@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,7 @@ const ForumCategory = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [category, setCategory] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ const ForumCategory = () => {
 
     if (tErr || !thread) {
       setSubmitting(false);
-      toast({ title: "Chyba", description: tErr?.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: tErr?.message, variant: "destructive" });
       return;
     }
     const { error: pErr } = await supabase.from("forum_posts")
@@ -92,7 +94,7 @@ const ForumCategory = () => {
 
     setSubmitting(false);
     if (pErr) {
-      toast({ title: "Chyba", description: pErr.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: pErr.message, variant: "destructive" });
       return;
     }
     setOpen(false);
@@ -100,19 +102,21 @@ const ForumCategory = () => {
     navigate(`/forum/${slug}/${thread.slug}`);
   };
 
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
+
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
         <Link to="/forum" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors mb-4">
-          <ChevronLeft className="h-4 w-4 mr-1" /> Zpět na fórum
+          <ChevronLeft className="h-4 w-4 mr-1" /> {t("forum.backToForum")}
         </Link>
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : !category ? (
-          <p className="text-muted-foreground">Kategorie nenalezena.</p>
+          <p className="text-muted-foreground">{t("forum.categoryNotFound")}</p>
         ) : (
           <>
             <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
@@ -124,22 +128,22 @@ const ForumCategory = () => {
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                      <Plus className="h-4 w-4 mr-1" /> Nové vlákno
+                      <Plus className="h-4 w-4 mr-1" /> {t("forum.newThread")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="glass border-border">
-                    <DialogHeader><DialogTitle>Nové vlákno</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{t("forum.newThread")}</DialogTitle></DialogHeader>
                     <form onSubmit={createThread} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="t-title">Titulek</Label>
+                        <Label htmlFor="t-title">{t("forum.threadTitle")}</Label>
                         <Input id="t-title" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="t-content">Obsah</Label>
+                        <Label htmlFor="t-content">{t("forum.threadContent")}</Label>
                         <Textarea id="t-content" rows={6} required value={content} onChange={(e) => setContent(e.target.value)} />
                       </div>
                       <Button type="submit" disabled={submitting} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publikovat"}
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
                       </Button>
                     </form>
                   </DialogContent>
@@ -150,26 +154,26 @@ const ForumCategory = () => {
             <div className="space-y-3">
               {threads.length === 0 && (
                 <Card className="glass border-border p-10 text-center text-muted-foreground">
-                  Zatím žádná vlákna. Buď první!
+                  {t("forum.noThreads")}
                 </Card>
               )}
-              {threads.map((t) => (
-                <Link key={t.id} to={`/forum/${slug}/${t.slug}`}>
+              {threads.map((th) => (
+                <Link key={th.id} to={`/forum/${slug}/${th.slug}`}>
                   <Card className="glass border-border p-5 hover:border-primary/60 transition-all flex items-center gap-4 group">
                     <MessageCircle className="h-5 w-5 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {t.is_pinned && <Pin className="h-3.5 w-3.5 text-accent" />}
-                        {t.is_locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <h3 className="font-display font-bold group-hover:text-primary transition-colors truncate">{t.title}</h3>
+                        {th.is_pinned && <Pin className="h-3.5 w-3.5 text-accent" />}
+                        {th.is_locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <h3 className="font-display font-bold group-hover:text-primary transition-colors truncate">{th.title}</h3>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {t.author?.display_name || t.author?.username || "Hráč"} · {new Date(t.created_at).toLocaleDateString("cs-CZ")}
+                        {th.author?.display_name || th.author?.username || t("common.player")} · {new Date(th.created_at).toLocaleDateString(locale)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-display font-bold text-primary">{t.post_count}</div>
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground">odp.</div>
+                      <div className="font-display font-bold text-primary">{th.post_count}</div>
+                      <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("forum.repliesShort")}</div>
                     </div>
                   </Card>
                 </Link>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -30,6 +31,7 @@ const ForumThread = () => {
   const { slug, threadSlug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [thread, setThread] = useState<Thread | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,13 +39,13 @@ const ForumThread = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
-    const { data: t } = await supabase
+    const { data: th } = await supabase
       .from("forum_threads").select("*").eq("slug", threadSlug).maybeSingle();
-    if (!t) { setLoading(false); return; }
-    setThread(t);
+    if (!th) { setLoading(false); return; }
+    setThread(th);
 
     const { data: ps } = await supabase
-      .from("forum_posts").select("*").eq("thread_id", t.id).order("created_at");
+      .from("forum_posts").select("*").eq("thread_id", th.id).order("created_at");
 
     if (ps) {
       const userIds = [...new Set(ps.map(p => p.user_id))];
@@ -65,7 +67,7 @@ const ForumThread = () => {
       .insert({ thread_id: thread.id, user_id: user.id, content: reply });
     setSubmitting(false);
     if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
     setReply("");
@@ -76,11 +78,13 @@ const ForumThread = () => {
     if (!user || otherId === user.id) return;
     const { data, error } = await supabase.rpc("get_or_create_conversation", { _other_user: otherId });
     if (error || !data) {
-      toast({ title: "Chyba", description: error?.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error?.message, variant: "destructive" });
       return;
     }
     navigate(`/messages?c=${data}`);
   };
+
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
 
   return (
     <div className="min-h-screen relative">
@@ -88,13 +92,13 @@ const ForumThread = () => {
       <Navbar />
       <main className="container py-10 max-w-4xl animate-fade-in">
         <Link to={`/forum/${slug}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors mb-4">
-          <ChevronLeft className="h-4 w-4 mr-1" /> Zpět do kategorie
+          <ChevronLeft className="h-4 w-4 mr-1" /> {t("forum.backToCategory")}
         </Link>
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : !thread ? (
-          <p className="text-muted-foreground">Vlákno nenalezeno.</p>
+          <p className="text-muted-foreground">{t("forum.threadNotFound")}</p>
         ) : (
           <>
             <div className="flex items-center gap-2 flex-wrap mb-6">
@@ -113,10 +117,10 @@ const ForumThread = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap mb-2">
                         <span className="font-display font-bold text-primary">
-                          {p.author?.display_name || p.author?.username || "Hráč"}
+                          {p.author?.display_name || p.author?.username || t("common.player")}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(p.created_at).toLocaleString("cs-CZ")}
+                          {new Date(p.created_at).toLocaleString(locale)}
                         </span>
                         {user && p.user_id !== user.id && (
                           <button onClick={() => startDM(p.user_id)}
@@ -135,23 +139,23 @@ const ForumThread = () => {
             {user && !thread.is_locked && (
               <form onSubmit={sendReply} className="mt-8 space-y-3">
                 <Textarea required rows={4} value={reply} onChange={(e) => setReply(e.target.value)}
-                  placeholder="Napiš odpověď…" className="resize-none" />
+                  placeholder={t("forum.replyPlaceholder")} className="resize-none" />
                 <Button type="submit" disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />Odeslat</>}
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
                 </Button>
               </form>
             )}
             {!user && (
               <Card className="glass border-border p-6 mt-8 text-center">
                 <p className="text-muted-foreground">
-                  <Link to="/auth" className="text-primary hover:underline">Přihlas se</Link> pro psaní odpovědí.
+                  <Link to="/auth" className="text-primary hover:underline">{t("forum.signInLink")}</Link> {t("forum.loginToReply")}
                 </p>
               </Card>
             )}
             {thread.is_locked && (
               <Card className="glass border-border p-6 mt-8 text-center">
                 <Lock className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Toto vlákno je zamčeno.</p>
+                <p className="text-sm text-muted-foreground">{t("forum.locked")}</p>
               </Card>
             )}
           </>

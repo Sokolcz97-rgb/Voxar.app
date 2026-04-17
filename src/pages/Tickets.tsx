@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -28,6 +29,7 @@ interface Ticket {
 
 const Tickets = () => {
   const { user, isAdmin, isEditor } = useAuth();
+  const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,6 @@ const Tickets = () => {
   const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState<"all" | TStatus>("all");
 
-  // form
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TPriority>("medium");
@@ -68,14 +69,16 @@ const Tickets = () => {
       .insert({ user_id: user.id, subject, description, priority, category: category || null });
     setSubmitting(false);
     if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
     setOpen(false);
     setSubject(""); setDescription(""); setPriority("medium"); setCategory("");
-    toast({ title: "Ticket vytvořen" });
+    toast({ title: t("tickets.created") });
     load();
   };
+
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
 
   return (
     <div className="min-h-screen relative">
@@ -84,12 +87,12 @@ const Tickets = () => {
       <main className="container py-10 animate-fade-in">
         <div className="flex items-end justify-between gap-4 flex-wrap mb-8">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Helpdesk</p>
+            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("tickets.tagline")}</p>
             <h1 className="font-display font-black text-3xl md:text-4xl mt-1">
-              {isStaff ? "Tickety (admin)" : "Moje tickety"}
+              {isStaff ? t("tickets.titleStaff") : t("tickets.titleUser")}
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              {isStaff ? "Správa všech ticketů od uživatelů." : "Potřebuješ pomoct? Otevři ticket."}
+              {isStaff ? t("tickets.subtitleStaff") : t("tickets.subtitleUser")}
             </p>
           </div>
 
@@ -97,52 +100,52 @@ const Tickets = () => {
             <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
               <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Vše</SelectItem>
-                <SelectItem value="open">Otevřené</SelectItem>
-                <SelectItem value="in_progress">Řeší se</SelectItem>
-                <SelectItem value="resolved">Vyřešené</SelectItem>
-                <SelectItem value="closed">Uzavřené</SelectItem>
+                <SelectItem value="all">{t("tickets.all")}</SelectItem>
+                <SelectItem value="open">{t("tickets.statusFilter.open")}</SelectItem>
+                <SelectItem value="in_progress">{t("tickets.statusFilter.in_progress")}</SelectItem>
+                <SelectItem value="resolved">{t("tickets.statusFilter.resolved")}</SelectItem>
+                <SelectItem value="closed">{t("tickets.statusFilter.closed")}</SelectItem>
               </SelectContent>
             </Select>
 
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                  <Plus className="h-4 w-4 mr-1" />Nový ticket
+                  <Plus className="h-4 w-4 mr-1" />{t("tickets.newTicket")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="glass border-border max-w-lg">
-                <DialogHeader><DialogTitle>Nový ticket</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{t("tickets.newTicket")}</DialogTitle></DialogHeader>
                 <form onSubmit={create} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Předmět</Label>
+                    <Label>{t("tickets.subject")}</Label>
                     <Input required maxLength={140} value={subject} onChange={(e) => setSubject(e.target.value)} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label>Priorita</Label>
+                      <Label>{t("tickets.priority")}</Label>
                       <Select value={priority} onValueChange={(v) => setPriority(v as TPriority)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Nízká</SelectItem>
-                          <SelectItem value="medium">Střední</SelectItem>
-                          <SelectItem value="high">Vysoká</SelectItem>
-                          <SelectItem value="urgent">Urgentní</SelectItem>
+                          <SelectItem value="low">{t("tickets.priorities.low")}</SelectItem>
+                          <SelectItem value="medium">{t("tickets.priorities.medium")}</SelectItem>
+                          <SelectItem value="high">{t("tickets.priorities.high")}</SelectItem>
+                          <SelectItem value="urgent">{t("tickets.priorities.urgent")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Kategorie (volitelné)</Label>
-                      <Input placeholder="účet, fórum, bug…" value={category} onChange={(e) => setCategory(e.target.value)} />
+                      <Label>{t("tickets.categoryOpt")}</Label>
+                      <Input placeholder={t("tickets.categoryPlaceholder")} value={category} onChange={(e) => setCategory(e.target.value)} />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Popis (Markdown podporován)</Label>
+                    <Label>{t("tickets.descriptionMd")}</Label>
                     <Textarea required rows={8} value={description} onChange={(e) => setDescription(e.target.value)}
-                      placeholder="**Co se děje?**&#10;Kroky k reprodukci..." className="font-mono text-sm" />
+                      placeholder={t("tickets.descPlaceholder")} className="font-mono text-sm" />
                   </div>
                   <Button type="submit" disabled={submitting} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vytvořit"}
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.create")}
                   </Button>
                 </form>
               </DialogContent>
@@ -155,27 +158,27 @@ const Tickets = () => {
         ) : tickets.length === 0 ? (
           <Card className="glass border-border p-12 text-center">
             <Inbox className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">Žádné tickety.</p>
+            <p className="text-muted-foreground">{t("tickets.noTickets")}</p>
           </Card>
         ) : (
           <div className="space-y-3">
-            {tickets.map((t) => (
-              <Link key={t.id} to={`/tickets/${t.id}`}>
+            {tickets.map((tk) => (
+              <Link key={tk.id} to={`/tickets/${tk.id}`}>
                 <Card className="glass border-border p-5 hover:border-primary/60 transition-all flex items-center gap-4 group">
                   <LifeBuoy className="h-5 w-5 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-bold group-hover:text-primary transition-colors truncate">
-                      {t.subject}
+                      {tk.subject}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {isStaff && (t.author?.display_name || t.author?.username || "Hráč") + " · "}
-                      {t.category && <>kat. {t.category} · </>}
-                      {new Date(t.updated_at).toLocaleString("cs-CZ")}
+                      {isStaff && (tk.author?.display_name || tk.author?.username || t("common.player")) + " · "}
+                      {tk.category && <>{t("tickets.categoryShort")} {tk.category} · </>}
+                      {new Date(tk.updated_at).toLocaleString(locale)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                    <PriorityBadge priority={t.priority} />
-                    <StatusBadge status={t.status} />
+                    <PriorityBadge priority={tk.priority} />
+                    <StatusBadge status={tk.status} />
                   </div>
                 </Card>
               </Link>

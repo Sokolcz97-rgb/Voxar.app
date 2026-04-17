@@ -9,6 +9,21 @@
     "signOut": "Odhlásit se",
     "signIn": "Přihlásit"
   },
+  "common": {
+    "back": "Zpět",
+    "loading": "Načítání...",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "submit": "Odeslat",
+    "delete": "Smazat",
+    "create": "Vytvořit",
+    "search": "Hledat",
+    "error": "Chyba",
+    "saved": "Uloženo",
+    "or": "nebo",
+    "player": "Hráč",
+    "locale": "cs-CZ"
+  },
   "home": {
     "badge": "Komunita pro hráče",
     "title1": "VSTUP DO",
@@ -22,6 +37,145 @@
       "streams": "Streamů",
       "online": "Online"
     }
+  },
+  "auth": {
+    "signIn": "Přihlášení",
+    "signUp": "Registrace",
+    "email": "E-mail",
+    "password": "Heslo",
+    "displayName": "Přezdívka",
+    "enter": "Vstoupit",
+    "createAccount": "Vytvořit účet",
+    "google": "Pokračovat s Google",
+    "backHome": "← Zpět na úvod",
+    "signUpFailed": "Registrace selhala",
+    "signInFailed": "Přihlášení selhalo",
+    "googleFailed": "Google přihlášení selhalo",
+    "accountCreated": "Účet vytvořen",
+    "welcome": "Vítej v NEONHUB!"
+  },
+  "dashboard": {
+    "welcome": "Vítej zpět",
+    "fallbackName": "Hráči",
+    "role": "Role",
+    "stats": {
+      "score": "Tvé skóre",
+      "friends": "Přátelé",
+      "messages": "Zprávy",
+      "streak": "Streak"
+    },
+    "ctaTitle": "🚀 Hub se právě rozjíždí",
+    "ctaDesc": "Brzy přibyde fórum, soukromé zprávy, ticketovací systém a AI helper. Sleduj novinky!"
+  },
+  "profile": {
+    "title": "Profil",
+    "displayName": "Přezdívka",
+    "username": "Username",
+    "bio": "Bio",
+    "bioPlaceholder": "Pár slov o tobě...",
+    "saveFailed": "Uložení selhalo",
+    "saved": "Profil uložen"
+  },
+  "forum": {
+    "title": "Fórum",
+    "subtitle": "Diskutuj, sdílej, najdi spoluhráče.",
+    "tagline": "Komunita",
+    "threadsCount": "vláken",
+    "categoryNotFound": "Kategorie nenalezena.",
+    "newThread": "Nové vlákno",
+    "noThreads": "Zatím žádná vlákna. Buď první!",
+    "backToForum": "Zpět na fórum",
+    "backToCategory": "Zpět do kategorie",
+    "threadTitle": "Titulek",
+    "threadContent": "Obsah",
+    "publish": "Publikovat",
+    "replyPlaceholder": "Napiš odpověď…",
+    "send": "Odeslat",
+    "threadNotFound": "Vlákno nenalezeno.",
+    "loginToReply": "pro psaní odpovědí.",
+    "signInLink": "Přihlas se",
+    "locked": "Toto vlákno je zamčeno.",
+    "repliesShort": "odp."
+  },
+  "messages": {
+    "tagline": "Komunikace",
+    "title": "Soukromé zprávy",
+    "new": "Nová",
+    "findUser": "Najít uživatele",
+    "searchPlaceholder": "Přezdívka nebo username…",
+    "nothingFound": "Nic nenalezeno.",
+    "noConversations": "Žádné konverzace.",
+    "startNew": "Začni novou!",
+    "selectOrStart": "Vyber konverzaci nebo zahaj novou.",
+    "beFirst": "Buď první, kdo napíše. 👋",
+    "writeMessage": "Napiš zprávu…",
+    "sendFailed": "Nepodařilo se odeslat"
+  },
+  "tickets": {
+    "tagline": "Helpdesk",
+    "titleStaff": "Tickety (admin)",
+    "titleUser": "Moje tickety",
+    "subtitleStaff": "Správa všech ticketů od uživatelů.",
+    "subtitleUser": "Potřebuješ pomoct? Otevři ticket.",
+    "all": "Vše",
+    "newTicket": "Nový ticket",
+    "subject": "Předmět",
+    "priority": "Priorita",
+    "categoryOpt": "Kategorie (volitelné)",
+    "categoryPlaceholder": "účet, fórum, bug…",
+    "descriptionMd": "Popis (Markdown podporován)",
+    "descPlaceholder": "**Co se děje?**\nKroky k reprodukci...",
+    "created": "Ticket vytvořen",
+    "noTickets": "Žádné tickety.",
+    "categoryShort": "kat.",
+    "ticketNotFound": "Ticket nenalezen.",
+    "originalMsg": "Původní zpráva",
+    "internal": "Interní",
+    "internalNote": "Interní poznámka (vidí jen tým)",
+    "replyPlaceholder": "Odpověď (Markdown podporován)…",
+    "closed": "Tento ticket je uzavřen.",
+    "backToTickets": "Zpět na tickety",
+    "status": {
+      "open": "Otevřený",
+      "in_progress": "Řeší se",
+      "resolved": "Vyřešený",
+      "closed": "Uzavřený"
+    },
+    "statusFilter": {
+      "open": "Otevřené",
+      "in_progress": "Řeší se",
+      "resolved": "Vyřešené",
+      "closed": "Uzavřené"
+    },
+    "priorities": {
+      "low": "Nízká",
+      "medium": "Střední",
+      "high": "Vysoká",
+      "urgent": "Urgentní"
+    }
+  },
+  "ai": {
+    "open": "Otevřít AI helper",
+    "close": "Zavřít",
+    "online": "Helper · online",
+    "greeting": "Ahoj, jsem NEON",
+    "intro": "Pomůžu ti s orientací po Hubu, fórem nebo obecnými otázkami.",
+    "clear": "smazat",
+    "askPlaceholder": "Zeptej se...",
+    "rateLimit": "Pomalejc",
+    "rateLimitDesc": "Příliš mnoho dotazů. Zkus to za chvíli.",
+    "noCredits": "AI nedostupné",
+    "noCreditsDesc": "Kredity vyčerpány.",
+    "errorDesc": "AI helper neodpovídá.",
+    "suggestions": {
+      "0": "Jak založím vlákno ve fóru?",
+      "1": "Jak pošlu soukromou zprávu?",
+      "2": "Co znamená role admin?"
+    }
+  },
+  "notFound": {
+    "subtitle": "Jejda! Stránka nenalezena",
+    "back": "Zpět na úvod"
   },
   "lang": {
     "switch": "Jazyk"
