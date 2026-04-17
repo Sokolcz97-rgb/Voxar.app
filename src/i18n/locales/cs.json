@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "forum": "Fórum",
+    "messages": "Zprávy",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "profile": "Profil",
+    "tickets": "Tickety",
+    "signOut": "Odhlásit se",
+    "signIn": "Přihlásit"
+  },
+  "home": {
+    "badge": "Komunita pro hráče",
+    "title1": "VSTUP DO",
+    "title2": "NEON HUB",
+    "subtitle": "Herní komunita nové generace. Diskutuj, streamuj, hraj. Připoj se k tisícům hráčů v jediném temném vesmíru.",
+    "enter": "Vstoupit do Hubu",
+    "signUp": "Zaregistrovat se",
+    "signIn": "Přihlásit se",
+    "stats": {
+      "players": "Hráčů",
+      "streams": "Streamů",
+      "online": "Online"
+    }
+  },
+  "lang": {
+    "switch": "Jazyk"
+  }
+}

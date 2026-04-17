@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "forum": "Forum",
+    "messages": "Messages",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "profile": "Profile",
+    "tickets": "Tickets",
+    "signOut": "Sign out",
+    "signIn": "Sign in"
+  },
+  "home": {
+    "badge": "Community for gamers",
+    "title1": "ENTER THE",
+    "title2": "NEON HUB",
+    "subtitle": "Next-gen gaming community. Discuss, stream, play. Join thousands of players in one dark universe.",
+    "enter": "Enter the Hub",
+    "signUp": "Sign up",
+    "signIn": "Sign in",
+    "stats": {
+      "players": "Players",
+      "streams": "Streams",
+      "online": "Online"
+    }
+  },
+  "lang": {
+    "switch": "Language"
+  }
+}
