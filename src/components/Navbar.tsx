@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, Shield, User as UserIcon, Gamepad2 } from "lucide-react";
+import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,9 @@ export function Navbar() {
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+                <Link to="/messages">Zprávy</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
               {(isAdmin || isEditor) && (
@@ -55,6 +58,9 @@ export function Navbar() {
                 <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-md">
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <UserIcon className="h-4 w-4 mr-2" />Profil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/messages")} className="sm:hidden">
+                    <MessageSquare className="h-4 w-4 mr-2" />Zprávy
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
