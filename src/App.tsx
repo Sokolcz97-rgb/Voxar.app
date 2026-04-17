@@ -14,6 +14,8 @@ import Forum from "./pages/Forum.tsx";
 import ForumCategory from "./pages/ForumCategory.tsx";
 import ForumThread from "./pages/ForumThread.tsx";
 import Messages from "./pages/Messages.tsx";
+import Tickets from "./pages/Tickets.tsx";
+import TicketDetail from "./pages/TicketDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { AIHelper } from "@/components/AIHelper";
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/forum/:slug" element={<ForumCategory />} />
             <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+            <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIHelper />
