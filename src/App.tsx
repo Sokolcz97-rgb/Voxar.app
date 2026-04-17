@@ -10,6 +10,9 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import Admin from "./pages/Admin.tsx";
+import Forum from "./pages/Forum.tsx";
+import ForumCategory from "./pages/ForumCategory.tsx";
+import ForumThread from "./pages/ForumThread.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();

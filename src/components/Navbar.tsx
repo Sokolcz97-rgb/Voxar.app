@@ -32,10 +32,13 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/forum">Fórum</Link>
+          </Button>
           {user ? (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
               {(isAdmin || isEditor) && (
