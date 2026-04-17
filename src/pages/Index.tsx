@@ -1,11 +1,13 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight } from "lucide-react";
 
 const Index = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -24,39 +26,38 @@ const Index = () => {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-8">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Komunita pro hráče
+                {t("home.badge")}
               </span>
             </div>
 
             <h1 className="font-display font-black text-5xl md:text-7xl lg:text-8xl mb-6 leading-[0.95]">
-              <span className="text-foreground">VSTUP DO</span>
+              <span className="text-foreground">{t("home.title1")}</span>
               <br />
               <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent text-glow">
-                NEON HUB
+                {t("home.title2")}
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
-              Herní komunita nové generace. Diskutuj, streamuj, hraj.
-              Připoj se k tisícům hráčů v jediném temném vesmíru.
+              {t("home.subtitle")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {user ? (
                 <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary-glow text-base px-8 h-12 animate-pulse-glow">
                   <Link to="/dashboard">
-                    Vstoupit do Hubu <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("home.enter")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
                 <>
                   <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary-glow text-base px-8 h-12 animate-pulse-glow">
                     <Link to="/auth">
-                      Zaregistrovat se <ArrowRight className="ml-2 h-4 w-4" />
+                      {t("home.signUp")} <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary text-base px-8 h-12">
-                    <Link to="/auth">Přihlásit se</Link>
+                    <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
               )}
@@ -65,9 +66,9 @@ const Index = () => {
             {/* Stats strip */}
             <div className="grid grid-cols-3 gap-6 mt-20 max-w-2xl mx-auto">
               {[
-                { value: "12K+", label: "Hráčů" },
-                { value: "340", label: "Streamů" },
-                { value: "24/7", label: "Online" },
+                { value: "12K+", label: t("home.stats.players") },
+                { value: "340", label: t("home.stats.streams") },
+                { value: "24/7", label: t("home.stats.online") },
               ].map((s) => (
                 <div key={s.label} className="glass rounded-lg p-4 hover:border-primary/50 transition-all">
                   <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow">{s.value}</div>
