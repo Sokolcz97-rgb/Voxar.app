@@ -30,6 +30,9 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
+            <Route path="/forum" element={<Forum />} />
+            <Route path="/forum/:slug" element={<ForumCategory />} />
+            <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
