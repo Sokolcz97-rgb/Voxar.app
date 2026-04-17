@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -28,10 +29,10 @@ interface Message {
 }
 
 const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
-const formatTime = (iso: string) => new Date(iso).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
 
 const Messages = () => {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -45,7 +46,9 @@ const Messages = () => {
   const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Load conversations + last message + other participant
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
+  const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+
   const loadConversations = async () => {
     if (!user) return;
     const { data: convs } = await supabase
@@ -74,7 +77,6 @@ const Messages = () => {
 
   useEffect(() => { loadConversations(); /* eslint-disable-next-line */ }, [user]);
 
-  // Load messages for active conversation + realtime subscription
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
     setLoadingMsgs(true);
@@ -106,17 +108,16 @@ const Messages = () => {
     const { error } = await supabase.from("messages")
       .insert({ conversation_id: activeId, sender_id: user.id, content });
     if (error) {
-      toast({ title: "Nepodařilo se odeslat", description: error.message, variant: "destructive" });
+      toast({ title: t("messages.sendFailed"), description: error.message, variant: "destructive" });
       setText(content);
     } else {
       loadConversations();
     }
   };
 
-  // Search users to start a new conversation
   useEffect(() => {
     if (!searchOpen || !search.trim()) { setSearchResults([]); return; }
-    const t = setTimeout(async () => {
+    const tm = setTimeout(async () => {
       const { data } = await supabase
         .from("profiles").select("user_id, display_name, username")
         .or(`display_name.ilike.%${search}%,username.ilike.%${search}%`)
@@ -124,13 +125,13 @@ const Messages = () => {
         .limit(10);
       setSearchResults(data ?? []);
     }, 200);
-    return () => clearTimeout(t);
+    return () => clearTimeout(tm);
   }, [search, searchOpen, user]);
 
   const startConversation = async (otherId: string) => {
     const { data, error } = await supabase.rpc("get_or_create_conversation", { _other_user: otherId });
     if (error || !data) {
-      toast({ title: "Chyba", description: error?.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error?.message, variant: "destructive" });
       return;
     }
     setSearchOpen(false);
@@ -149,21 +150,21 @@ const Messages = () => {
       <main className="container py-6 animate-fade-in">
         <div className="flex items-baseline justify-between mb-6 gap-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Komunikace</p>
-            <h1 className="font-display font-black text-3xl md:text-4xl mt-1">Soukromé zprávy</h1>
+            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("messages.tagline")}</p>
+            <h1 className="font-display font-black text-3xl md:text-4xl mt-1">{t("messages.title")}</h1>
           </div>
           <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                <Plus className="h-4 w-4 mr-1" />Nová
+                <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
               </Button>
             </DialogTrigger>
             <DialogContent className="glass border-border">
-              <DialogHeader><DialogTitle>Najít uživatele</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t("messages.findUser")}</DialogTitle></DialogHeader>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input value={search} onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Přezdívka nebo username…" className="pl-9" autoFocus />
+                  placeholder={t("messages.searchPlaceholder")} className="pl-9" autoFocus />
               </div>
               <div className="max-h-72 overflow-y-auto space-y-1">
                 {searchResults.map((r) => (
@@ -179,7 +180,7 @@ const Messages = () => {
                   </button>
                 ))}
                 {search && searchResults.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-6">Nic nenalezeno.</p>
+                  <p className="text-sm text-muted-foreground text-center py-6">{t("messages.nothingFound")}</p>
                 )}
               </div>
             </DialogContent>
@@ -187,14 +188,13 @@ const Messages = () => {
         </div>
 
         <div className="grid lg:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[500px]">
-          {/* Sidebar */}
           <Card className="glass border-border p-2 overflow-y-auto">
             {loadingConvs ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
             ) : conversations.length === 0 ? (
               <div className="text-center py-10 px-4">
                 <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Žádné konverzace.<br />Začni novou!</p>
+                <p className="text-sm text-muted-foreground">{t("messages.noConversations")}<br />{t("messages.startNew")}</p>
               </div>
             ) : (
               <ul className="space-y-1">
@@ -208,7 +208,7 @@ const Messages = () => {
                         {initials(c.other?.display_name || c.other?.username)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || "Hráč"}</div>
+                        <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
                         <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
                       </div>
                     </button>
@@ -218,13 +218,12 @@ const Messages = () => {
             )}
           </Card>
 
-          {/* Chat */}
           <Card className="glass border-border flex flex-col overflow-hidden">
             {!activeId ? (
               <div className="flex-1 flex items-center justify-center text-center p-6">
                 <div>
                   <MessageSquare className="h-12 w-12 text-primary/40 mx-auto mb-3" />
-                  <p className="text-muted-foreground">Vyber konverzaci nebo zahaj novou.</p>
+                  <p className="text-muted-foreground">{t("messages.selectOrStart")}</p>
                 </div>
               </div>
             ) : (
@@ -234,7 +233,7 @@ const Messages = () => {
                     {initials(active?.other?.display_name || active?.other?.username)}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || "Hráč"}</div>
+                    <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || t("common.player")}</div>
                     {active?.other?.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}
                   </div>
                 </div>
@@ -243,7 +242,7 @@ const Messages = () => {
                   {loadingMsgs ? (
                     <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
                   ) : messages.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-10">Buď první, kdo napíše. 👋</p>
+                    <p className="text-center text-sm text-muted-foreground py-10">{t("messages.beFirst")}</p>
                   ) : (
                     messages.map((m) => {
                       const mine = m.sender_id === user?.id;
@@ -264,7 +263,7 @@ const Messages = () => {
                 </div>
 
                 <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
-                  <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Napiš zprávu…" autoComplete="off" />
+                  <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={t("messages.writeMessage")} autoComplete="off" />
                   <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
                     <Send className="h-4 w-4" />
                   </Button>

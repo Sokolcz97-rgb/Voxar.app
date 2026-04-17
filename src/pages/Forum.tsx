@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,7 @@ interface Category {
 }
 
 const Forum = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +27,6 @@ const Forum = () => {
         .order("position");
 
       if (cats) {
-        // Get thread counts in parallel
         const withCounts = await Promise.all(
           cats.map(async (c) => {
             const { count } = await supabase
@@ -49,9 +50,9 @@ const Forum = () => {
 
       <main className="container py-10 animate-fade-in">
         <div className="mb-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Komunita</p>
-          <h1 className="font-display font-black text-4xl md:text-5xl mt-2">Fórum</h1>
-          <p className="text-muted-foreground mt-2">Diskutuj, sdílej, najdi spoluhráče.</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("forum.tagline")}</p>
+          <h1 className="font-display font-black text-4xl md:text-5xl mt-2">{t("forum.title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("forum.subtitle")}</p>
         </div>
 
         {loading ? (
@@ -72,7 +73,7 @@ const Forum = () => {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-display font-bold text-primary text-glow">{c.thread_count}</div>
-                    <div className="text-xs uppercase tracking-widest text-muted-foreground">vláken</div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("forum.threadsCount")}</div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </Card>

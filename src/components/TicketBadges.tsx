@@ -1,22 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export type TStatus = "open" | "in_progress" | "resolved" | "closed";
 export type TPriority = "low" | "medium" | "high" | "urgent";
-
-export const statusLabel: Record<TStatus, string> = {
-  open: "Otevřený",
-  in_progress: "Řeší se",
-  resolved: "Vyřešený",
-  closed: "Uzavřený",
-};
-
-export const priorityLabel: Record<TPriority, string> = {
-  low: "Nízká",
-  medium: "Střední",
-  high: "Vysoká",
-  urgent: "Urgentní",
-};
 
 const statusStyles: Record<TStatus, string> = {
   open: "bg-primary/15 text-primary border-primary/40",
@@ -33,17 +20,19 @@ const priorityStyles: Record<TPriority, string> = {
 };
 
 export function StatusBadge({ status }: { status: TStatus }) {
+  const { t } = useTranslation();
   return (
     <Badge variant="outline" className={cn("uppercase tracking-widest text-[10px]", statusStyles[status])}>
-      {statusLabel[status]}
+      {t(`tickets.status.${status}`)}
     </Badge>
   );
 }
 
 export function PriorityBadge({ priority }: { priority: TPriority }) {
+  const { t } = useTranslation();
   return (
     <Badge variant="outline" className={cn("uppercase tracking-widest text-[10px]", priorityStyles[priority])}>
-      {priorityLabel[priority]}
+      {t(`tickets.priorities.${priority}`)}
     </Badge>
   );
 }

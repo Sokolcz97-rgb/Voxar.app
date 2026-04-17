@@ -9,6 +9,21 @@
     "signOut": "Sign out",
     "signIn": "Sign in"
   },
+  "common": {
+    "back": "Back",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search",
+    "error": "Error",
+    "saved": "Saved",
+    "or": "or",
+    "player": "Player",
+    "locale": "en-US"
+  },
   "home": {
     "badge": "Community for gamers",
     "title1": "ENTER THE",
@@ -22,6 +37,145 @@
       "streams": "Streams",
       "online": "Online"
     }
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display name",
+    "enter": "Enter",
+    "createAccount": "Create account",
+    "google": "Continue with Google",
+    "backHome": "← Back home",
+    "signUpFailed": "Sign up failed",
+    "signInFailed": "Sign in failed",
+    "googleFailed": "Google sign in failed",
+    "accountCreated": "Account created",
+    "welcome": "Welcome to NEONHUB!"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "fallbackName": "Player",
+    "role": "Role",
+    "stats": {
+      "score": "Your score",
+      "friends": "Friends",
+      "messages": "Messages",
+      "streak": "Streak"
+    },
+    "ctaTitle": "🚀 The Hub is just spinning up",
+    "ctaDesc": "Forum, private messages, helpdesk and AI helper coming soon. Stay tuned!"
+  },
+  "profile": {
+    "title": "Profile",
+    "displayName": "Display name",
+    "username": "Username",
+    "bio": "Bio",
+    "bioPlaceholder": "A few words about you...",
+    "saveFailed": "Save failed",
+    "saved": "Profile saved"
+  },
+  "forum": {
+    "title": "Forum",
+    "subtitle": "Discuss, share, find teammates.",
+    "tagline": "Community",
+    "threadsCount": "threads",
+    "categoryNotFound": "Category not found.",
+    "newThread": "New thread",
+    "noThreads": "No threads yet. Be the first!",
+    "backToForum": "Back to forum",
+    "backToCategory": "Back to category",
+    "threadTitle": "Title",
+    "threadContent": "Content",
+    "publish": "Publish",
+    "replyPlaceholder": "Write a reply…",
+    "send": "Send",
+    "threadNotFound": "Thread not found.",
+    "loginToReply": "to write replies.",
+    "signInLink": "Sign in",
+    "locked": "This thread is locked.",
+    "repliesShort": "rep."
+  },
+  "messages": {
+    "tagline": "Communication",
+    "title": "Private messages",
+    "new": "New",
+    "findUser": "Find user",
+    "searchPlaceholder": "Display name or username…",
+    "nothingFound": "Nothing found.",
+    "noConversations": "No conversations.",
+    "startNew": "Start a new one!",
+    "selectOrStart": "Select a conversation or start a new one.",
+    "beFirst": "Be the first to write. 👋",
+    "writeMessage": "Write a message…",
+    "sendFailed": "Failed to send"
+  },
+  "tickets": {
+    "tagline": "Helpdesk",
+    "titleStaff": "Tickets (admin)",
+    "titleUser": "My tickets",
+    "subtitleStaff": "Manage all user tickets.",
+    "subtitleUser": "Need help? Open a ticket.",
+    "all": "All",
+    "newTicket": "New ticket",
+    "subject": "Subject",
+    "priority": "Priority",
+    "categoryOpt": "Category (optional)",
+    "categoryPlaceholder": "account, forum, bug…",
+    "descriptionMd": "Description (Markdown supported)",
+    "descPlaceholder": "**What's happening?**\nSteps to reproduce...",
+    "created": "Ticket created",
+    "noTickets": "No tickets.",
+    "categoryShort": "cat.",
+    "ticketNotFound": "Ticket not found.",
+    "originalMsg": "Original message",
+    "internal": "Internal",
+    "internalNote": "Internal note (staff only)",
+    "replyPlaceholder": "Reply (Markdown supported)…",
+    "closed": "This ticket is closed.",
+    "backToTickets": "Back to tickets",
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "statusFilter": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
+  "ai": {
+    "open": "Open AI helper",
+    "close": "Close",
+    "online": "Helper · online",
+    "greeting": "Hi, I'm NEON",
+    "intro": "I'll help you navigate the Hub, the forum or general questions.",
+    "clear": "clear",
+    "askPlaceholder": "Ask something...",
+    "rateLimit": "Slow down",
+    "rateLimitDesc": "Too many requests. Try again in a moment.",
+    "noCredits": "AI unavailable",
+    "noCreditsDesc": "Out of credits.",
+    "errorDesc": "AI helper not responding.",
+    "suggestions": {
+      "0": "How do I start a thread?",
+      "1": "How do I send a private message?",
+      "2": "What does the admin role mean?"
+    }
+  },
+  "notFound": {
+    "subtitle": "Oops! Page not found",
+    "back": "Return home"
   },
   "lang": {
     "switch": "Language"
