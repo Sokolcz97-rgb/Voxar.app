@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare } from "lucide-react";
+import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +61,9 @@ export function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/messages")} className="sm:hidden">
                     <MessageSquare className="h-4 w-4 mr-2" />Zprávy
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/tickets")}>
+                    <LifeBuoy className="h-4 w-4 mr-2" />Tickety
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
