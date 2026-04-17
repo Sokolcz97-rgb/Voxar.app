@@ -1,0 +1,281 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Navbar } from "@/components/Navbar";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
+
+interface Conversation {
+  id: string;
+  user_a: string;
+  user_b: string;
+  updated_at: string;
+  other?: { user_id: string; display_name: string | null; username: string | null; avatar_url: string | null } | null;
+  last?: { content: string; created_at: string } | null;
+}
+
+interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
+
+const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
+const formatTime = (iso: string) => new Date(iso).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+
+const Messages = () => {
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(params.get("c"));
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null }[]>([]);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Load conversations + last message + other participant
+  const loadConversations = async () => {
+    if (!user) return;
+    const { data: convs } = await supabase
+      .from("conversations").select("*")
+      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+      .order("updated_at", { ascending: false });
+
+    if (!convs) { setLoadingConvs(false); return; }
+
+    const otherIds = convs.map((c) => (c.user_a === user.id ? c.user_b : c.user_a));
+    const { data: profs } = await supabase
+      .from("profiles").select("user_id, display_name, username, avatar_url")
+      .in("user_id", otherIds.length ? otherIds : ["00000000-0000-0000-0000-000000000000"]);
+    const profMap = new Map(profs?.map((p) => [p.user_id, p]) ?? []);
+
+    const enriched = await Promise.all(convs.map(async (c) => {
+      const otherId = c.user_a === user.id ? c.user_b : c.user_a;
+      const { data: lastArr } = await supabase
+        .from("messages").select("content, created_at")
+        .eq("conversation_id", c.id).order("created_at", { ascending: false }).limit(1);
+      return { ...c, other: profMap.get(otherId) ?? null, last: lastArr?.[0] ?? null };
+    }));
+    setConversations(enriched);
+    setLoadingConvs(false);
+  };
+
+  useEffect(() => { loadConversations(); /* eslint-disable-next-line */ }, [user]);
+
+  // Load messages for active conversation + realtime subscription
+  useEffect(() => {
+    if (!activeId) { setMessages([]); return; }
+    setLoadingMsgs(true);
+    supabase.from("messages").select("*").eq("conversation_id", activeId).order("created_at")
+      .then(({ data }) => {
+        setMessages(data ?? []);
+        setLoadingMsgs(false);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior }), 50);
+      });
+
+    const channel = supabase
+      .channel(`msgs-${activeId}`)
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+        }
+      ).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [activeId]);
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !activeId || !text.trim()) return;
+    const content = text.trim();
+    setText("");
+    const { error } = await supabase.from("messages")
+      .insert({ conversation_id: activeId, sender_id: user.id, content });
+    if (error) {
+      toast({ title: "Nepodařilo se odeslat", description: error.message, variant: "destructive" });
+      setText(content);
+    } else {
+      loadConversations();
+    }
+  };
+
+  // Search users to start a new conversation
+  useEffect(() => {
+    if (!searchOpen || !search.trim()) { setSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("profiles").select("user_id, display_name, username")
+        .or(`display_name.ilike.%${search}%,username.ilike.%${search}%`)
+        .neq("user_id", user?.id ?? "")
+        .limit(10);
+      setSearchResults(data ?? []);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [search, searchOpen, user]);
+
+  const startConversation = async (otherId: string) => {
+    const { data, error } = await supabase.rpc("get_or_create_conversation", { _other_user: otherId });
+    if (error || !data) {
+      toast({ title: "Chyba", description: error?.message, variant: "destructive" });
+      return;
+    }
+    setSearchOpen(false);
+    setSearch(""); setSearchResults([]);
+    setActiveId(data as string);
+    setParams({ c: data as string });
+    loadConversations();
+  };
+
+  const active = conversations.find((c) => c.id === activeId);
+
+  return (
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 -z-10 gradient-hero" />
+      <Navbar />
+      <main className="container py-6 animate-fade-in">
+        <div className="flex items-baseline justify-between mb-6 gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Komunikace</p>
+            <h1 className="font-display font-black text-3xl md:text-4xl mt-1">Soukromé zprávy</h1>
+          </div>
+          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                <Plus className="h-4 w-4 mr-1" />Nová
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass border-border">
+              <DialogHeader><DialogTitle>Najít uživatele</DialogTitle></DialogHeader>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Přezdívka nebo username…" className="pl-9" autoFocus />
+              </div>
+              <div className="max-h-72 overflow-y-auto space-y-1">
+                {searchResults.map((r) => (
+                  <button key={r.user_id} onClick={() => startConversation(r.user_id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
+                    <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
+                      {initials(r.display_name || r.username)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-display font-bold truncate">{r.display_name || r.username}</div>
+                      {r.username && <div className="text-xs text-muted-foreground truncate">@{r.username}</div>}
+                    </div>
+                  </button>
+                ))}
+                {search && searchResults.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">Nic nenalezeno.</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="grid lg:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[500px]">
+          {/* Sidebar */}
+          <Card className="glass border-border p-2 overflow-y-auto">
+            {loadingConvs ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            ) : conversations.length === 0 ? (
+              <div className="text-center py-10 px-4">
+                <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Žádné konverzace.<br />Začni novou!</p>
+              </div>
+            ) : (
+              <ul className="space-y-1">
+                {conversations.map((c) => (
+                  <li key={c.id}>
+                    <button onClick={() => { setActiveId(c.id); setParams({ c: c.id }); }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                        activeId === c.id ? "bg-primary/15 border border-primary/40" : "hover:bg-secondary/50"
+                      }`}>
+                      <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary shrink-0">
+                        {initials(c.other?.display_name || c.other?.username)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || "Hráč"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* Chat */}
+          <Card className="glass border-border flex flex-col overflow-hidden">
+            {!activeId ? (
+              <div className="flex-1 flex items-center justify-center text-center p-6">
+                <div>
+                  <MessageSquare className="h-12 w-12 text-primary/40 mx-auto mb-3" />
+                  <p className="text-muted-foreground">Vyber konverzaci nebo zahaj novou.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="border-b border-border px-5 py-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
+                    {initials(active?.other?.display_name || active?.other?.username)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || "Hráč"}</div>
+                    {active?.other?.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                  {loadingMsgs ? (
+                    <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+                  ) : messages.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-10">Buď první, kdo napíše. 👋</p>
+                  ) : (
+                    messages.map((m) => {
+                      const mine = m.sender_id === user?.id;
+                      return (
+                        <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} animate-fade-in`}>
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                            mine ? "bg-primary text-primary-foreground rounded-br-sm shadow-[var(--glow-soft)]"
+                                 : "bg-secondary text-secondary-foreground rounded-bl-sm"
+                          }`}>
+                            <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                            <p className={`text-[10px] mt-1 opacity-70`}>{formatTime(m.created_at)}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+
+                <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
+                  <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Napiš zprávu…" autoComplete="off" />
+                  <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
+              </>
+            )}
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Messages;
