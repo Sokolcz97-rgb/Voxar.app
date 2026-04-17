@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bot, Send, X, Loader2, Sparkles } from "lucide-react";
@@ -15,6 +16,7 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const STORAGE_KEY = "neonhub_ai_chat";
 
 export function AIHelper() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
@@ -77,16 +79,16 @@ export function AIHelper() {
       });
 
       if (resp.status === 429) {
-        toast({ title: "Pomalejc", description: "Příliš mnoho dotazů. Zkus to za chvíli." });
+        toast({ title: t("ai.rateLimit"), description: t("ai.rateLimitDesc") });
         setLoading(false);
         return;
       }
       if (resp.status === 402) {
-        toast({ title: "AI nedostupné", description: "Kredity vyčerpány.", variant: "destructive" });
+        toast({ title: t("ai.noCredits"), description: t("ai.noCreditsDesc"), variant: "destructive" });
         setLoading(false);
         return;
       }
-      if (!resp.ok || !resp.body) throw new Error("Stream selhal");
+      if (!resp.ok || !resp.body) throw new Error("Stream failed");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -113,9 +115,7 @@ export function AIHelper() {
           }
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as
-              | string
-              | undefined;
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) upsertAssistant(content);
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -126,7 +126,7 @@ export function AIHelper() {
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         console.error(e);
-        toast({ title: "Chyba", description: "AI helper neodpovídá.", variant: "destructive" });
+        toast({ title: t("common.error"), description: t("ai.errorDesc"), variant: "destructive" });
       }
     } finally {
       setLoading(false);
@@ -148,12 +148,11 @@ export function AIHelper() {
 
   return (
     <>
-      {/* Floating launcher */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-40 group"
-          aria-label="Otevřít AI helper"
+          aria-label={t("ai.open")}
         >
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-primary/40 blur-xl group-hover:bg-primary/60 transition-all animate-pulse-glow" />
@@ -164,10 +163,8 @@ export function AIHelper() {
         </button>
       )}
 
-      {/* Chat window */}
       {open && (
         <div className="fixed bottom-6 right-6 z-40 w-[min(380px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col glass border border-primary/30 rounded-2xl shadow-[var(--glow-primary)] animate-scale-in overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -176,46 +173,42 @@ export function AIHelper() {
               </div>
               <div>
                 <div className="font-display font-bold text-sm tracking-wider text-glow">NEON AI</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Helper · online</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("ai.online")}</div>
               </div>
             </div>
             <div className="flex items-center gap-1">
               {messages.length > 0 && (
                 <button onClick={clearChat} className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors px-2">
-                  smazat
+                  {t("ai.clear")}
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Zavřít">
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label={t("ai.close")}>
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-10 px-4">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 border border-primary/30 mb-3">
                   <Bot className="h-5 w-5 text-primary" />
                 </div>
-                <p className="font-display font-bold text-sm mb-1">Ahoj, jsem NEON</p>
-                <p className="text-xs text-muted-foreground">
-                  Pomůžu ti s orientací po Hubu, fórem nebo obecnými otázkami.
-                </p>
+                <p className="font-display font-bold text-sm mb-1">{t("ai.greeting")}</p>
+                <p className="text-xs text-muted-foreground">{t("ai.intro")}</p>
                 <div className="mt-4 grid gap-2">
-                  {[
-                    "Jak založím vlákno ve fóru?",
-                    "Jak pošlu soukromou zprávu?",
-                    "Co znamená role admin?",
-                  ].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => { setInput(q); setTimeout(send, 0); }}
-                      className="text-xs text-left px-3 py-2 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
-                    >
-                      {q}
-                    </button>
-                  ))}
+                  {[0, 1, 2].map((i) => {
+                    const q = t(`ai.suggestions.${i}`);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { setInput(q); setTimeout(send, 0); }}
+                        className="text-xs text-left px-3 py-2 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
+                      >
+                        {q}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -241,13 +234,12 @@ export function AIHelper() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t border-border p-3 flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Zeptej se..."
+              placeholder={t("ai.askPlaceholder")}
               disabled={loading}
               className="text-sm"
             />
