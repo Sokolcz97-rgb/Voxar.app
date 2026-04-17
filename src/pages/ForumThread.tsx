@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Pin, Lock, ChevronLeft, Send } from "lucide-react";
+import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
 
 interface Post {
   id: string;
@@ -28,6 +28,7 @@ interface Thread {
 
 const ForumThread = () => {
   const { slug, threadSlug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [thread, setThread] = useState<Thread | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -71,6 +72,16 @@ const ForumThread = () => {
     load();
   };
 
+  const startDM = async (otherId: string) => {
+    if (!user || otherId === user.id) return;
+    const { data, error } = await supabase.rpc("get_or_create_conversation", { _other_user: otherId });
+    if (error || !data) {
+      toast({ title: "Chyba", description: error?.message, variant: "destructive" });
+      return;
+    }
+    navigate(`/messages?c=${data}`);
+  };
+
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
@@ -107,6 +118,12 @@ const ForumThread = () => {
                         <span className="text-xs text-muted-foreground">
                           {new Date(p.created_at).toLocaleString("cs-CZ")}
                         </span>
+                        {user && p.user_id !== user.id && (
+                          <button onClick={() => startDM(p.user_id)}
+                            className="ml-auto text-xs inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+                            <MessageSquare className="h-3 w-3" />DM
+                          </button>
+                        )}
                       </div>
                       <p className="whitespace-pre-wrap break-words text-foreground/90">{p.content}</p>
                     </div>

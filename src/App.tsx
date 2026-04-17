@@ -13,6 +13,7 @@ import Admin from "./pages/Admin.tsx";
 import Forum from "./pages/Forum.tsx";
 import ForumCategory from "./pages/ForumCategory.tsx";
 import ForumThread from "./pages/ForumThread.tsx";
+import Messages from "./pages/Messages.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:slug" element={<ForumCategory />} />
             <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
