@@ -15,6 +15,7 @@ import ForumCategory from "./pages/ForumCategory.tsx";
 import ForumThread from "./pages/ForumThread.tsx";
 import Messages from "./pages/Messages.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { AIHelper } from "@/components/AIHelper";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <AIHelper />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
