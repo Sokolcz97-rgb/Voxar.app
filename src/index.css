@@ -59,6 +59,10 @@
     --sidebar-accent-foreground: 190 40% 96%;
     --sidebar-border: 220 35% 16%;
     --sidebar-ring: 187 100% 50%;
+
+    /* Gold accent (e.g. 1st place trophy) */
+    --gold: 45 100% 55%;
+    --gold-foreground: 30 50% 8%;
   }
 
   .dark {
