@@ -142,10 +142,24 @@ const Leaderboard = () => {
           <ul className="space-y-2">
             {entries.map((e, i) => {
               const name = e.display_name || e.username || t("common.player");
+              const isFirst = i === 0;
               return (
-                <Card key={e.user_id} className="glass border-border p-4 hover:border-primary/40 transition-colors">
+                <Card
+                  key={e.user_id}
+                  className={
+                    isFirst
+                      ? "glass border p-4 animate-gold-pulse transition-colors"
+                      : "glass border-border p-4 hover:border-primary/40 transition-colors"
+                  }
+                >
                   <Link to={`/profile/${e.user_id}`} className="flex items-center gap-4">
-                    <div className="w-10 text-center font-display font-bold text-lg shrink-0">
+                    <div
+                      className={
+                        isFirst
+                          ? "w-10 text-center font-display font-bold text-2xl shrink-0 text-gold drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]"
+                          : "w-10 text-center font-display font-bold text-lg shrink-0"
+                      }
+                    >
                       {medal(i)}
                     </div>
                     <div className="relative shrink-0">
@@ -172,7 +186,7 @@ const Leaderboard = () => {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="flex items-center gap-1 text-primary">
+                      <div className={isFirst ? "flex items-center gap-1 text-gold" : "flex items-center gap-1 text-primary"}>
                         <Heart className="h-4 w-4" />
                         <span className="font-display text-2xl font-bold">{e.total}</span>
                       </div>
