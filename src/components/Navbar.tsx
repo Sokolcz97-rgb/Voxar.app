@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotifBadge } from "@/components/NotifBadge";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy } from "lucide-react";
 import {
@@ -39,6 +40,7 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">
+          <GlobalSearch />
           <Button variant="ghost" size="sm" asChild>
             <Link to="/forum">{t("nav.forum")}</Link>
           </Button>
