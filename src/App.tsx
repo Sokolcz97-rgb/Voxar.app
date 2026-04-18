@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
+import { InlineEditorProvider } from "@/contexts/InlineEditorContext";
+import { InlineEditorChrome } from "@/components/pageBuilder/InlineEditorChrome";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -64,9 +66,12 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <PresenceProvider>
-            <AppRoutes />
-            <AIHelper />
-            <ShortcutsHelp />
+            <InlineEditorProvider>
+              <AppRoutes />
+              <InlineEditorChrome />
+              <AIHelper />
+              <ShortcutsHelp />
+            </InlineEditorProvider>
           </PresenceProvider>
         </AuthProvider>
       </BrowserRouter>
