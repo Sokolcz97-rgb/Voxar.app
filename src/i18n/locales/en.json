@@ -134,7 +134,18 @@
     "streamingHint": "Fill in your handles so your live streams appear on the homepage (if you have the matching role).",
     "twitchPlaceholder": "e.g. shroud",
     "youtubePlaceholder": "e.g. @MrBeast",
-    "kickPlaceholder": "e.g. xqc"
+    "kickPlaceholder": "e.g. xqc",
+    "soundChoice": "Notification sound",
+    "playSound": "Play sound",
+    "sounds": {
+      "ping": "Ping",
+      "chime": "Chime",
+      "blip": "Blip",
+      "pop": "Pop",
+      "bell": "Bell",
+      "arcade": "Arcade",
+      "soft": "Soft tone"
+    }
   },
   "publicProfile": {
     "notFound": "Profile not found",

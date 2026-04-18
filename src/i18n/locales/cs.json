@@ -134,7 +134,18 @@
     "streamingHint": "Vyplň své handle, aby se tvé živé streamy zobrazovaly na úvodce (pokud máš odpovídající roli).",
     "twitchPlaceholder": "např. shroud",
     "youtubePlaceholder": "např. @MrBeast",
-    "kickPlaceholder": "např. xqc"
+    "kickPlaceholder": "např. xqc",
+    "soundChoice": "Zvuk oznámení",
+    "playSound": "Přehrát zvuk",
+    "sounds": {
+      "ping": "Ping",
+      "chime": "Zvonkohra",
+      "blip": "Blip",
+      "pop": "Puknutí",
+      "bell": "Zvoneček",
+      "arcade": "Arkáda",
+      "soft": "Jemný tón"
+    }
   },
   "publicProfile": {
     "notFound": "Profil nenalezen",
