@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { NotifBadge } from "@/components/NotifBadge";
+import { useNotifications } from "@/hooks/useNotifications";
 import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,6 +18,7 @@ export function Navbar() {
   const { user, isAdmin, isEditor, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { unreadMessages, openTickets } = useNotifications();
 
   const handleSignOut = async () => {
     await signOut();
@@ -41,8 +44,11 @@ export function Navbar() {
           </Button>
           {user ? (
             <>
-              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                <Link to="/messages">{t("nav.messages")}</Link>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex relative">
+                <Link to="/messages">
+                  {t("nav.messages")}
+                  <NotifBadge count={unreadMessages} />
+                </Link>
               </Button>
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link to="/dashboard">{t("nav.dashboard")}</Link>
@@ -55,8 +61,9 @@ export function Navbar() {
               <LanguageSwitcher />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full border border-border">
+                  <Button variant="ghost" size="icon" className="rounded-full border border-border relative">
                     <UserIcon className="h-4 w-4" />
+                    <NotifBadge count={unreadMessages + openTickets} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-md">
@@ -65,9 +72,15 @@ export function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/messages")} className="sm:hidden">
                     <MessageSquare className="h-4 w-4 mr-2" />{t("nav.messages")}
+                    {unreadMessages > 0 && (
+                      <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-1.5 rounded-full">{unreadMessages}</span>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/tickets")}>
                     <LifeBuoy className="h-4 w-4 mr-2" />{t("nav.tickets")}
+                    {openTickets > 0 && (
+                      <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-1.5 rounded-full">{openTickets}</span>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">

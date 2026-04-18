@@ -88,18 +88,31 @@ const Messages = () => {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior }), 50);
       });
 
+    // mark incoming messages as read
+    if (user) {
+      supabase.from("messages").update({ read_at: new Date().toISOString() })
+        .eq("conversation_id", activeId).neq("sender_id", user.id).is("read_at", null)
+        .then(() => {});
+    }
+
     const channel = supabase
       .channel(`msgs-${activeId}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const msg = payload.new as Message;
+          setMessages((prev) => [...prev, msg]);
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+          // auto-mark as read if not from me
+          if (user && msg.sender_id !== user.id) {
+            supabase.from("messages").update({ read_at: new Date().toISOString() })
+              .eq("id", msg.id).then(() => {});
+          }
         }
       ).subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeId]);
+  }, [activeId, user]);
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
