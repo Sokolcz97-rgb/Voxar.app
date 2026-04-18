@@ -12,7 +12,29 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { Search, FileText, MessageSquare, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, FileText, MessageSquare, User as UserIcon, Loader2, Clock, X } from "lucide-react";
+
+const HISTORY_KEY = "neonhub:search-history";
+const HISTORY_MAX = 5;
+
+const loadHistory = (): string[] => {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, HISTORY_MAX) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (items: string[]) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+  } catch {
+    /* ignore */
+  }
+};
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -67,7 +89,31 @@ export const GlobalSearch = () => {
   const [threads, setThreads] = useState<ThreadHit[]>([]);
   const [posts, setPosts] = useState<PostHit[]>([]);
   const [users, setUsers] = useState<UserHit[]>([]);
+  const [history, setHistory] = useState<string[]>(() => loadHistory());
   const reqId = useRef(0);
+
+  const pushHistory = (q: string) => {
+    const term = q.trim();
+    if (term.length < 2) return;
+    setHistory((prev) => {
+      const next = [term, ...prev.filter((x) => x.toLowerCase() !== term.toLowerCase())].slice(0, HISTORY_MAX);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  const removeFromHistory = (q: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((x) => x !== q);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    saveHistory([]);
+  };
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
@@ -171,8 +217,13 @@ export const GlobalSearch = () => {
   }, [query]);
 
   const go = (path: string) => {
+    pushHistory(query);
     setOpen(false);
     navigate(path);
+  };
+
+  const runHistory = (term: string) => {
+    setQuery(term);
   };
 
   const empty = !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
@@ -201,9 +252,49 @@ export const GlobalSearch = () => {
         />
         <CommandList>
           {query.trim().length < 2 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              {t("search.hint")}
-            </div>
+            <>
+              {history.length > 0 && (
+                <CommandGroup
+                  heading={
+                    <div className="flex items-center justify-between">
+                      <span>{t("search.recent")}</span>
+                      <button
+                        type="button"
+                        onClick={clearHistory}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {t("search.clear")}
+                      </button>
+                    </div>
+                  }
+                >
+                  {history.map((term) => (
+                    <CommandItem
+                      key={`hist-${term}`}
+                      value={`history-${term}`}
+                      onSelect={() => runHistory(term)}
+                    >
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="truncate flex-1">{term}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromHistory(term);
+                        }}
+                        className="ml-2 opacity-60 hover:opacity-100"
+                        aria-label={t("search.remove")}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                {t("search.hint")}
+              </div>
+            </>
           )}
 
           {loading && (
