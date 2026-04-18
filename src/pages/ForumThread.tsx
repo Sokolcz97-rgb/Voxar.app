@@ -14,6 +14,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { PostReactions } from "@/components/PostReactions";
+import { TopRankInline } from "@/components/TopRankInline";
 
 interface Post {
   id: string;
@@ -142,6 +143,7 @@ const ForumThread = () => {
                         >
                           {p.author?.display_name || p.author?.username || t("common.player")}
                         </Link>
+                        <TopRankInline userId={p.user_id} />
                         <span className="text-xs text-muted-foreground">
                           {new Date(p.created_at).toLocaleString(locale)}
                         </span>
