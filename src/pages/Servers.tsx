@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, Pencil } from "lucide-react";
+import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, Pencil, MessageCircle, ExternalLink } from "lucide-react";
 import { ServerFormDialog } from "@/components/servers/ServerFormDialog";
+import { useAllDiscord } from "@/hooks/useFeaturedDiscord";
 import { toast } from "sonner";
 
 type Game = {
@@ -39,6 +40,7 @@ const Servers = () => {
   const { user, isAdmin, isEditor, roles } = useAuth();
   const isCC = roles.includes("content_creator");
   const canAdd = isAdmin || isEditor || isCC;
+  const { discords } = useAllDiscord();
 
   const [games, setGames] = useState<Game[]>([]);
   const [servers, setServers] = useState<Server[]>([]);
@@ -110,10 +112,66 @@ const Servers = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
+        {/* DISCORD SERVERS */}
+        {discords.length > 0 && (
+          <section className="mb-12">
+            <div className="mb-5">
+              <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">
+                Komunita
+              </p>
+              <h2 className="font-display font-black text-3xl md:text-4xl mt-2">
+                Discord servery
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-xl">
+                Připoj se k naší komunitě na Discordu.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {discords.map((d) => (
+                <a
+                  key={d.id}
+                  href={d.invite_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass border border-border rounded-xl p-5 hover:border-[#5865F2]/60 transition-all hover:translate-y-[-2px] group block"
+                >
+                  <div className="flex items-start gap-3 mb-2">
+                    {d.icon_url ? (
+                      <img
+                        src={d.icon_url}
+                        alt=""
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center">
+                        <MessageCircle className="h-5 w-5 text-[#5865F2]" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display font-bold truncate group-hover:text-[#5865F2] transition-colors">
+                        {d.name}
+                      </h3>
+                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                        <ExternalLink className="h-3 w-3" /> Připojit se
+                      </span>
+                    </div>
+                  </div>
+                  {d.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {d.description}
+                    </p>
+                  )}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* GAME SERVERS */}
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Server List</p>
-            <h1 className="font-display font-black text-4xl md:text-5xl mt-2">Servery</h1>
+            <h2 className="font-display font-black text-3xl md:text-4xl mt-2">Herní servery</h2>
             <p className="text-muted-foreground mt-2 max-w-xl">
               Vyber si server podle hry. Připoj se přes IP nebo invite kód.
             </p>

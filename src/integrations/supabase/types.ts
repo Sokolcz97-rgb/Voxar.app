@@ -38,6 +38,48 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_servers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          invite_url: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          invite_url: string
+          is_active?: boolean
+          is_featured?: boolean
+          name: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          invite_url?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       forum_categories: {
         Row: {
           created_at: string

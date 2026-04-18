@@ -29,6 +29,7 @@ import Leaderboard from "./pages/Leaderboard.tsx";
 import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
 import AdminRoles from "./pages/AdminRoles.tsx";
+import AdminDiscord from "./pages/AdminDiscord.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -58,6 +59,7 @@ const AppRoutes = () => {
       <Route path="/servery" element={<Servers />} />
       <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
       <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminRoles /></ProtectedRoute>} />
+      <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
