@@ -84,6 +84,24 @@
     "notifPermDenied": "Notifications denied in the browser",
     "test": "Test"
   },
+  "account": {
+    "changePassword": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "savePassword": "Save password",
+    "pwTooShort": "Password must be at least 6 characters",
+    "pwMismatch": "Passwords don't match",
+    "pwFailed": "Password change failed",
+    "pwChanged": "Password changed",
+    "dangerZone": "Danger zone",
+    "deleteDesc": "Permanently delete your account and all related data. This action cannot be undone.",
+    "deleteAccount": "Delete account",
+    "confirmTitle": "Really delete account?",
+    "confirmDesc": "All your profiles, messages and posts will be permanently removed. Type DELETE to confirm.",
+    "typeToConfirm": "Type DELETE to confirm",
+    "deleteFailed": "Delete failed",
+    "deleted": "Account deleted"
+  },
   "avatar": {
     "upload": "Upload avatar",
     "remove": "Remove",
