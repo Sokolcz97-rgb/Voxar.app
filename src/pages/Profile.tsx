@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2 } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { ensureNotificationPermission, playBeep } from "@/lib/notify";
@@ -26,6 +26,9 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [notifySound, setNotifySound] = useState(true);
   const [notifyBrowser, setNotifyBrowser] = useState(true);
+  const [twitch, setTwitch] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [kick, setKick] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -38,6 +41,9 @@ const Profile = () => {
           setAvatarUrl(data.avatar_url ?? null);
           setNotifySound(data.notify_sound ?? true);
           setNotifyBrowser(data.notify_browser ?? true);
+          setTwitch((data as any).twitch_username ?? "");
+          setYoutube((data as any).youtube_handle ?? "");
+          setKick((data as any).kick_username ?? "");
         }
         setLoading(false);
       });
@@ -54,7 +60,10 @@ const Profile = () => {
         bio,
         notify_sound: notifySound,
         notify_browser: notifyBrowser,
-      })
+        twitch_username: twitch.trim() || null,
+        youtube_handle: youtube.trim() || null,
+        kick_username: kick.trim() || null,
+      } as any)
       .eq("user_id", user.id);
     setSaving(false);
     if (error) {
