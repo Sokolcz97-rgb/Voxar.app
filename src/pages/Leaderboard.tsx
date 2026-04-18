@@ -78,7 +78,7 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen relative">
-      <SEO title="Žebříček hráčů — NEONHUB" description="Nejlepší hráči komunity NEONHUB podle reakcí a aktivity." />
+      <SEO title={t("leaderboard.seoTitle")} description={t("leaderboard.seoDesc")} />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-3xl animate-fade-in">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +39,7 @@ type Server = {
 };
 
 const Servers = () => {
+  const { t } = useTranslation();
   const { user, isAdmin, isEditor, roles } = useAuth();
   const isCC = roles.includes("content_creator");
   const canAdd = isAdmin || isEditor || isCC;
@@ -94,31 +96,31 @@ const Servers = () => {
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopied(key);
-    toast.success("Zkopírováno");
+    toast.success(t("servers.copied"));
     setTimeout(() => setCopied(null), 1500);
   };
 
   const handleDelete = async (s: Server) => {
-    if (!confirm(`Smazat server "${s.name}"?`)) return;
+    if (!confirm(t("servers.confirmDelete", { name: s.name }))) return;
     const { error } = await supabase.from("servers").delete().eq("id", s.id);
     if (error) return toast.error(error.message);
-    toast.success("Smazáno");
+    toast.success(t("servers.deleted"));
     load();
   };
 
   const pingNow = async (id: string) => {
-    toast.info("Pinguji…");
+    toast.info(t("servers.pinging"));
     const { error } = await supabase.functions.invoke("ping-server", {
       body: { server_id: id },
     });
     if (error) return toast.error(error.message);
     await load();
-    toast.success("Status aktualizován");
+    toast.success(t("servers.statusUpdated"));
   };
 
   return (
     <div className="min-h-screen relative">
-      <SEO title="Herní servery — NEONHUB" description="Komunitní herní servery: Minecraft, CS, Rust a další. Připoj se k českým hráčům." />
+      <SEO title={t("servers.seoTitle")} description={t("servers.seoDesc")} />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
@@ -128,13 +130,13 @@ const Servers = () => {
           <section className="mb-12">
             <div className="mb-5">
               <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">
-                Komunita
+                {t("servers.communityTagline")}
               </p>
               <h2 className="font-display font-black text-3xl md:text-4xl mt-2">
-                Discord servery
+                {t("servers.discordTitle")}
               </h2>
               <p className="text-muted-foreground mt-2 max-w-xl">
-                Připoj se k naší komunitě na Discordu.
+                {t("servers.discordDesc")}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -163,7 +165,7 @@ const Servers = () => {
                         {d.name}
                       </h3>
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                        <ExternalLink className="h-3 w-3" /> Připojit se
+                        <ExternalLink className="h-3 w-3" /> {t("servers.joinDiscord")}
                       </span>
                     </div>
                   </div>
@@ -181,10 +183,10 @@ const Servers = () => {
         {/* GAME SERVERS */}
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Server List</p>
-            <h2 className="font-display font-black text-3xl md:text-4xl mt-2">Herní servery</h2>
+            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("servers.listTagline")}</p>
+            <h2 className="font-display font-black text-3xl md:text-4xl mt-2">{t("servers.title")}</h2>
             <p className="text-muted-foreground mt-2 max-w-xl">
-              Vyber si server podle hry. Připoj se přes IP nebo invite kód.
+              {t("servers.subtitle")}
             </p>
           </div>
           {canAdd && (
@@ -195,7 +197,7 @@ const Servers = () => {
               }}
               className="bg-primary text-primary-foreground hover:bg-primary-glow"
             >
-              <Plus className="h-4 w-4 mr-1" /> Přidat server
+              <Plus className="h-4 w-4 mr-1" /> {t("servers.addServer")}
             </Button>
           )}
         </div>
@@ -206,7 +208,7 @@ const Servers = () => {
             size="sm"
             onClick={() => setActiveGame("all")}
           >
-            Vše ({servers.length})
+            {t("servers.all")} ({servers.length})
           </Button>
           {games.map((g) => {
             const count = servers.filter((s) => s.game_id === g.id).length;
@@ -225,7 +227,7 @@ const Servers = () => {
         </div>
 
         <Input
-          placeholder="Hledat server…"
+          placeholder={t("servers.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="mb-6 max-w-md"
@@ -234,7 +236,7 @@ const Servers = () => {
         {filtered.length === 0 ? (
           <Card className="glass border-border p-10 text-center">
             <ServerIcon className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Žádné servery zde zatím nejsou.</p>
+            <p className="text-muted-foreground">{t("servers.empty")}</p>
           </Card>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -269,16 +271,16 @@ const Servers = () => {
                     {game?.connection_type === "ip_port" ? (
                       s.is_online ? (
                         <Badge className="bg-green-500/20 text-green-400 border-green-500/40 gap-1">
-                          <Wifi className="h-3 w-3" /> Online
+                          <Wifi className="h-3 w-3" /> {t("servers.online")}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-muted-foreground gap-1">
-                          <WifiOff className="h-3 w-3" /> Offline
+                          <WifiOff className="h-3 w-3" /> {t("servers.offline")}
                         </Badge>
                       )
                     ) : (
                       <Badge variant="outline" className="text-primary border-primary/40">
-                        Invite
+                        {t("servers.invite")}
                       </Badge>
                     )}
                   </div>
@@ -316,7 +318,7 @@ const Servers = () => {
                           rel="noreferrer"
                           className="hover:text-primary inline-flex items-center gap-1"
                         >
-                          <Globe className="h-3 w-3" /> Web
+                          <Globe className="h-3 w-3" /> {t("servers.web")}
                         </a>
                       )}
                       {s.discord_url && (
@@ -326,7 +328,7 @@ const Servers = () => {
                           rel="noreferrer"
                           className="hover:text-primary"
                         >
-                          Discord
+                          {t("servers.discord")}
                         </a>
                       )}
                     </div>
@@ -336,7 +338,7 @@ const Servers = () => {
                     <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
                       {game?.connection_type === "ip_port" && (
                         <Button size="sm" variant="ghost" onClick={() => pingNow(s.id)}>
-                          Ping
+                          {t("servers.ping")}
                         </Button>
                       )}
                       <Button
@@ -347,7 +349,7 @@ const Servers = () => {
                           setOpenForm(true);
                         }}
                       >
-                        <Pencil className="h-3 w-3 mr-1" /> Upravit
+                        <Pencil className="h-3 w-3 mr-1" /> {t("servers.edit")}
                       </Button>
                       <Button
                         size="sm"

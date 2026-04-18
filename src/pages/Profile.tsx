@@ -116,27 +116,27 @@ const Profile = () => {
                 <Input value={user?.email ?? ""} disabled />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dn">Přezdívka</Label>
+                <Label htmlFor="dn">{t("profile.displayName")}</Label>
                 <Input
                   id="dn"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="např. Sokolcz"
+                  placeholder={t("profile.displayNamePlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Veřejné jméno, které se zobrazuje na fóru, v chatu a u příspěvků.
+                  {t("profile.displayNameHint")}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="un">Pravé jméno</Label>
+                <Label htmlFor="un">{t("profile.realName")}</Label>
                 <Input
                   id="un"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="např. Radek"
+                  placeholder={t("profile.realNamePlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Nepovinné. Tvoje skutečné křestní jméno (nebo celé jméno).
+                  {t("profile.realNameHint")}
                 </p>
               </div>
               <div className="space-y-2">
@@ -146,24 +146,23 @@ const Profile = () => {
 
               <div className="pt-4 border-t border-border">
                 <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-                  <Radio className="h-5 w-5 text-primary" /> Streamovací účty
+                  <Radio className="h-5 w-5 text-primary" /> {t("profile.streamingAccounts")}
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Vyplň své handle, aby se tvé živé streamy zobrazovaly na úvodce
-                  (pokud máš odpovídající roli).
+                  {t("profile.streamingHint")}
                 </p>
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <Label htmlFor="tw" className="text-[#9146FF]">Twitch username</Label>
-                    <Input id="tw" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder="např. shroud" />
+                    <Input id="tw" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder={t("profile.twitchPlaceholder")} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="yt" className="text-[#FF0033]">YouTube handle</Label>
-                    <Input id="yt" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="např. @MrBeast" />
+                    <Input id="yt" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder={t("profile.youtubePlaceholder")} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ki" className="text-[#53FC18]">Kick username</Label>
-                    <Input id="ki" value={kick} onChange={(e) => setKick(e.target.value)} placeholder="např. xqc" />
+                    <Input id="ki" value={kick} onChange={(e) => setKick(e.target.value)} placeholder={t("profile.kickPlaceholder")} />
                   </div>
                 </div>
               </div>

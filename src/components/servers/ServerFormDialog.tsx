@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [gameId, setGameId] = useState<string>("");
   const [name, setName] = useState("");
@@ -81,15 +83,15 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
 
   const handleSave = async () => {
     if (!user || !gameId || !name.trim()) {
-      toast.error("Vyplň hru a název");
+      toast.error(t("servers.form.errGameName"));
       return;
     }
     if (game?.connection_type === "ip_port" && !ip.trim()) {
-      toast.error("Vyplň IP adresu");
+      toast.error(t("servers.form.errIp"));
       return;
     }
     if (game?.connection_type === "invite_code" && !inviteCode.trim()) {
-      toast.error("Vyplň invite kód");
+      toast.error(t("servers.form.errInvite"));
       return;
     }
 
@@ -113,7 +115,7 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
     setSaving(false);
     if (res.error) return toast.error(res.error.message);
 
-    toast.success(editing ? "Server upraven" : "Server přidán");
+    toast.success(editing ? t("servers.form.saved") : t("servers.form.added"));
     onOpenChange(false);
     onSaved();
   };
@@ -122,14 +124,16 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Upravit server" : "Přidat server"}</DialogTitle>
+          <DialogTitle>
+            {editing ? t("servers.form.editTitle") : t("servers.form.addTitle")}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <Label>Hra</Label>
+            <Label>{t("servers.form.game")}</Label>
             <Select value={gameId} onValueChange={setGameId}>
-              <SelectTrigger><SelectValue placeholder="Vyber hru" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("servers.form.selectGame")} /></SelectTrigger>
               <SelectContent>
                 {games.map((g) => (
                   <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
@@ -139,12 +143,12 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
           </div>
 
           <div>
-            <Label>Název serveru</Label>
+            <Label>{t("servers.form.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
 
           <div>
-            <Label>Popis (volitelné)</Label>
+            <Label>{t("servers.form.descriptionOpt")}</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -156,11 +160,11 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
           {game?.connection_type === "ip_port" ? (
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2">
-                <Label>IP adresa / hostname</Label>
+                <Label>{t("servers.form.ipHost")}</Label>
                 <Input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="play.example.com" />
               </div>
               <div>
-                <Label>Port</Label>
+                <Label>{t("servers.form.port")}</Label>
                 <Input
                   value={port}
                   onChange={(e) => setPort(e.target.value.replace(/\D/g, ""))}
@@ -170,7 +174,7 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
             </div>
           ) : (
             <div>
-              <Label>Invite kód</Label>
+              <Label>{t("servers.form.inviteCode")}</Label>
               <Input
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
@@ -181,20 +185,20 @@ export function ServerFormDialog({ open, onOpenChange, games, editing, onSaved }
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label>Web (volitelné)</Label>
+              <Label>{t("servers.form.websiteOpt")}</Label>
               <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
             </div>
             <div>
-              <Label>Discord (volitelné)</Label>
+              <Label>{t("servers.form.discordOpt")}</Label>
               <Input value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/" />
             </div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Zrušit</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{t("servers.form.cancel")}</Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Ukládám…" : editing ? "Uložit" : "Přidat"}
+            {saving ? t("servers.form.saving") : editing ? t("servers.form.save") : t("servers.form.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
