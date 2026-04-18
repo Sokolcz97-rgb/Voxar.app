@@ -14,6 +14,29 @@ import {
 } from "@/components/ui/command";
 import { Search, FileText, MessageSquare, User as UserIcon, Loader2 } from "lucide-react";
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const Highlight = ({ text, query }: { text: string; query: string }) => {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  const re = new RegExp(`(${escapeRegExp(q)})`, "ig");
+  const parts = text.split(re);
+  const lower = q.toLowerCase();
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === lower ? (
+          <mark key={i} className="bg-primary/30 text-primary-foreground rounded px-0.5">
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+};
+
 interface ThreadHit {
   id: string;
   title: string;
@@ -202,7 +225,7 @@ export const GlobalSearch = () => {
                   }
                 >
                   <FileText className="h-4 w-4 mr-2 text-primary" />
-                  <span className="truncate">{th.title}</span>
+                  <span className="truncate"><Highlight text={th.title} query={query} /></span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -227,9 +250,9 @@ export const GlobalSearch = () => {
                     <MessageSquare className="h-4 w-4 mr-2 text-accent shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-muted-foreground truncate">
-                        {p.thread_title || "—"}
+                        {p.thread_title ? <Highlight text={p.thread_title} query={query} /> : "—"}
                       </div>
-                      <div className="text-sm truncate">{p.content}</div>
+                      <div className="text-sm truncate"><Highlight text={p.content} query={query} /></div>
                     </div>
                   </CommandItem>
                 ))}
@@ -250,10 +273,10 @@ export const GlobalSearch = () => {
                       onSelect={() => go(`/profile/${u.user_id}`)}
                     >
                       <UserIcon className="h-4 w-4 mr-2 text-primary" />
-                      <span className="truncate">{name}</span>
+                      <span className="truncate"><Highlight text={name} query={query} /></span>
                       {u.username && (
                         <span className="ml-2 text-xs text-muted-foreground truncate">
-                          @{u.username}
+                          @<Highlight text={u.username} query={query} />
                         </span>
                       )}
                     </CommandItem>
