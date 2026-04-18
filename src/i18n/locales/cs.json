@@ -312,7 +312,34 @@
     "original": "Originál",
     "result": "Výsledek",
     "staffOnly": "Pouze pro staff",
-    "actions": { "blocked": "Zablokováno", "filtered": "Filtrováno" },
-    "sources": { "dm": "DM", "forum_thread": "Vlákno", "forum_post": "Příspěvek", "ticket": "Ticket", "ticket_reply": "Odpověď" }
+    "actions": {
+      "blocked": "Zablokováno",
+      "filtered": "Filtrováno"
+    },
+    "sources": {
+      "dm": "DM",
+      "forum_thread": "Vlákno",
+      "forum_post": "Příspěvek",
+      "ticket": "Ticket",
+      "ticket_reply": "Odpověď"
+    }
+  },
+  "shortcuts": {
+    "title": "Klávesové zkratky",
+    "description": "Rychlejší ovládání aplikace",
+    "global": "Globální",
+    "navigate": "Navigace (G + klávesa)",
+    "searchPrefixes": "Prefixy vyhledávání",
+    "openSearch": "Otevřít vyhledávání",
+    "openHelp": "Otevřít tuto nápovědu",
+    "closeDialog": "Zavřít dialog",
+    "goHome": "Domů",
+    "goForum": "Fórum",
+    "goDashboard": "Dashboard",
+    "goMessages": "Zprávy",
+    "goTickets": "Tickety",
+    "goProfile": "Profil",
+    "prefixUsers": "Hledat uživatele",
+    "prefixThreads": "Hledat vlákna"
   }
 }
