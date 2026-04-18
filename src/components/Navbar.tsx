@@ -59,6 +59,9 @@ export function Navbar() {
           <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
             <Link to="/leaderboard">{t("nav.leaderboard")}</Link>
           </Button>
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+            <Link to="/servery">Servery</Link>
+          </Button>
           {navPages.map((p) => (
             <Button key={p.slug} variant="ghost" size="sm" asChild className="hidden md:inline-flex">
               <Link to={`/${p.slug}`}>{p.nav_label}</Link>

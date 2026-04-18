@@ -1,0 +1,311 @@
+import { useEffect, useMemo, useState } from "react";
+import { Navbar } from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, Pencil } from "lucide-react";
+import { ServerFormDialog } from "@/components/servers/ServerFormDialog";
+import { toast } from "sonner";
+
+type Game = {
+  id: string;
+  slug: string;
+  name: string;
+  icon_url: string | null;
+  connection_type: "ip_port" | "invite_code";
+};
+
+type Server = {
+  id: string;
+  game_id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  ip: string | null;
+  port: number | null;
+  invite_code: string | null;
+  website_url: string | null;
+  discord_url: string | null;
+  is_online: boolean;
+  players_online: number | null;
+  players_max: number | null;
+  is_approved: boolean;
+};
+
+const Servers = () => {
+  const { user, isAdmin, isEditor, roles } = useAuth();
+  const isCC = roles.includes("content_creator");
+  const canAdd = isAdmin || isEditor || isCC;
+
+  const [games, setGames] = useState<Game[]>([]);
+  const [servers, setServers] = useState<Server[]>([]);
+  const [activeGame, setActiveGame] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [openForm, setOpenForm] = useState(false);
+  const [editing, setEditing] = useState<Server | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const load = async () => {
+    const { data: g } = await supabase
+      .from("games")
+      .select("id, slug, name, icon_url, connection_type")
+      .eq("is_active", true)
+      .order("position");
+    setGames((g ?? []) as Game[]);
+    const { data: s } = await supabase
+      .from("servers")
+      .select("*")
+      .order("is_featured", { ascending: false })
+      .order("is_online", { ascending: false })
+      .order("created_at", { ascending: false });
+    setServers((s ?? []) as Server[]);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filtered = useMemo(() => {
+    return servers.filter((s) => {
+      if (activeGame !== "all" && s.game_id !== activeGame) return false;
+      if (search && !`${s.name} ${s.description ?? ""}`.toLowerCase().includes(search.toLowerCase()))
+        return false;
+      return true;
+    });
+  }, [servers, activeGame, search]);
+
+  const gameById = (id: string) => games.find((g) => g.id === id);
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    toast.success("Zkopírováno");
+    setTimeout(() => setCopied(null), 1500);
+  };
+
+  const handleDelete = async (s: Server) => {
+    if (!confirm(`Smazat server "${s.name}"?`)) return;
+    const { error } = await supabase.from("servers").delete().eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Smazáno");
+    load();
+  };
+
+  const pingNow = async (id: string) => {
+    toast.info("Pinguji…");
+    const { error } = await supabase.functions.invoke("ping-server", {
+      body: { server_id: id },
+    });
+    if (error) return toast.error(error.message);
+    await load();
+    toast.success("Status aktualizován");
+  };
+
+  return (
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 -z-10 gradient-hero" />
+      <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
+      <Navbar />
+      <main className="container py-10 animate-fade-in">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Server List</p>
+            <h1 className="font-display font-black text-4xl md:text-5xl mt-2">Servery</h1>
+            <p className="text-muted-foreground mt-2 max-w-xl">
+              Vyber si server podle hry. Připoj se přes IP nebo invite kód.
+            </p>
+          </div>
+          {canAdd && (
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setOpenForm(true);
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary-glow"
+            >
+              <Plus className="h-4 w-4 mr-1" /> Přidat server
+            </Button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <Button
+            variant={activeGame === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveGame("all")}
+          >
+            Vše ({servers.length})
+          </Button>
+          {games.map((g) => {
+            const count = servers.filter((s) => s.game_id === g.id).length;
+            return (
+              <Button
+                key={g.id}
+                variant={activeGame === g.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveGame(g.id)}
+              >
+                {g.icon_url && <img src={g.icon_url} alt="" className="h-4 w-4 mr-1 rounded" />}
+                {g.name} ({count})
+              </Button>
+            );
+          })}
+        </div>
+
+        <Input
+          placeholder="Hledat server…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mb-6 max-w-md"
+        />
+
+        {filtered.length === 0 ? (
+          <Card className="glass border-border p-10 text-center">
+            <ServerIcon className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">Žádné servery zde zatím nejsou.</p>
+          </Card>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((s) => {
+              const game = gameById(s.game_id);
+              const isOwner = user?.id === s.owner_id;
+              const canEdit = isOwner || isAdmin || isEditor;
+              const addr =
+                game?.connection_type === "ip_port"
+                  ? `${s.ip ?? ""}${s.port ? `:${s.port}` : ""}`
+                  : s.invite_code ?? "";
+
+              return (
+                <Card
+                  key={s.id}
+                  className="glass border-border p-5 hover:border-primary/60 transition-all hover:translate-y-[-2px] group"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {game?.icon_url ? (
+                        <img src={game.icon_url} alt="" className="h-8 w-8 rounded" />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
+                          <ServerIcon className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="font-display font-bold truncate">{s.name}</h3>
+                        <p className="text-xs text-muted-foreground">{game?.name}</p>
+                      </div>
+                    </div>
+                    {game?.connection_type === "ip_port" ? (
+                      s.is_online ? (
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/40 gap-1">
+                          <Wifi className="h-3 w-3" /> Online
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground gap-1">
+                          <WifiOff className="h-3 w-3" /> Offline
+                        </Badge>
+                      )
+                    ) : (
+                      <Badge variant="outline" className="text-primary border-primary/40">
+                        Invite
+                      </Badge>
+                    )}
+                  </div>
+
+                  {s.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
+                  )}
+
+                  {addr && (
+                    <button
+                      onClick={() => copy(addr, s.id)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-background/60 border border-border hover:border-primary/50 transition font-mono text-sm"
+                    >
+                      <span className="truncate">{addr}</span>
+                      {copied === s.id ? (
+                        <Check className="h-4 w-4 text-green-400 shrink-0" />
+                      ) : (
+                        <Copy className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                    </button>
+                  )}
+
+                  {(s.players_online != null || s.website_url || s.discord_url) && (
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      {s.players_online != null && (
+                        <span>
+                          👥 {s.players_online}
+                          {s.players_max ? `/${s.players_max}` : ""}
+                        </span>
+                      )}
+                      {s.website_url && (
+                        <a
+                          href={s.website_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:text-primary inline-flex items-center gap-1"
+                        >
+                          <Globe className="h-3 w-3" /> Web
+                        </a>
+                      )}
+                      {s.discord_url && (
+                        <a
+                          href={s.discord_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:text-primary"
+                        >
+                          Discord
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {canEdit && (
+                    <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+                      {game?.connection_type === "ip_port" && (
+                        <Button size="sm" variant="ghost" onClick={() => pingNow(s.id)}>
+                          Ping
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditing(s);
+                          setOpenForm(true);
+                        }}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" /> Upravit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive ml-auto"
+                        onClick={() => handleDelete(s)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      <ServerFormDialog
+        open={openForm}
+        onOpenChange={setOpenForm}
+        games={games}
+        editing={editing}
+        onSaved={load}
+      />
+    </div>
+  );
+};
+
+export default Servers;
