@@ -10,26 +10,14 @@ interface Props {
 
 const medal = (rank: number) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉");
 
-// Cache so multiple badges in one page share a single fetch
-let cachePromise: Promise<Record<string, number>> | null = null;
-const getCachedTop = () => {
-  if (!cachePromise) cachePromise = getTopAllTime(3);
-  return cachePromise;
-};
-// Invalidate after 60s so reactions eventually reflect
-setInterval(() => {
-  cachePromise = null;
-}, 60_000);
-
 export const TopRankInline = ({ userId }: Props) => {
   const { t } = useTranslation();
   const [rank, setRank] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    getCachedTop().then((map) => {
-      if (cancelled) return;
-      setRank(map[userId] ?? null);
+    getTopAllTime(3).then((map) => {
+      if (!cancelled) setRank(map[userId] ?? null);
     });
     return () => {
       cancelled = true;

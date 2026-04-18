@@ -88,7 +88,7 @@ const Leaderboard = () => {
         </div>
         <p className="text-sm text-muted-foreground mb-4">{t("leaderboard.subtitle")}</p>
 
-        <Tabs value={range} onValueChange={(v) => setRange(v as Range)} className="mb-6">
+        <Tabs value={range} onValueChange={(v) => setRange(v as LbRange)} className="mb-6">
           <TabsList className="glass">
             <TabsTrigger value="all">{t("leaderboard.rangeAll")}</TabsTrigger>
             <TabsTrigger value="month">{t("leaderboard.rangeMonth")}</TabsTrigger>
