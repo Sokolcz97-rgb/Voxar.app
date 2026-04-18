@@ -37,6 +37,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       setOnlineIds(ids);
     };
 
+    const heartbeat = () => {
+      supabase
+        .from("profiles")
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .then(() => {});
+    };
+
     channel
       .on("presence", { event: "sync" }, sync)
       .on("presence", { event: "join" }, sync)
@@ -44,10 +52,19 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
+          heartbeat();
         }
       });
 
+    // periodic heartbeat every 60s + on tab close
+    const interval = window.setInterval(heartbeat, 60_000);
+    const onBeforeUnload = () => heartbeat();
+    window.addEventListener("beforeunload", onBeforeUnload);
+
     return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      heartbeat();
       supabase.removeChannel(channel);
     };
   }, [user]);

@@ -100,6 +100,19 @@
     "notifPermDenied": "Notifications denied in the browser",
     "test": "Test"
   },
+  "publicProfile": {
+    "notFound": "Profile not found",
+    "onlineNow": "Online",
+    "activeNow": "Active right now",
+    "lastSeen": "Last seen",
+    "neverSeen": "Never seen online",
+    "joined": "Joined",
+    "sendDm": "Send message",
+    "editProfile": "Edit profile",
+    "justNow": "just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}}h ago"
+  },
   "account": {
     "changePassword": "Change password",
     "newPassword": "New password",

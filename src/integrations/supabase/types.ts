@@ -222,6 +222,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          last_seen_at: string | null
           notify_browser: boolean
           notify_sound: boolean
           updated_at: string
@@ -234,6 +235,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_seen_at?: string | null
           notify_browser?: boolean
           notify_sound?: boolean
           updated_at?: string
@@ -246,6 +248,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_seen_at?: string | null
           notify_browser?: boolean
           notify_sound?: boolean
           updated_at?: string
