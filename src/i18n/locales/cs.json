@@ -76,6 +76,14 @@
     "saveFailed": "Uložení selhalo",
     "saved": "Profil uložen"
   },
+  "avatar": {
+    "upload": "Nahrát avatar",
+    "remove": "Odstranit",
+    "uploaded": "Avatar nahrán",
+    "removed": "Avatar odstraněn",
+    "notImage": "Soubor musí být obrázek",
+    "tooLarge": "Maximální velikost je 2 MB"
+  },
   "forum": {
     "title": "Fórum",
     "subtitle": "Diskutuj, sdílej, najdi spoluhráče.",

@@ -76,6 +76,14 @@
     "saveFailed": "Save failed",
     "saved": "Profile saved"
   },
+  "avatar": {
+    "upload": "Upload avatar",
+    "remove": "Remove",
+    "uploaded": "Avatar uploaded",
+    "removed": "Avatar removed",
+    "notImage": "File must be an image",
+    "tooLarge": "Max size is 2 MB"
+  },
   "forum": {
     "title": "Forum",
     "subtitle": "Discuss, share, find teammates.",
