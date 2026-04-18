@@ -6,7 +6,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotifBadge } from "@/components/NotifBadge";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useNotifications } from "@/hooks/useNotifications";
-import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy } from "lucide-react";
+import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy, Keyboard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,16 @@ export function Navbar() {
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <GlobalSearch />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden sm:inline-flex text-muted-foreground hover:text-foreground"
+            onClick={() => window.dispatchEvent(new Event("shortcuts:open"))}
+            aria-label={t("shortcuts.title")}
+            title={t("shortcuts.title")}
+          >
+            <Keyboard className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm" asChild>
             <Link to="/forum">{t("nav.forum")}</Link>
           </Button>
