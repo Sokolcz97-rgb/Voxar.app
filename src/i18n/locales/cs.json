@@ -111,7 +111,9 @@
     "editProfile": "Upravit profil",
     "justNow": "právě teď",
     "minutesAgo": "před {{count}} min",
-    "hoursAgo": "před {{count}} h"
+    "hoursAgo": "před {{count}} h",
+    "recentThreads": "Poslední vlákna",
+    "noThreads": "Uživatel zatím nezaložil žádné vlákno"
   },
   "account": {
     "changePassword": "Změna hesla",
