@@ -351,6 +351,9 @@
   "leaderboard": {
     "title": "Leaderboard",
     "subtitle": "Top 10 players by reactions received",
-    "empty": "No reactions yet"
+    "empty": "No reactions yet",
+    "rangeAll": "All time",
+    "rangeMonth": "This month",
+    "rangeWeek": "This week"
   }
 }
