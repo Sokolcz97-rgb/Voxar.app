@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
-import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Gamepad2, MessageCircle, Radio, Newspaper } from "lucide-react";
+import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare } from "lucide-react";
 
 const Admin = () => {
   const sections = [
     { icon: Users, title: "Uživatelé, role & oprávnění", desc: "Účty, role a co každá role smí", to: "/admin/users" },
     { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
     { icon: Palette, title: "Page Builder", desc: "Drag & drop editor stránek", to: "/admin/pages" },
+    { icon: MessageSquare, title: "Kategorie fóra", desc: "Vytvářet a spravovat diskuzní kategorie", to: "/admin/forum-categories" },
     { icon: Gamepad2, title: "Hry", desc: "Katalog her pro server list", to: "/admin/games" },
     { icon: Radio, title: "Streamy", desc: "Featured streamery (Twitch, YouTube, Kick)", to: "/admin/streams" },
     { icon: Newspaper, title: "Novinky (IGDB)", desc: "Sync nadcházejících herních vydání", to: "/admin/novinky" },

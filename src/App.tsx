@@ -35,6 +35,7 @@ import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
 import Novinky from "./pages/Novinky.tsx";
 import AdminNovinky from "./pages/AdminNovinky.tsx";
+import AdminForumCategories from "./pages/AdminForumCategories.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import { AIHelper } from "@/components/AIHelper";
@@ -70,6 +71,7 @@ const AppRoutes = () => {
       <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
       <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
       <Route path="/admin/novinky" element={<ProtectedRoute requireEditor><AdminNovinky /></ProtectedRoute>} />
+      <Route path="/admin/forum-categories" element={<ProtectedRoute requireEditor><AdminForumCategories /></ProtectedRoute>} />
       <Route path="/novinky" element={<Novinky />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
