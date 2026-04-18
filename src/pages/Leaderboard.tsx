@@ -8,8 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { Trophy, Loader2, Heart } from "lucide-react";
-
-type Range = "all" | "month" | "week";
+import { getTop, type LbRange } from "@/lib/leaderboard";
 
 interface Entry {
   user_id: string;
@@ -24,53 +23,20 @@ const Leaderboard = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [range, setRange] = useState<Range>("all");
+  const [range, setRange] = useState<LbRange>("all");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-
-      let since: string | null = null;
-      if (range === "week" || range === "month") {
-        const d = new Date();
-        d.setDate(d.getDate() - (range === "week" ? 7 : 30));
-        since = d.toISOString();
-      }
-
-      let q = supabase.from("post_reactions").select("emoji,post_id,created_at");
-      if (since) q = q.gte("created_at", since);
-      const { data: reacts } = await q;
-      const reactRows = (reacts ?? []) as { emoji: string; post_id: string }[];
-      if (reactRows.length === 0) {
+      const top = await getTop(range, 10);
+      if (top.length === 0) {
         if (!cancelled) {
           setEntries([]);
           setLoading(false);
         }
         return;
       }
-
-      const postIds = Array.from(new Set(reactRows.map((r) => r.post_id)));
-      const { data: posts } = await supabase
-        .from("forum_posts")
-        .select("id,user_id")
-        .in("id", postIds);
-      const postOwner: Record<string, string> = {};
-      (posts ?? []).forEach((p) => (postOwner[p.id] = p.user_id));
-
-      const tally: Record<string, { total: number; byEmoji: Record<string, number> }> = {};
-      reactRows.forEach((r) => {
-        const owner = postOwner[r.post_id];
-        if (!owner) return;
-        const t = tally[owner] || (tally[owner] = { total: 0, byEmoji: {} });
-        t.total += 1;
-        t.byEmoji[r.emoji] = (t.byEmoji[r.emoji] ?? 0) + 1;
-      });
-
-      const top = Object.entries(tally)
-        .map(([user_id, v]) => ({ user_id, ...v }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 10);
 
       const userIds = top.map((e) => e.user_id);
       const { data: profiles } = await supabase
