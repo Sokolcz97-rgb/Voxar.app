@@ -96,26 +96,26 @@ const Servers = () => {
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopied(key);
-    toast.success("Zkopírováno");
+    toast.success(t("servers.copied"));
     setTimeout(() => setCopied(null), 1500);
   };
 
   const handleDelete = async (s: Server) => {
-    if (!confirm(`Smazat server "${s.name}"?`)) return;
+    if (!confirm(t("servers.confirmDelete", { name: s.name }))) return;
     const { error } = await supabase.from("servers").delete().eq("id", s.id);
     if (error) return toast.error(error.message);
-    toast.success("Smazáno");
+    toast.success(t("servers.deleted"));
     load();
   };
 
   const pingNow = async (id: string) => {
-    toast.info("Pinguji…");
+    toast.info(t("servers.pinging"));
     const { error } = await supabase.functions.invoke("ping-server", {
       body: { server_id: id },
     });
     if (error) return toast.error(error.message);
     await load();
-    toast.success("Status aktualizován");
+    toast.success(t("servers.statusUpdated"));
   };
 
   return (
