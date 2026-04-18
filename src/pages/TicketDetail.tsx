@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
 import { Markdown } from "@/components/Markdown";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
