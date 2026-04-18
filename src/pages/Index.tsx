@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 import { useFeaturedDiscord } from "@/hooks/useFeaturedDiscord";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
 import { fetchPageBySlug } from "@/hooks/usePages";
 import { EditableBlocks } from "@/components/pageBuilder/EditableBlocks";
@@ -19,6 +20,7 @@ const Index = () => {
   const { t } = useTranslation();
   const ed = useInlineEditor();
   const { discord } = useFeaturedDiscord();
+  const { settings } = useSiteSettings();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
 
   useEffect(() => {
@@ -50,27 +52,27 @@ const Index = () => {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-8">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                {t("home.badge")}
+                {settings.hero_badge || t("home.badge")}
               </span>
             </div>
 
             <h1 className="font-display font-black text-5xl md:text-7xl lg:text-8xl mb-6 leading-[0.95]">
-              <span className="text-foreground">{t("home.title1")}</span>
+              <span className="text-foreground">{settings.hero_title_1 || t("home.title1")}</span>
               <br />
               <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent text-glow">
-                {t("home.title2")}
+                {settings.hero_title_2 || t("home.title2")}
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
-              {t("home.subtitle")}
+              {settings.hero_subtitle || t("home.subtitle")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {user ? (
                 <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary-glow text-base px-8 h-12 animate-pulse-glow">
                   <Link to="/dashboard">
-                    {t("home.enter")} <ArrowRight className="ml-2 h-4 w-4" />
+                    {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
@@ -152,7 +154,7 @@ const Index = () => {
 
       <footer className="border-t border-border/60 py-8">
         <div className="container text-center text-sm text-muted-foreground">
-          <span className="font-display tracking-widest">NEONHUB</span> © 2026 — Herní komunita
+          <span className="font-display tracking-widest">{settings.site_name}</span> {settings.footer_text || "© 2026 — Herní komunita"}
         </div>
       </footer>
       <EditPageButton slug="home" />

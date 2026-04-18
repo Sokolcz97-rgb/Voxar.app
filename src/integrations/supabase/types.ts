@@ -594,6 +594,57 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          favicon_url: string | null
+          footer_text: string | null
+          hero_badge: string | null
+          hero_cta_label: string | null
+          hero_subtitle: string | null
+          hero_title_1: string | null
+          hero_title_2: string | null
+          id: string
+          is_singleton: boolean
+          logo_url: string | null
+          site_name: string
+          site_tagline: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          favicon_url?: string | null
+          footer_text?: string | null
+          hero_badge?: string | null
+          hero_cta_label?: string | null
+          hero_subtitle?: string | null
+          hero_title_1?: string | null
+          hero_title_2?: string | null
+          id?: string
+          is_singleton?: boolean
+          logo_url?: string | null
+          site_name?: string
+          site_tagline?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          favicon_url?: string | null
+          footer_text?: string | null
+          hero_badge?: string | null
+          hero_cta_label?: string | null
+          hero_subtitle?: string | null
+          hero_title_1?: string | null
+          hero_title_2?: string | null
+          id?: string
+          is_singleton?: boolean
+          logo_url?: string | null
+          site_name?: string
+          site_tagline?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ticket_replies: {
         Row: {
           content: string
