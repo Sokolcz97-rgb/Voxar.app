@@ -40,6 +40,7 @@ const Servers = () => {
   const { user, isAdmin, isEditor, roles } = useAuth();
   const isCC = roles.includes("content_creator");
   const canAdd = isAdmin || isEditor || isCC;
+  const { discords } = useAllDiscord();
 
   const [games, setGames] = useState<Game[]>([]);
   const [servers, setServers] = useState<Server[]>([]);
