@@ -370,7 +370,9 @@
     "empty": "No reactions yet",
     "rangeAll": "All time",
     "rangeMonth": "This month",
-    "rangeWeek": "This week"
+    "rangeWeek": "This week",
+    "seoTitle": "Player leaderboard — NEONHUB",
+    "seoDesc": "Best players in the NEONHUB community ranked by reactions and activity."
   },
   "rankBadge": {
     "tooltip": "Rank #{{rank}} on leaderboard — {{range}}"

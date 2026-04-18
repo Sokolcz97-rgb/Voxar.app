@@ -370,7 +370,9 @@
     "empty": "Zatím nikdo nemá žádné reakce",
     "rangeAll": "Vše",
     "rangeMonth": "Tento měsíc",
-    "rangeWeek": "Tento týden"
+    "rangeWeek": "Tento týden",
+    "seoTitle": "Žebříček hráčů — NEONHUB",
+    "seoDesc": "Nejlepší hráči komunity NEONHUB podle reakcí a aktivity."
   },
   "rankBadge": {
     "tooltip": "Umístění #{{rank}} v žebříčku — {{range}}"
