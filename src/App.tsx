@@ -15,7 +15,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import PublicProfile from "./pages/PublicProfile.tsx";
 import Admin from "./pages/Admin.tsx";
-import AdminUsers from "./pages/AdminUsers.tsx";
+import AdminUsersRoles from "./pages/AdminUsersRoles.tsx";
 import AdminModeration from "./pages/AdminModeration.tsx";
 import AdminPages from "./pages/AdminPages.tsx";
 import DynamicPage from "./pages/DynamicPage.tsx";
@@ -29,7 +29,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
 import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
-import AdminRoles from "./pages/AdminRoles.tsx";
+
 import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
@@ -51,7 +51,7 @@ const AppRoutes = () => {
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/profile/:userId" element={<PublicProfile />} />
       <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsersRoles /></ProtectedRoute>} />
       <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
       <Route path="/admin/pages" element={<ProtectedRoute requireEditor><AdminPages /></ProtectedRoute>} />
       <Route path="/forum" element={<Forum />} />
@@ -63,7 +63,7 @@ const AppRoutes = () => {
       <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/servery" element={<Servers />} />
       <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
-      <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminRoles /></ProtectedRoute>} />
+      <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminUsersRoles /></ProtectedRoute>} />
       <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
       <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />

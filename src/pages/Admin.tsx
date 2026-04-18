@@ -5,8 +5,7 @@ import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Game
 
 const Admin = () => {
   const sections = [
-    { icon: Users, title: "Uživatelé & Role", desc: "Spravovat účty a oprávnění", to: "/admin/users" },
-    { icon: Shield, title: "Role & Oprávnění", desc: "Vytvořit role a nastavit, co smí", to: "/admin/roles" },
+    { icon: Users, title: "Uživatelé, role & oprávnění", desc: "Účty, role a co každá role smí", to: "/admin/users" },
     { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
     { icon: Palette, title: "Page Builder", desc: "Drag & drop editor stránek", to: "/admin/pages" },
     { icon: Gamepad2, title: "Hry", desc: "Katalog her pro server list", to: "/admin/games" },
