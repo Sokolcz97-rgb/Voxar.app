@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, FileText, Ticket, MessagesSquare } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ActivityChart } from "@/components/ActivityChart";
 
 type RecentThread = { id: string; title: string; slug: string; created_at: string; category_id: string };
 type RecentDm = {
@@ -163,6 +164,8 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
+
+        {user && <ActivityChart userId={user.id} />}
 
         <h2 className="font-display text-2xl font-bold mb-4">{t("dashboard.myActivity")}</h2>
         <div className="grid lg:grid-cols-2 gap-4 mb-10">
