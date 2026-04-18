@@ -38,6 +38,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/profile/:userId" element={<PublicProfile />} />
               <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
               <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
