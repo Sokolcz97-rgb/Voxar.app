@@ -69,11 +69,17 @@ export function AIHelper() {
     };
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: t("ai.noCredits") || "Sign in required", description: "Přihlaš se pro použití AI." , variant: "destructive" });
+        setLoading(false);
+        return;
+      }
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ANON_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ messages: next }),
         signal: controller.signal,
