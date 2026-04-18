@@ -11,6 +11,7 @@ import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 
 interface Post {
@@ -124,11 +125,14 @@ const ForumThread = () => {
               {posts.map((p, i) => (
                 <Card key={p.id} className="glass border-border p-5 animate-fade-in" style={{ animationDelay: `${i * 40}ms` }}>
                   <div className="flex items-start gap-4">
-                    <UserAvatar
-                      url={p.author?.avatar_url}
-                      name={p.author?.display_name || p.author?.username}
-                      className="h-10 w-10 shrink-0"
-                    />
+                    <div className="relative shrink-0">
+                      <UserAvatar
+                        url={p.author?.avatar_url}
+                        name={p.author?.display_name || p.author?.username}
+                        className="h-10 w-10"
+                      />
+                      <PresenceDot userId={p.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap mb-2">
                         <span className="font-display font-bold text-primary">
