@@ -663,6 +663,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can: { Args: { _action: string; _module: string }; Returns: boolean }
       get_or_create_conversation: {
         Args: { _other_user: string }
         Returns: string
