@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface Conversation {
   id: string;
@@ -43,7 +44,7 @@ const Messages = () => {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null; avatar_url: string | null }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
@@ -119,7 +120,7 @@ const Messages = () => {
     if (!searchOpen || !search.trim()) { setSearchResults([]); return; }
     const tm = setTimeout(async () => {
       const { data } = await supabase
-        .from("profiles").select("user_id, display_name, username")
+        .from("profiles").select("user_id, display_name, username, avatar_url")
         .or(`display_name.ilike.%${search}%,username.ilike.%${search}%`)
         .neq("user_id", user?.id ?? "")
         .limit(10);
@@ -170,9 +171,7 @@ const Messages = () => {
                 {searchResults.map((r) => (
                   <button key={r.user_id} onClick={() => startConversation(r.user_id)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
-                      {initials(r.display_name || r.username)}
-                    </div>
+                    <UserAvatar url={r.avatar_url} name={r.display_name || r.username} className="h-9 w-9" />
                     <div className="min-w-0">
                       <div className="font-display font-bold truncate">{r.display_name || r.username}</div>
                       {r.username && <div className="text-xs text-muted-foreground truncate">@{r.username}</div>}
@@ -204,9 +203,7 @@ const Messages = () => {
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
                         activeId === c.id ? "bg-primary/15 border border-primary/40" : "hover:bg-secondary/50"
                       }`}>
-                      <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary shrink-0">
-                        {initials(c.other?.display_name || c.other?.username)}
-                      </div>
+                      <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
                         <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
@@ -229,9 +226,7 @@ const Messages = () => {
             ) : (
               <>
                 <div className="border-b border-border px-5 py-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
-                    {initials(active?.other?.display_name || active?.other?.username)}
-                  </div>
+                  <UserAvatar url={active?.other?.avatar_url} name={active?.other?.display_name || active?.other?.username} className="h-9 w-9" />
                   <div className="min-w-0">
                     <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || t("common.player")}</div>
                     {active?.other?.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}

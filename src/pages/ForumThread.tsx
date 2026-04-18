@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface Post {
   id: string;
@@ -111,9 +112,11 @@ const ForumThread = () => {
               {posts.map((p, i) => (
                 <Card key={p.id} className="glass border-border p-5 animate-fade-in" style={{ animationDelay: `${i * 40}ms` }}>
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0 text-sm font-display font-bold text-primary">
-                      {(p.author?.display_name || p.author?.username || "?").charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      url={p.author?.avatar_url}
+                      name={p.author?.display_name || p.author?.username}
+                      className="h-10 w-10 shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap mb-2">
                         <span className="font-display font-bold text-primary">

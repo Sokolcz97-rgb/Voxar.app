@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { Markdown } from "@/components/Markdown";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
 import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface Ticket {
   id: string;
@@ -33,7 +34,7 @@ interface Reply {
   content: string;
   is_internal: boolean;
   created_at: string;
-  author?: { display_name: string | null; username: string | null } | null;
+  author?: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
 }
 
 const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
@@ -44,7 +45,7 @@ const TicketDetail = () => {
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [author, setAuthor] = useState<{ display_name: string | null; username: string | null } | null>(null);
+  const [author, setAuthor] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -59,7 +60,7 @@ const TicketDetail = () => {
     setTicket(tk);
 
     const { data: authorProf } = await supabase
-      .from("profiles").select("display_name, username").eq("user_id", tk.user_id).maybeSingle();
+      .from("profiles").select("display_name, username, avatar_url").eq("user_id", tk.user_id).maybeSingle();
     setAuthor(authorProf);
 
     const { data: rs } = await supabase
@@ -68,7 +69,7 @@ const TicketDetail = () => {
     if (rs) {
       const ids = [...new Set(rs.map((r) => r.user_id))];
       const { data: profs } = await supabase
-        .from("profiles").select("user_id, display_name, username").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+        .from("profiles").select("user_id, display_name, username, avatar_url").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
       const map = new Map(profs?.map((p) => [p.user_id, p]) ?? []);
       setReplies(rs.map((r) => ({ ...r, author: map.get(r.user_id) ?? null })));
     }
@@ -178,9 +179,7 @@ const TicketDetail = () => {
 
             <Card className="glass border-border p-5 mb-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
-                  {initials(author?.display_name || author?.username)}
-                </div>
+                <UserAvatar url={author?.avatar_url} name={author?.display_name || author?.username} className="h-9 w-9" />
                 <div>
                   <div className="font-display font-bold text-sm">{author?.display_name || author?.username || t("common.player")}</div>
                   <div className="text-[11px] text-muted-foreground uppercase tracking-widest">{t("tickets.originalMsg")}</div>
@@ -195,9 +194,7 @@ const TicketDetail = () => {
                   r.is_internal ? "border-accent/50 bg-accent/5" : "border-border"
                 }`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-display font-bold text-primary text-sm">
-                      {initials(r.author?.display_name || r.author?.username)}
-                    </div>
+                    <UserAvatar url={r.author?.avatar_url} name={r.author?.display_name || r.author?.username} className="h-9 w-9" />
                     <div className="flex-1 min-w-0">
                       <div className="font-display font-bold text-sm truncate">
                         {r.author?.display_name || r.author?.username || t("common.player")}
