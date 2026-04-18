@@ -152,6 +152,7 @@ const ForumThread = () => {
                         )}
                       </div>
                       <p className="whitespace-pre-wrap break-words text-foreground/90">{p.content}</p>
+                      <PostReactions postId={p.id} />
                     </div>
                   </div>
                 </Card>
