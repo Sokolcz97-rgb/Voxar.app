@@ -28,7 +28,7 @@ interface Ticket {
 }
 
 const Tickets = () => {
-  const { user, isAdmin, isEditor } = useAuth();
+  const { user, isAdmin, isEditor, isBanned } = useAuth();
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -108,48 +108,50 @@ const Tickets = () => {
               </SelectContent>
             </Select>
 
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                  <Plus className="h-4 w-4 mr-1" />{t("tickets.newTicket")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass border-border max-w-lg">
-                <DialogHeader><DialogTitle>{t("tickets.newTicket")}</DialogTitle></DialogHeader>
-                <form onSubmit={create} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("tickets.subject")}</Label>
-                    <Input required maxLength={140} value={subject} onChange={(e) => setSubject(e.target.value)} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>{t("tickets.priority")}</Label>
-                      <Select value={priority} onValueChange={(v) => setPriority(v as TPriority)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">{t("tickets.priorities.low")}</SelectItem>
-                          <SelectItem value="medium">{t("tickets.priorities.medium")}</SelectItem>
-                          <SelectItem value="high">{t("tickets.priorities.high")}</SelectItem>
-                          <SelectItem value="urgent">{t("tickets.priorities.urgent")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("tickets.categoryOpt")}</Label>
-                      <Input placeholder={t("tickets.categoryPlaceholder")} value={category} onChange={(e) => setCategory(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("tickets.descriptionMd")}</Label>
-                    <Textarea required rows={8} value={description} onChange={(e) => setDescription(e.target.value)}
-                      placeholder={t("tickets.descPlaceholder")} className="font-mono text-sm" />
-                  </div>
-                  <Button type="submit" disabled={submitting} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.create")}
+            {!isBanned && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                    <Plus className="h-4 w-4 mr-1" />{t("tickets.newTicket")}
                   </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="glass border-border max-w-lg">
+                  <DialogHeader><DialogTitle>{t("tickets.newTicket")}</DialogTitle></DialogHeader>
+                  <form onSubmit={create} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{t("tickets.subject")}</Label>
+                      <Input required maxLength={140} value={subject} onChange={(e) => setSubject(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>{t("tickets.priority")}</Label>
+                        <Select value={priority} onValueChange={(v) => setPriority(v as TPriority)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">{t("tickets.priorities.low")}</SelectItem>
+                            <SelectItem value="medium">{t("tickets.priorities.medium")}</SelectItem>
+                            <SelectItem value="high">{t("tickets.priorities.high")}</SelectItem>
+                            <SelectItem value="urgent">{t("tickets.priorities.urgent")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("tickets.categoryOpt")}</Label>
+                        <Input placeholder={t("tickets.categoryPlaceholder")} value={category} onChange={(e) => setCategory(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("tickets.descriptionMd")}</Label>
+                      <Textarea required rows={8} value={description} onChange={(e) => setDescription(e.target.value)}
+                        placeholder={t("tickets.descPlaceholder")} className="font-mono text-sm" />
+                    </div>
+                    <Button type="submit" disabled={submitting} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
+                      {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.create")}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 

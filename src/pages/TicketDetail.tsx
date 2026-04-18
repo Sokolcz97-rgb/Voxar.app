@@ -42,7 +42,7 @@ const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
 
 const TicketDetail = () => {
   const { id } = useParams();
-  const { user, isAdmin, isEditor } = useAuth();
+  const { user, isAdmin, isEditor, isBanned } = useAuth();
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -227,7 +227,10 @@ const TicketDetail = () => {
               <div ref={bottomRef} />
             </div>
 
-            {ticket.status !== "closed" && user && (
+            {ticket.status !== "closed" && user && isBanned && !isStaff && (
+              <div className="mt-6"><BannedNotice /></div>
+            )}
+            {ticket.status !== "closed" && user && (!isBanned || isStaff) && (
               <form onSubmit={send} className="mt-6 space-y-3">
                 <Textarea required rows={5} value={text} onChange={(e) => setText(e.target.value)}
                   placeholder={t("tickets.replyPlaceholder")} className="font-mono text-sm resize-none" />
