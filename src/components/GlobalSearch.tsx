@@ -22,12 +22,20 @@ export const GlobalSearch = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "threads" | "posts" | "users">("all");
-  const { loading, threads, posts, users, reset } = useGlobalSearch(query);
+
+  // Detect prefixes: @ → users, # → threads. Strip prefix before searching.
+  const trimmed = query.trim();
+  const prefixFilter: "users" | "threads" | null =
+    trimmed.startsWith("@") ? "users" : trimmed.startsWith("#") ? "threads" : null;
+  const effectiveQuery = prefixFilter ? trimmed.slice(1) : query;
+  const effectiveFilter = prefixFilter ?? filter;
+
+  const { loading, threads, posts, users, reset } = useGlobalSearch(effectiveQuery);
   const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistory();
 
-  const showThreads = (filter === "all" || filter === "threads") && threads.length > 0;
-  const showPosts = (filter === "all" || filter === "posts") && posts.length > 0;
-  const showUsers = (filter === "all" || filter === "users") && users.length > 0;
+  const showThreads = (effectiveFilter === "all" || effectiveFilter === "threads") && threads.length > 0;
+  const showPosts = (effectiveFilter === "all" || effectiveFilter === "posts") && posts.length > 0;
+  const showUsers = (effectiveFilter === "all" || effectiveFilter === "users") && users.length > 0;
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
