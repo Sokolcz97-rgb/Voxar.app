@@ -179,5 +179,17 @@
   },
   "lang": {
     "switch": "Jazyk"
+  },
+  "adminUsers": {
+    "section": "Administrace",
+    "title": "Uživatelé & Role",
+    "subtitle": "Spravuj přístupová práva členů komunity.",
+    "searchPlaceholder": "Hledat podle přezdívky nebo jména...",
+    "noResults": "Žádní uživatelé nenalezeni.",
+    "roleAdded": "Role přidána",
+    "roleRemoved": "Role odebrána",
+    "cantRemoveSelf": "Nemůžeš si odebrat vlastní admin roli",
+    "adminOnly": "Pouze pro adminy",
+    "adminOnlyDesc": "Tato sekce vyžaduje admin oprávnění."
   }
 }
