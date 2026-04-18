@@ -113,7 +113,10 @@
     "minutesAgo": "před {{count}} min",
     "hoursAgo": "před {{count}} h",
     "recentThreads": "Poslední vlákna",
-    "noThreads": "Uživatel zatím nezaložil žádné vlákno"
+    "noThreads": "Uživatel zatím nezaložil žádné vlákno",
+    "recentPosts": "Poslední příspěvky",
+    "noPosts": "Uživatel zatím nepřispěl",
+    "unknownThread": "Neznámé vlákno"
   },
   "account": {
     "changePassword": "Změna hesla",
