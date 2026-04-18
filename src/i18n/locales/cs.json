@@ -84,6 +84,24 @@
     "notifPermDenied": "Notifikace zamítnuty v prohlížeči",
     "test": "Test"
   },
+  "account": {
+    "changePassword": "Změna hesla",
+    "newPassword": "Nové heslo",
+    "confirmPassword": "Potvrdit heslo",
+    "savePassword": "Uložit heslo",
+    "pwTooShort": "Heslo musí mít alespoň 6 znaků",
+    "pwMismatch": "Hesla se neshodují",
+    "pwFailed": "Změna hesla selhala",
+    "pwChanged": "Heslo změněno",
+    "dangerZone": "Nebezpečná zóna",
+    "deleteDesc": "Trvale smaže tvůj účet a všechna související data. Tuto akci nelze vrátit.",
+    "deleteAccount": "Smazat účet",
+    "confirmTitle": "Opravdu smazat účet?",
+    "confirmDesc": "Všechny tvé profily, zprávy a příspěvky budou trvale odstraněny. Pro potvrzení napiš DELETE.",
+    "typeToConfirm": "Pro potvrzení napiš DELETE",
+    "deleteFailed": "Smazání selhalo",
+    "deleted": "Účet smazán"
+  },
   "avatar": {
     "upload": "Nahrát avatar",
     "remove": "Odstranit",

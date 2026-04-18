@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Bell, Loader2, Volume2 } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { AccountSettings } from "@/components/AccountSettings";
 import { ensureNotificationPermission, playBeep } from "@/lib/notify";
 
 const Profile = () => {
@@ -153,6 +154,12 @@ const Profile = () => {
             </form>
           )}
         </Card>
+
+        {!loading && (
+          <Card className="glass border-border p-8 mt-6">
+            <AccountSettings />
+          </Card>
+        )}
       </main>
     </div>
   );
