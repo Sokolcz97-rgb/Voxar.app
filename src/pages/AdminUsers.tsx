@@ -151,8 +151,12 @@ const AdminUsers = () => {
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {userRoles.length === 0 && <Badge variant="outline" className="text-xs">user</Badge>}
                       {userRoles.map((r) => (
-                        <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="text-xs">
-                          {r}
+                        <Badge
+                          key={r}
+                          variant={r === "admin" ? "default" : r === "banned" ? "destructive" : "secondary"}
+                          className="text-xs"
+                        >
+                          {r === "banned" ? t("adminUsers.banned") : r}
                         </Badge>
                       ))}
                     </div>
