@@ -89,7 +89,31 @@ export const GlobalSearch = () => {
   const [threads, setThreads] = useState<ThreadHit[]>([]);
   const [posts, setPosts] = useState<PostHit[]>([]);
   const [users, setUsers] = useState<UserHit[]>([]);
+  const [history, setHistory] = useState<string[]>(() => loadHistory());
   const reqId = useRef(0);
+
+  const pushHistory = (q: string) => {
+    const term = q.trim();
+    if (term.length < 2) return;
+    setHistory((prev) => {
+      const next = [term, ...prev.filter((x) => x.toLowerCase() !== term.toLowerCase())].slice(0, HISTORY_MAX);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  const removeFromHistory = (q: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((x) => x !== q);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    saveHistory([]);
+  };
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
