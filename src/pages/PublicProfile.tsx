@@ -287,6 +287,39 @@ const PublicProfile = () => {
                 </ul>
               )}
             </Card>
+
+            <Card className="glass border-border p-6 mt-6">
+              <h2 className="font-display text-xl font-bold mb-4">{t("publicProfile.recentPosts")}</h2>
+              {recentPosts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("publicProfile.noPosts")}</p>
+              ) : (
+                <ul className="space-y-3">
+                  {recentPosts.map((p) => {
+                    const href =
+                      p.category_slug && p.thread_slug
+                        ? `/forum/${p.category_slug}/${p.thread_slug}`
+                        : "/forum";
+                    return (
+                      <li key={p.id} className="border-b border-border/50 pb-3 last:border-0">
+                        <Link to={href} className="block group">
+                          <div className="flex items-start justify-between gap-3 mb-1">
+                            <span className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-1">
+                              {p.thread_title || t("publicProfile.unknownThread")}
+                            </span>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {fmt(p.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap break-words">
+                            {p.content}
+                          </p>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
           </>
         )}
       </main>
