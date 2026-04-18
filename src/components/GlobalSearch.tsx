@@ -272,7 +272,21 @@ export const GlobalSearch = () => {
               {t("search.kbdClose")}
             </span>
           </div>
-          <span className="hidden md:inline opacity-70">{t("search.hintPrefix")}</span>
+          <div className="flex items-center gap-3">
+            <span className="hidden md:inline opacity-70">{t("search.hintPrefix")}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setTimeout(() => window.dispatchEvent(new Event("shortcuts:open")), 50);
+              }}
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              aria-label={t("shortcuts.title")}
+            >
+              <kbd className="pointer-events-none inline-flex h-4 select-none items-center rounded border border-border bg-muted px-1 font-mono text-[10px]">?</kbd>
+              <span className="hidden sm:inline">{t("shortcuts.title")}</span>
+            </button>
+          </div>
         </div>
       </CommandDialog>
     </>
