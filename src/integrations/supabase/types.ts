@@ -147,6 +147,48 @@ export type Database = {
           },
         ]
       }
+      games: {
+        Row: {
+          connection_type: Database["public"]["Enums"]["server_connection_type"]
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          slug: string
+          steam_appid: number | null
+          updated_at: string
+        }
+        Insert: {
+          connection_type?: Database["public"]["Enums"]["server_connection_type"]
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          slug: string
+          steam_appid?: number | null
+          updated_at?: string
+        }
+        Update: {
+          connection_type?: Database["public"]["Enums"]["server_connection_type"]
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          slug?: string
+          steam_appid?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -337,6 +379,77 @@ export type Database = {
         }
         Relationships: []
       }
+      servers: {
+        Row: {
+          created_at: string
+          description: string | null
+          discord_url: string | null
+          game_id: string
+          id: string
+          invite_code: string | null
+          ip: string | null
+          is_approved: boolean
+          is_featured: boolean
+          is_online: boolean
+          last_pinged_at: string | null
+          name: string
+          owner_id: string
+          players_max: number | null
+          players_online: number | null
+          port: number | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discord_url?: string | null
+          game_id: string
+          id?: string
+          invite_code?: string | null
+          ip?: string | null
+          is_approved?: boolean
+          is_featured?: boolean
+          is_online?: boolean
+          last_pinged_at?: string | null
+          name: string
+          owner_id: string
+          players_max?: number | null
+          players_online?: number | null
+          port?: number | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discord_url?: string | null
+          game_id?: string
+          id?: string
+          invite_code?: string | null
+          ip?: string | null
+          is_approved?: boolean
+          is_featured?: boolean
+          is_online?: boolean
+          last_pinged_at?: string | null
+          name?: string
+          owner_id?: string
+          players_max?: number | null
+          players_online?: number | null
+          port?: number | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servers_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_replies: {
         Row: {
           content: string
@@ -451,6 +564,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "editor" | "user" | "banned" | "content_creator"
+      server_connection_type: "ip_port" | "invite_code"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
     }
@@ -581,6 +695,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "user", "banned", "content_creator"],
+      server_connection_type: ["ip_port", "invite_code"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
     },
