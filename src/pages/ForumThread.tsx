@@ -13,6 +13,7 @@ import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-rea
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
+import { PostReactions } from "@/components/PostReactions";
 
 interface Post {
   id: string;
