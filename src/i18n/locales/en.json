@@ -58,6 +58,11 @@
       "players": "Players",
       "streams": "Streams",
       "online": "Online"
+    },
+    "topPlayers": {
+      "title": "Top players",
+      "viewAll": "View leaderboard",
+      "reactions": "reactions"
     }
   },
   "auth": {
