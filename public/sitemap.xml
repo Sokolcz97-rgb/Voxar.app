@@ -6,4 +6,6 @@
   <url><loc>/leaderboard</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>/servery</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>/auth</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>/terms</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>/privacy</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>

@@ -179,8 +179,16 @@ const Index = () => {
       </main>
 
       <footer className="border-t border-border/60 py-8">
-        <div className="container text-center text-sm text-muted-foreground">
-          <span className="font-display tracking-widest">{settings.site_name}</span> {settings.footer_text || "© 2026 — Herní komunita"}
+        <div className="container flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
+          <div>
+            <span className="font-display tracking-widest">{settings.site_name}</span>{" "}
+            {settings.footer_text || "© 2026 — Herní komunita"}
+          </div>
+          <nav className="flex items-center gap-4">
+            <a href="/terms" className="hover:text-primary transition-colors">Podmínky používání</a>
+            <span className="opacity-40">·</span>
+            <a href="/privacy" className="hover:text-primary transition-colors">Ochrana soukromí</a>
+          </nav>
         </div>
       </footer>
       <EditPageButton slug="home" />

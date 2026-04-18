@@ -35,6 +35,8 @@ import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
 import Novinky from "./pages/Novinky.tsx";
 import AdminNovinky from "./pages/AdminNovinky.tsx";
+import Terms from "./pages/Terms.tsx";
+import Privacy from "./pages/Privacy.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -69,6 +71,8 @@ const AppRoutes = () => {
       <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
       <Route path="/admin/novinky" element={<ProtectedRoute requireEditor><AdminNovinky /></ProtectedRoute>} />
       <Route path="/novinky" element={<Novinky />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
