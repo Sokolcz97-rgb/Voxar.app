@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { invalidateRanking } from "@/lib/leaderboard";
 
 const EMOJIS = ["👍", "❤️", "😂", "🔥"] as const;
 type Emoji = (typeof EMOJIS)[number];
@@ -99,6 +100,7 @@ export const PostReactions = ({ postId }: { postId: string }) => {
         if (error) throw error;
         setRows((prev) => [...prev, { emoji, user_id: user.id }]);
       }
+      invalidateRanking();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
