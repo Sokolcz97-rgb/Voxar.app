@@ -124,7 +124,17 @@
     "notifBrowser": "Browser notifications",
     "notifBrowserDesc": "Pop-up alert when you're not on the chat tab.",
     "notifPermDenied": "Notifications denied in the browser",
-    "test": "Test"
+    "test": "Test",
+    "displayNamePlaceholder": "e.g. Sokolcz",
+    "displayNameHint": "Public name shown on the forum, in chat and on posts.",
+    "realName": "Real name",
+    "realNamePlaceholder": "e.g. Robert",
+    "realNameHint": "Optional. Your actual first name (or full name).",
+    "streamingAccounts": "Streaming accounts",
+    "streamingHint": "Fill in your handles so your live streams appear on the homepage (if you have the matching role).",
+    "twitchPlaceholder": "e.g. shroud",
+    "youtubePlaceholder": "e.g. @MrBeast",
+    "kickPlaceholder": "e.g. xqc"
   },
   "publicProfile": {
     "notFound": "Profile not found",

@@ -124,7 +124,17 @@
     "notifBrowser": "Browser notifikace",
     "notifBrowserDesc": "Vyskakovací upozornění, když nejsi na záložce s chatem.",
     "notifPermDenied": "Notifikace zamítnuty v prohlížeči",
-    "test": "Test"
+    "test": "Test",
+    "displayNamePlaceholder": "např. Sokolcz",
+    "displayNameHint": "Veřejné jméno, které se zobrazuje na fóru, v chatu a u příspěvků.",
+    "realName": "Pravé jméno",
+    "realNamePlaceholder": "např. Radek",
+    "realNameHint": "Nepovinné. Tvoje skutečné křestní jméno (nebo celé jméno).",
+    "streamingAccounts": "Streamovací účty",
+    "streamingHint": "Vyplň své handle, aby se tvé živé streamy zobrazovaly na úvodce (pokud máš odpovídající roli).",
+    "twitchPlaceholder": "např. shroud",
+    "youtubePlaceholder": "např. @MrBeast",
+    "kickPlaceholder": "např. xqc"
   },
   "publicProfile": {
     "notFound": "Profil nenalezen",
