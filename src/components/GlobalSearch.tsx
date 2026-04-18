@@ -21,8 +21,13 @@ export const GlobalSearch = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "threads" | "posts" | "users">("all");
   const { loading, threads, posts, users, reset } = useGlobalSearch(query);
   const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistory();
+
+  const showThreads = (filter === "all" || filter === "threads") && threads.length > 0;
+  const showPosts = (filter === "all" || filter === "posts") && posts.length > 0;
+  const showUsers = (filter === "all" || filter === "users") && users.length > 0;
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
