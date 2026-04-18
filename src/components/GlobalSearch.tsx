@@ -12,7 +12,29 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { Search, FileText, MessageSquare, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, FileText, MessageSquare, User as UserIcon, Loader2, Clock, X } from "lucide-react";
+
+const HISTORY_KEY = "neonhub:search-history";
+const HISTORY_MAX = 5;
+
+const loadHistory = (): string[] => {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, HISTORY_MAX) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (items: string[]) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+  } catch {
+    /* ignore */
+  }
+};
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
