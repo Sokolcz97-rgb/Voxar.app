@@ -143,8 +143,8 @@ const Novinky = () => {
             <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="date_asc">Nejdřív vyjdou (vzestupně)</SelectItem>
-                <SelectItem value="date_desc">Nejnovější vydání první</SelectItem>
+                <SelectItem value="date_asc">Od nejstarších po nejnovější</SelectItem>
+                <SelectItem value="date_desc">Od nejnovějších po nejstarší</SelectItem>
                 <SelectItem value="hype">Nejvíc očekávané (hype)</SelectItem>
               </SelectContent>
             </Select>
