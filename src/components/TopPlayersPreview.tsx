@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Trophy, Heart, ArrowRight } from "lucide-react";
+import { getTop } from "@/lib/leaderboard";
 
 interface TopEntry {
   user_id: string;
@@ -22,32 +23,11 @@ export const TopPlayersPreview = () => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: reacts } = await supabase.from("post_reactions").select("post_id");
-      const rows = (reacts ?? []) as { post_id: string }[];
-      if (rows.length === 0) {
+      const top = await getTop("all", 3);
+      if (top.length === 0) {
         if (!cancelled) setEntries([]);
         return;
       }
-      const postIds = Array.from(new Set(rows.map((r) => r.post_id)));
-      const { data: posts } = await supabase
-        .from("forum_posts")
-        .select("id,user_id")
-        .in("id", postIds);
-      const owner: Record<string, string> = {};
-      (posts ?? []).forEach((p) => (owner[p.id] = p.user_id));
-
-      const tally: Record<string, number> = {};
-      rows.forEach((r) => {
-        const o = owner[r.post_id];
-        if (!o) return;
-        tally[o] = (tally[o] ?? 0) + 1;
-      });
-
-      const top = Object.entries(tally)
-        .map(([user_id, total]) => ({ user_id, total }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 3);
-
       const userIds = top.map((e) => e.user_id);
       const { data: profs } = await supabase
         .from("profiles")
@@ -65,7 +45,8 @@ export const TopPlayersPreview = () => {
       if (cancelled) return;
       setEntries(
         top.map((e) => ({
-          ...e,
+          user_id: e.user_id,
+          total: e.total,
           display_name: profMap[e.user_id]?.display_name ?? null,
           username: profMap[e.user_id]?.username ?? null,
           avatar_url: profMap[e.user_id]?.avatar_url ?? null,
