@@ -13,7 +13,7 @@ const Admin = () => {
     { icon: MessageCircle, title: "Discord servery", desc: "Spravovat invite odkazy a featured tlačítko", to: "/admin/discord" },
     { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
     { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },
-    { icon: Settings, title: "Nastavení webu", desc: "Téma, jazyky, média", to: null },
+    { icon: Settings, title: "Nastavení webu", desc: "Texty na úvodce, navbaru, logo a zápatí", to: "/admin/settings" },
   ];
 
   return (

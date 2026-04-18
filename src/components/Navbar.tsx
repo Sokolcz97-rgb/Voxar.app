@@ -23,6 +23,7 @@ export function Navbar() {
   const { t } = useTranslation();
   const { unreadMessages, openTickets } = useNotifications();
   const navPages = useNavPages();
+  const { settings } = useSiteSettings();
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,11 +35,21 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative">
-            <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
-            <div className="absolute inset-0 blur-lg bg-primary/40 -z-10" />
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings.site_name}
+                className="h-7 w-7 object-contain transition-transform group-hover:scale-110"
+              />
+            ) : (
+              <>
+                <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
+                <div className="absolute inset-0 blur-lg bg-primary/40 -z-10" />
+              </>
+            )}
           </div>
           <span className="font-display font-bold text-lg tracking-widest text-glow">
-            NEONHUB
+            {settings.site_name}
           </span>
         </Link>
 
