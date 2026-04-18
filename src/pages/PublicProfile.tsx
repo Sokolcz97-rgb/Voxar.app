@@ -34,6 +34,16 @@ interface ThreadRow {
   category_name?: string;
 }
 
+interface PostRow {
+  id: string;
+  content: string;
+  created_at: string;
+  thread_id: string;
+  thread_title?: string;
+  thread_slug?: string;
+  category_slug?: string;
+}
+
 const PublicProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -44,6 +54,7 @@ const PublicProfile = () => {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ threads: 0, posts: 0 });
   const [recent, setRecent] = useState<ThreadRow[]>([]);
+  const [recentPosts, setRecentPosts] = useState<PostRow[]>([]);
 
   useEffect(() => {
     if (!userId) return;
@@ -65,6 +76,12 @@ const PublicProfile = () => {
           .order("created_at", { ascending: false })
           .limit(5),
         supabase.from("forum_categories").select("id,slug,name"),
+        supabase
+          .from("forum_posts")
+          .select("id,content,created_at,thread_id")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5),
       ]);
       if (cancelled) return;
       setProfile((profRes.data as Profile) ?? null);
@@ -80,6 +97,32 @@ const PublicProfile = () => {
         category_name: catMap[th.category_id]?.name,
       })) as ThreadRow[];
       setRecent(enriched);
+
+      const posts = (postsRecentRes.data ?? []) as { id: string; content: string; created_at: string; thread_id: string }[];
+      const threadIds = Array.from(new Set(posts.map((p) => p.thread_id)));
+      let threadMap: Record<string, { title: string; slug: string; category_id: string }> = {};
+      if (threadIds.length > 0) {
+        const { data: thRows } = await supabase
+          .from("forum_threads")
+          .select("id,title,slug,category_id")
+          .in("id", threadIds);
+        (thRows ?? []).forEach((th) => {
+          threadMap[th.id] = { title: th.title, slug: th.slug, category_id: th.category_id };
+        });
+      }
+      if (cancelled) return;
+      setRecentPosts(
+        posts.map((p) => {
+          const th = threadMap[p.thread_id];
+          return {
+            ...p,
+            thread_title: th?.title,
+            thread_slug: th?.slug,
+            category_slug: th ? catMap[th.category_id]?.slug : undefined,
+          };
+        }),
+      );
+
       setLoading(false);
     })();
     return () => {
