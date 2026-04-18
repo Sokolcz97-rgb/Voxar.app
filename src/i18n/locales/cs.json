@@ -63,10 +63,20 @@
       "score": "Tvé skóre",
       "friends": "Přátelé",
       "messages": "Zprávy",
-      "streak": "Streak"
+      "streak": "Streak",
+      "threads": "Vlákna",
+      "posts": "Příspěvky",
+      "tickets": "Tickety",
+      "dms": "DM zprávy"
     },
     "ctaTitle": "🚀 Hub se právě rozjíždí",
-    "ctaDesc": "Brzy přibyde fórum, soukromé zprávy, ticketovací systém a AI helper. Sleduj novinky!"
+    "ctaDesc": "Brzy přibyde fórum, soukromé zprávy, ticketovací systém a AI helper. Sleduj novinky!",
+    "myActivity": "Moje aktivita",
+    "recentDms": "Poslední DM",
+    "recentThreads": "Poslední vlákna",
+    "noActivity": "Žádná aktivita",
+    "openConversation": "Otevřít",
+    "viewAll": "Zobrazit vše"
   },
   "profile": {
     "title": "Profil",
