@@ -4,9 +4,12 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { Trophy, Loader2, Heart } from "lucide-react";
+
+type Range = "all" | "month" | "week";
 
 interface Entry {
   user_id: string;
@@ -21,15 +24,23 @@ const Leaderboard = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [range, setRange] = useState<Range>("all");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      // 1) all reactions joined with the post author
-      const { data: reacts } = await supabase
-        .from("post_reactions")
-        .select("emoji,post_id");
+
+      let since: string | null = null;
+      if (range === "week" || range === "month") {
+        const d = new Date();
+        d.setDate(d.getDate() - (range === "week" ? 7 : 30));
+        since = d.toISOString();
+      }
+
+      let q = supabase.from("post_reactions").select("emoji,post_id,created_at");
+      if (since) q = q.gte("created_at", since);
+      const { data: reacts } = await q;
       const reactRows = (reacts ?? []) as { emoji: string; post_id: string }[];
       if (reactRows.length === 0) {
         if (!cancelled) {
@@ -89,7 +100,7 @@ const Leaderboard = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [range]);
 
   const medal = (rank: number) => {
     if (rank === 0) return "🥇";
@@ -109,7 +120,15 @@ const Leaderboard = () => {
             {t("leaderboard.title")}
           </h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">{t("leaderboard.subtitle")}</p>
+        <p className="text-sm text-muted-foreground mb-4">{t("leaderboard.subtitle")}</p>
+
+        <Tabs value={range} onValueChange={(v) => setRange(v as Range)} className="mb-6">
+          <TabsList className="glass">
+            <TabsTrigger value="all">{t("leaderboard.rangeAll")}</TabsTrigger>
+            <TabsTrigger value="month">{t("leaderboard.rangeMonth")}</TabsTrigger>
+            <TabsTrigger value="week">{t("leaderboard.rangeWeek")}</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {loading ? (
           <div className="flex justify-center py-20">

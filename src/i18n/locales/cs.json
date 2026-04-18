@@ -351,6 +351,9 @@
   "leaderboard": {
     "title": "Žebříček",
     "subtitle": "Top 10 hráčů podle získaných reakcí",
-    "empty": "Zatím nikdo nemá žádné reakce"
+    "empty": "Zatím nikdo nemá žádné reakce",
+    "rangeAll": "Vše",
+    "rangeMonth": "Tento měsíc",
+    "rangeWeek": "Tento týden"
   }
 }
