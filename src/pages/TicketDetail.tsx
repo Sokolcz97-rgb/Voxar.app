@@ -15,6 +15,7 @@ import { Markdown } from "@/components/Markdown";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
 import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { moderate } from "@/lib/moderate";
 
 interface Ticket {
   id: string;
@@ -102,13 +103,24 @@ const TicketDetail = () => {
     e.preventDefault();
     if (!user || !id || !text.trim()) return;
     setSending(true);
+
+    // Skip AI moderation for internal staff notes
+    const mod = await moderate(text.trim(), !(internal && isStaff));
+    if (mod.blocked) {
+      setSending(false);
+      toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });
+      return;
+    }
+    const finalContent = mod.clean || text.trim();
+
     const { error } = await supabase.from("ticket_replies")
-      .insert({ ticket_id: id, user_id: user.id, content: text.trim(), is_internal: internal && isStaff });
+      .insert({ ticket_id: id, user_id: user.id, content: finalContent, is_internal: internal && isStaff });
     setSending(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
+    if (mod.flagged) toast({ title: t("moderation.filtered") });
     setText(""); setInternal(false);
   };
 
