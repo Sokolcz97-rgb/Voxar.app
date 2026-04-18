@@ -39,6 +39,7 @@ type Server = {
 };
 
 const Servers = () => {
+  const { t } = useTranslation();
   const { user, isAdmin, isEditor, roles } = useAuth();
   const isCC = roles.includes("content_creator");
   const canAdd = isAdmin || isEditor || isCC;
