@@ -10,7 +10,7 @@ import { PresenceDot } from "@/components/PresenceDot";
 import { usePresence } from "@/contexts/PresenceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock } from "lucide-react";
+import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock, Heart } from "lucide-react";
 
 interface Profile {
   user_id: string;
@@ -53,6 +53,10 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ threads: 0, posts: 0 });
+  const [reactions, setReactions] = useState<{ total: number; byEmoji: Record<string, number> }>({
+    total: 0,
+    byEmoji: {},
+  });
   const [recent, setRecent] = useState<ThreadRow[]>([]);
   const [recentPosts, setRecentPosts] = useState<PostRow[]>([]);
 
