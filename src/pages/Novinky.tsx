@@ -26,14 +26,15 @@ type Release = {
 };
 
 const PLATFORM_OPTIONS = [
-  "Steam",
-  "Epic Games Store",
-  "GOG",
-  "Xbox Marketplace",
-  "Playstation Store US",
+  "PC",
   "PlayStation 5",
+  "PlayStation 4",
   "Xbox Series X|S",
+  "Xbox One",
   "Nintendo Switch",
+  "Nintendo Switch 2",
+  "iOS",
+  "Android",
 ];
 
 const fmtDate = (iso: string | null, human: string | null) => {
