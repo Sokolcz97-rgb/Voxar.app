@@ -21,10 +21,11 @@ const Highlight = ({ text, query }: { text: string; query: string }) => {
   if (!q) return <>{text}</>;
   const re = new RegExp(`(${escapeRegExp(q)})`, "ig");
   const parts = text.split(re);
+  const lower = q.toLowerCase();
   return (
     <>
       {parts.map((part, i) =>
-        re.test(part) && part.toLowerCase() === q.toLowerCase() ? (
+        part.toLowerCase() === lower ? (
           <mark key={i} className="bg-primary/30 text-primary-foreground rounded px-0.5">
             {part}
           </mark>
