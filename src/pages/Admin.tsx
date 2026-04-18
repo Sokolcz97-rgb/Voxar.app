@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
-import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Gamepad2, MessageCircle } from "lucide-react";
+import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Gamepad2, MessageCircle, Radio } from "lucide-react";
 
 const Admin = () => {
   const sections = [
@@ -10,6 +10,7 @@ const Admin = () => {
     { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
     { icon: Palette, title: "Page Builder", desc: "Drag & drop editor stránek", to: "/admin/pages" },
     { icon: Gamepad2, title: "Hry", desc: "Katalog her pro server list", to: "/admin/games" },
+    { icon: Radio, title: "Streamy", desc: "Featured streamery (Twitch, YouTube, Kick)", to: "/admin/streams" },
     { icon: MessageCircle, title: "Discord servery", desc: "Spravovat invite odkazy a featured tlačítko", to: "/admin/discord" },
     { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
     { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },

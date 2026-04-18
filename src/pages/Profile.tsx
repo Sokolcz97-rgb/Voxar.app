@@ -124,6 +124,30 @@ const Profile = () => {
 
               <div className="pt-4 border-t border-border">
                 <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                  <Radio className="h-5 w-5 text-primary" /> Streamovací účty
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Vyplň své handle, aby se tvé živé streamy zobrazovaly na úvodce
+                  (pokud máš odpovídající roli).
+                </p>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="tw" className="text-[#9146FF]">Twitch username</Label>
+                    <Input id="tw" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder="např. shroud" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="yt" className="text-[#FF0033]">YouTube handle</Label>
+                    <Input id="yt" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="např. @MrBeast" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ki" className="text-[#53FC18]">Kick username</Label>
+                    <Input id="ki" value={kick} onChange={(e) => setKick(e.target.value)} placeholder="např. xqc" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />{t("profile.notifications")}
                 </h3>
                 <div className="space-y-4">
