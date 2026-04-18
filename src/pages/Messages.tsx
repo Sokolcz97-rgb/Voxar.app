@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
 
@@ -228,7 +229,10 @@ const Messages = () => {
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
                         activeId === c.id ? "bg-primary/15 border border-primary/40" : "hover:bg-secondary/50"
                       }`}>
-                      <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10 shrink-0" />
+                      <div className="relative shrink-0">
+                        <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10" />
+                        <PresenceDot userId={c.other?.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
                         <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
@@ -251,7 +255,10 @@ const Messages = () => {
             ) : (
               <>
                 <div className="border-b border-border px-5 py-3 flex items-center gap-3">
-                  <UserAvatar url={active?.other?.avatar_url} name={active?.other?.display_name || active?.other?.username} className="h-9 w-9" />
+                  <div className="relative">
+                    <UserAvatar url={active?.other?.avatar_url} name={active?.other?.display_name || active?.other?.username} className="h-9 w-9" />
+                    <PresenceDot userId={active?.other?.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                  </div>
                   <div className="min-w-0">
                     <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || t("common.player")}</div>
                     {active?.other?.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}

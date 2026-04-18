@@ -5,60 +5,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Users } from "lucide-react";
+import { usePresence } from "@/contexts/PresenceContext";
+import { PresenceDot } from "@/components/PresenceDot";
 
-type OnlineUser = {
+type Profile = {
   user_id: string;
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
 };
 
-const PRESENCE_CHANNEL = "presence:online-users";
-
 export const OnlineUsers = ({ currentUserId }: { currentUserId: string }) => {
   const { t } = useTranslation();
-  const [users, setUsers] = useState<OnlineUser[]>([]);
+  const { onlineIds } = usePresence();
+  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
-    const channel = supabase.channel(PRESENCE_CHANNEL, {
-      config: { presence: { key: currentUserId } },
-    });
-
-    const refresh = async () => {
-      const state = channel.presenceState<{ user_id: string }>();
-      const ids = Array.from(
-        new Set(
-          Object.values(state)
-            .flat()
-            .map((p) => p.user_id)
-            .filter(Boolean),
-        ),
-      );
-      if (ids.length === 0) {
-        setUsers([]);
-        return;
-      }
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,username,avatar_url")
-        .in("user_id", ids);
-      setUsers((data as OnlineUser[]) ?? []);
-    };
-
-    channel
-      .on("presence", { event: "sync" }, refresh)
-      .on("presence", { event: "join" }, refresh)
-      .on("presence", { event: "leave" }, refresh)
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ user_id: currentUserId, online_at: new Date().toISOString() });
-        }
+    const ids = Array.from(onlineIds);
+    if (ids.length === 0) {
+      setProfiles([]);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("user_id,display_name,username,avatar_url")
+      .in("user_id", ids)
+      .then(({ data }) => {
+        if (!cancelled) setProfiles((data as Profile[]) ?? []);
       });
-
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
     };
-  }, [currentUserId]);
+  }, [onlineIds]);
 
   return (
     <Card className="glass border-border p-6 mb-10">
@@ -66,29 +45,22 @@ export const OnlineUsers = ({ currentUserId }: { currentUserId: string }) => {
         <h3 className="font-display text-lg font-bold flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           {t("dashboard.online")}
-          <span className="text-sm font-normal text-muted-foreground">({users.length})</span>
+          <span className="text-sm font-normal text-muted-foreground">({profiles.length})</span>
         </h3>
       </div>
 
-      {users.length === 0 ? (
+      {profiles.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("dashboard.noOnline")}</p>
       ) : (
         <ul className="flex flex-wrap gap-3">
-          {users.map((u) => {
+          {profiles.map((u) => {
             const name = u.display_name || u.username || t("common.player");
             const isMe = u.user_id === currentUserId;
             const content = (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:border-primary/50 transition-colors bg-card/40">
                 <div className="relative">
-                  <UserAvatar
-                    url={u.avatar_url}
-                    name={name}
-                    className="h-8 w-8"
-                  />
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background"
-                    aria-hidden
-                  />
+                  <UserAvatar url={u.avatar_url} name={name} className="h-8 w-8" />
+                  <PresenceDot userId={u.user_id} className="absolute -bottom-0.5 -right-0.5" />
                 </div>
                 <span className="text-sm font-medium">
                   {name}
