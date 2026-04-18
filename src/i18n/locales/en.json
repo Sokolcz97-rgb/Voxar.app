@@ -312,7 +312,34 @@
     "original": "Original",
     "result": "Result",
     "staffOnly": "Staff only",
-    "actions": { "blocked": "Blocked", "filtered": "Filtered" },
-    "sources": { "dm": "DM", "forum_thread": "Thread", "forum_post": "Post", "ticket": "Ticket", "ticket_reply": "Reply" }
+    "actions": {
+      "blocked": "Blocked",
+      "filtered": "Filtered"
+    },
+    "sources": {
+      "dm": "DM",
+      "forum_thread": "Thread",
+      "forum_post": "Post",
+      "ticket": "Ticket",
+      "ticket_reply": "Reply"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Navigate the app faster",
+    "global": "Global",
+    "navigate": "Navigate (G + key)",
+    "searchPrefixes": "Search prefixes",
+    "openSearch": "Open search",
+    "openHelp": "Open this help",
+    "closeDialog": "Close dialog",
+    "goHome": "Home",
+    "goForum": "Forum",
+    "goDashboard": "Dashboard",
+    "goMessages": "Messages",
+    "goTickets": "Tickets",
+    "goProfile": "Profile",
+    "prefixUsers": "Search users",
+    "prefixThreads": "Search threads"
   }
 }
