@@ -58,6 +58,11 @@
       "players": "Hráčů",
       "streams": "Streamů",
       "online": "Online"
+    },
+    "topPlayers": {
+      "title": "Top hráči",
+      "viewAll": "Zobrazit žebříček",
+      "reactions": "reakcí"
     }
   },
   "auth": {
