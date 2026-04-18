@@ -901,6 +901,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_notification_prefs: {
+        Args: never
+        Returns: {
+          notify_browser: boolean
+          notify_sound: boolean
+        }[]
+      }
       get_or_create_conversation: {
         Args: { _other_user: string }
         Returns: string

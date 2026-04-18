@@ -32,21 +32,27 @@ const Profile = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setDisplayName(data.display_name ?? "");
-          setUsername(data.username ?? "");
-          setBio(data.bio ?? "");
-          setAvatarUrl(data.avatar_url ?? null);
-          setNotifySound(data.notify_sound ?? true);
-          setNotifyBrowser(data.notify_browser ?? true);
-          setTwitch((data as any).twitch_username ?? "");
-          setYoutube((data as any).youtube_handle ?? "");
-          setKick((data as any).kick_username ?? "");
-        }
-        setLoading(false);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, username, bio, avatar_url, twitch_username, youtube_handle, kick_username")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setDisplayName(data.display_name ?? "");
+        setUsername(data.username ?? "");
+        setBio(data.bio ?? "");
+        setAvatarUrl(data.avatar_url ?? null);
+        setTwitch((data as any).twitch_username ?? "");
+        setYoutube((data as any).youtube_handle ?? "");
+        setKick((data as any).kick_username ?? "");
+      }
+      const { data: prefs } = await supabase.rpc("get_my_notification_prefs");
+      const row = Array.isArray(prefs) ? prefs[0] : null;
+      setNotifySound(row?.notify_sound ?? true);
+      setNotifyBrowser(row?.notify_browser ?? true);
+      setLoading(false);
+    })();
   }, [user]);
 
   const save = async (e: React.FormEvent) => {

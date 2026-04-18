@@ -49,12 +49,11 @@ export function useNotifications() {
     }
     ensureNotificationPermission();
     (async () => {
-      const { data: prof } = await supabase
-        .from("profiles").select("notify_sound, notify_browser")
-        .eq("user_id", user.id).maybeSingle();
+      const { data: prof } = await supabase.rpc("get_my_notification_prefs");
+      const row = Array.isArray(prof) ? prof[0] : null;
       prefs.current = {
-        sound: prof?.notify_sound ?? true,
-        browser: prof?.notify_browser ?? true,
+        sound: row?.notify_sound ?? true,
+        browser: row?.notify_browser ?? true,
       };
       await loadConvs(user.id);
       await loadMessages(user.id);
