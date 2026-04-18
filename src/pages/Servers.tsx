@@ -130,13 +130,13 @@ const Servers = () => {
           <section className="mb-12">
             <div className="mb-5">
               <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">
-                Komunita
+                {t("servers.communityTagline")}
               </p>
               <h2 className="font-display font-black text-3xl md:text-4xl mt-2">
-                Discord servery
+                {t("servers.discordTitle")}
               </h2>
               <p className="text-muted-foreground mt-2 max-w-xl">
-                Připoj se k naší komunitě na Discordu.
+                {t("servers.discordDesc")}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
