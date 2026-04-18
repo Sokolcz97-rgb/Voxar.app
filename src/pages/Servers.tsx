@@ -197,7 +197,7 @@ const Servers = () => {
               }}
               className="bg-primary text-primary-foreground hover:bg-primary-glow"
             >
-              <Plus className="h-4 w-4 mr-1" /> Přidat server
+              <Plus className="h-4 w-4 mr-1" /> {t("servers.addServer")}
             </Button>
           )}
         </div>
