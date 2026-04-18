@@ -149,8 +149,8 @@ const Index = () => {
             {/* Stats strip */}
             <div className="grid grid-cols-3 gap-6 mt-20 max-w-2xl mx-auto">
               {[
-                { value: "12K+", label: t("home.stats.players") },
-                { value: "340", label: t("home.stats.streams") },
+                { value: String(stats.players), label: t("home.stats.players") },
+                { value: String(stats.streams), label: t("home.stats.streams") },
                 { value: "24/7", label: t("home.stats.online") },
               ].map((s) => (
                 <div key={s.label} className="glass rounded-lg p-4 hover:border-primary/50 transition-all">
