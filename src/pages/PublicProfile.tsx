@@ -257,7 +257,7 @@ const PublicProfile = () => {
               )}
             </Card>
 
-            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+            <div className="grid sm:grid-cols-3 gap-4 mt-6">
               <Card className="glass border-border p-5">
                 <FileText className="h-5 w-5 text-primary mb-3" />
                 <div className="font-display text-3xl font-bold">{counts.threads}</div>
@@ -271,6 +271,28 @@ const PublicProfile = () => {
                 <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
                   {t("dashboard.stats.posts")}
                 </div>
+              </Card>
+              <Card className="glass border-border p-5">
+                <Heart className="h-5 w-5 text-primary mb-3" />
+                <div className="font-display text-3xl font-bold">{reactions.total}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
+                  {t("publicProfile.reactionsReceived")}
+                </div>
+                {reactions.total > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {Object.entries(reactions.byEmoji)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([emoji, n]) => (
+                        <span
+                          key={emoji}
+                          className="inline-flex items-center gap-1 text-xs rounded-full border border-border bg-muted/40 px-2 py-0.5"
+                        >
+                          <span>{emoji}</span>
+                          <span className="font-medium">{n}</span>
+                        </span>
+                      ))}
+                  </div>
+                )}
               </Card>
             </div>
 

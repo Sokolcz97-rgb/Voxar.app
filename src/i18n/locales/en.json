@@ -136,7 +136,8 @@
     "noThreads": "This user hasn't started any thread yet",
     "recentPosts": "Recent posts",
     "noPosts": "This user hasn't posted yet",
-    "unknownThread": "Unknown thread"
+    "unknownThread": "Unknown thread",
+    "reactionsReceived": "Reactions received"
   },
   "account": {
     "changePassword": "Change password",
