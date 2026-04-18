@@ -55,3 +55,29 @@ export const getUserRankings = async (userId: string): Promise<Partial<Record<Lb
 
   return result;
 };
+
+export const getTopAllTime = async (limit = 3): Promise<Record<string, number>> => {
+  const { data: reacts } = await supabase.from("post_reactions").select("post_id");
+  const rows = (reacts ?? []) as { post_id: string }[];
+  if (rows.length === 0) return {};
+
+  const postIds = Array.from(new Set(rows.map((r) => r.post_id)));
+  const { data: posts } = await supabase
+    .from("forum_posts")
+    .select("id,user_id")
+    .in("id", postIds);
+  const owner: Record<string, string> = {};
+  (posts ?? []).forEach((p) => (owner[p.id] = p.user_id));
+
+  const tally: Record<string, number> = {};
+  rows.forEach((r) => {
+    const o = owner[r.post_id];
+    if (!o) return;
+    tally[o] = (tally[o] ?? 0) + 1;
+  });
+
+  const ordered = Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, limit);
+  const result: Record<string, number> = {};
+  ordered.forEach(([uid], i) => (result[uid] = i + 1));
+  return result;
+};
