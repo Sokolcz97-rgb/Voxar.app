@@ -231,6 +231,51 @@ export type Database = {
         }
         Relationships: []
       }
+      live_streams_cache: {
+        Row: {
+          checked_at: string
+          game_name: string | null
+          handle: string
+          id: string
+          is_live: boolean
+          platform: string
+          started_at: string | null
+          stream_url: string
+          thumbnail_url: string | null
+          title: string | null
+          user_id: string
+          viewer_count: number | null
+        }
+        Insert: {
+          checked_at?: string
+          game_name?: string | null
+          handle: string
+          id?: string
+          is_live?: boolean
+          platform: string
+          started_at?: string | null
+          stream_url: string
+          thumbnail_url?: string | null
+          title?: string | null
+          user_id: string
+          viewer_count?: number | null
+        }
+        Update: {
+          checked_at?: string
+          game_name?: string | null
+          handle?: string
+          id?: string
+          is_live?: boolean
+          platform?: string
+          started_at?: string | null
+          stream_url?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          user_id?: string
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -416,12 +461,15 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          kick_username: string | null
           last_seen_at: string | null
           notify_browser: boolean
           notify_sound: boolean
+          twitch_username: string | null
           updated_at: string
           user_id: string
           username: string | null
+          youtube_handle: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -429,12 +477,15 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          kick_username?: string | null
           last_seen_at?: string | null
           notify_browser?: boolean
           notify_sound?: boolean
+          twitch_username?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
+          youtube_handle?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -442,12 +493,15 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          kick_username?: string | null
           last_seen_at?: string | null
           notify_browser?: boolean
           notify_sound?: boolean
+          twitch_username?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
+          youtube_handle?: string | null
         }
         Relationships: []
       }
@@ -645,6 +699,33 @@ export type Database = {
         }
         Relationships: []
       }
+      streamer_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          is_included: boolean
+          note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_included?: boolean
+          note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_included?: boolean
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_replies: {
         Row: {
           content: string
@@ -757,6 +838,12 @@ export type Database = {
     }
     Functions: {
       can: { Args: { _action: string; _module: string }; Returns: boolean }
+      get_featured_streamers: {
+        Args: never
+        Returns: {
+          user_id: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { _other_user: string }
         Returns: string
