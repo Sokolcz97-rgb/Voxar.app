@@ -14,6 +14,8 @@ import PublicProfile from "./pages/PublicProfile.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminModeration from "./pages/AdminModeration.tsx";
+import AdminPages from "./pages/AdminPages.tsx";
+import DynamicPage from "./pages/DynamicPage.tsx";
 import Forum from "./pages/Forum.tsx";
 import ForumCategory from "./pages/ForumCategory.tsx";
 import ForumThread from "./pages/ForumThread.tsx";
@@ -40,6 +42,7 @@ const AppRoutes = () => {
       <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
+      <Route path="/admin/pages" element={<ProtectedRoute requireEditor><AdminPages /></ProtectedRoute>} />
       <Route path="/forum" element={<Forum />} />
       <Route path="/forum/:slug" element={<ForumCategory />} />
       <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
@@ -47,6 +50,7 @@ const AppRoutes = () => {
       <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
       <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
