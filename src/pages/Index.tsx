@@ -142,6 +142,9 @@ const Index = () => {
           </div>
         </section>
 
+        {/* LIVE STREAMS */}
+        <LiveStreamsSection />
+
         {/* TOP PLAYERS */}
         <TopPlayersPreview />
 
