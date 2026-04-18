@@ -10,10 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Search, UserCog } from "lucide-react";
+import { ArrowLeft, Shield, Search, UserCog, Ban } from "lucide-react";
 
-type AppRole = "admin" | "editor" | "user";
-const ALL_ROLES: AppRole[] = ["admin", "editor", "user"];
+type AppRole = "admin" | "editor" | "user" | "banned";
+const ALL_ROLES: AppRole[] = ["admin", "editor", "user", "banned"];
 
 interface ProfileRow {
   user_id: string;
@@ -61,17 +61,21 @@ const AdminUsers = () => {
       toast.error(t("adminUsers.cantRemoveSelf"));
       return;
     }
+    if (uid === user?.id && role === "banned") {
+      toast.error(t("adminUsers.cantBanSelf"));
+      return;
+    }
     const has = (rolesByUser[uid] ?? []).includes(role);
     if (has) {
       const { error } = await supabase.from("user_roles").delete().eq("user_id", uid).eq("role", role);
       if (error) return toast.error(error.message);
       setRolesByUser((m) => ({ ...m, [uid]: (m[uid] ?? []).filter((r) => r !== role) }));
-      toast.success(t("adminUsers.roleRemoved"));
+      toast.success(role === "banned" ? t("adminUsers.userUnbanned") : t("adminUsers.roleRemoved"));
     } else {
       const { error } = await supabase.from("user_roles").insert({ user_id: uid, role });
       if (error) return toast.error(error.message);
       setRolesByUser((m) => ({ ...m, [uid]: [...(m[uid] ?? []), role] }));
-      toast.success(t("adminUsers.roleAdded"));
+      toast.success(role === "banned" ? t("adminUsers.userBanned") : t("adminUsers.roleAdded"));
     }
   };
 
@@ -147,15 +151,19 @@ const AdminUsers = () => {
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {userRoles.length === 0 && <Badge variant="outline" className="text-xs">user</Badge>}
                       {userRoles.map((r) => (
-                        <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="text-xs">
-                          {r}
+                        <Badge
+                          key={r}
+                          variant={r === "admin" ? "default" : r === "banned" ? "destructive" : "secondary"}
+                          className="text-xs"
+                        >
+                          {r === "banned" ? t("adminUsers.banned") : r}
                         </Badge>
                       ))}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {ALL_ROLES.filter((r) => r !== "user").map((role) => {
+                  {(["admin", "editor"] as AppRole[]).map((role) => {
                     const active = userRoles.includes(role);
                     return (
                       <Button
@@ -169,6 +177,20 @@ const AdminUsers = () => {
                       </Button>
                     );
                   })}
+                  {(() => {
+                    const banned = userRoles.includes("banned");
+                    return (
+                      <Button
+                        size="sm"
+                        variant={banned ? "default" : "outline"}
+                        onClick={() => toggleRole(p.user_id, "banned")}
+                        className={banned ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "border-destructive/50 text-destructive hover:bg-destructive/10"}
+                      >
+                        <Ban className="h-3.5 w-3.5 mr-1" />
+                        {banned ? t("adminUsers.unban") : t("adminUsers.ban")}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </Card>
             );
