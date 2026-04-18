@@ -75,7 +75,14 @@
     "bio": "Bio",
     "bioPlaceholder": "A few words about you...",
     "saveFailed": "Save failed",
-    "saved": "Profile saved"
+    "saved": "Profile saved",
+    "notifications": "Notifications",
+    "notifSound": "Sound alert",
+    "notifSoundDesc": "Short beep when a new DM arrives.",
+    "notifBrowser": "Browser notifications",
+    "notifBrowserDesc": "Pop-up alert when you're not on the chat tab.",
+    "notifPermDenied": "Notifications denied in the browser",
+    "test": "Test"
   },
   "avatar": {
     "upload": "Upload avatar",

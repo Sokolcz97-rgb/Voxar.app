@@ -75,7 +75,14 @@
     "bio": "Bio",
     "bioPlaceholder": "Pár slov o tobě...",
     "saveFailed": "Uložení selhalo",
-    "saved": "Profil uložen"
+    "saved": "Profil uložen",
+    "notifications": "Notifikace",
+    "notifSound": "Zvukové upozornění",
+    "notifSoundDesc": "Krátký beep při nové DM zprávě.",
+    "notifBrowser": "Browser notifikace",
+    "notifBrowserDesc": "Vyskakovací upozornění, když nejsi na záložce s chatem.",
+    "notifPermDenied": "Notifikace zamítnuty v prohlížeči",
+    "test": "Test"
   },
   "avatar": {
     "upload": "Nahrát avatar",
