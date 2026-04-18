@@ -198,7 +198,13 @@
     "roleRemoved": "Role odebrána",
     "cantRemoveSelf": "Nemůžeš si odebrat vlastní admin roli",
     "adminOnly": "Pouze pro adminy",
-    "adminOnlyDesc": "Tato sekce vyžaduje admin oprávnění."
+    "adminOnlyDesc": "Tato sekce vyžaduje admin oprávnění.",
+    "ban": "Zabanovat",
+    "unban": "Odbanovat",
+    "banned": "Zabanován",
+    "userBanned": "Uživatel zabanován",
+    "userUnbanned": "Ban zrušen",
+    "cantBanSelf": "Nemůžeš zabanovat sám sebe"
   },
   "moderation": {
     "blocked": "Obsah zablokován",

@@ -198,7 +198,13 @@
     "roleRemoved": "Role removed",
     "cantRemoveSelf": "You can't remove your own admin role",
     "adminOnly": "Admins only",
-    "adminOnlyDesc": "This section requires admin privileges."
+    "adminOnlyDesc": "This section requires admin privileges.",
+    "ban": "Ban",
+    "unban": "Unban",
+    "banned": "Banned",
+    "userBanned": "User banned",
+    "userUnbanned": "Ban lifted",
+    "cantBanSelf": "You can't ban yourself"
   },
   "moderation": {
     "blocked": "Content blocked",
