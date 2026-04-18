@@ -11,6 +11,7 @@ export function useNotifications() {
   const [openTickets, setOpenTickets] = useState(0);
   const isStaff = isAdmin || isEditor;
   const myConvIds = useRef<Set<string>>(new Set());
+  const prefs = useRef<{ sound: boolean; browser: boolean }>({ sound: true, browser: true });
 
   const loadConvs = async (uid: string) => {
     const { data: convs } = await supabase
@@ -48,6 +49,13 @@ export function useNotifications() {
     }
     ensureNotificationPermission();
     (async () => {
+      const { data: prof } = await supabase
+        .from("profiles").select("notify_sound, notify_browser")
+        .eq("user_id", user.id).maybeSingle();
+      prefs.current = {
+        sound: prof?.notify_sound ?? true,
+        browser: prof?.notify_browser ?? true,
+      };
       await loadConvs(user.id);
       await loadMessages(user.id);
       await loadTickets(user.id, isStaff);
@@ -72,12 +80,14 @@ export function useNotifications() {
             .from("profiles").select("display_name, username")
             .eq("user_id", msg.sender_id).maybeSingle();
           const name = prof?.display_name || prof?.username || t("common.player");
-          playBeep();
-          showNotification(
-            `${t("nav.messages")} — ${name}`,
-            msg.content.slice(0, 140),
-            () => { window.location.href = `/messages?with=${msg.sender_id}`; }
-          );
+          if (prefs.current.sound) playBeep();
+          if (prefs.current.browser) {
+            showNotification(
+              `${t("nav.messages")} — ${name}`,
+              msg.content.slice(0, 140),
+              () => { window.location.href = `/messages?with=${msg.sender_id}`; }
+            );
+          }
         }
       )
       .on(
