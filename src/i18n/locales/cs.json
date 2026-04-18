@@ -355,5 +355,8 @@
     "rangeAll": "Vše",
     "rangeMonth": "Tento měsíc",
     "rangeWeek": "Tento týden"
+  },
+  "rankBadge": {
+    "tooltip": "Umístění #{{rank}} v žebříčku — {{range}}"
   }
 }
