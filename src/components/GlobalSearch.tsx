@@ -225,7 +225,7 @@ export const GlobalSearch = () => {
                   }
                 >
                   <FileText className="h-4 w-4 mr-2 text-primary" />
-                  <span className="truncate">{th.title}</span>
+                  <span className="truncate"><Highlight text={th.title} query={query} /></span>
                 </CommandItem>
               ))}
             </CommandGroup>
