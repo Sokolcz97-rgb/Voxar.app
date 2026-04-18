@@ -211,5 +211,9 @@
     "blockedDesc": "Your message violates community rules and was not sent.",
     "filtered": "Profanity replaced with ★",
     "checking": "Checking content..."
+  },
+  "banned": {
+    "title": "Your account has been banned",
+    "desc": "You can't send messages, create threads, posts or tickets. If you think this is a mistake, contact an administrator."
   }
 }

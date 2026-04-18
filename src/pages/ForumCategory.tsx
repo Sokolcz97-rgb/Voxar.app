@@ -33,7 +33,7 @@ const slugify = (s: string) =>
 const ForumCategory = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isBanned } = useAuth();
   const { t, i18n } = useTranslation();
   const [category, setCategory] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
@@ -124,7 +124,7 @@ const ForumCategory = () => {
                 <h1 className="font-display font-black text-3xl md:text-4xl text-glow">{category.name}</h1>
                 {category.description && <p className="text-muted-foreground mt-2">{category.description}</p>}
               </div>
-              {user && (
+              {user && !isBanned && (
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">

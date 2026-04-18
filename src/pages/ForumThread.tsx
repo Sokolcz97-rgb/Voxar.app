@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -32,7 +33,7 @@ interface Thread {
 const ForumThread = () => {
   const { slug, threadSlug } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isBanned } = useAuth();
   const { t, i18n } = useTranslation();
   const [thread, setThread] = useState<Thread | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -150,7 +151,10 @@ const ForumThread = () => {
               ))}
             </div>
 
-            {user && !thread.is_locked && (
+            {user && !thread.is_locked && isBanned && (
+              <div className="mt-8"><BannedNotice /></div>
+            )}
+            {user && !thread.is_locked && !isBanned && (
               <form onSubmit={sendReply} className="mt-8 space-y-3">
                 <Textarea required rows={4} value={reply} onChange={(e) => setReply(e.target.value)}
                   placeholder={t("forum.replyPlaceholder")} className="resize-none" />
