@@ -20,7 +20,9 @@
     "users": "Uživatelé",
     "recent": "Poslední vyhledávání",
     "clear": "Vymazat",
-    "remove": "Odstranit"
+    "remove": "Odstranit",
+    "filterAll": "Vše",
+    "noResultsInFilter": "V tomto filtru nic není"
   },
   "common": {
     "back": "Zpět",
@@ -152,6 +154,8 @@
   "avatar": {
     "upload": "Nahrát avatar",
     "remove": "Odstranit",
+    "filterAll": "Vše",
+    "noResultsInFilter": "V tomto filtru nic není",
     "uploaded": "Avatar nahrán",
     "removed": "Avatar odstraněn",
     "notImage": "Soubor musí být obrázek",

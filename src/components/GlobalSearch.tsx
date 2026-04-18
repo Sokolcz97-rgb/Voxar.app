@@ -21,8 +21,13 @@ export const GlobalSearch = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "threads" | "posts" | "users">("all");
   const { loading, threads, posts, users, reset } = useGlobalSearch(query);
   const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistory();
+
+  const showThreads = (filter === "all" || filter === "threads") && threads.length > 0;
+  const showPosts = (filter === "all" || filter === "posts") && posts.length > 0;
+  const showUsers = (filter === "all" || filter === "users") && users.length > 0;
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
@@ -40,6 +45,7 @@ export const GlobalSearch = () => {
   useEffect(() => {
     if (!open) {
       setQuery("");
+      setFilter("all");
       reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,6 +82,30 @@ export const GlobalSearch = () => {
           value={query}
           onValueChange={setQuery}
         />
+        {query.trim().length >= 2 && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/50 overflow-x-auto">
+            {([
+              { id: "all", label: t("search.filterAll"), count: threads.length + posts.length + users.length },
+              { id: "threads", label: t("search.threads"), count: threads.length },
+              { id: "posts", label: t("search.posts"), count: posts.length },
+              { id: "users", label: t("search.users"), count: users.length },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id)}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
+                  filter === tab.id
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {tab.label}
+                <span className="ml-1 opacity-60">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <CommandList>
           {query.trim().length < 2 && (
             <>
@@ -131,7 +161,11 @@ export const GlobalSearch = () => {
 
           {empty && <CommandEmpty>{t("search.noResults")}</CommandEmpty>}
 
-          {threads.length > 0 && (
+          {!loading && query.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
+            <CommandEmpty>{t("search.noResultsInFilter")}</CommandEmpty>
+          )}
+
+          {showThreads && (
             <CommandGroup heading={t("search.threads")}>
               {threads.map((th) => (
                 <CommandItem
@@ -148,9 +182,9 @@ export const GlobalSearch = () => {
             </CommandGroup>
           )}
 
-          {posts.length > 0 && (
+          {showPosts && (
             <>
-              {threads.length > 0 && <CommandSeparator />}
+              {showThreads && <CommandSeparator />}
               <CommandGroup heading={t("search.posts")}>
                 {posts.map((p) => (
                   <CommandItem
@@ -177,9 +211,9 @@ export const GlobalSearch = () => {
             </>
           )}
 
-          {users.length > 0 && (
+          {showUsers && (
             <>
-              {(threads.length > 0 || posts.length > 0) && <CommandSeparator />}
+              {(showThreads || showPosts) && <CommandSeparator />}
               <CommandGroup heading={t("search.users")}>
                 {users.map((u) => {
                   const name = u.display_name || u.username || "—";
