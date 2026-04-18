@@ -215,6 +215,54 @@ export type Database = {
         }
         Relationships: []
       }
+      pages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          draft_blocks: Json
+          id: string
+          is_published: boolean
+          is_system: boolean
+          nav_label: string | null
+          nav_position: number
+          published_at: string | null
+          published_blocks: Json
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          draft_blocks?: Json
+          id?: string
+          is_published?: boolean
+          is_system?: boolean
+          nav_label?: string | null
+          nav_position?: number
+          published_at?: string | null
+          published_blocks?: Json
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          draft_blocks?: Json
+          id?: string
+          is_published?: boolean
+          is_system?: boolean
+          nav_label?: string | null
+          nav_position?: number
+          published_at?: string | null
+          published_blocks?: Json
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
