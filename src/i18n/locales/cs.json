@@ -9,6 +9,16 @@
     "signOut": "Odhlásit se",
     "signIn": "Přihlásit"
   },
+  "search": {
+    "label": "Hledat",
+    "placeholder": "Hledat...",
+    "inputPlaceholder": "Hledej vlákna, příspěvky, uživatele...",
+    "hint": "Zadej alespoň 2 znaky pro hledání",
+    "noResults": "Nic nenalezeno",
+    "threads": "Vlákna",
+    "posts": "Příspěvky",
+    "users": "Uživatelé"
+  },
   "common": {
     "back": "Zpět",
     "loading": "Načítání...",
