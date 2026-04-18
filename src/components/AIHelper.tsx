@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bot, Send, X, Loader2, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Markdown } from "@/components/Markdown";
 
 interface Msg {
   role: "user" | "assistant";
@@ -220,7 +221,11 @@ export function AIHelper() {
                     ? "bg-primary text-primary-foreground rounded-br-sm"
                     : "bg-secondary text-secondary-foreground rounded-bl-sm border border-border"
                 }`}>
-                  <p className="whitespace-pre-wrap break-words">{m.content || (loading && i === messages.length - 1 ? "…" : "")}</p>
+                  {m.role === "assistant" ? (
+                    <Markdown content={m.content || (loading && i === messages.length - 1 ? "…" : "")} />
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                  )}
                 </div>
               </div>
             ))}
