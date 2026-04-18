@@ -33,7 +33,7 @@ export function EditPageButton({ slug }: { slug: string }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_-5px_hsl(var(--primary)/0.6)] hover:bg-primary-glow transition-all hover:scale-105"
+        className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_-5px_hsl(var(--primary)/0.6)] hover:bg-primary-glow transition-all hover:scale-105"
         aria-label="Upravit stránku"
       >
         <Pencil className="h-4 w-4" />
