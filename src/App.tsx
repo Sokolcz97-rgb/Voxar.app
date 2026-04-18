@@ -21,6 +21,7 @@ import Messages from "./pages/Messages.tsx";
 import Tickets from "./pages/Tickets.tsx";
 import TicketDetail from "./pages/TicketDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Leaderboard from "./pages/Leaderboard.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";

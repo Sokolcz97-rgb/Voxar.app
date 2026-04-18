@@ -7,7 +7,8 @@
     "profile": "Profil",
     "tickets": "Tickety",
     "signOut": "Odhlásit se",
-    "signIn": "Přihlásit"
+    "signIn": "Přihlásit",
+    "leaderboard": "Žebříček"
   },
   "search": {
     "label": "Hledat",
@@ -346,5 +347,10 @@
   "reactions": {
     "you": "Ty",
     "andMore": "a další {{count}}"
+  },
+  "leaderboard": {
+    "title": "Žebříček",
+    "subtitle": "Top 10 hráčů podle získaných reakcí",
+    "empty": "Zatím nikdo nemá žádné reakce"
   }
 }
