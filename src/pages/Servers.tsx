@@ -227,7 +227,7 @@ const Servers = () => {
         </div>
 
         <Input
-          placeholder="Hledat server…"
+          placeholder={t("servers.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="mb-6 max-w-md"
@@ -236,7 +236,7 @@ const Servers = () => {
         {filtered.length === 0 ? (
           <Card className="glass border-border p-10 text-center">
             <ServerIcon className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Žádné servery zde zatím nejsou.</p>
+            <p className="text-muted-foreground">{t("servers.empty")}</p>
           </Card>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -271,16 +271,16 @@ const Servers = () => {
                     {game?.connection_type === "ip_port" ? (
                       s.is_online ? (
                         <Badge className="bg-green-500/20 text-green-400 border-green-500/40 gap-1">
-                          <Wifi className="h-3 w-3" /> Online
+                          <Wifi className="h-3 w-3" /> {t("servers.online")}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-muted-foreground gap-1">
-                          <WifiOff className="h-3 w-3" /> Offline
+                          <WifiOff className="h-3 w-3" /> {t("servers.offline")}
                         </Badge>
                       )
                     ) : (
                       <Badge variant="outline" className="text-primary border-primary/40">
-                        Invite
+                        {t("servers.invite")}
                       </Badge>
                     )}
                   </div>
@@ -318,7 +318,7 @@ const Servers = () => {
                           rel="noreferrer"
                           className="hover:text-primary inline-flex items-center gap-1"
                         >
-                          <Globe className="h-3 w-3" /> Web
+                          <Globe className="h-3 w-3" /> {t("servers.web")}
                         </a>
                       )}
                       {s.discord_url && (
@@ -328,7 +328,7 @@ const Servers = () => {
                           rel="noreferrer"
                           className="hover:text-primary"
                         >
-                          Discord
+                          {t("servers.discord")}
                         </a>
                       )}
                     </div>
@@ -338,7 +338,7 @@ const Servers = () => {
                     <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
                       {game?.connection_type === "ip_port" && (
                         <Button size="sm" variant="ghost" onClick={() => pingNow(s.id)}>
-                          Ping
+                          {t("servers.ping")}
                         </Button>
                       )}
                       <Button
@@ -349,7 +349,7 @@ const Servers = () => {
                           setOpenForm(true);
                         }}
                       >
-                        <Pencil className="h-3 w-3 mr-1" /> Upravit
+                        <Pencil className="h-3 w-3 mr-1" /> {t("servers.edit")}
                       </Button>
                       <Button
                         size="sm"
