@@ -38,6 +38,7 @@ const Profile = () => {
   const [twitch, setTwitch] = useState("");
   const [youtube, setYoutube] = useState("");
   const [kick, setKick] = useState("");
+  const [soundId, setSoundId] = useState<NotifSoundId>(getNotifSoundId());
 
   useEffect(() => {
     if (!user) return;
@@ -189,15 +190,47 @@ const Profile = () => {
                         <p className="text-xs text-muted-foreground">{t("profile.notifSoundDesc")}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {notifySound && (
-                        <Button type="button" variant="ghost" size="sm" onClick={playBeep}>
-                          {t("profile.test")}
-                        </Button>
-                      )}
-                      <Switch id="ns" checked={notifySound} onCheckedChange={setNotifySound} />
-                    </div>
+                    <Switch id="ns" checked={notifySound} onCheckedChange={setNotifySound} />
                   </div>
+                  {notifySound && (
+                    <div className="flex items-center justify-between gap-4 pl-7">
+                      <Label htmlFor="sound-select" className="text-sm text-muted-foreground">
+                        {t("profile.soundChoice")}
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={soundId}
+                          onValueChange={(v) => {
+                            const id = v as NotifSoundId;
+                            setSoundId(id);
+                            setNotifSoundId(id);
+                            playNotifSound(id);
+                          }}
+                        >
+                          <SelectTrigger id="sound-select" className="w-[180px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NOTIF_SOUNDS.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {t(s.labelKey)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => playNotifSound(soundId)}
+                          aria-label={t("profile.playSound")}
+                          title={t("profile.playSound")}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <Bell className="h-4 w-4 text-muted-foreground mt-0.5" />
