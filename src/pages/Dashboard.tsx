@@ -167,6 +167,7 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {user && <OnlineUsers currentUserId={user.id} />}
         {user && <ActivityChart userId={user.id} />}
         {user && <RecommendedThreads userId={user.id} />}
 
