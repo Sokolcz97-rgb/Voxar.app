@@ -208,7 +208,7 @@ const Servers = () => {
             size="sm"
             onClick={() => setActiveGame("all")}
           >
-            Vše ({servers.length})
+            {t("servers.all")} ({servers.length})
           </Button>
           {games.map((g) => {
             const count = servers.filter((s) => s.game_id === g.id).length;
