@@ -12,8 +12,8 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Shield, Search, UserCog, Ban } from "lucide-react";
 
-type AppRole = "admin" | "editor" | "user" | "banned";
-const ALL_ROLES: AppRole[] = ["admin", "editor", "user", "banned"];
+type AppRole = "admin" | "editor" | "user" | "banned" | "content_creator";
+const ALL_ROLES: AppRole[] = ["admin", "editor", "content_creator", "user", "banned"];
 
 interface ProfileRow {
   user_id: string;
