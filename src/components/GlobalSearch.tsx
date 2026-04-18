@@ -45,6 +45,7 @@ export const GlobalSearch = () => {
   useEffect(() => {
     if (!open) {
       setQuery("");
+      setFilter("all");
       reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,6 +82,30 @@ export const GlobalSearch = () => {
           value={query}
           onValueChange={setQuery}
         />
+        {query.trim().length >= 2 && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/50 overflow-x-auto">
+            {([
+              { id: "all", label: t("search.filterAll"), count: threads.length + posts.length + users.length },
+              { id: "threads", label: t("search.threads"), count: threads.length },
+              { id: "posts", label: t("search.posts"), count: posts.length },
+              { id: "users", label: t("search.users"), count: users.length },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id)}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
+                  filter === tab.id
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {tab.label}
+                <span className="ml-1 opacity-60">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <CommandList>
           {query.trim().length < 2 && (
             <>
