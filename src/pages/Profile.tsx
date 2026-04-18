@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2 } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { ensureNotificationPermission, playBeep } from "@/lib/notify";
@@ -26,6 +26,9 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [notifySound, setNotifySound] = useState(true);
   const [notifyBrowser, setNotifyBrowser] = useState(true);
+  const [twitch, setTwitch] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [kick, setKick] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -38,6 +41,9 @@ const Profile = () => {
           setAvatarUrl(data.avatar_url ?? null);
           setNotifySound(data.notify_sound ?? true);
           setNotifyBrowser(data.notify_browser ?? true);
+          setTwitch((data as any).twitch_username ?? "");
+          setYoutube((data as any).youtube_handle ?? "");
+          setKick((data as any).kick_username ?? "");
         }
         setLoading(false);
       });
@@ -54,7 +60,10 @@ const Profile = () => {
         bio,
         notify_sound: notifySound,
         notify_browser: notifyBrowser,
-      })
+        twitch_username: twitch.trim() || null,
+        youtube_handle: youtube.trim() || null,
+        kick_username: kick.trim() || null,
+      } as any)
       .eq("user_id", user.id);
     setSaving(false);
     if (error) {
@@ -111,6 +120,30 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="bio">{t("profile.bio")}</Label>
                 <Textarea id="bio" rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder={t("profile.bioPlaceholder")} />
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                  <Radio className="h-5 w-5 text-primary" /> Streamovací účty
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Vyplň své handle, aby se tvé živé streamy zobrazovaly na úvodce
+                  (pokud máš odpovídající roli).
+                </p>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="tw" className="text-[#9146FF]">Twitch username</Label>
+                    <Input id="tw" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder="např. shroud" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="yt" className="text-[#FF0033]">YouTube handle</Label>
+                    <Input id="yt" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="např. @MrBeast" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ki" className="text-[#53FC18]">Kick username</Label>
+                    <Input id="ki" value={kick} onChange={(e) => setKick(e.target.value)} placeholder="např. xqc" />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-border">

@@ -32,6 +32,7 @@ import AdminGames from "./pages/AdminGames.tsx";
 import AdminRoles from "./pages/AdminRoles.tsx";
 import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
+import AdminStreams from "./pages/AdminStreams.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -63,6 +64,7 @@ const AppRoutes = () => {
       <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminRoles /></ProtectedRoute>} />
       <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
+      <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
