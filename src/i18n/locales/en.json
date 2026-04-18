@@ -199,5 +199,11 @@
     "cantRemoveSelf": "You can't remove your own admin role",
     "adminOnly": "Admins only",
     "adminOnlyDesc": "This section requires admin privileges."
+  },
+  "moderation": {
+    "blocked": "Content blocked",
+    "blockedDesc": "Your message violates community rules and was not sent.",
+    "filtered": "Profanity replaced with ★",
+    "checking": "Checking content..."
   }
 }

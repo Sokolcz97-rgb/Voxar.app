@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { moderate } from "@/lib/moderate";
 
 interface Post {
   id: string;
@@ -64,13 +65,23 @@ const ForumThread = () => {
     e.preventDefault();
     if (!user || !thread) return;
     setSubmitting(true);
+
+    const mod = await moderate(reply);
+    if (mod.blocked) {
+      setSubmitting(false);
+      toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });
+      return;
+    }
+    const finalContent = mod.clean || reply;
+
     const { error } = await supabase.from("forum_posts")
-      .insert({ thread_id: thread.id, user_id: user.id, content: reply });
+      .insert({ thread_id: thread.id, user_id: user.id, content: finalContent });
     setSubmitting(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
+    if (mod.flagged) toast({ title: t("moderation.filtered") });
     setReply("");
     load();
   };

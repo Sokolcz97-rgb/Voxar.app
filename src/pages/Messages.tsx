@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { moderate } from "@/lib/moderate";
 
 interface Conversation {
   id: string;
@@ -117,14 +118,24 @@ const Messages = () => {
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !activeId || !text.trim()) return;
-    const content = text.trim();
+    const original = text.trim();
     setText("");
+
+    const mod = await moderate(original);
+    if (mod.blocked) {
+      toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });
+      setText(original);
+      return;
+    }
+    const finalContent = mod.clean || original;
+
     const { error } = await supabase.from("messages")
-      .insert({ conversation_id: activeId, sender_id: user.id, content });
+      .insert({ conversation_id: activeId, sender_id: user.id, content: finalContent });
     if (error) {
       toast({ title: t("messages.sendFailed"), description: error.message, variant: "destructive" });
-      setText(content);
+      setText(original);
     } else {
+      if (mod.flagged) toast({ title: t("moderation.filtered") });
       loadConversations();
     }
   };
