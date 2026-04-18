@@ -202,7 +202,7 @@ const ReleaseCard = ({ r }: { r: Release }) => (
         </div>
       )}
       {r.is_released && (
-        <Badge className="absolute top-2 left-2 bg-green-600 text-white">Vyšlo</Badge>
+        <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground">Vyšlo</Badge>
       )}
       {(r.hype ?? 0) > 50 && (
         <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground gap-1">
