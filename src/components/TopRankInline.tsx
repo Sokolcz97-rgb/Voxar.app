@@ -38,11 +38,16 @@ export const TopRankInline = ({ userId }: Props) => {
 
   if (!rank) return null;
 
+  const isFirst = rank === 1;
   return (
     <Link
       to="/leaderboard"
       title={t("rankBadge.tooltip", { rank, range: t("leaderboard.rangeAll") })}
-      className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border border-primary/40 bg-primary/10 text-primary px-1.5 py-0.5 hover:border-primary transition-colors"
+      className={
+        isFirst
+          ? "inline-flex items-center gap-1 text-[10px] font-bold rounded-full border bg-gold/15 text-gold px-1.5 py-0.5 animate-gold-pulse transition-colors"
+          : "inline-flex items-center gap-1 text-[10px] font-bold rounded-full border border-primary/40 bg-primary/10 text-primary px-1.5 py-0.5 hover:border-primary transition-colors"
+      }
     >
       <Trophy className="h-2.5 w-2.5" />
       <span>{medal(rank)}</span>
