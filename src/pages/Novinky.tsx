@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -38,18 +39,20 @@ const PLATFORM_OPTIONS = [
   "Android",
 ];
 
-const fmtDate = (iso: string | null, human: string | null) => {
-  if (!iso) return human ?? "TBA";
-  const d = new Date(iso);
-  return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "long", year: "numeric" });
-};
-
 const Novinky = () => {
+  const { t, i18n } = useTranslation();
   const [items, setItems] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [platform, setPlatform] = useState<string>("all");
   const [sort, setSort] = useState<"date_asc" | "date_desc" | "hype">("date_asc");
+
+  const fmtDate = (iso: string | null, human: string | null) => {
+    if (!iso) return human ?? t("novinky.tba");
+    const d = new Date(iso);
+    const locale = i18n.language === "cs" ? "cs-CZ" : "en-US";
+    return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+  };
 
   useEffect(() => {
     (async () => {
@@ -96,30 +99,31 @@ const Novinky = () => {
   const byGenre = useMemo(() => {
     const map = new Map<string, Release[]>();
     for (const r of filtered) {
-      const gs = r.genres.length ? r.genres : ["Ostatní"];
+      const gs = r.genres.length ? r.genres : [t("novinky.genreOther")];
       for (const g of gs) {
         if (!map.has(g)) map.set(g, []);
         map.get(g)!.push(r);
       }
     }
     return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [filtered]);
+  }, [filtered, t]);
 
   return (
     <div className="min-h-screen relative">
-      <SEO title="Novinky o hrách — NEONHUB" description="Nadcházející a nedávno vydané hry pro PC, PlayStation, Xbox a Switch. Filtry podle žánru a platformy." />
+      <SEO title={t("novinky.seoTitle")} description={t("novinky.seoDesc")} />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
         <div className="mb-8">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Novinky</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("novinky.tagline")}</p>
           <h1 className="font-display font-black text-4xl md:text-5xl mt-2">
-            Nadcházející herní vydání
+            {t("novinky.title")}
           </h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Co se chystá na Steamu, Epic Games Store, Ubisoft Connect, EA App, PlayStationu, Xboxu a Switchi.
-            Data z IGDB · {items.length} her · {allGenres.length} žánrů
+            {t("novinky.subtitle")}
+            <br />
+            {t("novinky.metaCount", { games: items.length, genres: allGenres.length })}
           </p>
         </div>
 
@@ -130,14 +134,14 @@ const Novinky = () => {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Hledat hru…"
+                placeholder={t("novinky.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
             <Select value={platform} onValueChange={setPlatform}>
-              <SelectTrigger><SelectValue placeholder="Platforma" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("novinky.platform")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Všechny platformy</SelectItem>
+                <SelectItem value="all">{t("novinky.allPlatforms")}</SelectItem>
                 {PLATFORM_OPTIONS.map((p) => (
                   <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}
@@ -146,9 +150,9 @@ const Novinky = () => {
             <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="date_asc">Od nejstarších po nejnovější</SelectItem>
-                <SelectItem value="date_desc">Od nejnovějších po nejstarší</SelectItem>
-                <SelectItem value="hype">Nejvíc očekávané (hype)</SelectItem>
+                <SelectItem value="date_asc">{t("novinky.sortDateAsc")}</SelectItem>
+                <SelectItem value="date_desc">{t("novinky.sortDateDesc")}</SelectItem>
+                <SelectItem value="hype">{t("novinky.sortHype")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -163,7 +167,7 @@ const Novinky = () => {
         ) : filtered.length === 0 ? (
           <Card className="glass border-border p-10 text-center">
             <p className="text-muted-foreground">
-              Žádné hry neodpovídají filtru. Pokud je seznam prázdný, admin musí spustit synchronizaci v
+              {t("novinky.emptyFilter")}
               <span className="text-primary"> /admin/novinky</span>.
             </p>
           </Card>
@@ -173,11 +177,13 @@ const Novinky = () => {
               <section key={genre}>
                 <div className="flex items-baseline gap-3 mb-4">
                   <h2 className="font-display font-bold text-2xl">{genre}</h2>
-                  <span className="text-xs text-muted-foreground">{list.length} her</span>
+                  <span className="text-xs text-muted-foreground">
+                    {list.length} {t("novinky.gamesShort")}
+                  </span>
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {list.slice(0, 12).map((r) => (
-                    <ReleaseCard key={`${genre}-${r.id}`} r={r} />
+                    <ReleaseCard key={`${genre}-${r.id}`} r={r} fmtDate={fmtDate} />
                   ))}
                 </div>
               </section>
@@ -189,7 +195,15 @@ const Novinky = () => {
   );
 };
 
-const ReleaseCard = ({ r }: { r: Release }) => (
+const ReleaseCard = ({
+  r,
+  fmtDate,
+}: {
+  r: Release;
+  fmtDate: (iso: string | null, human: string | null) => string;
+}) => {
+  const { t } = useTranslation();
+  return (
   <Card className="glass border-border overflow-hidden flex flex-col group hover:border-primary/50 transition-all">
     <div className="aspect-[3/4] bg-muted relative overflow-hidden">
       {r.cover_url ? (
@@ -201,11 +215,11 @@ const ReleaseCard = ({ r }: { r: Release }) => (
         />
       ) : (
         <div className="w-full h-full grid place-items-center text-muted-foreground text-xs">
-          Bez obrázku
+          {t("novinky.noImage")}
         </div>
       )}
       {r.is_released && (
-        <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground">Vyšlo</Badge>
+        <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground">{t("novinky.released")}</Badge>
       )}
       {(r.hype ?? 0) > 50 && (
         <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground gap-1">
@@ -235,11 +249,12 @@ const ReleaseCard = ({ r }: { r: Release }) => (
           rel="noopener noreferrer"
           className="mt-3 text-xs text-primary hover:underline inline-flex items-center gap-1"
         >
-          Detail na IGDB <ExternalLink className="h-3 w-3" />
+          {t("novinky.detailIgdb")} <ExternalLink className="h-3 w-3" />
         </a>
       )}
     </div>
   </Card>
-);
+  );
+};
 
 export default Novinky;
