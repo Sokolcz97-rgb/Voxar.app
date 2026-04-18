@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +7,6 @@ import { playBeep, showNotification, ensureNotificationPermission } from "@/lib/
 export function useNotifications() {
   const { user, isAdmin, isEditor } = useAuth();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [openTickets, setOpenTickets] = useState(0);
   const isStaff = isAdmin || isEditor;
@@ -78,7 +76,7 @@ export function useNotifications() {
           showNotification(
             `${t("nav.messages")} — ${name}`,
             msg.content.slice(0, 140),
-            () => navigate(`/messages?with=${msg.sender_id}`)
+            () => { window.location.href = `/messages?with=${msg.sender_id}`; }
           );
         }
       )
