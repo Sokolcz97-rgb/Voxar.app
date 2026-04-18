@@ -256,6 +256,24 @@ export const GlobalSearch = () => {
             </>
           )}
         </CommandList>
+        <div className="flex items-center justify-between gap-3 border-t border-border/50 px-3 py-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <kbd className="pointer-events-none inline-flex h-4 select-none items-center rounded border border-border bg-muted px-1 font-mono text-[10px]">↑</kbd>
+              <kbd className="pointer-events-none inline-flex h-4 select-none items-center rounded border border-border bg-muted px-1 font-mono text-[10px]">↓</kbd>
+              {t("search.kbdNavigate")}
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="pointer-events-none inline-flex h-4 select-none items-center rounded border border-border bg-muted px-1 font-mono text-[10px]">↵</kbd>
+              {t("search.kbdOpen")}
+            </span>
+            <span className="hidden sm:flex items-center gap-1">
+              <kbd className="pointer-events-none inline-flex h-4 select-none items-center rounded border border-border bg-muted px-1 font-mono text-[10px]">Esc</kbd>
+              {t("search.kbdClose")}
+            </span>
+          </div>
+          <span className="hidden md:inline opacity-70">{t("search.hintPrefix")}</span>
+        </div>
       </CommandDialog>
     </>
   );
