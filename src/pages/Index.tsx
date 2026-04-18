@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -5,10 +6,23 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
+import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
+import { fetchPageBySlug } from "@/hooks/usePages";
+import { BlocksRenderer } from "@/lib/pageBuilder/BlockRenderer";
+import type { Block } from "@/lib/pageBuilder/types";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, isEditor } = useAuth();
   const { t } = useTranslation();
+  const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
+
+  useEffect(() => {
+    fetchPageBySlug("home", isEditor).then((p) => {
+      if (!p) return;
+      const blocks = isEditor && p.draft_blocks?.length ? p.draft_blocks : p.published_blocks;
+      setCustomBlocks(blocks ?? []);
+    });
+  }, [isEditor]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -106,6 +120,13 @@ const Index = () => {
 
         {/* TOP PLAYERS */}
         <TopPlayersPreview />
+
+        {/* CUSTOM EDITOR BLOCKS */}
+        {customBlocks.length > 0 && (
+          <section className="container max-w-4xl pb-32">
+            <BlocksRenderer blocks={customBlocks} />
+          </section>
+        )}
       </main>
 
       <footer className="border-t border-border/60 py-8">
@@ -113,6 +134,7 @@ const Index = () => {
           <span className="font-display tracking-widest">NEONHUB</span> © 2026 — Herní komunita
         </div>
       </footer>
+      <EditPageButton slug="home" />
     </div>
   );
 };
