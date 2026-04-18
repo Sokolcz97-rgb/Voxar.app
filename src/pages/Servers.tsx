@@ -165,7 +165,7 @@ const Servers = () => {
                         {d.name}
                       </h3>
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                        <ExternalLink className="h-3 w-3" /> Připojit se
+                        <ExternalLink className="h-3 w-3" /> {t("servers.joinDiscord")}
                       </span>
                     </div>
                   </div>
