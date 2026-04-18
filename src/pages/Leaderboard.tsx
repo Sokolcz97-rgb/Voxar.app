@@ -120,7 +120,15 @@ const Leaderboard = () => {
             {t("leaderboard.title")}
           </h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">{t("leaderboard.subtitle")}</p>
+        <p className="text-sm text-muted-foreground mb-4">{t("leaderboard.subtitle")}</p>
+
+        <Tabs value={range} onValueChange={(v) => setRange(v as Range)} className="mb-6">
+          <TabsList className="glass">
+            <TabsTrigger value="all">{t("leaderboard.rangeAll")}</TabsTrigger>
+            <TabsTrigger value="month">{t("leaderboard.rangeMonth")}</TabsTrigger>
+            <TabsTrigger value="week">{t("leaderboard.rangeWeek")}</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {loading ? (
           <div className="flex justify-center py-20">
