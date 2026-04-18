@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotifBadge } from "@/components/NotifBadge";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useNavPages } from "@/hooks/usePages";
 import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy, Keyboard } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ export function Navbar() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { unreadMessages, openTickets } = useNotifications();
+  const navPages = useNavPages();
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,6 +59,11 @@ export function Navbar() {
           <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
             <Link to="/leaderboard">{t("nav.leaderboard")}</Link>
           </Button>
+          {navPages.map((p) => (
+            <Button key={p.slug} variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+              <Link to={`/${p.slug}`}>{p.nav_label}</Link>
+            </Button>
+          ))}
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex relative">
