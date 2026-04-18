@@ -93,11 +93,6 @@ export function Navbar() {
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link to="/dashboard">{t("nav.dashboard")}</Link>
               </Button>
-              {(isAdmin || isEditor) && (
-                <Button variant="outline" size="sm" asChild className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
-                  <Link to="/admin"><Shield className="h-4 w-4 mr-1" />{t("nav.admin")}</Link>
-                </Button>
-              )}
               <LanguageSwitcher />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
