@@ -9,6 +9,7 @@ import { MessageSquare, FileText, Ticket, MessagesSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ActivityChart } from "@/components/ActivityChart";
 import { RecommendedThreads } from "@/components/RecommendedThreads";
+import { OnlineUsers } from "@/components/OnlineUsers";
 
 type RecentThread = { id: string; title: string; slug: string; created_at: string; category_id: string };
 type RecentDm = {
