@@ -61,7 +61,7 @@ export default function AdminPages() {
       return;
     }
     const { error } = await supabase.from("pages").insert({
-      title: title.trim(), slug: slugify(slug), nav_label: navLabel.trim() || null,
+      title: title.trim(), slug: finalSlug, nav_label: navLabel.trim() || null,
       nav_position: navPos, is_published: published,
     } as any);
     if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
