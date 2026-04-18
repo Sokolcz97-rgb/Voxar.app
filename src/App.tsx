@@ -22,8 +22,32 @@ import Tickets from "./pages/Tickets.tsx";
 import TicketDetail from "./pages/TicketDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { AIHelper } from "@/components/AIHelper";
+import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 
 const queryClient = new QueryClient();
+
+const AppRoutes = () => {
+  useGlobalShortcuts();
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/profile/:userId" element={<PublicProfile />} />
+      <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
+      <Route path="/forum" element={<Forum />} />
+      <Route path="/forum/:slug" element={<ForumCategory />} />
+      <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
+      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+      <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -33,23 +57,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <PresenceProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/profile/:userId" element={<PublicProfile />} />
-              <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
-              <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
-              <Route path="/forum" element={<Forum />} />
-              <Route path="/forum/:slug" element={<ForumCategory />} />
-              <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
-              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-              <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
-              <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
             <AIHelper />
           </PresenceProvider>
         </AuthProvider>
