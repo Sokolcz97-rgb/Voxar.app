@@ -73,6 +73,8 @@
     "ctaDesc": "Forum, private messages, helpdesk and AI helper coming soon. Stay tuned!",
     "myActivity": "My activity",
     "activity30d": "Activity over 30 days",
+    "recommended": "Recommended threads",
+    "noRecommendations": "No recommendations yet",
     "recentDms": "Recent DMs",
     "recentThreads": "Recent threads",
     "noActivity": "No activity yet",
