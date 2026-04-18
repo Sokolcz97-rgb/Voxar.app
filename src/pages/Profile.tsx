@@ -13,7 +13,16 @@ import { toast } from "@/hooks/use-toast";
 import { Bell, Loader2, Volume2, Radio } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
-import { ensureNotificationPermission, playBeep } from "@/lib/notify";
+import {
+  ensureNotificationPermission,
+  playNotifSound,
+  getNotifSoundId,
+  setNotifSoundId,
+  NOTIF_SOUNDS,
+  type NotifSoundId,
+} from "@/lib/notify";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play } from "lucide-react";
 
 const Profile = () => {
   const { user } = useAuth();
