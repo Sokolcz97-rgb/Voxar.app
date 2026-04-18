@@ -6,7 +6,7 @@ import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette } fro
 const Admin = () => {
   const sections = [
     { icon: Users, title: "Uživatelé & Role", desc: "Spravovat účty a oprávnění", to: "/admin/users" },
-    { icon: Shield, title: "Moderace", desc: "Filtr zpráv, banování", to: null },
+    { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
     { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
     { icon: Palette, title: "Page Builder", desc: "Drag & drop editor (brzy)", to: null },
     { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },
