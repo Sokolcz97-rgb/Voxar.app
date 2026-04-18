@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, X, Loader2, Sparkles } from "lucide-react";
+import { Bot, Send, X, Loader2, Sparkles, Square, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Markdown } from "@/components/Markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,6 +148,21 @@ export function AIHelper() {
     }
   };
 
+  const stopGenerating = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+  };
+
+  const newChat = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+    setMessages([]);
+    setInput("");
+    sessionStorage.removeItem(STORAGE_KEY);
+  };
+
   const clearChat = () => {
     setMessages([]);
     sessionStorage.removeItem(STORAGE_KEY);
@@ -184,6 +199,14 @@ export function AIHelper() {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              <button
+                onClick={newChat}
+                title={t("ai.newChat") || "Nová konverzace"}
+                className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded hover:bg-primary/10"
+              >
+                <Plus className="h-3 w-3" />
+                {t("ai.newChat") || "Nová"}
+              </button>
               {messages.length > 0 && (
                 <button onClick={clearChat} className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors px-2">
                   {t("ai.clear")}
@@ -254,14 +277,26 @@ export function AIHelper() {
               disabled={loading}
               className="text-sm"
             />
-            <Button
-              onClick={send}
-              disabled={loading || !input.trim()}
-              size="icon"
-              className="bg-primary text-primary-foreground hover:bg-primary-glow shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            {loading ? (
+              <Button
+                onClick={stopGenerating}
+                size="icon"
+                variant="destructive"
+                className="shrink-0"
+                title={t("ai.stop") || "Zastavit"}
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={send}
+                disabled={!input.trim()}
+                size="icon"
+                className="bg-primary text-primary-foreground hover:bg-primary-glow shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       )}
