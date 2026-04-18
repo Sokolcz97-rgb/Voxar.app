@@ -355,5 +355,8 @@
     "rangeAll": "All time",
     "rangeMonth": "This month",
     "rangeWeek": "This week"
+  },
+  "rankBadge": {
+    "tooltip": "Rank #{{rank}} on leaderboard — {{range}}"
   }
 }

@@ -11,6 +11,7 @@ import { usePresence } from "@/contexts/PresenceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock, Heart } from "lucide-react";
+import { RankBadges } from "@/components/RankBadges";
 
 interface Profile {
   user_id: string;
@@ -250,11 +251,12 @@ const PublicProfile = () => {
                 )}
               </div>
 
-              {profile.bio && (
-                <div className="mt-6 pt-6 border-t border-border">
+              <div className="mt-6 pt-6 border-t border-border space-y-4">
+                <RankBadges userId={profile.user_id} />
+                {profile.bio && (
                   <p className="whitespace-pre-wrap break-words text-foreground/90">{profile.bio}</p>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
 
             <div className="grid sm:grid-cols-3 gap-4 mt-6">
