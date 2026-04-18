@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -13,107 +12,17 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Search, FileText, MessageSquare, User as UserIcon, Loader2, Clock, X } from "lucide-react";
-
-const HISTORY_KEY = "neonhub:search-history";
-const HISTORY_MAX = 5;
-
-const loadHistory = (): string[] => {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, HISTORY_MAX) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveHistory = (items: string[]) => {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
-  } catch {
-    /* ignore */
-  }
-};
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const Highlight = ({ text, query }: { text: string; query: string }) => {
-  const q = query.trim();
-  if (!q) return <>{text}</>;
-  const re = new RegExp(`(${escapeRegExp(q)})`, "ig");
-  const parts = text.split(re);
-  const lower = q.toLowerCase();
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === lower ? (
-          <mark key={i} className="bg-primary/30 text-primary-foreground rounded px-0.5">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </>
-  );
-};
-
-interface ThreadHit {
-  id: string;
-  title: string;
-  slug: string;
-  category_id: string;
-  category_slug?: string;
-}
-interface PostHit {
-  id: string;
-  content: string;
-  thread_id: string;
-  thread_title?: string;
-  thread_slug?: string;
-  category_slug?: string;
-}
-interface UserHit {
-  user_id: string;
-  display_name: string | null;
-  username: string | null;
-}
+import { Highlight } from "@/components/search/Highlight";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 
 export const GlobalSearch = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [threads, setThreads] = useState<ThreadHit[]>([]);
-  const [posts, setPosts] = useState<PostHit[]>([]);
-  const [users, setUsers] = useState<UserHit[]>([]);
-  const [history, setHistory] = useState<string[]>(() => loadHistory());
-  const reqId = useRef(0);
-
-  const pushHistory = (q: string) => {
-    const term = q.trim();
-    if (term.length < 2) return;
-    setHistory((prev) => {
-      const next = [term, ...prev.filter((x) => x.toLowerCase() !== term.toLowerCase())].slice(0, HISTORY_MAX);
-      saveHistory(next);
-      return next;
-    });
-  };
-
-  const removeFromHistory = (q: string) => {
-    setHistory((prev) => {
-      const next = prev.filter((x) => x !== q);
-      saveHistory(next);
-      return next;
-    });
-  };
-
-  const clearHistory = () => {
-    setHistory([]);
-    saveHistory([]);
-  };
+  const { loading, threads, posts, users, reset } = useGlobalSearch(query);
+  const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistory();
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
@@ -131,90 +40,10 @@ export const GlobalSearch = () => {
   useEffect(() => {
     if (!open) {
       setQuery("");
-      setThreads([]);
-      setPosts([]);
-      setUsers([]);
+      reset();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  // debounced search
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
-      setThreads([]);
-      setPosts([]);
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const myId = ++reqId.current;
-    const handle = setTimeout(async () => {
-      const like = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`;
-      const [thRes, poRes, usRes, catsRes] = await Promise.all([
-        supabase
-          .from("forum_threads")
-          .select("id,title,slug,category_id")
-          .ilike("title", like)
-          .order("updated_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("forum_posts")
-          .select("id,content,thread_id")
-          .ilike("content", like)
-          .order("created_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("profiles")
-          .select("user_id,display_name,username")
-          .or(`display_name.ilike.${like},username.ilike.${like}`)
-          .limit(5),
-        supabase.from("forum_categories").select("id,slug"),
-      ]);
-
-      if (myId !== reqId.current) return;
-
-      const catMap: Record<string, string> = {};
-      (catsRes.data ?? []).forEach((c: { id: string; slug: string }) => (catMap[c.id] = c.slug));
-
-      const threadHits = (thRes.data ?? []).map((th) => ({
-        ...th,
-        category_slug: catMap[th.category_id],
-      })) as ThreadHit[];
-      setThreads(threadHits);
-
-      const postRows = (poRes.data ?? []) as { id: string; content: string; thread_id: string }[];
-      const threadIds = Array.from(new Set(postRows.map((p) => p.thread_id)));
-      let threadLookup: Record<string, { title: string; slug: string; category_id: string }> = {};
-      if (threadIds.length) {
-        const { data } = await supabase
-          .from("forum_threads")
-          .select("id,title,slug,category_id")
-          .in("id", threadIds);
-        (data ?? []).forEach((th) => {
-          threadLookup[th.id] = { title: th.title, slug: th.slug, category_id: th.category_id };
-        });
-      }
-      if (myId !== reqId.current) return;
-
-      setPosts(
-        postRows.map((p) => {
-          const th = threadLookup[p.thread_id];
-          return {
-            ...p,
-            thread_title: th?.title,
-            thread_slug: th?.slug,
-            category_slug: th ? catMap[th.category_id] : undefined,
-          };
-        }),
-      );
-
-      setUsers((usRes.data as UserHit[]) ?? []);
-      setLoading(false);
-    }, 250);
-
-    return () => clearTimeout(handle);
-  }, [query]);
 
   const go = (path: string) => {
     pushHistory(query);
@@ -222,11 +51,8 @@ export const GlobalSearch = () => {
     navigate(path);
   };
 
-  const runHistory = (term: string) => {
-    setQuery(term);
-  };
-
-  const empty = !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
+  const empty =
+    !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
 
   return (
     <>
@@ -272,7 +98,7 @@ export const GlobalSearch = () => {
                     <CommandItem
                       key={`hist-${term}`}
                       value={`history-${term}`}
-                      onSelect={() => runHistory(term)}
+                      onSelect={() => setQuery(term)}
                     >
                       <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="truncate flex-1">{term}</span>
@@ -280,7 +106,7 @@ export const GlobalSearch = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          removeFromHistory(term);
+                          removeHistory(term);
                         }}
                         className="ml-2 opacity-60 hover:opacity-100"
                         aria-label={t("search.remove")}
