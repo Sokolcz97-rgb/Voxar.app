@@ -217,8 +217,13 @@ export const GlobalSearch = () => {
   }, [query]);
 
   const go = (path: string) => {
+    pushHistory(query);
     setOpen(false);
     navigate(path);
+  };
+
+  const runHistory = (term: string) => {
+    setQuery(term);
   };
 
   const empty = !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
