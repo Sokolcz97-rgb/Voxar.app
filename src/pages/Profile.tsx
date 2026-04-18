@@ -116,12 +116,28 @@ const Profile = () => {
                 <Input value={user?.email ?? ""} disabled />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dn">{t("profile.displayName")}</Label>
-                <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                <Label htmlFor="dn">Přezdívka</Label>
+                <Input
+                  id="dn"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="např. Sokolcz"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Veřejné jméno, které se zobrazuje na fóru, v chatu a u příspěvků.
+                </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="un">{t("profile.username")}</Label>
-                <Input id="un" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <Label htmlFor="un">Pravé jméno</Label>
+                <Input
+                  id="un"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="např. Radek"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Nepovinné. Tvoje skutečné křestní jméno (nebo celé jméno).
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">{t("profile.bio")}</Label>
