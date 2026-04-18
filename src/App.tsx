@@ -10,6 +10,7 @@ import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
+import PublicProfile from "./pages/PublicProfile.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminModeration from "./pages/AdminModeration.tsx";
