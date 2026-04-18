@@ -165,8 +165,9 @@ export const GlobalSearch = () => {
                   ))}
                 </CommandGroup>
               )}
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                {t("search.hint")}
+              <div className="py-6 text-center text-sm text-muted-foreground space-y-1">
+                <div>{t("search.hint")}</div>
+                <div className="text-xs opacity-80">{t("search.hintPrefix")}</div>
               </div>
             </>
           )}
