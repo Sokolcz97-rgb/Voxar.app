@@ -229,10 +229,21 @@ const Messages = () => {
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
                         activeId === c.id ? "bg-primary/15 border border-primary/40" : "hover:bg-secondary/50"
                       }`}>
-                      <div className="relative shrink-0">
-                        <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10" />
-                        <PresenceDot userId={c.other?.user_id} className="absolute -bottom-0.5 -right-0.5" />
-                      </div>
+                      {c.other?.user_id ? (
+                        <Link
+                          to={`/profile/${c.other.user_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="relative shrink-0 group"
+                          aria-label={c.other.display_name || c.other.username || ""}
+                        >
+                          <UserAvatar url={c.other.avatar_url} name={c.other.display_name || c.other.username} className="h-10 w-10 group-hover:ring-2 group-hover:ring-primary/50 transition-all" />
+                          <PresenceDot userId={c.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                        </Link>
+                      ) : (
+                        <div className="relative shrink-0">
+                          <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10" />
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
                         <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
@@ -255,14 +266,20 @@ const Messages = () => {
             ) : (
               <>
                 <div className="border-b border-border px-5 py-3 flex items-center gap-3">
-                  <div className="relative">
-                    <UserAvatar url={active?.other?.avatar_url} name={active?.other?.display_name || active?.other?.username} className="h-9 w-9" />
-                    <PresenceDot userId={active?.other?.user_id} className="absolute -bottom-0.5 -right-0.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-display font-bold truncate">{active?.other?.display_name || active?.other?.username || t("common.player")}</div>
-                    {active?.other?.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}
-                  </div>
+                  {active?.other?.user_id ? (
+                    <Link to={`/profile/${active.other.user_id}`} className="flex items-center gap-3 group min-w-0">
+                      <div className="relative">
+                        <UserAvatar url={active.other.avatar_url} name={active.other.display_name || active.other.username} className="h-9 w-9 group-hover:ring-2 group-hover:ring-primary/50 transition-all" />
+                        <PresenceDot userId={active.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-display font-bold truncate group-hover:text-primary transition-colors">{active.other.display_name || active.other.username || t("common.player")}</div>
+                        {active.other.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="font-display font-bold">{t("common.player")}</div>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-5 space-y-3">
