@@ -216,5 +216,17 @@
   "banned": {
     "title": "Tvůj účet byl zabanován",
     "desc": "Nemůžeš posílat zprávy, vytvářet vlákna, příspěvky ani tickety. Pokud si myslíš, že jde o omyl, kontaktuj administrátora."
+  },
+  "moderationLog": {
+    "section": "Administrace",
+    "title": "Log moderace",
+    "subtitle": "Posledních 100 záznamů filtrovaného nebo zablokovaného obsahu.",
+    "empty": "Žádné záznamy.",
+    "user": "Uživatel",
+    "original": "Originál",
+    "result": "Výsledek",
+    "staffOnly": "Pouze pro staff",
+    "actions": { "blocked": "Zablokováno", "filtered": "Filtrováno" },
+    "sources": { "dm": "DM", "forum_thread": "Vlákno", "forum_post": "Příspěvek", "ticket": "Ticket", "ticket_reply": "Odpověď" }
   }
 }
