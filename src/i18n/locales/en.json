@@ -22,6 +22,7 @@
     "saved": "Saved",
     "or": "or",
     "player": "Player",
+    "refresh": "Refresh",
     "locale": "en-US"
   },
   "home": {
@@ -215,5 +216,17 @@
   "banned": {
     "title": "Your account has been banned",
     "desc": "You can't send messages, create threads, posts or tickets. If you think this is a mistake, contact an administrator."
+  },
+  "moderationLog": {
+    "section": "Administration",
+    "title": "Moderation Log",
+    "subtitle": "Last 100 records of filtered or blocked content.",
+    "empty": "No records.",
+    "user": "User",
+    "original": "Original",
+    "result": "Result",
+    "staffOnly": "Staff only",
+    "actions": { "blocked": "Blocked", "filtered": "Filtered" },
+    "sources": { "dm": "DM", "forum_thread": "Thread", "forum_post": "Post", "ticket": "Ticket", "ticket_reply": "Reply" }
   }
 }
