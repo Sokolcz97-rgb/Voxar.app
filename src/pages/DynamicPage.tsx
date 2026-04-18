@@ -8,6 +8,11 @@ import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
 import { useAuth } from "@/contexts/AuthContext";
 import NotFound from "./NotFound";
 
+const RESERVED = new Set([
+  "auth", "dashboard", "profile", "admin", "forum", "messages",
+  "tickets", "leaderboard", "home",
+]);
+
 export default function DynamicPage() {
   const { slug = "" } = useParams();
   const { isEditor } = useAuth();
@@ -18,6 +23,7 @@ export default function DynamicPage() {
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
+    if (RESERVED.has(slug)) { setNotFound(true); setLoading(false); return; }
     fetchPageBySlug(slug, isEditor).then((p) => {
       if (!p) setNotFound(true);
       else {

@@ -17,6 +17,11 @@ const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
+const RESERVED = new Set([
+  "auth", "dashboard", "profile", "admin", "forum", "messages",
+  "tickets", "leaderboard", "home",
+]);
+
 export default function AdminPages() {
   const [pages, setPages] = useState<PageRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +55,11 @@ export default function AdminPages() {
 
   const handleCreate = async () => {
     if (!title.trim() || !slug.trim()) { toast({ title: "Vyplň název a slug", variant: "destructive" }); return; }
-    if (slug === "home") { toast({ title: "Slug 'home' je rezervovaný", variant: "destructive" }); return; }
+    const finalSlug = slugify(slug);
+    if (RESERVED.has(finalSlug)) {
+      toast({ title: `Slug "${finalSlug}" je rezervovaný pro aplikaci`, variant: "destructive" });
+      return;
+    }
     const { error } = await supabase.from("pages").insert({
       title: title.trim(), slug: slugify(slug), nav_label: navLabel.trim() || null,
       nav_position: navPos, is_published: published,
