@@ -24,7 +24,10 @@
     "filterAll": "All",
     "noResultsInFilter": "Nothing in this filter",
     "prefixActive": "Prefix filter",
-    "hintPrefix": "Tip: @ for users, # for threads"
+    "hintPrefix": "Tip: @ for users, # for threads",
+    "kbdNavigate": "Navigate",
+    "kbdOpen": "Open",
+    "kbdClose": "Close"
   },
   "common": {
     "back": "Back",
@@ -160,6 +163,9 @@
     "noResultsInFilter": "Nothing in this filter",
     "prefixActive": "Prefix filter",
     "hintPrefix": "Tip: @ for users, # for threads",
+    "kbdNavigate": "Navigate",
+    "kbdOpen": "Open",
+    "kbdClose": "Close",
     "uploaded": "Avatar uploaded",
     "removed": "Avatar removed",
     "notImage": "File must be an image",

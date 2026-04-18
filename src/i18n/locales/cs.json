@@ -24,7 +24,10 @@
     "filterAll": "Vše",
     "noResultsInFilter": "V tomto filtru nic není",
     "prefixActive": "Filtr z prefixu",
-    "hintPrefix": "Tip: @ hledá uživatele, # hledá vlákna"
+    "hintPrefix": "Tip: @ hledá uživatele, # hledá vlákna",
+    "kbdNavigate": "Navigace",
+    "kbdOpen": "Otevřít",
+    "kbdClose": "Zavřít"
   },
   "common": {
     "back": "Zpět",
@@ -160,6 +163,9 @@
     "noResultsInFilter": "V tomto filtru nic není",
     "prefixActive": "Filtr z prefixu",
     "hintPrefix": "Tip: @ hledá uživatele, # hledá vlákna",
+    "kbdNavigate": "Navigace",
+    "kbdOpen": "Otevřít",
+    "kbdClose": "Zavřít",
     "uploaded": "Avatar nahrán",
     "removed": "Avatar odstraněn",
     "notImage": "Soubor musí být obrázek",
