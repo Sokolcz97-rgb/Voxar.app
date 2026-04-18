@@ -127,6 +127,26 @@ const PublicProfile = () => {
         }),
       );
 
+      // Aggregate received reactions across all user's posts
+      const { data: allPostIds } = await supabase
+        .from("forum_posts")
+        .select("id")
+        .eq("user_id", userId);
+      const ids = (allPostIds ?? []).map((p) => p.id);
+      if (ids.length > 0) {
+        const { data: reacts } = await supabase
+          .from("post_reactions")
+          .select("emoji")
+          .in("post_id", ids);
+        if (!cancelled) {
+          const byEmoji: Record<string, number> = {};
+          (reacts ?? []).forEach((r: { emoji: string }) => {
+            byEmoji[r.emoji] = (byEmoji[r.emoji] ?? 0) + 1;
+          });
+          setReactions({ total: (reacts ?? []).length, byEmoji });
+        }
+      }
+
       setLoading(false);
     })();
     return () => {
