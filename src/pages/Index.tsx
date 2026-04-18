@@ -25,6 +25,7 @@ const Index = () => {
   const { discord } = useFeaturedDiscord();
   const { settings } = useSiteSettings();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
+  const [stats, setStats] = useState({ players: 0, streams: 0 });
 
   useEffect(() => {
     fetchPageBySlug("home", isEditor).then((p) => {
@@ -33,6 +34,26 @@ const Index = () => {
       setCustomBlocks(blocks ?? []);
     });
   }, [isEditor]);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const [{ count: players }, { count: streams }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true })
+          .gte("last_seen_at", fiveMinAgo),
+        supabase
+          .from("live_streams_cache")
+          .select("*", { count: "exact", head: true })
+          .eq("is_live", true),
+      ]);
+      setStats({ players: players ?? 0, streams: streams ?? 0 });
+    };
+    loadStats();
+    const interval = setInterval(loadStats, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const editingThis = ed.active && ed.slug === "home";
   const blocksToShow = editingThis ? ed.blocks : customBlocks;
