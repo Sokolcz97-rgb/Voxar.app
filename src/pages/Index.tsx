@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight } from "lucide-react";
+import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 
 const Index = () => {
   const { user } = useAuth();
@@ -102,6 +103,9 @@ const Index = () => {
             ))}
           </div>
         </section>
+
+        {/* TOP PLAYERS */}
+        <TopPlayersPreview />
       </main>
 
       <footer className="border-t border-border/60 py-8">
