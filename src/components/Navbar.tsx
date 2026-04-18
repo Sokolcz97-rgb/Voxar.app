@@ -7,6 +7,7 @@ import { NotifBadge } from "@/components/NotifBadge";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNavPages } from "@/hooks/usePages";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { LogOut, Shield, User as UserIcon, Gamepad2, MessageSquare, LifeBuoy, Keyboard } from "lucide-react";
 import {
   DropdownMenu,

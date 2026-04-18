@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
 import { InlineEditorProvider } from "@/contexts/InlineEditorContext";
+import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
 import { InlineEditorChrome } from "@/components/pageBuilder/InlineEditorChrome";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
@@ -30,6 +31,7 @@ import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
 import AdminRoles from "./pages/AdminRoles.tsx";
 import AdminDiscord from "./pages/AdminDiscord.tsx";
+import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -60,6 +62,7 @@ const AppRoutes = () => {
       <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
       <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminRoles /></ProtectedRoute>} />
       <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -73,14 +76,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <PresenceProvider>
-            <InlineEditorProvider>
-              <AppRoutes />
-              <InlineEditorChrome />
-              <AIHelper />
-              <ShortcutsHelp />
-            </InlineEditorProvider>
-          </PresenceProvider>
+          <SiteSettingsProvider>
+            <PresenceProvider>
+              <InlineEditorProvider>
+                <AppRoutes />
+                <InlineEditorChrome />
+                <AIHelper />
+                <ShortcutsHelp />
+              </InlineEditorProvider>
+            </PresenceProvider>
+          </SiteSettingsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
