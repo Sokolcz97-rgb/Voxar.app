@@ -63,10 +63,20 @@
       "score": "Your score",
       "friends": "Friends",
       "messages": "Messages",
-      "streak": "Streak"
+      "streak": "Streak",
+      "threads": "Threads",
+      "posts": "Posts",
+      "tickets": "Tickets",
+      "dms": "DM messages"
     },
     "ctaTitle": "🚀 The Hub is just spinning up",
-    "ctaDesc": "Forum, private messages, helpdesk and AI helper coming soon. Stay tuned!"
+    "ctaDesc": "Forum, private messages, helpdesk and AI helper coming soon. Stay tuned!",
+    "myActivity": "My activity",
+    "recentDms": "Recent DMs",
+    "recentThreads": "Recent threads",
+    "noActivity": "No activity yet",
+    "openConversation": "Open",
+    "viewAll": "View all"
   },
   "profile": {
     "title": "Profile",
