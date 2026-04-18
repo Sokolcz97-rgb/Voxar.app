@@ -273,10 +273,10 @@ export const GlobalSearch = () => {
                       onSelect={() => go(`/profile/${u.user_id}`)}
                     >
                       <UserIcon className="h-4 w-4 mr-2 text-primary" />
-                      <span className="truncate">{name}</span>
+                      <span className="truncate"><Highlight text={name} query={query} /></span>
                       {u.username && (
                         <span className="ml-2 text-xs text-muted-foreground truncate">
-                          @{u.username}
+                          @<Highlight text={u.username} query={query} />
                         </span>
                       )}
                     </CommandItem>
