@@ -161,7 +161,11 @@ export const GlobalSearch = () => {
 
           {empty && <CommandEmpty>{t("search.noResults")}</CommandEmpty>}
 
-          {threads.length > 0 && (
+          {!loading && query.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
+            <CommandEmpty>{t("search.noResultsInFilter")}</CommandEmpty>
+          )}
+
+          {showThreads && (
             <CommandGroup heading={t("search.threads")}>
               {threads.map((th) => (
                 <CommandItem
@@ -178,9 +182,9 @@ export const GlobalSearch = () => {
             </CommandGroup>
           )}
 
-          {posts.length > 0 && (
+          {showPosts && (
             <>
-              {threads.length > 0 && <CommandSeparator />}
+              {showThreads && <CommandSeparator />}
               <CommandGroup heading={t("search.posts")}>
                 {posts.map((p) => (
                   <CommandItem
@@ -207,9 +211,9 @@ export const GlobalSearch = () => {
             </>
           )}
 
-          {users.length > 0 && (
+          {showUsers && (
             <>
-              {(threads.length > 0 || posts.length > 0) && <CommandSeparator />}
+              {(showThreads || showPosts) && <CommandSeparator />}
               <CommandGroup heading={t("search.users")}>
                 {users.map((u) => {
                   const name = u.display_name || u.username || "—";
