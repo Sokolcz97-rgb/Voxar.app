@@ -1,15 +1,16 @@
+import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette } from "lucide-react";
 
 const Admin = () => {
   const sections = [
-    { icon: Users, title: "Uživatelé & Role", desc: "Spravovat účty a oprávnění" },
-    { icon: Shield, title: "Moderace", desc: "Filtr zpráv, banování" },
-    { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita" },
-    { icon: Palette, title: "Page Builder", desc: "Drag & drop editor (brzy)" },
-    { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk (brzy)" },
-    { icon: Settings, title: "Nastavení webu", desc: "Téma, jazyky, média" },
+    { icon: Users, title: "Uživatelé & Role", desc: "Spravovat účty a oprávnění", to: "/admin/users" },
+    { icon: Shield, title: "Moderace", desc: "Filtr zpráv, banování", to: null },
+    { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
+    { icon: Palette, title: "Page Builder", desc: "Drag & drop editor (brzy)", to: null },
+    { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },
+    { icon: Settings, title: "Nastavení webu", desc: "Téma, jazyky, média", to: null },
   ];
 
   return (
@@ -24,15 +25,22 @@ const Admin = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {sections.map((s) => (
-            <Card key={s.title} className="glass border-border p-6 hover:border-primary/60 transition-all hover:translate-y-[-4px] cursor-pointer group">
-              <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-all">
-                <s.icon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-display font-bold text-lg">{s.title}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
-            </Card>
-          ))}
+          {sections.map((s) => {
+            const card = (
+              <Card className="glass border-border p-6 hover:border-primary/60 transition-all hover:translate-y-[-4px] cursor-pointer group h-full">
+                <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-all">
+                  <s.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-display font-bold text-lg">{s.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+              </Card>
+            );
+            return s.to ? (
+              <Link key={s.title} to={s.to}>{card}</Link>
+            ) : (
+              <div key={s.title} className="opacity-60">{card}</div>
+            );
+          })}
         </div>
       </main>
     </div>
