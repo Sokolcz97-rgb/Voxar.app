@@ -165,6 +165,8 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {user && <ActivityChart userId={user.id} />}
+
         <h2 className="font-display text-2xl font-bold mb-4">{t("dashboard.myActivity")}</h2>
         <div className="grid lg:grid-cols-2 gap-4 mb-10">
           <Card className="glass border-border p-6">
