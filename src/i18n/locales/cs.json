@@ -136,7 +136,8 @@
     "noThreads": "Uživatel zatím nezaložil žádné vlákno",
     "recentPosts": "Poslední příspěvky",
     "noPosts": "Uživatel zatím nepřispěl",
-    "unknownThread": "Neznámé vlákno"
+    "unknownThread": "Neznámé vlákno",
+    "reactionsReceived": "Získané reakce"
   },
   "account": {
     "changePassword": "Změna hesla",
