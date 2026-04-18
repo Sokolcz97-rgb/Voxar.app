@@ -207,6 +207,16 @@ export function AIHelper() {
                 <Plus className="h-3.5 w-3.5" />
                 {t("ai.newChat") || "Nová"}
               </button>
+              {messages.length > 0 && (
+                <button
+                  onClick={clearChat}
+                  title={t("ai.clear") || "Smazat"}
+                  className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-destructive/90 text-destructive-foreground hover:bg-destructive px-3 py-1.5 rounded-md hover:scale-105 transition-all border border-destructive/60"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("ai.clear")}
+                </button>
+              )}
               <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label={t("ai.close")}>
                 <X className="h-4 w-4" />
               </button>
