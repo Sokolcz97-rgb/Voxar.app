@@ -11,6 +11,7 @@ import { usePresence } from "@/contexts/PresenceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock, Heart } from "lucide-react";
+import { RankBadges } from "@/components/RankBadges";
 
 interface Profile {
   user_id: string;
