@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { AvatarUpload } from "@/components/AvatarUpload";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ const Profile = () => {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -28,6 +30,7 @@ const Profile = () => {
           setDisplayName(data.display_name ?? "");
           setUsername(data.username ?? "");
           setBio(data.bio ?? "");
+          setAvatarUrl(data.avatar_url ?? null);
         }
         setLoading(false);
       });
@@ -48,6 +51,8 @@ const Profile = () => {
     toast({ title: t("profile.saved") });
   };
 
+  const fallback = (displayName || username || user?.email || "?").slice(0, 2).toUpperCase();
+
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
@@ -58,7 +63,15 @@ const Profile = () => {
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : (
-            <form onSubmit={save} className="space-y-5">
+            <form onSubmit={save} className="space-y-6">
+              {user && (
+                <AvatarUpload
+                  userId={user.id}
+                  avatarUrl={avatarUrl}
+                  fallback={fallback}
+                  onChange={setAvatarUrl}
+                />
+              )}
               <div className="space-y-2">
                 <Label>{t("auth.email")}</Label>
                 <Input value={user?.email ?? ""} disabled />
@@ -87,3 +100,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
