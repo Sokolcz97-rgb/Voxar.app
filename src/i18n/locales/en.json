@@ -341,5 +341,9 @@
     "goProfile": "Profile",
     "prefixUsers": "Search users",
     "prefixThreads": "Search threads"
+  },
+  "reactions": {
+    "you": "You",
+    "andMore": "and {{count}} more"
   }
 }

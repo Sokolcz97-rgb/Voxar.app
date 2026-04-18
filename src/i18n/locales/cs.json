@@ -341,5 +341,9 @@
     "goProfile": "Profil",
     "prefixUsers": "Hledat uživatele",
     "prefixThreads": "Hledat vlákna"
+  },
+  "reactions": {
+    "you": "Ty",
+    "andMore": "a další {{count}}"
   }
 }
