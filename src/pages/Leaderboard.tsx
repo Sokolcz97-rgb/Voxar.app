@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { Trophy, Loader2, Heart } from "lucide-react";
 import { getTop, type LbRange } from "@/lib/leaderboard";
+import { SEO } from "@/components/SEO";
 
 interface Entry {
   user_id: string;
@@ -77,6 +78,7 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen relative">
+      <SEO title="Žebříček hráčů — NEONHUB" description="Nejlepší hráči komunity NEONHUB podle reakcí a aktivity." />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-3xl animate-fade-in">
