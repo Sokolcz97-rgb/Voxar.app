@@ -100,7 +100,7 @@ const Leaderboard = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [range]);
 
   const medal = (rank: number) => {
     if (rank === 0) return "🥇";
