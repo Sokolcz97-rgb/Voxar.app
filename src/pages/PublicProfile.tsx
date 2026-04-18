@@ -10,7 +10,7 @@ import { PresenceDot } from "@/components/PresenceDot";
 import { usePresence } from "@/contexts/PresenceContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare } from "lucide-react";
+import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock } from "lucide-react";
 
 interface Profile {
   user_id: string;
@@ -22,6 +22,18 @@ interface Profile {
   last_seen_at: string | null;
 }
 
+interface ThreadRow {
+  id: string;
+  title: string;
+  slug: string;
+  created_at: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  category_id: string;
+  category_slug?: string;
+  category_name?: string;
+}
+
 const PublicProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -31,13 +43,14 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ threads: 0, posts: 0 });
+  const [recent, setRecent] = useState<ThreadRow[]>([]);
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [profRes, threadsRes, postsRes] = await Promise.all([
+      const [profRes, threadsRes, postsRes, recentRes, catsRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("user_id,display_name,username,avatar_url,bio,created_at,last_seen_at")
@@ -45,10 +58,28 @@ const PublicProfile = () => {
           .maybeSingle(),
         supabase.from("forum_threads").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase
+          .from("forum_threads")
+          .select("id,title,slug,created_at,is_pinned,is_locked,category_id")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase.from("forum_categories").select("id,slug,name"),
       ]);
       if (cancelled) return;
       setProfile((profRes.data as Profile) ?? null);
       setCounts({ threads: threadsRes.count ?? 0, posts: postsRes.count ?? 0 });
+
+      const catMap: Record<string, { slug: string; name: string }> = {};
+      (catsRes.data ?? []).forEach((c: { id: string; slug: string; name: string }) => {
+        catMap[c.id] = { slug: c.slug, name: c.name };
+      });
+      const enriched = (recentRes.data ?? []).map((th) => ({
+        ...th,
+        category_slug: catMap[th.category_id]?.slug,
+        category_name: catMap[th.category_id]?.name,
+      })) as ThreadRow[];
+      setRecent(enriched);
       setLoading(false);
     })();
     return () => {
