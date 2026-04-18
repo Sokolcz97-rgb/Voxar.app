@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
 import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
+import AdminRoles from "./pages/AdminRoles.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -56,6 +57,7 @@ const AppRoutes = () => {
       <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/servery" element={<Servers />} />
       <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
+      <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminRoles /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
