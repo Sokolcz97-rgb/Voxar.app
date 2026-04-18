@@ -107,6 +107,7 @@ const Novinky = () => {
 
   return (
     <div className="min-h-screen relative">
+      <SEO title="Novinky o hrách — NEONHUB" description="Nadcházející a nedávno vydané hry pro PC, PlayStation, Xbox a Switch. Filtry podle žánru a platformy." />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />

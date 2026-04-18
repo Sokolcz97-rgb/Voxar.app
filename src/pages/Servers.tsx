@@ -109,6 +109,7 @@ const Servers = () => {
 
   return (
     <div className="min-h-screen relative">
+      <SEO title="Herní servery — NEONHUB" description="Komunitní herní servery: Minecraft, CS, Rust a další. Připoj se k českým hráčům." />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
