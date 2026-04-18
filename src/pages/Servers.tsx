@@ -68,7 +68,16 @@ const Servers = () => {
   };
 
   useEffect(() => {
-    load();
+    (async () => {
+      await load();
+      // Refresh live status + player counts on page load (fire & forget, then reload).
+      try {
+        await supabase.functions.invoke("ping-server", { body: {} });
+        await load();
+      } catch {
+        /* ignore — UI shows last known status */
+      }
+    })();
   }, []);
 
   const filtered = useMemo(() => {
