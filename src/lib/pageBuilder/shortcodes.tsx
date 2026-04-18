@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Trophy, MessageSquare, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getTop, getTopAllTime } from "@/lib/leaderboard";
+import { getTop } from "@/lib/leaderboard";
 
 interface Parsed { name: string; params: Record<string, string>; }
 
@@ -18,9 +18,32 @@ const parseShortcode = (raw: string): Parsed | null => {
   return { name: m[1].toLowerCase(), params };
 };
 
+interface RankRow { user_id: string; total: number; display_name: string; }
+
+const enrichWithProfiles = async (
+  ranking: { user_id: string; total: number }[],
+): Promise<RankRow[]> => {
+  if (ranking.length === 0) return [];
+  const ids = ranking.map((r) => r.user_id);
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id,display_name,username")
+    .in("user_id", ids);
+  const nameOf = new Map(
+    (profiles ?? []).map((p) => [p.user_id, p.display_name || p.username || "Hráč"]),
+  );
+  return ranking.map((r) => ({
+    user_id: r.user_id,
+    total: r.total,
+    display_name: nameOf.get(r.user_id) || "Hráč",
+  }));
+};
+
 function TopPlayersSC({ limit }: { limit: number }) {
-  const [items, setItems] = useState<{ user_id: string; display_name: string; score: number }[]>([]);
-  useEffect(() => { getTop(limit).then(setItems as any); }, [limit]);
+  const [items, setItems] = useState<RankRow[]>([]);
+  useEffect(() => {
+    getTop("all", limit).then((rows) => enrichWithProfiles(rows).then(setItems));
+  }, [limit]);
   return (
     <div className="grid sm:grid-cols-3 gap-3">
       {items.map((p, i) => (
@@ -29,8 +52,8 @@ function TopPlayersSC({ limit }: { limit: number }) {
             #{i + 1}
           </div>
           <div className="min-w-0">
-            <Link to={`/profile/${p.user_id}`} className="font-bold truncate hover:text-primary">{p.display_name}</Link>
-            <p className="text-xs text-muted-foreground">{p.score} bodů</p>
+            <Link to={`/profile/${p.user_id}`} className="font-bold truncate hover:text-primary block">{p.display_name}</Link>
+            <p className="text-xs text-muted-foreground">{p.total} reakcí</p>
           </div>
         </Card>
       ))}
@@ -39,8 +62,10 @@ function TopPlayersSC({ limit }: { limit: number }) {
 }
 
 function LeaderboardSC({ limit }: { limit: number }) {
-  const [items, setItems] = useState<{ user_id: string; display_name: string; score: number }[]>([]);
-  useEffect(() => { getTopAllTime(limit).then(setItems as any); }, [limit]);
+  const [items, setItems] = useState<RankRow[]>([]);
+  useEffect(() => {
+    getTop("all", limit).then((rows) => enrichWithProfiles(rows).then(setItems));
+  }, [limit]);
   return (
     <div className="rounded-lg border border-border overflow-hidden">
       {items.map((p, i) => (
@@ -48,7 +73,7 @@ function LeaderboardSC({ limit }: { limit: number }) {
           <span className="font-display font-bold text-primary w-8">#{i + 1}</span>
           <Trophy className="h-4 w-4 text-muted-foreground" />
           <Link to={`/profile/${p.user_id}`} className="flex-1 truncate hover:text-primary">{p.display_name}</Link>
-          <span className="text-sm font-bold">{p.score}</span>
+          <span className="text-sm font-bold">{p.total}</span>
         </div>
       ))}
     </div>
@@ -58,7 +83,8 @@ function LeaderboardSC({ limit }: { limit: number }) {
 function LatestThreadsSC({ count }: { count: number }) {
   const [items, setItems] = useState<any[]>([]);
   useEffect(() => {
-    supabase.from("forum_threads").select("id,title,slug,created_at,category_id,forum_categories(slug)")
+    supabase.from("forum_threads")
+      .select("id,title,slug,created_at,category_id,forum_categories(slug)")
       .order("created_at", { ascending: false }).limit(count)
       .then(({ data }) => setItems(data ?? []));
   }, [count]);
@@ -87,7 +113,7 @@ function OnlineUsersSC() {
     <Card className="glass border-border p-5 flex items-center gap-4 max-w-sm">
       <div className="relative">
         <Users className="h-6 w-6 text-primary" />
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
       </div>
       <div>
         <p className="font-display font-bold text-2xl">{count}</p>
