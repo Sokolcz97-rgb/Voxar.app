@@ -20,7 +20,9 @@
     "users": "Users",
     "recent": "Recent searches",
     "clear": "Clear",
-    "remove": "Remove"
+    "remove": "Remove",
+    "filterAll": "All",
+    "noResultsInFilter": "Nothing in this filter"
   },
   "common": {
     "back": "Back",
@@ -152,6 +154,8 @@
   "avatar": {
     "upload": "Upload avatar",
     "remove": "Remove",
+    "filterAll": "All",
+    "noResultsInFilter": "Nothing in this filter",
     "uploaded": "Avatar uploaded",
     "removed": "Avatar removed",
     "notImage": "File must be an image",
