@@ -17,7 +17,10 @@
     "noResults": "Nic nenalezeno",
     "threads": "Vlákna",
     "posts": "Příspěvky",
-    "users": "Uživatelé"
+    "users": "Uživatelé",
+    "recent": "Poslední vyhledávání",
+    "clear": "Vymazat",
+    "remove": "Odstranit"
   },
   "common": {
     "back": "Zpět",
