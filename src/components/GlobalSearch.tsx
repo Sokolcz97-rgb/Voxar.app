@@ -250,9 +250,9 @@ export const GlobalSearch = () => {
                     <MessageSquare className="h-4 w-4 mr-2 text-accent shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-muted-foreground truncate">
-                        {p.thread_title || "—"}
+                        {p.thread_title ? <Highlight text={p.thread_title} query={query} /> : "—"}
                       </div>
-                      <div className="text-sm truncate">{p.content}</div>
+                      <div className="text-sm truncate"><Highlight text={p.content} query={query} /></div>
                     </div>
                   </CommandItem>
                 ))}
