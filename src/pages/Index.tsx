@@ -8,12 +8,15 @@ import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight } from "lucide-
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
 import { fetchPageBySlug } from "@/hooks/usePages";
-import { BlocksRenderer } from "@/lib/pageBuilder/BlockRenderer";
+import { EditableBlocks } from "@/components/pageBuilder/EditableBlocks";
+import { InlineEditorFrame } from "@/components/pageBuilder/InlineEditorChrome";
+import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import type { Block } from "@/lib/pageBuilder/types";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
   const { t } = useTranslation();
+  const ed = useInlineEditor();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
 
   useEffect(() => {
@@ -24,7 +27,11 @@ const Index = () => {
     });
   }, [isEditor]);
 
+  const editingThis = ed.active && ed.slug === "home";
+  const blocksToShow = editingThis ? ed.blocks : customBlocks;
+
   return (
+    <InlineEditorFrame>
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated background layers */}
       <div className="fixed inset-0 -z-10 gradient-hero" />
@@ -122,9 +129,9 @@ const Index = () => {
         <TopPlayersPreview />
 
         {/* CUSTOM EDITOR BLOCKS */}
-        {customBlocks.length > 0 && (
+        {(blocksToShow.length > 0 || editingThis) && (
           <section className="container max-w-4xl pb-32">
-            <BlocksRenderer blocks={customBlocks} />
+            <EditableBlocks blocks={blocksToShow} editable={editingThis} />
           </section>
         )}
       </main>
@@ -136,6 +143,7 @@ const Index = () => {
       </footer>
       <EditPageButton slug="home" />
     </div>
+    </InlineEditorFrame>
   );
 };
 
