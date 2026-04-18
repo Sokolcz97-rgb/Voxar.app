@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight } from "lucide-react";
-import { SiDiscord } from "react-icons/si";
+import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 import { useFeaturedDiscord } from "@/hooks/useFeaturedDiscord";
 import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
@@ -19,6 +18,7 @@ const Index = () => {
   const { user, isEditor } = useAuth();
   const { t } = useTranslation();
   const ed = useInlineEditor();
+  const { discord } = useFeaturedDiscord();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
 
   useEffect(() => {
@@ -84,6 +84,18 @@ const Index = () => {
                     <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
+              )}
+              {discord && (
+                <Button
+                  size="lg"
+                  asChild
+                  className="bg-[#5865F2] text-white hover:bg-[#4752C4] text-base px-8 h-12"
+                >
+                  <a href={discord.invite_url} target="_blank" rel="noreferrer">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {discord.name}
+                  </a>
+                </Button>
               )}
             </div>
 

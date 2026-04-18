@@ -29,6 +29,7 @@ import Leaderboard from "./pages/Leaderboard.tsx";
 import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
 import AdminRoles from "./pages/AdminRoles.tsx";
+import AdminDiscord from "./pages/AdminDiscord.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
