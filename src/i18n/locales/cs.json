@@ -199,5 +199,11 @@
     "cantRemoveSelf": "Nemůžeš si odebrat vlastní admin roli",
     "adminOnly": "Pouze pro adminy",
     "adminOnlyDesc": "Tato sekce vyžaduje admin oprávnění."
+  },
+  "moderation": {
+    "blocked": "Obsah zablokován",
+    "blockedDesc": "Tvoje zpráva porušuje pravidla komunity a nebyla odeslána.",
+    "filtered": "Vulgarismy nahrazeny ★",
+    "checking": "Kontroluji obsah..."
   }
 }
