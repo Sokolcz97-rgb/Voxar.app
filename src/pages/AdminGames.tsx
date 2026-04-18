@@ -101,11 +101,6 @@ const AdminGames = () => {
   const searchSteam = async () => {
     if (!steamQ.trim()) return;
     setSearching(true);
-    const { data, error } = await supabase.functions.invoke("steam-search", {
-      body: null,
-      method: "GET",
-    } as any).catch(() => ({ data: null, error: "fail" } as any));
-    // fallback: direct fetch with query string
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/steam-search?q=${encodeURIComponent(steamQ)}`,
       { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
