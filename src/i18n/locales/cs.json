@@ -100,6 +100,19 @@
     "notifPermDenied": "Notifikace zamítnuty v prohlížeči",
     "test": "Test"
   },
+  "publicProfile": {
+    "notFound": "Profil nenalezen",
+    "onlineNow": "Online",
+    "activeNow": "Aktivní právě teď",
+    "lastSeen": "Naposledy viděn",
+    "neverSeen": "Zatím nikdy nepřipojen",
+    "joined": "Registrace",
+    "sendDm": "Poslat zprávu",
+    "editProfile": "Upravit profil",
+    "justNow": "právě teď",
+    "minutesAgo": "před {{count}} min",
+    "hoursAgo": "před {{count}} h"
+  },
   "account": {
     "changePassword": "Změna hesla",
     "newPassword": "Nové heslo",
