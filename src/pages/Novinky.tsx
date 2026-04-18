@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, ExternalLink, Search, Flame } from "lucide-react";
+import { SEO } from "@/components/SEO";
 
 type Release = {
   id: string;

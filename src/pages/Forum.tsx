@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { MessageSquare, ChevronRight, Loader2 } from "lucide-react";
+import { SEO } from "@/components/SEO";
 
 interface Category {
   id: string;

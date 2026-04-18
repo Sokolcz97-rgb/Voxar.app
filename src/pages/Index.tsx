@@ -15,6 +15,7 @@ import { EditableBlocks } from "@/components/pageBuilder/EditableBlocks";
 import { InlineEditorFrame } from "@/components/pageBuilder/InlineEditorChrome";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import type { Block } from "@/lib/pageBuilder/types";
+import { SEO } from "@/components/SEO";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
@@ -35,8 +36,29 @@ const Index = () => {
   const editingThis = ed.active && ed.slug === "home";
   const blocksToShow = editingThis ? ed.blocks : customBlocks;
 
+  const siteName = settings.site_name || "NEONHUB";
+  const seoTitle = `${siteName} — ${settings.hero_title_2 || "Herní komunita"}`;
+  const seoDesc =
+    settings.hero_subtitle ||
+    "Live streamy, fórum, novinky o hrách a žebříčky. Připoj se k české herní komunitě.";
+
   return (
     <InlineEditorFrame>
+    <SEO
+      title={seoTitle}
+      description={seoDesc}
+      jsonLd={{
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: siteName,
+        url: typeof window !== "undefined" ? window.location.origin : "",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${typeof window !== "undefined" ? window.location.origin : ""}/forum?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      }}
+    />
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated background layers */}
       <div className="fixed inset-0 -z-10 gradient-hero" />

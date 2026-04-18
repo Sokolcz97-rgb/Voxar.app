@@ -10,6 +10,7 @@ import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, 
 import { ServerFormDialog } from "@/components/servers/ServerFormDialog";
 import { useAllDiscord } from "@/hooks/useFeaturedDiscord";
 import { toast } from "sonner";
+import { SEO } from "@/components/SEO";
 
 type Game = {
   id: string;

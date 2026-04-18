@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { Trophy, Loader2, Heart } from "lucide-react";
 import { getTop, type LbRange } from "@/lib/leaderboard";
+import { SEO } from "@/components/SEO";
 
 interface Entry {
   user_id: string;
