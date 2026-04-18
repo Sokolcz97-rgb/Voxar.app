@@ -111,7 +111,9 @@
     "editProfile": "Edit profile",
     "justNow": "just now",
     "minutesAgo": "{{count}} min ago",
-    "hoursAgo": "{{count}}h ago"
+    "hoursAgo": "{{count}}h ago",
+    "recentThreads": "Recent threads",
+    "noThreads": "This user hasn't started any thread yet"
   },
   "account": {
     "changePassword": "Change password",
