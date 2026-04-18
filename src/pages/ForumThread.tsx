@@ -125,19 +125,22 @@ const ForumThread = () => {
               {posts.map((p, i) => (
                 <Card key={p.id} className="glass border-border p-5 animate-fade-in" style={{ animationDelay: `${i * 40}ms` }}>
                   <div className="flex items-start gap-4">
-                    <div className="relative shrink-0">
+                    <Link to={`/profile/${p.user_id}`} className="relative shrink-0 group">
                       <UserAvatar
                         url={p.author?.avatar_url}
                         name={p.author?.display_name || p.author?.username}
-                        className="h-10 w-10"
+                        className="h-10 w-10 group-hover:ring-2 group-hover:ring-primary/50 transition-all"
                       />
                       <PresenceDot userId={p.user_id} className="absolute -bottom-0.5 -right-0.5" />
-                    </div>
+                    </Link>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap mb-2">
-                        <span className="font-display font-bold text-primary">
+                        <Link
+                          to={`/profile/${p.user_id}`}
+                          className="font-display font-bold text-primary hover:underline"
+                        >
                           {p.author?.display_name || p.author?.username || t("common.player")}
-                        </span>
+                        </Link>
                         <span className="text-xs text-muted-foreground">
                           {new Date(p.created_at).toLocaleString(locale)}
                         </span>
