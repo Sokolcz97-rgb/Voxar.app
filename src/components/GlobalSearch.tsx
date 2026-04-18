@@ -179,7 +179,7 @@ export const GlobalSearch = () => {
 
           {empty && <CommandEmpty>{t("search.noResults")}</CommandEmpty>}
 
-          {!loading && query.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
+          {!loading && effectiveQuery.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
             <CommandEmpty>{t("search.noResultsInFilter")}</CommandEmpty>
           )}
 
@@ -194,7 +194,7 @@ export const GlobalSearch = () => {
                   }
                 >
                   <FileText className="h-4 w-4 mr-2 text-primary" />
-                  <span className="truncate"><Highlight text={th.title} query={query} /></span>
+                  <span className="truncate"><Highlight text={th.title} query={effectiveQuery} /></span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -219,9 +219,9 @@ export const GlobalSearch = () => {
                     <MessageSquare className="h-4 w-4 mr-2 text-accent shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-muted-foreground truncate">
-                        {p.thread_title ? <Highlight text={p.thread_title} query={query} /> : "—"}
+                        {p.thread_title ? <Highlight text={p.thread_title} query={effectiveQuery} /> : "—"}
                       </div>
-                      <div className="text-sm truncate"><Highlight text={p.content} query={query} /></div>
+                      <div className="text-sm truncate"><Highlight text={p.content} query={effectiveQuery} /></div>
                     </div>
                   </CommandItem>
                 ))}
@@ -242,10 +242,10 @@ export const GlobalSearch = () => {
                       onSelect={() => go(`/profile/${u.user_id}`)}
                     >
                       <UserIcon className="h-4 w-4 mr-2 text-primary" />
-                      <span className="truncate"><Highlight text={name} query={query} /></span>
+                      <span className="truncate"><Highlight text={name} query={effectiveQuery} /></span>
                       {u.username && (
                         <span className="ml-2 text-xs text-muted-foreground truncate">
-                          @<Highlight text={u.username} query={query} />
+                          @<Highlight text={u.username} query={effectiveQuery} />
                         </span>
                       )}
                     </CommandItem>
