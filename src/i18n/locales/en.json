@@ -22,7 +22,9 @@
     "clear": "Clear",
     "remove": "Remove",
     "filterAll": "All",
-    "noResultsInFilter": "Nothing in this filter"
+    "noResultsInFilter": "Nothing in this filter",
+    "prefixActive": "Prefix filter",
+    "hintPrefix": "Tip: @ for users, # for threads"
   },
   "common": {
     "back": "Back",
@@ -156,6 +158,8 @@
     "remove": "Remove",
     "filterAll": "All",
     "noResultsInFilter": "Nothing in this filter",
+    "prefixActive": "Prefix filter",
+    "hintPrefix": "Tip: @ for users, # for threads",
     "uploaded": "Avatar uploaded",
     "removed": "Avatar removed",
     "notImage": "File must be an image",

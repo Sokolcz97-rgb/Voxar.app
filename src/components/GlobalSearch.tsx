@@ -22,12 +22,20 @@ export const GlobalSearch = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "threads" | "posts" | "users">("all");
-  const { loading, threads, posts, users, reset } = useGlobalSearch(query);
+
+  // Detect prefixes: @ → users, # → threads. Strip prefix before searching.
+  const trimmed = query.trim();
+  const prefixFilter: "users" | "threads" | null =
+    trimmed.startsWith("@") ? "users" : trimmed.startsWith("#") ? "threads" : null;
+  const effectiveQuery = prefixFilter ? trimmed.slice(1) : query;
+  const effectiveFilter = prefixFilter ?? filter;
+
+  const { loading, threads, posts, users, reset } = useGlobalSearch(effectiveQuery);
   const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistory();
 
-  const showThreads = (filter === "all" || filter === "threads") && threads.length > 0;
-  const showPosts = (filter === "all" || filter === "posts") && posts.length > 0;
-  const showUsers = (filter === "all" || filter === "users") && users.length > 0;
+  const showThreads = (effectiveFilter === "all" || effectiveFilter === "threads") && threads.length > 0;
+  const showPosts = (effectiveFilter === "all" || effectiveFilter === "posts") && posts.length > 0;
+  const showUsers = (effectiveFilter === "all" || effectiveFilter === "users") && users.length > 0;
 
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
@@ -58,7 +66,7 @@ export const GlobalSearch = () => {
   };
 
   const empty =
-    !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
+    !loading && effectiveQuery.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
 
   return (
     <>
@@ -82,32 +90,42 @@ export const GlobalSearch = () => {
           value={query}
           onValueChange={setQuery}
         />
-        {query.trim().length >= 2 && (
+        {effectiveQuery.trim().length >= 2 && (
           <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/50 overflow-x-auto">
             {([
               { id: "all", label: t("search.filterAll"), count: threads.length + posts.length + users.length },
               { id: "threads", label: t("search.threads"), count: threads.length },
               { id: "posts", label: t("search.posts"), count: posts.length },
               { id: "users", label: t("search.users"), count: users.length },
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilter(tab.id)}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
-                  filter === tab.id
-                    ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                {tab.label}
-                <span className="ml-1 opacity-60">{tab.count}</span>
-              </button>
-            ))}
+            ] as const).map((tab) => {
+              const active = effectiveFilter === tab.id;
+              const locked = !!prefixFilter;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
+                    active
+                      ? "bg-primary/20 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  } ${locked && !active ? "opacity-40 cursor-not-allowed" : ""}`}
+                >
+                  {tab.label}
+                  <span className="ml-1 opacity-60">{tab.count}</span>
+                </button>
+              );
+            })}
+            {prefixFilter && (
+              <span className="ml-auto text-[10px] text-muted-foreground px-2">
+                {t("search.prefixActive")}
+              </span>
+            )}
           </div>
         )}
         <CommandList>
-          {query.trim().length < 2 && (
+          {effectiveQuery.trim().length < 2 && (
             <>
               {history.length > 0 && (
                 <CommandGroup
@@ -147,8 +165,9 @@ export const GlobalSearch = () => {
                   ))}
                 </CommandGroup>
               )}
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                {t("search.hint")}
+              <div className="py-6 text-center text-sm text-muted-foreground space-y-1">
+                <div>{t("search.hint")}</div>
+                <div className="text-xs opacity-80">{t("search.hintPrefix")}</div>
               </div>
             </>
           )}
@@ -161,7 +180,7 @@ export const GlobalSearch = () => {
 
           {empty && <CommandEmpty>{t("search.noResults")}</CommandEmpty>}
 
-          {!loading && query.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
+          {!loading && effectiveQuery.trim().length >= 2 && !showThreads && !showPosts && !showUsers && !empty && (
             <CommandEmpty>{t("search.noResultsInFilter")}</CommandEmpty>
           )}
 
@@ -176,7 +195,7 @@ export const GlobalSearch = () => {
                   }
                 >
                   <FileText className="h-4 w-4 mr-2 text-primary" />
-                  <span className="truncate"><Highlight text={th.title} query={query} /></span>
+                  <span className="truncate"><Highlight text={th.title} query={effectiveQuery} /></span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -201,9 +220,9 @@ export const GlobalSearch = () => {
                     <MessageSquare className="h-4 w-4 mr-2 text-accent shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-muted-foreground truncate">
-                        {p.thread_title ? <Highlight text={p.thread_title} query={query} /> : "—"}
+                        {p.thread_title ? <Highlight text={p.thread_title} query={effectiveQuery} /> : "—"}
                       </div>
-                      <div className="text-sm truncate"><Highlight text={p.content} query={query} /></div>
+                      <div className="text-sm truncate"><Highlight text={p.content} query={effectiveQuery} /></div>
                     </div>
                   </CommandItem>
                 ))}
@@ -224,10 +243,10 @@ export const GlobalSearch = () => {
                       onSelect={() => go(`/profile/${u.user_id}`)}
                     >
                       <UserIcon className="h-4 w-4 mr-2 text-primary" />
-                      <span className="truncate"><Highlight text={name} query={query} /></span>
+                      <span className="truncate"><Highlight text={name} query={effectiveQuery} /></span>
                       {u.username && (
                         <span className="ml-2 text-xs text-muted-foreground truncate">
-                          @<Highlight text={u.username} query={query} />
+                          @<Highlight text={u.username} query={effectiveQuery} />
                         </span>
                       )}
                     </CommandItem>

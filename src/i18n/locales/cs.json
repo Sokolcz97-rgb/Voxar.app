@@ -22,7 +22,9 @@
     "clear": "Vymazat",
     "remove": "Odstranit",
     "filterAll": "Vše",
-    "noResultsInFilter": "V tomto filtru nic není"
+    "noResultsInFilter": "V tomto filtru nic není",
+    "prefixActive": "Filtr z prefixu",
+    "hintPrefix": "Tip: @ hledá uživatele, # hledá vlákna"
   },
   "common": {
     "back": "Zpět",
@@ -156,6 +158,8 @@
     "remove": "Odstranit",
     "filterAll": "Vše",
     "noResultsInFilter": "V tomto filtru nic není",
+    "prefixActive": "Filtr z prefixu",
+    "hintPrefix": "Tip: @ hledá uživatele, # hledá vlákna",
     "uploaded": "Avatar nahrán",
     "removed": "Avatar odstraněn",
     "notImage": "Soubor musí být obrázek",
