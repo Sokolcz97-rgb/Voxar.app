@@ -104,6 +104,14 @@ export function Navbar() {
                       <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-1.5 rounded-full">{openTickets}</span>
                     )}
                   </DropdownMenuItem>
+                  {(isAdmin || isEditor) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate("/admin")} className="text-primary">
+                        <Shield className="h-4 w-4 mr-2" />{t("nav.admin")}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />{t("nav.signOut")}
