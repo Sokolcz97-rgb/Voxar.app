@@ -1,4 +1,4 @@
-import "https://deno.land/x/[email protected]/index.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
