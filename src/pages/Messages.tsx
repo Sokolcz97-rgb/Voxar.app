@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { moderate } from "@/lib/moderate";
+import { BannedNotice } from "@/components/BannedNotice";
 
 interface Conversation {
   id: string;
@@ -281,12 +282,18 @@ const Messages = () => {
                   <div ref={bottomRef} />
                 </div>
 
-                <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
-                  <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={t("messages.writeMessage")} autoComplete="off" />
-                  <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+                {isBanned ? (
+                  <div className="border-t border-border p-3">
+                    <BannedNotice />
+                  </div>
+                ) : (
+                  <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
+                    <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={t("messages.writeMessage")} autoComplete="off" />
+                    <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
+                )}
               </>
             )}
           </Card>
