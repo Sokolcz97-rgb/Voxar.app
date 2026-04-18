@@ -106,7 +106,7 @@ const TicketDetail = () => {
     setSending(true);
 
     // Skip AI moderation for internal staff notes
-    const mod = await moderate(text.trim(), !(internal && isStaff));
+    const mod = await moderate(text.trim(), !(internal && isStaff), "ticket_reply");
     if (mod.blocked) {
       setSending(false);
       toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });

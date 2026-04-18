@@ -67,7 +67,7 @@ const ForumThread = () => {
     if (!user || !thread) return;
     setSubmitting(true);
 
-    const mod = await moderate(reply);
+    const mod = await moderate(reply, true, "forum_post");
     if (mod.blocked) {
       setSubmitting(false);
       toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });

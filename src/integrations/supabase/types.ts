@@ -182,6 +182,39 @@ export type Database = {
           },
         ]
       }
+      moderation_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          original: string
+          reason: string | null
+          result: string | null
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          original: string
+          reason?: string | null
+          result?: string | null
+          source: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          original?: string
+          reason?: string | null
+          result?: string | null
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -122,7 +122,7 @@ const Messages = () => {
     const original = text.trim();
     setText("");
 
-    const mod = await moderate(original);
+    const mod = await moderate(original, true, "dm");
     if (mod.blocked) {
       toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });
       setText(original);
