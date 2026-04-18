@@ -66,7 +66,7 @@ export const GlobalSearch = () => {
   };
 
   const empty =
-    !loading && query.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
+    !loading && effectiveQuery.trim().length >= 2 && threads.length === 0 && posts.length === 0 && users.length === 0;
 
   return (
     <>
@@ -90,32 +90,42 @@ export const GlobalSearch = () => {
           value={query}
           onValueChange={setQuery}
         />
-        {query.trim().length >= 2 && (
+        {effectiveQuery.trim().length >= 2 && (
           <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/50 overflow-x-auto">
             {([
               { id: "all", label: t("search.filterAll"), count: threads.length + posts.length + users.length },
               { id: "threads", label: t("search.threads"), count: threads.length },
               { id: "posts", label: t("search.posts"), count: posts.length },
               { id: "users", label: t("search.users"), count: users.length },
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilter(tab.id)}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
-                  filter === tab.id
-                    ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                {tab.label}
-                <span className="ml-1 opacity-60">{tab.count}</span>
-              </button>
-            ))}
+            ] as const).map((tab) => {
+              const active = effectiveFilter === tab.id;
+              const locked = !!prefixFilter;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap ${
+                    active
+                      ? "bg-primary/20 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  } ${locked && !active ? "opacity-40 cursor-not-allowed" : ""}`}
+                >
+                  {tab.label}
+                  <span className="ml-1 opacity-60">{tab.count}</span>
+                </button>
+              );
+            })}
+            {prefixFilter && (
+              <span className="ml-auto text-[10px] text-muted-foreground px-2">
+                {t("search.prefixActive")}
+              </span>
+            )}
           </div>
         )}
         <CommandList>
-          {query.trim().length < 2 && (
+          {effectiveQuery.trim().length < 2 && (
             <>
               {history.length > 0 && (
                 <CommandGroup
