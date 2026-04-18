@@ -179,5 +179,17 @@
   },
   "lang": {
     "switch": "Language"
+  },
+  "adminUsers": {
+    "section": "Administration",
+    "title": "Users & Roles",
+    "subtitle": "Manage access rights of community members.",
+    "searchPlaceholder": "Search by username or display name...",
+    "noResults": "No users found.",
+    "roleAdded": "Role added",
+    "roleRemoved": "Role removed",
+    "cantRemoveSelf": "You can't remove your own admin role",
+    "adminOnly": "Admins only",
+    "adminOnlyDesc": "This section requires admin privileges."
   }
 }

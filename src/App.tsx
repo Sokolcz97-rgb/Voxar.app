@@ -10,6 +10,7 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import Admin from "./pages/Admin.tsx";
+import AdminUsers from "./pages/AdminUsers.tsx";
 import Forum from "./pages/Forum.tsx";
 import ForumCategory from "./pages/ForumCategory.tsx";
 import ForumThread from "./pages/ForumThread.tsx";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsers /></ProtectedRoute>} />
             <Route path="/forum" element={<Forum />} />
             <Route path="/forum/:slug" element={<ForumCategory />} />
             <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
