@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Bot, Send, X, Loader2, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Markdown } from "@/components/Markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Msg {
   role: "user" | "assistant";
@@ -12,7 +13,6 @@ interface Msg {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-helper`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const STORAGE_KEY = "neonhub_ai_chat";
 
