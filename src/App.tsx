@@ -26,6 +26,8 @@ import Tickets from "./pages/Tickets.tsx";
 import TicketDetail from "./pages/TicketDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
+import Servers from "./pages/Servers.tsx";
+import AdminGames from "./pages/AdminGames.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -52,6 +54,8 @@ const AppRoutes = () => {
       <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
       <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/servery" element={<Servers />} />
+      <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

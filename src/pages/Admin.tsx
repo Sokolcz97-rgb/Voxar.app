@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
-import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette } from "lucide-react";
+import { Shield, Users, Settings, BarChart3, MessageSquareWarning, Palette, Gamepad2 } from "lucide-react";
 
 const Admin = () => {
   const sections = [
     { icon: Users, title: "Uživatelé & Role", desc: "Spravovat účty a oprávnění", to: "/admin/users" },
     { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
     { icon: Palette, title: "Page Builder", desc: "Drag & drop editor stránek", to: "/admin/pages" },
+    { icon: Gamepad2, title: "Hry", desc: "Katalog her pro server list", to: "/admin/games" },
     { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
     { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },
     { icon: Settings, title: "Nastavení webu", desc: "Téma, jazyky, média", to: null },
