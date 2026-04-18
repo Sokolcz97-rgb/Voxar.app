@@ -33,7 +33,7 @@ interface Message {
 const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
 
 const Messages = () => {
-  const { user } = useAuth();
+  const { user, isBanned } = useAuth();
   const { t, i18n } = useTranslation();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
