@@ -22,6 +22,7 @@ import Tickets from "./pages/Tickets.tsx";
 import TicketDetail from "./pages/TicketDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { AIHelper } from "@/components/AIHelper";
+import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
           <PresenceProvider>
             <AppRoutes />
             <AIHelper />
+            <ShortcutsHelp />
           </PresenceProvider>
         </AuthProvider>
       </BrowserRouter>
