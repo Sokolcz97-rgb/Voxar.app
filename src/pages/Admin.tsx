@@ -13,7 +13,7 @@ const Admin = () => {
     { icon: Radio, title: "Streamy", desc: "Featured streamery (Twitch, YouTube, Kick)", to: "/admin/streams" },
     { icon: Newspaper, title: "Novinky (IGDB)", desc: "Sync nadcházejících herních vydání", to: "/admin/novinky" },
     { icon: MessageCircle, title: "Discord servery", desc: "Spravovat invite odkazy a featured tlačítko", to: "/admin/discord" },
-    { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost a aktivita", to: null },
+    { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost, komunita a stav webu", to: "/admin/stats" },
     { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk", to: "/tickets" },
     { icon: Settings, title: "Nastavení webu", desc: "Texty na úvodce, navbaru, logo a zápatí", to: "/admin/settings" },
   ];
