@@ -252,9 +252,49 @@ export const GlobalSearch = () => {
         />
         <CommandList>
           {query.trim().length < 2 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              {t("search.hint")}
-            </div>
+            <>
+              {history.length > 0 && (
+                <CommandGroup
+                  heading={
+                    <div className="flex items-center justify-between">
+                      <span>{t("search.recent")}</span>
+                      <button
+                        type="button"
+                        onClick={clearHistory}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {t("search.clear")}
+                      </button>
+                    </div>
+                  }
+                >
+                  {history.map((term) => (
+                    <CommandItem
+                      key={`hist-${term}`}
+                      value={`history-${term}`}
+                      onSelect={() => runHistory(term)}
+                    >
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="truncate flex-1">{term}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromHistory(term);
+                        }}
+                        className="ml-2 opacity-60 hover:opacity-100"
+                        aria-label={t("search.remove")}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                {t("search.hint")}
+              </div>
+            </>
           )}
 
           {loading && (
