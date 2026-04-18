@@ -61,7 +61,7 @@ const PublicProfile = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [profRes, threadsRes, postsRes, recentRes, catsRes] = await Promise.all([
+      const [profRes, threadsRes, postsRes, recentRes, catsRes, postsRecentRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("user_id,display_name,username,avatar_url,bio,created_at,last_seen_at")
