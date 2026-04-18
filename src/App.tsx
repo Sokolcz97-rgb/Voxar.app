@@ -46,6 +46,7 @@ const AppRoutes = () => {
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
       <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -54,6 +54,9 @@ export function Navbar() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/forum">{t("nav.forum")}</Link>
           </Button>
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+            <Link to="/leaderboard">{t("nav.leaderboard")}</Link>
+          </Button>
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex relative">
