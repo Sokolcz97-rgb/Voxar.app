@@ -35,6 +35,7 @@ interface Message {
 }
 
 const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
+const stripHtml = (s?: string | null) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 const Messages = () => {
   const { user, isBanned } = useAuth();
@@ -248,7 +249,7 @@ const Messages = () => {
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
-                        <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{stripHtml(c.last?.content) || "—"}</div>
                       </div>
                     </button>
                   </li>
