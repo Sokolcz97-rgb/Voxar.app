@@ -58,7 +58,7 @@ const Index = () => {
   const editingThis = ed.active && ed.slug === "home";
   const blocksToShow = editingThis ? ed.blocks : customBlocks;
 
-  const siteName = settings.site_name || "NEONHUB";
+  const siteName = settings.site_name || "StudioVoxario";
   const seoTitle = `${siteName} — ${settings.hero_title_2 || "Herní komunita"}`;
   const seoDesc =
     settings.hero_subtitle ||

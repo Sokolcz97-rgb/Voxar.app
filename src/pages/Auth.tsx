@@ -9,10 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Gamepad2, Loader2 } from "lucide-react";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { settings } = useSiteSettings();
+  const siteName = settings.site_name || "StudioVoxario";
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +74,7 @@ const Auth = () => {
       <div className="w-full max-w-md animate-scale-in">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8 group">
           <Gamepad2 className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-          <span className="font-display font-bold text-2xl tracking-widest text-glow">NEONHUB</span>
+          <span className="font-display font-bold text-2xl tracking-widest text-glow">{siteName}</span>
         </Link>
 
         <div className="glass rounded-2xl p-8 border-glow">
@@ -85,7 +88,7 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4 mt-6">
                 <div className="space-y-2">
                   <Label htmlFor="email-in">{t("auth.email")}</Label>
-                  <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hrac@neonhub.gg" />
+                  <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="player@example.com" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-in">{t("auth.password")}</Label>

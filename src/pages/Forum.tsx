@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { MessageSquare, ChevronRight, Loader2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 interface Category {
   id: string;
@@ -17,6 +18,7 @@ interface Category {
 
 const Forum = () => {
   const { t } = useTranslation();
+  const { settings } = useSiteSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,7 @@ const Forum = () => {
 
   return (
     <div className="min-h-screen relative">
-      <SEO title="Fórum — NEONHUB" description="Diskuze české herní komunity. Připoj se k tématům o hrách, streamerech a turnajích." />
+      <SEO title={`${t("forum.title")} — ${settings.site_name}`} description={t("forum.subtitle")} />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />

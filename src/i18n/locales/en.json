@@ -79,7 +79,7 @@
     "signInFailed": "Sign in failed",
     "googleFailed": "Google sign in failed",
     "accountCreated": "Account created",
-    "welcome": "Welcome to NEONHUB!"
+    "welcome": "Welcome!"
   },
   "dashboard": {
     "welcome": "Welcome back",
@@ -382,14 +382,14 @@
     "rangeAll": "All time",
     "rangeMonth": "This month",
     "rangeWeek": "This week",
-    "seoTitle": "Player leaderboard — NEONHUB",
-    "seoDesc": "Best players in the NEONHUB community ranked by reactions and activity."
+    "seoTitle": "Player leaderboard",
+    "seoDesc": "Best players in the community ranked by reactions and activity."
   },
   "rankBadge": {
     "tooltip": "Rank #{{rank}} on leaderboard — {{range}}"
   },
   "servers": {
-    "seoTitle": "Game servers — NEONHUB",
+    "seoTitle": "Game servers",
     "seoDesc": "Community game servers: Minecraft, CS, Rust and more. Join Czech players.",
     "communityTagline": "Community",
     "discordTitle": "Discord servers",
@@ -438,7 +438,7 @@
     }
   },
   "novinky": {
-    "seoTitle": "Game releases — NEONHUB",
+    "seoTitle": "Game releases",
     "seoDesc": "Upcoming and recently released games for PC, PlayStation, Xbox and Switch. Filter by genre and platform.",
     "tagline": "Releases",
     "title": "Upcoming game releases",
