@@ -95,7 +95,7 @@ const Messages = () => {
     if (user) {
       supabase.from("messages").update({ read_at: new Date().toISOString() })
         .eq("conversation_id", activeId).neq("sender_id", user.id).is("read_at", null)
-        .then(() => {});
+        .then(() => { window.dispatchEvent(new Event("messages:read")); });
     }
 
     const channel = supabase
@@ -109,7 +109,7 @@ const Messages = () => {
           // auto-mark as read if not from me
           if (user && msg.sender_id !== user.id) {
             supabase.from("messages").update({ read_at: new Date().toISOString() })
-              .eq("id", msg.id).then(() => {});
+              .eq("id", msg.id).then(() => { window.dispatchEvent(new Event("messages:read")); });
           }
         }
       ).subscribe();
