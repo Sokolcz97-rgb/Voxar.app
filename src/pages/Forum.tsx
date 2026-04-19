@@ -18,6 +18,7 @@ interface Category {
 
 const Forum = () => {
   const { t } = useTranslation();
+  const { settings } = useSiteSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
