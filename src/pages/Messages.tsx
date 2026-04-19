@@ -14,6 +14,8 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
+import { RichEditor } from "@/components/RichEditor";
+import { RichContent } from "@/components/RichContent";
 
 interface Conversation {
   id: string;
@@ -296,7 +298,7 @@ const Messages = () => {
                             mine ? "bg-primary text-primary-foreground rounded-br-sm shadow-[var(--glow-soft)]"
                                  : "bg-secondary text-secondary-foreground rounded-bl-sm"
                           }`}>
-                            <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                            <RichContent content={m.content} className="rich-content prose prose-invert prose-sm max-w-none break-words [&_p]:my-0" />
                             <p className={`text-[10px] mt-1 opacity-70`}>{formatTime(m.created_at)}</p>
                           </div>
                         </div>
