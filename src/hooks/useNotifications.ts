@@ -106,10 +106,18 @@ export function useNotifications() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(ch); };
+    const onRead = () => loadMessages(user.id);
+    window.addEventListener("messages:read", onRead);
+
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("messages:read", onRead);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isStaff]);
 
-  return { unreadMessages, openTickets };
+  const refreshMessages = () => { if (user) loadMessages(user.id); };
+
+  return { unreadMessages, openTickets, refreshMessages };
 }
 
