@@ -5,14 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichEditor } from "@/components/RichEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
-import { Markdown } from "@/components/Markdown";
+import { RichContent } from "@/components/RichContent";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
 import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -198,7 +198,7 @@ const TicketDetail = () => {
                   <div className="text-[11px] text-muted-foreground uppercase tracking-widest">{t("tickets.originalMsg")}</div>
                 </div>
               </div>
-              <Markdown content={ticket.description} />
+              <RichContent content={ticket.description} />
             </Card>
 
             <div className="space-y-3">
@@ -222,7 +222,7 @@ const TicketDetail = () => {
                       </span>
                     )}
                   </div>
-                  <Markdown content={r.content} />
+                  <RichContent content={r.content} />
                 </Card>
               ))}
               <div ref={bottomRef} />
@@ -233,8 +233,7 @@ const TicketDetail = () => {
             )}
             {ticket.status !== "closed" && user && (!isBanned || isStaff) && (
               <form onSubmit={send} className="mt-6 space-y-3">
-                <Textarea required rows={5} value={text} onChange={(e) => setText(e.target.value)}
-                  placeholder={t("tickets.replyPlaceholder")} className="font-mono text-sm resize-none" />
+                <RichEditor value={text} onChange={setText} placeholder={t("tickets.replyPlaceholder")} minHeight={140} />
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   {isStaff ? (
                     <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">

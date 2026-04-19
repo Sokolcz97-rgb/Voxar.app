@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichEditor } from "@/components/RichEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -131,7 +131,7 @@ const ForumCategory = () => {
                       <Plus className="h-4 w-4 mr-1" /> {t("forum.newThread")}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="glass border-border">
+                  <DialogContent className="glass border-border max-w-2xl">
                     <DialogHeader><DialogTitle>{t("forum.newThread")}</DialogTitle></DialogHeader>
                     <form onSubmit={createThread} className="space-y-4">
                       <div className="space-y-2">
@@ -139,10 +139,10 @@ const ForumCategory = () => {
                         <Input id="t-title" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="t-content">{t("forum.threadContent")}</Label>
-                        <Textarea id="t-content" rows={6} required value={content} onChange={(e) => setContent(e.target.value)} />
+                        <Label>{t("forum.threadContent")}</Label>
+                        <RichEditor value={content} onChange={setContent} minHeight={180} />
                       </div>
-                      <Button type="submit" disabled={submitting} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
+                      <Button type="submit" disabled={submitting || !content.trim()} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
                         {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
                       </Button>
                     </form>

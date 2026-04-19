@@ -14,6 +14,8 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
+import { RichEditor } from "@/components/RichEditor";
+import { RichContent } from "@/components/RichContent";
 
 interface Conversation {
   id: string;
@@ -33,6 +35,7 @@ interface Message {
 }
 
 const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
+const stripHtml = (s?: string | null) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 const Messages = () => {
   const { user, isBanned } = useAuth();
@@ -246,7 +249,7 @@ const Messages = () => {
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
-                        <div className="text-xs text-muted-foreground truncate">{c.last?.content ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{stripHtml(c.last?.content) || "—"}</div>
                       </div>
                     </button>
                   </li>
@@ -296,7 +299,7 @@ const Messages = () => {
                             mine ? "bg-primary text-primary-foreground rounded-br-sm shadow-[var(--glow-soft)]"
                                  : "bg-secondary text-secondary-foreground rounded-bl-sm"
                           }`}>
-                            <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                            <RichContent content={m.content} className="rich-content prose prose-invert prose-sm max-w-none break-words [&_p]:my-0" />
                             <p className={`text-[10px] mt-1 opacity-70`}>{formatTime(m.created_at)}</p>
                           </div>
                         </div>
@@ -311,11 +314,13 @@ const Messages = () => {
                     <BannedNotice />
                   </div>
                 ) : (
-                  <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
-                    <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={t("messages.writeMessage")} autoComplete="off" />
-                    <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                      <Send className="h-4 w-4" />
-                    </Button>
+                  <form onSubmit={send} className="border-t border-border p-3 space-y-2">
+                    <RichEditor value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} />
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                        <Send className="h-4 w-4 mr-2" />{t("forum.send")}
+                      </Button>
+                    </div>
                   </form>
                 )}
               </>

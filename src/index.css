@@ -126,3 +126,45 @@
   }
 }
 .animate-gold-pulse { animation: gold-pulse 2s ease-in-out infinite; }
+
+/* Rich content (TipTap output) */
+.rich-content img,
+.rich-content video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  margin: 0.5rem 0;
+}
+.rich-content video { display: block; max-height: 480px; background: #000; }
+.rich-content a[data-attachment="true"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--secondary) / 0.5);
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: all 0.15s;
+}
+.rich-content a[data-attachment="true"]:hover {
+  border-color: hsl(var(--primary) / 0.6);
+  color: hsl(var(--primary));
+}
+/* TipTap empty placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror:focus { outline: none; }
+.ProseMirror img, .ProseMirror video {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+}
