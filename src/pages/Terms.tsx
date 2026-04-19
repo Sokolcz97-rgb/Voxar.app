@@ -5,7 +5,7 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const Terms = () => {
   const { settings } = useSiteSettings();
-  const siteName = settings.site_name || "NEONHUB";
+  const siteName = settings.site_name || "StudioVoxario";
   const updated = "18. dubna 2026";
 
   return (
