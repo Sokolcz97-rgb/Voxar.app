@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { MessageSquare, ChevronRight, Loader2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 interface Category {
   id: string;
