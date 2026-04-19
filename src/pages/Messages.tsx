@@ -313,11 +313,13 @@ const Messages = () => {
                     <BannedNotice />
                   </div>
                 ) : (
-                  <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
-                    <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={t("messages.writeMessage")} autoComplete="off" />
-                    <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                      <Send className="h-4 w-4" />
-                    </Button>
+                  <form onSubmit={send} className="border-t border-border p-3 space-y-2">
+                    <RichEditor value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} />
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                        <Send className="h-4 w-4 mr-2" />{t("forum.send")}
+                      </Button>
+                    </div>
                   </form>
                 )}
               </>
