@@ -79,7 +79,7 @@
     "signInFailed": "Přihlášení selhalo",
     "googleFailed": "Google přihlášení selhalo",
     "accountCreated": "Účet vytvořen",
-    "welcome": "Vítej v NEONHUB!"
+    "welcome": "Vítej!"
   },
   "dashboard": {
     "welcome": "Vítej zpět",
@@ -382,14 +382,14 @@
     "rangeAll": "Vše",
     "rangeMonth": "Tento měsíc",
     "rangeWeek": "Tento týden",
-    "seoTitle": "Žebříček hráčů — NEONHUB",
-    "seoDesc": "Nejlepší hráči komunity NEONHUB podle reakcí a aktivity."
+    "seoTitle": "Žebříček hráčů",
+    "seoDesc": "Nejlepší hráči komunity podle reakcí a aktivity."
   },
   "rankBadge": {
     "tooltip": "Umístění #{{rank}} v žebříčku — {{range}}"
   },
   "servers": {
-    "seoTitle": "Herní servery — NEONHUB",
+    "seoTitle": "Herní servery",
     "seoDesc": "Komunitní herní servery: Minecraft, CS, Rust a další. Připoj se k českým hráčům.",
     "communityTagline": "Komunita",
     "discordTitle": "Discord servery",
@@ -438,7 +438,7 @@
     }
   },
   "novinky": {
-    "seoTitle": "Novinky o hrách — NEONHUB",
+    "seoTitle": "Novinky o hrách",
     "seoDesc": "Nadcházející a nedávno vydané hry pro PC, PlayStation, Xbox a Switch. Filtry podle žánru a platformy.",
     "tagline": "Novinky",
     "title": "Nadcházející herní vydání",
