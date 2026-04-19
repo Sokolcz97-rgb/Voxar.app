@@ -74,7 +74,7 @@ const Auth = () => {
       <div className="w-full max-w-md animate-scale-in">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8 group">
           <Gamepad2 className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-          <span className="font-display font-bold text-2xl tracking-widest text-glow">NEONHUB</span>
+          <span className="font-display font-bold text-2xl tracking-widest text-glow">{siteName}</span>
         </Link>
 
         <div className="glass rounded-2xl p-8 border-glow">
