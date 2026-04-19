@@ -296,10 +296,17 @@ const Messages = () => {
                       return (
                         <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} animate-fade-in`}>
                           <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                            mine ? "bg-primary text-primary-foreground rounded-br-sm shadow-[var(--glow-soft)]"
+                            mine ? "bg-primary text-black rounded-br-sm shadow-[var(--glow-soft)]"
                                  : "bg-secondary text-secondary-foreground rounded-bl-sm"
                           }`}>
-                            <RichContent content={m.content} className="rich-content prose prose-invert prose-sm max-w-none break-words [&_p]:my-0" />
+                            <RichContent
+                              content={m.content}
+                              className={`rich-content prose prose-sm max-w-none break-words [&_p]:my-0 ${
+                                mine
+                                  ? "text-black [&_*]:!text-black [&_a]:!text-black [&_a]:underline"
+                                  : "prose-invert"
+                              }`}
+                            />
                             <p className={`text-[10px] mt-1 opacity-70`}>{formatTime(m.created_at)}</p>
                           </div>
                         </div>
