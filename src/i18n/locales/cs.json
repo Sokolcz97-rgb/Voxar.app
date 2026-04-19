@@ -457,5 +457,24 @@
     "released": "Vyšlo",
     "detailIgdb": "Detail na IGDB",
     "tba": "TBA"
+  },
+  "editor": {
+    "placeholder": "Začni psát…",
+    "bold": "Tučné",
+    "italic": "Kurzíva",
+    "underline": "Podtržené",
+    "strike": "Přeškrtnuté",
+    "color": "Barva textu",
+    "bulletList": "Odrážkový seznam",
+    "orderedList": "Číslovaný seznam",
+    "quote": "Citace",
+    "code": "Blok kódu",
+    "link": "Vložit odkaz",
+    "unlink": "Odstranit odkaz",
+    "linkPrompt": "URL odkazu (prázdné = odstranit)",
+    "image": "Vložit obrázek",
+    "file": "Vložit soubor / video",
+    "tooLarge": "Soubor je příliš velký (max 25 MB)",
+    "uploadFailed": "Nahrávání selhalo"
   }
 }
