@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichEditor } from "@/components/RichEditor";
+import { RichContent } from "@/components/RichContent";
 import { useAuth } from "@/contexts/AuthContext";
 import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
@@ -154,7 +155,7 @@ const ForumThread = () => {
                           </button>
                         )}
                       </div>
-                      <p className="whitespace-pre-wrap break-words text-foreground/90">{p.content}</p>
+                      <RichContent content={p.content} />
                       <PostReactions postId={p.id} />
                     </div>
                   </div>
@@ -167,9 +168,8 @@ const ForumThread = () => {
             )}
             {user && !thread.is_locked && !isBanned && (
               <form onSubmit={sendReply} className="mt-8 space-y-3">
-                <Textarea required rows={4} value={reply} onChange={(e) => setReply(e.target.value)}
-                  placeholder={t("forum.replyPlaceholder")} className="resize-none" />
-                <Button type="submit" disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                <RichEditor value={reply} onChange={setReply} placeholder={t("forum.replyPlaceholder")} minHeight={140} />
+                <Button type="submit" disabled={submitting || !reply.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
                 </Button>
               </form>
