@@ -88,7 +88,7 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4 mt-6">
                 <div className="space-y-2">
                   <Label htmlFor="email-in">{t("auth.email")}</Label>
-                  <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hrac@neonhub.gg" />
+                  <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="player@example.com" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-in">{t("auth.password")}</Label>
