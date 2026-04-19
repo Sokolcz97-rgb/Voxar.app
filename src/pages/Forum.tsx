@@ -47,7 +47,7 @@ const Forum = () => {
 
   return (
     <div className="min-h-screen relative">
-      <SEO title="Fórum — NEONHUB" description="Diskuze české herní komunity. Připoj se k tématům o hrách, streamerech a turnajích." />
+      <SEO title={`${t("forum.title")} — ${settings.site_name}`} description={t("forum.subtitle")} />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
