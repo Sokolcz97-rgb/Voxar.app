@@ -9,10 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Gamepad2, Loader2 } from "lucide-react";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { settings } = useSiteSettings();
+  const siteName = settings.site_name || "StudioVoxario";
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
