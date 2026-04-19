@@ -17,11 +17,11 @@ export type SiteSettings = {
 
 const DEFAULTS: SiteSettings = {
   id: "",
-  site_name: "NEONHUB",
+  site_name: "StudioVoxario",
   site_tagline: "Herní komunita",
   hero_badge: "Next-gen herní hub",
   hero_title_1: "Vstup do",
-  hero_title_2: "NEONHUB",
+  hero_title_2: "StudioVoxario",
   hero_subtitle:
     "Připoj se k tisícům hráčů. Sleduj streamy, diskutuj na fóru a buduj svou hráčskou identitu.",
   hero_cta_label: "Vstoupit do Hubu",
