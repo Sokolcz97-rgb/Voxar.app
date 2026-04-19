@@ -10,7 +10,7 @@ interface Props {
 // Detect TipTap/HTML content (starts with a tag) vs legacy markdown/plaintext.
 const looksLikeHtml = (s: string) => /^\s*<(?:p|h[1-6]|ul|ol|blockquote|pre|figure|img|video|a|div|span|strong|em|u)\b/i.test(s);
 
-const PURIFY_CONFIG: DOMPurify.Config = {
+const PURIFY_CONFIG = {
   ALLOWED_TAGS: [
     "p","br","strong","em","u","s","a","img","video","source",
     "h1","h2","h3","ul","ol","li","blockquote","pre","code","hr","span","div","figure","figcaption",
@@ -26,8 +26,7 @@ export function RichContent({ content, className }: Props) {
   const html = useMemo(() => {
     if (!content) return "";
     if (!looksLikeHtml(content)) return null;
-    const clean = DOMPurify.sanitize(content, PURIFY_CONFIG);
-    return clean;
+    return DOMPurify.sanitize(content, PURIFY_CONFIG) as string;
   }, [content]);
 
   if (html === null) {

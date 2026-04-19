@@ -9,7 +9,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TextStyle from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { uploadAttachment, MAX_ATTACHMENT_BYTES } from "@/lib/uploadAttachment";
 import {
