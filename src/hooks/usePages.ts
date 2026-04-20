@@ -28,7 +28,7 @@ export function useNavPages() {
         .select("slug,nav_label,nav_position")
         .eq("is_published", true)
         .not("nav_label", "is", null)
-        .order("nav_position");
+        .order("nav_label");
       if (active && data) setPages(data as any);
     };
     load();
