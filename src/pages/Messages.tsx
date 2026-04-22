@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
+import { Loader2, Send, Plus, Search, MessageSquare, Paperclip } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
-import { RichEditor } from "@/components/RichEditor";
+import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
 
 interface Conversation {
