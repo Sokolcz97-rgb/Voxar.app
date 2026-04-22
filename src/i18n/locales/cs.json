@@ -475,6 +475,7 @@
     "image": "Vložit obrázek",
     "file": "Vložit soubor / video",
     "tooLarge": "Soubor je příliš velký (max 25 MB)",
-    "uploadFailed": "Nahrávání selhalo"
+    "uploadFailed": "Nahrávání selhalo",
+    "attach": "Připojit soubor"
   }
 }

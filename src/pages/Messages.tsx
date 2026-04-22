@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Send, Plus, Search, MessageSquare } from "lucide-react";
+import { Loader2, Send, Plus, Search, MessageSquare, Paperclip } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
-import { RichEditor } from "@/components/RichEditor";
+import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
 
 interface Conversation {
@@ -52,6 +52,7 @@ const Messages = () => {
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null; avatar_url: string | null }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<RichEditorHandle>(null);
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
@@ -322,8 +323,16 @@ const Messages = () => {
                   </div>
                 ) : (
                   <form onSubmit={send} className="border-t border-border p-3 space-y-2">
-                    <RichEditor value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} />
-                    <div className="flex justify-end">
+                    <RichEditor ref={editorRef} value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} hideUploadButtons />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => editorRef.current?.openFilePicker()}
+                        title={t("editor.file")}
+                      >
+                        <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                      </Button>
                       <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
                         <Send className="h-4 w-4 mr-2" />{t("forum.send")}
                       </Button>
