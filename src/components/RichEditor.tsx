@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -26,14 +26,52 @@ interface Props {
   minHeight?: number;
   /** When true, image/file uploads are disabled (e.g. user not logged in). */
   disableUploads?: boolean;
+  /** Hide the built-in upload toolbar buttons (use external Attach button via ref instead). */
+  hideUploadButtons?: boolean;
 }
 
-const COLORS = [
+export interface RichEditorHandle {
+  openFilePicker: (accept?: string) => void;
+  isUploading: () => boolean;
+}
+
+const PRESET_COLORS = [
   "#ffffff", "#9ca3af", "#fca5a5", "#f87171", "#ef4444",
   "#fb923c", "#fbbf24", "#facc15", "#a3e635", "#4ade80",
   "#22d3ee", "#60a5fa", "#818cf8", "#a78bfa", "#e879f9",
   "#f472b6",
 ];
+
+// ---------- Color helpers ----------
+function clamp(n: number, min = 0, max = 255) { return Math.max(min, Math.min(max, n)); }
+
+function rgbToHex(r: number, g: number, b: number) {
+  const h = (n: number) => clamp(Math.round(n)).toString(16).padStart(2, "0");
+  return `#${h(r)}${h(g)}${h(b)}`.toLowerCase();
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  let h = hex.trim().replace(/^#/, "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  };
+}
+
+function parseAnyColor(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  // hex with or without #
+  const hex = hexToRgb(s.startsWith("#") ? s : `#${s}`);
+  if (hex) return rgbToHex(hex.r, hex.g, hex.b);
+  // rgb()/rgba()
+  const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (m) return rgbToHex(+m[1], +m[2], +m[3]);
+  return null;
+}
 
 function ToolbarBtn({
   onClick, active, disabled, title, children,
@@ -68,6 +106,36 @@ function ColorPicker({ editor }: { editor: Editor }) {
   const [open, setOpen] = useState(false);
   const current = (editor.getAttributes("textStyle").color as string | undefined) ?? null;
 
+  // Local controlled inputs (initialized from current color when opening)
+  const initialHex = current && parseAnyColor(current) ? parseAnyColor(current)! : "#ffffff";
+  const initialRgb = hexToRgb(initialHex)!;
+  const [hexInput, setHexInput] = useState(initialHex);
+  const [r, setR] = useState(initialRgb.r);
+  const [g, setG] = useState(initialRgb.g);
+  const [b, setB] = useState(initialRgb.b);
+
+  const apply = (color: string) => {
+    editor.chain().focus().setColor(color).run();
+  };
+
+  const onHexChange = (val: string) => {
+    setHexInput(val);
+    const parsed = parseAnyColor(val);
+    if (parsed) {
+      const rgb = hexToRgb(parsed)!;
+      setR(rgb.r); setG(rgb.g); setB(rgb.b);
+      apply(parsed);
+    }
+  };
+
+  const onRgbChange = (nr: number, ng: number, nb: number) => {
+    const cr = clamp(nr), cg = clamp(ng), cb = clamp(nb);
+    setR(cr); setG(cg); setB(cb);
+    const hex = rgbToHex(cr, cg, cb);
+    setHexInput(hex);
+    apply(hex);
+  };
+
   return (
     <div className="relative">
       <ToolbarBtn onClick={() => setOpen((o) => !o)} title="Barva textu" active={!!current}>
@@ -83,39 +151,89 @@ function ColorPicker({ editor }: { editor: Editor }) {
       </ToolbarBtn>
       {open && (
         <div
-          className="absolute z-50 mt-1 left-0 p-2 rounded-lg border border-border bg-card/95 backdrop-blur shadow-lg"
-          onMouseLeave={() => setOpen(false)}
+          className="absolute z-50 mt-1 left-0 p-3 rounded-lg border border-border bg-card/95 backdrop-blur shadow-lg w-[240px]"
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="grid grid-cols-8 gap-1.5 w-[200px]">
-            {COLORS.map((c) => (
+          <div className="grid grid-cols-8 gap-1.5 mb-3">
+            {PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => { editor.chain().focus().setColor(c).run(); setOpen(false); }}
+                onClick={() => apply(c)}
                 className="h-5 w-5 rounded border border-border/50 hover:scale-110 transition-transform"
                 style={{ background: c }}
                 aria-label={`Barva ${c}`}
               />
             ))}
           </div>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => { editor.chain().focus().unsetColor().run(); setOpen(false); }}
-            className="mt-2 w-full text-xs text-muted-foreground hover:text-foreground"
-          >
-            Bez barvy
-          </button>
+
+          {/* Native color picker (true RGB triangle/square) */}
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="color"
+              value={parseAnyColor(hexInput) ?? "#ffffff"}
+              onChange={(e) => onHexChange(e.target.value)}
+              className="h-8 w-10 rounded border border-border bg-transparent cursor-pointer"
+              aria-label="Vybrat barvu"
+            />
+            <input
+              type="text"
+              value={hexInput}
+              onChange={(e) => onHexChange(e.target.value)}
+              placeholder="#RRGGBB"
+              className="flex-1 h-8 px-2 rounded border border-border bg-background text-xs font-mono"
+              aria-label="HEX"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
+            {([
+              ["R", r, (v: number) => onRgbChange(v, g, b)],
+              ["G", g, (v: number) => onRgbChange(r, v, b)],
+              ["B", b, (v: number) => onRgbChange(r, g, v)],
+            ] as const).map(([label, val, set]) => (
+              <label key={label} className="flex flex-col items-center text-[10px] text-muted-foreground">
+                <span>{label}</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={255}
+                  value={val}
+                  onChange={(e) => set(clamp(parseInt(e.target.value || "0", 10)))}
+                  className="w-full h-7 px-1 rounded border border-border bg-background text-xs text-foreground text-center"
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { editor.chain().focus().unsetColor().run(); }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Bez barvy
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setOpen(false)}
+              className="text-xs text-primary hover:underline"
+            >
+              Hotovo
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-export function RichEditor({
-  value, onChange, placeholder, className, minHeight = 140, disableUploads,
-}: Props) {
+export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor({
+  value, onChange, placeholder, className, minHeight = 140, disableUploads, hideUploadButtons,
+}, ref) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -163,7 +281,6 @@ export function RichEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
-      // TipTap returns "<p></p>" for empty editor — normalize to ""
       onChange(ed.isEmpty ? "" : html);
     },
   });
@@ -207,6 +324,11 @@ export function RichEditor({
     fileInputRef.current.accept = accept;
     fileInputRef.current.click();
   };
+
+  useImperativeHandle(ref, () => ({
+    openFilePicker: (accept = "image/*,video/*,application/pdf,application/zip,text/plain") => onPickFiles(accept),
+    isUploading: () => uploading,
+  }), [uploading]);
 
   const setLink = () => {
     if (!editor) return;
@@ -275,7 +397,7 @@ export function RichEditor({
           </ToolbarBtn>
         )}
 
-        {!disableUploads && user && (
+        {!disableUploads && user && !hideUploadButtons && (
           <>
             <div className="w-px h-5 bg-border mx-1" />
             <ToolbarBtn
@@ -311,4 +433,4 @@ export function RichEditor({
       <EditorContent editor={editor} />
     </div>
   );
-}
+});
