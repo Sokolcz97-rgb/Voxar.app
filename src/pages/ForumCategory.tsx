@@ -42,6 +42,7 @@ const ForumCategory = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const newThreadEditorRef = useRef<RichEditorHandle>(null);
 
   const load = async () => {
     setLoading(true);
