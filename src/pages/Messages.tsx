@@ -52,6 +52,7 @@ const Messages = () => {
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null; avatar_url: string | null }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<RichEditorHandle>(null);
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
