@@ -169,10 +169,15 @@ const ForumThread = () => {
             )}
             {user && !thread.is_locked && !isBanned && (
               <form onSubmit={sendReply} className="mt-8 space-y-3">
-                <RichEditor value={reply} onChange={setReply} placeholder={t("forum.replyPlaceholder")} minHeight={140} />
-                <Button type="submit" disabled={submitting || !reply.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
-                </Button>
+                <RichEditor ref={replyEditorRef} value={reply} onChange={setReply} placeholder={t("forum.replyPlaceholder")} minHeight={140} hideUploadButtons />
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => replyEditorRef.current?.openFilePicker()}>
+                    <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                  </Button>
+                  <Button type="submit" disabled={submitting || !reply.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
+                  </Button>
+                </div>
               </form>
             )}
             {!user && (
