@@ -141,11 +141,16 @@ const ForumCategory = () => {
                       </div>
                       <div className="space-y-2">
                         <Label>{t("forum.threadContent")}</Label>
-                        <RichEditor value={content} onChange={setContent} minHeight={180} />
+                        <RichEditor ref={newThreadEditorRef} value={content} onChange={setContent} minHeight={180} hideUploadButtons />
                       </div>
-                      <Button type="submit" disabled={submitting || !content.trim()} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={() => newThreadEditorRef.current?.openFilePicker()}>
+                          <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                        </Button>
+                        <Button type="submit" disabled={submitting || !content.trim()} className="flex-1 bg-primary text-primary-foreground hover:bg-primary-glow">
+                          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
+                        </Button>
+                      </div>
                     </form>
                   </DialogContent>
                 </Dialog>
