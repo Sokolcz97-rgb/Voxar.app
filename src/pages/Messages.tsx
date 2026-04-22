@@ -323,8 +323,16 @@ const Messages = () => {
                   </div>
                 ) : (
                   <form onSubmit={send} className="border-t border-border p-3 space-y-2">
-                    <RichEditor value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} />
-                    <div className="flex justify-end">
+                    <RichEditor ref={editorRef} value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} hideUploadButtons />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => editorRef.current?.openFilePicker()}
+                        title={t("editor.file")}
+                      >
+                        <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                      </Button>
                       <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
                         <Send className="h-4 w-4 mr-2" />{t("forum.send")}
                       </Button>
