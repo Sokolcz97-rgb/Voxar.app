@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RichEditor } from "@/components/RichEditor";
+import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Pin, Lock, Plus, ChevronLeft, MessageCircle } from "lucide-react";
+import { Loader2, Pin, Lock, Plus, ChevronLeft, MessageCircle, Paperclip } from "lucide-react";
 
 interface Thread {
   id: string;
@@ -42,6 +42,7 @@ const ForumCategory = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const newThreadEditorRef = useRef<RichEditorHandle>(null);
 
   const load = async () => {
     setLoading(true);
@@ -140,11 +141,16 @@ const ForumCategory = () => {
                       </div>
                       <div className="space-y-2">
                         <Label>{t("forum.threadContent")}</Label>
-                        <RichEditor value={content} onChange={setContent} minHeight={180} />
+                        <RichEditor ref={newThreadEditorRef} value={content} onChange={setContent} minHeight={180} hideUploadButtons />
                       </div>
-                      <Button type="submit" disabled={submitting || !content.trim()} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={() => newThreadEditorRef.current?.openFilePicker()}>
+                          <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                        </Button>
+                        <Button type="submit" disabled={submitting || !content.trim()} className="flex-1 bg-primary text-primary-foreground hover:bg-primary-glow">
+                          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("forum.publish")}
+                        </Button>
+                      </div>
                     </form>
                   </DialogContent>
                 </Dialog>

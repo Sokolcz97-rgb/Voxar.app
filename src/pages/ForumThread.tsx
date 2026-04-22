@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RichEditor } from "@/components/RichEditor";
+import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
 import { useAuth } from "@/contexts/AuthContext";
 import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare } from "lucide-react";
+import { Loader2, Pin, Lock, ChevronLeft, Send, MessageSquare, Paperclip } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
@@ -44,6 +44,7 @@ const ForumThread = () => {
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const replyEditorRef = useRef<RichEditorHandle>(null);
 
   const load = async () => {
     const { data: th } = await supabase
@@ -168,10 +169,15 @@ const ForumThread = () => {
             )}
             {user && !thread.is_locked && !isBanned && (
               <form onSubmit={sendReply} className="mt-8 space-y-3">
-                <RichEditor value={reply} onChange={setReply} placeholder={t("forum.replyPlaceholder")} minHeight={140} />
-                <Button type="submit" disabled={submitting || !reply.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
-                </Button>
+                <RichEditor ref={replyEditorRef} value={reply} onChange={setReply} placeholder={t("forum.replyPlaceholder")} minHeight={140} hideUploadButtons />
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => replyEditorRef.current?.openFilePicker()}>
+                    <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
+                  </Button>
+                  <Button type="submit" disabled={submitting || !reply.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />{t("forum.send")}</>}
+                  </Button>
+                </div>
               </form>
             )}
             {!user && (
