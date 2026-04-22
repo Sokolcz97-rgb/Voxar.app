@@ -44,6 +44,7 @@ const ForumThread = () => {
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const replyEditorRef = useRef<RichEditorHandle>(null);
 
   const load = async () => {
     const { data: th } = await supabase
