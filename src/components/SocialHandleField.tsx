@@ -18,7 +18,7 @@ interface Props {
 
 /** Extract a clean handle from either a raw username/@handle or a full URL. */
 export function extractHandle(platform: Platform, raw: string): string {
-  let s = (raw || "").trim();
+  const s = (raw || "").trim();
   if (!s) return "";
 
   // If the user pasted a URL, parse it
