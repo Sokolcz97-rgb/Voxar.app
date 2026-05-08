@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
+import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   ensureNotificationPermission,
   playNotifSound,
@@ -161,19 +162,34 @@ const Profile = () => {
                 <p className="text-xs text-muted-foreground mb-4">
                   {t("profile.streamingHint")}
                 </p>
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="tw" className="text-[#9146FF]">Twitch username</Label>
-                    <Input id="tw" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder={t("profile.twitchPlaceholder")} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="yt" className="text-[#FF0033]">YouTube handle</Label>
-                    <Input id="yt" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder={t("profile.youtubePlaceholder")} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ki" className="text-[#53FC18]">Kick username</Label>
-                    <Input id="ki" value={kick} onChange={(e) => setKick(e.target.value)} placeholder={t("profile.kickPlaceholder")} />
-                  </div>
+                <div className="space-y-4">
+                  <SocialHandleField
+                    id="tw"
+                    label="Twitch"
+                    color="#9146FF"
+                    value={twitch}
+                    onChange={setTwitch}
+                    platform="twitch"
+                    placeholder={t("profile.twitchPlaceholder")}
+                  />
+                  <SocialHandleField
+                    id="yt"
+                    label="YouTube"
+                    color="#FF0033"
+                    value={youtube}
+                    onChange={setYoutube}
+                    platform="youtube"
+                    placeholder={t("profile.youtubePlaceholder")}
+                  />
+                  <SocialHandleField
+                    id="ki"
+                    label="Kick"
+                    color="#53FC18"
+                    value={kick}
+                    onChange={setKick}
+                    platform="kick"
+                    placeholder={t("profile.kickPlaceholder")}
+                  />
                 </div>
               </div>
 
