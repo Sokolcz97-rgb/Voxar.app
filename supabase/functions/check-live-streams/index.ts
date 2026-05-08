@@ -48,6 +48,7 @@ async function checkTwitch(
     .map((h) => `user_login=${encodeURIComponent(h.login)}`)
     .join("&");
   const url = `${TWITCH_GATEWAY}/streams?${params}&first=100`;
+  console.log("[twitch] checking", handles.map((h) => h.login).join(","));
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -60,9 +61,12 @@ async function checkTwitch(
     return handles.map((h) => offlineRec(h.user_id, "twitch", h.login));
   }
   const json = await res.json();
+  console.log("[twitch] live results:", (json.data ?? []).length);
   const liveByLogin = new Map<string, any>();
   for (const s of json.data ?? []) {
-    liveByLogin.set(String(s.user_login).toLowerCase(), s);
+    // Match by both user_login and user_name (case-insensitive) for robustness
+    if (s.user_login) liveByLogin.set(String(s.user_login).toLowerCase(), s);
+    if (s.user_name) liveByLogin.set(String(s.user_name).toLowerCase(), s);
   }
   const checkedAt = new Date().toISOString();
   return handles.map((h) => {
