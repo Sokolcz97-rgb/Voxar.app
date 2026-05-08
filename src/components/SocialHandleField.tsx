@@ -60,7 +60,7 @@ export function extractHandle(platform: Platform, raw: string): string {
 }
 
 function buildUrl(platform: Platform, handle: string): string | null {
-  const h = handle.trim();
+  const h = extractHandle(platform, handle).trim();
   if (!h) return null;
   if (platform === "twitch") return `https://twitch.tv/${h.replace(/^@/, "")}`;
   if (platform === "kick") return `https://kick.com/${h.replace(/^@/, "")}`;
@@ -69,6 +69,23 @@ function buildUrl(platform: Platform, handle: string): string | null {
     return `https://www.youtube.com/${v}`;
   }
   return null;
+}
+
+function openExternalUrl(url: string) {
+  const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
+  if (popup) {
+    popup.opener = null;
+    popup.location.href = url;
+    return;
+  }
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export function SocialHandleField({
@@ -138,7 +155,11 @@ export function SocialHandleField({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              openExternalUrl(url);
+            }}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-xs"
             style={{ color }}
           >
