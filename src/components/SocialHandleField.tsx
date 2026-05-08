@@ -135,16 +135,15 @@ export function SocialHandleField({
         />
         {url && (
           <Button
-            asChild
             type="button"
             size="sm"
             variant="ghost"
+            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-xs"
+            style={{ color }}
           >
-            <a href={url} target="_blank" rel="noreferrer" style={{ color }}>
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Otevřít
-            </a>
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Otevřít
           </Button>
         )}
       </div>
