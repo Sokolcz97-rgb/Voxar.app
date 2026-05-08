@@ -55,6 +55,15 @@ export function useLiveStreams() {
 
   useEffect(() => {
     load();
+    // Trigger a fresh check on mount (rate-limited via sessionStorage)
+    const lastTrigger = Number(sessionStorage.getItem("lsc_last_trigger") ?? 0);
+    if (Date.now() - lastTrigger > 60_000) {
+      sessionStorage.setItem("lsc_last_trigger", String(Date.now()));
+      supabase.functions
+        .invoke("check-live-streams")
+        .then(() => load())
+        .catch((e) => console.warn("check-live-streams trigger failed", e));
+    }
     const channel = supabase
       .channel("live_streams_changes")
       .on(
