@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import {
