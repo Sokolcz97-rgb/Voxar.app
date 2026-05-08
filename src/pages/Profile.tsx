@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
+import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   ensureNotificationPermission,
   playNotifSound,
