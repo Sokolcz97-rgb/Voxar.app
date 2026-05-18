@@ -241,13 +241,23 @@ export default function DashboardBotGuilds() {
               </p>
             </div>
           </div>
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Požádat o přidání serveru
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button onClick={startDiscordOAuth} disabled={oauthLoading} variant="default">
+              {oauthLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <LogIn className="h-4 w-4 mr-2" />
+              )}
+              Vybrat z mých Discord serverů
+            </Button>
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ručně přes ID
+                </Button>
+              </DialogTrigger>
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Žádost o přidání serveru</DialogTitle>
