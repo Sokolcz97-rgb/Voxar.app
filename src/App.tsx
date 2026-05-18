@@ -34,6 +34,7 @@ import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
 import DashboardBot from "./pages/DashboardBot.tsx";
+import DashboardBotGuilds from "./pages/DashboardBotGuilds.tsx";
 import Novinky from "./pages/Novinky.tsx";
 import AdminNovinky from "./pages/AdminNovinky.tsx";
 import AdminForumCategories from "./pages/AdminForumCategories.tsx";
