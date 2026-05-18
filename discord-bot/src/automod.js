@@ -4,8 +4,9 @@ const spamTracker = new Map(); // userId → [timestamps]
 
 export async function runAutomod(message) {
   if (message.author.bot || !message.guild) return false;
-  const cfg = await getConfig();
+  const cfg = await getConfig(message.guild.id);
   if (!cfg.automod_enabled) return false;
+  if (cfg.bot_maintenance) return false;
 
   const content = message.content || '';
   const lower = content.toLowerCase();

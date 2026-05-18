@@ -3,7 +3,8 @@ import { getConfig } from './config.js';
 
 export async function handleCommand(message) {
   if (message.author.bot || !message.content) return false;
-  const cfg = await getConfig();
+  const guildId = message.guild?.id ?? null;
+  const cfg = await getConfig(guildId);
   const prefix = cfg.prefix || '!';
   if (!message.content.startsWith(prefix)) return false;
 
@@ -17,10 +18,12 @@ export async function handleCommand(message) {
     return true;
   }
   if (name === 'help') {
+    // List per-guild + global commands
     const { data } = await supabase
       .from('bot_commands')
-      .select('name, description')
+      .select('name, description, guild_id')
       .eq('enabled', true)
+      .or(`guild_id.eq.${guildId},guild_id.is.null`)
       .order('name');
     const lines = [`**Příkazy** (prefix \`${prefix}\`)`, `- \`ping\` – test`];
     for (const c of data || []) {
@@ -30,13 +33,24 @@ export async function handleCommand(message) {
     return true;
   }
 
-  // Custom commands
-  const { data: cmd } = await supabase
+  // Custom commands — prefer guild-specific, fall back to global
+  let { data: cmd } = await supabase
     .from('bot_commands')
     .select('*')
     .eq('name', name)
     .eq('enabled', true)
+    .eq('guild_id', guildId)
     .maybeSingle();
+  if (!cmd) {
+    const r = await supabase
+      .from('bot_commands')
+      .select('*')
+      .eq('name', name)
+      .eq('enabled', true)
+      .is('guild_id', null)
+      .maybeSingle();
+    cmd = r.data;
+  }
   if (!cmd) return false;
 
   try {
