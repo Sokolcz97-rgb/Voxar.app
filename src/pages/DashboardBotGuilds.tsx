@@ -100,6 +100,81 @@ export default function DashboardBotGuilds() {
     })();
   }, []);
 
+  // Handle returning from Discord OAuth: ?discord_session=NONCE
+  useEffect(() => {
+    const ds = searchParams.get("discord_session");
+    if (!ds || !user) return;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("discord-oauth-result", {
+        body: { state: ds },
+      });
+      if (error || !data) {
+        toast.error("Nepodařilo se načíst seznam serverů z Discordu.");
+      } else {
+        setPickerGuilds((data as any).guilds || []);
+        setDiscordUsername((data as any).discord_username || null);
+        setDiscordUserId((data as any).discord_user_id || null);
+        setPickerOpen(true);
+      }
+      // Strip the query param
+      const next = new URLSearchParams(searchParams);
+      next.delete("discord_session");
+      setSearchParams(next, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams.get("discord_session")]);
+
+  const startDiscordOAuth = async () => {
+    setOauthLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("discord-oauth-start", {
+        body: { origin: window.location.origin },
+      });
+      if (error || !data?.url) {
+        toast.error("Nepodařilo se spustit přihlášení přes Discord.");
+        return;
+      }
+      window.location.href = (data as any).url;
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
+  const requestGuild = async (g: DiscordGuildOption) => {
+    setSubmittingIds((s) => new Set(s).add(g.id));
+    try {
+      // Skip if already registered
+      const existing = guilds.find((x) => x.guild_id === g.id);
+      if (existing) {
+        toast.info(`${g.name}: již registrováno (${statusLabel[existing.status]})`);
+        return;
+      }
+      const { error } = await supabase.from("bot_guilds").insert({
+        guild_id: g.id,
+        name: g.name,
+        icon_url: g.icon_url,
+        owner_user_id: user?.id ?? null,
+        owner_discord_id: discordUserId,
+        source: "request",
+        status: "pending",
+        member_count: g.approximate_member_count,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success(`${g.name} odeslán ke schválení`);
+      await load();
+    } finally {
+      setSubmittingIds((s) => {
+        const n = new Set(s);
+        n.delete(g.id);
+        return n;
+      });
+    }
+  };
+
+
   const updateStatus = async (g: BotGuild, status: GuildStatus, notes?: string) => {
     const { error } = await supabase
       .from("bot_guilds")
