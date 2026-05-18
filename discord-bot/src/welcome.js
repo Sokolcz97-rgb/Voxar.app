@@ -1,10 +1,13 @@
 import { supabase } from './supabase.js';
 
 export async function sendWelcome(member) {
+  const guildId = member.guild.id;
+  // Per-guild welcome rows + legacy global rows (guild_id IS NULL)
   const { data: rows } = await supabase
     .from('bot_welcome')
     .select('*')
-    .eq('enabled', true);
+    .eq('enabled', true)
+    .or(`guild_id.eq.${guildId},guild_id.is.null`);
   if (!rows?.length) return;
 
   for (const row of rows) {
