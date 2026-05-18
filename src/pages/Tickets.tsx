@@ -113,6 +113,8 @@ const Tickets = () => {
     load();
   };
 
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
+
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
@@ -140,6 +142,34 @@ const Tickets = () => {
                 <SelectItem value="closed">{t("tickets.statusFilter.closed")}</SelectItem>
               </SelectContent>
             </Select>
+
+            {canManage && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {t("tickets.deleteResolved")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="glass border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("tickets.deleteResolvedTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("tickets.deleteResolvedDesc")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={deleteResolved}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {t("common.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
 
             {!isBanned && (
               <Dialog open={open} onOpenChange={setOpen}>
