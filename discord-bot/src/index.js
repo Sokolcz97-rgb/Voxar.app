@@ -7,6 +7,7 @@ import { handleInteraction, setupTicketPanel } from './tickets.js';
 import { startOutboundWorker } from './outbound.js';
 import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
+import { verifySupabaseConnection } from './supabase.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -78,4 +79,10 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(token);
+try {
+  await verifySupabaseConnection();
+  await client.login(token);
+} catch (e) {
+  console.error('❌ Bot se nespustil:', e?.message || e);
+  process.exit(1);
+}
