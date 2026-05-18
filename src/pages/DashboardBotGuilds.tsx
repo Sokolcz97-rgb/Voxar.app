@@ -334,9 +334,76 @@ export default function DashboardBotGuilds() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Vyber server{discordUsername ? ` (přihlášen jako ${discordUsername})` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto -mx-6 px-6 space-y-2">
+            {pickerGuilds.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-8 text-center">
+                Nemáš žádné servery, kde bys byl administrátor nebo vlastník.
+              </p>
+            ) : (
+              pickerGuilds.map((g) => {
+                const existing = guilds.find((x) => x.guild_id === g.id);
+                const isSubmitting = submittingIds.has(g.id);
+                return (
+                  <div
+                    key={g.id}
+                    className="flex items-center gap-3 p-3 border rounded-lg"
+                  >
+                    {g.icon_url ? (
+                      <img src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
+                        {g.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{g.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {g.owner ? "Vlastník" : "Administrátor"}
+                        {g.approximate_member_count != null &&
+                          ` · ${g.approximate_member_count} členů`}
+                      </div>
+                    </div>
+                    {existing ? (
+                      <Badge variant={statusVariant[existing.status] as any}>
+                        {statusLabel[existing.status]}
+                      </Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => requestGuild(g)}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Požádat o přidání"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPickerOpen(false)}>
+              Zavřít
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function GuildRow({
   guild,
