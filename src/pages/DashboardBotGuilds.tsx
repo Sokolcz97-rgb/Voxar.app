@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft, Check, X, Pause, Play, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Check, X, Pause, Play, Trash2, Plus, LogIn, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+
+const DISCORD_CLIENT_ID_PUBLIC = "__SET_VIA_OAUTH__"; // not needed client-side; we build URL from edge config below
+
 
 type GuildStatus = "pending" | "approved" | "rejected" | "suspended";
 
