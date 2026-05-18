@@ -14,6 +14,303 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_commands: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          response_type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          response_type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          response_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_config: {
+        Row: {
+          automod_action: string
+          automod_blocked_words: string[]
+          automod_enabled: boolean
+          automod_max_emojis: number
+          automod_max_mentions: number
+          automod_spam_threshold: number
+          bot_maintenance: boolean
+          default_alerts_channel: string | null
+          default_log_channel: string | null
+          default_welcome_channel: string | null
+          id: string
+          is_singleton: boolean
+          maintenance_channel: string | null
+          nsfw_allowed_channels: string[]
+          nsfw_protection: boolean
+          prefix: string
+          updated_at: string
+          updated_by: string | null
+          web_maintenance: boolean
+        }
+        Insert: {
+          automod_action?: string
+          automod_blocked_words?: string[]
+          automod_enabled?: boolean
+          automod_max_emojis?: number
+          automod_max_mentions?: number
+          automod_spam_threshold?: number
+          bot_maintenance?: boolean
+          default_alerts_channel?: string | null
+          default_log_channel?: string | null
+          default_welcome_channel?: string | null
+          id?: string
+          is_singleton?: boolean
+          maintenance_channel?: string | null
+          nsfw_allowed_channels?: string[]
+          nsfw_protection?: boolean
+          prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+          web_maintenance?: boolean
+        }
+        Update: {
+          automod_action?: string
+          automod_blocked_words?: string[]
+          automod_enabled?: boolean
+          automod_max_emojis?: number
+          automod_max_mentions?: number
+          automod_spam_threshold?: number
+          bot_maintenance?: boolean
+          default_alerts_channel?: string | null
+          default_log_channel?: string | null
+          default_welcome_channel?: string | null
+          id?: string
+          is_singleton?: boolean
+          maintenance_channel?: string | null
+          nsfw_allowed_channels?: string[]
+          nsfw_protection?: boolean
+          prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+          web_maintenance?: boolean
+        }
+        Relationships: []
+      }
+      bot_outbound_queue: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json
+          sent_at: string | null
+          source: string
+          webhook_url: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload: Json
+          sent_at?: string | null
+          source?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          source?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      bot_status: {
+        Row: {
+          guild_count: number | null
+          id: string
+          is_singleton: boolean
+          last_heartbeat: string | null
+          version: string | null
+        }
+        Insert: {
+          guild_count?: number | null
+          id?: string
+          is_singleton?: boolean
+          last_heartbeat?: string | null
+          version?: string | null
+        }
+        Update: {
+          guild_count?: number | null
+          id?: string
+          is_singleton?: boolean
+          last_heartbeat?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      bot_status_checks: {
+        Row: {
+          created_at: string
+          discord_channel_id: string
+          enabled: boolean
+          id: string
+          label: string
+          last_changed_at: string | null
+          last_checked_at: string | null
+          last_status: string | null
+          target: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          discord_channel_id: string
+          enabled?: boolean
+          id?: string
+          label: string
+          last_changed_at?: string | null
+          last_checked_at?: string | null
+          last_status?: string | null
+          target: string
+          target_type?: string
+        }
+        Update: {
+          created_at?: string
+          discord_channel_id?: string
+          enabled?: boolean
+          id?: string
+          label?: string
+          last_changed_at?: string | null
+          last_checked_at?: string | null
+          last_status?: string | null
+          target?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
+      bot_stream_notifications: {
+        Row: {
+          created_at: string
+          discord_channel_id: string
+          enabled: boolean
+          handle: string
+          id: string
+          last_notified_at: string | null
+          last_video_id: string | null
+          platform: string
+          template: string
+        }
+        Insert: {
+          created_at?: string
+          discord_channel_id: string
+          enabled?: boolean
+          handle: string
+          id?: string
+          last_notified_at?: string | null
+          last_video_id?: string | null
+          platform: string
+          template?: string
+        }
+        Update: {
+          created_at?: string
+          discord_channel_id?: string
+          enabled?: boolean
+          handle?: string
+          id?: string
+          last_notified_at?: string | null
+          last_video_id?: string | null
+          platform?: string
+          template?: string
+        }
+        Relationships: []
+      }
+      bot_tickets_config: {
+        Row: {
+          category_id: string | null
+          id: string
+          is_singleton: boolean
+          panel_channel_id: string | null
+          support_role_id: string | null
+          transcripts_enabled: boolean
+          updated_at: string
+          welcome_md: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          id?: string
+          is_singleton?: boolean
+          panel_channel_id?: string | null
+          support_role_id?: string | null
+          transcripts_enabled?: boolean
+          updated_at?: string
+          welcome_md?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          id?: string
+          is_singleton?: boolean
+          panel_channel_id?: string | null
+          support_role_id?: string | null
+          transcripts_enabled?: boolean
+          updated_at?: string
+          welcome_md?: string | null
+        }
+        Relationships: []
+      }
+      bot_welcome: {
+        Row: {
+          channel_id: string
+          content: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          message_type: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id: string
+          content?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          message_type?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string
+          content?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          message_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
