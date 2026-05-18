@@ -21,6 +21,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           enabled: boolean
+          guild_id: string | null
           id: string
           name: string
           response_type: string
@@ -32,6 +33,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           name: string
           response_type?: string
@@ -43,6 +45,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           name?: string
           response_type?: string
@@ -116,6 +119,131 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_guild_config: {
+        Row: {
+          automod_action: string
+          automod_blocked_words: string[]
+          automod_enabled: boolean
+          automod_max_emojis: number
+          automod_max_mentions: number
+          automod_spam_threshold: number
+          bot_maintenance: boolean
+          default_alerts_channel: string | null
+          default_log_channel: string | null
+          default_welcome_channel: string | null
+          guild_id: string
+          id: string
+          maintenance_channel: string | null
+          nsfw_allowed_channels: string[]
+          nsfw_protection: boolean
+          prefix: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          automod_action?: string
+          automod_blocked_words?: string[]
+          automod_enabled?: boolean
+          automod_max_emojis?: number
+          automod_max_mentions?: number
+          automod_spam_threshold?: number
+          bot_maintenance?: boolean
+          default_alerts_channel?: string | null
+          default_log_channel?: string | null
+          default_welcome_channel?: string | null
+          guild_id: string
+          id?: string
+          maintenance_channel?: string | null
+          nsfw_allowed_channels?: string[]
+          nsfw_protection?: boolean
+          prefix?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          automod_action?: string
+          automod_blocked_words?: string[]
+          automod_enabled?: boolean
+          automod_max_emojis?: number
+          automod_max_mentions?: number
+          automod_spam_threshold?: number
+          bot_maintenance?: boolean
+          default_alerts_channel?: string | null
+          default_log_channel?: string | null
+          default_welcome_channel?: string | null
+          guild_id?: string
+          id?: string
+          maintenance_channel?: string | null
+          nsfw_allowed_channels?: string[]
+          nsfw_protection?: boolean
+          prefix?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_guild_config_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: true
+            referencedRelation: "bot_guilds"
+            referencedColumns: ["guild_id"]
+          },
+        ]
+      }
+      bot_guilds: {
+        Row: {
+          created_at: string
+          guild_id: string
+          icon_url: string | null
+          id: string
+          member_count: number | null
+          name: string
+          notes: string | null
+          owner_discord_id: string | null
+          owner_user_id: string | null
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: Database["public"]["Enums"]["bot_guild_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          icon_url?: string | null
+          id?: string
+          member_count?: number | null
+          name: string
+          notes?: string | null
+          owner_discord_id?: string | null
+          owner_user_id?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: Database["public"]["Enums"]["bot_guild_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          icon_url?: string | null
+          id?: string
+          member_count?: number | null
+          name?: string
+          notes?: string | null
+          owner_discord_id?: string | null
+          owner_user_id?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: Database["public"]["Enums"]["bot_guild_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_outbound_queue: {
         Row: {
           channel_id: string | null
@@ -178,6 +306,7 @@ export type Database = {
           created_at: string
           discord_channel_id: string
           enabled: boolean
+          guild_id: string | null
           id: string
           label: string
           last_changed_at: string | null
@@ -191,6 +320,7 @@ export type Database = {
           created_at?: string
           discord_channel_id: string
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           label: string
           last_changed_at?: string | null
@@ -204,6 +334,7 @@ export type Database = {
           created_at?: string
           discord_channel_id?: string
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           label?: string
           last_changed_at?: string | null
@@ -220,6 +351,7 @@ export type Database = {
           created_at: string
           discord_channel_id: string
           enabled: boolean
+          guild_id: string | null
           handle: string
           id: string
           last_notified_at: string | null
@@ -232,6 +364,7 @@ export type Database = {
           created_at?: string
           discord_channel_id: string
           enabled?: boolean
+          guild_id?: string | null
           handle: string
           id?: string
           last_notified_at?: string | null
@@ -244,6 +377,7 @@ export type Database = {
           created_at?: string
           discord_channel_id?: string
           enabled?: boolean
+          guild_id?: string | null
           handle?: string
           id?: string
           last_notified_at?: string | null
@@ -257,8 +391,8 @@ export type Database = {
       bot_tickets_config: {
         Row: {
           category_id: string | null
+          guild_id: string | null
           id: string
-          is_singleton: boolean
           mirror_enabled: boolean
           panel_channel_id: string | null
           support_role_id: string | null
@@ -270,8 +404,8 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          guild_id?: string | null
           id?: string
-          is_singleton?: boolean
           mirror_enabled?: boolean
           panel_channel_id?: string | null
           support_role_id?: string | null
@@ -283,8 +417,8 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          guild_id?: string | null
           id?: string
-          is_singleton?: boolean
           mirror_enabled?: boolean
           panel_channel_id?: string | null
           support_role_id?: string | null
@@ -302,6 +436,7 @@ export type Database = {
           content: Json
           created_at: string
           enabled: boolean
+          guild_id: string | null
           id: string
           message_type: string
           updated_at: string
@@ -311,6 +446,7 @@ export type Database = {
           content?: Json
           created_at?: string
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           message_type?: string
           updated_at?: string
@@ -320,6 +456,7 @@ export type Database = {
           content?: Json
           created_at?: string
           enabled?: boolean
+          guild_id?: string | null
           id?: string
           message_type?: string
           updated_at?: string
@@ -1237,6 +1374,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_guild_manager: {
+        Args: { _guild_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }
         Returns: boolean
@@ -1244,6 +1385,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "editor" | "user" | "banned" | "content_creator"
+      bot_guild_status: "pending" | "approved" | "rejected" | "suspended"
       server_connection_type: "ip_port" | "invite_code"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
@@ -1375,6 +1517,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "user", "banned", "content_creator"],
+      bot_guild_status: ["pending", "approved", "rejected", "suspended"],
       server_connection_type: ["ip_port", "invite_code"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],

@@ -34,6 +34,7 @@ import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
 import DashboardBot from "./pages/DashboardBot.tsx";
+import DashboardBotGuilds from "./pages/DashboardBotGuilds.tsx";
 import Novinky from "./pages/Novinky.tsx";
 import AdminNovinky from "./pages/AdminNovinky.tsx";
 import AdminForumCategories from "./pages/AdminForumCategories.tsx";
@@ -54,6 +55,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard/bot" element={<ProtectedRoute><DashboardBot /></ProtectedRoute>} />
+      <Route path="/dashboard/bot/guilds" element={<ProtectedRoute><DashboardBotGuilds /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/profile/:userId" element={<PublicProfile />} />
       <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />

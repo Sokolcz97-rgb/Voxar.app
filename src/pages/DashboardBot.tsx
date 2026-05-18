@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2 } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 
 type BotConfig = {
@@ -233,15 +233,21 @@ const DashboardBot = () => {
               <Bot className="h-10 w-10" /> Správce bota
             </h1>
           </div>
-          <Card className="glass border-border p-4 flex items-center gap-3">
-            <div className={`h-3 w-3 rounded-full ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
-            <div>
-              <div className="text-sm font-medium">{botOnline ? "Bot online" : "Bot offline"}</div>
-              <div className="text-xs text-muted-foreground">
-                {status?.guild_count ?? 0} serverů · {status?.version ?? "—"}
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")}>
+              <Server className="h-4 w-4 mr-2" />
+              Servery bota
+            </Button>
+            <Card className="glass border-border p-4 flex items-center gap-3">
+              <div className={`h-3 w-3 rounded-full ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
+              <div>
+                <div className="text-sm font-medium">{botOnline ? "Bot online" : "Bot offline"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {status?.guild_count ?? 0} serverů · {status?.version ?? "—"}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
 
         <Tabs defaultValue="basics">

@@ -6,6 +6,7 @@ import { sendWelcome } from './welcome.js';
 import { handleInteraction, setupTicketPanel } from './tickets.js';
 import { startOutboundWorker } from './outbound.js';
 import { startHeartbeat } from './heartbeat.js';
+import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -25,16 +26,32 @@ const client = new Client({
 
 client.once('ready', async () => {
   console.log(`✅ Přihlášen jako ${client.user.tag} (${client.guilds.cache.size} serverů)`);
+  await syncAllGuilds(client);
   startHeartbeat(client);
   startOutboundWorker(client);
+  // Setup ticket panels for approved guilds
   for (const guild of client.guilds.cache.values()) {
-    await setupTicketPanel(client).catch(() => {});
-    break; // panel je singleton config
+    if (await isGuildApproved(guild.id)) {
+      await setupTicketPanel(client, guild.id).catch(() => {});
+    }
   }
+});
+
+// New guild → register as pending
+client.on('guildCreate', async (guild) => {
+  console.log(`➕ Joined guild ${guild.name} (${guild.id})`);
+  await registerGuild(guild);
+});
+
+client.on('guildDelete', async (guild) => {
+  console.log(`➖ Left guild ${guild.name} (${guild.id})`);
+  invalidateGuildCache(guild.id);
 });
 
 client.on('messageCreate', async (message) => {
   try {
+    if (!message.guild) return;
+    if (!(await isGuildApproved(message.guild.id))) return;
     const moderated = await runAutomod(message);
     if (moderated) return;
     await handleCommand(message);
@@ -45,6 +62,7 @@ client.on('messageCreate', async (message) => {
 
 client.on('guildMemberAdd', async (member) => {
   try {
+    if (!(await isGuildApproved(member.guild.id))) return;
     await sendWelcome(member);
   } catch (e) {
     console.error('guildMemberAdd', e);
@@ -53,6 +71,7 @@ client.on('guildMemberAdd', async (member) => {
 
 client.on('interactionCreate', async (interaction) => {
   try {
+    if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
     await handleInteraction(interaction);
   } catch (e) {
     console.error('interactionCreate', e);
