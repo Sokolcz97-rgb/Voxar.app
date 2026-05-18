@@ -487,6 +487,36 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_oauth_sessions: {
+        Row: {
+          created_at: string
+          discord_user_id: string | null
+          discord_username: string | null
+          expires_at: string
+          guilds: Json
+          state: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discord_user_id?: string | null
+          discord_username?: string | null
+          expires_at?: string
+          guilds?: Json
+          state: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discord_user_id?: string | null
+          discord_username?: string | null
+          expires_at?: string
+          guilds?: Json
+          state?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       discord_servers: {
         Row: {
           created_at: string
