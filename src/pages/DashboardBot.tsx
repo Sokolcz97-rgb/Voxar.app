@@ -520,6 +520,7 @@ const DashboardBot = () => {
                   <Input placeholder="Discord kanál ID" value={newCheck.channel} onChange={(e) => setNewCheck({ ...newCheck, channel: e.target.value })} />
                   <Button onClick={addCheck}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
+                <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
               </Card>
             )}
             <Card className="glass border-border p-6">
