@@ -171,6 +171,21 @@ const Dashboard = () => {
         {user && <ActivityChart userId={user.id} />}
         {user && <RecommendedThreads userId={user.id} />}
 
+        <Card className="glass border-border p-6 mb-10 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Bot className="h-6 w-6 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-display font-bold text-lg">Discord bot</h3>
+              <p className="text-sm text-muted-foreground">Příkazy, auto-moderace, uvítací zprávy, embedy a notifikace</p>
+            </div>
+          </div>
+          <Button asChild>
+            <Link to="/dashboard/bot">Spravovat bota</Link>
+          </Button>
+        </Card>
+
         <h2 className="font-display text-2xl font-bold mb-4">{t("dashboard.myActivity")}</h2>
         <div className="grid lg:grid-cols-2 gap-4 mb-10">
           <Card className="glass border-border p-6">
