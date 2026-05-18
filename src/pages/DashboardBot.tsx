@@ -593,6 +593,9 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
       welcome_md: cfg.welcome_md,
       transcripts_enabled: cfg.transcripts_enabled,
       panel_channel_id: cfg.panel_channel_id,
+      mirror_enabled: cfg.mirror_enabled,
+      sync_channel_id: cfg.sync_channel_id,
+      sync_webhook_url: cfg.sync_webhook_url,
     }).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { toast({ title: "Uloženo" }); onChanged(); }
@@ -621,13 +624,51 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
             Podporuje <code>**tučné**</code>, <code>*kurzíva*</code>, <code>`kód`</code>, <code>[odkaz](url)</code>, <code>### nadpis</code>, <code>- seznam</code>.
           </p>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
             <div className="font-medium">Ukládat transkripty</div>
             <p className="text-xs text-muted-foreground">Po zavření ticketu uložit historii</p>
           </div>
           <Switch checked={cfg.transcripts_enabled} onCheckedChange={(v) => setCfg({ ...cfg, transcripts_enabled: v })} disabled={!isManager} />
         </div>
+
+        <div className="border-t border-border pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Synchronizace s webovými tickety</div>
+              <p className="text-xs text-muted-foreground">
+                Nové tickety, odpovědi a změny stavu se z webu posílají na Discord.
+              </p>
+            </div>
+            <Switch
+              checked={!!cfg.mirror_enabled}
+              onCheckedChange={(v) => setCfg({ ...cfg, mirror_enabled: v })}
+              disabled={!isManager}
+            />
+          </div>
+          <div>
+            <Label>Sync kanál (ID) — pro externího bota</Label>
+            <Input
+              placeholder="ID Discord kanálu"
+              value={cfg.sync_channel_id ?? ""}
+              onChange={(e) => setCfg({ ...cfg, sync_channel_id: e.target.value })}
+              disabled={!isManager}
+            />
+          </div>
+          <div>
+            <Label>Nebo Discord webhook URL — bez bota (okamžité)</Label>
+            <Input
+              placeholder="https://discord.com/api/webhooks/..."
+              value={cfg.sync_webhook_url ?? ""}
+              onChange={(e) => setCfg({ ...cfg, sync_webhook_url: e.target.value })}
+              disabled={!isManager}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Pokud zadáš webhook, sync půjde okamžitě přes něj. Bez webhooku se zařadí do fronty pro bota.
+            </p>
+          </div>
+        </div>
+
         <Button onClick={save} disabled={!isManager}>Uložit</Button>
       </Card>
       <div className="space-y-2 lg:sticky lg:top-24 self-start">

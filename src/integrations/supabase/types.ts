@@ -259,8 +259,11 @@ export type Database = {
           category_id: string | null
           id: string
           is_singleton: boolean
+          mirror_enabled: boolean
           panel_channel_id: string | null
           support_role_id: string | null
+          sync_channel_id: string | null
+          sync_webhook_url: string | null
           transcripts_enabled: boolean
           updated_at: string
           welcome_md: string | null
@@ -269,8 +272,11 @@ export type Database = {
           category_id?: string | null
           id?: string
           is_singleton?: boolean
+          mirror_enabled?: boolean
           panel_channel_id?: string | null
           support_role_id?: string | null
+          sync_channel_id?: string | null
+          sync_webhook_url?: string | null
           transcripts_enabled?: boolean
           updated_at?: string
           welcome_md?: string | null
@@ -279,8 +285,11 @@ export type Database = {
           category_id?: string | null
           id?: string
           is_singleton?: boolean
+          mirror_enabled?: boolean
           panel_channel_id?: string | null
           support_role_id?: string | null
+          sync_channel_id?: string | null
+          sync_webhook_url?: string | null
           transcripts_enabled?: boolean
           updated_at?: string
           welcome_md?: string | null
@@ -1127,6 +1136,8 @@ export type Database = {
           category: string | null
           created_at: string
           description: string
+          discord_channel_id: string | null
+          discord_message_id: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
           status: Database["public"]["Enums"]["ticket_status"]
@@ -1139,6 +1150,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           description: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           status?: Database["public"]["Enums"]["ticket_status"]
@@ -1151,6 +1164,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           status?: Database["public"]["Enums"]["ticket_status"]

@@ -13,7 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
-import { Loader2, Plus, LifeBuoy, Inbox } from "lucide-react";
+import { Loader2, Plus, LifeBuoy, Inbox, Trash2 } from "lucide-react";
+import { syncTicketToDiscord } from "@/lib/ticketDiscordSync";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Ticket {
   id: string;
@@ -29,6 +35,8 @@ interface Ticket {
 
 const Tickets = () => {
   const { user, isAdmin, isEditor, isBanned } = useAuth();
+  const { can } = usePermissions();
+  const canManage = can("tickets", "manage");
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -65,8 +73,10 @@ const Tickets = () => {
     e.preventDefault();
     if (!user) return;
     setSubmitting(true);
-    const { error } = await supabase.from("tickets")
-      .insert({ user_id: user.id, subject, description, priority, category: category || null });
+    const { data: inserted, error } = await supabase.from("tickets")
+      .insert({ user_id: user.id, subject, description, priority, category: category || null })
+      .select("id")
+      .maybeSingle();
     setSubmitting(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
@@ -75,6 +85,31 @@ const Tickets = () => {
     setOpen(false);
     setSubject(""); setDescription(""); setPriority("medium"); setCategory("");
     toast({ title: t("tickets.created") });
+    if (inserted?.id) {
+      void syncTicketToDiscord({ ticket_id: inserted.id, event: "created" });
+    }
+    load();
+  };
+
+  const deleteResolved = async () => {
+    const { data: ids, error: selErr } = await supabase
+      .from("tickets")
+      .select("id")
+      .eq("status", "resolved");
+    if (selErr) {
+      toast({ title: t("common.error"), description: selErr.message, variant: "destructive" });
+      return;
+    }
+    if (!ids?.length) {
+      toast({ title: t("tickets.noResolvedToDelete") });
+      return;
+    }
+    const { error } = await supabase.from("tickets").delete().eq("status", "resolved");
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("tickets.resolvedDeleted", { count: ids.length }) });
     load();
   };
 
@@ -107,6 +142,34 @@ const Tickets = () => {
                 <SelectItem value="closed">{t("tickets.statusFilter.closed")}</SelectItem>
               </SelectContent>
             </Select>
+
+            {canManage && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {t("tickets.deleteResolved")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="glass border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("tickets.deleteResolvedTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("tickets.deleteResolvedDesc")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={deleteResolved}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {t("common.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
 
             {!isBanned && (
               <Dialog open={open} onOpenChange={setOpen}>
