@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 
-const DISCORD_CLIENT_ID_PUBLIC = "__SET_VIA_OAUTH__"; // not needed client-side; we build URL from edge config below
+interface DiscordGuildOption {
+  id: string;
+  name: string;
+  icon_url: string | null;
+  owner: boolean;
+  approximate_member_count: number | null;
+}
+
 
 
 type GuildStatus = "pending" | "approved" | "rejected" | "suspended";
