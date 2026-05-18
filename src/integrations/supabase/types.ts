@@ -185,6 +185,7 @@ export type Database = {
           last_status: string | null
           target: string
           target_type: string
+          webhook_url: string | null
         }
         Insert: {
           created_at?: string
@@ -197,6 +198,7 @@ export type Database = {
           last_status?: string | null
           target: string
           target_type?: string
+          webhook_url?: string | null
         }
         Update: {
           created_at?: string
@@ -209,6 +211,7 @@ export type Database = {
           last_status?: string | null
           target?: string
           target_type?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -223,6 +226,7 @@ export type Database = {
           last_video_id: string | null
           platform: string
           template: string
+          webhook_url: string | null
         }
         Insert: {
           created_at?: string
@@ -234,6 +238,7 @@ export type Database = {
           last_video_id?: string | null
           platform: string
           template?: string
+          webhook_url?: string | null
         }
         Update: {
           created_at?: string
@@ -245,6 +250,7 @@ export type Database = {
           last_video_id?: string | null
           platform?: string
           template?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }

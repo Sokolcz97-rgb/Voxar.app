@@ -61,9 +61,9 @@ const DashboardBot = () => {
   // New welcome
   const [newWelcome, setNewWelcome] = useState({ channel_id: "", content: "" });
   // New stream
-  const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", template: "🔴 {handle} právě vysílá: {title}" });
+  const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
   // New status check
-  const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "" });
+  const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
 
   useEffect(() => {
     if (!user) return;
@@ -170,11 +170,12 @@ const DashboardBot = () => {
       platform: newStream.platform,
       handle: newStream.handle.trim().replace(/^@/, ""),
       discord_channel_id: newStream.channel.trim(),
+      webhook_url: newStream.webhook.trim() || null,
       template: newStream.template,
       enabled: true,
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { setNewStream({ ...newStream, handle: "", channel: "" }); void loadAll(); }
+    else { setNewStream({ ...newStream, handle: "", channel: "", webhook: "" }); void loadAll(); }
   };
 
   const addCheck = async () => {
@@ -184,10 +185,11 @@ const DashboardBot = () => {
       target_type: "url",
       target: newCheck.target.trim(),
       discord_channel_id: newCheck.channel.trim(),
+      webhook_url: newCheck.webhook.trim() || null,
       enabled: true,
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { setNewCheck({ label: "", target: "", channel: "" }); void loadAll(); }
+    else { setNewCheck({ label: "", target: "", channel: "", webhook: "" }); void loadAll(); }
   };
 
   const sendEmbed = async () => {
@@ -476,7 +478,8 @@ const DashboardBot = () => {
                   <Button onClick={addStream}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
-                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code></p>
+                <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>. Pokud webhook nezadáš, zpráva čeká ve frontě na externího bota.</p>
               </Card>
             )}
             <Card className="glass border-border p-6">
@@ -517,6 +520,7 @@ const DashboardBot = () => {
                   <Input placeholder="Discord kanál ID" value={newCheck.channel} onChange={(e) => setNewCheck({ ...newCheck, channel: e.target.value })} />
                   <Button onClick={addCheck}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
+                <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
               </Card>
             )}
             <Card className="glass border-border p-6">
