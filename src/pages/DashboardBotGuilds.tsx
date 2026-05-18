@@ -126,15 +126,27 @@ export default function DashboardBotGuilds() {
 
   const startDiscordOAuth = async () => {
     setOauthLoading(true);
+    // Otevři okno hned (synchronně po kliknutí), aby ho browser nezablokoval jako popup
+    const popup = window.open("about:blank", "discord-oauth", "width=500,height=800");
     try {
       const { data, error } = await supabase.functions.invoke("discord-oauth-start", {
         body: { origin: window.location.origin },
       });
       if (error || !data?.url) {
+        popup?.close();
         toast.error("Nepodařilo se spustit přihlášení přes Discord.");
         return;
       }
-      window.location.href = (data as any).url;
+      if (popup) {
+        popup.location.href = (data as any).url;
+      } else {
+        // Fallback – top-level navigace (mimo iframe)
+        if (window.top) {
+          window.top.location.href = (data as any).url;
+        } else {
+          window.location.href = (data as any).url;
+        }
+      }
     } finally {
       setOauthLoading(false);
     }
