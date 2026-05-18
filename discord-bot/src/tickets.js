@@ -10,12 +10,17 @@ import { supabase } from './supabase.js';
 const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
 
-export async function setupTicketPanel(client) {
-  const { data: cfg } = await supabase
-    .from('bot_tickets_config')
-    .select('*')
-    .limit(1)
-    .maybeSingle();
+export async function setupTicketPanel(client, guildId = null) {
+  // Per-guild config first, fall back to legacy global row
+  let cfg = null;
+  if (guildId) {
+    const r = await supabase.from('bot_tickets_config').select('*').eq('guild_id', guildId).maybeSingle();
+    cfg = r.data;
+  }
+  if (!cfg) {
+    const r = await supabase.from('bot_tickets_config').select('*').is('guild_id', null).limit(1).maybeSingle();
+    cfg = r.data;
+  }
   if (!cfg?.panel_channel_id) return;
 
   try {
