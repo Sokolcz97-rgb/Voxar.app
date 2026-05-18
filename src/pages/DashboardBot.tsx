@@ -170,11 +170,12 @@ const DashboardBot = () => {
       platform: newStream.platform,
       handle: newStream.handle.trim().replace(/^@/, ""),
       discord_channel_id: newStream.channel.trim(),
+      webhook_url: newStream.webhook.trim() || null,
       template: newStream.template,
       enabled: true,
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { setNewStream({ ...newStream, handle: "", channel: "" }); void loadAll(); }
+    else { setNewStream({ ...newStream, handle: "", channel: "", webhook: "" }); void loadAll(); }
   };
 
   const addCheck = async () => {
@@ -184,10 +185,11 @@ const DashboardBot = () => {
       target_type: "url",
       target: newCheck.target.trim(),
       discord_channel_id: newCheck.channel.trim(),
+      webhook_url: newCheck.webhook.trim() || null,
       enabled: true,
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { setNewCheck({ label: "", target: "", channel: "" }); void loadAll(); }
+    else { setNewCheck({ label: "", target: "", channel: "", webhook: "" }); void loadAll(); }
   };
 
   const sendEmbed = async () => {
