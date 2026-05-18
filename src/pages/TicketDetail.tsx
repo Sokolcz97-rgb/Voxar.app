@@ -17,6 +17,7 @@ import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/Tic
 import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { moderate } from "@/lib/moderate";
+import { syncTicketToDiscord } from "@/lib/ticketDiscordSync";
 
 interface Ticket {
   id: string;
@@ -122,13 +123,23 @@ const TicketDetail = () => {
       return;
     }
     if (mod.flagged) toast({ title: t("moderation.filtered") });
+    // Mirror to Discord (skip internal staff notes)
+    if (!(internal && isStaff)) {
+      void syncTicketToDiscord({ ticket_id: id, event: "reply", reply_content: finalContent });
+    }
     setText(""); setInternal(false);
   };
 
   const updateField = async (patch: Partial<Pick<Ticket, "status" | "priority">>) => {
     if (!id) return;
     const { error } = await supabase.from("tickets").update(patch).eq("id", id);
-    if (error) toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    if (patch.status && ticket && patch.status !== ticket.status) {
+      void syncTicketToDiscord({ ticket_id: id, event: "status", new_status: patch.status });
+    }
   };
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
