@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, FileText, Ticket, MessagesSquare } from "lucide-react";
+import { MessageSquare, FileText, Ticket, MessagesSquare, Bot } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ActivityChart } from "@/components/ActivityChart";
 import { RecommendedThreads } from "@/components/RecommendedThreads";
