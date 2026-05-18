@@ -478,7 +478,8 @@ const DashboardBot = () => {
                   <Button onClick={addStream}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
-                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code></p>
+                <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>. Pokud webhook nezadáš, zpráva čeká ve frontě na externího bota.</p>
               </Card>
             )}
             <Card className="glass border-border p-6">
