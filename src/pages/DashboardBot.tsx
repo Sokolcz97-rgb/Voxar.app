@@ -14,6 +14,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2 } from "lucide-react";
+import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 
 type BotConfig = {
   id: string;
@@ -443,24 +444,30 @@ const DashboardBot = () => {
 
           {/* EMBED / WEBHOOK */}
           <TabsContent value="embed" className="mt-4">
-            <Card className="glass border-border p-6 space-y-4 max-w-3xl">
-              <div>
-                <Label>Discord webhook URL <span className="text-muted-foreground">(prázdné = zařadit do fronty pro bota)</span></Label>
-                <Input placeholder="https://discord.com/api/webhooks/..." value={embedWebhook} onChange={(e) => setEmbedWebhook(e.target.value)} disabled={!isManager} />
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card className="glass border-border p-6 space-y-4">
+                <div>
+                  <Label>Discord webhook URL <span className="text-muted-foreground">(prázdné = zařadit do fronty pro bota)</span></Label>
+                  <Input placeholder="https://discord.com/api/webhooks/..." value={embedWebhook} onChange={(e) => setEmbedWebhook(e.target.value)} disabled={!isManager} />
+                </div>
+                <div>
+                  <Label>Text zprávy (volitelně)</Label>
+                  <Textarea rows={2} value={embedContent} onChange={(e) => setEmbedContent(e.target.value)} disabled={!isManager} />
+                </div>
+                <div>
+                  <Label>Embed JSON <span className="text-muted-foreground">(podporuje formát z discohook.org)</span></Label>
+                  <Textarea rows={12} className="font-mono text-xs" value={embedJson} onChange={(e) => setEmbedJson(e.target.value)} disabled={!isManager} />
+                </div>
+                <Button onClick={sendEmbed} disabled={!isManager || sending}>
+                  {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Odeslat
+                </Button>
+              </Card>
+              <div className="space-y-2 lg:sticky lg:top-24 self-start">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled</Label>
+                <EmbedLivePreview content={embedContent} json={embedJson} />
               </div>
-              <div>
-                <Label>Text zprávy (volitelně)</Label>
-                <Textarea rows={2} value={embedContent} onChange={(e) => setEmbedContent(e.target.value)} disabled={!isManager} />
-              </div>
-              <div>
-                <Label>Embed JSON <span className="text-muted-foreground">(podporuje formát z discohook.org)</span></Label>
-                <Textarea rows={10} className="font-mono text-xs" value={embedJson} onChange={(e) => setEmbedJson(e.target.value)} disabled={!isManager} />
-              </div>
-              <Button onClick={sendEmbed} disabled={!isManager || sending}>
-                {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                Odeslat
-              </Button>
-            </Card>
+            </div>
           </TabsContent>
 
           {/* STREAMS */}
@@ -509,6 +516,8 @@ const DashboardBot = () => {
             <TicketsConfigCard isManager={isManager} onChanged={loadAll} />
           </TabsContent>
 
+
+
           {/* STATUS CHECKS */}
           <TabsContent value="status" className="mt-4 space-y-4">
             {isManager && (
@@ -550,6 +559,27 @@ const DashboardBot = () => {
   );
 };
 
+function EmbedLivePreview({ content, json }: { content: string; json: string }) {
+  let embed: any = null;
+  try {
+    if (json.trim()) {
+      const parsed = JSON.parse(json);
+      embed = parsed?.embeds?.[0] ?? parsed?.embed ?? parsed;
+    }
+  } catch {
+    return (
+      <Card className="glass border-border p-6">
+        <p className="text-sm text-destructive">Neplatný JSON — náhled nelze zobrazit.</p>
+      </Card>
+    );
+  }
+  return (
+    <Card className="glass border-border p-4">
+      <DiscordMessagePreview content={content} embed={embed} />
+    </Card>
+  );
+}
+
 function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onChanged: () => void }) {
   const [cfg, setCfg] = useState<any>(null);
   useEffect(() => {
@@ -568,34 +598,55 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
     else { toast({ title: "Uloženo" }); onChanged(); }
   };
   return (
-    <Card className="glass border-border p-6 space-y-4 max-w-2xl">
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <Label>Kategorie (ID)</Label>
-          <Input value={cfg.category_id ?? ""} onChange={(e) => setCfg({ ...cfg, category_id: e.target.value })} disabled={!isManager} />
+    <div className="grid lg:grid-cols-2 gap-4">
+      <Card className="glass border-border p-6 space-y-4">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <Label>Kategorie (ID)</Label>
+            <Input value={cfg.category_id ?? ""} onChange={(e) => setCfg({ ...cfg, category_id: e.target.value })} disabled={!isManager} />
+          </div>
+          <div>
+            <Label>Support role (ID)</Label>
+            <Input value={cfg.support_role_id ?? ""} onChange={(e) => setCfg({ ...cfg, support_role_id: e.target.value })} disabled={!isManager} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Panel kanál (ID)</Label>
+            <Input value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value })} disabled={!isManager} />
+          </div>
         </div>
         <div>
-          <Label>Support role (ID)</Label>
-          <Input value={cfg.support_role_id ?? ""} onChange={(e) => setCfg({ ...cfg, support_role_id: e.target.value })} disabled={!isManager} />
+          <Label>Uvítací zpráva ticketu (markdown)</Label>
+          <Textarea rows={8} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
+          <p className="text-xs text-muted-foreground mt-1">
+            Podporuje <code>**tučné**</code>, <code>*kurzíva*</code>, <code>`kód`</code>, <code>[odkaz](url)</code>, <code>### nadpis</code>, <code>- seznam</code>.
+          </p>
         </div>
-        <div className="sm:col-span-2">
-          <Label>Panel kanál (ID)</Label>
-          <Input value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value })} disabled={!isManager} />
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-medium">Ukládat transkripty</div>
+            <p className="text-xs text-muted-foreground">Po zavření ticketu uložit historii</p>
+          </div>
+          <Switch checked={cfg.transcripts_enabled} onCheckedChange={(v) => setCfg({ ...cfg, transcripts_enabled: v })} disabled={!isManager} />
         </div>
+        <Button onClick={save} disabled={!isManager}>Uložit</Button>
+      </Card>
+      <div className="space-y-2 lg:sticky lg:top-24 self-start">
+        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled panelu</Label>
+        <Card className="glass border-border p-4 space-y-3">
+          <DiscordMessagePreview content={cfg.welcome_md || "Klikni níže pro otevření ticketu."} />
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium px-4 py-2 transition-colors"
+            disabled
+          >
+            🎫 Otevřít ticket
+          </button>
+          <p className="text-xs text-muted-foreground">
+            Toto se objeví v panel kanálu. Po kliknutí bot vytvoří privátní kanál s uvítací zprávou.
+          </p>
+        </Card>
       </div>
-      <div>
-        <Label>Uvítací zpráva ticketu (markdown)</Label>
-        <Textarea rows={5} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
-      </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="font-medium">Ukládat transkripty</div>
-          <p className="text-xs text-muted-foreground">Po zavření ticketu uložit historii</p>
-        </div>
-        <Switch checked={cfg.transcripts_enabled} onCheckedChange={(v) => setCfg({ ...cfg, transcripts_enabled: v })} disabled={!isManager} />
-      </div>
-      <Button onClick={save} disabled={!isManager}>Uložit</Button>
-    </Card>
+    </div>
   );
 }
 
