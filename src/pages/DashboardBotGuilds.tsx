@@ -291,7 +291,9 @@ export default function DashboardBotGuilds() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
+
 
         <div className="flex gap-2 mb-4 flex-wrap">
           {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
