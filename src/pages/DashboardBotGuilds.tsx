@@ -62,6 +62,7 @@ const statusLabel: Record<GuildStatus, string> = {
 export default function DashboardBotGuilds() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [guilds, setGuilds] = useState<BotGuild[]>([]);
   const [filter, setFilter] = useState<GuildStatus | "all">("all");
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,13 @@ export default function DashboardBotGuilds() {
   const [addOpen, setAddOpen] = useState(false);
   const [newGuildId, setNewGuildId] = useState("");
   const [newGuildName, setNewGuildName] = useState("");
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerGuilds, setPickerGuilds] = useState<DiscordGuildOption[]>([]);
+  const [discordUsername, setDiscordUsername] = useState<string | null>(null);
+  const [discordUserId, setDiscordUserId] = useState<string | null>(null);
+  const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
+
 
   const load = async () => {
     setLoading(true);
