@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2, Server } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type BotConfig = {
+type AnyConfig = {
   id: string;
-  prefix: string;
+  prefix?: string | null;
   default_welcome_channel: string | null;
   default_log_channel: string | null;
   default_alerts_channel: string | null;
@@ -31,56 +38,102 @@ type BotConfig = {
   nsfw_protection: boolean;
   nsfw_allowed_channels: string[];
   bot_maintenance: boolean;
-  web_maintenance: boolean;
+  web_maintenance?: boolean;
   maintenance_channel: string | null;
 };
 
-type Command = { id: string; name: string; description: string | null; response_type: string; content: any; enabled: boolean };
-type Welcome = { id: string; channel_id: string; message_type: string; content: any; enabled: boolean };
-type StreamNotif = { id: string; platform: string; handle: string; discord_channel_id: string; template: string; enabled: boolean };
-type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null };
+type Command = { id: string; name: string; description: string | null; response_type: string; content: any; enabled: boolean; guild_id: string | null };
+type Welcome = { id: string; channel_id: string; message_type: string; content: any; enabled: boolean; guild_id: string | null };
+type StreamNotif = { id: string; platform: string; handle: string; discord_channel_id: string; template: string; enabled: boolean; guild_id: string | null };
+type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null; guild_id: string | null };
 type BotStatus = { last_heartbeat: string | null; version: string | null; guild_count: number | null };
+type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null };
+
+const GLOBAL_KEY = "__global__";
 
 const DashboardBot = () => {
   const { user, loading: authLoading } = useAuth();
   const { can, loading: permsLoading } = usePermissions();
-  const [config, setConfig] = useState<BotConfig | null>(null);
+
+  // Guild scope
+  const [guilds, setGuilds] = useState<GuildOption[]>([]);
+  const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
+  const selectedGuild = useMemo(
+    () => (selectedGuildId === GLOBAL_KEY ? null : guilds.find((g) => g.guild_id === selectedGuildId) ?? null),
+    [selectedGuildId, guilds]
+  );
+
+  const [config, setConfig] = useState<AnyConfig | null>(null);
   const [commands, setCommands] = useState<Command[]>([]);
   const [welcomes, setWelcomes] = useState<Welcome[]>([]);
   const [streams, setStreams] = useState<StreamNotif[]>([]);
   const [checks, setChecks] = useState<StatusCheck[]>([]);
   const [status, setStatus] = useState<BotStatus | null>(null);
 
-  // Embed/webhook tester
   const [embedWebhook, setEmbedWebhook] = useState("");
   const [embedContent, setEmbedContent] = useState("");
   const [embedJson, setEmbedJson] = useState('{\n  "title": "Test",\n  "description": "Z webu",\n  "color": 5814783\n}');
   const [sending, setSending] = useState(false);
 
-  // New command
   const [newCmd, setNewCmd] = useState({ name: "", description: "", response: "" });
-  // New welcome
   const [newWelcome, setNewWelcome] = useState({ channel_id: "", content: "" });
-  // New stream
   const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
-  // New status check
   const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
+
+  // Load list of guilds user can manage (admin sees all approved + pending; owner sees own approved)
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bot_guilds")
+        .select("id, guild_id, name, icon_url, status")
+        .eq("status", "approved")
+        .order("name");
+      setGuilds(((data as any) ?? []) as GuildOption[]);
+    })();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
     void loadAll();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, selectedGuildId]);
+
+  const scopeFilter = (q: any) =>
+    selectedGuild ? q.eq("guild_id", selectedGuild.guild_id) : q.is("guild_id", null);
 
   const loadAll = async () => {
-    const [c, cmds, w, s, ch, st] = await Promise.all([
-      supabase.from("bot_config").select("*").maybeSingle(),
-      supabase.from("bot_commands").select("*").order("name"),
-      supabase.from("bot_welcome").select("*").order("created_at", { ascending: false }),
-      supabase.from("bot_stream_notifications").select("*").order("created_at", { ascending: false }),
-      supabase.from("bot_status_checks").select("*").order("created_at", { ascending: false }),
+    // Config: per-guild config vs global bot_config
+    let configRow: any = null;
+    if (selectedGuild) {
+      const r = await supabase
+        .from("bot_guild_config")
+        .select("*")
+        .eq("guild_id", selectedGuild.guild_id)
+        .maybeSingle();
+      if (r.data) configRow = r.data;
+      else {
+        // No row yet — auto-insert via upsert
+        const ins = await supabase
+          .from("bot_guild_config")
+          .insert({ guild_id: selectedGuild.guild_id })
+          .select()
+          .maybeSingle();
+        configRow = ins.data;
+      }
+    } else {
+      const r = await supabase.from("bot_config").select("*").maybeSingle();
+      configRow = r.data;
+    }
+
+    const [cmds, w, s, ch, st] = await Promise.all([
+      scopeFilter(supabase.from("bot_commands").select("*").order("name")),
+      scopeFilter(supabase.from("bot_welcome").select("*").order("created_at", { ascending: false })),
+      scopeFilter(supabase.from("bot_stream_notifications").select("*").order("created_at", { ascending: false })),
+      scopeFilter(supabase.from("bot_status_checks").select("*").order("created_at", { ascending: false })),
       supabase.from("bot_status").select("last_heartbeat, version, guild_count").maybeSingle(),
     ]);
-    setConfig((c.data as any) ?? null);
+    setConfig(configRow ?? null);
     setCommands((cmds.data as any) ?? []);
     setWelcomes((w.data as any) ?? []);
     setStreams((s.data as any) ?? []);
@@ -96,17 +149,22 @@ const DashboardBot = () => {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
-  if (!can("bot", "manage") && !can("bot", "view")) return <Navigate to="/dashboard" replace />;
+  if (!can("bot", "manage") && !can("bot", "view") && guilds.length === 0)
+    return <Navigate to="/dashboard" replace />;
 
-  const isManager = can("bot", "manage");
+  const isAdmin = can("bot", "manage");
+  // Manager = admin OR (guild owner of selected guild — already enforced by RLS on save)
+  const isManager = isAdmin || !!selectedGuild;
+
   const botOnline = status?.last_heartbeat
     ? Date.now() - new Date(status.last_heartbeat).getTime() < 90_000
     : false;
 
+  const guildIdOrNull = () => selectedGuild?.guild_id ?? null;
+
   const saveConfig = async () => {
     if (!config) return;
-    const { error } = await supabase.from("bot_config").update({
-      prefix: config.prefix,
+    const payload: any = {
       default_welcome_channel: config.default_welcome_channel,
       default_log_channel: config.default_log_channel,
       default_alerts_channel: config.default_alerts_channel,
@@ -119,9 +177,14 @@ const DashboardBot = () => {
       nsfw_protection: config.nsfw_protection,
       nsfw_allowed_channels: config.nsfw_allowed_channels,
       bot_maintenance: config.bot_maintenance,
-      web_maintenance: config.web_maintenance,
       maintenance_channel: config.maintenance_channel,
-    }).eq("id", config.id);
+    };
+    if (config.prefix !== undefined && config.prefix !== null) payload.prefix = config.prefix;
+
+    const table = selectedGuild ? "bot_guild_config" : "bot_config";
+    if (!selectedGuild) payload.web_maintenance = (config as any).web_maintenance ?? false;
+
+    const { error } = await supabase.from(table as any).update(payload).eq("id", config.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else toast({ title: "Uloženo" });
   };
@@ -135,6 +198,7 @@ const DashboardBot = () => {
       content: { text: newCmd.response },
       enabled: true,
       created_by: user.id,
+      guild_id: guildIdOrNull(),
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else {
@@ -147,7 +211,6 @@ const DashboardBot = () => {
     await supabase.from("bot_commands").delete().eq("id", id);
     void loadAll();
   };
-
   const toggleCommand = async (id: string, enabled: boolean) => {
     await supabase.from("bot_commands").update({ enabled }).eq("id", id);
     void loadAll();
@@ -160,6 +223,7 @@ const DashboardBot = () => {
       message_type: "text",
       content: { text: newWelcome.content },
       enabled: true,
+      guild_id: guildIdOrNull(),
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { setNewWelcome({ channel_id: "", content: "" }); void loadAll(); }
@@ -174,6 +238,7 @@ const DashboardBot = () => {
       webhook_url: newStream.webhook.trim() || null,
       template: newStream.template,
       enabled: true,
+      guild_id: guildIdOrNull(),
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { setNewStream({ ...newStream, handle: "", channel: "", webhook: "" }); void loadAll(); }
@@ -188,6 +253,7 @@ const DashboardBot = () => {
       discord_channel_id: newCheck.channel.trim(),
       webhook_url: newCheck.webhook.trim() || null,
       enabled: true,
+      guild_id: guildIdOrNull(),
     });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { setNewCheck({ label: "", target: "", channel: "", webhook: "" }); void loadAll(); }
@@ -199,12 +265,11 @@ const DashboardBot = () => {
       let embed: any = null;
       if (embedJson.trim()) {
         try { embed = JSON.parse(embedJson); } catch { toast({ title: "Chyba", description: "Neplatný JSON embed", variant: "destructive" }); setSending(false); return; }
-        // discohook source: { embeds: [...] } or { embed: {...} }
         if (embed.embeds && Array.isArray(embed.embeds)) embed = embed.embeds[0];
         if (embed.embed) embed = embed.embed;
       }
       const { data, error } = await supabase.functions.invoke("discord-bot-send", {
-        body: { webhook_url: embedWebhook || undefined, content: embedContent || undefined, embed },
+        body: { webhook_url: embedWebhook || undefined, content: embedContent || undefined, embed, guild_id: guildIdOrNull() },
       });
       if (error) throw error;
       toast({ title: data?.queued ? "Zařazeno do fronty" : "Odesláno" });
@@ -226,7 +291,7 @@ const DashboardBot = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
-        <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Discord</p>
             <h1 className="font-display font-black text-4xl md:text-5xl mt-2 flex items-center gap-3">
@@ -250,6 +315,45 @@ const DashboardBot = () => {
           </div>
         </div>
 
+        {/* Guild selector */}
+        <Card className="glass border-border p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+          <Label className="shrink-0">Konfigurace pro:</Label>
+          <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
+            <SelectTrigger className="sm:max-w-md">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {isAdmin && (
+                <SelectItem value={GLOBAL_KEY}>
+                  <span className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" /> Globální / šablony (legacy)
+                  </span>
+                </SelectItem>
+              )}
+              {guilds.map((g) => (
+                <SelectItem key={g.guild_id} value={g.guild_id}>
+                  <span className="flex items-center gap-2">
+                    {g.icon_url ? (
+                      <img src={g.icon_url} className="h-4 w-4 rounded-full" alt="" />
+                    ) : (
+                      <Server className="h-4 w-4" />
+                    )}
+                    {g.name}
+                  </span>
+                </SelectItem>
+              ))}
+              {guilds.length === 0 && !isAdmin && (
+                <div className="px-3 py-2 text-xs text-muted-foreground">
+                  Žádné schválené servery — požádej na stránce „Servery bota".
+                </div>
+              )}
+            </SelectContent>
+          </Select>
+          {selectedGuild && (
+            <code className="text-xs text-muted-foreground">{selectedGuild.guild_id}</code>
+          )}
+        </Card>
+
         <Tabs defaultValue="basics">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="basics">Základ</TabsTrigger>
@@ -268,8 +372,8 @@ const DashboardBot = () => {
               <Card className="glass border-border p-6 space-y-4 max-w-2xl">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Prefix příkazů</Label>
-                    <Input value={config.prefix} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} />
+                    <Label>Prefix příkazů {selectedGuild && <span className="text-xs text-muted-foreground">(prázdné = použít globální)</span>}</Label>
+                    <Input value={config.prefix ?? ""} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} />
                   </div>
                   <div>
                     <Label>Welcome kanál (ID)</Label>
@@ -288,26 +392,25 @@ const DashboardBot = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">Maintenance — bot</div>
-                      <p className="text-xs text-muted-foreground">Bot pošle do maintenance kanálu a přestane reagovat</p>
+                      <p className="text-xs text-muted-foreground">Bot pošle do maintenance kanálu a přestane reagovat na tomto serveru</p>
                     </div>
                     <Switch checked={config.bot_maintenance} onCheckedChange={(v) => setConfig({ ...config, bot_maintenance: v })} disabled={!isManager} />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">Maintenance — web</div>
-                      <p className="text-xs text-muted-foreground">Pošle oznámení o údržbě webu</p>
+                  {!selectedGuild && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">Maintenance — web</div>
+                        <p className="text-xs text-muted-foreground">Pošle oznámení o údržbě webu</p>
+                      </div>
+                      <Switch checked={!!(config as any).web_maintenance} onCheckedChange={(v) => setConfig({ ...config, web_maintenance: v } as any)} disabled={!isManager} />
                     </div>
-                    <Switch checked={config.web_maintenance} onCheckedChange={(v) => setConfig({ ...config, web_maintenance: v })} disabled={!isManager} />
-                  </div>
+                  )}
                   <div>
                     <Label>Maintenance kanál (ID)</Label>
                     <Input value={config.maintenance_channel ?? ""} onChange={(e) => setConfig({ ...config, maintenance_channel: e.target.value })} disabled={!isManager} />
                   </div>
                 </div>
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
-                <p className="text-xs text-muted-foreground">
-                  Bot token se ukládá jako tajný klíč v Lovable Cloud — ne v této tabulce.
-                </p>
               </Card>
             )}
           </TabsContent>
@@ -324,7 +427,7 @@ const DashboardBot = () => {
                   <Label>Blokovaná slova (oddělená čárkou)</Label>
                   <Textarea
                     rows={3}
-                    value={config.automod_blocked_words.join(", ")}
+                    value={(config.automod_blocked_words ?? []).join(", ")}
                     onChange={(e) => setConfig({ ...config, automod_blocked_words: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
                     disabled={!isManager}
                   />
@@ -364,7 +467,7 @@ const DashboardBot = () => {
                   <div>
                     <Label>Povolené NSFW kanály (ID, oddělené čárkou)</Label>
                     <Input
-                      value={config.nsfw_allowed_channels.join(", ")}
+                      value={(config.nsfw_allowed_channels ?? []).join(", ")}
                       onChange={(e) => setConfig({ ...config, nsfw_allowed_channels: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
                       disabled={!isManager}
                     />
@@ -379,7 +482,9 @@ const DashboardBot = () => {
           <TabsContent value="commands" className="mt-4 space-y-4">
             {isManager && (
               <Card className="glass border-border p-6 space-y-3">
-                <h3 className="font-display text-lg font-bold">Nový vlastní příkaz</h3>
+                <h3 className="font-display text-lg font-bold">
+                  Nový vlastní příkaz {selectedGuild ? `· ${selectedGuild.name}` : "· globální"}
+                </h3>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Input placeholder="název (bez prefixu)" value={newCmd.name} onChange={(e) => setNewCmd({ ...newCmd, name: e.target.value })} />
                   <Input placeholder="popis (volitelné)" value={newCmd.description} onChange={(e) => setNewCmd({ ...newCmd, description: e.target.value })} />
@@ -397,7 +502,7 @@ const DashboardBot = () => {
                     <li key={c.id} className="py-3 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <code className="text-primary font-mono">{config?.prefix}{c.name}</code>
+                          <code className="text-primary font-mono">{(config?.prefix ?? "!")}{c.name}</code>
                           {!c.enabled && <Badge variant="secondary">vypnuté</Badge>}
                         </div>
                         {c.description && <div className="text-xs text-muted-foreground">{c.description}</div>}
@@ -466,7 +571,7 @@ const DashboardBot = () => {
                 </div>
                 <Button onClick={sendEmbed} disabled={!isManager || sending}>
                   {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                  Odeslat
+                  Odeslat {selectedGuild && `do ${selectedGuild.name}`}
                 </Button>
               </Card>
               <div className="space-y-2 lg:sticky lg:top-24 self-start">
@@ -492,7 +597,7 @@ const DashboardBot = () => {
                 </div>
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
-                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>. Pokud webhook nezadáš, zpráva čeká ve frontě na externího bota.</p>
+                <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>.</p>
               </Card>
             )}
             <Card className="glass border-border p-6">
@@ -519,10 +624,13 @@ const DashboardBot = () => {
 
           {/* TICKETS */}
           <TabsContent value="tickets" className="mt-4">
-            <TicketsConfigCard isManager={isManager} onChanged={loadAll} />
+            <TicketsConfigCard
+              key={selectedGuildId}
+              isManager={isManager}
+              guildId={guildIdOrNull()}
+              onChanged={loadAll}
+            />
           </TabsContent>
-
-
 
           {/* STATUS CHECKS */}
           <TabsContent value="status" className="mt-4 space-y-4">
@@ -586,12 +694,42 @@ function EmbedLivePreview({ content, json }: { content: string; json: string }) 
   );
 }
 
-function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onChanged: () => void }) {
+function TicketsConfigCard({
+  isManager,
+  guildId,
+  onChanged,
+}: {
+  isManager: boolean;
+  guildId: string | null;
+  onChanged: () => void;
+}) {
   const [cfg, setCfg] = useState<any>(null);
+
   useEffect(() => {
-    supabase.from("bot_tickets_config").select("*").maybeSingle().then((r) => setCfg(r.data));
-  }, []);
-  if (!cfg) return null;
+    (async () => {
+      const q = supabase.from("bot_tickets_config").select("*");
+      const filtered = guildId ? q.eq("guild_id", guildId) : q.is("guild_id", null);
+      const r = await filtered.maybeSingle();
+      if (r.data) {
+        setCfg(r.data);
+      } else {
+        const ins = await supabase
+          .from("bot_tickets_config")
+          .insert({
+            guild_id: guildId,
+            welcome_md: "Ahoj! Popiš svůj problém a tým ti odpoví co nejdřív.",
+            transcripts_enabled: true,
+            mirror_enabled: false,
+          })
+          .select()
+          .maybeSingle();
+        setCfg(ins.data);
+      }
+    })();
+  }, [guildId]);
+
+  if (!cfg) return <p className="text-sm text-muted-foreground">Načítání…</p>;
+
   const save = async () => {
     const { error } = await supabase.from("bot_tickets_config").update({
       category_id: cfg.category_id,
@@ -606,6 +744,7 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { toast({ title: "Uloženo" }); onChanged(); }
   };
+
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <Card className="glass border-border p-6 space-y-4">
@@ -626,9 +765,6 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
         <div>
           <Label>Uvítací zpráva ticketu (markdown)</Label>
           <Textarea rows={8} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
-          <p className="text-xs text-muted-foreground mt-1">
-            Podporuje <code>**tučné**</code>, <code>*kurzíva*</code>, <code>`kód`</code>, <code>[odkaz](url)</code>, <code>### nadpis</code>, <code>- seznam</code>.
-          </p>
         </div>
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
@@ -669,9 +805,6 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
               onChange={(e) => setCfg({ ...cfg, sync_webhook_url: e.target.value })}
               disabled={!isManager}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Pokud zadáš webhook, sync půjde okamžitě přes něj. Bez webhooku se zařadí do fronty pro bota.
-            </p>
           </div>
         </div>
 
@@ -688,9 +821,6 @@ function TicketsConfigCard({ isManager, onChanged }: { isManager: boolean; onCha
           >
             🎫 Otevřít ticket
           </button>
-          <p className="text-xs text-muted-foreground">
-            Toto se objeví v panel kanálu. Po kliknutí bot vytvoří privátní kanál s uvítací zprávou.
-          </p>
         </Card>
       </div>
     </div>
