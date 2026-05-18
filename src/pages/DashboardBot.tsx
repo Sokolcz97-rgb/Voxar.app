@@ -61,9 +61,9 @@ const DashboardBot = () => {
   // New welcome
   const [newWelcome, setNewWelcome] = useState({ channel_id: "", content: "" });
   // New stream
-  const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", template: "🔴 {handle} právě vysílá: {title}" });
+  const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
   // New status check
-  const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "" });
+  const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
 
   useEffect(() => {
     if (!user) return;
