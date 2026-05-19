@@ -44,6 +44,8 @@ client.once('ready', async () => {
 client.on('guildCreate', async (guild) => {
   console.log(`➕ Joined guild ${guild.name} (${guild.id})`);
   await registerGuild(guild);
+  // Zaregistruj slash commandy hned – fungovat začnou až po schválení v adminu
+  await registerGuildSlashCommands(client, guild.id).catch(() => {});
 });
 
 client.on('guildDelete', async (guild) => {
