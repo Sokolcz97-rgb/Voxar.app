@@ -110,7 +110,17 @@ const Novinky = () => {
 
   return (
     <div className="min-h-screen relative">
-      <SEO title={t("novinky.seoTitle")} description={t("novinky.seoDesc")} />
+      <SEO
+        title={t("novinky.seoTitle")}
+        description={t("novinky.seoDesc")}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: t("novinky.seoTitle"),
+          description: t("novinky.seoDesc"),
+          url: "https://studiovoxario.com/novinky",
+        }}
+      />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
