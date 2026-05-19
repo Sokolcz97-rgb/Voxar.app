@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pin, Lock, Plus, ChevronLeft, MessageCircle, Paperclip } from "lucide-react";
+import { SEO } from "@/components/SEO";
 
 interface Thread {
   id: string;
@@ -107,6 +108,12 @@ const ForumCategory = () => {
 
   return (
     <div className="min-h-screen relative">
+      {category && (
+        <SEO
+          title={`${category.name} — Fórum StudioVoxario`}
+          description={(category.description || `Diskuze v kategorii ${category.name} na fóru StudioVoxario. Připoj se a sdílej své názory s herní komunitou.`).slice(0, 160)}
+        />
+      )}
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 animate-fade-in">

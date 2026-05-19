@@ -1,0 +1,19 @@
+# StudioVoxario
+
+> Czech gaming community hub with forums, news, live streams, leaderboards, game servers and a Discord bot manager.
+
+StudioVoxario is a modern, futuristic gaming community where players discover servers, follow live streams, discuss games in the forum, read news and manage their own Discord communities.
+
+## Pages
+
+- [Home](/): Live streams, featured servers, top players and latest news.
+- [News](/novinky): Game release calendar and community news.
+- [Forum](/forum): Community discussions across multiple categories.
+- [Leaderboard](/leaderboard): Top contributors and most active members.
+- [Servers](/servery): Browse and submit community game servers.
+
+## Optional
+
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
+- [Sign in](/auth): Create an account or sign in.
