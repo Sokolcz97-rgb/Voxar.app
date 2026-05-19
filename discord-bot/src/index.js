@@ -9,6 +9,7 @@ import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
 import { verifySupabaseConnection } from './supabase.js';
 import { registerGuildSlashCommands, handleSlashCommand } from './slashCommands.js';
+import { startCommandsRealtime } from './commandsRealtime.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -31,6 +32,7 @@ client.once('ready', async () => {
   await syncAllGuilds(client);
   startHeartbeat(client);
   startOutboundWorker(client);
+  startCommandsRealtime(client);
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {

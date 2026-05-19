@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
+import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
   SelectContent,
@@ -596,15 +597,32 @@ const DashboardBot = () => {
             {isManager && (
               <Card className="glass border-border p-6 space-y-3">
                 <h3 className="font-display text-lg font-bold">Sledovat kanál</h3>
-                <div className="grid sm:grid-cols-4 gap-3">
-                  <select className="bg-background border border-border rounded-md px-3 py-2" value={newStream.platform} onChange={(e) => setNewStream({ ...newStream, platform: e.target.value })}>
-                    <option value="twitch">Twitch</option>
-                    <option value="youtube">YouTube</option>
-                  </select>
-                  <Input placeholder="handle / username" value={newStream.handle} onChange={(e) => setNewStream({ ...newStream, handle: e.target.value })} />
-                  <Input placeholder="Discord kanál ID" value={newStream.channel} onChange={(e) => setNewStream({ ...newStream, channel: e.target.value })} />
+                <div className="grid sm:grid-cols-4 gap-3 items-end">
+                  <div>
+                    <Label>Platforma</Label>
+                    <select className="w-full bg-background border border-border rounded-md px-3 py-2 mt-2" value={newStream.platform} onChange={(e) => setNewStream({ ...newStream, platform: e.target.value, handle: "" })}>
+                      <option value="twitch">Twitch</option>
+                      <option value="youtube">YouTube</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Kanál (jméno, URL, nebo začni psát)</Label>
+                    <div className="mt-2">
+                      <SocialHandleField
+                        id="stream-handle"
+                        label=""
+                        color="hsl(var(--primary))"
+                        platform={newStream.platform as "twitch" | "youtube"}
+                        value={newStream.handle}
+                        onChange={(v) => setNewStream({ ...newStream, handle: v })}
+                        placeholder="např. shroud nebo https://twitch.tv/shroud"
+                        hideLabel
+                      />
+                    </div>
+                  </div>
                   <Button onClick={addStream}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
+                <Input placeholder="Discord kanál ID" value={newStream.channel} onChange={(e) => setNewStream({ ...newStream, channel: e.target.value })} />
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>.</p>
