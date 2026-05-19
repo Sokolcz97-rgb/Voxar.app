@@ -151,6 +151,19 @@ const TicketDetail = () => {
     }
   };
 
+  const deleteTicket = async () => {
+    if (!id) return;
+    const { error } = await supabase.from("tickets").delete().eq("id", id);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("tickets.deleted") });
+    navigate("/tickets");
+  };
+
+  const canDelete = !!ticket && !!user && (canManage || ticket.user_id === user.id);
+
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
 
   return (
