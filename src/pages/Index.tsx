@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 import { LiveStreamsSection } from "@/components/LiveStreamsSection";
+import { InviteBotButton } from "@/components/InviteBotButton";
 import { useFeaturedDiscord } from "@/hooks/useFeaturedDiscord";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { EditPageButton } from "@/components/pageBuilder/EditPageButton";
