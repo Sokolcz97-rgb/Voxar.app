@@ -103,6 +103,7 @@ const ForumThread = () => {
     navigate(`/messages?c=${data}`);
   };
 
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
   const stripHtml = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const firstPost = posts[0];
   const seoDesc = firstPost
