@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { InviteBotButton } from "@/components/InviteBotButton";
 
 interface DiscordGuildOption {
   id: string;
@@ -254,7 +255,8 @@ export default function DashboardBotGuilds() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button onClick={startDiscordOAuth} disabled={oauthLoading} variant="default">
+            <InviteBotButton variant="default" />
+            <Button onClick={startDiscordOAuth} disabled={oauthLoading} variant="outline">
               {oauthLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
