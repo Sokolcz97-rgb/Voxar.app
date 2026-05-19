@@ -144,6 +144,11 @@ const Index = () => {
                   </a>
                 </Button>
               )}
+              <InviteBotButton
+                size="lg"
+                variant="outline"
+                className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary text-base px-8 h-12"
+              />
             </div>
 
             {/* Stats strip */}
