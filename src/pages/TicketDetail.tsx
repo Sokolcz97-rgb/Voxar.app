@@ -51,6 +51,9 @@ const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
 const TicketDetail = () => {
   const { id } = useParams();
   const { user, isAdmin, isEditor, isBanned } = useAuth();
+  const { can } = usePermissions();
+  const canManage = can("tickets", "manage");
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [ticket, setTicket] = useState<Ticket | null>(null);
