@@ -95,7 +95,7 @@ const Tickets = () => {
     const { data: ids, error: selErr } = await supabase
       .from("tickets")
       .select("id")
-      .eq("status", "resolved");
+      .in("status", ["resolved", "closed"]);
     if (selErr) {
       toast({ title: t("common.error"), description: selErr.message, variant: "destructive" });
       return;
@@ -104,12 +104,22 @@ const Tickets = () => {
       toast({ title: t("tickets.noResolvedToDelete") });
       return;
     }
-    const { error } = await supabase.from("tickets").delete().eq("status", "resolved");
+    const { error } = await supabase.from("tickets").delete().in("status", ["resolved", "closed"]);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
     toast({ title: t("tickets.resolvedDeleted", { count: ids.length }) });
+    load();
+  };
+
+  const deleteOne = async (ticketId: string) => {
+    const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("tickets.deleted") });
     load();
   };
 
