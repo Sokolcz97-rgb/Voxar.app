@@ -211,21 +211,17 @@ export function SocialHandleField({
           <Loader2 className="absolute right-24 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
         )}
         {url && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              openExternalUrl(url);
-            }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-xs"
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center h-7 px-2 text-xs rounded-md hover:bg-muted transition-colors"
             style={{ color }}
           >
             <ExternalLink className="h-3 w-3 mr-1" />
             Otevřít
-          </Button>
+          </a>
         )}
 
         {open && suggestions.length > 0 && (
