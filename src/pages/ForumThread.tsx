@@ -16,6 +16,7 @@ import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
 import { PostReactions } from "@/components/PostReactions";
 import { TopRankInline } from "@/components/TopRankInline";
+import { SEO } from "@/components/SEO";
 
 interface Post {
   id: string;
@@ -102,10 +103,40 @@ const ForumThread = () => {
     navigate(`/messages?c=${data}`);
   };
 
-  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
+  const stripHtml = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const firstPost = posts[0];
+  const seoDesc = firstPost
+    ? stripHtml(firstPost.content).slice(0, 160)
+    : thread ? `Diskuze "${thread.title}" na fóru StudioVoxario.` : "";
 
   return (
     <div className="min-h-screen relative">
+      {thread && (
+        <SEO
+          title={`${thread.title} — Fórum StudioVoxario`}
+          description={seoDesc}
+          type="article"
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "DiscussionForumPosting",
+            headline: thread.title,
+            datePublished: thread.created_at,
+            dateModified: posts[posts.length - 1]?.created_at || thread.created_at,
+            author: {
+              "@type": "Person",
+              name:
+                firstPost?.author?.display_name ||
+                firstPost?.author?.username ||
+                "StudioVoxario user",
+            },
+            interactionStatistic: {
+              "@type": "InteractionCounter",
+              interactionType: "https://schema.org/CommentAction",
+              userInteractionCount: Math.max(posts.length - 1, 0),
+            },
+          }}
+        />
+      )}
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-4xl animate-fade-in">
