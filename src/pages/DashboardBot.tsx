@@ -423,8 +423,18 @@ const DashboardBot = () => {
                   <Label className="text-base">Auto-moderace zapnutá</Label>
                   <Switch checked={config.automod_enabled} onCheckedChange={(v) => setConfig({ ...config, automod_enabled: v })} disabled={!isManager} />
                 </div>
+                <div className="rounded-md border border-border bg-muted/30 p-3 text-sm space-y-1">
+                  <div className="font-medium text-foreground">Vestavěná ochrana (vždy aktivní)</div>
+                  <p className="text-muted-foreground">
+                    Bot automaticky blokuje běžné vulgarismy (CZ + EN), rasistické nadávky včetně N-words a NSFW termíny.
+                    Detekce ignoruje diakritiku, takže např. „piča" i „pica" se zachytí stejně.
+                  </p>
+                </div>
                 <div>
-                  <Label>Blokovaná slova (oddělená čárkou)</Label>
+                  <Label>Další blokovaná slova (oddělená čárkou)</Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Tato slova se přidají navíc k vestavěnému seznamu.
+                  </p>
                   <Textarea
                     rows={3}
                     value={(config.automod_blocked_words ?? []).join(", ")}
