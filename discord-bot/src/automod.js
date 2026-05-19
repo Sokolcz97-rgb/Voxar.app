@@ -1,6 +1,14 @@
 import { getConfig } from './config.js';
+import { DEFAULT_BLOCKED_WORDS } from './defaultBlockedWords.js';
 
 const spamTracker = new Map(); // userId → [timestamps]
+
+// Normalizace: lowercase + odstranění diakritiky (aby "piča" == "pica")
+function normalize(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+const DEFAULT_BLOCKED_NORMALIZED = DEFAULT_BLOCKED_WORDS.map(normalize);
 
 export async function runAutomod(message) {
   if (message.author.bot || !message.guild) return false;
@@ -9,10 +17,11 @@ export async function runAutomod(message) {
   if (cfg.bot_maintenance) return false;
 
   const content = message.content || '';
-  const lower = content.toLowerCase();
+  const lower = normalize(content);
 
-  // Blocked words
-  const blocked = (cfg.automod_blocked_words || []).map((w) => w.toLowerCase());
+  // Blocked words: výchozí (vždy) + uživatelské navíc
+  const userBlocked = (cfg.automod_blocked_words || []).map(normalize);
+  const blocked = [...DEFAULT_BLOCKED_NORMALIZED, ...userBlocked];
   if (blocked.some((w) => w && lower.includes(w))) {
     return await act(message, cfg, 'Blokované slovo');
   }
