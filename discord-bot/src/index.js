@@ -32,6 +32,7 @@ client.once('ready', async () => {
   await syncAllGuilds(client);
   startHeartbeat(client);
   startOutboundWorker(client);
+  startCommandsRealtime(client);
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
