@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, MessageSquare, ChevronLeft, FileText, MessagesSquare, Pin, Lock, Heart } from "lucide-react";
 import { RankBadges } from "@/components/RankBadges";
+import { SEO } from "@/components/SEO";
 
 interface Profile {
   user_id: string;
@@ -183,8 +184,27 @@ const PublicProfile = () => {
   const isMe = user?.id === userId;
   const name = profile?.display_name || profile?.username || t("common.player");
 
+  const displayName = profile?.display_name || profile?.username || "Hráč";
+
   return (
     <div className="min-h-screen relative">
+      {profile && (
+        <SEO
+          title={`${displayName} — Profil hráče StudioVoxario`}
+          description={(profile.bio || `Profil hráče ${displayName} na StudioVoxario: aktivita ve fóru, příspěvky a reakce.`).slice(0, 160)}
+          image={profile.avatar_url || undefined}
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            mainEntity: {
+              "@type": "Person",
+              name: displayName,
+              description: profile.bio || undefined,
+              image: profile.avatar_url || undefined,
+            },
+          }}
+        />
+      )}
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-3xl animate-fade-in">
