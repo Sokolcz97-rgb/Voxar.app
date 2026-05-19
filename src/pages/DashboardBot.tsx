@@ -858,4 +858,76 @@ function TicketsConfigCard({
   );
 }
 
+function TicketsWebhookPreview({ webhookUrl, isManager }: { webhookUrl: string; isManager: boolean }) {
+  const [sending, setSending] = useState(false);
+  const trimmed = webhookUrl.trim();
+  const isValid = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/.test(trimmed);
+
+  const sampleEmbed = {
+    title: "🎫 Nový ticket #42",
+    description: "**Předmět:** Příklad ticketu\n\nUkázkový popis problému od uživatele.",
+    color: 0x5865F2,
+    fields: [
+      { name: "Priorita", value: "medium", inline: true },
+      { name: "Stav", value: "open", inline: true },
+    ],
+    footer: { text: "StudioVoxario • Tickets" },
+    timestamp: new Date().toISOString(),
+  };
+
+  const sendTest = async () => {
+    if (!isValid) return;
+    setSending(true);
+    try {
+      const res = await fetch(trimmed, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "✅ Testovací zpráva ze sync webhooku (tickety).",
+          embeds: [sampleEmbed],
+        }),
+      });
+      if (res.ok || res.status === 204) toast({ title: "Test odeslán", description: "Zkontroluj kanál na Discordu." });
+      else toast({ title: "Chyba", description: `Discord vrátil ${res.status}`, variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Chyba", description: e?.message ?? "Nelze odeslat", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled sync webhooku</Label>
+        {trimmed ? (
+          <Badge variant={isValid ? "default" : "destructive"} className="text-[10px]">
+            {isValid ? "URL OK" : "Neplatná URL"}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">Bez webhooku</Badge>
+        )}
+      </div>
+      <Card className="glass border-border p-4 space-y-3">
+        {trimmed ? (
+          <>
+            <DiscordMessagePreview
+              content="✅ Testovací zpráva ze sync webhooku (tickety)."
+              embed={sampleEmbed}
+            />
+            <Button size="sm" onClick={sendTest} disabled={!isValid || !isManager || sending} className="gap-2">
+              <Send className="h-3.5 w-3.5" />
+              {sending ? "Odesílám…" : "Odeslat test na webhook"}
+            </Button>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Vlož Discord webhook URL výše a uvidíš živý náhled ukázkové sync zprávy.
+          </p>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 export default DashboardBot;
