@@ -215,7 +215,15 @@ export function SocialHandleField({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const w = window.open(url, "_blank", "noopener,noreferrer");
+              if (!w) {
+                // Pokud popup zablokován, zkus přes top window
+                try { window.top!.open(url, "_blank", "noopener,noreferrer"); } catch { /* noop */ }
+              }
+            }}
             className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center h-7 px-2 text-xs rounded-md hover:bg-muted transition-colors"
             style={{ color }}
           >
