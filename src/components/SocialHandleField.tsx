@@ -78,12 +78,7 @@ function buildUrl(platform: Platform, handle: string): string | null {
 }
 
 function openExternalUrl(url: string) {
-  const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
-  if (popup) {
-    popup.opener = null;
-    popup.location.href = url;
-    return;
-  }
+  if (!url) return;
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.target = "_blank";
