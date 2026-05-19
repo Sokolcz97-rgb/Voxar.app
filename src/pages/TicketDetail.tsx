@@ -14,10 +14,16 @@ import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
 import { RichContent } from "@/components/RichContent";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
-import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
+import { Loader2, ChevronLeft, Send, EyeOff, Trash2 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { moderate } from "@/lib/moderate";
 import { syncTicketToDiscord } from "@/lib/ticketDiscordSync";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Ticket {
   id: string;
@@ -45,6 +51,9 @@ const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
 const TicketDetail = () => {
   const { id } = useParams();
   const { user, isAdmin, isEditor, isBanned } = useAuth();
+  const { can } = usePermissions();
+  const canManage = can("tickets", "manage");
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isStaff = isAdmin || isEditor;
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -142,6 +151,19 @@ const TicketDetail = () => {
     }
   };
 
+  const deleteTicket = async () => {
+    if (!id) return;
+    const { error } = await supabase.from("tickets").delete().eq("id", id);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("tickets.deleted") });
+    navigate("/tickets");
+  };
+
+  const canDelete = !!ticket && !!user && (canManage || ticket.user_id === user.id);
+
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
 
   return (
@@ -164,6 +186,27 @@ const TicketDetail = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <PriorityBadge priority={ticket.priority} />
                 <StatusBadge status={ticket.status} />
+                {canDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" aria-label={t("common.delete")}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="glass border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("tickets.deleteOneTitle")}</AlertDialogTitle>
+                        <AlertDialogDescription>{t("tickets.deleteOneDesc")}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          {t("common.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-6">

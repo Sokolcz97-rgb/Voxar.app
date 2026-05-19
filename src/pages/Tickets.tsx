@@ -95,7 +95,7 @@ const Tickets = () => {
     const { data: ids, error: selErr } = await supabase
       .from("tickets")
       .select("id")
-      .eq("status", "resolved");
+      .in("status", ["resolved", "closed"]);
     if (selErr) {
       toast({ title: t("common.error"), description: selErr.message, variant: "destructive" });
       return;
@@ -104,12 +104,22 @@ const Tickets = () => {
       toast({ title: t("tickets.noResolvedToDelete") });
       return;
     }
-    const { error } = await supabase.from("tickets").delete().eq("status", "resolved");
+    const { error } = await supabase.from("tickets").delete().in("status", ["resolved", "closed"]);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
     toast({ title: t("tickets.resolvedDeleted", { count: ids.length }) });
+    load();
+  };
+
+  const deleteOne = async (ticketId: string) => {
+    const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("tickets.deleted") });
     load();
   };
 
@@ -243,6 +253,36 @@ const Tickets = () => {
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     <PriorityBadge priority={tk.priority} />
                     <StatusBadge status={tk.status} />
+                    {(canManage || tk.user_id === user?.id) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            aria-label={t("common.delete")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="glass border-border" onClick={(e) => e.preventDefault()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t("tickets.deleteOneTitle")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("tickets.deleteOneDesc")}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteOne(tk.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {t("common.delete")}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </Card>
               </Link>
