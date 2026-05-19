@@ -838,18 +838,21 @@ function TicketsConfigCard({
 
         <Button onClick={save} disabled={!isManager}>Uložit</Button>
       </Card>
-      <div className="space-y-2 lg:sticky lg:top-24 self-start">
-        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled panelu</Label>
-        <Card className="glass border-border p-4 space-y-3">
-          <DiscordMessagePreview content={cfg.welcome_md || "Klikni níže pro otevření ticketu."} />
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-md bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium px-4 py-2 transition-colors"
-            disabled
-          >
-            🎫 Otevřít ticket
-          </button>
-        </Card>
+      <div className="space-y-4 lg:sticky lg:top-24 self-start">
+        <div className="space-y-2">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled panelu</Label>
+          <Card className="glass border-border p-4 space-y-3">
+            <DiscordMessagePreview content={cfg.welcome_md || "Klikni níže pro otevření ticketu."} />
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium px-4 py-2 transition-colors"
+              disabled
+            >
+              🎫 Otevřít ticket
+            </button>
+          </Card>
+        </div>
+        <TicketsWebhookPreview webhookUrl={cfg.sync_webhook_url ?? ""} isManager={isManager} />
       </div>
     </div>
   );
