@@ -186,6 +186,27 @@ const TicketDetail = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <PriorityBadge priority={ticket.priority} />
                 <StatusBadge status={ticket.status} />
+                {canDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" aria-label={t("common.delete")}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="glass border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("tickets.deleteOneTitle")}</AlertDialogTitle>
+                        <AlertDialogDescription>{t("tickets.deleteOneDesc")}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          {t("common.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-6">
