@@ -9,6 +9,7 @@ import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
 import { verifySupabaseConnection } from './supabase.js';
 import { registerGuildSlashCommands, handleSlashCommand } from './slashCommands.js';
+import { startCommandsRealtime } from './commandsRealtime.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
