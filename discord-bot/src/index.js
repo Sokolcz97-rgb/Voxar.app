@@ -8,6 +8,7 @@ import { startOutboundWorker } from './outbound.js';
 import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
 import { verifySupabaseConnection } from './supabase.js';
+import { registerGuildSlashCommands, handleSlashCommand } from './slashCommands.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -30,10 +31,11 @@ client.once('ready', async () => {
   await syncAllGuilds(client);
   startHeartbeat(client);
   startOutboundWorker(client);
-  // Setup ticket panels for approved guilds
+  // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
       await setupTicketPanel(client, guild.id).catch(() => {});
+      await registerGuildSlashCommands(client, guild.id).catch(() => {});
     }
   }
 });
@@ -42,6 +44,8 @@ client.once('ready', async () => {
 client.on('guildCreate', async (guild) => {
   console.log(`➕ Joined guild ${guild.name} (${guild.id})`);
   await registerGuild(guild);
+  // Zaregistruj slash commandy hned – fungovat začnou až po schválení v adminu
+  await registerGuildSlashCommands(client, guild.id).catch(() => {});
 });
 
 client.on('guildDelete', async (guild) => {
@@ -73,6 +77,10 @@ client.on('guildMemberAdd', async (member) => {
 client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
+    if (interaction.isChatInputCommand?.()) {
+      const handled = await handleSlashCommand(interaction);
+      if (handled) return;
+    }
     await handleInteraction(interaction);
   } catch (e) {
     console.error('interactionCreate', e);
