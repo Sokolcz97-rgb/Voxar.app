@@ -14,10 +14,16 @@ import { BannedNotice } from "@/components/BannedNotice";
 import { toast } from "@/hooks/use-toast";
 import { RichContent } from "@/components/RichContent";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
-import { Loader2, ChevronLeft, Send, EyeOff } from "lucide-react";
+import { Loader2, ChevronLeft, Send, EyeOff, Trash2 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { moderate } from "@/lib/moderate";
 import { syncTicketToDiscord } from "@/lib/ticketDiscordSync";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Ticket {
   id: string;
