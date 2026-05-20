@@ -865,7 +865,24 @@ function TicketsConfigCard({
           </div>
         </div>
 
-        <Button onClick={save} disabled={!isManager}>Uložit</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={save} disabled={!isManager}>Uložit</Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!isManager || !cfg.panel_channel_id}
+            onClick={async () => {
+              const { error } = await supabase.from("bot_outbound_queue").insert({
+                payload: { action: "refresh_ticket_panel", guild_id: guildId ?? null },
+                source: "ticket_panel_manual",
+              });
+              if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+              else toast({ title: "Odesláno", description: "Bot panel publikuje během chvíle." });
+            }}
+          >
+            📤 Odeslat panel nyní
+          </Button>
+        </div>
       </Card>
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
         <div className="space-y-2">
