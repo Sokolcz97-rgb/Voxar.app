@@ -10,17 +10,17 @@ import { supabase } from './supabase.js';
 const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
 
-export async function setupTicketPanel(client, guildId = null) {
-  // Per-guild config first, fall back to legacy global row
-  let cfg = null;
+async function loadCfg(guildId = null) {
   if (guildId) {
     const r = await supabase.from('bot_tickets_config').select('*').eq('guild_id', guildId).maybeSingle();
-    cfg = r.data;
+    if (r.data) return r.data;
   }
-  if (!cfg) {
-    const r = await supabase.from('bot_tickets_config').select('*').is('guild_id', null).limit(1).maybeSingle();
-    cfg = r.data;
-  }
+  const r = await supabase.from('bot_tickets_config').select('*').is('guild_id', null).limit(1).maybeSingle();
+  return r.data;
+}
+
+export async function setupTicketPanel(client, guildId = null) {
+  const cfg = await loadCfg(guildId);
   if (!cfg?.panel_channel_id) return;
 
   try {
@@ -35,18 +35,21 @@ export async function setupTicketPanel(client, guildId = null) {
       }
     }
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(TICKET_BTN_ID)
-        .setLabel('Otevřít ticket')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('🎫')
-    );
+    const mode = cfg.panel_mode || 'button';
+    const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
 
-    await channel.send({
-      content: cfg.welcome_md || 'Klikni níže pro otevření ticketu.',
-      components: [row],
-    });
+    if (mode === 'markdown') {
+      await channel.send({ content });
+    } else {
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(TICKET_BTN_ID)
+          .setLabel('Otevřít ticket')
+          .setStyle(ButtonStyle.Primary)
+          .setEmoji('🎫'),
+      );
+      await channel.send({ content, components: [row] });
+    }
   } catch (e) {
     console.error('setupTicketPanel', e);
   }
@@ -67,16 +70,20 @@ export async function handleInteraction(interaction) {
 }
 
 async function openTicket(interaction) {
-  const { data: cfg } = await supabase
-    .from('bot_tickets_config')
-    .select('*')
-    .limit(1)
-    .maybeSingle();
+  const cfg = await loadCfg(interaction.guild?.id);
 
   const guild = interaction.guild;
   if (!guild) return interaction.reply({ content: 'Nelze otevřít ticket zde.', ephemeral: true });
 
   const name = `ticket-${interaction.user.username}`.toLowerCase().slice(0, 90);
+
+  // Determine parent category: explicit cfg.category_id, else fall back to
+  // the panel channel's parent (so ticket lands in the same category as the panel).
+  let parentId = cfg?.category_id || undefined;
+  if (!parentId && cfg?.panel_channel_id) {
+    const panel = await guild.channels.fetch(cfg.panel_channel_id).catch(() => null);
+    if (panel?.parentId) parentId = panel.parentId;
+  }
 
   const overwrites = [
     { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
@@ -114,7 +121,7 @@ async function openTicket(interaction) {
     const channel = await guild.channels.create({
       name,
       type: ChannelType.GuildText,
-      parent: cfg?.category_id || undefined,
+      parent: parentId,
       permissionOverwrites: overwrites,
     });
 
@@ -123,7 +130,7 @@ async function openTicket(interaction) {
         .setCustomId(TICKET_CLOSE_ID)
         .setLabel('Uzavřít')
         .setStyle(ButtonStyle.Danger)
-        .setEmoji('🔒')
+        .setEmoji('🔒'),
     );
 
     await channel.send({
@@ -142,11 +149,7 @@ async function openTicket(interaction) {
 }
 
 async function closeTicket(interaction) {
-  const { data: cfg } = await supabase
-    .from('bot_tickets_config')
-    .select('transcripts_enabled')
-    .limit(1)
-    .maybeSingle();
+  const cfg = await loadCfg(interaction.guild?.id);
 
   await interaction.reply({ content: 'Zavírám ticket za 5 s…' });
 
@@ -166,4 +169,42 @@ async function closeTicket(interaction) {
   }
 
   setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+}
+
+/**
+ * Sleduje změny v bot_tickets_config a přerenderuje panel pro dotčenou guildu.
+ */
+export function startTicketsConfigRealtime(client) {
+  const debounce = new Map();
+  const schedule = (guildId) => {
+    const key = guildId || '*';
+    clearTimeout(debounce.get(key));
+    debounce.set(
+      key,
+      setTimeout(async () => {
+        if (guildId) {
+          await setupTicketPanel(client, guildId).catch(() => {});
+        } else {
+          for (const g of client.guilds.cache.values()) {
+            await setupTicketPanel(client, g.id).catch(() => {});
+          }
+        }
+      }, 800),
+    );
+  };
+
+  return supabase
+    .channel('bot-tickets-config-realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'bot_tickets_config' },
+      (payload) => {
+        const guilds = new Set([payload.new?.guild_id ?? null, payload.old?.guild_id ?? null]);
+        for (const g of guilds) schedule(g);
+        console.log(`🔄 bot_tickets_config změna (${payload.eventType}) → refresh panelu`);
+      },
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') console.log('📡 Realtime: bot_tickets_config sleduji');
+    });
 }
