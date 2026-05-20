@@ -765,13 +765,16 @@ function TicketsConfigCard({
       welcome_md: cfg.welcome_md,
       transcripts_enabled: cfg.transcripts_enabled,
       panel_channel_id: cfg.panel_channel_id,
+      panel_mode: cfg.panel_mode || "button",
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
     }).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { toast({ title: "Uloženo" }); onChanged(); }
+    else { toast({ title: "Uloženo", description: "Panel se obnoví v Discordu během chvíle." }); onChanged(); }
   };
+
+  const panelMode: "button" | "markdown" = cfg.panel_mode === "markdown" ? "markdown" : "button";
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
@@ -789,6 +792,32 @@ function TicketsConfigCard({
             <Label>Panel kanál (ID)</Label>
             <Input value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value })} disabled={!isManager} />
           </div>
+        </div>
+        <div>
+          <Label>Režim panelu</Label>
+          <div className="flex gap-2 mt-1">
+            <Button
+              type="button"
+              variant={panelMode === "button" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCfg({ ...cfg, panel_mode: "button" })}
+              disabled={!isManager}
+            >
+              🎫 Tlačítko
+            </Button>
+            <Button
+              type="button"
+              variant={panelMode === "markdown" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCfg({ ...cfg, panel_mode: "markdown" })}
+              disabled={!isManager}
+            >
+              📝 Pouze markdown
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tlačítko vytvoří ticket kanál na klik. Markdown pošle jen zprávu (bez tlačítka).
+          </p>
         </div>
         <div>
           <Label>Uvítací zpráva ticketu (markdown)</Label>
@@ -842,14 +871,16 @@ function TicketsConfigCard({
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled panelu</Label>
           <Card className="glass border-border p-4 space-y-3">
-            <DiscordMessagePreview content={cfg.welcome_md || "Klikni níže pro otevření ticketu."} />
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium px-4 py-2 transition-colors"
-              disabled
-            >
-              🎫 Otevřít ticket
-            </button>
+            <DiscordMessagePreview content={cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Pro otevření ticketu napiš zprávu.")} />
+            {panelMode === "button" && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-md bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium px-4 py-2 transition-colors"
+                disabled
+              >
+                🎫 Otevřít ticket
+              </button>
+            )}
           </Card>
         </div>
         <TicketsWebhookPreview webhookUrl={cfg.sync_webhook_url ?? ""} isManager={isManager} />

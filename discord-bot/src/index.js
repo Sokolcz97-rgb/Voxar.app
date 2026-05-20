@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { runAutomod } from './automod.js';
 import { handleCommand } from './commands.js';
 import { sendWelcome } from './welcome.js';
-import { handleInteraction, setupTicketPanel } from './tickets.js';
+import { handleInteraction, setupTicketPanel, startTicketsConfigRealtime } from './tickets.js';
 import { startOutboundWorker } from './outbound.js';
 import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
@@ -33,6 +33,7 @@ client.once('ready', async () => {
   startHeartbeat(client);
   startOutboundWorker(client);
   startCommandsRealtime(client);
+  startTicketsConfigRealtime(client);
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
