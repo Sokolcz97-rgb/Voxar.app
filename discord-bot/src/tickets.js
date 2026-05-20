@@ -10,6 +10,23 @@ import { supabase } from './supabase.js';
 const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
 
+export function buildTicketPanelMessage(cfg = {}) {
+  const mode = cfg.panel_mode || 'button';
+  const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
+
+  if (mode === 'markdown') return { content };
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(TICKET_BTN_ID)
+      .setLabel('Otevřít ticket')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('🎫'),
+  );
+
+  return { content, components: [row] };
+}
+
 async function loadCfg(guildId = null) {
   if (guildId) {
     const r = await supabase.from('bot_tickets_config').select('*').eq('guild_id', guildId).maybeSingle();
@@ -19,13 +36,14 @@ async function loadCfg(guildId = null) {
   return r.data;
 }
 
-export async function setupTicketPanel(client, guildId = null) {
+export async function setupTicketPanel(client, guildId = null, options = {}) {
   const cfg = await loadCfg(guildId);
-  if (!cfg?.panel_channel_id) return;
+  const panelChannelId = options.channelId || cfg?.panel_channel_id;
+  if (!panelChannelId) return { ok: false, error: 'no panel_channel_id' };
 
   try {
-    const channel = await client.channels.fetch(cfg.panel_channel_id).catch(() => null);
-    if (!channel?.isTextBased?.()) return;
+    const channel = await client.channels.fetch(panelChannelId).catch(() => null);
+    if (!channel?.isTextBased?.()) return { ok: false, error: 'channel not found' };
 
     // Refresh panel: delete old bot messages and post a fresh one
     const messages = await channel.messages.fetch({ limit: 20 }).catch(() => null);
@@ -35,23 +53,11 @@ export async function setupTicketPanel(client, guildId = null) {
       }
     }
 
-    const mode = cfg.panel_mode || 'button';
-    const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
-
-    if (mode === 'markdown') {
-      await channel.send({ content });
-    } else {
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(TICKET_BTN_ID)
-          .setLabel('Otevřít ticket')
-          .setStyle(ButtonStyle.Primary)
-          .setEmoji('🎫'),
-      );
-      await channel.send({ content, components: [row] });
-    }
+    await channel.send(buildTicketPanelMessage(cfg));
+    return { ok: true, channelId: panelChannelId, mode: cfg.panel_mode || 'button' };
   } catch (e) {
     console.error('setupTicketPanel', e);
+    return { ok: false, error: String(e) };
   }
 }
 
