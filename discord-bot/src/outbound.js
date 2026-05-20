@@ -25,23 +25,54 @@ export function startOutboundWorker(client) {
           // Special action: refresh ticket panel
           if (payload.action === 'refresh_ticket_panel') {
             const channelId = payload.panel_channel_id || job.channel_id || null;
-            const result = await setupTicketPanel(client, payload.guild_id || null, {
-              channelId,
-              message: payload.content ? {
-                content: payload.content,
-                components: payload.components,
-              } : undefined,
-            });
-            if (!result?.ok) {
-              await supabase
-                .from('bot_outbound_queue')
-                .update({ error: result?.error || 'ticket panel send failed', sent_at: new Date().toISOString() })
+            if (!channelId) {
+              await supabase.from('bot_outbound_queue')
+                .update({ error: 'no panel_channel_id', sent_at: new Date().toISOString() })
                 .eq('id', job.id);
               continue;
             }
-            await supabase
-              .from('bot_outbound_queue')
-              .update({ sent_at: new Date().toISOString(), error: null })
+            const channel = await client.channels.fetch(channelId).catch(() => null);
+            if (!channel?.isTextBased?.()) {
+              await supabase.from('bot_outbound_queue')
+                .update({ error: 'panel channel not found', sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+              continue;
+            }
+            // delete old bot messages
+            try {
+              const msgs = await channel.messages.fetch({ limit: 20 });
+              for (const m of msgs.values()) {
+                if (m.author.id === client.user.id) await m.delete().catch(() => {});
+              }
+            } catch (e) { console.error('panel cleanup', e); }
+
+            // If payload supplies content/components, send directly (this avoids
+            // depending on setupTicketPanel/buildTicketPanelMessage versions).
+            if (payload.content || payload.components) {
+              try {
+                await channel.send({
+                  content: payload.content || '',
+                  components: payload.components || [],
+                });
+                await supabase.from('bot_outbound_queue')
+                  .update({ sent_at: new Date().toISOString(), error: null })
+                  .eq('id', job.id);
+              } catch (e) {
+                console.error('panel send', e);
+                await supabase.from('bot_outbound_queue')
+                  .update({ error: String(e), sent_at: new Date().toISOString() })
+                  .eq('id', job.id);
+              }
+              continue;
+            }
+
+            // Fallback: build from DB cfg
+            const result = await setupTicketPanel(client, payload.guild_id || null, { channelId });
+            await supabase.from('bot_outbound_queue')
+              .update({
+                sent_at: new Date().toISOString(),
+                error: result?.ok ? null : (result?.error || 'ticket panel send failed'),
+              })
               .eq('id', job.id);
             continue;
           }
