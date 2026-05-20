@@ -784,12 +784,18 @@ function TicketsConfigCard({
 
     setPanelSending(true);
     try {
+      const panelContent = cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Pro otevření ticketu napiš zprávu.");
+      const panelComponents = panelMode === "button"
+        ? [{ type: 1, components: [{ type: 2, style: 1, custom_id: "ticket_open", label: "Otevřít ticket", emoji: { name: "🎫" } }] }]
+        : undefined;
       const { error } = await supabase.from("bot_outbound_queue").insert({
         channel_id: channelId,
         payload: {
           action: "refresh_ticket_panel",
           guild_id: guildId ?? null,
           panel_channel_id: channelId,
+          content: panelContent,
+          components: panelComponents,
         },
         source: "ticket_panel_manual",
       });
