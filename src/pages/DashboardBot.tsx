@@ -336,7 +336,7 @@ const DashboardBot = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {isAdmin && (
+              {canUseGlobalConfig && (
                 <SelectItem value={GLOBAL_KEY}>
                   <span className="flex items-center gap-2">
                     <Globe className="h-4 w-4" /> Globální / šablony (legacy)
