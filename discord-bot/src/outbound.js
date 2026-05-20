@@ -60,6 +60,7 @@ export function startOutboundWorker(client) {
           await channel.send({
             content: payload.content,
             embeds: payload.embeds,
+            components: payload.components,
           });
           await supabase
             .from('bot_outbound_queue')
