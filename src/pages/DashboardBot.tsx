@@ -838,7 +838,38 @@ function TicketsConfigCard({
     }
   };
 
-  const panelMode: "button" | "markdown" = cfg.panel_mode === "markdown" ? "markdown" : "button";
+  const addTicketCategory = async () => {
+    if (!guildId || !newTicketCategory.label.trim()) return;
+    const { error } = await supabase.from("bot_ticket_categories" as any).insert({
+      guild_id: guildId,
+      label: newTicketCategory.label.trim(),
+      description: newTicketCategory.description.trim() || null,
+      emoji: newTicketCategory.emoji.trim() || null,
+      discord_category_id: newTicketCategory.discord_category_id.trim() || null,
+      position: ticketCategories.length + 1,
+      enabled: true,
+    });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else {
+      setNewTicketCategory({ label: "", description: "", emoji: "", discord_category_id: "" });
+      await loadTicketCategories();
+      toast({ title: "Kategorie přidána" });
+    }
+  };
+
+  const updateTicketCategory = async (id: string, patch: Partial<TicketCategory>) => {
+    const { error } = await supabase.from("bot_ticket_categories" as any).update(patch).eq("id", id);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else await loadTicketCategories();
+  };
+
+  const deleteTicketCategory = async (id: string) => {
+    const { error } = await supabase.from("bot_ticket_categories" as any).delete().eq("id", id);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else await loadTicketCategories();
+  };
+
+  const panelMode: "button" | "categories" = cfg.panel_mode === "categories" || cfg.panel_mode === "markdown" ? "categories" : "button";
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
