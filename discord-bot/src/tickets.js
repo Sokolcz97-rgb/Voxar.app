@@ -9,12 +9,37 @@ import { supabase } from './supabase.js';
 
 const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
+const TICKET_CATEGORY_SELECT_ID = 'ticket_category_select';
 
-export function buildTicketPanelMessage(cfg = {}) {
+export function buildTicketPanelMessage(cfg = {}, categories = []) {
   const mode = cfg.panel_mode || 'button';
   const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
 
-  if (mode === 'markdown') return { content };
+  if ((mode === 'categories' || mode === 'markdown') && categories.length > 0) {
+    return {
+      content,
+      components: [{
+        type: 1,
+        components: [{
+          type: 3,
+          custom_id: TICKET_CATEGORY_SELECT_ID,
+          placeholder: 'Vyber typ ticketu',
+          min_values: 1,
+          max_values: 1,
+          options: categories.slice(0, 25).map((category) => ({
+            label: category.label.slice(0, 100),
+            value: category.id,
+            description: category.description?.slice(0, 100) || undefined,
+            emoji: category.emoji ? { name: category.emoji } : undefined,
+          })),
+        }],
+      }],
+    };
+  }
+
+  if (mode === 'categories' || mode === 'markdown') {
+    return { content: `${content}\n\nKategorie ticketů zatím nejsou nastavené.` };
+  }
 
   return {
     content,
@@ -34,8 +59,25 @@ async function loadCfg(guildId = null) {
   return r.data;
 }
 
+async function loadTicketCategories(guildId = null) {
+  if (!guildId) return [];
+  const { data, error } = await supabase
+    .from('bot_ticket_categories')
+    .select('*')
+    .eq('guild_id', guildId)
+    .eq('enabled', true)
+    .order('position', { ascending: true })
+    .order('label', { ascending: true });
+  if (error) {
+    console.error('loadTicketCategories', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function setupTicketPanel(client, guildId = null, options = {}) {
   const cfg = await loadCfg(guildId);
+  const categories = await loadTicketCategories(guildId);
   const panelChannelId = options.channelId || cfg?.panel_channel_id;
   if (!panelChannelId) return { ok: false, error: 'no panel_channel_id' };
 
@@ -51,7 +93,7 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
       }
     }
 
-    await channel.send(options.message || buildTicketPanelMessage(cfg));
+    await channel.send(options.message || buildTicketPanelMessage(cfg, categories));
     return { ok: true, channelId: panelChannelId, mode: cfg.panel_mode || 'button' };
   } catch (e) {
     console.error('setupTicketPanel', e);
@@ -60,6 +102,11 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
 }
 
 export async function handleInteraction(interaction) {
+  if (interaction.isStringSelectMenu?.() && interaction.customId === TICKET_CATEGORY_SELECT_ID) {
+    await openTicket(interaction, interaction.values?.[0] || null);
+    return true;
+  }
+
   if (!interaction.isButton()) return false;
 
   if (interaction.customId === TICKET_BTN_ID) {
@@ -73,17 +120,21 @@ export async function handleInteraction(interaction) {
   return false;
 }
 
-async function openTicket(interaction) {
+async function openTicket(interaction, ticketCategoryId = null) {
   const cfg = await loadCfg(interaction.guild?.id);
+  const ticketCategory = ticketCategoryId
+    ? (await loadTicketCategories(interaction.guild?.id)).find((category) => category.id === ticketCategoryId)
+    : null;
 
   const guild = interaction.guild;
   if (!guild) return interaction.reply({ content: 'Nelze otevřít ticket zde.', ephemeral: true });
 
-  const name = `ticket-${interaction.user.username}`.toLowerCase().slice(0, 90);
+  const prefix = ticketCategory?.label ? `${ticketCategory.label}-` : 'ticket-';
+  const name = `${prefix}${interaction.user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 90);
 
   // Determine parent category: explicit cfg.category_id, else fall back to
   // the panel channel's parent (so ticket lands in the same category as the panel).
-  let parentId = cfg?.category_id || undefined;
+  let parentId = ticketCategory?.discord_category_id || cfg?.category_id || undefined;
   if (!parentId && cfg?.panel_channel_id) {
     const panel = await guild.channels.fetch(cfg.panel_channel_id).catch(() => null);
     if (panel?.parentId) parentId = panel.parentId;
@@ -138,7 +189,7 @@ async function openTicket(interaction) {
     );
 
     await channel.send({
-      content: `${cfg?.welcome_md || 'Ahoj! Popiš svůj problém.'}\n\n${interaction.user}, díky.`,
+      content: `${ticketCategory ? `**${ticketCategory.label}**\n${ticketCategory.description || ''}\n\n` : ''}${cfg?.welcome_md || 'Ahoj! Popiš svůj problém.'}\n\n${interaction.user}, díky.`,
       components: [closeRow],
     });
 
@@ -206,6 +257,15 @@ export function startTicketsConfigRealtime(client) {
         const guilds = new Set([payload.new?.guild_id ?? null, payload.old?.guild_id ?? null]);
         for (const g of guilds) schedule(g);
         console.log(`🔄 bot_tickets_config změna (${payload.eventType}) → refresh panelu`);
+      },
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'bot_ticket_categories' },
+      (payload) => {
+        const guilds = new Set([payload.new?.guild_id ?? null, payload.old?.guild_id ?? null]);
+        for (const g of guilds) schedule(g);
+        console.log(`🔄 bot_ticket_categories změna (${payload.eventType}) → refresh panelu`);
       },
     )
     .subscribe((status) => {

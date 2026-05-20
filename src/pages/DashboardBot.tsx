@@ -49,6 +49,7 @@ type StreamNotif = { id: string; platform: string; handle: string; discord_chann
 type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null; guild_id: string | null };
 type BotStatus = { last_heartbeat: string | null; version: string | null; guild_count: number | null };
 type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null };
+type TicketCategory = { id: string; guild_id: string; label: string; description: string | null; emoji: string | null; discord_category_id: string | null; position: number; enabled: boolean };
 
 const GLOBAL_KEY = "__global__";
 
@@ -58,7 +59,11 @@ const DashboardBot = () => {
 
   // Guild scope
   const [guilds, setGuilds] = useState<GuildOption[]>([]);
+  const [guildsLoaded, setGuildsLoaded] = useState(false);
   const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
+  const canManageBot = can("bot", "manage");
+  const canViewBot = can("bot", "view");
+  const canUseGlobalConfig = canManageBot || canViewBot;
   const selectedGuild = useMemo(
     () => (selectedGuildId === GLOBAL_KEY ? null : guilds.find((g) => g.guild_id === selectedGuildId) ?? null),
     [selectedGuildId, guilds]
@@ -91,8 +96,15 @@ const DashboardBot = () => {
         .eq("status", "approved")
         .order("name");
       setGuilds(((data as any) ?? []) as GuildOption[]);
+      setGuildsLoaded(true);
     })();
   }, [user]);
+
+  useEffect(() => {
+    if (!canUseGlobalConfig && selectedGuildId === GLOBAL_KEY && guilds[0]) {
+      setSelectedGuildId(guilds[0].guild_id);
+    }
+  }, [canUseGlobalConfig, guilds, selectedGuildId]);
 
   useEffect(() => {
     if (!user) return;
@@ -150,10 +162,10 @@ const DashboardBot = () => {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
-  if (!can("bot", "manage") && !can("bot", "view") && guilds.length === 0)
+  if (guildsLoaded && !canManageBot && !canViewBot && guilds.length === 0)
     return <Navigate to="/dashboard" replace />;
 
-  const isAdmin = can("bot", "manage");
+  const isAdmin = canManageBot;
   // Manager = admin OR (guild owner of selected guild — already enforced by RLS on save)
   const isManager = isAdmin || !!selectedGuild;
 
@@ -324,7 +336,7 @@ const DashboardBot = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {isAdmin && (
+              {canUseGlobalConfig && (
                 <SelectItem value={GLOBAL_KEY}>
                   <span className="flex items-center gap-2">
                     <Globe className="h-4 w-4" /> Globální / šablony (legacy)
@@ -733,6 +745,22 @@ function TicketsConfigCard({
 }) {
   const [cfg, setCfg] = useState<any>(null);
   const [panelSending, setPanelSending] = useState(false);
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>([]);
+  const [newTicketCategory, setNewTicketCategory] = useState({ label: "", description: "", emoji: "", discord_category_id: "" });
+
+  const loadTicketCategories = async () => {
+    if (!guildId) {
+      setTicketCategories([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("bot_ticket_categories" as any)
+      .select("*")
+      .eq("guild_id", guildId)
+      .order("position", { ascending: true })
+      .order("label", { ascending: true });
+    setTicketCategories(((data as any) ?? []) as TicketCategory[]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -754,7 +782,9 @@ function TicketsConfigCard({
           .maybeSingle();
         setCfg(ins.data);
       }
+      await loadTicketCategories();
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
 
   if (!cfg) return <p className="text-sm text-muted-foreground">Načítání…</p>;
@@ -784,16 +814,34 @@ function TicketsConfigCard({
 
     setPanelSending(true);
     try {
-      const panelContent = cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Pro otevření ticketu napiš zprávu.");
+      const panelContent = cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Vyber typ ticketu níže.");
       const panelComponents = panelMode === "button"
         ? [{ type: 1, components: [{ type: 2, style: 1, custom_id: "ticket_open", label: "Otevřít ticket", emoji: { name: "🎫" } }] }]
-        : undefined;
+        : ticketCategories.filter((category) => category.enabled).length > 0
+          ? [{
+              type: 1,
+              components: [{
+                type: 3,
+                custom_id: "ticket_category_select",
+                placeholder: "Vyber typ ticketu",
+                min_values: 1,
+                max_values: 1,
+                options: ticketCategories.filter((category) => category.enabled).slice(0, 25).map((category) => ({
+                  label: category.label.slice(0, 100),
+                  value: category.id,
+                  description: category.description?.slice(0, 100) || undefined,
+                  emoji: category.emoji ? { name: category.emoji } : undefined,
+                })),
+              }],
+            }]
+          : undefined;
       const { error } = await supabase.from("bot_outbound_queue").insert({
         channel_id: channelId,
         payload: {
           action: "refresh_ticket_panel",
           guild_id: guildId ?? null,
           panel_channel_id: channelId,
+          panel_mode: panelMode,
           content: panelContent,
           components: panelComponents,
         },
@@ -808,7 +856,38 @@ function TicketsConfigCard({
     }
   };
 
-  const panelMode: "button" | "markdown" = cfg.panel_mode === "markdown" ? "markdown" : "button";
+  const addTicketCategory = async () => {
+    if (!guildId || !newTicketCategory.label.trim()) return;
+    const { error } = await supabase.from("bot_ticket_categories" as any).insert({
+      guild_id: guildId,
+      label: newTicketCategory.label.trim(),
+      description: newTicketCategory.description.trim() || null,
+      emoji: newTicketCategory.emoji.trim() || null,
+      discord_category_id: newTicketCategory.discord_category_id.trim() || null,
+      position: ticketCategories.length + 1,
+      enabled: true,
+    });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else {
+      setNewTicketCategory({ label: "", description: "", emoji: "", discord_category_id: "" });
+      await loadTicketCategories();
+      toast({ title: "Kategorie přidána" });
+    }
+  };
+
+  const updateTicketCategory = async (id: string, patch: Partial<TicketCategory>) => {
+    const { error } = await supabase.from("bot_ticket_categories" as any).update(patch).eq("id", id);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else await loadTicketCategories();
+  };
+
+  const deleteTicketCategory = async (id: string) => {
+    const { error } = await supabase.from("bot_ticket_categories" as any).delete().eq("id", id);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else await loadTicketCategories();
+  };
+
+  const panelMode: "button" | "categories" = cfg.panel_mode === "categories" || cfg.panel_mode === "markdown" ? "categories" : "button";
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
@@ -842,22 +921,50 @@ function TicketsConfigCard({
             </Button>
             <Button
               type="button"
-              variant={panelMode === "markdown" ? "default" : "outline"}
+              variant={panelMode === "categories" ? "default" : "outline"}
               size="sm"
-              onClick={() => setCfg({ ...cfg, panel_mode: "markdown" })}
+              onClick={() => setCfg({ ...cfg, panel_mode: "categories" })}
               disabled={!isManager}
             >
-              📝 Pouze markdown
+              🗂️ Výběr kategorií
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Tlačítko vytvoří ticket kanál na klik. Markdown pošle jen zprávu (bez tlačítka).
+            Tlačítko vytvoří obecný ticket. Výběr kategorií ukáže volby jako BUG nebo Dotaz.
           </p>
         </div>
         <div>
           <Label>Uvítací zpráva ticketu (markdown)</Label>
           <Textarea rows={8} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
         </div>
+        {guildId && (
+          <div className="border-t border-border pt-4 space-y-3">
+            <div>
+              <div className="font-medium">Kategorie ticketů</div>
+              <p className="text-xs text-muted-foreground">Použije se v režimu výběru kategorií. Každá volba může mít vlastní Discord kategorii.</p>
+            </div>
+            <div className="grid sm:grid-cols-5 gap-2">
+              <Input placeholder="Název (BUG)" value={newTicketCategory.label} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, label: e.target.value })} disabled={!isManager} />
+              <Input placeholder="Popis" value={newTicketCategory.description} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, description: e.target.value })} disabled={!isManager} />
+              <Input placeholder="Emoji" value={newTicketCategory.emoji} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, emoji: e.target.value })} disabled={!isManager} />
+              <Input placeholder="ID Discord kategorie" value={newTicketCategory.discord_category_id} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: e.target.value.trim() })} disabled={!isManager} />
+              <Button type="button" onClick={addTicketCategory} disabled={!isManager || !newTicketCategory.label.trim()}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
+            </div>
+            <div className="space-y-2">
+              {ticketCategories.map((category) => (
+                <div key={category.id} className="grid sm:grid-cols-[80px_1fr_1fr_1fr_auto_auto] gap-2 items-center rounded-md border border-border p-2">
+                  <Input value={category.emoji ?? ""} onChange={(e) => updateTicketCategory(category.id, { emoji: e.target.value || null })} disabled={!isManager} />
+                  <Input value={category.label} onChange={(e) => updateTicketCategory(category.id, { label: e.target.value })} disabled={!isManager} />
+                  <Input value={category.description ?? ""} onChange={(e) => updateTicketCategory(category.id, { description: e.target.value || null })} disabled={!isManager} />
+                  <Input value={category.discord_category_id ?? ""} onChange={(e) => updateTicketCategory(category.id, { discord_category_id: e.target.value.trim() || null })} disabled={!isManager} />
+                  <Switch checked={category.enabled} onCheckedChange={(enabled) => updateTicketCategory(category.id, { enabled })} disabled={!isManager} />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => deleteTicketCategory(category.id)} disabled={!isManager}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              {ticketCategories.length === 0 && <p className="text-xs text-muted-foreground">Zatím nejsou vytvořené žádné kategorie.</p>}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
             <div className="font-medium">Ukládat transkripty</div>
@@ -926,6 +1033,11 @@ function TicketsConfigCard({
               >
                 🎫 Otevřít ticket
               </button>
+            )}
+            {panelMode === "categories" && (
+              <div className="rounded-md border border-border bg-background/60 px-3 py-2 text-sm text-muted-foreground">
+                Vyber typ ticketu: {ticketCategories.filter((category) => category.enabled).map((category) => `${category.emoji ?? "🎫"} ${category.label}`).join(" · ") || "žádné kategorie"}
+              </div>
             )}
           </Card>
         </div>

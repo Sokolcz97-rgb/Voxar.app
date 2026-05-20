@@ -388,6 +388,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_ticket_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          discord_category_id: string | null
+          emoji: string | null
+          enabled: boolean
+          guild_id: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discord_category_id?: string | null
+          emoji?: string | null
+          enabled?: boolean
+          guild_id: string
+          id?: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discord_category_id?: string | null
+          emoji?: string | null
+          enabled?: boolean
+          guild_id?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_tickets_config: {
         Row: {
           category_id: string | null
