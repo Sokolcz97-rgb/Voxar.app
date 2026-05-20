@@ -897,16 +897,16 @@ function TicketsConfigCard({
             </Button>
             <Button
               type="button"
-              variant={panelMode === "markdown" ? "default" : "outline"}
+              variant={panelMode === "categories" ? "default" : "outline"}
               size="sm"
-              onClick={() => setCfg({ ...cfg, panel_mode: "markdown" })}
+              onClick={() => setCfg({ ...cfg, panel_mode: "categories" })}
               disabled={!isManager}
             >
-              📝 Pouze markdown
+              🗂️ Výběr kategorií
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Tlačítko vytvoří ticket kanál na klik. Markdown pošle jen zprávu (bez tlačítka).
+            Tlačítko vytvoří obecný ticket. Výběr kategorií ukáže volby jako BUG nebo Dotaz.
           </p>
         </div>
         <div>
