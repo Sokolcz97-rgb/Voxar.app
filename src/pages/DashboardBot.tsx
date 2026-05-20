@@ -49,6 +49,7 @@ type StreamNotif = { id: string; platform: string; handle: string; discord_chann
 type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null; guild_id: string | null };
 type BotStatus = { last_heartbeat: string | null; version: string | null; guild_count: number | null };
 type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null };
+type TicketCategory = { id: string; guild_id: string; label: string; description: string | null; emoji: string | null; discord_category_id: string | null; position: number; enabled: boolean };
 
 const GLOBAL_KEY = "__global__";
 
@@ -59,6 +60,9 @@ const DashboardBot = () => {
   // Guild scope
   const [guilds, setGuilds] = useState<GuildOption[]>([]);
   const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
+  const canManageBot = can("bot", "manage");
+  const canViewBot = can("bot", "view");
+  const canUseGlobalConfig = canManageBot || canViewBot;
   const selectedGuild = useMemo(
     () => (selectedGuildId === GLOBAL_KEY ? null : guilds.find((g) => g.guild_id === selectedGuildId) ?? null),
     [selectedGuildId, guilds]
@@ -150,10 +154,10 @@ const DashboardBot = () => {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
-  if (!can("bot", "manage") && !can("bot", "view") && guilds.length === 0)
+  if (!canManageBot && !canViewBot && guilds.length === 0)
     return <Navigate to="/dashboard" replace />;
 
-  const isAdmin = can("bot", "manage");
+  const isAdmin = canManageBot;
   // Manager = admin OR (guild owner of selected guild — already enforced by RLS on save)
   const isManager = isAdmin || !!selectedGuild;
 
