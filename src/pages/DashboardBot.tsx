@@ -59,6 +59,7 @@ const DashboardBot = () => {
 
   // Guild scope
   const [guilds, setGuilds] = useState<GuildOption[]>([]);
+  const [guildsLoaded, setGuildsLoaded] = useState(false);
   const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
   const canManageBot = can("bot", "manage");
   const canViewBot = can("bot", "view");
@@ -95,8 +96,15 @@ const DashboardBot = () => {
         .eq("status", "approved")
         .order("name");
       setGuilds(((data as any) ?? []) as GuildOption[]);
+      setGuildsLoaded(true);
     })();
   }, [user]);
+
+  useEffect(() => {
+    if (!canUseGlobalConfig && selectedGuildId === GLOBAL_KEY && guilds[0]) {
+      setSelectedGuildId(guilds[0].guild_id);
+    }
+  }, [canUseGlobalConfig, guilds, selectedGuildId]);
 
   useEffect(() => {
     if (!user) return;
@@ -154,7 +162,7 @@ const DashboardBot = () => {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
-  if (!canManageBot && !canViewBot && guilds.length === 0)
+  if (guildsLoaded && !canManageBot && !canViewBot && guilds.length === 0)
     return <Navigate to="/dashboard" replace />;
 
   const isAdmin = canManageBot;
