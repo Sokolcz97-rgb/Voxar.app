@@ -24,10 +24,19 @@ export function startOutboundWorker(client) {
 
           // Special action: refresh ticket panel
           if (payload.action === 'refresh_ticket_panel') {
-            await setupTicketPanel(client, payload.guild_id || null);
+            const result = await setupTicketPanel(client, payload.guild_id || null, {
+              channelId: payload.panel_channel_id || job.channel_id || null,
+            });
+            if (!result?.ok) {
+              await supabase
+                .from('bot_outbound_queue')
+                .update({ error: result?.error || 'ticket panel send failed', sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+              continue;
+            }
             await supabase
               .from('bot_outbound_queue')
-              .update({ sent_at: new Date().toISOString() })
+              .update({ sent_at: new Date().toISOString(), error: null })
               .eq('id', job.id);
             continue;
           }
