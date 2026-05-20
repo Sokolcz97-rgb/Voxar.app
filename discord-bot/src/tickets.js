@@ -9,12 +9,33 @@ import { supabase } from './supabase.js';
 
 const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
+const TICKET_CATEGORY_SELECT_ID = 'ticket_category_select';
 
-export function buildTicketPanelMessage(cfg = {}) {
+export function buildTicketPanelMessage(cfg = {}, categories = []) {
   const mode = cfg.panel_mode || 'button';
   const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
 
-  if (mode === 'markdown') return { content };
+  if ((mode === 'categories' || mode === 'markdown') && categories.length > 0) {
+    return {
+      content,
+      components: [{
+        type: 1,
+        components: [{
+          type: 3,
+          custom_id: TICKET_CATEGORY_SELECT_ID,
+          placeholder: 'Vyber typ ticketu',
+          min_values: 1,
+          max_values: 1,
+          options: categories.slice(0, 25).map((category) => ({
+            label: category.label.slice(0, 100),
+            value: category.id,
+            description: category.description?.slice(0, 100) || undefined,
+            emoji: category.emoji ? { name: category.emoji } : undefined,
+          })),
+        }],
+      }],
+    };
+  }
 
   return {
     content,
@@ -34,8 +55,25 @@ async function loadCfg(guildId = null) {
   return r.data;
 }
 
+async function loadTicketCategories(guildId = null) {
+  if (!guildId) return [];
+  const { data, error } = await supabase
+    .from('bot_ticket_categories')
+    .select('*')
+    .eq('guild_id', guildId)
+    .eq('enabled', true)
+    .order('position', { ascending: true })
+    .order('label', { ascending: true });
+  if (error) {
+    console.error('loadTicketCategories', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function setupTicketPanel(client, guildId = null, options = {}) {
   const cfg = await loadCfg(guildId);
+  const categories = await loadTicketCategories(guildId);
   const panelChannelId = options.channelId || cfg?.panel_channel_id;
   if (!panelChannelId) return { ok: false, error: 'no panel_channel_id' };
 
@@ -51,7 +89,7 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
       }
     }
 
-    await channel.send(options.message || buildTicketPanelMessage(cfg));
+    await channel.send(options.message || buildTicketPanelMessage(cfg, categories));
     return { ok: true, channelId: panelChannelId, mode: cfg.panel_mode || 'button' };
   } catch (e) {
     console.error('setupTicketPanel', e);
