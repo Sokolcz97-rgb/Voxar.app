@@ -1,7 +1,8 @@
 import { supabase } from './supabase.js';
+import { setupTicketPanel } from './tickets.js';
 
 export function startOutboundWorker(client) {
-  // Poll every 5s for queued messages without webhook_url (channel sends)
+  // Poll every 5s for queued jobs (channel sends + special actions)
   const tick = async () => {
     try {
       const { data, error } = await supabase
@@ -9,7 +10,6 @@ export function startOutboundWorker(client) {
         .select('*')
         .is('sent_at', null)
         .is('webhook_url', null)
-        .not('channel_id', 'is', null)
         .order('created_at', { ascending: true })
         .limit(10);
 
@@ -20,6 +20,26 @@ export function startOutboundWorker(client) {
 
       for (const job of data || []) {
         try {
+          const payload = job.payload || {};
+
+          // Special action: refresh ticket panel
+          if (payload.action === 'refresh_ticket_panel') {
+            await setupTicketPanel(client, payload.guild_id || null);
+            await supabase
+              .from('bot_outbound_queue')
+              .update({ sent_at: new Date().toISOString() })
+              .eq('id', job.id);
+            continue;
+          }
+
+          if (!job.channel_id) {
+            await supabase
+              .from('bot_outbound_queue')
+              .update({ error: 'no channel_id', sent_at: new Date().toISOString() })
+              .eq('id', job.id);
+            continue;
+          }
+
           const channel = await client.channels.fetch(job.channel_id).catch(() => null);
           if (!channel?.isTextBased?.()) {
             await supabase
@@ -28,7 +48,6 @@ export function startOutboundWorker(client) {
               .eq('id', job.id);
             continue;
           }
-          const payload = job.payload || {};
           await channel.send({
             content: payload.content,
             embeds: payload.embeds,
