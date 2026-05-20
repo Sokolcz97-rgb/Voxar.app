@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { runAutomod } from './automod.js';
 import { handleCommand } from './commands.js';
 import { sendWelcome } from './welcome.js';
-import { handleInteraction, setupTicketPanel } from './tickets.js';
+import { handleInteraction, setupTicketPanel, startTicketsConfigRealtime } from './tickets.js';
 import { startOutboundWorker } from './outbound.js';
 import { startHeartbeat } from './heartbeat.js';
 import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } from './guilds.js';
