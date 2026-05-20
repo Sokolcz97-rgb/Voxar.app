@@ -745,6 +745,22 @@ function TicketsConfigCard({
 }) {
   const [cfg, setCfg] = useState<any>(null);
   const [panelSending, setPanelSending] = useState(false);
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>([]);
+  const [newTicketCategory, setNewTicketCategory] = useState({ label: "", description: "", emoji: "", discord_category_id: "" });
+
+  const loadTicketCategories = async () => {
+    if (!guildId) {
+      setTicketCategories([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("bot_ticket_categories" as any)
+      .select("*")
+      .eq("guild_id", guildId)
+      .order("position", { ascending: true })
+      .order("label", { ascending: true });
+    setTicketCategories(((data as any) ?? []) as TicketCategory[]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -766,7 +782,9 @@ function TicketsConfigCard({
           .maybeSingle();
         setCfg(ins.data);
       }
+      await loadTicketCategories();
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
 
   if (!cfg) return <p className="text-sm text-muted-foreground">Načítání…</p>;
