@@ -1010,6 +1010,11 @@ function TicketsConfigCard({
                 🎫 Otevřít ticket
               </button>
             )}
+            {panelMode === "categories" && (
+              <div className="rounded-md border border-border bg-background/60 px-3 py-2 text-sm text-muted-foreground">
+                Vyber typ ticketu: {ticketCategories.filter((category) => category.enabled).map((category) => `${category.emoji ?? "🎫"} ${category.label}`).join(" · ") || "žádné kategorie"}
+              </div>
+            )}
           </Card>
         </div>
         <TicketsWebhookPreview webhookUrl={cfg.sync_webhook_url ?? ""} isManager={isManager} />
