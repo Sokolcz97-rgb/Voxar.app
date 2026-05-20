@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { buildTicketPanelMessage, setupTicketPanel } from './tickets.js';
+import { setupTicketPanel } from './tickets.js';
 
 export function startOutboundWorker(client) {
   // Poll every 5s for queued jobs (channel sends + special actions)
