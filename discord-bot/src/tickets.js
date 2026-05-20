@@ -51,7 +51,7 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
       }
     }
 
-    await channel.send(buildTicketPanelMessage(cfg));
+    await channel.send(options.message || buildTicketPanelMessage(cfg));
     return { ok: true, channelId: panelChannelId, mode: cfg.panel_mode || 'button' };
   } catch (e) {
     console.error('setupTicketPanel', e);
