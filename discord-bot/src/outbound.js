@@ -30,7 +30,7 @@ export function startOutboundWorker(client) {
               result = await setupTicketPanel(client, payload.guild_id || null, {
                 channelId,
                 message: buildTicketPanelMessage({
-                  panel_mode: payload.components ? 'button' : 'markdown',
+                  panel_mode: payload.panel_mode || (payload.components ? 'button' : 'markdown'),
                   welcome_md: payload.content,
                 }),
               });
