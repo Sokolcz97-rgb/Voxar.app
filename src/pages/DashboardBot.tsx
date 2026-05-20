@@ -794,6 +794,32 @@ function TicketsConfigCard({
           </div>
         </div>
         <div>
+          <Label>Režim panelu</Label>
+          <div className="flex gap-2 mt-1">
+            <Button
+              type="button"
+              variant={panelMode === "button" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCfg({ ...cfg, panel_mode: "button" })}
+              disabled={!isManager}
+            >
+              🎫 Tlačítko
+            </Button>
+            <Button
+              type="button"
+              variant={panelMode === "markdown" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCfg({ ...cfg, panel_mode: "markdown" })}
+              disabled={!isManager}
+            >
+              📝 Pouze markdown
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tlačítko vytvoří ticket kanál na klik. Markdown pošle jen zprávu (bez tlačítka).
+          </p>
+        </div>
+        <div>
           <Label>Uvítací zpráva ticketu (markdown)</Label>
           <Textarea rows={8} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
         </div>
