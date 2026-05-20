@@ -765,13 +765,16 @@ function TicketsConfigCard({
       welcome_md: cfg.welcome_md,
       transcripts_enabled: cfg.transcripts_enabled,
       panel_channel_id: cfg.panel_channel_id,
+      panel_mode: cfg.panel_mode || "button",
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
     }).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { toast({ title: "Uloženo" }); onChanged(); }
+    else { toast({ title: "Uloženo", description: "Panel se obnoví v Discordu během chvíle." }); onChanged(); }
   };
+
+  const panelMode: "button" | "markdown" = cfg.panel_mode === "markdown" ? "markdown" : "button";
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
