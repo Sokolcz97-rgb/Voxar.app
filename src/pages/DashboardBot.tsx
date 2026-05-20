@@ -913,6 +913,34 @@ function TicketsConfigCard({
           <Label>Uvítací zpráva ticketu (markdown)</Label>
           <Textarea rows={8} value={cfg.welcome_md ?? ""} onChange={(e) => setCfg({ ...cfg, welcome_md: e.target.value })} disabled={!isManager} />
         </div>
+        {guildId && (
+          <div className="border-t border-border pt-4 space-y-3">
+            <div>
+              <div className="font-medium">Kategorie ticketů</div>
+              <p className="text-xs text-muted-foreground">Použije se v režimu výběru kategorií. Každá volba může mít vlastní Discord kategorii.</p>
+            </div>
+            <div className="grid sm:grid-cols-5 gap-2">
+              <Input placeholder="Název (BUG)" value={newTicketCategory.label} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, label: e.target.value })} disabled={!isManager} />
+              <Input placeholder="Popis" value={newTicketCategory.description} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, description: e.target.value })} disabled={!isManager} />
+              <Input placeholder="Emoji" value={newTicketCategory.emoji} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, emoji: e.target.value })} disabled={!isManager} />
+              <Input placeholder="ID Discord kategorie" value={newTicketCategory.discord_category_id} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: e.target.value.trim() })} disabled={!isManager} />
+              <Button type="button" onClick={addTicketCategory} disabled={!isManager || !newTicketCategory.label.trim()}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
+            </div>
+            <div className="space-y-2">
+              {ticketCategories.map((category) => (
+                <div key={category.id} className="grid sm:grid-cols-[80px_1fr_1fr_1fr_auto_auto] gap-2 items-center rounded-md border border-border p-2">
+                  <Input value={category.emoji ?? ""} onChange={(e) => updateTicketCategory(category.id, { emoji: e.target.value || null })} disabled={!isManager} />
+                  <Input value={category.label} onChange={(e) => updateTicketCategory(category.id, { label: e.target.value })} disabled={!isManager} />
+                  <Input value={category.description ?? ""} onChange={(e) => updateTicketCategory(category.id, { description: e.target.value || null })} disabled={!isManager} />
+                  <Input value={category.discord_category_id ?? ""} onChange={(e) => updateTicketCategory(category.id, { discord_category_id: e.target.value.trim() || null })} disabled={!isManager} />
+                  <Switch checked={category.enabled} onCheckedChange={(enabled) => updateTicketCategory(category.id, { enabled })} disabled={!isManager} />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => deleteTicketCategory(category.id)} disabled={!isManager}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              {ticketCategories.length === 0 && <p className="text-xs text-muted-foreground">Zatím nejsou vytvořené žádné kategorie.</p>}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
             <div className="font-medium">Ukládat transkripty</div>
