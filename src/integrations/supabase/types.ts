@@ -395,6 +395,7 @@ export type Database = {
           id: string
           mirror_enabled: boolean
           panel_channel_id: string | null
+          panel_mode: string
           support_role_id: string | null
           sync_channel_id: string | null
           sync_webhook_url: string | null
@@ -408,6 +409,7 @@ export type Database = {
           id?: string
           mirror_enabled?: boolean
           panel_channel_id?: string | null
+          panel_mode?: string
           support_role_id?: string | null
           sync_channel_id?: string | null
           sync_webhook_url?: string | null
@@ -421,6 +423,7 @@ export type Database = {
           id?: string
           mirror_enabled?: boolean
           panel_channel_id?: string | null
+          panel_mode?: string
           support_role_id?: string | null
           sync_channel_id?: string | null
           sync_webhook_url?: string | null
