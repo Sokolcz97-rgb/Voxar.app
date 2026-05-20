@@ -732,6 +732,7 @@ function TicketsConfigCard({
   onChanged: () => void;
 }) {
   const [cfg, setCfg] = useState<any>(null);
+  const [panelSending, setPanelSending] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -774,6 +775,33 @@ function TicketsConfigCard({
     else { toast({ title: "Uloženo", description: "Panel se obnoví v Discordu během chvíle." }); onChanged(); }
   };
 
+  const sendPanelNow = async () => {
+    const channelId = `${cfg.panel_channel_id ?? ""}`.trim();
+    if (!channelId) {
+      toast({ title: "Chybí ID kanálu", description: "Vyplň ID Discord kanálu, kam se má ticket panel odeslat.", variant: "destructive" });
+      return;
+    }
+
+    setPanelSending(true);
+    try {
+      const { error } = await supabase.from("bot_outbound_queue").insert({
+        channel_id: channelId,
+        payload: {
+          action: "refresh_ticket_panel",
+          guild_id: guildId ?? null,
+          panel_channel_id: channelId,
+        },
+        source: "ticket_panel_manual",
+      });
+      if (error) throw error;
+      toast({ title: "Zařazeno do fronty", description: `Bot odešle panel do kanálu ${channelId}.` });
+    } catch (e: any) {
+      toast({ title: "Chyba", description: e?.message ?? "Panel se nepodařilo zařadit k odeslání.", variant: "destructive" });
+    } finally {
+      setPanelSending(false);
+    }
+  };
+
   const panelMode: "button" | "markdown" = cfg.panel_mode === "markdown" ? "markdown" : "button";
 
   return (
@@ -789,8 +817,9 @@ function TicketsConfigCard({
             <Input value={cfg.support_role_id ?? ""} onChange={(e) => setCfg({ ...cfg, support_role_id: e.target.value })} disabled={!isManager} />
           </div>
           <div className="sm:col-span-2">
-            <Label>Panel kanál (ID)</Label>
-            <Input value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value })} disabled={!isManager} />
+            <Label>ID kanálu pro ticket panel</Label>
+            <Input placeholder="Např. 1506373996277665862" value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value.trim() })} disabled={!isManager} />
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie níže.</p>
           </div>
         </div>
         <div>
@@ -870,17 +899,11 @@ function TicketsConfigCard({
           <Button
             type="button"
             variant="outline"
-            disabled={!isManager || !cfg.panel_channel_id}
-            onClick={async () => {
-              const { error } = await supabase.from("bot_outbound_queue").insert({
-                payload: { action: "refresh_ticket_panel", guild_id: guildId ?? null },
-                source: "ticket_panel_manual",
-              });
-              if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-              else toast({ title: "Odesláno", description: "Bot panel publikuje během chvíle." });
-            }}
+            disabled={!isManager || !cfg.panel_channel_id || panelSending}
+            onClick={sendPanelNow}
           >
-            📤 Odeslat panel nyní
+            {panelSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+            Odeslat panel nyní
           </Button>
         </div>
       </Card>
