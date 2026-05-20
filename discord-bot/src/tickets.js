@@ -16,15 +16,13 @@ export function buildTicketPanelMessage(cfg = {}) {
 
   if (mode === 'markdown') return { content };
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(TICKET_BTN_ID)
-      .setLabel('Otevřít ticket')
-      .setStyle(ButtonStyle.Primary)
-      .setEmoji('🎫'),
-  );
-
-  return { content, components: [row] };
+  return {
+    content,
+    components: [{
+      type: 1,
+      components: [{ type: 2, style: 1, custom_id: TICKET_BTN_ID, label: 'Otevřít ticket', emoji: { name: '🎫' } }],
+    }],
+  };
 }
 
 async function loadCfg(guildId = null) {
@@ -53,7 +51,7 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
       }
     }
 
-    await channel.send(buildTicketPanelMessage(cfg));
+    await channel.send(options.message || buildTicketPanelMessage(cfg));
     return { ok: true, channelId: panelChannelId, mode: cfg.panel_mode || 'button' };
   } catch (e) {
     console.error('setupTicketPanel', e);

@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { setupTicketPanel } from './tickets.js';
+import { buildTicketPanelMessage, setupTicketPanel } from './tickets.js';
 
 export function startOutboundWorker(client) {
   // Poll every 5s for queued jobs (channel sends + special actions)
@@ -24,9 +24,19 @@ export function startOutboundWorker(client) {
 
           // Special action: refresh ticket panel
           if (payload.action === 'refresh_ticket_panel') {
-            const result = await setupTicketPanel(client, payload.guild_id || null, {
-              channelId: payload.panel_channel_id || job.channel_id || null,
-            });
+            const channelId = payload.panel_channel_id || job.channel_id || null;
+            let result;
+            if (payload.content || payload.components) {
+              result = await setupTicketPanel(client, payload.guild_id || null, {
+                channelId,
+                message: buildTicketPanelMessage({
+                  panel_mode: payload.components ? 'button' : 'markdown',
+                  welcome_md: payload.content,
+                }),
+              });
+            } else {
+              result = await setupTicketPanel(client, payload.guild_id || null, { channelId });
+            }
             if (!result?.ok) {
               await supabase
                 .from('bot_outbound_queue')
