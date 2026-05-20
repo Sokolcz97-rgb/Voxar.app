@@ -814,12 +814,36 @@ function TicketsConfigCard({
 
     setPanelSending(true);
     try {
+      const panelContent = cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Vyber typ ticketu níže.");
+      const panelComponents = panelMode === "button"
+        ? [{ type: 1, components: [{ type: 2, style: 1, custom_id: "ticket_open", label: "Otevřít ticket", emoji: { name: "🎫" } }] }]
+        : ticketCategories.filter((category) => category.enabled).length > 0
+          ? [{
+              type: 1,
+              components: [{
+                type: 3,
+                custom_id: "ticket_category_select",
+                placeholder: "Vyber typ ticketu",
+                min_values: 1,
+                max_values: 1,
+                options: ticketCategories.filter((category) => category.enabled).slice(0, 25).map((category) => ({
+                  label: category.label.slice(0, 100),
+                  value: category.id,
+                  description: category.description?.slice(0, 100) || undefined,
+                  emoji: category.emoji ? { name: category.emoji } : undefined,
+                })),
+              }],
+            }]
+          : undefined;
       const { error } = await supabase.from("bot_outbound_queue").insert({
         channel_id: channelId,
         payload: {
           action: "refresh_ticket_panel",
           guild_id: guildId ?? null,
           panel_channel_id: channelId,
+          panel_mode: panelMode,
+          content: panelContent,
+          components: panelComponents,
         },
         source: "ticket_panel_manual",
       });
