@@ -255,6 +255,15 @@ export function startTicketsConfigRealtime(client) {
         console.log(`🔄 bot_tickets_config změna (${payload.eventType}) → refresh panelu`);
       },
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'bot_ticket_categories' },
+      (payload) => {
+        const guilds = new Set([payload.new?.guild_id ?? null, payload.old?.guild_id ?? null]);
+        for (const g of guilds) schedule(g);
+        console.log(`🔄 bot_ticket_categories změna (${payload.eventType}) → refresh panelu`);
+      },
+    )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') console.log('📡 Realtime: bot_tickets_config sleduji');
     });
