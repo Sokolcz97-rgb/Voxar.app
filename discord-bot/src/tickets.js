@@ -98,6 +98,11 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
 }
 
 export async function handleInteraction(interaction) {
+  if (interaction.isStringSelectMenu?.() && interaction.customId === TICKET_CATEGORY_SELECT_ID) {
+    await openTicket(interaction, interaction.values?.[0] || null);
+    return true;
+  }
+
   if (!interaction.isButton()) return false;
 
   if (interaction.customId === TICKET_BTN_ID) {
@@ -111,17 +116,21 @@ export async function handleInteraction(interaction) {
   return false;
 }
 
-async function openTicket(interaction) {
+async function openTicket(interaction, ticketCategoryId = null) {
   const cfg = await loadCfg(interaction.guild?.id);
+  const ticketCategory = ticketCategoryId
+    ? (await loadTicketCategories(interaction.guild?.id)).find((category) => category.id === ticketCategoryId)
+    : null;
 
   const guild = interaction.guild;
   if (!guild) return interaction.reply({ content: 'Nelze otevřít ticket zde.', ephemeral: true });
 
-  const name = `ticket-${interaction.user.username}`.toLowerCase().slice(0, 90);
+  const prefix = ticketCategory?.label ? `${ticketCategory.label}-` : 'ticket-';
+  const name = `${prefix}${interaction.user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 90);
 
   // Determine parent category: explicit cfg.category_id, else fall back to
   // the panel channel's parent (so ticket lands in the same category as the panel).
-  let parentId = cfg?.category_id || undefined;
+  let parentId = ticketCategory?.discord_category_id || cfg?.category_id || undefined;
   if (!parentId && cfg?.panel_channel_id) {
     const panel = await guild.channels.fetch(cfg.panel_channel_id).catch(() => null);
     if (panel?.parentId) parentId = panel.parentId;
@@ -176,7 +185,7 @@ async function openTicket(interaction) {
     );
 
     await channel.send({
-      content: `${cfg?.welcome_md || 'Ahoj! Popiš svůj problém.'}\n\n${interaction.user}, díky.`,
+      content: `${ticketCategory ? `**${ticketCategory.label}**\n${ticketCategory.description || ''}\n\n` : ''}${cfg?.welcome_md || 'Ahoj! Popiš svůj problém.'}\n\n${interaction.user}, díky.`,
       components: [closeRow],
     });
 
