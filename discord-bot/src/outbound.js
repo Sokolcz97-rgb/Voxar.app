@@ -25,7 +25,13 @@ export function startOutboundWorker(client) {
           // Special action: refresh ticket panel
           if (payload.action === 'refresh_ticket_panel') {
             const channelId = payload.panel_channel_id || job.channel_id || null;
-            const result = await setupTicketPanel(client, payload.guild_id || null, { channelId });
+            const result = await setupTicketPanel(client, payload.guild_id || null, {
+              channelId,
+              message: payload.content ? {
+                content: payload.content,
+                components: payload.components,
+              } : undefined,
+            });
             if (!result?.ok) {
               await supabase
                 .from('bot_outbound_queue')
