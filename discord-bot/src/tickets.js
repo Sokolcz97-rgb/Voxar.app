@@ -37,6 +37,10 @@ export function buildTicketPanelMessage(cfg = {}, categories = []) {
     };
   }
 
+  if (mode === 'categories' || mode === 'markdown') {
+    return { content: `${content}\n\nKategorie ticketů zatím nejsou nastavené.` };
+  }
+
   return {
     content,
     components: [{
