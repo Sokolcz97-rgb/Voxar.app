@@ -216,6 +216,32 @@ async function openTicket(interaction, ticketCategoryId = null) {
     });
   }
 
+  // Permission precheck
+  const me = await guild.members.fetchMe().catch(() => null);
+  if (!me) {
+    await interaction.editReply({ content: 'Nepodařilo se načíst bota v této guildě.' });
+    return;
+  }
+  const missing = [];
+  if (!me.permissions.has(PermissionFlagsBits.ManageChannels)) missing.push('Manage Channels');
+  if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) missing.push('Manage Roles (pro permission overwrites)');
+  if (!me.permissions.has(PermissionFlagsBits.ViewChannel)) missing.push('View Channels');
+  if (missing.length) {
+    await interaction.editReply({ content: `Botovi chybí oprávnění: **${missing.join(', ')}**. Přidej je v Server Settings → Roles → role bota.` });
+    return;
+  }
+
+  if (parentId) {
+    const parent = await guild.channels.fetch(parentId).catch(() => null);
+    if (parent) {
+      const perms = parent.permissionsFor(me);
+      if (!perms?.has(PermissionFlagsBits.ManageChannels) || !perms?.has(PermissionFlagsBits.ViewChannel)) {
+        await interaction.editReply({ content: `Bot nemá oprávnění **Manage Channels / View Channel** v kategorii <#${parentId}>. Uprav permissions té kategorie.` });
+        return;
+      }
+    }
+  }
+
   try {
     const channel = await guild.channels.create({
       name,
@@ -242,7 +268,10 @@ async function openTicket(interaction, ticketCategoryId = null) {
     });
   } catch (e) {
     console.error('openTicket', e);
-    await interaction.editReply({ content: 'Nepodařilo se vytvořit ticket. Zkontroluj oprávnění bota pro tvorbu kanálů a nastavenou Discord kategorii.' });
+    const msg = e?.code === 50013
+      ? 'Discord vrátil **Missing Permissions** (50013). Zkontroluj, že role bota je nad ostatními a má Manage Channels + Manage Roles, a že má přístup k cílové kategorii.'
+      : `Nepodařilo se vytvořit ticket: ${e?.message || e}`;
+    await interaction.editReply({ content: msg });
   }
 }
 
