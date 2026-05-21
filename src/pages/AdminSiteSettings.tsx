@@ -166,7 +166,7 @@ const AdminSiteSettings = () => {
           </div>
         </Card>
 
-        <Card className="glass border-border p-6 space-y-5">
+        <Card className="glass border-border p-6 space-y-5 mb-5">
           <h2 className="font-display font-bold text-xl">Zápatí</h2>
           <div>
             <Label>Text v zápatí</Label>
@@ -177,6 +177,22 @@ const AdminSiteSettings = () => {
             />
             <p className="text-xs text-muted-foreground mt-1">
               Název webu se vloží automaticky před tento text.
+            </p>
+          </div>
+        </Card>
+
+        <Card className="glass border-border p-6 space-y-5">
+          <h2 className="font-display font-bold text-xl">Synchronizace ticketů s Discordem</h2>
+          <div>
+            <Label>Discord Guild ID</Label>
+            <Input
+              value={form.web_tickets_guild_id ?? ""}
+              onChange={(e) => update("web_tickets_guild_id", e.target.value)}
+              placeholder="napr. 123456789012345678"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Tickety vytvořené na webu se budou zrcadlit pouze do tohoto Discord serveru.
+              Pokud je prázdné, web tickety se na Discord nebudou posílat.
             </p>
           </div>
         </Card>
