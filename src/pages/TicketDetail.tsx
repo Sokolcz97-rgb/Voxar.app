@@ -153,6 +153,8 @@ const TicketDetail = () => {
 
   const deleteTicket = async () => {
     if (!id) return;
+    // Sync to Discord first so the edge function can read the ticket and enqueue channel deletion
+    await syncTicketToDiscord({ ticket_id: id, event: "deleted" });
     const { error } = await supabase.from("tickets").delete().eq("id", id);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
@@ -161,6 +163,7 @@ const TicketDetail = () => {
     toast({ title: t("tickets.deleted") });
     navigate("/tickets");
   };
+
 
   const canDelete = !!ticket && !!user && (canManage || ticket.user_id === user.id);
 
