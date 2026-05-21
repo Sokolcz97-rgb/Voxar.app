@@ -698,7 +698,14 @@ const DashboardBot = () => {
                 <div className="grid sm:grid-cols-4 gap-3">
                   <Input placeholder="popisek" value={newCheck.label} onChange={(e) => setNewCheck({ ...newCheck, label: e.target.value })} />
                   <Input placeholder="URL k pingu" value={newCheck.target} onChange={(e) => setNewCheck({ ...newCheck, target: e.target.value })} />
-                  <Input placeholder="Discord kanál ID" value={newCheck.channel} onChange={(e) => setNewCheck({ ...newCheck, channel: e.target.value })} />
+                  <GuildResourceSelect
+                    guildId={guildIdOrNull()}
+                    kind="text"
+                    value={newCheck.channel}
+                    onChange={(v) => setNewCheck({ ...newCheck, channel: v ?? "" })}
+                    placeholder="Vyber kanál"
+                  />
+
                   <Button onClick={addCheck}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
