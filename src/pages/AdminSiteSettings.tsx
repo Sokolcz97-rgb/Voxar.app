@@ -37,6 +37,7 @@ const AdminSiteSettings = () => {
       footer_text: form.footer_text,
       logo_url: form.logo_url,
       favicon_url: form.favicon_url,
+      web_tickets_guild_id: form.web_tickets_guild_id,
       updated_by: user?.id ?? null,
     };
     const { error } = await supabase
