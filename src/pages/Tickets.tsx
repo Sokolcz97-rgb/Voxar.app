@@ -104,6 +104,8 @@ const Tickets = () => {
       toast({ title: t("tickets.noResolvedToDelete") });
       return;
     }
+    // Sync each to Discord first so per-ticket channels get cleaned up
+    await Promise.all(ids.map((row) => syncTicketToDiscord({ ticket_id: row.id, event: "deleted" })));
     const { error } = await supabase.from("tickets").delete().in("status", ["resolved", "closed"]);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
@@ -114,6 +116,7 @@ const Tickets = () => {
   };
 
   const deleteOne = async (ticketId: string) => {
+    await syncTicketToDiscord({ ticket_id: ticketId, event: "deleted" });
     const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
@@ -122,6 +125,7 @@ const Tickets = () => {
     toast({ title: t("tickets.deleted") });
     load();
   };
+
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
 
