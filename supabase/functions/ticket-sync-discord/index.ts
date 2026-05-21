@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
         source: 'web_ticket',
         payload: {
           action: 'create_web_ticket_channel',
-          guild_id: cfg.guild_id,
+          guild_id: webGuildId,
           web_ticket_id: ticket.id,
           subject: ticket.subject,
           description_text: trunc(stripHtml(ticket.description || ''), 1800),
