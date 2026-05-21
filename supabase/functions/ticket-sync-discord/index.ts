@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
     // -------- Per-ticket Discord channel flow (web ticket → real channel) --------
     // 1) On 'created' → ask bot to create a channel for this ticket
-    if (body.event === 'created' && cfg?.guild_id && !ticket.discord_channel_id) {
+    if (body.event === 'created' && webGuildId && !ticket.discord_channel_id) {
       await admin.from('bot_outbound_queue').insert({
         source: 'web_ticket',
         payload: {
