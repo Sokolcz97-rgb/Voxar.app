@@ -315,7 +315,11 @@ async function closeTicket(interaction) {
     }
   }
 
-  setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+  const channelId = interaction.channel.id;
+  setTimeout(async () => {
+    await interaction.channel.delete().catch(() => {});
+    try { await supabase.from('bot_open_tickets').delete().eq('channel_id', channelId); } catch {}
+  }, 5000);
 }
 
 /**
