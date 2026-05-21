@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
     const webGuildId = (siteCfg as { web_tickets_guild_id?: string | null } | null)?.web_tickets_guild_id || null;
     const webCategoryId = (siteCfg as { web_tickets_category_id?: string | null } | null)?.web_tickets_category_id || null;
     const webNotifyChannelId = (siteCfg as { web_tickets_notify_channel_id?: string | null } | null)?.web_tickets_notify_channel_id || null;
+    const hasWebTicketRouting = Boolean(webGuildId);
 
     const { data: authorProfile } = await admin
       .from('profiles')
@@ -143,27 +144,45 @@ Deno.serve(async (req) => {
     }
 
     // 2) On 'reply' → forward to per-ticket channel if it exists
-    if (body.event === 'reply' && ticket.discord_channel_id && body.reply_content) {
+    if (body.event === 'reply' && body.reply_content) {
       const text = trunc(stripHtml(body.reply_content), 1900);
-      await admin.from('bot_outbound_queue').insert({
-        source: 'web_ticket',
-        channel_id: ticket.discord_channel_id,
-        payload: { content: `**${actorName}** (web):\n${text}` },
-      });
+      if (ticket.discord_channel_id) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          channel_id: ticket.discord_channel_id,
+          payload: { content: `**${actorName}** (web):\n${text}` },
+        });
+      } else if (hasWebTicketRouting && webNotifyChannelId) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          channel_id: webNotifyChannelId,
+          payload: {
+            content: `💬 **Odpověď k web ticketu** od **${actorName}**\n**${trunc(ticket.subject, 180)}**\n${text}`,
+          },
+        });
+      }
     }
 
     // 3) On 'status' → notice in channel + (close → schedule close action)
-    if (body.event === 'status' && ticket.discord_channel_id) {
+    if (body.event === 'status') {
       const newStatus = body.new_status || ticket.status;
-      await admin.from('bot_outbound_queue').insert({
-        source: 'web_ticket',
-        channel_id: ticket.discord_channel_id,
-        payload: { content: `🔄 **${actorName}** změnil status: \`${ticket.status}\` → \`${newStatus}\`` },
-      });
+      if (ticket.discord_channel_id) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          channel_id: ticket.discord_channel_id,
+          payload: { content: `🔄 **${actorName}** nastavil status: \`${newStatus}\`` },
+        });
+      } else if (hasWebTicketRouting && webNotifyChannelId) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          channel_id: webNotifyChannelId,
+          payload: { content: `🔄 **${actorName}** nastavil status web ticketu **${trunc(ticket.subject, 180)}** na \`${newStatus}\`` },
+        });
+      }
     }
 
     // -------- Legacy: mirror digest to a single shared channel/webhook --------
-    const shouldUseLegacyMirror = cfg?.mirror_enabled && (cfg.sync_channel_id || cfg.sync_webhook_url) && !(body.event === 'created' && webGuildId);
+    const shouldUseLegacyMirror = cfg?.mirror_enabled && (cfg.sync_channel_id || cfg.sync_webhook_url) && !hasWebTicketRouting;
     if (shouldUseLegacyMirror) {
       let embed: Record<string, unknown> = {};
       if (body.event === 'created') {
