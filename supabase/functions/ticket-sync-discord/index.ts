@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
           author_user_id: ticket.user_id,
           category: ticket.category,
           priority: ticket.priority,
-          welcome_md: cfg.welcome_md,
+          welcome_md: cfg?.welcome_md,
         },
       });
     }
