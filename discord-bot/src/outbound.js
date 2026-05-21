@@ -1,3 +1,10 @@
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  PermissionFlagsBits,
+} from 'discord.js';
 import { supabase } from './supabase.js';
 import { setupTicketPanel } from './tickets.js';
 
