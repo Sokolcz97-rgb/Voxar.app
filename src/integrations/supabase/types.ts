@@ -244,6 +244,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_open_tickets: {
+        Row: {
+          category_id: string | null
+          category_label: string | null
+          channel_id: string
+          created_at: string
+          guild_id: string
+          id: string
+          user_id: string
+          user_tag: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          category_label?: string | null
+          channel_id: string
+          created_at?: string
+          guild_id: string
+          id?: string
+          user_id: string
+          user_tag?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          category_label?: string | null
+          channel_id?: string
+          created_at?: string
+          guild_id?: string
+          id?: string
+          user_id?: string
+          user_tag?: string | null
+        }
+        Relationships: []
+      }
       bot_outbound_queue: {
         Row: {
           channel_id: string | null
