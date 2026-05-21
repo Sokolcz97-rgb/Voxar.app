@@ -77,6 +77,40 @@ export function startOutboundWorker(client) {
             continue;
           }
 
+          // Special action: close/delete a ticket channel from dashboard
+          if (payload.action === 'close_ticket' || payload.action === 'delete_ticket') {
+            const channelId = payload.channel_id || job.channel_id;
+            if (!channelId) {
+              await supabase.from('bot_outbound_queue')
+                .update({ error: 'no channel_id', sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+              continue;
+            }
+            const channel = await client.channels.fetch(channelId).catch(() => null);
+            if (channel) {
+              if (payload.action === 'close_ticket' && payload.transcripts_enabled) {
+                try {
+                  const msgs = await channel.messages.fetch({ limit: 100 });
+                  const lines = [...msgs.values()].reverse()
+                    .map((m) => `[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`)
+                    .join('\n');
+                  await channel.send({
+                    files: [{ attachment: Buffer.from(lines, 'utf8'), name: 'transcript.txt' }],
+                  });
+                } catch (e) { console.error('transcript (queue)', e); }
+              }
+              if (payload.notice) {
+                try { await channel.send({ content: payload.notice }); } catch {}
+              }
+              await channel.delete().catch((e) => console.error('delete ticket channel', e));
+            }
+            try { await supabase.from('bot_open_tickets').delete().eq('channel_id', channelId); } catch {}
+            await supabase.from('bot_outbound_queue')
+              .update({ sent_at: new Date().toISOString(), error: channel ? null : 'channel not found' })
+              .eq('id', job.id);
+            continue;
+          }
+
           if (!job.channel_id) {
             await supabase
               .from('bot_outbound_queue')

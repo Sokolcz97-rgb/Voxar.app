@@ -270,6 +270,19 @@ async function openTicket(interaction, ticketCategoryId = null) {
       components: [closeRow],
     });
 
+    try {
+      await supabase.from('bot_open_tickets').insert({
+        guild_id: guild.id,
+        channel_id: channel.id,
+        user_id: interaction.user.id,
+        user_tag: interaction.user.tag,
+        category_id: ticketCategory?.id || null,
+        category_label: ticketCategory?.label || null,
+      });
+    } catch (e) {
+      console.error('track open ticket', e);
+    }
+
     await interaction.editReply({
       content: `🎫 Ticket vytvořen: <#${channel.id}>`,
     });
@@ -302,7 +315,11 @@ async function closeTicket(interaction) {
     }
   }
 
-  setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+  const channelId = interaction.channel.id;
+  setTimeout(async () => {
+    await interaction.channel.delete().catch(() => {});
+    try { await supabase.from('bot_open_tickets').delete().eq('channel_id', channelId); } catch {}
+  }, 5000);
 }
 
 /**

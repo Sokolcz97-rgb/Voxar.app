@@ -51,6 +51,13 @@ client.on('guildCreate', async (guild) => {
   await registerGuildSlashCommands(client, guild.id).catch(() => {});
 });
 
+client.on('channelDelete', async (channel) => {
+  try {
+    const { supabase } = await import('./supabase.js');
+    await supabase.from('bot_open_tickets').delete().eq('channel_id', channel.id);
+  } catch {}
+});
+
 client.on('guildDelete', async (guild) => {
   console.log(`➖ Left guild ${guild.name} (${guild.id})`);
   invalidateGuildCache(guild.id);
