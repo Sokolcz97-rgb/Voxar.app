@@ -722,7 +722,7 @@ const DashboardBot = () => {
                         <div className={`h-2.5 w-2.5 rounded-full ${c.last_status === "up" ? "bg-green-500" : c.last_status === "down" ? "bg-red-500" : "bg-muted-foreground"}`} />
                         <div>
                           <div className="font-medium">{c.label}</div>
-                          <code className="text-xs text-muted-foreground">{c.target} → #{c.discord_channel_id}</code>
+                          <code className="text-xs text-muted-foreground">{c.target} → <GuildResourceLabel guildId={c.guild_id} id={c.discord_channel_id} kind="channel" /></code>
                         </div>
                       </div>
                       {isManager && <Button size="icon" variant="ghost" onClick={() => deleteRow("bot_status_checks", c.id)}><Trash2 className="h-4 w-4" /></Button>}
