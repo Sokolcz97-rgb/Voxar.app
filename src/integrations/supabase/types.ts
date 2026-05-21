@@ -1281,7 +1281,9 @@ export type Database = {
           site_tagline: string | null
           updated_at: string
           updated_by: string | null
+          web_tickets_category_id: string | null
           web_tickets_guild_id: string | null
+          web_tickets_notify_channel_id: string | null
         }
         Insert: {
           favicon_url?: string | null
@@ -1298,7 +1300,9 @@ export type Database = {
           site_tagline?: string | null
           updated_at?: string
           updated_by?: string | null
+          web_tickets_category_id?: string | null
           web_tickets_guild_id?: string | null
+          web_tickets_notify_channel_id?: string | null
         }
         Update: {
           favicon_url?: string | null
@@ -1315,7 +1319,9 @@ export type Database = {
           site_tagline?: string | null
           updated_at?: string
           updated_by?: string | null
+          web_tickets_category_id?: string | null
           web_tickets_guild_id?: string | null
+          web_tickets_notify_channel_id?: string | null
         }
         Relationships: []
       }
