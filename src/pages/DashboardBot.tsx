@@ -642,7 +642,17 @@ const DashboardBot = () => {
                   </div>
                   <Button onClick={addStream}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
-                <Input placeholder="Discord kanál ID" value={newStream.channel} onChange={(e) => setNewStream({ ...newStream, channel: e.target.value })} />
+                <div>
+                  <Label className="text-xs">Discord kanál</Label>
+                  <GuildResourceSelect
+                    guildId={guildIdOrNull()}
+                    kind="text"
+                    value={newStream.channel}
+                    onChange={(v) => setNewStream({ ...newStream, channel: v ?? "" })}
+                    placeholder="Vyber kanál pro notifikace"
+                  />
+                </div>
+
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>.</p>
