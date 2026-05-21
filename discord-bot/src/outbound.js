@@ -169,6 +169,22 @@ export function startOutboundWorker(client) {
                 web_ticket_id: payload.web_ticket_id,
               });
 
+              // Volitelné oznámení do zvoleného kanálu
+              if (payload.notify_channel_id) {
+                try {
+                  const notify = await guild.channels.fetch(payload.notify_channel_id).catch(() => null);
+                  if (notify?.isTextBased?.()) {
+                    await notify.send({
+                      content: `🌐 **Nový web ticket** od **${payload.author_name || 'uživatele'}**\n**${payload.subject || ''}** → <#${channel.id}>` +
+                        (payload.priority ? `\nPriorita: \`${payload.priority}\`` : '') +
+                        (payload.category ? ` · Kategorie: \`${payload.category}\`` : ''),
+                    });
+                  }
+                } catch (e) {
+                  console.error('notify channel send', e);
+                }
+              }
+
               await supabase.from('bot_outbound_queue')
                 .update({ sent_at: new Date().toISOString(), error: null })
                 .eq('id', job.id);
