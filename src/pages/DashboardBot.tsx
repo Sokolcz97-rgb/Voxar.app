@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { SocialHandleField } from "@/components/SocialHandleField";
@@ -1051,13 +1051,13 @@ function TicketsConfigCard({
 }
 
 function OpenTicketsList({ guildId, isManager, transcriptsEnabled }: { guildId: string; isManager: boolean; transcriptsEnabled: boolean }) {
-  const [rows, setRows] = useState<Array<{ id: string; channel_id: string; user_tag: string | null; user_id: string; category_label: string | null; created_at: string }>>([]);
+  const [rows, setRows] = useState<Array<{ id: string; channel_id: string; user_tag: string | null; user_id: string; category_label: string | null; created_at: string; source?: string | null; web_ticket_id?: string | null }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = async () => {
     const { data, error } = await supabase
       .from("bot_open_tickets" as any)
-      .select("id, channel_id, user_tag, user_id, category_label, created_at")
+      .select("id, channel_id, user_tag, user_id, category_label, created_at, source, web_ticket_id")
       .eq("guild_id", guildId)
       .order("created_at", { ascending: false });
     if (!error) setRows((data as any) || []);
@@ -1089,7 +1089,6 @@ function OpenTicketsList({ guildId, isManager, transcriptsEnabled }: { guildId: 
       });
       if (error) throw error;
       toast({ title: action === "close_ticket" ? "Zavírám ticket" : "Mažu ticket", description: "Bot ho během chvilky zpracuje." });
-      // optimistic remove
       setRows((r) => r.filter((x) => x.id !== row.id));
     } catch (e: any) {
       toast({ title: "Chyba", description: e?.message || String(e), variant: "destructive" });
@@ -1111,26 +1110,35 @@ function OpenTicketsList({ guildId, isManager, transcriptsEnabled }: { guildId: 
         <p className="text-sm text-muted-foreground">Žádné otevřené tickety.</p>
       ) : (
         <ul className="divide-y divide-border">
-          {rows.map((r) => (
-            <li key={r.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-medium truncate">
-                  {r.user_tag || r.user_id}{r.category_label ? ` · ${r.category_label}` : ""}
+          {rows.map((r) => {
+            const isWeb = r.source === "web";
+            return (
+              <li key={r.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-medium truncate flex items-center gap-2 flex-wrap">
+                    <span className={`text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded border ${isWeb ? "border-primary/50 text-primary" : "border-accent/50 text-accent"}`}>
+                      {isWeb ? "Web" : "Discord"}
+                    </span>
+                    <span className="truncate">{r.user_tag || r.user_id}{r.category_label ? ` · ${r.category_label}` : ""}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <code>#{r.channel_id}</code> · {new Date(r.created_at).toLocaleString()}
+                    {isWeb && r.web_ticket_id && (
+                      <> · <Link to={`/tickets/${r.web_ticket_id}`} className="text-primary hover:underline">otevřít na webu</Link></>
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  <code>#{r.channel_id}</code> · {new Date(r.created_at).toLocaleString()}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled={!isManager || busy === r.id} onClick={() => act(r, "close_ticket")}>
+                    🔒 Uzavřít
+                  </Button>
+                  <Button size="sm" variant="destructive" disabled={!isManager || busy === r.id} onClick={() => act(r, "delete_ticket")}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Smazat
+                  </Button>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={!isManager || busy === r.id} onClick={() => act(r, "close_ticket")}>
-                  🔒 Uzavřít
-                </Button>
-                <Button size="sm" variant="destructive" disabled={!isManager || busy === r.id} onClick={() => act(r, "delete_ticket")}>
-                  <Trash2 className="h-4 w-4 mr-1" /> Smazat
-                </Button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </Card>

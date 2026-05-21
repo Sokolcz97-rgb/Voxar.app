@@ -69,6 +69,32 @@ client.on('messageCreate', async (message) => {
     if (!(await isGuildApproved(message.guild.id))) return;
     const moderated = await runAutomod(message);
     if (moderated) return;
+
+    // Sync messages from a web-ticket channel back to the web ticket replies
+    if (!message.author.bot && message.content) {
+      try {
+        const { supabase } = await import('./supabase.js');
+        const { data: openRow } = await supabase
+          .from('bot_open_tickets')
+          .select('web_ticket_id')
+          .eq('channel_id', message.channel.id)
+          .maybeSingle();
+        if (openRow?.web_ticket_id) {
+          const { data: tk } = await supabase
+            .from('tickets').select('user_id').eq('id', openRow.web_ticket_id).maybeSingle();
+          if (tk?.user_id) {
+            const tagged = `**[Discord @${message.author.tag}]**\n${message.content}`;
+            await supabase.from('ticket_replies').insert({
+              ticket_id: openRow.web_ticket_id,
+              user_id: tk.user_id,
+              content: tagged,
+              is_internal: false,
+            });
+          }
+        }
+      } catch (e) { console.error('sync discord→web reply', e); }
+    }
+
     await handleCommand(message);
   } catch (e) {
     console.error('messageCreate', e);

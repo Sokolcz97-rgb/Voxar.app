@@ -316,9 +316,14 @@ async function closeTicket(interaction) {
   }
 
   const channelId = interaction.channel.id;
+  const { data: openRow } = await supabase
+    .from('bot_open_tickets').select('web_ticket_id').eq('channel_id', channelId).maybeSingle();
   setTimeout(async () => {
     await interaction.channel.delete().catch(() => {});
     try { await supabase.from('bot_open_tickets').delete().eq('channel_id', channelId); } catch {}
+    if (openRow?.web_ticket_id) {
+      try { await supabase.from('tickets').update({ status: 'closed' }).eq('id', openRow.web_ticket_id); } catch {}
+    }
   }, 5000);
 }
 
