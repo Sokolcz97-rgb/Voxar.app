@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
+import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
