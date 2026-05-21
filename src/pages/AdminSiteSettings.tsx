@@ -203,16 +203,64 @@ const AdminSiteSettings = () => {
 
         <Card className="glass border-border p-6 space-y-5">
           <h2 className="font-display font-bold text-xl">Synchronizace ticketů s Discordem</h2>
+
           <div>
-            <Label>Discord Guild ID</Label>
-            <Input
-              value={form.web_tickets_guild_id ?? ""}
-              onChange={(e) => update("web_tickets_guild_id", e.target.value)}
-              placeholder="napr. 123456789012345678"
-            />
+            <Label>Discord server</Label>
+            <Select
+              value={form.web_tickets_guild_id || "__none__"}
+              onValueChange={(v) => {
+                const next = v === "__none__" ? null : v;
+                setForm((f) => ({
+                  ...f,
+                  web_tickets_guild_id: next,
+                  // reset závislé volby při změně serveru
+                  web_tickets_category_id: next === f.web_tickets_guild_id ? f.web_tickets_category_id : null,
+                  web_tickets_notify_channel_id: next === f.web_tickets_guild_id ? f.web_tickets_notify_channel_id : null,
+                }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Vyber server" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— žádný (vypnuto) —</SelectItem>
+                {guilds.map((g) => (
+                  <SelectItem key={g.guild_id} value={g.guild_id}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground mt-1">
               Tickety vytvořené na webu se budou zrcadlit pouze do tohoto Discord serveru.
               Pokud je prázdné, web tickety se na Discord nebudou posílat.
+            </p>
+          </div>
+
+          <div>
+            <Label>Kategorie pro nové ticket kanály</Label>
+            <GuildResourceSelect
+              guildId={form.web_tickets_guild_id}
+              kind="category"
+              value={form.web_tickets_category_id}
+              onChange={(v) => update("web_tickets_category_id", v)}
+              placeholder="Vyber kategorii (volitelné)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Každý web ticket dostane vlastní kanál v této kategorii.
+            </p>
+          </div>
+
+          <div>
+            <Label>Kanál pro oznámení o nových web ticketech</Label>
+            <GuildResourceSelect
+              guildId={form.web_tickets_guild_id}
+              kind="text"
+              value={form.web_tickets_notify_channel_id}
+              onChange={(v) => update("web_tickets_notify_channel_id", v)}
+              placeholder="Vyber kanál (volitelné)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Sem se pošle zpráva „nový web ticket" s odkazem na vytvořený kanál.
+              Pokud je prázdné, žádné oznámení se nepošle.
             </p>
           </div>
         </Card>
