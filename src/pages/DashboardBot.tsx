@@ -818,6 +818,7 @@ function TicketsConfigCard({
     const { error } = await supabase.from("bot_tickets_config").update({
       category_id: cfg.category_id,
       support_role_id: cfg.support_role_id,
+      notify_channel_id: cfg.notify_channel_id,
       welcome_md: cfg.welcome_md,
       transcripts_enabled: cfg.transcripts_enabled,
       panel_channel_id: cfg.panel_channel_id,
@@ -930,7 +931,12 @@ function TicketsConfigCard({
           <div className="sm:col-span-2">
             <Label>Kanál pro ticket panel</Label>
             <GuildResourceSelect guildId={guildId} kind="text" value={cfg.panel_channel_id} onChange={(v) => setCfg({ ...cfg, panel_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
-            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie výše.</p>
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle jen úvodní ticket panel.</p>
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Kanál pro oznámení o nových ticketech</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.notify_channel_id} onChange={(v) => setCfg({ ...cfg, notify_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle zprávu po vytvoření ticketu přes panel. Pokud je prázdné, oznámení se neposílá.</p>
           </div>
         </div>
 
