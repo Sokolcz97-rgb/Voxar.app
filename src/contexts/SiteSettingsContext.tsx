@@ -13,6 +13,7 @@ export type SiteSettings = {
   footer_text: string | null;
   logo_url: string | null;
   favicon_url: string | null;
+  web_tickets_guild_id: string | null;
 };
 
 const DEFAULTS: SiteSettings = {
