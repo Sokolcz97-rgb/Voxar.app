@@ -173,7 +173,7 @@ export function startOutboundWorker(client) {
               if (payload.notify_channel_id) {
                 try {
                   const notify = await guild.channels.fetch(payload.notify_channel_id).catch(() => null);
-                  if (notify?.isTextBased?.()) {
+                  if (notify?.isTextBased?.() && [ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(notify.type)) {
                     await notify.send({
                       content: `🌐 **Nový web ticket** od **${payload.author_name || 'uživatele'}**\n**${payload.subject || ''}** → <#${channel.id}>` +
                         (payload.priority ? `\nPriorita: \`${payload.priority}\`` : '') +

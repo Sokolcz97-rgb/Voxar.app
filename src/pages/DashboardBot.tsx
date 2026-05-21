@@ -815,9 +815,10 @@ function TicketsConfigCard({
   if (!cfg) return <p className="text-sm text-muted-foreground">Načítání…</p>;
 
   const save = async () => {
-    const { error } = await supabase.from("bot_tickets_config").update({
+    const ticketConfigPayload = {
       category_id: cfg.category_id,
       support_role_id: cfg.support_role_id,
+      notify_channel_id: cfg.notify_channel_id,
       welcome_md: cfg.welcome_md,
       transcripts_enabled: cfg.transcripts_enabled,
       panel_channel_id: cfg.panel_channel_id,
@@ -825,7 +826,8 @@ function TicketsConfigCard({
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
-    }).eq("id", cfg.id);
+    };
+    const { error } = await supabase.from("bot_tickets_config").update(ticketConfigPayload as any).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { toast({ title: "Uloženo", description: "Panel se obnoví v Discordu během chvíle." }); onChanged(); }
   };
@@ -930,7 +932,12 @@ function TicketsConfigCard({
           <div className="sm:col-span-2">
             <Label>Kanál pro ticket panel</Label>
             <GuildResourceSelect guildId={guildId} kind="text" value={cfg.panel_channel_id} onChange={(v) => setCfg({ ...cfg, panel_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
-            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie výše.</p>
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle jen úvodní ticket panel.</p>
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Kanál pro oznámení o nových ticketech</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.notify_channel_id} onChange={(v) => setCfg({ ...cfg, notify_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle zprávu po vytvoření ticketu přes panel. Pokud je prázdné, oznámení se neposílá.</p>
           </div>
         </div>
 

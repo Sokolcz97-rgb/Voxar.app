@@ -163,7 +163,8 @@ Deno.serve(async (req) => {
     }
 
     // -------- Legacy: mirror digest to a single shared channel/webhook --------
-    if (cfg?.mirror_enabled && (cfg.sync_channel_id || cfg.sync_webhook_url)) {
+    const shouldUseLegacyMirror = cfg?.mirror_enabled && (cfg.sync_channel_id || cfg.sync_webhook_url) && !(body.event === 'created' && webGuildId);
+    if (shouldUseLegacyMirror) {
       let embed: Record<string, unknown> = {};
       if (body.event === 'created') {
         embed = {

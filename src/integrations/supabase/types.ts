@@ -472,6 +472,7 @@ export type Database = {
           guild_id: string | null
           id: string
           mirror_enabled: boolean
+          notify_channel_id: string | null
           panel_channel_id: string | null
           panel_mode: string
           support_role_id: string | null
@@ -486,6 +487,7 @@ export type Database = {
           guild_id?: string | null
           id?: string
           mirror_enabled?: boolean
+          notify_channel_id?: string | null
           panel_channel_id?: string | null
           panel_mode?: string
           support_role_id?: string | null
@@ -500,6 +502,7 @@ export type Database = {
           guild_id?: string | null
           id?: string
           mirror_enabled?: boolean
+          notify_channel_id?: string | null
           panel_channel_id?: string | null
           panel_mode?: string
           support_role_id?: string | null

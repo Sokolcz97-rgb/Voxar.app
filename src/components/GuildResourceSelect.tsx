@@ -81,7 +81,7 @@ const TYPE_LABEL: Record<number, string> = {
 };
 
 function filterChannels(channels: GuildChannel[], kind: Kind): GuildChannel[] {
-  if (kind === "text") return channels.filter((c) => c.type === 0 || c.type === 5 || c.type === 15);
+  if (kind === "text") return channels.filter((c) => c.type === 0 || c.type === 5);
   if (kind === "voice") return channels.filter((c) => c.type === 2 || c.type === 13);
   if (kind === "category") return channels.filter((c) => c.type === 4);
   return channels.filter((c) => c.type !== 4);
