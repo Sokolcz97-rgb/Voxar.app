@@ -29,6 +29,7 @@ const DEFAULTS: SiteSettings = {
   footer_text: "© 2026 — Herní komunita",
   logo_url: null,
   favicon_url: null,
+  web_tickets_guild_id: null,
 };
 
 type Ctx = {
