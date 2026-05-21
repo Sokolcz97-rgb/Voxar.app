@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
+import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
@@ -549,7 +550,14 @@ const DashboardBot = () => {
             {isManager && (
               <Card className="glass border-border p-6 space-y-3">
                 <h3 className="font-display text-lg font-bold">Nová uvítací zpráva</h3>
-                <Input placeholder="ID Discord kanálu" value={newWelcome.channel_id} onChange={(e) => setNewWelcome({ ...newWelcome, channel_id: e.target.value })} />
+                <GuildResourceSelect
+                  guildId={guildIdOrNull()}
+                  kind="text"
+                  value={newWelcome.channel_id}
+                  onChange={(v) => setNewWelcome({ ...newWelcome, channel_id: v ?? "" })}
+                  placeholder="Vyber kanál"
+                />
+
                 <Textarea placeholder="Vítej {user} na {server}! 🎉" rows={3} value={newWelcome.content} onChange={(e) => setNewWelcome({ ...newWelcome, content: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{user}`}</code>, <code>{`{server}`}</code>, <code>{`{memberCount}`}</code></p>
                 <Button onClick={addWelcome}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
@@ -563,7 +571,7 @@ const DashboardBot = () => {
                   {welcomes.map((w) => (
                     <li key={w.id} className="py-3 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <code className="text-xs text-muted-foreground">#{w.channel_id}</code>
+                        <code className="text-xs text-muted-foreground"><GuildResourceLabel guildId={w.guild_id} id={w.channel_id} kind="channel" /></code>
                         <div className="text-sm mt-1 whitespace-pre-wrap">{(w.content as any)?.text}</div>
                       </div>
                       {isManager && (
@@ -634,7 +642,17 @@ const DashboardBot = () => {
                   </div>
                   <Button onClick={addStream}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
-                <Input placeholder="Discord kanál ID" value={newStream.channel} onChange={(e) => setNewStream({ ...newStream, channel: e.target.value })} />
+                <div>
+                  <Label className="text-xs">Discord kanál</Label>
+                  <GuildResourceSelect
+                    guildId={guildIdOrNull()}
+                    kind="text"
+                    value={newStream.channel}
+                    onChange={(v) => setNewStream({ ...newStream, channel: v ?? "" })}
+                    placeholder="Vyber kanál pro notifikace"
+                  />
+                </div>
+
                 <Input placeholder="šablona zprávy" value={newStream.template} onChange={(e) => setNewStream({ ...newStream, template: e.target.value })} />
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newStream.webhook} onChange={(e) => setNewStream({ ...newStream, webhook: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>.</p>
@@ -651,7 +669,7 @@ const DashboardBot = () => {
                         <Radio className="h-4 w-4 text-primary" />
                         <div>
                           <div className="font-medium">{s.platform}: {s.handle}</div>
-                          <code className="text-xs text-muted-foreground">→ #{s.discord_channel_id}</code>
+                          <code className="text-xs text-muted-foreground">→ <GuildResourceLabel guildId={s.guild_id} id={s.discord_channel_id} kind="channel" /></code>
                         </div>
                       </div>
                       {isManager && <Button size="icon" variant="ghost" onClick={() => deleteRow("bot_stream_notifications", s.id)}><Trash2 className="h-4 w-4" /></Button>}
@@ -680,7 +698,14 @@ const DashboardBot = () => {
                 <div className="grid sm:grid-cols-4 gap-3">
                   <Input placeholder="popisek" value={newCheck.label} onChange={(e) => setNewCheck({ ...newCheck, label: e.target.value })} />
                   <Input placeholder="URL k pingu" value={newCheck.target} onChange={(e) => setNewCheck({ ...newCheck, target: e.target.value })} />
-                  <Input placeholder="Discord kanál ID" value={newCheck.channel} onChange={(e) => setNewCheck({ ...newCheck, channel: e.target.value })} />
+                  <GuildResourceSelect
+                    guildId={guildIdOrNull()}
+                    kind="text"
+                    value={newCheck.channel}
+                    onChange={(v) => setNewCheck({ ...newCheck, channel: v ?? "" })}
+                    placeholder="Vyber kanál"
+                  />
+
                   <Button onClick={addCheck}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
                 </div>
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
@@ -697,7 +722,7 @@ const DashboardBot = () => {
                         <div className={`h-2.5 w-2.5 rounded-full ${c.last_status === "up" ? "bg-green-500" : c.last_status === "down" ? "bg-red-500" : "bg-muted-foreground"}`} />
                         <div>
                           <div className="font-medium">{c.label}</div>
-                          <code className="text-xs text-muted-foreground">{c.target} → #{c.discord_channel_id}</code>
+                          <code className="text-xs text-muted-foreground">{c.target} → <GuildResourceLabel guildId={c.guild_id} id={c.discord_channel_id} kind="channel" /></code>
                         </div>
                       </div>
                       {isManager && <Button size="icon" variant="ghost" onClick={() => deleteRow("bot_status_checks", c.id)}><Trash2 className="h-4 w-4" /></Button>}
@@ -895,19 +920,20 @@ function TicketsConfigCard({
       <Card className="glass border-border p-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <Label>Kategorie (ID)</Label>
-            <Input value={cfg.category_id ?? ""} onChange={(e) => setCfg({ ...cfg, category_id: e.target.value })} disabled={!isManager} />
+            <Label>Discord kategorie (kam vytvářet tickety)</Label>
+            <GuildResourceSelect guildId={guildId} kind="category" value={cfg.category_id} onChange={(v) => setCfg({ ...cfg, category_id: v })} disabled={!isManager} placeholder="Vyber kategorii" />
           </div>
           <div>
-            <Label>Support role (ID)</Label>
-            <Input value={cfg.support_role_id ?? ""} onChange={(e) => setCfg({ ...cfg, support_role_id: e.target.value })} disabled={!isManager} />
+            <Label>Support role</Label>
+            <GuildResourceSelect guildId={guildId} kind="role" value={cfg.support_role_id} onChange={(v) => setCfg({ ...cfg, support_role_id: v })} disabled={!isManager} placeholder="Vyber roli" />
           </div>
           <div className="sm:col-span-2">
-            <Label>ID kanálu pro ticket panel</Label>
-            <Input placeholder="Např. 1506373996277665862" value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value.trim() })} disabled={!isManager} />
-            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie níže.</p>
+            <Label>Kanál pro ticket panel</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.panel_channel_id} onChange={(v) => setCfg({ ...cfg, panel_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie výše.</p>
           </div>
         </div>
+
         <div>
           <Label>Režim panelu</Label>
           <div className="flex gap-2 mt-1">
@@ -948,7 +974,7 @@ function TicketsConfigCard({
               <Input placeholder="Název (BUG)" value={newTicketCategory.label} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, label: e.target.value })} disabled={!isManager} />
               <Input placeholder="Popis" value={newTicketCategory.description} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, description: e.target.value })} disabled={!isManager} />
               <Input placeholder="Emoji" value={newTicketCategory.emoji} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, emoji: e.target.value })} disabled={!isManager} />
-              <Input placeholder="ID Discord kategorie" value={newTicketCategory.discord_category_id} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: e.target.value.trim() })} disabled={!isManager} />
+              <GuildResourceSelect guildId={guildId} kind="category" value={newTicketCategory.discord_category_id || null} onChange={(v) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: v ?? "" })} disabled={!isManager} placeholder="Discord kategorie" />
               <Button type="button" onClick={addTicketCategory} disabled={!isManager || !newTicketCategory.label.trim()}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
             </div>
             <div className="space-y-2">
@@ -957,7 +983,7 @@ function TicketsConfigCard({
                   <Input value={category.emoji ?? ""} onChange={(e) => updateTicketCategory(category.id, { emoji: e.target.value || null })} disabled={!isManager} />
                   <Input value={category.label} onChange={(e) => updateTicketCategory(category.id, { label: e.target.value })} disabled={!isManager} />
                   <Input value={category.description ?? ""} onChange={(e) => updateTicketCategory(category.id, { description: e.target.value || null })} disabled={!isManager} />
-                  <Input value={category.discord_category_id ?? ""} onChange={(e) => updateTicketCategory(category.id, { discord_category_id: e.target.value.trim() || null })} disabled={!isManager} />
+                  <GuildResourceSelect guildId={guildId} kind="category" value={category.discord_category_id} onChange={(v) => updateTicketCategory(category.id, { discord_category_id: v })} disabled={!isManager} placeholder="Discord kategorie" />
                   <Switch checked={category.enabled} onCheckedChange={(enabled) => updateTicketCategory(category.id, { enabled })} disabled={!isManager} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => deleteTicketCategory(category.id)} disabled={!isManager}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -989,14 +1015,10 @@ function TicketsConfigCard({
             />
           </div>
           <div>
-            <Label>Sync kanál (ID) — pro externího bota</Label>
-            <Input
-              placeholder="ID Discord kanálu"
-              value={cfg.sync_channel_id ?? ""}
-              onChange={(e) => setCfg({ ...cfg, sync_channel_id: e.target.value })}
-              disabled={!isManager}
-            />
+            <Label>Sync kanál — pro externího bota</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.sync_channel_id} onChange={(v) => setCfg({ ...cfg, sync_channel_id: v })} disabled={!isManager} placeholder="Vyber kanál" />
           </div>
+
           <div>
             <Label>Nebo Discord webhook URL — bez bota (okamžité)</Label>
             <Input
