@@ -176,8 +176,8 @@ async function openTicket(interaction, ticketCategoryId = null) {
   const prefix = ticketCategory?.label ? `${ticketCategory.label}-` : 'ticket-';
   const name = `${prefix}${interaction.user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 90);
 
-  // Determine parent category: explicit cfg.category_id, else fall back to
-  // the panel channel's parent (so ticket lands in the same category as the panel).
+  // Determine parent category: only explicit config/category selection.
+  // Do not fall back to panel channel, otherwise tickets can leak into the panel area.
   let parentId = ticketCategory?.discord_category_id || cfg?.category_id || undefined;
   if (parentId) {
     const candidate = await guild.channels.fetch(parentId).catch(() => null);
@@ -186,11 +186,6 @@ async function openTicket(interaction, ticketCategoryId = null) {
       parentId = undefined;
     }
   }
-  if (!parentId && cfg?.panel_channel_id) {
-    const panel = await guild.channels.fetch(cfg.panel_channel_id).catch(() => null);
-    if (panel?.parentId) parentId = panel.parentId;
-  }
-
   const overwrites = [
     { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
     {
@@ -286,6 +281,20 @@ async function openTicket(interaction, ticketCategoryId = null) {
     await interaction.editReply({
       content: `🎫 Ticket vytvořen: <#${channel.id}>`,
     });
+
+    if (cfg?.notify_channel_id) {
+      try {
+        const notify = await guild.channels.fetch(cfg.notify_channel_id).catch(() => null);
+        if (notify?.isTextBased?.() && [ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(notify.type)) {
+          await notify.send({
+            content: `🎫 **Nový ticket** od **${interaction.user.tag}** → <#${channel.id}>` +
+              (ticketCategory?.label ? `\nKategorie: \`${ticketCategory.label}\`` : ''),
+          });
+        }
+      } catch (e) {
+        console.error('ticket notify channel send', e);
+      }
+    }
   } catch (e) {
     console.error('openTicket', e);
     const msg = e?.code === 50013
