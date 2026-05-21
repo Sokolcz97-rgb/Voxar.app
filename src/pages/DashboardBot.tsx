@@ -920,19 +920,20 @@ function TicketsConfigCard({
       <Card className="glass border-border p-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <Label>Kategorie (ID)</Label>
-            <Input value={cfg.category_id ?? ""} onChange={(e) => setCfg({ ...cfg, category_id: e.target.value })} disabled={!isManager} />
+            <Label>Discord kategorie (kam vytvářet tickety)</Label>
+            <GuildResourceSelect guildId={guildId} kind="category" value={cfg.category_id} onChange={(v) => setCfg({ ...cfg, category_id: v })} disabled={!isManager} placeholder="Vyber kategorii" />
           </div>
           <div>
-            <Label>Support role (ID)</Label>
-            <Input value={cfg.support_role_id ?? ""} onChange={(e) => setCfg({ ...cfg, support_role_id: e.target.value })} disabled={!isManager} />
+            <Label>Support role</Label>
+            <GuildResourceSelect guildId={guildId} kind="role" value={cfg.support_role_id} onChange={(v) => setCfg({ ...cfg, support_role_id: v })} disabled={!isManager} placeholder="Vyber roli" />
           </div>
           <div className="sm:col-span-2">
-            <Label>ID kanálu pro ticket panel</Label>
-            <Input placeholder="Např. 1506373996277665862" value={cfg.panel_channel_id ?? ""} onChange={(e) => setCfg({ ...cfg, panel_channel_id: e.target.value.trim() })} disabled={!isManager} />
-            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie níže.</p>
+            <Label>Kanál pro ticket panel</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.panel_channel_id} onChange={(v) => setCfg({ ...cfg, panel_channel_id: v })} disabled={!isManager} placeholder="Vyber textový kanál" />
+            <p className="text-xs text-muted-foreground mt-1">Sem bot pošle úvodní ticket panel. Ticket kanály se vytvoří ve stejné kategorii, pokud není vyplněná kategorie výše.</p>
           </div>
         </div>
+
         <div>
           <Label>Režim panelu</Label>
           <div className="flex gap-2 mt-1">
