@@ -98,10 +98,12 @@ Deno.serve(async (req) => {
     // Site-level guild for web ticket sync (only this Discord server receives web tickets)
     const { data: siteCfg } = await admin
       .from('site_settings')
-      .select('web_tickets_guild_id')
+      .select('web_tickets_guild_id, web_tickets_category_id, web_tickets_notify_channel_id')
       .limit(1)
       .maybeSingle();
     const webGuildId = (siteCfg as { web_tickets_guild_id?: string | null } | null)?.web_tickets_guild_id || null;
+    const webCategoryId = (siteCfg as { web_tickets_category_id?: string | null } | null)?.web_tickets_category_id || null;
+    const webNotifyChannelId = (siteCfg as { web_tickets_notify_channel_id?: string | null } | null)?.web_tickets_notify_channel_id || null;
 
     const { data: authorProfile } = await admin
       .from('profiles')
