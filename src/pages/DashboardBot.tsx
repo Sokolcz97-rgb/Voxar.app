@@ -815,7 +815,7 @@ function TicketsConfigCard({
   if (!cfg) return <p className="text-sm text-muted-foreground">Načítání…</p>;
 
   const save = async () => {
-    const { error } = await supabase.from("bot_tickets_config").update({
+    const ticketConfigPayload = {
       category_id: cfg.category_id,
       support_role_id: cfg.support_role_id,
       notify_channel_id: cfg.notify_channel_id,
@@ -826,7 +826,8 @@ function TicketsConfigCard({
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
-    }).eq("id", cfg.id);
+    };
+    const { error } = await supabase.from("bot_tickets_config").update(ticketConfigPayload as any).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { toast({ title: "Uloženo", description: "Panel se obnoví v Discordu během chvíle." }); onChanged(); }
   };
