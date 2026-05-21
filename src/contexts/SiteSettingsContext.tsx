@@ -13,6 +13,7 @@ export type SiteSettings = {
   footer_text: string | null;
   logo_url: string | null;
   favicon_url: string | null;
+  web_tickets_guild_id: string | null;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -28,6 +29,7 @@ const DEFAULTS: SiteSettings = {
   footer_text: "© 2026 — Herní komunita",
   logo_url: null,
   favicon_url: null,
+  web_tickets_guild_id: null,
 };
 
 type Ctx = {

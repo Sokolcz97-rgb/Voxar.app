@@ -95,6 +95,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Site-level guild for web ticket sync (only this Discord server receives web tickets)
+    const { data: siteCfg } = await admin
+      .from('site_settings')
+      .select('web_tickets_guild_id')
+      .limit(1)
+      .maybeSingle();
+    const webGuildId = (siteCfg as { web_tickets_guild_id?: string | null } | null)?.web_tickets_guild_id || null;
+
     const { data: authorProfile } = await admin
       .from('profiles')
       .select('display_name, username, avatar_url')
@@ -112,12 +120,12 @@ Deno.serve(async (req) => {
 
     // -------- Per-ticket Discord channel flow (web ticket → real channel) --------
     // 1) On 'created' → ask bot to create a channel for this ticket
-    if (body.event === 'created' && cfg?.guild_id && !ticket.discord_channel_id) {
+    if (body.event === 'created' && webGuildId && !ticket.discord_channel_id) {
       await admin.from('bot_outbound_queue').insert({
         source: 'web_ticket',
         payload: {
           action: 'create_web_ticket_channel',
-          guild_id: cfg.guild_id,
+          guild_id: webGuildId,
           web_ticket_id: ticket.id,
           subject: ticket.subject,
           description_text: trunc(stripHtml(ticket.description || ''), 1800),
@@ -125,7 +133,7 @@ Deno.serve(async (req) => {
           author_user_id: ticket.user_id,
           category: ticket.category,
           priority: ticket.priority,
-          welcome_md: cfg.welcome_md,
+          welcome_md: cfg?.welcome_md,
         },
       });
     }
