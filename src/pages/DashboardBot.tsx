@@ -974,7 +974,7 @@ function TicketsConfigCard({
               <Input placeholder="Název (BUG)" value={newTicketCategory.label} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, label: e.target.value })} disabled={!isManager} />
               <Input placeholder="Popis" value={newTicketCategory.description} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, description: e.target.value })} disabled={!isManager} />
               <Input placeholder="Emoji" value={newTicketCategory.emoji} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, emoji: e.target.value })} disabled={!isManager} />
-              <Input placeholder="ID Discord kategorie" value={newTicketCategory.discord_category_id} onChange={(e) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: e.target.value.trim() })} disabled={!isManager} />
+              <GuildResourceSelect guildId={guildId} kind="category" value={newTicketCategory.discord_category_id || null} onChange={(v) => setNewTicketCategory({ ...newTicketCategory, discord_category_id: v ?? "" })} disabled={!isManager} placeholder="Discord kategorie" />
               <Button type="button" onClick={addTicketCategory} disabled={!isManager || !newTicketCategory.label.trim()}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
             </div>
             <div className="space-y-2">
