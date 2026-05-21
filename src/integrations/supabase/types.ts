@@ -252,8 +252,10 @@ export type Database = {
           created_at: string
           guild_id: string
           id: string
+          source: string
           user_id: string
           user_tag: string | null
+          web_ticket_id: string | null
         }
         Insert: {
           category_id?: string | null
@@ -262,8 +264,10 @@ export type Database = {
           created_at?: string
           guild_id: string
           id?: string
+          source?: string
           user_id: string
           user_tag?: string | null
+          web_ticket_id?: string | null
         }
         Update: {
           category_id?: string | null
@@ -272,8 +276,10 @@ export type Database = {
           created_at?: string
           guild_id?: string
           id?: string
+          source?: string
           user_id?: string
           user_tag?: string | null
+          web_ticket_id?: string | null
         }
         Relationships: []
       }
