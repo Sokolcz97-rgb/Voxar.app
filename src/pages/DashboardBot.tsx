@@ -1045,6 +1045,95 @@ function TicketsConfigCard({
         <TicketsWebhookPreview webhookUrl={cfg.sync_webhook_url ?? ""} isManager={isManager} />
       </div>
     </div>
+    {guildId && <OpenTicketsList guildId={guildId} isManager={isManager} transcriptsEnabled={!!cfg.transcripts_enabled} />}
+    </div>
+  );
+}
+
+function OpenTicketsList({ guildId, isManager, transcriptsEnabled }: { guildId: string; isManager: boolean; transcriptsEnabled: boolean }) {
+  const [rows, setRows] = useState<Array<{ id: string; channel_id: string; user_tag: string | null; user_id: string; category_label: string | null; created_at: string }>>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from("bot_open_tickets" as any)
+      .select("id, channel_id, user_tag, user_id, category_label, created_at")
+      .eq("guild_id", guildId)
+      .order("created_at", { ascending: false });
+    if (!error) setRows((data as any) || []);
+  };
+
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel(`bot-open-tickets-${guildId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bot_open_tickets", filter: `guild_id=eq.${guildId}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guildId]);
+
+  const act = async (row: typeof rows[number], action: "close_ticket" | "delete_ticket") => {
+    if (!isManager) return;
+    setBusy(row.id);
+    try {
+      const { error } = await supabase.from("bot_outbound_queue").insert({
+        source: "ticket_dashboard",
+        channel_id: row.channel_id,
+        payload: {
+          action,
+          channel_id: row.channel_id,
+          transcripts_enabled: action === "close_ticket" ? transcriptsEnabled : false,
+          notice: action === "close_ticket" ? "🔒 Ticket uzavřen ze správce bota." : undefined,
+        },
+      });
+      if (error) throw error;
+      toast({ title: action === "close_ticket" ? "Zavírám ticket" : "Mažu ticket", description: "Bot ho během chvilky zpracuje." });
+      // optimistic remove
+      setRows((r) => r.filter((x) => x.id !== row.id));
+    } catch (e: any) {
+      toast({ title: "Chyba", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card className="glass border-border p-6 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-display text-lg font-bold">Otevřené tickety</h3>
+          <p className="text-xs text-muted-foreground">Aktuálně otevřené ticket kanály na tomto serveru.</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={load}>Obnovit</Button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Žádné otevřené tickety.</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-medium truncate">
+                  {r.user_tag || r.user_id}{r.category_label ? ` · ${r.category_label}` : ""}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <code>#{r.channel_id}</code> · {new Date(r.created_at).toLocaleString()}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={!isManager || busy === r.id} onClick={() => act(r, "close_ticket")}>
+                  🔒 Uzavřít
+                </Button>
+                <Button size="sm" variant="destructive" disabled={!isManager || busy === r.id} onClick={() => act(r, "delete_ticket")}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Smazat
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
