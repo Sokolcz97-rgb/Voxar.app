@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 interface Body {
   ticket_id: string;
-  event: 'created' | 'reply' | 'status';
+  event: 'created' | 'reply' | 'status' | 'deleted';
   reply_content?: string;
   new_status?: string;
 }
@@ -180,6 +180,28 @@ Deno.serve(async (req) => {
         });
       }
     }
+
+    // 4) On 'deleted' → delete the per-ticket Discord channel
+    if (body.event === 'deleted') {
+      if (ticket.discord_channel_id) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          payload: {
+            action: 'delete_ticket',
+            channel_id: ticket.discord_channel_id,
+            notice: `🗑️ **${actorName}** smazal tento ticket z webu. Kanál bude odstraněn.`,
+          },
+        });
+      } else if (hasWebTicketRouting && webNotifyChannelId) {
+        await admin.from('bot_outbound_queue').insert({
+          source: 'web_ticket',
+          channel_id: webNotifyChannelId,
+          payload: { content: `🗑️ **${actorName}** smazal web ticket **${trunc(ticket.subject, 180)}**` },
+        });
+      }
+    }
+
+
 
     // -------- Legacy: mirror digest to a single shared channel/webhook --------
     const shouldUseLegacyMirror = cfg?.mirror_enabled && (cfg.sync_channel_id || cfg.sync_webhook_url) && !hasWebTicketRouting;
