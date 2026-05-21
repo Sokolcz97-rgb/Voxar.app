@@ -97,18 +97,16 @@ export function startOutboundWorker(client) {
             try {
               const { data: cfgRow } = await supabase
                 .from('bot_tickets_config')
-                .select('category_id, support_role_id, panel_channel_id')
+                .select('support_role_id')
                 .eq('guild_id', guildId)
                 .maybeSingle();
 
-              let parentId = cfgRow?.category_id || undefined;
+              // Parent kategorie: pouze ta z site_settings (žádný fallback na panel,
+              // aby se nic neposílalo do panel kanálu).
+              let parentId = payload.parent_category_id || undefined;
               if (parentId) {
                 const cand = await guild.channels.fetch(parentId).catch(() => null);
                 if (!cand || cand.type !== ChannelType.GuildCategory) parentId = undefined;
-              }
-              if (!parentId && cfgRow?.panel_channel_id) {
-                const panel = await guild.channels.fetch(cfgRow.panel_channel_id).catch(() => null);
-                if (panel?.parentId) parentId = panel.parentId;
               }
 
               const me = await guild.members.fetchMe();
