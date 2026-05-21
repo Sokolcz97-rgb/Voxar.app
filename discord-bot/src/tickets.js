@@ -142,13 +142,23 @@ export async function handleInteraction(interaction) {
 }
 
 async function openTicket(interaction, ticketCategoryId = null) {
-  const cfg = await loadCfg(interaction.guild?.id);
-  const ticketCategory = ticketCategoryId
-    ? (await loadTicketCategories(interaction.guild?.id)).find((category) => category.id === ticketCategoryId)
-    : null;
-
   const guild = interaction.guild;
   if (!guild) return interaction.reply({ content: 'Nelze otevřít ticket zde.', ephemeral: true });
+
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ ephemeral: true });
+  }
+
+  const cfg = await loadCfg(guild.id);
+  const ticketCategories = await loadTicketCategories(guild.id);
+  const ticketCategory = ticketCategoryId
+    ? ticketCategories.find((category) => category.id === ticketCategoryId)
+    : null;
+
+  if (ticketCategoryId && !ticketCategory) {
+    await interaction.editReply({ content: 'Tahle kategorie ticketu už neexistuje nebo je vypnutá. Zkus panel obnovit.' });
+    return;
+  }
 
   const prefix = ticketCategory?.label ? `${ticketCategory.label}-` : 'ticket-';
   const name = `${prefix}${interaction.user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 90);
@@ -214,13 +224,12 @@ async function openTicket(interaction, ticketCategoryId = null) {
       components: [closeRow],
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `🎫 Ticket vytvořen: <#${channel.id}>`,
-      ephemeral: true,
     });
   } catch (e) {
     console.error('openTicket', e);
-    await interaction.reply({ content: 'Nepodařilo se vytvořit ticket.', ephemeral: true });
+    await interaction.editReply({ content: 'Nepodařilo se vytvořit ticket. Zkontroluj oprávnění bota pro tvorbu kanálů a nastavenou Discord kategorii.' });
   }
 }
 
