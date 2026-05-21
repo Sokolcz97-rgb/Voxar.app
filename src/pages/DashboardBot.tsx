@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { SocialHandleField } from "@/components/SocialHandleField";
