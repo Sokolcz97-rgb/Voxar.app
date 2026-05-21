@@ -890,6 +890,7 @@ function TicketsConfigCard({
   const panelMode: "button" | "categories" = cfg.panel_mode === "categories" || cfg.panel_mode === "markdown" ? "categories" : "button";
 
   return (
+    <div className="space-y-4">
     <div className="grid lg:grid-cols-2 gap-4">
       <Card className="glass border-border p-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
