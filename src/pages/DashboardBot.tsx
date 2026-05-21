@@ -1015,14 +1015,10 @@ function TicketsConfigCard({
             />
           </div>
           <div>
-            <Label>Sync kanál (ID) — pro externího bota</Label>
-            <Input
-              placeholder="ID Discord kanálu"
-              value={cfg.sync_channel_id ?? ""}
-              onChange={(e) => setCfg({ ...cfg, sync_channel_id: e.target.value })}
-              disabled={!isManager}
-            />
+            <Label>Sync kanál — pro externího bota</Label>
+            <GuildResourceSelect guildId={guildId} kind="text" value={cfg.sync_channel_id} onChange={(v) => setCfg({ ...cfg, sync_channel_id: v })} disabled={!isManager} placeholder="Vyber kanál" />
           </div>
+
           <div>
             <Label>Nebo Discord webhook URL — bez bota (okamžité)</Label>
             <Input
