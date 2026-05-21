@@ -95,6 +95,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Site-level guild for web ticket sync (only this Discord server receives web tickets)
+    const { data: siteCfg } = await admin
+      .from('site_settings')
+      .select('web_tickets_guild_id')
+      .limit(1)
+      .maybeSingle();
+    const webGuildId = (siteCfg as { web_tickets_guild_id?: string | null } | null)?.web_tickets_guild_id || null;
+
     const { data: authorProfile } = await admin
       .from('profiles')
       .select('display_name, username, avatar_url')
