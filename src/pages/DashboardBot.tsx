@@ -571,7 +571,7 @@ const DashboardBot = () => {
                   {welcomes.map((w) => (
                     <li key={w.id} className="py-3 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <code className="text-xs text-muted-foreground">#{w.channel_id}</code>
+                        <code className="text-xs text-muted-foreground"><GuildResourceLabel guildId={w.guild_id} id={w.channel_id} kind="channel" /></code>
                         <div className="text-sm mt-1 whitespace-pre-wrap">{(w.content as any)?.text}</div>
                       </div>
                       {isManager && (
