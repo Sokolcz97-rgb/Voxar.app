@@ -24,13 +24,23 @@ const AdminSiteSettings = () => {
   const { settings, refresh, loading } = useSiteSettings();
   const [form, setForm] = useState<SiteSettings>(settings);
   const [saving, setSaving] = useState(false);
+  const [guilds, setGuilds] = useState<Array<{ guild_id: string; name: string }>>([]);
 
   useEffect(() => {
     if (!loading) setForm(settings);
   }, [settings, loading]);
 
-  const update = (k: keyof SiteSettings, v: string) =>
-    setForm({ ...form, [k]: v });
+  useEffect(() => {
+    supabase
+      .from("bot_guilds")
+      .select("guild_id, name")
+      .eq("status", "approved")
+      .order("name", { ascending: true })
+      .then(({ data }) => setGuilds(data || []));
+  }, []);
+
+  const update = <K extends keyof SiteSettings>(k: K, v: SiteSettings[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   const save = async () => {
     setSaving(true);
@@ -46,6 +56,8 @@ const AdminSiteSettings = () => {
       logo_url: form.logo_url,
       favicon_url: form.favicon_url,
       web_tickets_guild_id: form.web_tickets_guild_id,
+      web_tickets_category_id: form.web_tickets_category_id,
+      web_tickets_notify_channel_id: form.web_tickets_notify_channel_id,
       updated_by: user?.id ?? null,
     };
     const { error } = await supabase
