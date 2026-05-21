@@ -983,7 +983,7 @@ function TicketsConfigCard({
                   <Input value={category.emoji ?? ""} onChange={(e) => updateTicketCategory(category.id, { emoji: e.target.value || null })} disabled={!isManager} />
                   <Input value={category.label} onChange={(e) => updateTicketCategory(category.id, { label: e.target.value })} disabled={!isManager} />
                   <Input value={category.description ?? ""} onChange={(e) => updateTicketCategory(category.id, { description: e.target.value || null })} disabled={!isManager} />
-                  <Input value={category.discord_category_id ?? ""} onChange={(e) => updateTicketCategory(category.id, { discord_category_id: e.target.value.trim() || null })} disabled={!isManager} />
+                  <GuildResourceSelect guildId={guildId} kind="category" value={category.discord_category_id} onChange={(v) => updateTicketCategory(category.id, { discord_category_id: v })} disabled={!isManager} placeholder="Discord kategorie" />
                   <Switch checked={category.enabled} onCheckedChange={(enabled) => updateTicketCategory(category.id, { enabled })} disabled={!isManager} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => deleteTicketCategory(category.id)} disabled={!isManager}><Trash2 className="h-4 w-4" /></Button>
                 </div>
