@@ -124,7 +124,20 @@ export async function setupTicketPanel(client, guildId = null, options = {}) {
 
 export async function handleInteraction(interaction) {
   if (interaction.isStringSelectMenu?.() && interaction.customId === TICKET_CATEGORY_SELECT_ID) {
-    await openTicket(interaction, interaction.values?.[0] || null);
+    const selected = interaction.values?.[0] || null;
+    // Reset the select menu visually by re-rendering the panel message
+    try {
+      const cfg = await loadCfg(interaction.guild?.id);
+      const categories = await loadTicketCategories(interaction.guild?.id);
+      const fresh = buildTicketPanelMessage(cfg, categories);
+      await interaction.message.edit({
+        content: fresh.content,
+        components: fresh.components || [],
+      }).catch(() => {});
+    } catch (e) {
+      console.error('reset select menu', e);
+    }
+    await openTicket(interaction, selected);
     return true;
   }
 
