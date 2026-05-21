@@ -669,7 +669,7 @@ const DashboardBot = () => {
                         <Radio className="h-4 w-4 text-primary" />
                         <div>
                           <div className="font-medium">{s.platform}: {s.handle}</div>
-                          <code className="text-xs text-muted-foreground">→ #{s.discord_channel_id}</code>
+                          <code className="text-xs text-muted-foreground">→ <GuildResourceLabel guildId={s.guild_id} id={s.discord_channel_id} kind="channel" /></code>
                         </div>
                       </div>
                       {isManager && <Button size="icon" variant="ghost" onClick={() => deleteRow("bot_stream_notifications", s.id)}><Trash2 className="h-4 w-4" /></Button>}
