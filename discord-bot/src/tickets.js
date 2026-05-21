@@ -179,6 +179,13 @@ async function openTicket(interaction, ticketCategoryId = null) {
   // Determine parent category: explicit cfg.category_id, else fall back to
   // the panel channel's parent (so ticket lands in the same category as the panel).
   let parentId = ticketCategory?.discord_category_id || cfg?.category_id || undefined;
+  if (parentId) {
+    const candidate = await guild.channels.fetch(parentId).catch(() => null);
+    if (!candidate || candidate.type !== ChannelType.GuildCategory) {
+      console.warn(`parent_id ${parentId} is not a GuildCategory (type=${candidate?.type}), ignoring`);
+      parentId = undefined;
+    }
+  }
   if (!parentId && cfg?.panel_channel_id) {
     const panel = await guild.channels.fetch(cfg.panel_channel_id).catch(() => null);
     if (panel?.parentId) parentId = panel.parentId;
