@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 interface Body {
   ticket_id: string;
-  event: 'created' | 'reply' | 'status';
+  event: 'created' | 'reply' | 'status' | 'deleted';
   reply_content?: string;
   new_status?: string;
 }
