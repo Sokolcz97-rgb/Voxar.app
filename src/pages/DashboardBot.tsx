@@ -550,7 +550,14 @@ const DashboardBot = () => {
             {isManager && (
               <Card className="glass border-border p-6 space-y-3">
                 <h3 className="font-display text-lg font-bold">Nová uvítací zpráva</h3>
-                <Input placeholder="ID Discord kanálu" value={newWelcome.channel_id} onChange={(e) => setNewWelcome({ ...newWelcome, channel_id: e.target.value })} />
+                <GuildResourceSelect
+                  guildId={guildIdOrNull()}
+                  kind="text"
+                  value={newWelcome.channel_id}
+                  onChange={(v) => setNewWelcome({ ...newWelcome, channel_id: v ?? "" })}
+                  placeholder="Vyber kanál"
+                />
+
                 <Textarea placeholder="Vítej {user} na {server}! 🎉" rows={3} value={newWelcome.content} onChange={(e) => setNewWelcome({ ...newWelcome, content: e.target.value })} />
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{user}`}</code>, <code>{`{server}`}</code>, <code>{`{memberCount}`}</code></p>
                 <Button onClick={addWelcome}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
