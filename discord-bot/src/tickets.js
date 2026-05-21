@@ -4,6 +4,7 @@ import {
   ButtonStyle,
   ChannelType,
   PermissionFlagsBits,
+  StringSelectMenuBuilder,
 } from 'discord.js';
 import { supabase } from './supabase.js';
 
@@ -11,29 +12,44 @@ const TICKET_BTN_ID = 'ticket_open';
 const TICKET_CLOSE_ID = 'ticket_close';
 const TICKET_CATEGORY_SELECT_ID = 'ticket_category_select';
 
+function parseDiscordEmoji(value) {
+  const emoji = `${value || ''}`.trim();
+  if (!emoji) return undefined;
+  const custom = emoji.match(/^<a?:([A-Za-z0-9_]+):(\d+)>$/);
+  if (custom) return { name: custom[1], id: custom[2], animated: emoji.startsWith('<a:') };
+  if (/^\d{15,25}$/.test(emoji)) return { id: emoji };
+  if (/\p{Extended_Pictographic}/u.test(emoji)) return { name: emoji };
+  return undefined;
+}
+
+function truncate(value, max) {
+  return `${value || ''}`.slice(0, max);
+}
+
 export function buildTicketPanelMessage(cfg = {}, categories = []) {
   const mode = cfg.panel_mode || 'button';
   const content = cfg.welcome_md || (mode === 'button' ? 'Klikni níže pro otevření ticketu.' : 'Pro otevření ticketu napiš zprávu.');
 
   if ((mode === 'categories' || mode === 'markdown') && categories.length > 0) {
+    const select = new StringSelectMenuBuilder()
+      .setCustomId(TICKET_CATEGORY_SELECT_ID)
+      .setPlaceholder('Vyber typ ticketu')
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addOptions(categories.slice(0, 25).map((category) => {
+        const option = {
+          label: truncate(category.label, 100) || 'Ticket',
+          value: category.id,
+          description: truncate(category.description, 100) || undefined,
+        };
+        const emoji = parseDiscordEmoji(category.emoji);
+        if (emoji) option.emoji = emoji;
+        return option;
+      }));
+
     return {
       content,
-      components: [{
-        type: 1,
-        components: [{
-          type: 3,
-          custom_id: TICKET_CATEGORY_SELECT_ID,
-          placeholder: 'Vyber typ ticketu',
-          min_values: 1,
-          max_values: 1,
-          options: categories.slice(0, 25).map((category) => ({
-            label: category.label.slice(0, 100),
-            value: category.id,
-            description: category.description?.slice(0, 100) || undefined,
-            emoji: category.emoji ? { name: category.emoji } : undefined,
-          })),
-        }],
-      }],
+      components: [new ActionRowBuilder().addComponents(select)],
     };
   }
 
@@ -43,10 +59,15 @@ export function buildTicketPanelMessage(cfg = {}, categories = []) {
 
   return {
     content,
-    components: [{
-      type: 1,
-      components: [{ type: 2, style: 1, custom_id: TICKET_BTN_ID, label: 'Otevřít ticket', emoji: { name: '🎫' } }],
-    }],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(TICKET_BTN_ID)
+          .setLabel('Otevřít ticket')
+          .setStyle(ButtonStyle.Primary)
+          .setEmoji('🎫'),
+      ),
+    ],
   };
 }
 
@@ -121,13 +142,23 @@ export async function handleInteraction(interaction) {
 }
 
 async function openTicket(interaction, ticketCategoryId = null) {
-  const cfg = await loadCfg(interaction.guild?.id);
-  const ticketCategory = ticketCategoryId
-    ? (await loadTicketCategories(interaction.guild?.id)).find((category) => category.id === ticketCategoryId)
-    : null;
-
   const guild = interaction.guild;
   if (!guild) return interaction.reply({ content: 'Nelze otevřít ticket zde.', ephemeral: true });
+
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferReply({ ephemeral: true });
+  }
+
+  const cfg = await loadCfg(guild.id);
+  const ticketCategories = await loadTicketCategories(guild.id);
+  const ticketCategory = ticketCategoryId
+    ? ticketCategories.find((category) => category.id === ticketCategoryId)
+    : null;
+
+  if (ticketCategoryId && !ticketCategory) {
+    await interaction.editReply({ content: 'Tahle kategorie ticketu už neexistuje nebo je vypnutá. Zkus panel obnovit.' });
+    return;
+  }
 
   const prefix = ticketCategory?.label ? `${ticketCategory.label}-` : 'ticket-';
   const name = `${prefix}${interaction.user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 90);
@@ -193,13 +224,12 @@ async function openTicket(interaction, ticketCategoryId = null) {
       components: [closeRow],
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `🎫 Ticket vytvořen: <#${channel.id}>`,
-      ephemeral: true,
     });
   } catch (e) {
     console.error('openTicket', e);
-    await interaction.reply({ content: 'Nepodařilo se vytvořit ticket.', ephemeral: true });
+    await interaction.editReply({ content: 'Nepodařilo se vytvořit ticket. Zkontroluj oprávnění bota pro tvorbu kanálů a nastavenou Discord kategorii.' });
   }
 }
 

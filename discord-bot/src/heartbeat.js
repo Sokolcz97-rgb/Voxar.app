@@ -1,5 +1,7 @@
 import { supabase } from './supabase.js';
 
+const DEFAULT_BOT_VERSION = 'ticket-categories-2026-05-21';
+
 export function startHeartbeat(client) {
   const send = async () => {
     try {
@@ -10,7 +12,7 @@ export function startHeartbeat(client) {
         .maybeSingle();
       const payload = {
         guild_count: client.guilds.cache.size,
-        version: process.env.BOT_VERSION || '1.0.0',
+        version: process.env.BOT_VERSION || DEFAULT_BOT_VERSION,
         last_heartbeat: new Date().toISOString(),
       };
       if (existing?.id) {
