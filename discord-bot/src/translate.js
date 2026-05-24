@@ -1,6 +1,8 @@
-// Calls the Supabase edge function `translate-message` which uses Lovable AI.
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Calls the Lovable Cloud edge function `translate-message` which uses Lovable AI.
+// Hardcoded to the Lovable project's Supabase URL because the bot's own
+// SUPABASE_URL env points at a different (bot-only) Supabase project.
+const LOVABLE_SUPABASE_URL = 'https://rioexuvgvmdwvidfakxy.supabase.co';
+const LOVABLE_PUBLISHABLE_KEY = 'sb_publishable_s0KxdrY9Wm7_j2mtI-PnJg_eYbQln9-';
 
 export async function translateText(text, target) {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Supabase env not configured');
