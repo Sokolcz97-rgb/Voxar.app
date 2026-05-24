@@ -130,11 +130,17 @@ client.on('messageReactionAdd', async (reaction, user) => {
     const { translateText } = await import('./translate.js');
     const translation = await translateText(text, lang).catch((e) => `⚠️ Chyba překladu: ${e?.message || 'neznámá'}`);
     const header = lang === 'cs' ? '🇨🇿 Překlad do češtiny' : '🇬🇧 Translation to English';
-    const author = msg.author ? `**${msg.author.username}**` : 'zpráva';
-    const link = `https://discord.com/channels/${msg.guild.id}/${msg.channelId}/${msg.id}`;
-    const body = translation.length > 1700 ? translation.slice(0, 1697) + '…' : translation;
-    const dm = await user.createDM().catch(() => null);
-    if (dm) await dm.send(`${header} – ${author} (#${msg.channel?.name || ''})\n${body}\n${link}`).catch(() => {});
+    const body = translation.length > 1800 ? translation.slice(0, 1797) + '…' : translation;
+    let thread = msg.thread;
+    if (!thread) {
+      thread = await msg.startThread({
+        name: `Překlad – ${(msg.content || 'zpráva').slice(0, 40)}`,
+        autoArchiveDuration: 60,
+      }).catch(() => null);
+    }
+    if (thread) {
+      await thread.send(`${header} (požádal <@${user.id}>)\n${body}`).catch(() => {});
+    }
   } catch (e) {
     console.error('reaction translate', e);
   }
