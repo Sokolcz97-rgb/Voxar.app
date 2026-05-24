@@ -112,34 +112,55 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
-// Translate via flag reaction → DM the reactor with translation, then remove the reaction
+// Translate via flag reaction → post translation into a thread, then remove the reaction
 const FLAG_TO_LANG = { '🇨🇿': 'cs', '🇸🇰': 'cs', '🇬🇧': 'en', '🇺🇸': 'en' };
 client.on('messageReactionAdd', async (reaction, user) => {
   try {
     if (user.bot) return;
-    if (reaction.partial) { try { await reaction.fetch(); } catch { return; } }
+    if (reaction.partial) { try { await reaction.fetch(); } catch (e) { console.error('reaction fetch', e?.message || e); return; } }
     const lang = FLAG_TO_LANG[reaction.emoji.name];
     if (!lang) return;
-    const msg = reaction.message.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
+    let msg = reaction.message;
+    if (msg.partial) {
+      msg = await msg.fetch().catch((e) => { console.error('msg fetch', e?.message || e); return null; });
+    }
     if (!msg?.guild) return;
     if (!(await isGuildApproved(msg.guild.id))) return;
     const text = (msg.content || '').trim();
-    // Always remove the user's flag reaction to keep the channel clean
+    // Try to remove the user's flag reaction to keep the channel clean (fails in DMs / no perms)
     reaction.users.remove(user.id).catch(() => {});
     if (!text) return;
     const { translateText } = await import('./translate.js');
     const translation = await translateText(text, lang).catch((e) => `⚠️ Chyba překladu: ${e?.message || 'neznámá'}`);
     const header = lang === 'cs' ? '🇨🇿 Překlad do češtiny' : '🇬🇧 Translation to English';
     const body = translation.length > 1800 ? translation.slice(0, 1797) + '…' : translation;
-    let thread = msg.thread;
-    if (!thread) {
-      thread = await msg.startThread({
-        name: `Překlad – ${(msg.content || 'zpráva').slice(0, 40)}`,
-        autoArchiveDuration: 60,
-      }).catch(() => null);
+
+    // Pick where to post: if message is already inside a thread, reply there.
+    // Otherwise reuse existing thread on the message, or create a new one.
+    let target = null;
+    try {
+      const ch = msg.channel;
+      if (ch?.isThread?.()) {
+        target = ch;
+      } else if (msg.hasThread && msg.thread) {
+        target = msg.thread;
+      } else if (typeof msg.startThread === 'function') {
+        target = await msg.startThread({
+          name: `Překlad – ${(msg.content || 'zpráva').slice(0, 40)}`,
+          autoArchiveDuration: 60,
+        }).catch((e) => { console.error('startThread failed', e?.message || e); return null; });
+      }
+    } catch (e) {
+      console.error('pick target failed', e?.message || e);
     }
-    if (thread) {
-      await thread.send(`${header} (požádal <@${user.id}>)\n${body}`).catch(() => {});
+
+    if (target) {
+      await target.send(`${header} (požádal <@${user.id}>)\n${body}`)
+        .catch((e) => console.error('translation send failed', e?.message || e));
+    } else {
+      // Fallback: reply directly in the channel as a reply to the message
+      await msg.reply(`${header} (požádal <@${user.id}>)\n${body}`)
+        .catch((e) => console.error('translation reply fallback failed', e?.message || e));
     }
   } catch (e) {
     console.error('reaction translate', e);
