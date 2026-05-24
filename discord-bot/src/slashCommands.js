@@ -4,9 +4,12 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  ContextMenuCommandBuilder,
+  ApplicationCommandType,
 } from 'discord.js';
 import { supabase } from './supabase.js';
 import { getConfig } from './config.js';
+import { translateText } from './translate.js';
 
 // ---------------- Built-in slash commands ----------------
 
@@ -41,6 +44,15 @@ const BUILTIN_DEFS = [
     .addUserOption((o) => o.setName('uživatel').setDescription('Koho zabanovat').setRequired(true))
     .addStringOption((o) => o.setName('důvod').setDescription('Důvod').setRequired(false))
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers.toString()),
+];
+
+const CONTEXT_MENU_DEFS = [
+  new ContextMenuCommandBuilder()
+    .setName('Přeložit do češtiny')
+    .setType(ApplicationCommandType.Message),
+  new ContextMenuCommandBuilder()
+    .setName('Translate to English')
+    .setType(ApplicationCommandType.Message),
 ];
 
 const BUILTIN_NAMES = new Set(BUILTIN_DEFS.map((c) => c.name));
@@ -85,7 +97,7 @@ export async function registerGuildSlashCommands(client, guildId) {
     const appId = client.application?.id ?? client.user?.id;
     if (!token || !appId || !guildId) return;
     const custom = await buildCustomDefsForGuild(guildId);
-    const body = [...BUILTIN_DEFS, ...custom].map((c) => c.toJSON());
+    const body = [...BUILTIN_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(Routes.applicationGuildCommands(appId, guildId), { body });
     console.log(`🔧 Slash commands zaregistrovány pro ${guildId} (${body.length})`);
@@ -113,6 +125,9 @@ function renderVars(value, interaction, argsStr) {
 }
 
 export async function handleSlashCommand(interaction) {
+  if (interaction.isMessageContextMenuCommand?.()) {
+    return handleMessageContextMenu(interaction);
+  }
   if (!interaction.isChatInputCommand()) return false;
   const name = interaction.commandName;
   const guildId = interaction.guild?.id ?? null;
@@ -267,6 +282,39 @@ export async function handleSlashCommand(interaction) {
   } catch (e) {
     console.error('slash custom command error', e);
     if (!interaction.replied) await interaction.reply({ content: 'Chyba.', ephemeral: true });
+  }
+  return true;
+}
+
+// ---------------- Message context menu (Translate) ----------------
+
+async function handleMessageContextMenu(interaction) {
+  const name = interaction.commandName;
+  let target = null;
+  if (name === 'Přeložit do češtiny') target = 'cs';
+  else if (name === 'Translate to English') target = 'en';
+  if (!target) return false;
+
+  const msg = interaction.targetMessage;
+  const text = (msg?.content || '').trim();
+  if (!text) {
+    await interaction.reply({ content: 'Tato zpráva neobsahuje text k překladu.', ephemeral: true });
+    return true;
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+  try {
+    const translation = await translateText(text, target);
+    if (!translation) {
+      await interaction.editReply('Překlad se nepodařilo získat.');
+      return true;
+    }
+    const header = target === 'cs' ? '🇨🇿 Překlad do češtiny' : '🇬🇧 Translation to English';
+    const author = msg.author ? `**${msg.author.username}**: ` : '';
+    const body = translation.length > 1800 ? translation.slice(0, 1797) + '…' : translation;
+    await interaction.editReply(`${header}\n${author}${body}`);
+  } catch (e) {
+    await interaction.editReply(`Chyba překladu: ${e?.message || 'neznámá'}`);
   }
   return true;
 }
