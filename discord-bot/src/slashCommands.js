@@ -285,3 +285,36 @@ export async function handleSlashCommand(interaction) {
   }
   return true;
 }
+
+// ---------------- Message context menu (Translate) ----------------
+
+async function handleMessageContextMenu(interaction) {
+  const name = interaction.commandName;
+  let target = null;
+  if (name === 'Přeložit do češtiny') target = 'cs';
+  else if (name === 'Translate to English') target = 'en';
+  if (!target) return false;
+
+  const msg = interaction.targetMessage;
+  const text = (msg?.content || '').trim();
+  if (!text) {
+    await interaction.reply({ content: 'Tato zpráva neobsahuje text k překladu.', ephemeral: true });
+    return true;
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+  try {
+    const translation = await translateText(text, target);
+    if (!translation) {
+      await interaction.editReply('Překlad se nepodařilo získat.');
+      return true;
+    }
+    const header = target === 'cs' ? '🇨🇿 Překlad do češtiny' : '🇬🇧 Translation to English';
+    const author = msg.author ? `**${msg.author.username}**: ` : '';
+    const body = translation.length > 1800 ? translation.slice(0, 1797) + '…' : translation;
+    await interaction.editReply(`${header}\n${author}${body}`);
+  } catch (e) {
+    await interaction.editReply(`Chyba překladu: ${e?.message || 'neznámá'}`);
+  }
+  return true;
+}
