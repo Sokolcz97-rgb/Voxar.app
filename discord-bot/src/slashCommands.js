@@ -46,6 +46,15 @@ const BUILTIN_DEFS = [
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers.toString()),
 ];
 
+const CONTEXT_MENU_DEFS = [
+  new ContextMenuCommandBuilder()
+    .setName('Přeložit do češtiny')
+    .setType(ApplicationCommandType.Message),
+  new ContextMenuCommandBuilder()
+    .setName('Translate to English')
+    .setType(ApplicationCommandType.Message),
+];
+
 const BUILTIN_NAMES = new Set(BUILTIN_DEFS.map((c) => c.name));
 
 // Sanitize custom command name → Discord slash naming rules (lowercase, 1-32, [a-z0-9_-])
@@ -88,7 +97,7 @@ export async function registerGuildSlashCommands(client, guildId) {
     const appId = client.application?.id ?? client.user?.id;
     if (!token || !appId || !guildId) return;
     const custom = await buildCustomDefsForGuild(guildId);
-    const body = [...BUILTIN_DEFS, ...custom].map((c) => c.toJSON());
+    const body = [...BUILTIN_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(Routes.applicationGuildCommands(appId, guildId), { body });
     console.log(`🔧 Slash commands zaregistrovány pro ${guildId} (${body.length})`);
