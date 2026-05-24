@@ -125,6 +125,9 @@ function renderVars(value, interaction, argsStr) {
 }
 
 export async function handleSlashCommand(interaction) {
+  if (interaction.isMessageContextMenuCommand?.()) {
+    return handleMessageContextMenu(interaction);
+  }
   if (!interaction.isChatInputCommand()) return false;
   const name = interaction.commandName;
   const guildId = interaction.guild?.id ?? null;
