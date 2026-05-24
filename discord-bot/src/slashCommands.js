@@ -4,9 +4,12 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  ContextMenuCommandBuilder,
+  ApplicationCommandType,
 } from 'discord.js';
 import { supabase } from './supabase.js';
 import { getConfig } from './config.js';
+import { translateText } from './translate.js';
 
 // ---------------- Built-in slash commands ----------------
 
