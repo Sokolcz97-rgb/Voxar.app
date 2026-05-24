@@ -112,6 +112,34 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
+// Translate via flag reaction → DM the reactor with translation, then remove the reaction
+const FLAG_TO_LANG = { '🇨🇿': 'cs', '🇸🇰': 'cs', '🇬🇧': 'en', '🇺🇸': 'en' };
+client.on('messageReactionAdd', async (reaction, user) => {
+  try {
+    if (user.bot) return;
+    if (reaction.partial) { try { await reaction.fetch(); } catch { return; } }
+    const lang = FLAG_TO_LANG[reaction.emoji.name];
+    if (!lang) return;
+    const msg = reaction.message.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
+    if (!msg?.guild) return;
+    if (!(await isGuildApproved(msg.guild.id))) return;
+    const text = (msg.content || '').trim();
+    // Always remove the user's flag reaction to keep the channel clean
+    reaction.users.remove(user.id).catch(() => {});
+    if (!text) return;
+    const { translateText } = await import('./translate.js');
+    const translation = await translateText(text, lang).catch((e) => `⚠️ Chyba překladu: ${e?.message || 'neznámá'}`);
+    const header = lang === 'cs' ? '🇨🇿 Překlad do češtiny' : '🇬🇧 Translation to English';
+    const author = msg.author ? `**${msg.author.username}**` : 'zpráva';
+    const link = `https://discord.com/channels/${msg.guild.id}/${msg.channelId}/${msg.id}`;
+    const body = translation.length > 1700 ? translation.slice(0, 1697) + '…' : translation;
+    const dm = await user.createDM().catch(() => null);
+    if (dm) await dm.send(`${header} – ${author} (#${msg.channel?.name || ''})\n${body}\n${link}`).catch(() => {});
+  } catch (e) {
+    console.error('reaction translate', e);
+  }
+});
+
 client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
