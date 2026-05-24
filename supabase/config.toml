@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.discord-oauth-callback]
 verify_jwt = false
+
+[functions.translate-message]
+verify_jwt = false
