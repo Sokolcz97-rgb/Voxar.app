@@ -19,6 +19,9 @@ export async function sendWelcome(member) {
         '{user}': `<@${member.id}>`,
         '{username}': member.user.username,
         '{server}': member.guild.name,
+        '{memberCount}': String(member.guild.memberCount ?? '?'),
+        '{member_count}': String(member.guild.memberCount ?? '?'),
+        '{members}': String(member.guild.memberCount ?? '?'),
       };
       const apply = (s) =>
         typeof s === 'string'
