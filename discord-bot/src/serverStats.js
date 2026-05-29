@@ -48,9 +48,14 @@ async function valueFor(kind, guild) {
 function renderName(slot, value) {
   const tpl = slot.template || KIND_DEFAULTS[slot.kind]?.template || '{value}';
   let out = tpl.replace(/\{value\}/g, value);
-  // Discord channel names max 100 chars
   if (out.length > 100) out = out.slice(0, 100);
   return out;
+}
+
+function botHasPerms(guild) {
+  const me = guild.members.me;
+  if (!me) return false;
+  return me.permissions.has(PermissionsBitField.Flags.ManageChannels);
 }
 
 async function ensureCategory(guild, cfg) {
@@ -59,15 +64,16 @@ async function ensureCategory(guild, cfg) {
       || await guild.channels.fetch(cfg.category_id).catch(() => null);
     if (ch && ch.type === ChannelType.GuildCategory) return ch;
   }
+  console.log(`[serverStats] creating category in ${guild.name}`);
   const created = await guild.channels.create({
     name: cfg.category_name || '📊 Statistiky',
     type: ChannelType.GuildCategory,
-    position: 0,
     permissionOverwrites: [
       { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.Connect] },
     ],
-  }).catch((e) => { console.error('serverStats: create category failed', e?.message || e); return null; });
+  }).catch((e) => { console.error('[serverStats] create category failed:', e?.message || e); return null; });
   if (created) {
+    try { await created.setPosition(0).catch(() => {}); } catch {}
     cfg.category_id = created.id;
     await supabase.from('bot_server_stats').update({ category_id: created.id }).eq('guild_id', guild.id);
   }
@@ -80,11 +86,12 @@ async function ensureChannel(guild, category, slot, name) {
       || await guild.channels.fetch(slot.channel_id).catch(() => null);
     if (ch) {
       if (ch.name !== name) {
-        await ch.setName(name).catch((e) => console.error('serverStats: rename failed', e?.message || e));
+        await ch.setName(name).catch((e) => console.error('[serverStats] rename failed:', e?.message || e));
       }
       return ch;
     }
   }
+  console.log(`[serverStats] creating channel "${name}" in ${guild.name}`);
   const created = await guild.channels.create({
     name,
     type: ChannelType.GuildVoice,
@@ -92,24 +99,30 @@ async function ensureChannel(guild, category, slot, name) {
     permissionOverwrites: [
       { id: guild.roles.everyone.id, deny: [PermissionsBitField.Flags.Connect] },
     ],
-  }).catch((e) => { console.error('serverStats: create channel failed', e?.message || e); return null; });
+  }).catch((e) => { console.error('[serverStats] create channel failed:', e?.message || e); return null; });
   if (created) slot.channel_id = created.id;
   return created;
 }
 
 async function updateGuildStats(guild) {
   try {
-    const { data: cfg } = await supabase
+    const { data: cfg, error } = await supabase
       .from('bot_server_stats')
       .select('*')
       .eq('guild_id', guild.id)
       .maybeSingle();
+    if (error) { console.error('[serverStats] load cfg error:', error.message); return; }
     if (!cfg || !cfg.enabled) return;
+    if (!botHasPerms(guild)) {
+      console.warn(`[serverStats] missing Manage Channels permission in ${guild.name} (${guild.id})`);
+      return;
+    }
     const slots = Array.isArray(cfg.slots) ? cfg.slots.slice(0, 4) : [];
     const active = slots.filter((s) => s && s.kind && s.kind !== 'none');
     if (active.length === 0) return;
 
     const category = await ensureCategory(guild, cfg);
+    if (!category) return;
     let dirty = false;
     for (const slot of active) {
       const value = await valueFor(slot.kind, guild);
@@ -122,7 +135,7 @@ async function updateGuildStats(guild) {
       await supabase.from('bot_server_stats').update({ slots: cfg.slots }).eq('guild_id', guild.id);
     }
   } catch (e) {
-    console.error('serverStats: updateGuildStats', e?.message || e);
+    console.error('[serverStats] updateGuildStats:', e?.message || e);
   }
 }
 
@@ -133,8 +146,31 @@ export async function runServerStats(client) {
   }
 }
 
+async function updateOneGuild(client, guildId) {
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) return;
+  if (!(await isGuildApproved(guildId))) return;
+  await updateGuildStats(guild);
+}
+
 export function startServerStats(client) {
-  // Initial run after 30s (let cache warm up), then every 10 minutes
-  setTimeout(() => runServerStats(client).catch(() => {}), 30_000);
-  setInterval(() => runServerStats(client).catch(() => {}), INTERVAL_MS);
+  // Initial run quickly, then every 10 minutes
+  setTimeout(() => runServerStats(client).catch((e) => console.error('[serverStats] initial:', e)), 5_000);
+  setInterval(() => runServerStats(client).catch((e) => console.error('[serverStats] tick:', e)), INTERVAL_MS);
+
+  // Realtime: when dashboard saves a config, run immediately for that guild
+  try {
+    supabase
+      .channel('bot_server_stats_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bot_server_stats' }, (payload) => {
+        const row = payload.new || payload.old;
+        const guildId = row?.guild_id;
+        if (!guildId) return;
+        console.log('[serverStats] realtime change for', guildId);
+        setTimeout(() => updateOneGuild(client, guildId).catch((e) => console.error('[serverStats] realtime run:', e)), 1500);
+      })
+      .subscribe((status) => console.log('[serverStats] realtime status:', status));
+  } catch (e) {
+    console.error('[serverStats] realtime subscribe failed:', e?.message || e);
+  }
 }
