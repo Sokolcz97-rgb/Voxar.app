@@ -32,7 +32,7 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.GuildMember, Partials.Reaction, Partials.User],
 });
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log(`✅ Přihlášen jako ${client.user.tag} (${client.guilds.cache.size} serverů)`);
   await syncAllGuilds(client);
   startHeartbeat(client);
