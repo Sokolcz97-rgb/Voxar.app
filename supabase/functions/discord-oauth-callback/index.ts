@@ -99,9 +99,28 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
 
-    // Redirect back to web app
-    const target = `${origin}/dashboard/bot/guilds?discord_session=${encodeURIComponent(nonce)}`;
-    return new Response(null, { status: 302, headers: { Location: target } });
+    // Return HTML that messages the opener window and closes itself.
+    // Falls back to a normal redirect if there is no opener (e.g. popup was blocked
+    // and we used top-level navigation).
+    const safeOrigin = JSON.stringify(origin);
+    const safeNonce = JSON.stringify(nonce);
+    const fallbackUrl = `${origin}/dashboard/bot/guilds?discord_session=${encodeURIComponent(nonce)}`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Discord připojen</title>
+<style>body{font-family:system-ui,sans-serif;background:#0a0a1a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}.box{text-align:center;padding:2rem}</style>
+</head><body><div class="box"><h2>Hotovo ✓</h2><p>Můžeš toto okno zavřít.</p></div>
+<script>(function(){
+  var origin=${safeOrigin}; var nonce=${safeNonce};
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: "discord-oauth-result", nonce: nonce }, origin);
+      window.close();
+      return;
+    }
+  } catch(e) {}
+  // Fallback: navigate top-level back to the app
+  window.location.replace(${JSON.stringify(fallbackUrl)});
+})();</script></body></html>`;
+    return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
   } catch (e) {
     return htmlError(String(e instanceof Error ? e.message : e));
   }
