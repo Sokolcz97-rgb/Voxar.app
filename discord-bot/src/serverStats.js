@@ -122,6 +122,8 @@ async function ensureChannel(guild, category, slot, name) {
 
 async function cleanupOrphans(guild, category, keepIds) {
   try {
+    // Force-fetch fresh channel list so we don't rely on a stale cache
+    await guild.channels.fetch().catch(() => {});
     const children = guild.channels.cache.filter(
       (c) => c.parentId === category.id && c.type === ChannelType.GuildVoice,
     );
@@ -132,6 +134,28 @@ async function cleanupOrphans(guild, category, keepIds) {
     }
   } catch (e) {
     console.error('[serverStats] cleanupOrphans:', e?.message || e);
+  }
+}
+
+async function cleanupOldCategories(guild, currentCategoryId) {
+  try {
+    await guild.channels.fetch().catch(() => {});
+    const cats = guild.channels.cache.filter(
+      (c) => c.type === ChannelType.GuildCategory
+        && c.id !== currentCategoryId
+        && /statistik|stats/i.test(c.name),
+    );
+    for (const cat of cats.values()) {
+      const children = guild.channels.cache.filter((c) => c.parentId === cat.id);
+      for (const ch of children.values()) {
+        console.log(`[serverStats] deleting leftover channel ${ch.name} (${ch.id}) from old stats category`);
+        await ch.delete('Server stats cleanup (old category)').catch(() => {});
+      }
+      console.log(`[serverStats] deleting old stats category ${cat.name} (${cat.id})`);
+      await cat.delete('Server stats cleanup (old category)').catch(() => {});
+    }
+  } catch (e) {
+    console.error('[serverStats] cleanupOldCategories:', e?.message || e);
   }
 }
 
@@ -174,6 +198,8 @@ async function _updateGuildStats(guild) {
 
     // Reconcile: delete any extra voice channels inside our category that aren't tracked
     await cleanupOrphans(guild, category, keepIds);
+    // Also clean up leftover stats categories from previous runs/renames
+    await cleanupOldCategories(guild, category.id);
 
     // Always persist normalized slots (clears stale channel_ids etc.)
     await supabase.from('bot_server_stats').update({ slots: cfg.slots }).eq('guild_id', guild.id);
