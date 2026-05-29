@@ -17,6 +17,8 @@ import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-r
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
+import { MultiChannelPicker } from "@/components/MultiChannelPicker";
+import { BotFaq } from "@/components/BotFaq";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
