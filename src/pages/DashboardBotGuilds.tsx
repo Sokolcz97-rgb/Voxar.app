@@ -101,57 +101,93 @@ export default function DashboardBotGuilds() {
     })();
   }, []);
 
-  // Handle returning from Discord OAuth: ?discord_session=NONCE
+  const loadPickerForNonce = async (nonce: string) => {
+    const { data, error } = await supabase.functions.invoke("discord-oauth-result", {
+      body: { state: nonce },
+    });
+    if (error || !data) {
+      toast.error("Nepodařilo se načíst seznam serverů z Discordu.");
+      return;
+    }
+    setPickerGuilds((data as any).guilds || []);
+    setDiscordUsername((data as any).discord_username || null);
+    setDiscordUserId((data as any).discord_user_id || null);
+    setPickerOpen(true);
+  };
+
+  // Fallback: when popup is blocked and the callback redirected the whole tab back
+  // with ?discord_session=NONCE.
   useEffect(() => {
     const ds = searchParams.get("discord_session");
     if (!ds || !user) return;
-    (async () => {
-      const { data, error } = await supabase.functions.invoke("discord-oauth-result", {
-        body: { state: ds },
-      });
-      if (error || !data) {
-        toast.error("Nepodařilo se načíst seznam serverů z Discordu.");
-      } else {
-        setPickerGuilds((data as any).guilds || []);
-        setDiscordUsername((data as any).discord_username || null);
-        setDiscordUserId((data as any).discord_user_id || null);
-        setPickerOpen(true);
-      }
-      // Strip the query param
-      const next = new URLSearchParams(searchParams);
-      next.delete("discord_session");
-      setSearchParams(next, { replace: true });
-    })();
+    void loadPickerForNonce(ds);
+    const next = new URLSearchParams(searchParams);
+    next.delete("discord_session");
+    setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams.get("discord_session")]);
 
+  // Primary path: popup posts the result back to us.
+  useEffect(() => {
+    const handler = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin) return;
+      const data = ev.data as any;
+      if (!data || data.type !== "discord-oauth-result" || !data.nonce) return;
+      setOauthLoading(false);
+      void loadPickerForNonce(data.nonce);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const startDiscordOAuth = async () => {
     setOauthLoading(true);
-    // Otevři okno hned (synchronně po kliknutí), aby ho browser nezablokoval jako popup
-    const popup = window.open("about:blank", "discord-oauth", "width=500,height=800");
+    // Otevři popup hned (synchronně po kliknutí), aby ho browser nezablokoval
+    const w = 500;
+    const h = 800;
+    const left = window.screenX + Math.max(0, (window.outerWidth - w) / 2);
+    const top = window.screenY + Math.max(0, (window.outerHeight - h) / 2);
+    const popup = window.open(
+      "about:blank",
+      "discord-oauth",
+      `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`,
+    );
     try {
       const { data, error } = await supabase.functions.invoke("discord-oauth-start", {
         body: { origin: window.location.origin },
       });
       if (error || !data?.url) {
         popup?.close();
+        setOauthLoading(false);
         toast.error("Nepodařilo se spustit přihlášení přes Discord.");
         return;
       }
-      if (popup) {
+      if (popup && !popup.closed) {
         popup.location.href = (data as any).url;
+        // Sleduj zavření popupu bez dokončení (uživatel ho zavřel)
+        const timer = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(timer);
+            setOauthLoading(false);
+          }
+        }, 500);
       } else {
-        // Fallback – top-level navigace (mimo iframe)
+        // Popup zablokován — fallback na top-level navigaci
+        toast.message("Povol vyskakovací okna pro plynulé přihlášení.");
         if (window.top) {
           window.top.location.href = (data as any).url;
         } else {
           window.location.href = (data as any).url;
         }
       }
-    } finally {
+    } catch (e) {
+      popup?.close();
       setOauthLoading(false);
+      toast.error("Nepodařilo se spustit přihlášení přes Discord.");
     }
   };
+
 
   const requestGuild = async (g: DiscordGuildOption) => {
     setSubmittingIds((s) => new Set(s).add(g.id));
