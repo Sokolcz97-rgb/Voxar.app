@@ -435,8 +435,8 @@ const DashboardBot = () => {
                     </div>
                   )}
                   <div>
-                    <Label>Maintenance kanál (ID)</Label>
-                    <Input value={config.maintenance_channel ?? ""} onChange={(e) => setConfig({ ...config, maintenance_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Maintenance kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.maintenance_channel} onChange={(v) => setConfig({ ...config, maintenance_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                 </div>
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
