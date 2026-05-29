@@ -98,6 +98,18 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         ],
       },
       {
+        id: "serverstats",
+        title: "Server Stats",
+        items: [
+          { q: "Co to dělá?", a: "Po zapnutí bot vytvoří v tvém Discord serveru kategorii nahoře a v ní hlasové kanály (max. 4), které ukazují statistiky — počet členů, online, status webu a status bota. Kanály jsou zamčené, nikdo do nich nemůže vstoupit, slouží jen jako vizuální štítek." },
+          { q: "Jak nastavím vlastní názvy?", a: "U každého slotu vyber typ statistiky a uprav šablonu. Použij {value} jako místo, kam se doplní aktuální hodnota. Např.: „👥 Členové: {value}“." },
+          { q: "Proč se hodnoty mění pomalu?", a: "Discord limituje přejmenování kanálů na ~2× za 10 minut, proto bot aktualizuje statistiky každých 10 minut." },
+          { q: "Jaká oprávnění bot potřebuje?", a: "Manage Channels (Spravovat kanály), aby mohl vytvořit kategorii a kanály a přejmenovávat je." },
+          { q: "Můžu mít méně než 4 statistiky?", a: "Ano — u nepotřebných slotů zvol „— vypnuto —“. Vytvoří se jen aktivní." },
+          { q: "Status webu / bota – co to ukazuje?", a: "Web ukazuje UP nebo DOWN podle nastavení Údržba webu v sekci Základ. Bot ukazuje UP vždy, když běží (pokud spadne, hodnoty se prostě přestanou aktualizovat)." },
+        ],
+      },
+      {
         id: "general",
         title: "Obecné / problémy",
         items: [
