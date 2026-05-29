@@ -20,14 +20,21 @@ async function fetchWebStatus() {
 
 async function valueFor(kind, guild) {
   switch (kind) {
-    case 'members':
-      return String(guild.memberCount ?? '?');
+    case 'members': {
+      try {
+        const members = await guild.members.fetch().catch(() => null);
+        if (!members) return String(guild.memberCount ?? '?');
+        const humans = members.filter((m) => !m.user.bot).size;
+        return String(humans);
+      } catch { return String(guild.memberCount ?? '?'); }
+    }
     case 'online': {
       try {
         const members = await guild.members.fetch({ withPresences: true }).catch(() => null);
         if (!members) return '?';
         let online = 0;
         members.forEach((m) => {
+          if (m.user.bot) return;
           const s = m.presence?.status;
           if (s && s !== 'offline') online += 1;
         });
