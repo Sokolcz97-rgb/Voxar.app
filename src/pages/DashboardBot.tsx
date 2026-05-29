@@ -735,6 +735,11 @@ const DashboardBot = () => {
             </Card>
           </TabsContent>
 
+          {/* SERVER STATS */}
+          <TabsContent value="serverstats" className="mt-4">
+            <ServerStatsCard guildId={guildIdOrNull()} isManager={isManager} />
+          </TabsContent>
+
           {/* FAQ */}
           <TabsContent value="faq" className="mt-4">
             <BotFaq />
