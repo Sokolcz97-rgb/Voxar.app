@@ -598,30 +598,11 @@ const DashboardBot = () => {
 
           {/* EMBED / WEBHOOK */}
           <TabsContent value="embed" className="mt-4">
-            <div className="grid lg:grid-cols-2 gap-4">
-              <Card className="glass border-border p-6 space-y-4">
-                <div>
-                  <Label>Discord webhook URL <span className="text-muted-foreground">(prázdné = zařadit do fronty pro bota)</span></Label>
-                  <Input placeholder="https://discord.com/api/webhooks/..." value={embedWebhook} onChange={(e) => setEmbedWebhook(e.target.value)} disabled={!isManager} />
-                </div>
-                <div>
-                  <Label>Text zprávy (volitelně)</Label>
-                  <Textarea rows={2} value={embedContent} onChange={(e) => setEmbedContent(e.target.value)} disabled={!isManager} />
-                </div>
-                <div>
-                  <Label>Embed JSON <span className="text-muted-foreground">(podporuje formát z discohook.org)</span></Label>
-                  <Textarea rows={12} className="font-mono text-xs" value={embedJson} onChange={(e) => setEmbedJson(e.target.value)} disabled={!isManager} />
-                </div>
-                <Button onClick={sendEmbed} disabled={!isManager || sending}>
-                  {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                  Odeslat {selectedGuild && `do ${selectedGuild.name}`}
-                </Button>
-              </Card>
-              <div className="space-y-2 lg:sticky lg:top-24 self-start">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled</Label>
-                <EmbedLivePreview content={embedContent} json={embedJson} />
-              </div>
-            </div>
+            <EmbedBuilder
+              guildId={guildIdOrNull()}
+              guildName={selectedGuild?.name}
+              isManager={isManager}
+            />
           </TabsContent>
 
           {/* STREAMS */}
