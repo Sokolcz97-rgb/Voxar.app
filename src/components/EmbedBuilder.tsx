@@ -100,13 +100,19 @@ export function EmbedBuilder({
   guildId,
   guildName,
   isManager,
+  availableGuilds = [],
 }: {
   guildId: string | null;
   guildName?: string | null;
   isManager: boolean;
+  availableGuilds?: { guild_id: string; name: string }[];
 }) {
   const [content, setContent] = useState("");
   const [embed, setEmbed] = useState<EmbedState>(DEFAULT_EMBED);
+  const [pickedGuildId, setPickedGuildId] = useState<string>("");
+  const effectiveGuildId = guildId ?? (pickedGuildId || null);
+  const effectiveGuildName =
+    guildName ?? availableGuilds.find((g) => g.guild_id === pickedGuildId)?.name ?? null;
   const [channelId, setChannelId] = useState<string>("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [sending, setSending] = useState(false);
