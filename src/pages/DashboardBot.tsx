@@ -19,6 +19,7 @@ import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
 import { MultiChannelPicker } from "@/components/MultiChannelPicker";
 import { BotFaq } from "@/components/BotFaq";
+import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
