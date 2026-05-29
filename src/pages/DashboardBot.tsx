@@ -504,11 +504,13 @@ const DashboardBot = () => {
                     <Switch checked={config.nsfw_protection} onCheckedChange={(v) => setConfig({ ...config, nsfw_protection: v })} disabled={!isManager} />
                   </div>
                   <div>
-                    <Label>Povolené NSFW kanály (ID, oddělené čárkou)</Label>
-                    <Input
-                      value={(config.nsfw_allowed_channels ?? []).join(", ")}
-                      onChange={(e) => setConfig({ ...config, nsfw_allowed_channels: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                    <Label>Povolené NSFW kanály</Label>
+                    <MultiChannelPicker
+                      guildId={guildIdOrNull()}
+                      value={config.nsfw_allowed_channels ?? []}
+                      onChange={(v) => setConfig({ ...config, nsfw_allowed_channels: v })}
                       disabled={!isManager}
+                      placeholder="Přidat NSFW kanál"
                     />
                   </div>
                 </div>
