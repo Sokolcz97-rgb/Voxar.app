@@ -198,6 +198,8 @@ async function _updateGuildStats(guild) {
 
     // Reconcile: delete any extra voice channels inside our category that aren't tracked
     await cleanupOrphans(guild, category, keepIds);
+    // Also clean up leftover stats categories from previous runs/renames
+    await cleanupOldCategories(guild, category.id);
 
     // Always persist normalized slots (clears stale channel_ids etc.)
     await supabase.from('bot_server_stats').update({ slots: cfg.slots }).eq('guild_id', guild.id);
