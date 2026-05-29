@@ -127,17 +127,48 @@ export default function DashboardBotGuilds() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams.get("discord_session")]);
 
-  // Primary path: popup posts the result back to us.
+  // Primary path: popup returns to our same-origin completion page, then notifies this tab.
   useEffect(() => {
+    const handleNonce = (nonce: string) => {
+      setOauthLoading(false);
+      void loadPickerForNonce(nonce);
+    };
+
     const handler = (ev: MessageEvent) => {
       if (ev.origin !== window.location.origin) return;
       const data = ev.data as any;
       if (!data || data.type !== "discord-oauth-result" || !data.nonce) return;
-      setOauthLoading(false);
-      void loadPickerForNonce(data.nonce);
+      handleNonce(data.nonce);
     };
+
+    const storageHandler = (ev: StorageEvent) => {
+      if (ev.key !== "discord-oauth-result" || !ev.newValue) return;
+      try {
+        const data = JSON.parse(ev.newValue);
+        if (data?.type === "discord-oauth-result" && data.nonce) handleNonce(data.nonce);
+      } catch {
+        // Ignore malformed storage payloads.
+      }
+    };
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel("discord-oauth");
+      channel.onmessage = (ev) => {
+        const data = ev.data as any;
+        if (data?.type === "discord-oauth-result" && data.nonce) handleNonce(data.nonce);
+      };
+    } catch {
+      channel = null;
+    }
+
     window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
+    window.addEventListener("storage", storageHandler);
+    return () => {
+      window.removeEventListener("message", handler);
+      window.removeEventListener("storage", storageHandler);
+      channel?.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
