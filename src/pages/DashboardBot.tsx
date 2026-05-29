@@ -744,6 +744,7 @@ const DashboardBot = () => {
               )}
             </Card>
           </TabsContent>
+          </div>
         </Tabs>
       </main>
     </div>
