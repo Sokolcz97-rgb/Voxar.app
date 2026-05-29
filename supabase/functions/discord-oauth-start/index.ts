@@ -45,7 +45,9 @@ Deno.serve(async (req) => {
       redirect_uri: REDIRECT_URI,
       scope: "identify guilds",
       state,
-      prompt: "consent",
+      // prompt=none → Discord přeskočí potvrzovací obrazovku, pokud uživatel
+      // už dříve autorizoval naši aplikaci.
+      prompt: "none",
     });
     const url = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
     return new Response(JSON.stringify({ url, state: nonce }), {
