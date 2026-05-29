@@ -368,17 +368,29 @@ const DashboardBot = () => {
           )}
         </Card>
 
-        <Tabs defaultValue="basics">
-          <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="basics">Základ</TabsTrigger>
-            <TabsTrigger value="automod">Auto-moderace</TabsTrigger>
-            <TabsTrigger value="commands">Příkazy</TabsTrigger>
-            <TabsTrigger value="welcome">Uvítací zprávy</TabsTrigger>
-            <TabsTrigger value="embed">Embed / Webhook</TabsTrigger>
-            <TabsTrigger value="streams">YT / Twitch</TabsTrigger>
-            <TabsTrigger value="tickets">Tickety</TabsTrigger>
-            <TabsTrigger value="status">Status checks</TabsTrigger>
+        <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">
+          <TabsList className="lg:sticky lg:top-20 flex lg:flex-col h-auto w-full lg:w-60 shrink-0 bg-card/40 backdrop-blur-md border border-border rounded-xl p-2 gap-1 overflow-x-auto lg:overflow-visible justify-start">
+            {[
+              { v: "basics", l: "Základ" },
+              { v: "automod", l: "Auto-moderace" },
+              { v: "commands", l: "Příkazy" },
+              { v: "welcome", l: "Uvítací zprávy" },
+              { v: "embed", l: "Embed / Webhook" },
+              { v: "streams", l: "YT / Twitch" },
+              { v: "tickets", l: "Tickety" },
+              { v: "status", l: "Status checks" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.v}
+                value={tab.v}
+                className="w-full justify-start whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-sm text-muted-foreground transition-all hover:text-foreground hover:bg-secondary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/60 data-[state=active]:[box-shadow:var(--glow-soft)]"
+              >
+                {tab.l}
+              </TabsTrigger>
+            ))}
           </TabsList>
+
+          <div className="flex-1 min-w-0 w-full">
 
           {/* BASICS */}
           <TabsContent value="basics" className="mt-4">
