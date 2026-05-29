@@ -173,12 +173,12 @@ export default function DashboardBotGuilds() {
           }
         }, 500);
       } else {
-        // Popup zablokován — fallback na top-level navigaci
-        toast.message("Povol vyskakovací okna pro plynulé přihlášení.");
-        if (window.top) {
-          window.top.location.href = (data as any).url;
-        } else {
-          window.location.href = (data as any).url;
+        // Popup zablokován (časté v Lovable preview iframe) — místo top-level
+        // navigace (která může selhat cross-origin) otevři nové okno/tab.
+        setOauthLoading(false);
+        const opened = window.open((data as any).url, "_blank", "noopener=no");
+        if (!opened) {
+          toast.error("Povol vyskakovací okna pro tento web a zkus to znovu.");
         }
       }
     } catch (e) {
