@@ -38,6 +38,7 @@ client.once('ready', async () => {
   startOutboundWorker(client);
   startCommandsRealtime(client);
   startTicketsConfigRealtime(client);
+  startServerStats(client);
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
