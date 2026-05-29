@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 
-const DEFAULT_BOT_VERSION = 'ticket-categories-2026-05-21';
+const DEFAULT_BOT_VERSION = 'server-stats-2026-05-29';
 
 export function startHeartbeat(client) {
   const send = async () => {
