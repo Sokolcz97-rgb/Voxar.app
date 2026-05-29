@@ -316,6 +316,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_server_stats: {
+        Row: {
+          category_id: string | null
+          category_name: string
+          enabled: boolean
+          guild_id: string
+          id: string
+          slots: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          category_name?: string
+          enabled?: boolean
+          guild_id: string
+          id?: string
+          slots?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          category_name?: string
+          enabled?: boolean
+          guild_id?: string
+          id?: string
+          slots?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       bot_status: {
         Row: {
           guild_count: number | null
