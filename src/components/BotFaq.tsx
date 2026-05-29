@@ -98,6 +98,18 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         ],
       },
       {
+        id: "serverstats",
+        title: "Server Stats",
+        items: [
+          { q: "Co to dělá?", a: "Po zapnutí bot vytvoří v tvém Discord serveru kategorii nahoře a v ní hlasové kanály (max. 4), které ukazují statistiky — počet členů, online, status webu a status bota. Kanály jsou zamčené, nikdo do nich nemůže vstoupit, slouží jen jako vizuální štítek." },
+          { q: "Jak nastavím vlastní názvy?", a: "U každého slotu vyber typ statistiky a uprav šablonu. Použij {value} jako místo, kam se doplní aktuální hodnota. Např.: „👥 Členové: {value}“." },
+          { q: "Proč se hodnoty mění pomalu?", a: "Discord limituje přejmenování kanálů na ~2× za 10 minut, proto bot aktualizuje statistiky každých 10 minut." },
+          { q: "Jaká oprávnění bot potřebuje?", a: "Manage Channels (Spravovat kanály), aby mohl vytvořit kategorii a kanály a přejmenovávat je." },
+          { q: "Můžu mít méně než 4 statistiky?", a: "Ano — u nepotřebných slotů zvol „— vypnuto —“. Vytvoří se jen aktivní." },
+          { q: "Status webu / bota – co to ukazuje?", a: "Web ukazuje UP nebo DOWN podle nastavení Údržba webu v sekci Základ. Bot ukazuje UP vždy, když běží (pokud spadne, hodnoty se prostě přestanou aktualizovat)." },
+        ],
+      },
+      {
         id: "general",
         title: "Obecné / problémy",
         items: [
@@ -189,6 +201,18 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         items: [
           { q: "What does it monitor?", a: "The bot pings the given URL on schedule. If it goes down, an alert is posted to the chosen Discord channel." },
           { q: "Webhook URL", a: "Optional — used instead of the bot (handy if the bot isn't on the server)." },
+        ],
+      },
+      {
+        id: "serverstats",
+        title: "Server Stats",
+        items: [
+          { q: "What does it do?", a: "When enabled, the bot creates a category at the top of your Discord server with up to 4 locked voice channels that display live stats — member count, online count, web status and bot status. Nobody can join them, they act as visual badges." },
+          { q: "How do I customize names?", a: "For each slot pick a stat type and edit the template. Use {value} as a placeholder for the actual value, e.g. \"👥 Members: {value}\"." },
+          { q: "Why are updates slow?", a: "Discord rate-limits channel renames to ~2 per 10 minutes, so the bot refreshes stats every 10 minutes." },
+          { q: "Permissions required", a: "Manage Channels — so the bot can create the category, channels, and rename them." },
+          { q: "Can I have fewer than 4 stats?", a: "Yes — set unused slots to \"— off —\". Only enabled ones are created." },
+          { q: "What does Web / Bot status show?", a: "Web shows UP or DOWN based on the Web maintenance toggle in Basics. Bot shows UP whenever it's running (if it goes down, values simply stop updating)." },
         ],
       },
       {

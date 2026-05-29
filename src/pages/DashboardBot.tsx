@@ -19,6 +19,7 @@ import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
 import { MultiChannelPicker } from "@/components/MultiChannelPicker";
 import { BotFaq } from "@/components/BotFaq";
+import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
@@ -382,6 +383,7 @@ const DashboardBot = () => {
               { v: "streams", l: "YT / Twitch" },
               { v: "tickets", l: "Tickety" },
               { v: "status", l: "Status checks" },
+              { v: "serverstats", l: "Server Stats" },
               { v: "faq", l: "FAQ / Návod" },
             ].map((tab) => (
               <TabsTrigger
@@ -731,6 +733,11 @@ const DashboardBot = () => {
                 </ul>
               )}
             </Card>
+          </TabsContent>
+
+          {/* SERVER STATS */}
+          <TabsContent value="serverstats" className="mt-4">
+            <ServerStatsCard guildId={guildIdOrNull()} isManager={isManager} />
           </TabsContent>
 
           {/* FAQ */}
