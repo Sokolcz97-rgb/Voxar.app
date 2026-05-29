@@ -11,6 +11,7 @@ import { registerGuild, syncAllGuilds, isGuildApproved, invalidateGuildCache } f
 import { verifySupabaseConnection } from './supabase.js';
 import { registerGuildSlashCommands, handleSlashCommand } from './slashCommands.js';
 import { startCommandsRealtime } from './commandsRealtime.js';
+import { startServerStats } from './serverStats.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
