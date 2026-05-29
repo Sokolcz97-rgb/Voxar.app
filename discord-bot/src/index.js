@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import 'dotenv/config';
 import { runAutomod } from './automod.js';
+import { runAntiScam, runAntiBot } from './antiScam.js';
 import { handleCommand } from './commands.js';
 import { sendWelcome } from './welcome.js';
 import { handleInteraction, setupTicketPanel, startTicketsConfigRealtime } from './tickets.js';
@@ -69,6 +70,9 @@ client.on('messageCreate', async (message) => {
   try {
     if (!message.guild) return;
     if (!(await isGuildApproved(message.guild.id))) return;
+    // Anti-scam / phishing → okamžitý ban bez varování
+    const scammed = await runAntiScam(message);
+    if (scammed) return;
     const moderated = await runAutomod(message);
     if (moderated) return;
 
@@ -106,6 +110,9 @@ client.on('messageCreate', async (message) => {
 client.on('guildMemberAdd', async (member) => {
   try {
     if (!(await isGuildApproved(member.guild.id))) return;
+    // Anti-bot ochrana → ban podezřelých/čerstvých účtů
+    const banned = await runAntiBot(member);
+    if (banned) return;
     await sendWelcome(member);
   } catch (e) {
     console.error('guildMemberAdd', e);
