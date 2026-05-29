@@ -405,16 +405,16 @@ const DashboardBot = () => {
                     <Input value={config.prefix ?? ""} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} />
                   </div>
                   <div>
-                    <Label>Welcome kanál (ID)</Label>
-                    <Input value={config.default_welcome_channel ?? ""} onChange={(e) => setConfig({ ...config, default_welcome_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Welcome kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_welcome_channel} onChange={(v) => setConfig({ ...config, default_welcome_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                   <div>
-                    <Label>Log kanál (ID)</Label>
-                    <Input value={config.default_log_channel ?? ""} onChange={(e) => setConfig({ ...config, default_log_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Log kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_log_channel} onChange={(v) => setConfig({ ...config, default_log_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                   <div>
-                    <Label>Alerts kanál (ID)</Label>
-                    <Input value={config.default_alerts_channel ?? ""} onChange={(e) => setConfig({ ...config, default_alerts_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Alerts kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_alerts_channel} onChange={(v) => setConfig({ ...config, default_alerts_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                 </div>
                 <div className="border-t border-border pt-4 space-y-3">
