@@ -382,6 +382,7 @@ const DashboardBot = () => {
               { v: "streams", l: "YT / Twitch" },
               { v: "tickets", l: "Tickety" },
               { v: "status", l: "Status checks" },
+              { v: "faq", l: "FAQ / Návod" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.v}
