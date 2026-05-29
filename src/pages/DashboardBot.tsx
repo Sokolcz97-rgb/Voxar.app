@@ -17,6 +17,8 @@ import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-r
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
+import { MultiChannelPicker } from "@/components/MultiChannelPicker";
+import { BotFaq } from "@/components/BotFaq";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
@@ -380,6 +382,7 @@ const DashboardBot = () => {
               { v: "streams", l: "YT / Twitch" },
               { v: "tickets", l: "Tickety" },
               { v: "status", l: "Status checks" },
+              { v: "faq", l: "FAQ / Návod" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.v}
@@ -403,16 +406,16 @@ const DashboardBot = () => {
                     <Input value={config.prefix ?? ""} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} />
                   </div>
                   <div>
-                    <Label>Welcome kanál (ID)</Label>
-                    <Input value={config.default_welcome_channel ?? ""} onChange={(e) => setConfig({ ...config, default_welcome_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Welcome kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_welcome_channel} onChange={(v) => setConfig({ ...config, default_welcome_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                   <div>
-                    <Label>Log kanál (ID)</Label>
-                    <Input value={config.default_log_channel ?? ""} onChange={(e) => setConfig({ ...config, default_log_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Log kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_log_channel} onChange={(v) => setConfig({ ...config, default_log_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                   <div>
-                    <Label>Alerts kanál (ID)</Label>
-                    <Input value={config.default_alerts_channel ?? ""} onChange={(e) => setConfig({ ...config, default_alerts_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Alerts kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_alerts_channel} onChange={(v) => setConfig({ ...config, default_alerts_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                 </div>
                 <div className="border-t border-border pt-4 space-y-3">
@@ -433,8 +436,8 @@ const DashboardBot = () => {
                     </div>
                   )}
                   <div>
-                    <Label>Maintenance kanál (ID)</Label>
-                    <Input value={config.maintenance_channel ?? ""} onChange={(e) => setConfig({ ...config, maintenance_channel: e.target.value })} disabled={!isManager} />
+                    <Label>Maintenance kanál</Label>
+                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.maintenance_channel} onChange={(v) => setConfig({ ...config, maintenance_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
                   </div>
                 </div>
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
@@ -502,11 +505,13 @@ const DashboardBot = () => {
                     <Switch checked={config.nsfw_protection} onCheckedChange={(v) => setConfig({ ...config, nsfw_protection: v })} disabled={!isManager} />
                   </div>
                   <div>
-                    <Label>Povolené NSFW kanály (ID, oddělené čárkou)</Label>
-                    <Input
-                      value={(config.nsfw_allowed_channels ?? []).join(", ")}
-                      onChange={(e) => setConfig({ ...config, nsfw_allowed_channels: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                    <Label>Povolené NSFW kanály</Label>
+                    <MultiChannelPicker
+                      guildId={guildIdOrNull()}
+                      value={config.nsfw_allowed_channels ?? []}
+                      onChange={(v) => setConfig({ ...config, nsfw_allowed_channels: v })}
                       disabled={!isManager}
+                      placeholder="Přidat NSFW kanál"
                     />
                   </div>
                 </div>
@@ -726,6 +731,11 @@ const DashboardBot = () => {
                 </ul>
               )}
             </Card>
+          </TabsContent>
+
+          {/* FAQ */}
+          <TabsContent value="faq" className="mt-4">
+            <BotFaq />
           </TabsContent>
           </div>
         </Tabs>
