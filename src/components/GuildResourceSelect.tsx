@@ -106,6 +106,27 @@ export function GuildResourceSelect({
 }) {
   const { data, loading, error } = useGuildResources(guildId);
 
+  const items = useMemo(() => {
+    if (!data) return [];
+    if (kind === "role") return data.roles.map((r) => ({ id: r.id, label: r.name }));
+    const filtered = filterChannels(data.channels, kind);
+    if (kind === "category") {
+      return filtered.map((c) => ({ id: c.id, label: `📁 ${c.name}` }));
+    }
+    const cats = new Map<string, string>();
+    data.channels.filter((c) => c.type === 4).forEach((c) => cats.set(c.id, c.name));
+    return filtered
+      .sort((a, b) => {
+        const ca = a.parent_id ? cats.get(a.parent_id) ?? "" : "";
+        const cb = b.parent_id ? cats.get(b.parent_id) ?? "" : "";
+        return ca.localeCompare(cb) || a.position - b.position;
+      })
+      .map((c) => ({
+        id: c.id,
+        label: `${TYPE_LABEL[c.type] || "#"} ${c.name}${c.parent_id && cats.get(c.parent_id) ? `  ·  ${cats.get(c.parent_id)}` : ""}`,
+      }));
+  }, [data, kind]);
+
   // Fallback: no guild → free-text ID
   if (!guildId) {
     return (
@@ -131,28 +152,6 @@ export function GuildResourceSelect({
       </div>
     );
   }
-
-  const items = useMemo(() => {
-    if (!data) return [];
-    if (kind === "role") return data.roles.map((r) => ({ id: r.id, label: r.name }));
-    const filtered = filterChannels(data.channels, kind);
-    // Group children under their categories for text/voice/any-channel
-    if (kind === "category") {
-      return filtered.map((c) => ({ id: c.id, label: `📁 ${c.name}` }));
-    }
-    const cats = new Map<string, string>();
-    data.channels.filter((c) => c.type === 4).forEach((c) => cats.set(c.id, c.name));
-    return filtered
-      .sort((a, b) => {
-        const ca = a.parent_id ? cats.get(a.parent_id) ?? "" : "";
-        const cb = b.parent_id ? cats.get(b.parent_id) ?? "" : "";
-        return ca.localeCompare(cb) || a.position - b.position;
-      })
-      .map((c) => ({
-        id: c.id,
-        label: `${TYPE_LABEL[c.type] || "#"} ${c.name}${c.parent_id && cats.get(c.parent_id) ? `  ·  ${cats.get(c.parent_id)}` : ""}`,
-      }));
-  }, [data, kind]);
 
   const NONE = "__none__";
   return (
