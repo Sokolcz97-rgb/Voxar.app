@@ -110,6 +110,9 @@ client.on('messageCreate', async (message) => {
 client.on('guildMemberAdd', async (member) => {
   try {
     if (!(await isGuildApproved(member.guild.id))) return;
+    // Anti-bot ochrana → ban podezřelých/čerstvých účtů
+    const banned = await runAntiBot(member);
+    if (banned) return;
     await sendWelcome(member);
   } catch (e) {
     console.error('guildMemberAdd', e);
