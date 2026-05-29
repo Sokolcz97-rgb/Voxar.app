@@ -39,6 +39,7 @@ import Novinky from "./pages/Novinky.tsx";
 import AdminNovinky from "./pages/AdminNovinky.tsx";
 import AdminForumCategories from "./pages/AdminForumCategories.tsx";
 import AdminStats from "./pages/AdminStats.tsx";
+import DiscordOAuthComplete from "./pages/DiscordOAuthComplete.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import { AIHelper } from "@/components/AIHelper";
@@ -53,6 +54,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/discord-oauth-complete" element={<DiscordOAuthComplete />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard/bot" element={<ProtectedRoute><DashboardBot /></ProtectedRoute>} />
       <Route path="/dashboard/bot/guilds" element={<ProtectedRoute><DashboardBotGuilds /></ProtectedRoute>} />
