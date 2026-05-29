@@ -11,6 +11,11 @@ const KIND_DEFAULTS = {
   boosts: { template: '🚀 Boosty: {value}' },
 };
 
+// In-flight lock per guild to prevent parallel runs from creating duplicates
+const inFlight = new Map();
+// Realtime debounce timers per guild
+const debounceTimers = new Map();
+
 async function fetchWebStatus() {
   try {
     const { data } = await supabase.from('bot_config').select('web_maintenance').maybeSingle();
@@ -23,15 +28,15 @@ async function valueFor(kind, guild) {
     case 'members': {
       try {
         const members = await guild.members.fetch().catch(() => null);
-        if (!members) return String(guild.memberCount ?? '?');
+        if (!members) return String(guild.memberCount ?? 0);
         const humans = members.filter((m) => !m.user.bot).size;
         return String(humans);
-      } catch { return String(guild.memberCount ?? '?'); }
+      } catch { return String(guild.memberCount ?? 0); }
     }
     case 'online': {
       try {
         const members = await guild.members.fetch({ withPresences: true }).catch(() => null);
-        if (!members) return '?';
+        if (!members) return '0';
         let online = 0;
         members.forEach((m) => {
           if (m.user.bot) return;
@@ -39,7 +44,7 @@ async function valueFor(kind, guild) {
           if (s && s !== 'offline') online += 1;
         });
         return String(online);
-      } catch { return '?'; }
+      } catch { return '0'; }
     }
     case 'web_status':
       return await fetchWebStatus();
@@ -92,6 +97,10 @@ async function ensureChannel(guild, category, slot, name) {
     const ch = guild.channels.cache.get(slot.channel_id)
       || await guild.channels.fetch(slot.channel_id).catch(() => null);
     if (ch) {
+      // If channel exists but is parented elsewhere, move it back under our category
+      if (ch.parentId !== category.id) {
+        await ch.setParent(category.id, { lockPermissions: false }).catch(() => {});
+      }
       if (ch.name !== name) {
         await ch.setName(name).catch((e) => console.error('[serverStats] rename failed:', e?.message || e));
       }
@@ -111,7 +120,22 @@ async function ensureChannel(guild, category, slot, name) {
   return created;
 }
 
-async function updateGuildStats(guild) {
+async function cleanupOrphans(guild, category, keepIds) {
+  try {
+    const children = guild.channels.cache.filter(
+      (c) => c.parentId === category.id && c.type === ChannelType.GuildVoice,
+    );
+    for (const ch of children.values()) {
+      if (keepIds.has(ch.id)) continue;
+      console.log(`[serverStats] deleting orphan channel ${ch.name} (${ch.id}) in ${guild.name}`);
+      await ch.delete('Server stats cleanup').catch((e) => console.error('[serverStats] delete orphan failed:', e?.message || e));
+    }
+  } catch (e) {
+    console.error('[serverStats] cleanupOrphans:', e?.message || e);
+  }
+}
+
+async function _updateGuildStats(guild) {
   try {
     const { data: cfg, error } = await supabase
       .from('bot_server_stats')
@@ -126,24 +150,44 @@ async function updateGuildStats(guild) {
     }
     const slots = Array.isArray(cfg.slots) ? cfg.slots.slice(0, 4) : [];
     const active = slots.filter((s) => s && s.kind && s.kind !== 'none');
-    if (active.length === 0) return;
 
     const category = await ensureCategory(guild, cfg);
     if (!category) return;
+
+    // Clear channel_id on inactive slots so they don't get re-used / leave orphans
+    for (const slot of slots) {
+      if (!slot || slot.kind === 'none' || !slot.kind) {
+        if (slot && slot.channel_id) slot.channel_id = null;
+      }
+    }
+
+    const keepIds = new Set();
     let dirty = false;
     for (const slot of active) {
       const value = await valueFor(slot.kind, guild);
       const name = renderName(slot, value);
       const before = slot.channel_id;
-      await ensureChannel(guild, category, slot, name);
+      const ch = await ensureChannel(guild, category, slot, name);
+      if (ch) keepIds.add(ch.id);
       if (slot.channel_id !== before) dirty = true;
     }
-    if (dirty) {
-      await supabase.from('bot_server_stats').update({ slots: cfg.slots }).eq('guild_id', guild.id);
-    }
+
+    // Reconcile: delete any extra voice channels inside our category that aren't tracked
+    await cleanupOrphans(guild, category, keepIds);
+
+    // Always persist normalized slots (clears stale channel_ids etc.)
+    await supabase.from('bot_server_stats').update({ slots: cfg.slots }).eq('guild_id', guild.id);
   } catch (e) {
     console.error('[serverStats] updateGuildStats:', e?.message || e);
   }
+}
+
+async function updateGuildStats(guild) {
+  const existing = inFlight.get(guild.id);
+  if (existing) return existing; // coalesce concurrent runs
+  const p = _updateGuildStats(guild).finally(() => inFlight.delete(guild.id));
+  inFlight.set(guild.id, p);
+  return p;
 }
 
 export async function runServerStats(client) {
@@ -161,11 +205,9 @@ async function updateOneGuild(client, guildId) {
 }
 
 export function startServerStats(client) {
-  // Initial run quickly, then every 10 minutes
   setTimeout(() => runServerStats(client).catch((e) => console.error('[serverStats] initial:', e)), 5_000);
   setInterval(() => runServerStats(client).catch((e) => console.error('[serverStats] tick:', e)), INTERVAL_MS);
 
-  // Realtime: when dashboard saves a config, run immediately for that guild
   try {
     supabase
       .channel('bot_server_stats_changes')
@@ -173,8 +215,14 @@ export function startServerStats(client) {
         const row = payload.new || payload.old;
         const guildId = row?.guild_id;
         if (!guildId) return;
-        console.log('[serverStats] realtime change for', guildId);
-        setTimeout(() => updateOneGuild(client, guildId).catch((e) => console.error('[serverStats] realtime run:', e)), 1500);
+        // Debounce: collapse rapid changes (incl. bot's own writes) into one run
+        const t = debounceTimers.get(guildId);
+        if (t) clearTimeout(t);
+        debounceTimers.set(guildId, setTimeout(() => {
+          debounceTimers.delete(guildId);
+          console.log('[serverStats] realtime change for', guildId);
+          updateOneGuild(client, guildId).catch((e) => console.error('[serverStats] realtime run:', e));
+        }, 3000));
       })
       .subscribe((status) => console.log('[serverStats] realtime status:', status));
   } catch (e) {
