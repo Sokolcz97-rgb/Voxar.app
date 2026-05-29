@@ -602,6 +602,7 @@ const DashboardBot = () => {
             <EmbedBuilder
               guildId={guildIdOrNull()}
               guildName={selectedGuild?.name}
+              availableGuilds={guilds}
               isManager={isManager}
             />
           </TabsContent>

@@ -100,13 +100,19 @@ export function EmbedBuilder({
   guildId,
   guildName,
   isManager,
+  availableGuilds = [],
 }: {
   guildId: string | null;
   guildName?: string | null;
   isManager: boolean;
+  availableGuilds?: { guild_id: string; name: string }[];
 }) {
   const [content, setContent] = useState("");
   const [embed, setEmbed] = useState<EmbedState>(DEFAULT_EMBED);
+  const [pickedGuildId, setPickedGuildId] = useState<string>("");
+  const effectiveGuildId = guildId ?? (pickedGuildId || null);
+  const effectiveGuildName =
+    guildName ?? availableGuilds.find((g) => g.guild_id === pickedGuildId)?.name ?? null;
   const [channelId, setChannelId] = useState<string>("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [sending, setSending] = useState(false);
@@ -132,11 +138,10 @@ export function EmbedBuilder({
   const canSend = useMemo(() => {
     if (!isManager) return false;
     if (!content.trim() && !builtEmbed) return false;
-    // either guild+channel OR webhook URL
     if (webhookUrl.trim()) return true;
-    if (guildId && channelId) return true;
+    if (effectiveGuildId && channelId) return true;
     return false;
-  }, [isManager, content, builtEmbed, webhookUrl, guildId, channelId]);
+  }, [isManager, content, builtEmbed, webhookUrl, effectiveGuildId, channelId]);
 
   const send = async () => {
     setSending(true);
@@ -147,7 +152,7 @@ export function EmbedBuilder({
           channel_id: webhookUrl.trim() ? undefined : channelId || undefined,
           content: content || undefined,
           embed: builtEmbed ?? undefined,
-          guild_id: guildId,
+          guild_id: effectiveGuildId,
         },
       });
       if (error) throw error;
@@ -159,7 +164,8 @@ export function EmbedBuilder({
     }
   };
 
-  const hasGuild = !!guildId;
+  const hasGuild = !!effectiveGuildId;
+  const canPickGuild = !guildId && availableGuilds.length > 0;
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
@@ -167,20 +173,40 @@ export function EmbedBuilder({
         {/* DESTINATION */}
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Kam odeslat</Label>
+
+          {canPickGuild && (
+            <div className="space-y-1">
+              <Label className="text-xs">Server</Label>
+              <select
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
+                value={pickedGuildId}
+                onChange={(e) => { setPickedGuildId(e.target.value); setChannelId(""); }}
+                disabled={!isManager}
+              >
+                <option value="">— vyber server —</option>
+                {availableGuilds.map((g) => (
+                  <option key={g.guild_id} value={g.guild_id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {hasGuild ? (
             <div className="space-y-2">
+              <Label className="text-xs">Textový kanál</Label>
               <GuildResourceSelect
-                guildId={guildId}
+                guildId={effectiveGuildId}
                 kind="text"
                 value={channelId}
                 onChange={(v) => setChannelId(v ?? "")}
                 placeholder="Vyber kanál na serveru"
               />
               <p className="text-xs text-muted-foreground">
-                Bot odešle zprávu přímo do vybraného kanálu serveru <span className="text-foreground font-medium">{guildName ?? ""}</span>.
+                Bot odešle zprávu přímo do vybraného kanálu serveru{" "}
+                <span className="text-foreground font-medium">{effectiveGuildName ?? ""}</span>.
               </p>
             </div>
-          ) : (
+          ) : !canPickGuild ? (
             <div className="space-y-2">
               <Input
                 placeholder="https://discord.com/api/webhooks/..."
@@ -189,10 +215,10 @@ export function EmbedBuilder({
                 disabled={!isManager}
               />
               <p className="text-xs text-muted-foreground">
-                Vlevo nahoře vyber konkrétní server, aby bylo možné poslat přes bota bez webhooku.
+                Nemáš žádné spravované servery — odeslání jde pouze přes webhook URL.
               </p>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* MESSAGE */}
