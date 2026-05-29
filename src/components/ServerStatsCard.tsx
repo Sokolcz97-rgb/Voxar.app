@@ -209,7 +209,7 @@ export function ServerStatsCard({
             <span>Kategorie zatím nevytvořena – vytvoří se po zapnutí a uložení.</span>
           )}
         </div>
-        <Button onClick={save} disabled={!isManager || saving} variant="hero">
+        <Button onClick={save} disabled={!isManager || saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
           Uložit
         </Button>
