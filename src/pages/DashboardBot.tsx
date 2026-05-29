@@ -732,6 +732,11 @@ const DashboardBot = () => {
               )}
             </Card>
           </TabsContent>
+
+          {/* FAQ */}
+          <TabsContent value="faq" className="mt-4">
+            <BotFaq />
+          </TabsContent>
           </div>
         </Tabs>
       </main>
