@@ -217,6 +217,7 @@ export async function runAntiBot(member) {
   }
 
   let banned = false;
+  let kicked = false;
   try {
     await member.guild.members.ban(member.id, {
       reason: `Anti-bot: ${reason}`,
@@ -225,12 +226,103 @@ export async function runAntiBot(member) {
     banned = true;
   } catch (e) {
     console.error('anti-bot ban failed', e?.message);
+    try {
+      if (member.kickable) { await member.kick(`Anti-bot: ${reason}`); kicked = true; }
+    } catch (e2) { console.error('anti-bot kick fallback failed', e2?.message); }
   }
 
+  const statusNote = banned ? ' → 🔨 BAN' : kicked ? ' → 👢 KICK (ban selhal)' : ' (ban i kick selhaly – chybí oprávnění)';
   await sendAlert(member.guild, cfg, {
     user: member.user,
-    reason: `Anti-bot: ${reason}${banned ? '' : ' (ban se nezdařil – chybí oprávnění?)'}`,
+    reason: `Anti-bot: ${reason}${statusNote}`,
   }).catch(() => {});
 
-  return banned;
+  return banned || kicked;
+}
+
+// ============================================================
+// Manuální sken všech členů serveru — spouštěný z webu (bot_outbound_queue)
+// Posílá souhrnný report do alerts kanálu a u tvrdých případů automaticky banuje (+kick fallback).
+// ============================================================
+export async function scanGuildMembers(guild) {
+  const cfg = await getConfig(guild.id);
+  const alertChannelId = cfg.default_alerts_channel || cfg.default_log_channel;
+  const alertCh = alertChannelId
+    ? await guild.channels.fetch(alertChannelId).catch(() => null)
+    : null;
+
+  await guild.members.fetch().catch((e) => console.error('scan: fetch members', e?.message));
+
+  const suspicious = []; // { member, reason, hard }
+  for (const member of guild.members.cache.values()) {
+    if (member.user.id === guild.client.user.id) continue;
+    const reason = detectSuspiciousAccount(member);
+    if (!reason) continue;
+    const hard =
+      Date.now() - member.user.createdTimestamp < 1000 * 60 * 60 * 24 ||
+      /free|nitro|gift|airdrop|claim/i.test(member.user.username || '') ||
+      (member.user.bot && !member.user.flags?.has?.('VerifiedBot'));
+    suspicious.push({ member, reason, hard });
+  }
+
+  // Akce u tvrdých případů
+  const actioned = [];
+  for (const s of suspicious.filter((x) => x.hard)) {
+    let banned = false;
+    let kicked = false;
+    try {
+      await guild.members.ban(s.member.id, {
+        reason: `Scan anti-bot: ${s.reason}`,
+        deleteMessageSeconds: 60 * 60 * 24,
+      });
+      banned = true;
+    } catch (e) {
+      try {
+        if (s.member.kickable) { await s.member.kick(`Scan anti-bot: ${s.reason}`); kicked = true; }
+      } catch {}
+    }
+    actioned.push({ ...s, banned, kicked });
+  }
+  const watched = suspicious.filter((x) => !x.hard);
+
+  // Souhrnný embed
+  if (alertCh?.isTextBased?.()) {
+    const lines = [];
+    lines.push(`**🔎 Scan členů – ${guild.memberCount} účtů prověřeno**`);
+    lines.push('');
+    if (actioned.length) {
+      lines.push(`**🔨 Akce provedena (${actioned.length}):**`);
+      for (const a of actioned.slice(0, 15)) {
+        const act = a.banned ? 'BAN' : a.kicked ? 'KICK' : 'NIC (chybí oprávnění)';
+        lines.push(`• <@${a.member.id}> \`${a.member.user.tag}\` — ${a.reason} → **${act}**`);
+      }
+      if (actioned.length > 15) lines.push(`…a dalších ${actioned.length - 15}`);
+      lines.push('');
+    }
+    if (watched.length) {
+      lines.push(`**⚠️ Podezřelí (jen sledováno, ${watched.length}):**`);
+      for (const w of watched.slice(0, 20)) {
+        lines.push(`• <@${w.member.id}> \`${w.member.user.tag}\` — ${w.reason}`);
+      }
+      if (watched.length > 20) lines.push(`…a dalších ${watched.length - 20}`);
+    }
+    if (!actioned.length && !watched.length) {
+      lines.push('✅ Nic podezřelého nebylo nalezeno.');
+    }
+    const chunks = [];
+    let cur = '';
+    for (const ln of lines) {
+      if ((cur + ln + '\n').length > 1900) { chunks.push(cur); cur = ''; }
+      cur += ln + '\n';
+    }
+    if (cur) chunks.push(cur);
+    for (const c of chunks) await alertCh.send({ content: c }).catch(() => {});
+  }
+
+  return {
+    total: guild.memberCount,
+    suspicious: suspicious.length,
+    actioned: actioned.length,
+    watched: watched.length,
+  };
 }
