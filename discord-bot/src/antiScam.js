@@ -164,8 +164,9 @@ export async function runAntiScam(message) {
   // 1) smaz zprávu
   await message.delete().catch(() => {});
 
-  // 2) ban bez varování (smaz posledních 24h zpráv)
+  // 2) ban bez varování (smaz posledních 24h zpráv) — pokud ban selže, fallback kick
   let banned = false;
+  let kicked = false;
   try {
     await message.guild.members.ban(message.author.id, {
       reason,
@@ -174,12 +175,17 @@ export async function runAntiScam(message) {
     banned = true;
   } catch (e) {
     console.error('anti-scam ban failed', e?.message);
+    try {
+      const m = await message.guild.members.fetch(message.author.id).catch(() => null);
+      if (m && m.kickable) { await m.kick(reason); kicked = true; }
+    } catch (e2) { console.error('anti-scam kick fallback failed', e2?.message); }
   }
 
   // 3) alert
+  const statusNote = banned ? ' → 🔨 BAN' : kicked ? ' → 👢 KICK (ban selhal)' : ' (ban i kick selhaly – chybí oprávnění)';
   await sendAlert(message.guild, cfg, {
     user: message.author,
-    reason: `${reason}${banned ? '' : ' (ban se nezdařil – chybí oprávnění?)'}`,
+    reason: `${reason}${statusNote}`,
     evidence: `Match: \`${detection.match}\``,
     channel: message.channel,
     messageContent: message.content,
