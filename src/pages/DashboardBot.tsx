@@ -517,6 +517,22 @@ const DashboardBot = () => {
                     />
                   </div>
                 </div>
+                {selectedGuild && (
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <div className="font-medium">Anti-bot / Anti-scam — kontrola členů</div>
+                        <p className="text-xs text-muted-foreground">
+                          Projde všechny členy serveru a vyhodnotí podezřelé účty (nově vytvořené, nick „nitro/free/gift", neoficiální boti).
+                          Tvrdé případy automaticky <strong>banuje</strong> (+kick fallback). Ostatní označí jako „sledováno".
+                          Souhrn odejde do <strong>Alerts kanálu</strong> (nastav v záložce Základ).
+                        </p>
+                      </div>
+                    </div>
+                    <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                  </div>
+                )}
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
               </Card>
             )}
