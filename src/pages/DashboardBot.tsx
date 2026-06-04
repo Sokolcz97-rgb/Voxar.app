@@ -48,6 +48,32 @@ type AnyConfig = {
   maintenance_channel: string | null;
 };
 
+function ScanMembersButton({ guildId, disabled }: { guildId: string; disabled?: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("bot_outbound_queue").insert({
+      source: "bot_scan",
+      payload: { action: "scan_members", guild_id: guildId },
+    });
+    setBusy(false);
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    } else {
+      toast({
+        title: "Kontrola spuštěna",
+        description: "Bot prověří všechny členy a souhrn pošle do Alerts kanálu.",
+      });
+    }
+  };
+  return (
+    <Button onClick={run} disabled={disabled || busy} variant="outline" className="border-primary/50">
+      {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanSearch className="h-4 w-4 mr-2" />}
+      Spustit kontrolu členů
+    </Button>
+  );
+}
+
 type Command = { id: string; name: string; description: string | null; response_type: string; content: any; enabled: boolean; guild_id: string | null };
 type Welcome = { id: string; channel_id: string; message_type: string; content: any; enabled: boolean; guild_id: string | null };
 type StreamNotif = { id: string; platform: string; handle: string; discord_channel_id: string; template: string; enabled: boolean; guild_id: string | null };
