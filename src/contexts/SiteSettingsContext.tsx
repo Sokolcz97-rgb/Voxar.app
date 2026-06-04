@@ -55,7 +55,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     const { data } = await supabase
       .from("site_settings")
-      .select("*")
+      .select(
+        "id, site_name, site_tagline, hero_badge, hero_title_1, hero_title_2, hero_subtitle, hero_cta_label, footer_text, logo_url, favicon_url"
+      )
       .limit(1)
       .maybeSingle();
     if (data) setSettings({ ...DEFAULTS, ...(data as any) });
