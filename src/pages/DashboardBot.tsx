@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch } from "lucide-react";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
@@ -47,6 +47,32 @@ type AnyConfig = {
   web_maintenance?: boolean;
   maintenance_channel: string | null;
 };
+
+function ScanMembersButton({ guildId, disabled }: { guildId: string; disabled?: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("bot_outbound_queue").insert({
+      source: "bot_scan",
+      payload: { action: "scan_members", guild_id: guildId },
+    });
+    setBusy(false);
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    } else {
+      toast({
+        title: "Kontrola spuštěna",
+        description: "Bot prověří všechny členy a souhrn pošle do Alerts kanálu.",
+      });
+    }
+  };
+  return (
+    <Button onClick={run} disabled={disabled || busy} variant="outline" className="border-primary/50">
+      {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanSearch className="h-4 w-4 mr-2" />}
+      Spustit kontrolu členů
+    </Button>
+  );
+}
 
 type Command = { id: string; name: string; description: string | null; response_type: string; content: any; enabled: boolean; guild_id: string | null };
 type Welcome = { id: string; channel_id: string; message_type: string; content: any; enabled: boolean; guild_id: string | null };
@@ -517,6 +543,22 @@ const DashboardBot = () => {
                     />
                   </div>
                 </div>
+                {selectedGuild && (
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <div className="font-medium">Anti-bot / Anti-scam — kontrola členů</div>
+                        <p className="text-xs text-muted-foreground">
+                          Projde všechny členy serveru a vyhodnotí podezřelé účty (nově vytvořené, nick „nitro/free/gift", neoficiální boti).
+                          Tvrdé případy automaticky <strong>banuje</strong> (+kick fallback). Ostatní označí jako „sledováno".
+                          Souhrn odejde do <strong>Alerts kanálu</strong> (nastav v záložce Základ).
+                        </p>
+                      </div>
+                    </div>
+                    <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                  </div>
+                )}
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
               </Card>
             )}

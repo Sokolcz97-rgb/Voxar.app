@@ -1,0 +1,1 @@
+CREATE POLICY "Guild managers queue scan members" ON public.bot_outbound_queue FOR INSERT TO authenticated WITH CHECK (source = 'bot_scan' AND (payload->>'guild_id') IS NOT NULL AND is_guild_manager(auth.uid(), payload->>'guild_id'));

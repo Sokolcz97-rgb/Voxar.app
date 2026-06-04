@@ -7,6 +7,7 @@ import {
 } from 'discord.js';
 import { supabase } from './supabase.js';
 import { setupTicketPanel } from './tickets.js';
+import { scanGuildMembers } from './antiScam.js';
 
 export function startOutboundWorker(client) {
   // Poll every 5s for queued jobs (channel sends + special actions)
@@ -28,6 +29,31 @@ export function startOutboundWorker(client) {
       for (const job of data || []) {
         try {
           const payload = job.payload || {};
+
+          // Special action: manuální anti-bot scan členů serveru
+          if (payload.action === 'scan_members') {
+            const guildId = payload.guild_id;
+            const guild = guildId ? await client.guilds.fetch(guildId).catch(() => null) : null;
+            if (!guild) {
+              await supabase.from('bot_outbound_queue')
+                .update({ error: 'guild not found', sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+              continue;
+            }
+            try {
+              const res = await scanGuildMembers(guild);
+              await supabase.from('bot_outbound_queue')
+                .update({ sent_at: new Date().toISOString(), error: null, payload: { ...payload, result: res } })
+                .eq('id', job.id);
+            } catch (e) {
+              console.error('scan_members', e);
+              await supabase.from('bot_outbound_queue')
+                .update({ error: String(e), sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+            }
+            continue;
+          }
+
 
           // Special action: refresh ticket panel
           if (payload.action === 'refresh_ticket_panel') {
