@@ -2,10 +2,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024; // 25 MB
 
-// Long-lived signed URL — bucket is private, ale embedované URLs ve fórových
-// postech musí zůstat funkční bez per-request resolvingu.
-const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365 * 5; // 5 let
-
 export const ALLOWED_MIME = new Set<string>([
   "image/png", "image/jpeg", "image/webp", "image/gif",
   "video/mp4", "video/webm", "video/quicktime",
@@ -46,16 +42,10 @@ export async function uploadAttachment(file: File, userId: string): Promise<Uplo
 
   if (error) throw error;
 
-  const { data: signed, error: signErr } = await supabase.storage
-    .from("forum-attachments")
-    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
-
-  if (signErr || !signed?.signedUrl) {
-    throw signErr ?? new Error("Nepodařilo se vytvořit URL přílohy");
-  }
+  const { data } = supabase.storage.from("forum-attachments").getPublicUrl(path);
 
   return {
-    url: signed.signedUrl,
+    url: data.publicUrl,
     name: file.name,
     mime: file.type,
     size: file.size,
