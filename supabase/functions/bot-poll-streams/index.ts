@@ -107,27 +107,27 @@ async function pollYouTube(rows: Row[], supabase: any) {
         /"liveBroadcastContent":"live"/.test(html);
       if (!isLive) continue;
 
-      const vidMatch =
-        html.match(/"videoId":"([A-Za-z0-9_-]{11})"/) ||
-        html.match(/watch\?v=([A-Za-z0-9_-]{11})/);
-      const videoId = vidMatch?.[1] ?? "";
+      // Canonical videoId = the actual live broadcast (not a recommended video).
+      const canonical = html.match(
+        /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
+      );
+      const ogUrl = html.match(
+        /<meta property="og:url" content="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
+      );
+      const fallbackVid = html.match(/"videoId":"([A-Za-z0-9_-]{11})"/);
+      const videoId = canonical?.[1] ?? ogUrl?.[1] ?? fallbackVid?.[1] ?? "";
       if (!videoId) continue;
-      // Already notified about this live broadcast
       if (videoId === row.last_video_id) continue;
 
       const titleMatch =
+        html.match(/<meta property="og:title" content="([^"]+)"/) ||
         html.match(/<meta name="title" content="([^"]+)"/) ||
         html.match(/<title>([^<]+)<\/title>/);
       const title = (titleMatch?.[1] ?? "").replace(/ - YouTube$/, "");
       const url = `https://youtu.be/${videoId}`;
-      const ogMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
-      const playerThumb = html.match(
-        /"thumbnails":\[(?:[^\]]*?)\{"url":"(https:\/\/i\.ytimg\.com\/vi\/[^"]+\/maxresdefault\.jpg[^"]*)"/,
-      );
+      const ogImg = html.match(/<meta property="og:image" content="([^"]+)"/);
       const thumbUrl =
-        ogMatch?.[1] ??
-        playerThumb?.[1] ??
-        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+        ogImg?.[1] ?? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
       const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
       const embed = {
         title: title || row.handle,
