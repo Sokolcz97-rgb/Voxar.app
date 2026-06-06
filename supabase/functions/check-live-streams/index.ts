@@ -172,11 +172,16 @@ async function checkYouTube(
           html.match(/<meta name="title" content="([^"]+)"/) ||
           html.match(/<title>([^<]+)<\/title>/);
         const title = titleMatch?.[1]?.replace(/ - YouTube$/, "") ?? null;
-        // Prefer the uploader's custom thumbnail (maxresdefault → hqdefault).
-        // hqdefault.jpg is always available; maxresdefault only if the creator uploaded HD.
-        const thumb = videoId
-          ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`
-          : null;
+        // Real thumbnail set on the YouTube video: prefer og:image, then the
+        // largest entry from playerResponse thumbnails, fall back to maxres.
+        const ogMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+        const playerThumb = html.match(
+          /"thumbnails":\[(?:[^\]]*?)\{"url":"(https:\/\/i\.ytimg\.com\/vi\/[^"]+\/maxresdefault\.jpg[^"]*)"/,
+        );
+        const thumb =
+          ogMatch?.[1] ??
+          playerThumb?.[1] ??
+          (videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : null);
         const viewersMatch = html.match(/"concurrentViewers":"(\d+)"/);
         const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
         out.push({
