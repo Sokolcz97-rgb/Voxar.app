@@ -101,33 +101,40 @@ async function pollYouTube(rows: Row[], supabase: any) {
         redirect: "follow",
       });
       const html = await res.text();
-      const isLive =
-        html.includes('"isLiveBroadcast":true') ||
-        html.includes('"isLive":true') ||
-        /"liveBroadcastContent":"live"/.test(html);
-      if (!isLive) continue;
-
-      // Canonical videoId = the actual live broadcast (not a recommended video).
       const canonical = html.match(
         /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
       );
-      const ogUrl = html.match(
-        /<meta property="og:url" content="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
-      );
-      const fallbackVid = html.match(/"videoId":"([A-Za-z0-9_-]{11})"/);
-      const videoId = canonical?.[1] ?? ogUrl?.[1] ?? fallbackVid?.[1] ?? "";
+      const videoId = canonical?.[1] ?? "";
       if (!videoId) continue;
       if (videoId === row.last_video_id) continue;
 
-      const titleMatch =
-        html.match(/<meta property="og:title" content="([^"]+)"/) ||
-        html.match(/<meta name="title" content="([^"]+)"/) ||
-        html.match(/<title>([^<]+)<\/title>/);
-      const title = (titleMatch?.[1] ?? "").replace(/ - YouTube$/, "");
+      // Verify video belongs to this channel (oEmbed) and is currently live.
+      const [oembedRes, watchRes] = await Promise.all([
+        fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`),
+        fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+          headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
+        }),
+      ]);
+      if (!oembedRes.ok) continue;
+      const oembed = await oembedRes.json();
+      if (!String(oembed.author_url ?? "").toLowerCase().includes(handle.toLowerCase())) {
+        console.warn(`[yt] author mismatch ${row.handle} vid=${videoId}`);
+        continue;
+      }
+      const watchHtml = await watchRes.text();
+      const stillLive =
+        watchHtml.includes('"isLiveBroadcast":true') ||
+        watchHtml.includes('"isLiveNow":true') ||
+        /"liveBroadcastContent":"live"/.test(watchHtml);
+      if (!stillLive) continue;
+
+      const title = String(oembed.title ?? "");
       const url = `https://youtu.be/${videoId}`;
-      const ogImg = html.match(/<meta property="og:image" content="([^"]+)"/);
+      const ogImg = watchHtml.match(/<meta property="og:image" content="([^"]+)"/);
       const thumbUrl =
-        ogImg?.[1] ?? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+        ogImg?.[1] ??
+        String(oembed.thumbnail_url ?? "").replace("hqdefault.jpg", "maxresdefault.jpg") ??
+        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
       const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
       const embed = {
         title: title || row.handle,
