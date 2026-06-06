@@ -97,7 +97,7 @@ async function pollYouTube(rows: Row[], supabase: any) {
         ? `https://www.youtube.com/channel/${row.handle}/live`
         : `https://www.youtube.com/${handle}/live`;
       const res = await fetch(liveUrl, {
-        headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9" },
+        headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
         redirect: "follow",
       });
       const html = await res.text();
