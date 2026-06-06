@@ -87,48 +87,54 @@ async function pollTwitch(rows: Row[], supabase: any) {
 
 async function pollYouTube(rows: Row[], supabase: any) {
   if (rows.length === 0) return;
-  const YT_KEY = Deno.env.get("YOUTUBE_API_KEY");
-  if (!YT_KEY) { console.warn("YOUTUBE_API_KEY missing"); return; }
+  const UA =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 
   for (const row of rows) {
-    // Resolve channel id from handle (cached via last_video_id field — not ideal but works)
-    let channelId: string | null = null;
-    // Treat handle starting with UC as channel id directly
-    if (row.handle.startsWith("UC") && row.handle.length === 24) {
-      channelId = row.handle;
-    } else {
-      const handle = row.handle.replace(/^@/, "");
-      const sr = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(handle)}&maxResults=1&key=${YT_KEY}`);
-      if (!sr.ok) { console.error("yt search", sr.status, await sr.text()); continue; }
-      const sj = await sr.json();
-      channelId = sj.items?.[0]?.snippet?.channelId ?? sj.items?.[0]?.id?.channelId ?? null;
+    try {
+      const handle = row.handle.startsWith("@") ? row.handle : `@${row.handle}`;
+      const liveUrl = row.handle.startsWith("UC") && row.handle.length === 24
+        ? `https://www.youtube.com/channel/${row.handle}/live`
+        : `https://www.youtube.com/${handle}/live`;
+      const res = await fetch(liveUrl, {
+        headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9" },
+        redirect: "follow",
+      });
+      const html = await res.text();
+      const isLive =
+        html.includes('"isLiveBroadcast":true') ||
+        html.includes('"isLive":true') ||
+        /"liveBroadcastContent":"live"/.test(html);
+      if (!isLive) continue;
+
+      const vidMatch =
+        html.match(/"videoId":"([A-Za-z0-9_-]{11})"/) ||
+        html.match(/watch\?v=([A-Za-z0-9_-]{11})/);
+      const videoId = vidMatch?.[1] ?? "";
+      if (!videoId) continue;
+      // Already notified about this live broadcast
+      if (videoId === row.last_video_id) continue;
+
+      const titleMatch =
+        html.match(/<meta name="title" content="([^"]+)"/) ||
+        html.match(/<title>([^<]+)<\/title>/);
+      const title = (titleMatch?.[1] ?? "").replace(/ - YouTube$/, "");
+      const url = `https://youtu.be/${videoId}`;
+      const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
+      const embed = {
+        title: title || row.handle,
+        url,
+        color: 0xff0033,
+        author: { name: `${row.handle} je živě na YouTube` },
+        image: { url: `https://i.ytimg.com/vi/${videoId}/hqdefault_live.jpg` },
+      };
+      await sendDiscord(row, content, embed, supabase);
+      await supabase.from("bot_stream_notifications")
+        .update({ last_notified_at: new Date().toISOString(), last_video_id: videoId })
+        .eq("id", row.id);
+    } catch (e) {
+      console.error("yt scrape error", row.handle, e);
     }
-    if (!channelId) continue;
-
-    // Latest upload via search ordered by date
-    const lr = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&type=video&maxResults=1&key=${YT_KEY}`);
-    if (!lr.ok) { console.error("yt latest", lr.status, await lr.text()); continue; }
-    const lj = await lr.json();
-    const item = lj.items?.[0];
-    if (!item) continue;
-    const videoId = item.id?.videoId;
-    if (!videoId || videoId === row.last_video_id) continue;
-
-    const url = `https://youtu.be/${videoId}`;
-    const title = item.snippet?.title ?? "";
-    const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
-    const embed = {
-      title,
-      url,
-      color: 0xff0033,
-      author: { name: `${row.handle} vydal nové video` },
-      description: item.snippet?.description?.slice(0, 200) ?? "",
-      image: item.snippet?.thumbnails?.high?.url ? { url: item.snippet.thumbnails.high.url } : undefined,
-    };
-    await sendDiscord(row, content, embed, supabase);
-    await supabase.from("bot_stream_notifications")
-      .update({ last_notified_at: new Date().toISOString(), last_video_id: videoId })
-      .eq("id", row.id);
   }
 }
 
