@@ -52,6 +52,7 @@ const Servers = () => {
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Server | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [view, setView] = useState<"discord" | "game">("discord");
 
   const load = async () => {
     const { data: g } = await supabase
