@@ -161,9 +161,41 @@ async function checkYouTube(
         const canonical = html.match(
           /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
         );
-        const videoId = canonical?.[1] ?? "";
+        let videoId = canonical?.[1] ?? "";
+        // EU IPs sometimes get the channel page instead of the live redirect.
+        // Fall back to scraping the channel /streams tab for a live badge.
+        if (!videoId) {
+          try {
+            const streamsRes = await fetch(
+              `https://www.youtube.com/${handle}/streams`,
+              {
+                headers: {
+                  "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+                  "Accept-Language": "en-US,en;q=0.9",
+                  Cookie: "CONSENT=YES+cb; SOCS=CAI",
+                },
+              },
+            );
+            const sHtml = await streamsRes.text();
+            // Live videos on the streams tab have "LIVE NOW" / style:"LIVE"
+            // near the videoId. Match the FIRST videoId that is preceded or
+            // followed by a LIVE indicator within a small window.
+            const liveBlock = sHtml.match(
+              /"videoId":"([A-Za-z0-9_-]{11})"[^{}]{0,2000}?"style":"LIVE"/,
+            ) ?? sHtml.match(
+              /"style":"LIVE"[^{}]{0,2000}?"videoId":"([A-Za-z0-9_-]{11})"/,
+            );
+            videoId = liveBlock?.[1] ?? "";
+            console.log(
+              `[yt] ${h.login} /streams fallback len=${sHtml.length} live=${videoId || "none"}`,
+            );
+          } catch (e) {
+            console.error("yt /streams fallback failed", h.login, e);
+          }
+        }
         console.log(
-          `[yt] ${h.login} status=${res.status} len=${html.length} canonical=${videoId || "none"}`,
+          `[yt] ${h.login} status=${res.status} len=${html.length} videoId=${videoId || "none"}`,
         );
         if (!videoId) {
           out.push(offlineRec(h.user_id, "youtube", h.login));
