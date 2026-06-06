@@ -120,13 +120,21 @@ async function pollYouTube(rows: Row[], supabase: any) {
         html.match(/<title>([^<]+)<\/title>/);
       const title = (titleMatch?.[1] ?? "").replace(/ - YouTube$/, "");
       const url = `https://youtu.be/${videoId}`;
+      const ogMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+      const playerThumb = html.match(
+        /"thumbnails":\[(?:[^\]]*?)\{"url":"(https:\/\/i\.ytimg\.com\/vi\/[^"]+\/maxresdefault\.jpg[^"]*)"/,
+      );
+      const thumbUrl =
+        ogMatch?.[1] ??
+        playerThumb?.[1] ??
+        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
       const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
       const embed = {
         title: title || row.handle,
         url,
         color: 0xff0033,
         author: { name: `${row.handle} je živě na YouTube` },
-        image: { url: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` },
+        image: { url: thumbUrl },
       };
       await sendDiscord(row, content, embed, supabase);
       await supabase.from("bot_stream_notifications")
