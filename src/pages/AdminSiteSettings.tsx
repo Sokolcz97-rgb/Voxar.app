@@ -28,6 +28,15 @@ const AdminSiteSettings = () => {
 
   useEffect(() => {
     if (!loading) setForm(settings);
+    // Admin needs sensitive ticket-related columns too; fetch full row (RLS gated by can('site','manage')).
+    supabase
+      .from("site_settings")
+      .select("web_tickets_guild_id, web_tickets_category_id, web_tickets_notify_channel_id")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setForm((f) => ({ ...f, ...(data as any) }));
+      });
   }, [settings, loading]);
 
   useEffect(() => {

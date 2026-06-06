@@ -1502,7 +1502,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      site_settings_public: {
+        Row: {
+          favicon_url: string | null
+          footer_text: string | null
+          hero_badge: string | null
+          hero_cta_label: string | null
+          hero_subtitle: string | null
+          hero_title_1: string | null
+          hero_title_2: string | null
+          id: string | null
+          logo_url: string | null
+          site_name: string | null
+          site_tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          favicon_url?: string | null
+          footer_text?: string | null
+          hero_badge?: string | null
+          hero_cta_label?: string | null
+          hero_subtitle?: string | null
+          hero_title_1?: string | null
+          hero_title_2?: string | null
+          id?: string | null
+          logo_url?: string | null
+          site_name?: string | null
+          site_tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          favicon_url?: string | null
+          footer_text?: string | null
+          hero_badge?: string | null
+          hero_cta_label?: string | null
+          hero_subtitle?: string | null
+          hero_title_1?: string | null
+          hero_title_2?: string | null
+          id?: string | null
+          logo_url?: string | null
+          site_name?: string | null
+          site_tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can: { Args: { _action: string; _module: string }; Returns: boolean }
