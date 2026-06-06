@@ -136,71 +136,64 @@ async function checkKick(
   return out;
 }
 
-// ---------- YouTube ----------
+// ---------- YouTube (scrape /live to avoid expensive Search API quota) ----------
 async function checkYouTube(
   handles: { user_id: string; login: string }[],
 ): Promise<StreamRecord[]> {
-  const KEY = Deno.env.get("YOUTUBE_API_KEY");
   const checkedAt = new Date().toISOString();
-  if (!KEY) {
-    // No key configured — return offline placeholders so DB stays consistent
-    return handles.map((h) => offlineRec(h.user_id, "youtube", h.login));
-  }
   const out: StreamRecord[] = [];
   await Promise.all(
     handles.map(async (h) => {
       try {
-        // Resolve channelId from @handle
         const handle = h.login.startsWith("@") ? h.login : `@${h.login}`;
-        const chRes = await fetch(
-          `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent(handle)}&key=${KEY}`,
-        );
-        const chJson = await chRes.json();
-        const channelId = chJson.items?.[0]?.id;
-        if (!channelId) {
+        const liveUrl = `https://www.youtube.com/${handle}/live`;
+        const res = await fetch(liveUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          redirect: "follow",
+        });
+        const html = await res.text();
+        const isLive =
+          html.includes('"isLiveBroadcast":true') ||
+          html.includes('"isLive":true') ||
+          /"liveBroadcastContent":"live"/.test(html);
+        if (!isLive) {
           out.push(offlineRec(h.user_id, "youtube", h.login));
           return;
         }
-        // Search live videos for that channel
-        const sRes = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${KEY}`,
-        );
-        const sJson = await sRes.json();
-        const item = sJson.items?.[0];
-        if (!item) {
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
-        const videoId = item.id?.videoId;
-        // Get viewers via videos endpoint liveStreamingDetails
-        let viewers = 0;
-        if (videoId) {
-          const vRes = await fetch(
-            `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${KEY}`,
-          );
-          const vJson = await vRes.json();
-          viewers = Number(
-            vJson.items?.[0]?.liveStreamingDetails?.concurrentViewers ?? 0,
-          );
-        }
+        const vidMatch =
+          html.match(/"videoId":"([A-Za-z0-9_-]{11})"/) ||
+          html.match(/watch\?v=([A-Za-z0-9_-]{11})/);
+        const videoId = vidMatch?.[1] ?? "";
+        const titleMatch =
+          html.match(/<meta name="title" content="([^"]+)"/) ||
+          html.match(/<title>([^<]+)<\/title>/);
+        const title = titleMatch?.[1]?.replace(/ - YouTube$/, "") ?? null;
+        const thumb = videoId
+          ? `https://i.ytimg.com/vi/${videoId}/hqdefault_live.jpg`
+          : null;
+        const viewersMatch = html.match(/"concurrentViewers":"(\d+)"/);
+        const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
         out.push({
           user_id: h.user_id,
           platform: "youtube",
           handle: h.login,
           is_live: true,
-          title: item.snippet?.title ?? null,
+          title,
           game_name: null,
           viewer_count: viewers,
-          thumbnail_url:
-            item.snippet?.thumbnails?.high?.url ??
-            item.snippet?.thumbnails?.default?.url ??
-            null,
-          stream_url: `https://www.youtube.com/watch?v=${videoId}`,
-          started_at: item.snippet?.publishedAt ?? null,
+          thumbnail_url: thumb,
+          stream_url: videoId
+            ? `https://www.youtube.com/watch?v=${videoId}`
+            : liveUrl,
+          started_at: null,
           checked_at: checkedAt,
         });
       } catch (e) {
-        console.error("YouTube error for", h.login, e);
+        console.error("YouTube scrape error for", h.login, e);
         out.push(offlineRec(h.user_id, "youtube", h.login));
       }
     }),
