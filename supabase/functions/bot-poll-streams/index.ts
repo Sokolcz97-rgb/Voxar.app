@@ -126,7 +126,7 @@ async function pollYouTube(rows: Row[], supabase: any) {
         url,
         color: 0xff0033,
         author: { name: `${row.handle} je živě na YouTube` },
-        image: { url: `https://i.ytimg.com/vi/${videoId}/hqdefault_live.jpg` },
+        image: { url: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` },
       };
       await sendDiscord(row, content, embed, supabase);
       await supabase.from("bot_stream_notifications")
