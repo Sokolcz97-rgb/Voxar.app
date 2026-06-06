@@ -136,7 +136,7 @@ async function checkKick(
   return out;
 }
 
-// ---------- YouTube (scrape /live to avoid expensive Search API quota) ----------
+// ---------- YouTube (scrape /live + verify via oEmbed) ----------
 async function checkYouTube(
   handles: { user_id: string; login: string }[],
 ): Promise<StreamRecord[]> {
@@ -152,56 +152,89 @@ async function checkYouTube(
             "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
-            // Skip YouTube EU consent interstitial (which strips og:* tags)
             Cookie: "CONSENT=YES+cb; SOCS=CAI",
           },
           redirect: "follow",
         });
         const html = await res.text();
-        const isLive =
-          html.includes('"isLiveBroadcast":true') ||
-          html.includes('"isLive":true') ||
-          /"liveBroadcastContent":"live"/.test(html);
-        if (!isLive) {
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
-        // Pull canonical videoId first — this is the actual live broadcast,
-        // not a recommended sidebar video.
+
+        // Only trust the canonical link from /live — that points at the actual
+        // broadcast page YT redirects to. If canonical is the channel itself,
+        // the channel is not live.
         const canonical = html.match(
           /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
         );
-        const ogVideo = html.match(
-          /<meta property="og:url" content="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
+        const videoId = canonical?.[1] ?? "";
+        if (!videoId) {
+          out.push(offlineRec(h.user_id, "youtube", h.login));
+          return;
+        }
+
+        // Verify the videoId really belongs to this channel and is currently
+        // live — use the no-quota oEmbed endpoint for ownership + title +
+        // thumbnail, and re-check live status on the watch page.
+        const [oembedRes, watchRes] = await Promise.all([
+          fetch(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+          ),
+          fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+              "Accept-Language": "en-US,en;q=0.9",
+              Cookie: "CONSENT=YES+cb; SOCS=CAI",
+            },
+          }),
+        ]);
+        if (!oembedRes.ok) {
+          console.warn(`[yt] oembed failed for ${h.login} vid=${videoId}`);
+          out.push(offlineRec(h.user_id, "youtube", h.login));
+          return;
+        }
+        const oembed = await oembedRes.json();
+        const expected = handle.toLowerCase();
+        const author = String(oembed.author_url ?? "").toLowerCase();
+        if (!author.includes(expected)) {
+          console.warn(
+            `[yt] author mismatch for ${h.login}: got ${author}, expected ${expected}`,
+          );
+          out.push(offlineRec(h.user_id, "youtube", h.login));
+          return;
+        }
+
+        const watchHtml = await watchRes.text();
+        const stillLive =
+          watchHtml.includes('"isLiveBroadcast":true') ||
+          watchHtml.includes('"isLiveNow":true') ||
+          /"liveBroadcastContent":"live"/.test(watchHtml);
+        if (!stillLive) {
+          out.push(offlineRec(h.user_id, "youtube", h.login));
+          return;
+        }
+
+        const ogImg = watchHtml.match(
+          /<meta property="og:image" content="([^"]+)"/,
         );
-        const fallbackVid = html.match(/"videoId":"([A-Za-z0-9_-]{11})"/);
-        const videoId =
-          canonical?.[1] ?? ogVideo?.[1] ?? fallbackVid?.[1] ?? "";
-        const titleMatch =
-          html.match(/<meta property="og:title" content="([^"]+)"/) ||
-          html.match(/<meta name="title" content="([^"]+)"/) ||
-          html.match(/<title>([^<]+)<\/title>/);
-        const title = titleMatch?.[1]?.replace(/ - YouTube$/, "") ?? null;
-        // Real thumbnail (custom uploader image): prefer og:image (always set
-        // to the actual video thumbnail with cache-busting param).
-        const ogImg = html.match(/<meta property="og:image" content="([^"]+)"/);
         const thumb =
           ogImg?.[1] ??
-          (videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : null);
-        const viewersMatch = html.match(/"concurrentViewers":"(\d+)"/);
+          String(oembed.thumbnail_url ?? "").replace(
+            "hqdefault.jpg",
+            "maxresdefault.jpg",
+          ) ??
+          `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+        const viewersMatch = watchHtml.match(/"concurrentViewers":"(\d+)"/);
         const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
+
         out.push({
           user_id: h.user_id,
           platform: "youtube",
           handle: h.login,
           is_live: true,
-          title,
+          title: oembed.title ?? null,
           game_name: null,
           viewer_count: viewers,
           thumbnail_url: thumb,
-          stream_url: videoId
-            ? `https://www.youtube.com/watch?v=${videoId}`
-            : liveUrl,
+          stream_url: `https://www.youtube.com/watch?v=${videoId}`,
           started_at: null,
           checked_at: checkedAt,
         });
