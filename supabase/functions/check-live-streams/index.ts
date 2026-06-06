@@ -158,44 +158,42 @@ async function checkYouTube(
         });
         const html = await res.text();
 
+        // 1) Primary: /live page redirects to the live broadcast — canonical
+        //    link is the live videoId.
         const canonical = html.match(
           /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
         );
         let videoId = canonical?.[1] ?? "";
-        // EU IPs sometimes get the channel page instead of the live redirect.
-        // Fall back to scraping the channel /streams tab for a live badge.
+
+        // 2) Fallback: some IPs (notably EU) don't get the redirect. Scrape
+        //    the channel page (/@handle) for a "LIVE" badge next to a video.
         if (!videoId) {
           try {
-            const streamsRes = await fetch(
-              `https://www.youtube.com/${handle}/streams`,
-              {
-                headers: {
-                  "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
-                  "Accept-Language": "en-US,en;q=0.9",
-                  Cookie: "CONSENT=YES+cb; SOCS=CAI",
-                },
+            const chRes = await fetch(`https://www.youtube.com/${handle}`, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9",
+                Cookie: "CONSENT=YES+cb; SOCS=CAI",
               },
-            );
-            const sHtml = await streamsRes.text();
-            // Live videos on the streams tab have "LIVE NOW" / style:"LIVE"
-            // near the videoId. Match the FIRST videoId that is preceded or
-            // followed by a LIVE indicator within a small window.
-            const liveBlock = sHtml.match(
-              /"videoId":"([A-Za-z0-9_-]{11})"[^{}]{0,2000}?"style":"LIVE"/,
-            ) ?? sHtml.match(
-              /"style":"LIVE"[^{}]{0,2000}?"videoId":"([A-Za-z0-9_-]{11})"/,
-            );
-            videoId = liveBlock?.[1] ?? "";
-            console.log(
-              `[yt] ${h.login} /streams fallback len=${sHtml.length} live=${videoId || "none"}`,
-            );
+            });
+            const chHtml = await chRes.text();
+            // Live videos on the channel page have LIVE_NOW badge near the videoId
+            const m =
+              chHtml.match(
+                /"videoId":"([A-Za-z0-9_-]{11})"[^{}]{0,3000}?BADGE_STYLE_TYPE_LIVE_NOW/,
+              ) ??
+              chHtml.match(
+                /BADGE_STYLE_TYPE_LIVE_NOW[^{}]{0,3000}?"videoId":"([A-Za-z0-9_-]{11})"/,
+              );
+            videoId = m?.[1] ?? "";
           } catch (e) {
-            console.error("yt /streams fallback failed", h.login, e);
+            console.error("yt channel fallback failed", h.login, e);
           }
         }
+
         console.log(
-          `[yt] ${h.login} status=${res.status} len=${html.length} videoId=${videoId || "none"}`,
+          `[yt] ${h.login} status=${res.status} videoId=${videoId || "none"}`,
         );
         if (!videoId) {
           out.push(offlineRec(h.user_id, "youtube", h.login));
