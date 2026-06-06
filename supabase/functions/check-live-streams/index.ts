@@ -158,13 +158,13 @@ async function checkYouTube(
         });
         const html = await res.text();
 
-        // Only trust the canonical link from /live — that points at the actual
-        // broadcast page YT redirects to. If canonical is the channel itself,
-        // the channel is not live.
         const canonical = html.match(
           /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
         );
         const videoId = canonical?.[1] ?? "";
+        console.log(
+          `[yt] ${h.login} status=${res.status} len=${html.length} canonical=${videoId || "none"}`,
+        );
         if (!videoId) {
           out.push(offlineRec(h.user_id, "youtube", h.login));
           return;
