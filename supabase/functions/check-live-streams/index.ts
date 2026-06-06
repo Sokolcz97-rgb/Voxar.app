@@ -164,23 +164,27 @@ async function checkYouTube(
           out.push(offlineRec(h.user_id, "youtube", h.login));
           return;
         }
-        const vidMatch =
-          html.match(/"videoId":"([A-Za-z0-9_-]{11})"/) ||
-          html.match(/watch\?v=([A-Za-z0-9_-]{11})/);
-        const videoId = vidMatch?.[1] ?? "";
+        // Pull canonical videoId first — this is the actual live broadcast,
+        // not a recommended sidebar video.
+        const canonical = html.match(
+          /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
+        );
+        const ogVideo = html.match(
+          /<meta property="og:url" content="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
+        );
+        const fallbackVid = html.match(/"videoId":"([A-Za-z0-9_-]{11})"/);
+        const videoId =
+          canonical?.[1] ?? ogVideo?.[1] ?? fallbackVid?.[1] ?? "";
         const titleMatch =
+          html.match(/<meta property="og:title" content="([^"]+)"/) ||
           html.match(/<meta name="title" content="([^"]+)"/) ||
           html.match(/<title>([^<]+)<\/title>/);
         const title = titleMatch?.[1]?.replace(/ - YouTube$/, "") ?? null;
-        // Real thumbnail set on the YouTube video: prefer og:image, then the
-        // largest entry from playerResponse thumbnails, fall back to maxres.
-        const ogMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
-        const playerThumb = html.match(
-          /"thumbnails":\[(?:[^\]]*?)\{"url":"(https:\/\/i\.ytimg\.com\/vi\/[^"]+\/maxresdefault\.jpg[^"]*)"/,
-        );
+        // Real thumbnail (custom uploader image): prefer og:image (always set
+        // to the actual video thumbnail with cache-busting param).
+        const ogImg = html.match(/<meta property="og:image" content="([^"]+)"/);
         const thumb =
-          ogMatch?.[1] ??
-          playerThumb?.[1] ??
+          ogImg?.[1] ??
           (videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : null);
         const viewersMatch = html.match(/"concurrentViewers":"(\d+)"/);
         const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
