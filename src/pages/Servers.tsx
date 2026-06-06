@@ -402,6 +402,8 @@ const Servers = () => {
             })}
           </div>
         )}
+        </>
+        )}
       </main>
 
       <ServerFormDialog
