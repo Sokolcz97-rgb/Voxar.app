@@ -47,11 +47,15 @@ export function useNavPages() {
 export async function fetchPageBySlug(slug: string, includeDraft = false) {
   const { data, error } = await supabase
     .from("pages")
-    .select("*")
+    .select("id,slug,title,nav_label,nav_position,is_published,is_system,published_blocks,created_at,updated_at,published_at")
     .eq("slug", slug)
     .maybeSingle();
   if (error || !data) return null;
-  const page = data as unknown as PageRow;
+  const page = { ...(data as any), draft_blocks: [] } as PageRow;
   if (!page.is_published && !includeDraft) return null;
+  if (includeDraft) {
+    const { data: draft } = await supabase.rpc("get_page_draft_blocks" as any, { _slug: slug });
+    if (Array.isArray(draft)) page.draft_blocks = draft as unknown as Block[];
+  }
   return page;
 }
