@@ -62,6 +62,7 @@ export type Database = {
           automod_max_mentions: number
           automod_spam_threshold: number
           bot_maintenance: boolean
+          bypass_role_ids: string[]
           default_alerts_channel: string | null
           default_log_channel: string | null
           default_welcome_channel: string | null
@@ -83,6 +84,7 @@ export type Database = {
           automod_max_mentions?: number
           automod_spam_threshold?: number
           bot_maintenance?: boolean
+          bypass_role_ids?: string[]
           default_alerts_channel?: string | null
           default_log_channel?: string | null
           default_welcome_channel?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           automod_max_mentions?: number
           automod_spam_threshold?: number
           bot_maintenance?: boolean
+          bypass_role_ids?: string[]
           default_alerts_channel?: string | null
           default_log_channel?: string | null
           default_welcome_channel?: string | null
@@ -128,6 +131,7 @@ export type Database = {
           automod_max_mentions: number
           automod_spam_threshold: number
           bot_maintenance: boolean
+          bypass_role_ids: string[]
           default_alerts_channel: string | null
           default_log_channel: string | null
           default_welcome_channel: string | null
@@ -148,6 +152,7 @@ export type Database = {
           automod_max_mentions?: number
           automod_spam_threshold?: number
           bot_maintenance?: boolean
+          bypass_role_ids?: string[]
           default_alerts_channel?: string | null
           default_log_channel?: string | null
           default_welcome_channel?: string | null
@@ -168,6 +173,7 @@ export type Database = {
           automod_max_mentions?: number
           automod_spam_threshold?: number
           bot_maintenance?: boolean
+          bypass_role_ids?: string[]
           default_alerts_channel?: string | null
           default_log_channel?: string | null
           default_welcome_channel?: string | null

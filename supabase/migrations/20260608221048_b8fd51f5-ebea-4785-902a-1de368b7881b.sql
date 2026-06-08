@@ -1,0 +1,2 @@
+ALTER TABLE public.bot_guild_config ADD COLUMN IF NOT EXISTS bypass_role_ids text[] NOT NULL DEFAULT '{}'::text[];
+ALTER TABLE public.bot_config ADD COLUMN IF NOT EXISTS bypass_role_ids text[] NOT NULL DEFAULT '{}'::text[];

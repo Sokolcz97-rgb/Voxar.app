@@ -18,6 +18,7 @@ import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
 import { MultiChannelPicker } from "@/components/MultiChannelPicker";
+import { MultiRolePicker } from "@/components/MultiRolePicker";
 import { BotFaq } from "@/components/BotFaq";
 import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { SocialHandleField } from "@/components/SocialHandleField";
@@ -43,6 +44,7 @@ type AnyConfig = {
   automod_action: string;
   nsfw_protection: boolean;
   nsfw_allowed_channels: string[];
+  bypass_role_ids: string[];
   bot_maintenance: boolean;
   web_maintenance?: boolean;
   maintenance_channel: string | null;
@@ -220,6 +222,7 @@ const DashboardBot = () => {
       automod_action: config.automod_action,
       nsfw_protection: config.nsfw_protection,
       nsfw_allowed_channels: config.nsfw_allowed_channels,
+      bypass_role_ids: config.bypass_role_ids ?? [],
       bot_maintenance: config.bot_maintenance,
       maintenance_channel: config.maintenance_channel,
     };
@@ -542,6 +545,20 @@ const DashboardBot = () => {
                       placeholder="Přidat NSFW kanál"
                     />
                   </div>
+                </div>
+                <div className="border-t border-border pt-4 space-y-2">
+                  <div className="font-medium">Bypass role (žádná penalizace)</div>
+                  <p className="text-xs text-muted-foreground">
+                    Uživatelé s některou z těchto rolí <strong>nebudou banováni, vyhozeni ani jejich zprávy mazány</strong> anti-scam ani anti-spam ochranou.
+                    Mohou posílat jakékoliv odkazy. Pokud poruší pravidla, bot pouze pošle <strong>upozornění do Alerts kanálu</strong> a zpráva zůstane.
+                  </p>
+                  <MultiRolePicker
+                    guildId={guildIdOrNull()}
+                    value={config.bypass_role_ids ?? []}
+                    onChange={(v) => setConfig({ ...config, bypass_role_ids: v })}
+                    disabled={!isManager}
+                    placeholder="Přidat bypass roli"
+                  />
                 </div>
                 {selectedGuild && (
                   <div className="border-t border-border pt-4 space-y-3">
