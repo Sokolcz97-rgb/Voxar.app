@@ -231,6 +231,13 @@ export async function runAntiBot(member) {
 
   const reason = detectSuspiciousAccount(member);
   if (!reason) return false;
+  if (hasBypassRole(member, cfg)) {
+    await sendAlert(member.guild, cfg, {
+      user: member.user,
+      reason: `⚪ BYPASS role: ${reason} (žádná akce)`,
+    }).catch(() => {});
+    return false;
+  }
 
   // Banuj jen tvrdé případy: účet < 1 den, nebo nitro/scam v nicku, nebo neoficiální bot
   const hard =
