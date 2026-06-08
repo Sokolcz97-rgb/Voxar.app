@@ -151,6 +151,12 @@ async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageC
   await alertCh.send({ embeds: [embed] }).catch((e) => console.error('alert send', e?.message));
 }
 
+function hasBypassRole(member, cfg) {
+  const ids = cfg?.bypass_role_ids || [];
+  if (!ids.length || !member?.roles?.cache) return false;
+  return ids.some((r) => member.roles.cache.has(r));
+}
+
 export async function runAntiScam(message) {
   if (message.author.bot || !message.guild) return false;
   const cfg = await getConfig(message.guild.id);
@@ -161,12 +167,27 @@ export async function runAntiScam(message) {
 
   const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
 
+  // Bypass: pokud má uživatel některou z bypass rolí, zprávu nesmazat ani nebanovat – pouze alert.
+  const member = message.member || (await message.guild.members.fetch(message.author.id).catch(() => null));
+  if (hasBypassRole(member, cfg)) {
+    await sendAlert(message.guild, cfg, {
+      user: message.author,
+      reason: `${reason} → ⚪ BYPASS role (pouze upozornění)`,
+      evidence: `Match: \`${detection.match}\``,
+      channel: message.channel,
+      messageContent: message.content,
+    }).catch(() => {});
+    return false;
+  }
+
   // 1) smaz zprávu
-  await message.delete().catch(() => {});
+  await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
 
   // 2) ban bez varování (smaz posledních 24h zpráv) — pokud ban selže, fallback kick
   let banned = false;
   let kicked = false;
+  let banErr = null;
+  let kickErr = null;
   try {
     await message.guild.members.ban(message.author.id, {
       reason,
@@ -174,15 +195,25 @@ export async function runAntiScam(message) {
     });
     banned = true;
   } catch (e) {
-    console.error('anti-scam ban failed', e?.message);
+    banErr = e?.message || String(e);
+    console.error('anti-scam ban failed', banErr);
     try {
-      const m = await message.guild.members.fetch(message.author.id).catch(() => null);
+      const m = member || (await message.guild.members.fetch(message.author.id).catch(() => null));
       if (m && m.kickable) { await m.kick(reason); kicked = true; }
-    } catch (e2) { console.error('anti-scam kick fallback failed', e2?.message); }
+      else if (m && !m.kickable) kickErr = 'member not kickable (vyšší role než bot nebo chybí KICK_MEMBERS)';
+      else kickErr = 'member nenalezen';
+    } catch (e2) {
+      kickErr = e2?.message || String(e2);
+      console.error('anti-scam kick fallback failed', kickErr);
+    }
   }
 
   // 3) alert
-  const statusNote = banned ? ' → 🔨 BAN' : kicked ? ' → 👢 KICK (ban selhal)' : ' (ban i kick selhaly – chybí oprávnění)';
+  const statusNote = banned
+    ? ' → 🔨 BAN'
+    : kicked
+      ? ' → 👢 KICK (ban selhal)'
+      : ` (ban i kick selhaly — ban: ${banErr || '?'}; kick: ${kickErr || '?'})`;
   await sendAlert(message.guild, cfg, {
     user: message.author,
     reason: `${reason}${statusNote}`,
