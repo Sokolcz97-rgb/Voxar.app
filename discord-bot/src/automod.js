@@ -72,7 +72,24 @@ function hasNsfwHint(text) {
   return /\b(nsfw|porn|18\+|xxx)\b/i.test(text);
 }
 
-async function act(message, cfg, reason) {
+async function sendBypassAlert(message, cfg, reason) {
+  const channelId = cfg.default_alerts_channel || cfg.default_log_channel;
+  if (!channelId) return;
+  const ch = await message.guild.channels.fetch(channelId).catch(() => null);
+  if (!ch?.isTextBased?.()) return;
+  await ch
+    .send({
+      content: `⚪ **Bypass role** — porušení automodu ignorováno\n• Uživatel: <@${message.author.id}> (\`${message.author.tag}\`)\n• Důvod: ${reason}\n• Kanál: <#${message.channel.id}>\n• Zpráva: ${message.url}`,
+    })
+    .catch(() => {});
+}
+
+async function act(message, cfg, reason, isBypass = false) {
+  // Bypass: nic neprovádět, jen alert (zpráva zůstane)
+  if (isBypass) {
+    await sendBypassAlert(message, cfg, reason);
+    return false;
+  }
   const action = cfg.automod_action || 'warn';
   try {
     if (action === 'delete' || action === 'kick' || action === 'ban') {
