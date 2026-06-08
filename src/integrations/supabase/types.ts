@@ -1567,6 +1567,7 @@ export type Database = {
         Args: { _other_user: string }
         Returns: string
       }
+      get_page_draft_blocks: { Args: { _slug: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

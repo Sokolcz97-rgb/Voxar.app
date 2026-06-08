@@ -16,15 +16,22 @@ export function EditPageButton({ slug }: { slug: string }) {
 
   const handleClick = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("pages").select("*").eq("slug", slug).maybeSingle();
-    setLoading(false);
+    const { data, error } = await supabase
+      .from("pages")
+      .select("id,slug,published_blocks")
+      .eq("slug", slug)
+      .maybeSingle();
     if (error || !data) {
+      setLoading(false);
       toast({ title: "Stránku se nepodařilo načíst", variant: "destructive" });
       return;
     }
-    const page = data as unknown as PageRow;
-    const blocks = (page.draft_blocks?.length ? page.draft_blocks : page.published_blocks) as Block[];
-    start(page.id, page.slug, blocks ?? []);
+    const { data: draft } = await supabase.rpc("get_page_draft_blocks" as any, { _slug: slug });
+    setLoading(false);
+    const page = data as any;
+    const draftBlocks = (Array.isArray(draft) ? draft : []) as Block[];
+    const blocks = (draftBlocks.length ? draftBlocks : (page.published_blocks as Block[])) ?? [];
+    start(page.id, page.slug, blocks);
   };
 
   return (
