@@ -546,6 +546,20 @@ const DashboardBot = () => {
                     />
                   </div>
                 </div>
+                <div className="border-t border-border pt-4 space-y-2">
+                  <div className="font-medium">Bypass role (žádná penalizace)</div>
+                  <p className="text-xs text-muted-foreground">
+                    Uživatelé s některou z těchto rolí <strong>nebudou banováni, vyhozeni ani jejich zprávy mazány</strong> anti-scam ani anti-spam ochranou.
+                    Mohou posílat jakékoliv odkazy. Pokud poruší pravidla, bot pouze pošle <strong>upozornění do Alerts kanálu</strong> a zpráva zůstane.
+                  </p>
+                  <MultiRolePicker
+                    guildId={guildIdOrNull()}
+                    value={config.bypass_role_ids ?? []}
+                    onChange={(v) => setConfig({ ...config, bypass_role_ids: v })}
+                    disabled={!isManager}
+                    placeholder="Přidat bypass roli"
+                  />
+                </div>
                 {selectedGuild && (
                   <div className="border-t border-border pt-4 space-y-3">
                     <div className="flex items-start gap-2">
