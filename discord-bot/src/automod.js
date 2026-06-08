@@ -29,14 +29,14 @@ export async function runAutomod(message) {
   const userBlocked = (cfg.automod_blocked_words || []).map(normalize);
   const blocked = [...DEFAULT_BLOCKED_NORMALIZED, ...userBlocked];
   if (blocked.some((w) => w && lower.includes(w))) {
-    return await act(message, cfg, 'Blokované slovo');
+    return await act(message, cfg, 'Blokované slovo', isBypass);
   }
 
   // Mentions
   const mentionCount =
     (message.mentions?.users?.size ?? 0) + (message.mentions?.roles?.size ?? 0);
   if (mentionCount > (cfg.automod_max_mentions ?? 5)) {
-    return await act(message, cfg, 'Příliš mnoho zmínek');
+    return await act(message, cfg, 'Příliš mnoho zmínek', isBypass);
   }
 
   // Emojis (unicode + custom)
@@ -44,7 +44,7 @@ export async function runAutomod(message) {
     (content.match(/<a?:\w+:\d+>/g)?.length ?? 0) +
     (content.match(/\p{Extended_Pictographic}/gu)?.length ?? 0);
   if (emojiCount > (cfg.automod_max_emojis ?? 10)) {
-    return await act(message, cfg, 'Příliš mnoho emoji');
+    return await act(message, cfg, 'Příliš mnoho emoji', isBypass);
   }
 
   // Spam: N messages in 5s
@@ -54,14 +54,14 @@ export async function runAutomod(message) {
   arr.push(now);
   spamTracker.set(message.author.id, arr);
   if (arr.length > threshold) {
-    return await act(message, cfg, 'Spam');
+    return await act(message, cfg, 'Spam', isBypass);
   }
 
   // NSFW protection
   if (cfg.nsfw_protection) {
     const allowed = cfg.nsfw_allowed_channels || [];
     if (!allowed.includes(message.channel.id) && hasNsfwHint(content)) {
-      return await act(message, cfg, 'NSFW obsah mimo povolený kanál');
+      return await act(message, cfg, 'NSFW obsah mimo povolený kanál', isBypass);
     }
   }
 
