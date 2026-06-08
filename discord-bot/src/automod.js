@@ -16,6 +16,12 @@ export async function runAutomod(message) {
   if (!cfg.automod_enabled) return false;
   if (cfg.bot_maintenance) return false;
 
+  // Bypass role: žádná penalizace, jen volitelný alert.
+  const bypassIds = cfg.bypass_role_ids || [];
+  const isBypass = bypassIds.length && message.member?.roles?.cache
+    ? bypassIds.some((r) => message.member.roles.cache.has(r))
+    : false;
+
   const content = message.content || '';
   const lower = normalize(content);
 
