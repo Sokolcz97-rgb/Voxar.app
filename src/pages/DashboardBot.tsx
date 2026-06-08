@@ -43,6 +43,7 @@ type AnyConfig = {
   automod_action: string;
   nsfw_protection: boolean;
   nsfw_allowed_channels: string[];
+  bypass_role_ids: string[];
   bot_maintenance: boolean;
   web_maintenance?: boolean;
   maintenance_channel: string | null;
