@@ -1568,6 +1568,22 @@ export type Database = {
         Returns: string
       }
       get_page_draft_blocks: { Args: { _slug: string }; Returns: Json }
+      get_public_site_settings: {
+        Args: never
+        Returns: {
+          favicon_url: string
+          footer_text: string
+          hero_badge: string
+          hero_cta_label: string
+          hero_subtitle: string
+          hero_title_1: string
+          hero_title_2: string
+          id: string
+          logo_url: string
+          site_name: string
+          site_tagline: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
