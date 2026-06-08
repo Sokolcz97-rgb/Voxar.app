@@ -221,6 +221,7 @@ const DashboardBot = () => {
       automod_action: config.automod_action,
       nsfw_protection: config.nsfw_protection,
       nsfw_allowed_channels: config.nsfw_allowed_channels,
+      bypass_role_ids: config.bypass_role_ids ?? [],
       bot_maintenance: config.bot_maintenance,
       maintenance_channel: config.maintenance_channel,
     };
