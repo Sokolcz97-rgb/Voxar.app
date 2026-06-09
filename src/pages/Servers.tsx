@@ -128,8 +128,16 @@ const Servers = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
+        <PageHero
+          eyebrow={view === "discord" ? t("servers.communityTagline") : t("servers.title")}
+          title={view === "discord" ? t("servers.discordTitle") : t("servers.title")}
+          description={view === "discord" ? t("servers.discordDesc") : t("servers.subtitle")}
+          icon={view === "discord" ? MessageCircle : ServerIcon}
+        />
+
         {/* TOGGLE */}
         <div className="mb-8 flex justify-center">
+
           <div className="inline-flex p-1 rounded-xl glass border border-border">
             <Button
               size="sm"
