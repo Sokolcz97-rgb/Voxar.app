@@ -28,11 +28,17 @@ interface Props {
   disableUploads?: boolean;
   /** Hide the built-in upload toolbar buttons (use external Attach button via ref instead). */
   hideUploadButtons?: boolean;
+  /** Hide the entire formatting toolbar (compact chat mode). */
+  hideToolbar?: boolean;
+  /** Called when the user presses Enter (without Shift). Return true to indicate handled. */
+  onEnterSubmit?: () => void;
 }
 
 export interface RichEditorHandle {
   openFilePicker: (accept?: string) => void;
   isUploading: () => boolean;
+  clear: () => void;
+  focus: () => void;
 }
 
 const PRESET_COLORS = [
@@ -232,7 +238,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
 }
 
 export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor({
-  value, onChange, placeholder, className, minHeight = 140, disableUploads, hideUploadButtons,
+  value, onChange, placeholder, className, minHeight = 140, disableUploads, hideUploadButtons, hideToolbar, onEnterSubmit,
 }, ref) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -274,6 +280,14 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
         if (files.length > 0 && !disableUploads && user) {
           event.preventDefault();
           handleFiles(files);
+          return true;
+        }
+        return false;
+      },
+      handleKeyDown: (_view, event) => {
+        if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.metaKey && onEnterSubmit) {
+          event.preventDefault();
+          onEnterSubmit();
           return true;
         }
         return false;
@@ -328,7 +342,9 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
   useImperativeHandle(ref, () => ({
     openFilePicker: (accept = "image/*,video/*,application/pdf,application/zip,text/plain") => onPickFiles(accept),
     isUploading: () => uploading,
-  }), [uploading]);
+    clear: () => { editor?.commands.clearContent(true); },
+    focus: () => { editor?.commands.focus("end"); },
+  }), [uploading, editor]);
 
   const setLink = () => {
     if (!editor) return;
@@ -346,6 +362,7 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
 
   return (
     <div className={cn("rounded-md border border-border bg-background/40", className)}>
+      {!hideToolbar && (
       <div className="relative flex flex-wrap items-center gap-0.5 border-b border-border bg-secondary/30 p-1 rounded-t-md">
         <ToolbarBtn title={t("editor.bold")} onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <Bold className="h-4 w-4" />
@@ -429,6 +446,21 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
           }}
         />
       </div>
+      )}
+
+      {hideToolbar && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (files.length) handleFiles(files);
+          }}
+        />
+      )}
 
       <EditorContent editor={editor} />
     </div>
