@@ -54,20 +54,6 @@ export function AIHelper() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    let assistantSoFar = "";
-    const upsertAssistant = (chunk: string) => {
-      assistantSoFar += chunk;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
-          );
-        }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
-      });
-    };
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -95,40 +81,19 @@ export function AIHelper() {
         setLoading(false);
         return;
       }
-      if (!resp.ok || !resp.body) throw new Error("Stream failed");
+      if (!resp.ok) throw new Error("Request failed");
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-      let streamDone = false;
+      const data = await resp.json();
+      const content = String(data?.content ?? "");
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
 
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let nl: number;
-        while ((nl = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, nl);
-          textBuffer = textBuffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsertAssistant(content);
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
+      if (data?.escalated) {
+        toast({
+          title: "Eskalováno majiteli",
+          description: data.ticket_id
+            ? `Založil jsem ticket #${String(data.ticket_id).slice(0, 8)} s vysokou prioritou.`
+            : "Tvůj problém byl předán adminovi.",
+        });
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
@@ -140,6 +105,7 @@ export function AIHelper() {
       abortRef.current = null;
     }
   };
+
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
