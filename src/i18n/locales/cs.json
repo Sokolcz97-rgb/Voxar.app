@@ -63,6 +63,24 @@
       "title": "Top hráči",
       "viewAll": "Zobrazit žebříček",
       "reactions": "reakcí"
+    },
+    "features": {
+      "community": {
+        "title": "Komunita",
+        "desc": "Tisíce aktivních hráčů"
+      },
+      "dms": {
+        "title": "Soukromé zprávy",
+        "desc": "Komunikuj v reálném čase"
+      },
+      "moderation": {
+        "title": "Moderace",
+        "desc": "Bezpečné prostředí"
+      },
+      "streams": {
+        "title": "Live streamy",
+        "desc": "Sleduj v reálném čase"
+      }
     }
   },
   "auth": {
@@ -306,8 +324,8 @@
     }
   },
   "notFound": {
-    "subtitle": "Jejda! Stránka nenalezena",
-    "back": "Zpět na úvod"
+    "title": "404 — Stránka nenalezena",
+    "desc": "Tato stránka neexistuje."
   },
   "lang": {
     "switch": "Jazyk"
@@ -485,5 +503,10 @@
     "tooLarge": "Soubor je příliš velký (max 25 MB)",
     "uploadFailed": "Nahrávání selhalo",
     "attach": "Připojit soubor"
+  },
+  "footer": {
+    "tagline": "Herní komunita",
+    "terms": "Podmínky používání",
+    "privacy": "Ochrana soukromí"
   }
 }
