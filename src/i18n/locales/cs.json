@@ -131,7 +131,8 @@
     "recentThreads": "Poslední vlákna",
     "noActivity": "Žádná aktivita",
     "openConversation": "Otevřít",
-    "viewAll": "Zobrazit vše"
+    "viewAll": "Zobrazit vše",
+    "botManager": "Správce bota"
   },
   "profile": {
     "title": "Profil",
@@ -326,7 +327,13 @@
       "0": "Jak založím vlákno ve fóru?",
       "1": "Jak pošlu soukromou zprávu?",
       "2": "Co znamená role admin?"
-    }
+    },
+    "signInRequired": "Přihlášení vyžadováno",
+    "signInRequiredDesc": "Přihlaš se pro použití AI.",
+    "escalated": "Eskalováno majiteli",
+    "escalatedWithTicket": "Založil jsem ticket #{{id}} s vysokou prioritou.",
+    "escalatedNoTicket": "Tvůj problém byl předán adminovi.",
+    "newChatTitle": "Nová konverzace"
   },
   "notFound": {
     "title": "404 — Stránka nenalezena",
