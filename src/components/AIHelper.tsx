@@ -57,7 +57,7 @@ export function AIHelper() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast({ title: t("ai.noCredits") || "Sign in required", description: "Přihlaš se pro použití AI." , variant: "destructive" });
+        toast({ title: t("ai.signInRequired"), description: t("ai.signInRequiredDesc"), variant: "destructive" });
         setLoading(false);
         return;
       }
