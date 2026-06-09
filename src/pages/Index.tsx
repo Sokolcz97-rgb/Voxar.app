@@ -169,10 +169,10 @@ const Index = () => {
         <section className="container pb-32">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { icon: Users, title: "Komunita", desc: "Tisíce aktivních hráčů" },
-              { icon: MessageSquare, title: "Soukromé zprávy", desc: "Připravujeme" },
-              { icon: Shield, title: "Moderace", desc: "Bezpečné prostředí" },
-              { icon: Zap, title: "Live streamy", desc: "Sleduj v reálném čase" },
+              { icon: Users, title: t("home.features.community.title"), desc: t("home.features.community.desc") },
+              { icon: MessageSquare, title: t("home.features.dms.title"), desc: t("home.features.dms.desc") },
+              { icon: Shield, title: t("home.features.moderation.title"), desc: t("home.features.moderation.desc") },
+              { icon: Zap, title: t("home.features.streams.title"), desc: t("home.features.streams.desc") },
             ].map((f, i) => (
               <div
                 key={f.title}
