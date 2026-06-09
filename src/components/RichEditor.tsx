@@ -342,7 +342,9 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
   useImperativeHandle(ref, () => ({
     openFilePicker: (accept = "image/*,video/*,application/pdf,application/zip,text/plain") => onPickFiles(accept),
     isUploading: () => uploading,
-  }), [uploading]);
+    clear: () => { editor?.commands.clearContent(true); },
+    focus: () => { editor?.commands.focus("end"); },
+  }), [uploading, editor]);
 
   const setLink = () => {
     if (!editor) return;
