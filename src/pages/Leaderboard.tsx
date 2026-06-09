@@ -84,13 +84,14 @@ const Leaderboard = () => {
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-3xl animate-fade-in">
-        <div className="flex items-center gap-3 mb-6">
-          <Trophy className="h-7 w-7 text-primary" />
-          <h1 className="font-display font-black text-3xl text-glow">
-            {t("leaderboard.title")}
-          </h1>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">{t("leaderboard.subtitle")}</p>
+        <PageHero
+          eyebrow={t("leaderboard.title")}
+          title={t("leaderboard.title")}
+          description={t("leaderboard.subtitle")}
+          icon={Trophy}
+        />
+
+
 
         <Tabs value={range} onValueChange={(v) => setRange(v as LbRange)} className="mb-6">
           <TabsList className="glass">
