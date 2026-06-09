@@ -184,24 +184,11 @@ const Messages = () => {
           eyebrow={t("messages.tagline")}
           title={t("messages.title")}
           icon={MessageSquare}
-          actions={
-            <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-              <DialogTrigger asChild>
-                <Button variant="hero">
-                  <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
-                </Button>
-              </DialogTrigger>
-            </Dialog>
-          }
         />
-        <div className="flex items-baseline justify-between mb-6 gap-4">
-          <div className="hidden">
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("messages.tagline")}</p>
-            <h1 className="font-display font-black text-3xl md:text-4xl mt-1">{t("messages.title")}</h1>
-          </div>
+        <div className="flex items-center justify-end mb-6 -mt-2">
           <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
+              <Button variant="hero">
                 <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
               </Button>
             </DialogTrigger>
@@ -230,6 +217,7 @@ const Messages = () => {
             </DialogContent>
           </Dialog>
         </div>
+
 
         <div className="grid lg:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[500px]">
           <Card className="glass border-border p-2 overflow-y-auto">
