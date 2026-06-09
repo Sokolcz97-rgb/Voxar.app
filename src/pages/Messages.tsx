@@ -16,6 +16,7 @@ import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
+import { PageHero } from "@/components/PageHero";
 
 interface Conversation {
   id: string;
