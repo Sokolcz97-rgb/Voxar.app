@@ -160,20 +160,37 @@ const DashboardBot = () => {
     })();
   }, [user]);
 
-  // Auto-pick the first guild for non-admins so they land directly on their
-  // server config (where they can actually edit). The global scope is read-only
-  // for non-admins, which used to make settings appear disabled.
-  const [autoPicked, setAutoPicked] = useState(false);
+  // Picker dialog state — opens automatically the first time the user lands
+  // on the dashboard so they can pick which server to configure.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [hasPickedScope, setHasPickedScope] = useState(false);
+
   useEffect(() => {
-    if (autoPicked) return;
+    if (hasPickedScope) return;
     if (!guildsLoaded) return;
-    if (canManageBot) return; // admins keep GLOBAL by default
-    if (selectedGuildId !== GLOBAL_KEY) { setAutoPicked(true); return; }
-    if (guilds[0]) {
+    // If user has nothing to pick (no guilds and no global access), let the
+    // existing Navigate fallback handle it.
+    if (guilds.length === 0 && !canUseGlobalConfig) return;
+    // If only one option exists, auto-pick silently.
+    if (guilds.length === 1 && !canUseGlobalConfig) {
       setSelectedGuildId(guilds[0].guild_id);
-      setAutoPicked(true);
+      setHasPickedScope(true);
+      return;
     }
-  }, [autoPicked, guildsLoaded, canManageBot, guilds, selectedGuildId]);
+    if (guilds.length === 0 && canUseGlobalConfig) {
+      setSelectedGuildId(GLOBAL_KEY);
+      setHasPickedScope(true);
+      return;
+    }
+    setPickerOpen(true);
+  }, [hasPickedScope, guildsLoaded, canUseGlobalConfig, guilds]);
+
+  const pickScope = (value: string) => {
+    setSelectedGuildId(value);
+    setHasPickedScope(true);
+    setPickerOpen(false);
+  };
+
 
   useEffect(() => {
     if (!user) return;
