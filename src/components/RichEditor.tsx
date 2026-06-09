@@ -362,6 +362,7 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
 
   return (
     <div className={cn("rounded-md border border-border bg-background/40", className)}>
+      {!hideToolbar && (
       <div className="relative flex flex-wrap items-center gap-0.5 border-b border-border bg-secondary/30 p-1 rounded-t-md">
         <ToolbarBtn title={t("editor.bold")} onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <Bold className="h-4 w-4" />
