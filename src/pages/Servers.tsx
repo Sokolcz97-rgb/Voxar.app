@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, Pencil, MessageCircle, ExternalLink } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { ServerFormDialog } from "@/components/servers/ServerFormDialog";
 import { useAllDiscord } from "@/hooks/useFeaturedDiscord";
 import { toast } from "sonner";
