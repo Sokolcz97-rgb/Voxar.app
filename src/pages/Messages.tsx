@@ -180,8 +180,22 @@ const Messages = () => {
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-6 animate-fade-in">
+        <PageHero
+          eyebrow={t("messages.tagline")}
+          title={t("messages.title")}
+          icon={MessageSquare}
+          actions={
+            <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+              <DialogTrigger asChild>
+                <Button variant="hero">
+                  <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          }
+        />
         <div className="flex items-baseline justify-between mb-6 gap-4">
-          <div>
+          <div className="hidden">
             <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("messages.tagline")}</p>
             <h1 className="font-display font-black text-3xl md:text-4xl mt-1">{t("messages.title")}</h1>
           </div>
