@@ -1,5 +1,37 @@
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, ChannelType } from 'discord.js';
 import { getConfig } from './config.js';
+import { supabase } from './supabase.js';
+
+// ------------------------------------------------------------
+// Image moderation via Supabase edge function `moderate-image`
+// (Lovable AI Gemini vision). Returns null on error/no-result.
+// ------------------------------------------------------------
+const IMG_EXT = /\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i;
+function imageUrlsFromMessage(message) {
+  const urls = [];
+  for (const a of message.attachments?.values?.() || []) {
+    const ct = a.contentType || '';
+    if (ct.startsWith('image/') || IMG_EXT.test(a.url || '')) urls.push(a.url);
+  }
+  for (const e of message.embeds || []) {
+    if (e?.image?.url) urls.push(e.image.url);
+    if (e?.thumbnail?.url && IMG_EXT.test(e.thumbnail.url)) urls.push(e.thumbnail.url);
+  }
+  return urls.slice(0, 4);
+}
+
+export async function moderateImages(urls) {
+  if (!urls?.length) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('moderate-image', { body: { urls } });
+    if (error) { console.error('moderate-image invoke', error.message); return null; }
+    return data || null;
+  } catch (e) {
+    console.error('moderate-image exception', e?.message || e);
+    return null;
+  }
+}
+
 
 // ============================================================
 // Anti-scam: detekce podvodných odkazů / phishingu / scamů
@@ -186,10 +218,24 @@ export async function runAntiScam(message) {
   if (cfg.bot_maintenance) return false;
 
   const ageDays = (Date.now() - message.author.createdTimestamp) / (1000 * 60 * 60 * 24);
-  const detection = detectScam(message.content || '', { accountAgeDays: ageDays });
+  let detection = detectScam(message.content || '', { accountAgeDays: ageDays });
+
+  // Pokud text není scam, zkusíme obrázkovou analýzu (Gemini vision)
+  let imgResult = null;
+  if (!detection) {
+    const urls = imageUrlsFromMessage(message);
+    if (urls.length) {
+      imgResult = await moderateImages(urls);
+      if (imgResult?.severe) {
+        const kind = imgResult.scam ? 'image_scam' : 'image_nsfw';
+        detection = { type: kind, match: imgResult.reason || (imgResult.scam ? 'scam image' : 'nsfw image') };
+      }
+    }
+  }
   if (!detection) return false;
 
   const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
+
 
   // Bypass: pokud má uživatel některou z bypass rolí, zprávu nesmazat ani nebanovat – pouze alert.
   const member = message.member || (await message.guild.members.fetch(message.author.id).catch(() => null));
@@ -387,4 +433,89 @@ export async function scanGuildMembers(guild) {
     actioned: actioned.length,
     watched: watched.length,
   };
+}
+
+// ============================================================
+// Manuální sken zpráv v textových + voice text + thread kanálech.
+// Projde posledních N zpráv v každém kanálu, vyhodnotí obrázky přes AI,
+// u scamu smaže zprávu + zabanuje autora (kick fallback). Souhrn do alerts.
+// ============================================================
+export async function scanGuildMessages(guild, { perChannel = 30 } = {}) {
+  const cfg = await getConfig(guild.id);
+  const alertChannelId = cfg.default_alerts_channel || cfg.default_log_channel;
+  const alertCh = alertChannelId
+    ? await guild.channels.fetch(alertChannelId).catch(() => null)
+    : null;
+
+  await guild.channels.fetch().catch(() => {});
+
+  const scannable = [];
+  for (const ch of guild.channels.cache.values()) {
+    if (!ch?.isTextBased?.()) continue;
+    if ([ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.GuildVoice, ChannelType.GuildStageVoice, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.AnnouncementThread].includes(ch.type)) {
+      scannable.push(ch);
+    }
+  }
+
+  const actioned = []; // { user, channel, reason, banned, kicked }
+  let scannedMsgs = 0;
+  const bannedIds = new Set();
+
+  for (const ch of scannable) {
+    let msgs;
+    try { msgs = await ch.messages.fetch({ limit: perChannel }); } catch { continue; }
+    for (const m of msgs.values()) {
+      if (m.author.bot) continue;
+      const urls = imageUrlsFromMessage(m);
+      if (!urls.length) continue;
+      scannedMsgs++;
+      const member = m.member || await guild.members.fetch(m.author.id).catch(() => null);
+      if (member && hasBypassRole(member, cfg)) continue;
+      if (bannedIds.has(m.author.id)) { await m.delete().catch(() => {}); continue; }
+
+      const res = await moderateImages(urls);
+      if (!res?.severe) continue;
+
+      const reason = `Image ${res.scam ? 'scam' : 'nsfw'}: ${res.reason || ''}`.slice(0, 200);
+      await m.delete().catch(() => {});
+      let banned = false, kicked = false;
+      try {
+        await guild.members.ban(m.author.id, { reason, deleteMessageSeconds: 60 * 60 * 24 });
+        banned = true;
+        bannedIds.add(m.author.id);
+      } catch {
+        try {
+          const mb = member || await guild.members.fetch(m.author.id).catch(() => null);
+          if (mb?.kickable) { await mb.kick(reason); kicked = true; }
+        } catch {}
+      }
+      actioned.push({ user: m.author, channel: ch, reason, banned, kicked });
+      // krátká pauza kvůli AI rate-limitu
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+
+  if (alertCh?.isTextBased?.()) {
+    const lines = [];
+    lines.push(`**🖼️ Image scan – ${scannable.length} kanálů, ${scannedMsgs} zpráv s obrázky**`);
+    if (actioned.length) {
+      lines.push('');
+      lines.push(`**🔨 Akce (${actioned.length}):**`);
+      for (const a of actioned.slice(0, 25)) {
+        const act = a.banned ? 'BAN' : a.kicked ? 'KICK' : 'jen smazáno';
+        lines.push(`• <@${a.user.id}> \`${a.user.tag}\` v <#${a.channel.id}> — ${a.reason} → **${act}**`);
+      }
+      if (actioned.length > 25) lines.push(`…a dalších ${actioned.length - 25}`);
+    } else {
+      lines.push('✅ Žádné scam/nsfw obrázky nenalezeny.');
+    }
+    let buf = '';
+    for (const ln of lines) {
+      if ((buf + ln + '\n').length > 1900) { await alertCh.send({ content: buf }).catch(() => {}); buf = ''; }
+      buf += ln + '\n';
+    }
+    if (buf) await alertCh.send({ content: buf }).catch(() => {});
+  }
+
+  return { channels: scannable.length, scanned: scannedMsgs, actioned: actioned.length };
 }

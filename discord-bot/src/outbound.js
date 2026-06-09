@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { supabase } from './supabase.js';
 import { setupTicketPanel } from './tickets.js';
-import { scanGuildMembers } from './antiScam.js';
+import { scanGuildMembers, scanGuildMessages } from './antiScam.js';
 
 export function startOutboundWorker(client) {
   // Poll every 5s for queued jobs (channel sends + special actions)
@@ -53,6 +53,31 @@ export function startOutboundWorker(client) {
             }
             continue;
           }
+
+          // Special action: skenování zpráv (obrázky) ve všech kanálech
+          if (payload.action === 'scan_messages') {
+            const guildId = payload.guild_id;
+            const guild = guildId ? await client.guilds.fetch(guildId).catch(() => null) : null;
+            if (!guild) {
+              await supabase.from('bot_outbound_queue')
+                .update({ error: 'guild not found', sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+              continue;
+            }
+            try {
+              const res = await scanGuildMessages(guild, { perChannel: payload.per_channel || 30 });
+              await supabase.from('bot_outbound_queue')
+                .update({ sent_at: new Date().toISOString(), error: null, payload: { ...payload, result: res } })
+                .eq('id', job.id);
+            } catch (e) {
+              console.error('scan_messages', e);
+              await supabase.from('bot_outbound_queue')
+                .update({ error: String(e), sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+            }
+            continue;
+          }
+
 
 
           // Special action: refresh ticket panel
