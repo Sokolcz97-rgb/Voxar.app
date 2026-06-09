@@ -5,35 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RefreshCw, Database } from "lucide-react";
+import { RefreshCw, Database, Flame } from "lucide-react";
 import { toast } from "sonner";
-
-type Platform = { id: number; label: string };
-
-const PLATFORMS: Platform[] = [
-  { id: 6, label: "PC (Steam, Epic, GOG, Ubisoft, EA)" },
-  { id: 167, label: "PlayStation 5" },
-  { id: 48, label: "PlayStation 4" },
-  { id: 169, label: "Xbox Series X|S" },
-  { id: 49, label: "Xbox One" },
-  { id: 130, label: "Nintendo Switch" },
-  { id: 508, label: "Nintendo Switch 2" },
-  { id: 14, label: "Mac" },
-  { id: 3, label: "Linux" },
-  { id: 39, label: "iOS" },
-  { id: 34, label: "Android" },
-];
-
-const DEFAULT_SELECTED = [6, 167, 48, 169, 49, 130, 508];
 
 const AdminNovinky = () => {
   const [count, setCount] = useState<number | null>(null);
   const [lastFetched, setLastFetched] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [selected, setSelected] = useState<number[]>(DEFAULT_SELECTED);
-  const [daysBack, setDaysBack] = useState("30");
-  const [daysForward, setDaysForward] = useState("365");
+  const [includeTopSellers, setIncludeTopSellers] = useState(true);
+  const [includeSpecials, setIncludeSpecials] = useState(false);
 
   const load = async () => {
     const { count: c } = await supabase
@@ -51,28 +31,20 @@ const AdminNovinky = () => {
 
   useEffect(() => { load(); }, []);
 
-  const toggle = (id: number) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-
   const syncNow = async () => {
-    if (selected.length === 0) {
-      toast.error("Vyber alespoň jednu platformu");
-      return;
-    }
     setSyncing(true);
-    const t = toast.loading("Synchronizuji s IGDB…");
+    const t = toast.loading("Tahám novinky ze Steamu…");
     try {
-      const { data, error } = await supabase.functions.invoke("sync-game-releases", {
+      const { data, error } = await supabase.functions.invoke("sync-steam-releases", {
         body: {
-          platforms: selected,
-          days_back: parseInt(daysBack, 10) || 30,
-          days_forward: parseInt(daysForward, 10) || 365,
+          include_top_sellers: includeTopSellers,
+          include_specials: includeSpecials,
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(
-        `Synchronizováno: ${data?.synced ?? 0} her (${data?.release_dates ?? 0} vydání)`,
+        `Synchronizováno: ${data?.synced ?? 0} her (z ${data?.considered ?? 0} kandidátů)`,
         { id: t },
       );
       await load();
@@ -90,7 +62,11 @@ const AdminNovinky = () => {
       <Navbar />
       <main className="container py-10 animate-fade-in max-w-3xl">
         <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Administrace</p>
-        <h1 className="font-display font-black text-4xl mt-2 mb-8">Novinky · IGDB sync</h1>
+        <h1 className="font-display font-black text-4xl mt-2 mb-2">Novinky · Steam sync</h1>
+        <p className="text-sm text-muted-foreground mb-8">
+          Zdrojem je teď oficiální Steam Store API (bez API klíče). Pokrývá publikanty napříč PC scénou —
+          nadcházející vydání, čerstvě vydané, top sellers.
+        </p>
 
         <Card className="glass border-border p-6 space-y-6">
           <div className="flex items-center gap-3">
@@ -109,59 +85,39 @@ const AdminNovinky = () => {
 
           <div className="space-y-3 pt-4 border-t border-border">
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Platformy k synchronizaci
+              Zahrnout sekce
             </Label>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {PLATFORMS.map((p) => (
-                <label
-                  key={p.id}
-                  className="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-primary/5 cursor-pointer transition-colors"
-                >
-                  <Checkbox
-                    checked={selected.includes(p.id)}
-                    onCheckedChange={() => toggle(p.id)}
-                  />
-                  <span className="text-sm">{p.label}</span>
-                </label>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              PC pokrývá Steam, Epic Games Store, Ubisoft Connect, EA App, GOG a další launchery — IGDB
-              označí konkrétní obchody automaticky.
-            </p>
+            <label className="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-primary/5 cursor-pointer transition-colors">
+              <Checkbox checked disabled />
+              <span className="text-sm">Coming Soon · New Releases (vždy)</span>
+            </label>
+            <label className="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-primary/5 cursor-pointer transition-colors">
+              <Checkbox
+                checked={includeTopSellers}
+                onCheckedChange={(v) => setIncludeTopSellers(!!v)}
+              />
+              <span className="text-sm">Top Sellers</span>
+            </label>
+            <label className="flex items-center gap-2 p-2 rounded-md border border-border hover:bg-primary/5 cursor-pointer transition-colors">
+              <Checkbox
+                checked={includeSpecials}
+                onCheckedChange={(v) => setIncludeSpecials(!!v)}
+              />
+              <span className="text-sm">Specials (slevy)</span>
+            </label>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Dny zpět (nedávno vydané)
-              </Label>
-              <Input
-                value={daysBack}
-                onChange={(e) => setDaysBack(e.target.value.replace(/\D/g, ""))}
-                placeholder="30"
-              />
+          <div className="pt-4 border-t border-border space-y-3">
+            <div className="flex items-start gap-2 text-xs text-muted-foreground p-3 rounded-md bg-primary/5 border border-primary/20">
+              <Flame className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <span>
+                Sync přepíše existující katalog. Steam vrací ~60-90 her na sync; pro širší pokrytí spusť
+                víckrát během dne (Steam rotuje featured).
+              </span>
             </div>
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Dny dopředu (nadcházející)
-              </Label>
-              <Input
-                value={daysForward}
-                onChange={(e) => setDaysForward(e.target.value.replace(/\D/g, ""))}
-                placeholder="365"
-              />
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-3">
-              Automatický sync běží denně v 04:00 UTC s výchozím nastavením. Tady ho můžeš spustit ručně
-              s vlastním rozsahem.
-            </p>
             <Button onClick={syncNow} disabled={syncing} className="w-full">
               <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Synchronizuji…" : `Spustit sync teď (${selected.length} platforem)`}
+              {syncing ? "Synchronizuji…" : "Spustit sync teď"}
             </Button>
           </div>
         </Card>
