@@ -599,7 +599,10 @@ const DashboardBot = () => {
                         </p>
                       </div>
                     </div>
-                    <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                    <div className="flex flex-wrap gap-2">
+                      <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                      <ScanMessagesButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                    </div>
                   </div>
                 )}
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
