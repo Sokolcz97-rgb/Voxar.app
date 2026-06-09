@@ -55,11 +55,14 @@ const Forum = () => {
       <Navbar />
 
       <main className="container py-10 animate-fade-in">
-        <div className="mb-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("forum.tagline")}</p>
-          <h1 className="font-display font-black text-4xl md:text-5xl mt-2">{t("forum.title")}</h1>
-          <p className="text-muted-foreground mt-2">{t("forum.subtitle")}</p>
-        </div>
+        <PageHero
+          eyebrow={t("forum.tagline")}
+          title={t("forum.title")}
+          description={t("forum.subtitle")}
+          icon={MessageSquare}
+        />
+
+
 
         {loading ? (
           <div className="flex justify-center py-20">
