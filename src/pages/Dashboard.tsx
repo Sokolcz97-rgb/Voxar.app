@@ -172,7 +172,7 @@ const Dashboard = () => {
                 </div>
                 <div className="leading-tight">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Discord</div>
-                  <div className="font-display font-bold text-sm">Správce bota</div>
+                  <div className="font-display font-bold text-sm">{t("dashboard.botManager")}</div>
                 </div>
               </div>
               <Button asChild size="lg" className="shadow-[var(--glow-soft)]">
