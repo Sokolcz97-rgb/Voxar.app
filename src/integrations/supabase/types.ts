@@ -1556,6 +1556,7 @@ export type Database = {
     }
     Functions: {
       can: { Args: { _action: string; _module: string }; Returns: boolean }
+      current_user_discord_id: { Args: never; Returns: string }
       get_featured_streamers: {
         Args: never
         Returns: {
