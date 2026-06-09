@@ -143,7 +143,8 @@ const Tickets = () => {
           icon={LifeBuoy}
         />
         <div className="flex items-center justify-end gap-2 flex-wrap mb-6">
-          <div></div>
+
+
 
 
 
