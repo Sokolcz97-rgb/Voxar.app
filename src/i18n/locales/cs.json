@@ -63,6 +63,29 @@
       "title": "Top hráči",
       "viewAll": "Zobrazit žebříček",
       "reactions": "reakcí"
+    },
+    "features": {
+      "community": {
+        "title": "Komunita",
+        "desc": "Tisíce aktivních hráčů"
+      },
+      "dms": {
+        "title": "Soukromé zprávy",
+        "desc": "Komunikuj v reálném čase"
+      },
+      "moderation": {
+        "title": "Moderace",
+        "desc": "Bezpečné prostředí"
+      },
+      "streams": {
+        "title": "Live streamy",
+        "desc": "Sleduj v reálném čase"
+      }
+    },
+    "footer": {
+      "tagline": "Herní komunita",
+      "terms": "Podmínky používání",
+      "privacy": "Ochrana soukromí"
     }
   },
   "auth": {
@@ -108,7 +131,8 @@
     "recentThreads": "Poslední vlákna",
     "noActivity": "Žádná aktivita",
     "openConversation": "Otevřít",
-    "viewAll": "Zobrazit vše"
+    "viewAll": "Zobrazit vše",
+    "botManager": "Správce bota"
   },
   "profile": {
     "title": "Profil",
@@ -303,11 +327,17 @@
       "0": "Jak založím vlákno ve fóru?",
       "1": "Jak pošlu soukromou zprávu?",
       "2": "Co znamená role admin?"
-    }
+    },
+    "signInRequired": "Přihlášení vyžadováno",
+    "signInRequiredDesc": "Přihlaš se pro použití AI.",
+    "escalated": "Eskalováno majiteli",
+    "escalatedWithTicket": "Založil jsem ticket #{{id}} s vysokou prioritou.",
+    "escalatedNoTicket": "Tvůj problém byl předán adminovi.",
+    "newChatTitle": "Nová konverzace"
   },
   "notFound": {
-    "subtitle": "Jejda! Stránka nenalezena",
-    "back": "Zpět na úvod"
+    "title": "404 — Stránka nenalezena",
+    "desc": "Tato stránka neexistuje."
   },
   "lang": {
     "switch": "Jazyk"

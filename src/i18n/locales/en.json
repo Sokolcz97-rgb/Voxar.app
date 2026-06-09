@@ -63,6 +63,29 @@
       "title": "Top players",
       "viewAll": "View leaderboard",
       "reactions": "reactions"
+    },
+    "features": {
+      "community": {
+        "title": "Community",
+        "desc": "Thousands of active gamers"
+      },
+      "dms": {
+        "title": "Private messages",
+        "desc": "Chat in real time"
+      },
+      "moderation": {
+        "title": "Moderation",
+        "desc": "A safe environment"
+      },
+      "streams": {
+        "title": "Live streams",
+        "desc": "Watch in real time"
+      }
+    },
+    "footer": {
+      "tagline": "Gaming community",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy"
     }
   },
   "auth": {
@@ -108,7 +131,8 @@
     "recentThreads": "Recent threads",
     "noActivity": "No activity yet",
     "openConversation": "Open",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "botManager": "Bot manager"
   },
   "profile": {
     "title": "Profile",
@@ -303,11 +327,17 @@
       "0": "How do I start a thread?",
       "1": "How do I send a private message?",
       "2": "What does the admin role mean?"
-    }
+    },
+    "signInRequired": "Sign in required",
+    "signInRequiredDesc": "Sign in to use the AI helper.",
+    "escalated": "Escalated to the owner",
+    "escalatedWithTicket": "I opened ticket #{{id}} with high priority.",
+    "escalatedNoTicket": "Your issue was forwarded to an admin.",
+    "newChatTitle": "New conversation"
   },
   "notFound": {
-    "subtitle": "Oops! Page not found",
-    "back": "Return home"
+    "title": "404 — Page not found",
+    "desc": "This page does not exist."
   },
   "lang": {
     "switch": "Language"
