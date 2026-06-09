@@ -139,6 +139,37 @@ export function startOutboundWorker(client) {
             continue;
           }
 
+          // Special action: review and undo wrongful AI image bans across guild(s)
+          if (payload.action === 'unban_image_scams') {
+            try {
+              const guildId = payload.guild_id;
+              let guilds;
+              if (guildId) {
+                const g = await client.guilds.fetch(guildId).catch(() => null);
+                guilds = g ? [g] : [];
+              } else {
+                guilds = Array.from(client.guilds.cache.values());
+              }
+              const summary = [];
+              for (const g of guilds) {
+                try {
+                  const r = await unbanImageScamsForGuild(g);
+                  summary.push({ guild_id: g.id, name: g.name, unbanned: r.unbanned, failed: r.failed, alert_sent: !!r.alertCh });
+                } catch (e) {
+                  summary.push({ guild_id: g.id, name: g.name, error: e?.message || String(e) });
+                }
+              }
+              await supabase.from('bot_outbound_queue')
+                .update({ sent_at: new Date().toISOString(), error: null, payload: { ...payload, result: summary } })
+                .eq('id', job.id);
+            } catch (e) {
+              console.error('unban_image_scams', e);
+              await supabase.from('bot_outbound_queue')
+                .update({ error: String(e), sent_at: new Date().toISOString() })
+                .eq('id', job.id);
+            }
+            continue;
+          }
 
 
           // Special action: refresh ticket panel
