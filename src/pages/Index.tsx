@@ -207,12 +207,12 @@ const Index = () => {
         <div className="container flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
           <div>
             <span className="font-display tracking-widest">{settings.site_name}</span>{" "}
-            {settings.footer_text || "© 2026 — Herní komunita"}
+            {settings.footer_text || `© 2026 — ${t("home.footer.tagline")}`}
           </div>
           <nav className="flex items-center gap-4">
-            <a href="/terms" className="hover:text-primary transition-colors">Podmínky používání</a>
+            <a href="/terms" className="hover:text-primary transition-colors">{t("home.footer.terms")}</a>
             <span className="opacity-40">·</span>
-            <a href="/privacy" className="hover:text-primary transition-colors">Ochrana soukromí</a>
+            <a href="/privacy" className="hover:text-primary transition-colors">{t("home.footer.privacy")}</a>
           </nav>
         </div>
       </footer>
