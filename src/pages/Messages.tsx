@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Send, Plus, Search, MessageSquare, Paperclip } from "lucide-react";
+import { Loader2, Send, Plus, Search, MessageSquare, Paperclip, Sparkles, ArrowLeft } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { moderate } from "@/lib/moderate";
@@ -17,6 +17,7 @@ import { BannedNotice } from "@/components/BannedNotice";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
 import { PageHero } from "@/components/PageHero";
+import { cn } from "@/lib/utils";
 
 interface Conversation {
   id: string;
@@ -35,8 +36,10 @@ interface Message {
   created_at: string;
 }
 
-const initials = (n?: string | null) => (n ?? "?").charAt(0).toUpperCase();
-const stripHtml = (s?: string | null) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const stripHtml = (s?: string | null) =>
+  (s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+const isEmptyHtml = (s: string) => !stripHtml(s);
 
 const Messages = () => {
   const { user, isBanned } = useAuth();
@@ -47,16 +50,33 @@ const Messages = () => {
   const [activeId, setActiveId] = useState<string | null>(params.get("c"));
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<{ user_id: string; display_name: string | null; username: string | null; avatar_url: string | null }[]>([]);
+  const [searchResults, setSearchResults] = useState<
+    { user_id: string; display_name: string | null; username: string | null; avatar_url: string | null }[]
+  >([]);
+  const [convFilter, setConvFilter] = useState("");
+  const [mobileShowList, setMobileShowList] = useState(!params.get("c"));
   const bottomRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<RichEditorHandle>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
-  const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  const formatDay = (iso: string) => {
+    const d = new Date(iso);
+    const today = new Date();
+    const yest = new Date(); yest.setDate(today.getDate() - 1);
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(d, today)) return locale === "en-US" ? "Today" : "Dnes";
+    if (sameDay(d, yest)) return locale === "en-US" ? "Yesterday" : "Včera";
+    return d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
+  };
 
   const loadConversations = async () => {
     if (!user) return;
@@ -86,6 +106,19 @@ const Messages = () => {
 
   useEffect(() => { loadConversations(); /* eslint-disable-next-line */ }, [user]);
 
+  // Live update sidebar previews when any new message arrives
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`convs-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        loadConversations();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [user]);
+
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
     setLoadingMsgs(true);
@@ -96,7 +129,6 @@ const Messages = () => {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "instant" as ScrollBehavior }), 50);
       });
 
-    // mark incoming messages as read
     if (user) {
       supabase.from("messages").update({ read_at: new Date().toISOString() })
         .eq("conversation_id", activeId).neq("sender_id", user.id).is("read_at", null)
@@ -109,9 +141,8 @@ const Messages = () => {
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
         (payload) => {
           const msg = payload.new as Message;
-          setMessages((prev) => [...prev, msg]);
+          setMessages((prev) => prev.find((m) => m.id === msg.id) ? prev : [...prev, msg]);
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-          // auto-mark as read if not from me
           if (user && msg.sender_id !== user.id) {
             supabase.from("messages").update({ read_at: new Date().toISOString() })
               .eq("id", msg.id).then(() => { window.dispatchEvent(new Event("messages:read")); });
@@ -122,16 +153,25 @@ const Messages = () => {
     return () => { supabase.removeChannel(channel); };
   }, [activeId, user]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !activeId || !text.trim()) return;
+  const doSend = async () => {
+    if (!user || !activeId || sending) return;
     const original = text.trim();
+    if (!original || isEmptyHtml(original)) return;
+
+    setSending(true);
+    // Optimistically clear UI
     setText("");
+    editorRef.current?.clear();
 
     const mod = await moderate(original, true, "dm");
     if (mod.blocked) {
-      toast({ title: t("moderation.blocked"), description: mod.reason || t("moderation.blockedDesc"), variant: "destructive" });
+      toast({
+        title: t("moderation.blocked"),
+        description: mod.reason || t("moderation.blockedDesc"),
+        variant: "destructive",
+      });
       setText(original);
+      setSending(false);
       return;
     }
     const finalContent = mod.clean || original;
@@ -144,7 +184,14 @@ const Messages = () => {
     } else {
       if (mod.flagged) toast({ title: t("moderation.filtered") });
       loadConversations();
+      setTimeout(() => editorRef.current?.focus(), 30);
     }
+    setSending(false);
+  };
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    doSend();
   };
 
   useEffect(() => {
@@ -170,118 +217,227 @@ const Messages = () => {
     setSearch(""); setSearchResults([]);
     setActiveId(data as string);
     setParams({ c: data as string });
+    setMobileShowList(false);
     loadConversations();
   };
 
   const active = conversations.find((c) => c.id === activeId);
 
+  const filteredConvs = useMemo(() => {
+    const q = convFilter.trim().toLowerCase();
+    if (!q) return conversations;
+    return conversations.filter((c) => {
+      const name = (c.other?.display_name || c.other?.username || "").toLowerCase();
+      const prev = stripHtml(c.last?.content).toLowerCase();
+      return name.includes(q) || prev.includes(q);
+    });
+  }, [conversations, convFilter]);
+
+  // Group messages by day & by consecutive sender for cleaner UI
+  type Block = { senderId: string; mine: boolean; items: Message[] };
+  type DayGroup = { day: string; iso: string; blocks: Block[] };
+  const grouped: DayGroup[] = useMemo(() => {
+    const days: DayGroup[] = [];
+    for (const m of messages) {
+      const dayKey = new Date(m.created_at).toDateString();
+      let day = days[days.length - 1];
+      if (!day || day.day !== dayKey) {
+        day = { day: dayKey, iso: m.created_at, blocks: [] };
+        days.push(day);
+      }
+      const lastBlock = day.blocks[day.blocks.length - 1];
+      const mine = m.sender_id === user?.id;
+      if (lastBlock && lastBlock.senderId === m.sender_id) {
+        lastBlock.items.push(m);
+      } else {
+        day.blocks.push({ senderId: m.sender_id, mine, items: [m] });
+      }
+    }
+    return days;
+  }, [messages, user?.id]);
+
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
+      <div className="fixed inset-0 -z-10 opacity-40 pointer-events-none">
+        <div className="absolute top-20 left-1/4 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute bottom-20 right-1/4 h-80 w-80 rounded-full bg-accent/15 blur-3xl" />
+      </div>
       <Navbar />
       <main className="container py-6 animate-fade-in">
         <PageHero
           eyebrow={t("messages.tagline")}
           title={t("messages.title")}
           icon={MessageSquare}
-        />
-        <div className="flex items-center justify-end mb-6 -mt-2">
-          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-            <DialogTrigger asChild>
-              <Button variant="hero">
-                <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="glass border-border">
-              <DialogHeader><DialogTitle>{t("messages.findUser")}</DialogTitle></DialogHeader>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={search} onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("messages.searchPlaceholder")} className="pl-9" autoFocus />
-              </div>
-              <div className="max-h-72 overflow-y-auto space-y-1">
-                {searchResults.map((r) => (
-                  <button key={r.user_id} onClick={() => startConversation(r.user_id)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
-                    <UserAvatar url={r.avatar_url} name={r.display_name || r.username} className="h-9 w-9" />
-                    <div className="min-w-0">
-                      <div className="font-display font-bold truncate">{r.display_name || r.username}</div>
-                      {r.username && <div className="text-xs text-muted-foreground truncate">@{r.username}</div>}
-                    </div>
-                  </button>
-                ))}
-                {search && searchResults.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-6">{t("messages.nothingFound")}</p>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-
-        <div className="grid lg:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[500px]">
-          <Card className="glass border-border p-2 overflow-y-auto">
-            {loadingConvs ? (
-              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-            ) : conversations.length === 0 ? (
-              <div className="text-center py-10 px-4">
-                <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">{t("messages.noConversations")}<br />{t("messages.startNew")}</p>
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                {conversations.map((c) => (
-                  <li key={c.id}>
-                    <button onClick={() => { setActiveId(c.id); setParams({ c: c.id }); }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                        activeId === c.id ? "bg-primary/15 border border-primary/40" : "hover:bg-secondary/50"
-                      }`}>
-                      {c.other?.user_id ? (
-                        <Link
-                          to={`/profile/${c.other.user_id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="relative shrink-0 group"
-                          aria-label={c.other.display_name || c.other.username || ""}
-                        >
-                          <UserAvatar url={c.other.avatar_url} name={c.other.display_name || c.other.username} className="h-10 w-10 group-hover:ring-2 group-hover:ring-primary/50 transition-all" />
-                          <PresenceDot userId={c.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
-                        </Link>
-                      ) : (
-                        <div className="relative shrink-0">
-                          <UserAvatar url={c.other?.avatar_url} name={c.other?.display_name || c.other?.username} className="h-10 w-10" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-display font-bold truncate">{c.other?.display_name || c.other?.username || t("common.player")}</div>
-                        <div className="text-xs text-muted-foreground truncate">{stripHtml(c.last?.content) || "—"}</div>
+          actions={
+            <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+              <DialogTrigger asChild>
+                <Button variant="hero" size="lg" className="shadow-[var(--glow-soft)]">
+                  <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass border-border">
+                <DialogHeader><DialogTitle>{t("messages.findUser")}</DialogTitle></DialogHeader>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t("messages.searchPlaceholder")} className="pl-9" autoFocus />
+                </div>
+                <div className="max-h-72 overflow-y-auto space-y-1">
+                  {searchResults.map((r) => (
+                    <button key={r.user_id} onClick={() => startConversation(r.user_id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
+                      <UserAvatar url={r.avatar_url} name={r.display_name || r.username} className="h-9 w-9" />
+                      <div className="min-w-0">
+                        <div className="font-display font-bold truncate">{r.display_name || r.username}</div>
+                        {r.username && <div className="text-xs text-muted-foreground truncate">@{r.username}</div>}
                       </div>
                     </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  ))}
+                  {search && searchResults.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-6">{t("messages.nothingFound")}</p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          }
+        />
+
+        <div className="grid lg:grid-cols-[340px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[560px] mt-4">
+          {/* Sidebar */}
+          <Card className={cn(
+            "glass border-border flex flex-col overflow-hidden",
+            !mobileShowList && "hidden lg:flex"
+          )}>
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={convFilter}
+                  onChange={(e) => setConvFilter(e.target.value)}
+                  placeholder={t("messages.searchPlaceholder")}
+                  className="pl-9 h-9 bg-background/40"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2">
+              {loadingConvs ? (
+                <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+              ) : filteredConvs.length === 0 ? (
+                <div className="text-center py-10 px-4">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {convFilter ? t("messages.nothingFound") : <>{t("messages.noConversations")}<br />{t("messages.startNew")}</>}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {filteredConvs.map((c) => {
+                    const isActive = activeId === c.id;
+                    return (
+                      <li key={c.id}>
+                        <button
+                          onClick={() => { setActiveId(c.id); setParams({ c: c.id }); setMobileShowList(false); }}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all duration-200 group",
+                            isActive
+                              ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/40 shadow-[var(--glow-soft)]"
+                              : "hover:bg-secondary/50 border border-transparent"
+                          )}
+                        >
+                          {c.other?.user_id ? (
+                            <Link
+                              to={`/profile/${c.other.user_id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="relative shrink-0"
+                              aria-label={c.other.display_name || c.other.username || ""}
+                            >
+                              <UserAvatar
+                                url={c.other.avatar_url}
+                                name={c.other.display_name || c.other.username}
+                                className={cn(
+                                  "h-11 w-11 ring-2 transition-all",
+                                  isActive ? "ring-primary/60" : "ring-transparent group-hover:ring-primary/30"
+                                )}
+                              />
+                              <PresenceDot userId={c.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
+                            </Link>
+                          ) : (
+                            <UserAvatar
+                              url={c.other?.avatar_url}
+                              name={c.other?.display_name || c.other?.username}
+                              className="h-11 w-11"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="font-display font-bold truncate text-sm">
+                                {c.other?.display_name || c.other?.username || t("common.player")}
+                              </div>
+                              {c.last?.created_at && (
+                                <span className="text-[10px] text-muted-foreground shrink-0">
+                                  {formatTime(c.last.created_at)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {stripHtml(c.last?.content) || "—"}
+                            </div>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </Card>
 
-          <Card className="glass border-border flex flex-col overflow-hidden">
+          {/* Chat panel */}
+          <Card className={cn(
+            "glass border-border flex flex-col overflow-hidden relative",
+            mobileShowList && "hidden lg:flex"
+          )}>
             {!activeId ? (
               <div className="flex-1 flex items-center justify-center text-center p-6">
-                <div>
-                  <MessageSquare className="h-12 w-12 text-primary/40 mx-auto mb-3" />
-                  <p className="text-muted-foreground">{t("messages.selectOrStart")}</p>
+                <div className="max-w-sm">
+                  <div className="mx-auto mb-4 h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 grid place-items-center shadow-[var(--glow-soft)]">
+                    <Sparkles className="h-9 w-9 text-primary" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold mb-2">{t("messages.selectOrStart")}</h3>
+                  <p className="text-sm text-muted-foreground">{t("messages.tagline")}</p>
                 </div>
               </div>
             ) : (
               <>
-                <div className="border-b border-border px-5 py-3 flex items-center gap-3">
+                {/* Header */}
+                <div className="border-b border-border px-4 py-3 flex items-center gap-3 bg-background/30 backdrop-blur-sm">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden h-9 w-9"
+                    onClick={() => setMobileShowList(true)}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
                   {active?.other?.user_id ? (
-                    <Link to={`/profile/${active.other.user_id}`} className="flex items-center gap-3 group min-w-0">
+                    <Link to={`/profile/${active.other.user_id}`} className="flex items-center gap-3 group min-w-0 flex-1">
                       <div className="relative">
-                        <UserAvatar url={active.other.avatar_url} name={active.other.display_name || active.other.username} className="h-9 w-9 group-hover:ring-2 group-hover:ring-primary/50 transition-all" />
+                        <UserAvatar
+                          url={active.other.avatar_url}
+                          name={active.other.display_name || active.other.username}
+                          className="h-10 w-10 ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all"
+                        />
                         <PresenceDot userId={active.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-display font-bold truncate group-hover:text-primary transition-colors">{active.other.display_name || active.other.username || t("common.player")}</div>
-                        {active.other.username && <div className="text-xs text-muted-foreground">@{active.other.username}</div>}
+                        <div className="font-display font-bold truncate group-hover:text-primary transition-colors">
+                          {active.other.display_name || active.other.username || t("common.player")}
+                        </div>
+                        {active.other.username && (
+                          <div className="text-xs text-muted-foreground">@{active.other.username}</div>
+                        )}
                       </div>
                     </Link>
                   ) : (
@@ -289,56 +445,163 @@ const Messages = () => {
                   )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                {/* Messages */}
+                <div
+                  ref={scrollerRef}
+                  className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 scroll-smooth"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at 20% 10%, hsl(var(--primary)/0.06), transparent 50%), radial-gradient(circle at 80% 90%, hsl(var(--accent)/0.05), transparent 50%)",
+                  }}
+                >
                   {loadingMsgs ? (
-                    <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
                   ) : messages.length === 0 ? (
                     <p className="text-center text-sm text-muted-foreground py-10">{t("messages.beFirst")}</p>
                   ) : (
-                    messages.map((m) => {
-                      const mine = m.sender_id === user?.id;
-                      return (
-                        <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} animate-fade-in`}>
-                          <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                            mine ? "bg-primary text-black rounded-br-sm shadow-[var(--glow-soft)]"
-                                 : "bg-secondary text-secondary-foreground rounded-bl-sm"
-                          }`}>
-                            <RichContent
-                              content={m.content}
-                              className={`rich-content prose prose-sm max-w-none break-words [&_p]:my-0 ${
-                                mine
-                                  ? "text-black [&_*]:!text-black [&_a]:!text-black [&_a]:underline"
-                                  : "prose-invert"
-                              }`}
-                            />
-                            <p className={`text-[10px] mt-1 opacity-70`}>{formatTime(m.created_at)}</p>
-                          </div>
+                    grouped.map((day) => (
+                      <div key={day.day} className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-px bg-border/60" />
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-1 rounded-full bg-secondary/40 border border-border/50">
+                            {formatDay(day.iso)}
+                          </span>
+                          <div className="flex-1 h-px bg-border/60" />
                         </div>
-                      );
-                    })
+
+                        {day.blocks.map((block, bi) => {
+                          const mine = block.mine;
+                          const other = active?.other;
+                          return (
+                            <div
+                              key={bi}
+                              className={cn(
+                                "flex gap-2 items-end animate-fade-in",
+                                mine ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              {!mine && (
+                                <div className="shrink-0 w-8">
+                                  <UserAvatar
+                                    url={other?.avatar_url}
+                                    name={other?.display_name || other?.username}
+                                    className="h-8 w-8"
+                                  />
+                                </div>
+                              )}
+                              <div className={cn("flex flex-col gap-1 max-w-[78%] sm:max-w-[68%]", mine ? "items-end" : "items-start")}>
+                                {block.items.map((m, mi) => {
+                                  const isFirst = mi === 0;
+                                  const isLast = mi === block.items.length - 1;
+                                  return (
+                                    <div
+                                      key={m.id}
+                                      className={cn(
+                                        "px-4 py-2 text-sm shadow-sm transition-all break-words",
+                                        mine
+                                          ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-[var(--glow-soft)]"
+                                          : "bg-secondary/80 backdrop-blur-sm text-secondary-foreground border border-border/50",
+                                        // bubble corners based on grouping
+                                        mine
+                                          ? cn(
+                                              "rounded-2xl",
+                                              !isFirst && "rounded-tr-md",
+                                              !isLast && "rounded-br-md"
+                                            )
+                                          : cn(
+                                              "rounded-2xl",
+                                              !isFirst && "rounded-tl-md",
+                                              !isLast && "rounded-bl-md"
+                                            )
+                                      )}
+                                    >
+                                      <RichContent
+                                        content={m.content}
+                                        className={cn(
+                                          "rich-content prose prose-sm max-w-none break-words [&_p]:my-0",
+                                          mine
+                                            ? "[&_*]:!text-primary-foreground [&_a]:underline"
+                                            : "prose-invert"
+                                        )}
+                                      />
+                                      {isLast && (
+                                        <p className={cn(
+                                          "text-[10px] mt-1 opacity-60 text-right select-none",
+                                          mine ? "text-primary-foreground" : "text-muted-foreground"
+                                        )}>
+                                          {formatTime(m.created_at)}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))
                   )}
                   <div ref={bottomRef} />
                 </div>
 
+                {/* Composer */}
                 {isBanned ? (
                   <div className="border-t border-border p-3">
                     <BannedNotice />
                   </div>
                 ) : (
-                  <form onSubmit={send} className="border-t border-border p-3 space-y-2">
-                    <RichEditor ref={editorRef} value={text} onChange={setText} placeholder={t("messages.writeMessage")} minHeight={60} hideUploadButtons />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => editorRef.current?.openFilePicker()}
-                        title={t("editor.file")}
-                      >
-                        <Paperclip className="h-4 w-4 mr-2" />{t("editor.attach")}
-                      </Button>
-                      <Button type="submit" disabled={!text.trim()} className="bg-primary text-primary-foreground hover:bg-primary-glow">
-                        <Send className="h-4 w-4 mr-2" />{t("forum.send")}
-                      </Button>
+                  <form
+                    onSubmit={send}
+                    className="border-t border-border p-3 bg-background/30 backdrop-blur-sm"
+                  >
+                    <div className="relative rounded-2xl border border-border/70 bg-background/60 backdrop-blur-md focus-within:border-primary/60 focus-within:shadow-[var(--glow-soft)] transition-all overflow-hidden">
+                      <RichEditor
+                        ref={editorRef}
+                        value={text}
+                        onChange={setText}
+                        placeholder={t("messages.writeMessage")}
+                        minHeight={48}
+                        hideUploadButtons
+                        hideToolbar
+                        onEnterSubmit={doSend}
+                        className="!border-0 !bg-transparent !rounded-none"
+                      />
+                      <div className="flex items-center justify-between gap-2 px-2 pb-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => editorRef.current?.openFilePicker()}
+                          title={t("editor.file")}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Paperclip className="h-4 w-4 mr-1.5" />
+                          <span className="hidden sm:inline">{t("editor.attach")}</span>
+                        </Button>
+                        <div className="flex items-center gap-3">
+                          <span className="hidden sm:inline text-[10px] text-muted-foreground">
+                            {locale === "en-US" ? "Enter to send · Shift+Enter for new line" : "Enter odešle · Shift+Enter nový řádek"}
+                          </span>
+                          <Button
+                            type="submit"
+                            disabled={!text.trim() || isEmptyHtml(text) || sending}
+                            size="sm"
+                            className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 shadow-[var(--glow-soft)] rounded-full px-4"
+                          >
+                            {sending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4 sm:mr-1.5" />
+                                <span className="hidden sm:inline">{t("forum.send")}</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 )}
