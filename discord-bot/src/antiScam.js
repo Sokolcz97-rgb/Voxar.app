@@ -218,10 +218,24 @@ export async function runAntiScam(message) {
   if (cfg.bot_maintenance) return false;
 
   const ageDays = (Date.now() - message.author.createdTimestamp) / (1000 * 60 * 60 * 24);
-  const detection = detectScam(message.content || '', { accountAgeDays: ageDays });
+  let detection = detectScam(message.content || '', { accountAgeDays: ageDays });
+
+  // Pokud text není scam, zkusíme obrázkovou analýzu (Gemini vision)
+  let imgResult = null;
+  if (!detection) {
+    const urls = imageUrlsFromMessage(message);
+    if (urls.length) {
+      imgResult = await moderateImages(urls);
+      if (imgResult?.severe) {
+        const kind = imgResult.scam ? 'image_scam' : 'image_nsfw';
+        detection = { type: kind, match: imgResult.reason || (imgResult.scam ? 'scam image' : 'nsfw image') };
+      }
+    }
+  }
   if (!detection) return false;
 
   const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
+
 
   // Bypass: pokud má uživatel některou z bypass rolí, zprávu nesmazat ani nebanovat – pouze alert.
   const member = message.member || (await message.guild.members.fetch(message.author.id).catch(() => null));
