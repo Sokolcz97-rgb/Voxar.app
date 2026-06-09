@@ -162,17 +162,7 @@ const Servers = () => {
         {/* DISCORD SERVERS */}
         {view === "discord" && (
           <section className="mb-12">
-            <div className="mb-5">
-              <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">
-                {t("servers.communityTagline")}
-              </p>
-              <h2 className="font-display font-black text-3xl md:text-4xl mt-2">
-                {t("servers.discordTitle")}
-              </h2>
-              <p className="text-muted-foreground mt-2 max-w-xl">
-                {t("servers.discordDesc")}
-              </p>
-            </div>
+
             {discords.length === 0 ? (
               <Card className="glass border-border p-10 text-center">
                 <MessageCircle className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
