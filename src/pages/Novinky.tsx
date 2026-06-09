@@ -9,7 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, ExternalLink, Search, Flame } from "lucide-react";
+import { CalendarDays, ExternalLink, Search, Flame, Gamepad2 } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { SEO } from "@/components/SEO";
 
 type Release = {
