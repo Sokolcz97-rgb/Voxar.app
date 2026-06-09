@@ -391,56 +391,57 @@ const DashboardBot = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
-        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Discord</p>
-            <h1 className="font-display font-black text-4xl md:text-5xl mt-2 flex items-center gap-3">
-              <Bot className="h-10 w-10" /> Správce bota
-            </h1>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")}>
-              <Server className="h-4 w-4 mr-2" />
-              Servery bota
-            </Button>
-            <Card className="glass border-border p-4 flex items-center gap-3">
-              <div className={`h-3 w-3 rounded-full ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
-              <div>
-                <div className="text-sm font-medium">{botOnline ? "Bot online" : "Bot offline"}</div>
-                <div className="text-xs text-muted-foreground">
-                  {status?.guild_count ?? 0} serverů · {status?.version ?? "—"}
-                </div>
+        {/* Hero header */}
+        <div className="mb-8 relative overflow-hidden rounded-2xl border border-border/60 glass p-8 md:p-10">
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">Discord</p>
+              <h1 className="font-display font-black text-4xl md:text-5xl mt-2 flex items-center gap-3">
+                <Bot className="h-10 w-10" /> Správce bota
+              </h1>
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                {selectedGuild ? (
+                  <>
+                    {selectedGuild.icon_url ? (
+                      <img src={selectedGuild.icon_url} className="h-5 w-5 rounded-full" alt="" />
+                    ) : (
+                      <Server className="h-4 w-4" />
+                    )}
+                    <span className="text-foreground/90 font-medium">{selectedGuild.name}</span>
+                    <code className="text-xs">{selectedGuild.guild_id}</code>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4" />
+                    <span className="text-foreground/90 font-medium">Globální / šablony</span>
+                  </>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="ml-2 border-primary/40 hover:border-primary/80">
+                  <Server className="h-3.5 w-3.5 mr-1.5" />
+                  Změnit server
+                </Button>
               </div>
-            </Card>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap shrink-0">
+              <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")} className="border-primary/40 hover:border-primary/80">
+                <Server className="h-4 w-4 mr-2" />
+                Servery bota
+              </Button>
+              <Card className="glass border-border/60 p-4 flex items-center gap-3 hover:border-primary/60 hover:-translate-y-0.5 transition-all relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className={`h-3 w-3 rounded-full relative ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
+                <div className="relative">
+                  <div className="text-sm font-medium">{botOnline ? "Bot online" : "Bot offline"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {status?.guild_count ?? 0} serverů · {status?.version ?? "—"}
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
-
-        {/* Guild selector */}
-        <Card className="glass border-border p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
-          <Label className="shrink-0">Konfigurace pro:</Label>
-          <div className="flex-1 flex items-center gap-2 flex-wrap">
-            {selectedGuild ? (
-              <div className="flex items-center gap-2">
-                {selectedGuild.icon_url ? (
-                  <img src={selectedGuild.icon_url} className="h-6 w-6 rounded-full" alt="" />
-                ) : (
-                  <Server className="h-5 w-5" />
-                )}
-                <span className="font-medium">{selectedGuild.name}</span>
-                <code className="text-xs text-muted-foreground">{selectedGuild.guild_id}</code>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                <span className="font-medium">Globální / šablony</span>
-              </div>
-            )}
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-            <Server className="h-4 w-4 mr-2" />
-            Změnit server
-          </Button>
-        </Card>
 
         {/* Server picker dialog */}
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
