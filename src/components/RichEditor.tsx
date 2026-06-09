@@ -238,7 +238,7 @@ function ColorPicker({ editor }: { editor: Editor }) {
 }
 
 export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor({
-  value, onChange, placeholder, className, minHeight = 140, disableUploads, hideUploadButtons,
+  value, onChange, placeholder, className, minHeight = 140, disableUploads, hideUploadButtons, hideToolbar, onEnterSubmit,
 }, ref) {
   const { t } = useTranslation();
   const { user } = useAuth();
