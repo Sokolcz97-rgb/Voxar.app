@@ -185,7 +185,8 @@ export async function runAntiScam(message) {
   const cfg = await getConfig(message.guild.id);
   if (cfg.bot_maintenance) return false;
 
-  const detection = detectScam(message.content || '');
+  const ageDays = (Date.now() - message.author.createdTimestamp) / (1000 * 60 * 60 * 24);
+  const detection = detectScam(message.content || '', { accountAgeDays: ageDays });
   if (!detection) return false;
 
   const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
