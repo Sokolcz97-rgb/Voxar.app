@@ -2,6 +2,8 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { SEO } from "@/components/SEO";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { PageHero } from "@/components/PageHero";
+import { ScrollText } from "lucide-react";
 
 const Terms = () => {
   const { settings } = useSiteSettings();
@@ -18,10 +20,14 @@ const Terms = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
 
-      <main className="container py-12 max-w-3xl animate-fade-in">
-        <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">Právní</p>
-        <h1 className="font-display font-black text-3xl md:text-4xl mt-2">Podmínky používání</h1>
-        <p className="text-sm text-muted-foreground mt-2">Platnost od {updated}</p>
+      <main className="container py-10 max-w-3xl animate-fade-in">
+        <PageHero
+          eyebrow="Právní"
+          title="Podmínky používání"
+          description={`Pravidla užívání služby ${siteName}. Platnost od ${updated}.`}
+          icon={ScrollText}
+        />
+
 
         <Card className="glass border-border p-6 md:p-8 mt-8 space-y-6 text-sm leading-relaxed">
           <section>
