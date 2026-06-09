@@ -214,15 +214,9 @@ const Servers = () => {
         {/* GAME SERVERS */}
         {view === "game" && (
         <>
+        <div className="flex flex-wrap items-end justify-end gap-4 mb-8">
+          <div className="flex-1" />
 
-
-        {/* GAME SERVERS */}
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("servers.listTagline")}</p>
-            <h2 className="font-display font-black text-3xl md:text-4xl mt-2">{t("servers.title")}</h2>
-            <p className="text-muted-foreground mt-2 max-w-xl">
-              {t("servers.subtitle")}
             </p>
           </div>
           {canAdd && (
