@@ -284,6 +284,14 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
         }
         return false;
       },
+      handleKeyDown: (_view, event) => {
+        if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.metaKey && onEnterSubmit) {
+          event.preventDefault();
+          onEnterSubmit();
+          return true;
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
