@@ -8,6 +8,67 @@ import {
 import { supabase } from './supabase.js';
 import { setupTicketPanel } from './tickets.js';
 import { scanGuildMembers, scanGuildMessages } from './antiScam.js';
+import { getConfig } from './config.js';
+
+// Detects bans that were applied by the AI image moderation pipeline.
+// Matches both runAntiScam reason "Scam/phishing (image_scam: ...)" and
+// scanGuildMessages reason "Image scam: ..." / "Image nsfw: ...".
+const IMAGE_BAN_REASON_RE = /image[_\s-]?(scam|nsfw)/i;
+
+async function unbanImageScamsForGuild(guild) {
+  const cfg = await getConfig(guild.id).catch(() => ({}));
+  const alertChannelId = cfg?.default_alerts_channel || cfg?.default_log_channel;
+  const alertCh = alertChannelId ? await guild.channels.fetch(alertChannelId).catch(() => null) : null;
+
+  let bans;
+  try { bans = await guild.bans.fetch(); } catch (e) {
+    return { guild, unbanned: 0, failed: 0, error: e?.message || String(e), alertCh };
+  }
+
+  const targets = [];
+  for (const b of bans.values()) {
+    const reason = b.reason || '';
+    if (IMAGE_BAN_REASON_RE.test(reason)) targets.push(b);
+  }
+
+  const unbanned = [];
+  let failed = 0;
+  for (const b of targets) {
+    try {
+      await guild.bans.remove(b.user.id, 'Automatický odban: false-positive AI image moderation (re-trénovaný model)');
+      unbanned.push(b);
+    } catch (e) {
+      failed++;
+      console.error('unban failed', guild.id, b.user.id, e?.message);
+    }
+  }
+
+  if (alertCh?.isTextBased?.()) {
+    const lines = [];
+    lines.push(`**♻️ Revize AI image-banů – ${guild.name}**`);
+    lines.push(`Kontrola staré (příliš přísné) detekce scam obrázků. Model byl opraven, aby neflagoval běžné screenshoty chatu.`);
+    if (unbanned.length) {
+      lines.push('');
+      lines.push(`**✅ Odbanováno (${unbanned.length}):**`);
+      for (const u of unbanned.slice(0, 30)) {
+        lines.push(`• <@${u.user.id}> \`${u.user.tag}\` — původní důvod: \`${(u.reason || '').slice(0, 120)}\``);
+      }
+      if (unbanned.length > 30) lines.push(`…a dalších ${unbanned.length - 30}`);
+    } else {
+      lines.push('');
+      lines.push('✅ Žádné bany od AI image scanneru nenalezeny – nic k odbanování.');
+    }
+    if (failed) lines.push(`\n⚠️ Selhalo: ${failed}`);
+    let buf = '';
+    for (const ln of lines) {
+      if ((buf + ln + '\n').length > 1900) { await alertCh.send({ content: buf }).catch(() => {}); buf = ''; }
+      buf += ln + '\n';
+    }
+    if (buf) await alertCh.send({ content: buf }).catch(() => {});
+  }
+
+  return { guild, unbanned: unbanned.length, failed, alertCh };
+}
 
 export function startOutboundWorker(client) {
   // Poll every 5s for queued jobs (channel sends + special actions)
