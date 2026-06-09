@@ -446,6 +446,21 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
           }}
         />
       </div>
+      )}
+
+      {hideToolbar && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (files.length) handleFiles(files);
+          }}
+        />
+      )}
 
       <EditorContent editor={editor} />
     </div>
