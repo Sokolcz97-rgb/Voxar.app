@@ -8,6 +8,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PresenceDot } from "@/components/PresenceDot";
 import { Trophy, Loader2, Heart } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { getTop, type LbRange } from "@/lib/leaderboard";
 import { SEO } from "@/components/SEO";
 
