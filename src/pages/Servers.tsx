@@ -217,8 +217,6 @@ const Servers = () => {
         <div className="flex flex-wrap items-end justify-end gap-4 mb-8">
           <div className="flex-1" />
 
-            </p>
-          </div>
           {canAdd && (
             <Button
               onClick={() => {
