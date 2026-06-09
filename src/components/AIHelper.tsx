@@ -167,11 +167,11 @@ export function AIHelper() {
             <div className="flex items-center gap-1">
               <button
                 onClick={newChat}
-                title={t("ai.newChat") || "Nová konverzace"}
+                title={t("ai.newChatTitle")}
                 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary-glow px-3 py-1.5 rounded-md shadow-[var(--glow-soft)] hover:shadow-[var(--glow-primary)] hover:scale-105 transition-all border border-primary/50"
               >
                 <Plus className="h-3.5 w-3.5" />
-                {t("ai.newChat") || "Nová"}
+                {t("ai.newChat")}
               </button>
               {messages.length > 0 && (
                 <button
