@@ -81,6 +81,11 @@
         "title": "Live streams",
         "desc": "Watch in real time"
       }
+    },
+    "footer": {
+      "tagline": "Gaming community",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy"
     }
   },
   "auth": {
@@ -503,10 +508,5 @@
     "tooLarge": "File is too large (max 25 MB)",
     "uploadFailed": "Upload failed",
     "attach": "Attach file"
-  },
-  "footer": {
-    "tagline": "Gaming community",
-    "terms": "Terms of Service",
-    "privacy": "Privacy Policy"
   }
 }

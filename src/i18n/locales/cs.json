@@ -81,6 +81,11 @@
         "title": "Live streamy",
         "desc": "Sleduj v reálném čase"
       }
+    },
+    "footer": {
+      "tagline": "Herní komunita",
+      "terms": "Podmínky používání",
+      "privacy": "Ochrana soukromí"
     }
   },
   "auth": {
@@ -503,10 +508,5 @@
     "tooLarge": "Soubor je příliš velký (max 25 MB)",
     "uploadFailed": "Nahrávání selhalo",
     "attach": "Připojit soubor"
-  },
-  "footer": {
-    "tagline": "Herní komunita",
-    "terms": "Podmínky používání",
-    "privacy": "Ochrana soukromí"
   }
 }
