@@ -5,8 +5,9 @@ import { Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
-  variant?: "default" | "outline" | "secondary" | "ghost";
-  size?: "default" | "sm" | "lg" | "icon";
+  variant?: "default" | "outline" | "secondary" | "ghost" | "hero" | "destructive" | "link";
+  size?: "default" | "sm" | "lg" | "xl" | "icon";
+
   className?: string;
   label?: string;
 }

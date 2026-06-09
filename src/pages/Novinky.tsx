@@ -9,7 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, ExternalLink, Search, Flame } from "lucide-react";
+import { CalendarDays, ExternalLink, Search, Flame, Gamepad2 } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { SEO } from "@/components/SEO";
 
 type Release = {
@@ -125,17 +127,22 @@ const Novinky = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
-        <div className="mb-8">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("novinky.tagline")}</p>
-          <h1 className="font-display font-black text-4xl md:text-5xl mt-2">
-            {t("novinky.title")}
-          </h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            {t("novinky.subtitle")}
-            <br />
-            {t("novinky.metaCount", { games: items.length, genres: allGenres.length })}
-          </p>
-        </div>
+        <PageHero
+          eyebrow={t("novinky.tagline")}
+          title={t("novinky.title")}
+          icon={Gamepad2}
+          description={
+            <>
+              {t("novinky.subtitle")}
+              <br />
+              <span className="text-foreground/70">
+                {t("novinky.metaCount", { games: items.length, genres: allGenres.length })}
+              </span>
+            </>
+          }
+        />
+
+
 
         <Card className="glass border-border p-4 mb-6">
           <div className="grid md:grid-cols-3 gap-3">

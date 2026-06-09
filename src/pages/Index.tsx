@@ -114,57 +114,54 @@ const Index = () => {
               {settings.hero_subtitle || t("home.subtitle")}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center flex-wrap">
               {user ? (
-                <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary-glow text-base px-8 h-12 animate-pulse-glow">
+                <Button size="xl" variant="hero" asChild>
                   <Link to="/dashboard">
-                    {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-2 h-4 w-4" />
+                    {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
                 <>
-                  <Button size="lg" asChild className="bg-primary text-primary-foreground hover:bg-primary-glow text-base px-8 h-12 animate-pulse-glow">
+                  <Button size="xl" variant="hero" asChild>
                     <Link to="/auth">
-                      {t("home.signUp")} <ArrowRight className="ml-2 h-4 w-4" />
+                      {t("home.signUp")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button size="lg" variant="outline" asChild className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary text-base px-8 h-12">
+                  <Button size="xl" variant="outline" asChild>
                     <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
               )}
               {discord && (
                 <Button
-                  size="lg"
+                  size="xl"
                   asChild
-                  className="bg-[#5865F2] text-white hover:bg-[#4752C4] text-base px-8 h-12"
+                  className="bg-[#5865F2] text-white hover:bg-[#4752C4] hover:-translate-y-0.5 shadow-[0_0_24px_rgba(88,101,242,0.35)] hover:shadow-[0_0_40px_rgba(88,101,242,0.55)] transition-all"
                 >
                   <a href={discord.invite_url} target="_blank" rel="noreferrer">
-                    <MessageCircle className="mr-2 h-4 w-4" />
+                    <MessageCircle className="mr-1 h-4 w-4" />
                     {discord.name}
                   </a>
                 </Button>
               )}
-              <InviteBotButton
-                size="lg"
-                variant="outline"
-                className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary text-base px-8 h-12"
-              />
+              <InviteBotButton size="xl" variant="outline" />
             </div>
 
             {/* Stats strip */}
-            <div className="grid grid-cols-3 gap-6 mt-20 max-w-2xl mx-auto">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 mt-16 sm:mt-20 max-w-2xl mx-auto">
               {[
                 { value: String(stats.players), label: t("home.stats.players") },
                 { value: String(stats.streams), label: t("home.stats.streams") },
                 { value: "24/7", label: t("home.stats.online") },
               ].map((s) => (
-                <div key={s.label} className="glass rounded-lg p-4 hover:border-primary/50 transition-all">
-                  <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow">{s.value}</div>
-                  <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">{s.label}</div>
+                <div key={s.label} className="premium-card rounded-xl p-4 sm:p-5">
+                  <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow relative">{s.value}</div>
+                  <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-1 relative">{s.label}</div>
                 </div>
               ))}
             </div>
+
           </div>
         </section>
 

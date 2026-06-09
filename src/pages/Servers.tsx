@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Server as ServerIcon, Copy, Check, Globe, Wifi, WifiOff, Trash2, Pencil, MessageCircle, ExternalLink } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { ServerFormDialog } from "@/components/servers/ServerFormDialog";
 import { useAllDiscord } from "@/hooks/useFeaturedDiscord";
 import { toast } from "sonner";
@@ -126,8 +128,16 @@ const Servers = () => {
       <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
+        <PageHero
+          eyebrow={view === "discord" ? t("servers.communityTagline") : t("servers.title")}
+          title={view === "discord" ? t("servers.discordTitle") : t("servers.title")}
+          description={view === "discord" ? t("servers.discordDesc") : t("servers.subtitle")}
+          icon={view === "discord" ? MessageCircle : ServerIcon}
+        />
+
         {/* TOGGLE */}
         <div className="mb-8 flex justify-center">
+
           <div className="inline-flex p-1 rounded-xl glass border border-border">
             <Button
               size="sm"
@@ -152,17 +162,7 @@ const Servers = () => {
         {/* DISCORD SERVERS */}
         {view === "discord" && (
           <section className="mb-12">
-            <div className="mb-5">
-              <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">
-                {t("servers.communityTagline")}
-              </p>
-              <h2 className="font-display font-black text-3xl md:text-4xl mt-2">
-                {t("servers.discordTitle")}
-              </h2>
-              <p className="text-muted-foreground mt-2 max-w-xl">
-                {t("servers.discordDesc")}
-              </p>
-            </div>
+
             {discords.length === 0 ? (
               <Card className="glass border-border p-10 text-center">
                 <MessageCircle className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
@@ -214,17 +214,9 @@ const Servers = () => {
         {/* GAME SERVERS */}
         {view === "game" && (
         <>
+        <div className="flex flex-wrap items-end justify-end gap-4 mb-8">
+          <div className="flex-1" />
 
-
-        {/* GAME SERVERS */}
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("servers.listTagline")}</p>
-            <h2 className="font-display font-black text-3xl md:text-4xl mt-2">{t("servers.title")}</h2>
-            <p className="text-muted-foreground mt-2 max-w-xl">
-              {t("servers.subtitle")}
-            </p>
-          </div>
           {canAdd && (
             <Button
               onClick={() => {

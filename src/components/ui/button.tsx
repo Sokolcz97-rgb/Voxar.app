@@ -5,21 +5,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold tracking-wide ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary-glow hover:shadow-[var(--glow-soft)] hover:-translate-y-0.5",
+        hero:
+          "relative overflow-hidden text-primary-foreground bg-gradient-to-r from-primary via-primary-glow to-accent bg-[length:200%_100%] bg-[position:0%_50%] hover:bg-[position:100%_50%] shadow-[var(--glow-soft)] hover:shadow-[var(--glow-primary)] hover:-translate-y-0.5",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-[0_0_20px_hsl(var(--destructive)/0.45)]",
+        outline:
+          "border border-primary/40 bg-background/40 backdrop-blur-sm text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/70 hover:shadow-[var(--glow-soft)]",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:border-primary/30 border border-transparent",
+        ghost: "hover:bg-primary/10 hover:text-primary",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        lg: "h-12 rounded-md px-7 text-base",
+        xl: "h-14 rounded-lg px-9 text-base",
         icon: "h-10 w-10",
       },
     },
@@ -29,6 +36,7 @@ const buttonVariants = cva(
     },
   },
 );
+
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
