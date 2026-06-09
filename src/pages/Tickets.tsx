@@ -14,6 +14,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { StatusBadge, PriorityBadge, TStatus, TPriority } from "@/components/TicketBadges";
 import { Loader2, Plus, LifeBuoy, Inbox, Trash2 } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
 import { syncTicketToDiscord } from "@/lib/ticketDiscordSync";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
