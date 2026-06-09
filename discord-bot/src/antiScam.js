@@ -11,37 +11,52 @@ import { getConfig } from './config.js';
 const SCAM_PATTERNS = [
   /\bfree\s*(discord\s*)?nitro\b/i,
   /\bnitro\s*(for\s*)?free\b/i,
-  /\bsteam\s*gift\b/i,
-  /\bclaim\s*your\s*(free\s*)?(nitro|gift|reward)\b/i,
-  /\bairdrop\b.*\b(crypto|eth|btc|nft)\b/i,
+  /\b(discord|steam)\s*(gift|gifts)\b/i,
+  /\bclaim\s*(your)?\s*(free\s*)?(nitro|gift|reward|skin|csgo|cs2)\b/i,
+  /\bairdrop\b/i,
   /\b(only|just)\s*for\s*you\b.*http/i,
   /who\s*(the\s*)?first/i,
   /\bsteamcommunity\s*\.\s*ru\b/i,
+  // typické scam fráze (EN+CZ)
+  /\bi\s*(found|got)\s*(a\s*)?(free|cheap)\s*(nitro|gift)/i,
+  /\bnitro\s*(drop|giveaway)\b/i,
+  /\b(teen|18\+|girls?|nudes?|onlyfans|leaked|sex)\b.*https?:\/\//i,
+  /https?:\/\/.*\b(teen|18\+|nude|onlyfans|leak|sex)\b/i,
+  /\b(trade|skins?|csgo|cs2)\b.*https?:\/\//i,
+  /https?:\/\/(t\.me|telegram\.me)\/.+/i,
+  /\bjoin\s*(my|this)\s*(server|discord)\b.*https?:\/\//i,
+  /\bdm\s*me\b.*https?:\/\//i,
+  /\bzdarma\s*(nitro|skiny?)\b/i,
+  /\bdárek\b.*https?:\/\//i,
+  /@everyone.*https?:\/\//i,
+  /@here.*https?:\/\//i,
 ];
 
 // Phishing / fake domény (běžně zneužívané pro podvody na Discordu)
 const SCAM_DOMAINS = [
-  'discordnitro.gift',
-  'discord-nitro.com',
-  'dlscord.com',
-  'dlscordapp.com',
-  'discrod.com',
-  'discordapp.io',
-  'discordgift.site',
-  'discord-airdrop.com',
-  'steamcommiunity.com',
-  'steancommunity.com',
-  'stearmcommunity.com',
-  'steamcommunity.ru',
-  'discrod-nitro.com',
-  'discord-gifts.com',
-  'discordsnitro.com',
-  'dicsord.com',
-  'discrodapp.com',
+  'discordnitro.gift', 'discord-nitro.com', 'dlscord.com', 'dlscordapp.com',
+  'discrod.com', 'discordapp.io', 'discordgift.site', 'discord-airdrop.com',
+  'steamcommiunity.com', 'steancommunity.com', 'stearmcommunity.com',
+  'steamcommunity.ru', 'discrod-nitro.com', 'discord-gifts.com',
+  'discordsnitro.com', 'dicsord.com', 'discrodapp.com',
+  'discord-airdrop.xyz', 'discordnitro.info', 'discord-nitro.info',
+  'steamcommunlty.com', 'stearncommunity.com', 'steamcommunity-tradeoffer.ru',
+  'csgo-skins.com', 'csgo-trade.ru', 'csgo-cases.ru',
+  'bit.ly', 'tinyurl.com', 'cutt.ly', 'shorturl.at', // shortenery v kombinaci s keywordy
+];
+
+// Bezpečné domény – nikdy se neflagují
+const SAFE_DOMAINS = [
+  'discord.com','discord.gg','discord.media','discordapp.com','discordapp.net',
+  'steamcommunity.com','steampowered.com',
+  'youtube.com','youtu.be','twitch.tv',
+  'twitter.com','x.com','instagram.com','facebook.com','tiktok.com',
+  'github.com','google.com','wikipedia.org','reddit.com',
+  'spotify.com','soundcloud.com','imgur.com','tenor.com','giphy.com',
 ];
 
 // Podezřelé TLD často využívané pro podvody
-const SUSPICIOUS_TLDS = ['.ru', '.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.click'];
+const SUSPICIOUS_TLDS = ['.ru','.tk','.ml','.ga','.cf','.gq','.xyz','.top','.click','.icu','.work','.link','.zip','.mov'];
 
 const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
 
@@ -59,7 +74,11 @@ function getHost(url) {
   }
 }
 
-export function detectScam(content) {
+function isSafeHost(host) {
+  return SAFE_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`));
+}
+
+export function detectScam(content, ctx = {}) {
   if (!content) return null;
   const text = content.toLowerCase();
 
@@ -71,20 +90,24 @@ export function detectScam(content) {
   for (const url of urls) {
     const host = getHost(url);
     if (!host) continue;
+    if (isSafeHost(host)) continue;
     if (SCAM_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))) {
       return { type: 'domain', match: host };
     }
-    // Podezřelé: discord/steam keyword v hostname, ale není to oficiální doména
-    if (
-      /discord|nitro|steam/.test(host) &&
-      !/(^|\.)discord\.(com|gg|media)$|(^|\.)discordapp\.(com|net)$|(^|\.)steamcommunity\.com$|(^|\.)steampowered\.com$/.test(
-        host
-      )
-    ) {
+    // Impersonation: discord/steam/nitro keyword v hostname mimo oficiální domény
+    if (/discord|nitro|steam|stea?m/.test(host)) {
       return { type: 'impersonation', match: host };
     }
-    if (SUSPICIOUS_TLDS.some((t) => host.endsWith(t)) && /gift|free|nitro|claim|reward|airdrop/.test(text)) {
+    if (SUSPICIOUS_TLDS.some((t) => host.endsWith(t)) && /gift|free|nitro|claim|reward|airdrop|skin|trade|drop/.test(text)) {
       return { type: 'suspicious_tld', match: host };
+    }
+    // @everyone / @here + jakýkoli neznámý odkaz = scam
+    if (/@everyone|@here/.test(content)) {
+      return { type: 'mass_mention_link', match: host };
+    }
+    // Odkaz od velmi nového účtu (<3 dny) na neznámou doménu
+    if (ctx.accountAgeDays != null && ctx.accountAgeDays < 3) {
+      return { type: 'new_account_link', match: host };
     }
   }
 
