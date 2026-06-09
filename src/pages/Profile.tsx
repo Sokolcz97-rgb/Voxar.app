@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { SocialHandleField } from "@/components/SocialHandleField";
@@ -108,7 +109,12 @@ const Profile = () => {
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 max-w-2xl animate-fade-in">
-        <h1 className="font-display font-black text-4xl mb-8 text-glow">{t("profile.title")}</h1>
+        <PageHero
+          eyebrow={t("profile.tagline") || "Účet"}
+          title={t("profile.title")}
+          description={t("profile.subtitle") || "Spravuj svůj profil, sociální sítě, oznámení a zvuky."}
+          icon={UserCog}
+        />
         <Card className="glass border-border p-8">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
