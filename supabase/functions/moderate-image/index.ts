@@ -75,10 +75,15 @@ async function classifyImage(url: string): Promise<{
   const content = data.choices?.[0]?.message?.content ?? "{}";
   try {
     const p = JSON.parse(content);
+    const conf = typeof p.confidence === "number" ? p.confidence : 0;
+    const scam = !!p.scam && conf >= 0.85;
+    const nsfw = !!p.nsfw && conf >= 0.85;
+    // severe must be a high-confidence positive — never trust model's severe flag alone
+    const severe = scam || nsfw;
     return {
-      scam: !!p.scam,
-      nsfw: !!p.nsfw,
-      severe: !!p.severe || !!p.scam || !!p.nsfw,
+      scam,
+      nsfw,
+      severe,
       reason: String(p.reason ?? ""),
       categories: Array.isArray(p.categories) ? p.categories.map(String) : [],
     };
