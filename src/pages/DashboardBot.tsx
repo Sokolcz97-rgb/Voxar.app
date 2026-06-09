@@ -418,41 +418,99 @@ const DashboardBot = () => {
         {/* Guild selector */}
         <Card className="glass border-border p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
           <Label className="shrink-0">Konfigurace pro:</Label>
-          <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
-            <SelectTrigger className="sm:max-w-md">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
+          <div className="flex-1 flex items-center gap-2 flex-wrap">
+            {selectedGuild ? (
+              <div className="flex items-center gap-2">
+                {selectedGuild.icon_url ? (
+                  <img src={selectedGuild.icon_url} className="h-6 w-6 rounded-full" alt="" />
+                ) : (
+                  <Server className="h-5 w-5" />
+                )}
+                <span className="font-medium">{selectedGuild.name}</span>
+                <code className="text-xs text-muted-foreground">{selectedGuild.guild_id}</code>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                <span className="font-medium">Globální / šablony</span>
+              </div>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+            <Server className="h-4 w-4 mr-2" />
+            Změnit server
+          </Button>
+        </Card>
+
+        {/* Server picker dialog */}
+        <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Vyber server</DialogTitle>
+              <DialogDescription>
+                Zvol server, který chceš spravovat. Můžeš to kdykoli změnit tlačítkem
+                „Změnit server".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="overflow-y-auto -mx-6 px-6 space-y-2">
               {canUseGlobalConfig && (
-                <SelectItem value={GLOBAL_KEY}>
-                  <span className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" /> Globální / šablony (legacy)
-                  </span>
-                </SelectItem>
+                <button
+                  type="button"
+                  onClick={() => pickScope(GLOBAL_KEY)}
+                  className={`w-full flex items-center gap-3 p-3 border rounded-lg text-left hover:bg-secondary/50 transition ${
+                    selectedGuildId === GLOBAL_KEY ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <Globe className="h-6 w-6" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">Globální / šablony</div>
+                    <div className="text-xs text-muted-foreground">
+                      Výchozí nastavení pro všechny servery
+                    </div>
+                  </div>
+                </button>
               )}
               {guilds.map((g) => (
-                <SelectItem key={g.guild_id} value={g.guild_id}>
-                  <span className="flex items-center gap-2">
-                    {g.icon_url ? (
-                      <img src={g.icon_url} className="h-4 w-4 rounded-full" alt="" />
-                    ) : (
-                      <Server className="h-4 w-4" />
-                    )}
-                    {g.name}
-                  </span>
-                </SelectItem>
+                <button
+                  key={g.guild_id}
+                  type="button"
+                  onClick={() => pickScope(g.guild_id)}
+                  className={`w-full flex items-center gap-3 p-3 border rounded-lg text-left hover:bg-secondary/50 transition ${
+                    selectedGuildId === g.guild_id ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  {g.icon_url ? (
+                    <img src={g.icon_url} className="h-8 w-8 rounded-full" alt="" />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
+                      {g.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{g.name}</div>
+                    <code className="text-xs text-muted-foreground">{g.guild_id}</code>
+                  </div>
+                </button>
               ))}
-              {guilds.length === 0 && !isAdmin && (
-                <div className="px-3 py-2 text-xs text-muted-foreground">
-                  Žádné schválené servery — požádej na stránce „Servery bota".
+              {guilds.length === 0 && (
+                <div className="px-3 py-6 text-sm text-muted-foreground text-center">
+                  Nemáš žádné schválené servery.
+                  <div className="mt-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/dashboard/bot/guilds">Přejít na Servery bota</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
-            </SelectContent>
-          </Select>
-          {selectedGuild && (
-            <code className="text-xs text-muted-foreground">{selectedGuild.guild_id}</code>
-          )}
-        </Card>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPickerOpen(false)}>
+                Zavřít
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">
           <TabsList className="lg:sticky lg:top-20 flex lg:flex-col h-auto w-full lg:w-60 shrink-0 bg-card/40 backdrop-blur-md border border-border rounded-xl p-2 gap-1 overflow-x-auto lg:overflow-visible justify-start">
