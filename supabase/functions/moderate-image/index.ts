@@ -23,12 +23,31 @@ async function classifyImage(url: string): Promise<{
   if (!apiKey) return { scam: false, nsfw: false, severe: false, reason: "no key", categories: [] };
 
   const sys =
-    "Jsi obrázkový moderátor pro Discord server. Odpověz POUZE JSON: " +
-    '{"scam":bool,"nsfw":bool,"severe":bool,"reason":string,"categories":string[]}. ' +
-    "scam=true pokud obrázek obsahuje phishing/fake Discord/Steam/Nitro/airdrop/CSGO skin scam, " +
-    "fake login, QR kódy s podezřelými odkazy, falešné odměny, podvodné nabídky, kradené účty. " +
-    "nsfw=true pokud je explicitně sexuální, nahota, gore, extrémní násilí, drogy, gore/shock content. " +
-    "severe=true pokud scam NEBO nsfw. categories obsahuje krátké tagy. reason krátce česky.";
+    "Jsi PŘÍSNÝ a OPATRNÝ obrázkový moderátor pro Discord server. Odpověz POUZE JSON: " +
+    '{"scam":bool,"nsfw":bool,"severe":bool,"confidence":number,"reason":string,"categories":string[]}. ' +
+    "confidence = 0.0–1.0 (jak moc jsi si jistý). " +
+    "\n\n" +
+    "DEFAULT: scam=false, nsfw=false, severe=false. Když si NEJSI 100% jistý, vrať false.\n\n" +
+    "scam=true POUZE pokud obrázek je ZJEVNĚ phishingový/podvodný landing page: " +
+    "fake Discord/Steam/Nitro/Epic login formulář, falešná stránka pro 'claim' nitro/gift/skinu, " +
+    "QR kód s textem nabádajícím k naskenování pro odměnu/nitro/gift, " +
+    "falešné airdrop / crypto giveaway stránky, fake 'tvůj účet byl napaden' phishing. " +
+    "Musí obsahovat JASNĚ podvodný UI prvek (tlačítko Claim, login pole na podvodné doméně, fake Discord stránka).\n\n" +
+    "scam=false (NIKDY neflaguj jako scam) pokud jde o:\n" +
+    "- screenshot chatu / Discord zpráv / SMS / WhatsApp konverzace (i kdyby zmiňovaly nitro/gift/scam – je to JEN screenshot rozhovoru),\n" +
+    "- memy, vtipy, reaction obrázky, šablony memů,\n" +
+    "- screenshoty her, gameplay, herní inventáře, CS2/CSGO skiny v inventáři,\n" +
+    "- screenshoty profilů, statistik, leaderboardů,\n" +
+    "- normální fotky lidí, věcí, krajiny, jídla, zvířat,\n" +
+    "- screenshoty webů / článků / YouTube / Twitch / sociálních sítí,\n" +
+    "- obrázky kde je jen text bez podvodného UI,\n" +
+    "- screenshot Discord notifikace / pinglu / ping zprávy,\n" +
+    "- fan-art, kresby, anime obrázky (pokud nejsou explicitně NSFW).\n\n" +
+    "nsfw=true POUZE pokud explicitní pornografie, plná nahota, reálné gore (krev/zranění), " +
+    "scény týrání, hard drogy v akci. Sexy oblečení, bikini, plavky, lehký fanservice = false.\n\n" +
+    "severe=true POUZE pokud (scam=true a confidence>=0.85) NEBO (nsfw=true a confidence>=0.85). " +
+    "Když confidence < 0.85, severe MUSÍ být false.\n" +
+    "reason krátce česky. categories krátké tagy.";
 
   const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
