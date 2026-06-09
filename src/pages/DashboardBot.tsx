@@ -159,11 +159,20 @@ const DashboardBot = () => {
     })();
   }, [user]);
 
+  // Auto-pick the first guild for non-admins so they land directly on their
+  // server config (where they can actually edit). The global scope is read-only
+  // for non-admins, which used to make settings appear disabled.
+  const [autoPicked, setAutoPicked] = useState(false);
   useEffect(() => {
-    if (!canUseGlobalConfig && selectedGuildId === GLOBAL_KEY && guilds[0]) {
+    if (autoPicked) return;
+    if (!guildsLoaded) return;
+    if (canManageBot) return; // admins keep GLOBAL by default
+    if (selectedGuildId !== GLOBAL_KEY) { setAutoPicked(true); return; }
+    if (guilds[0]) {
       setSelectedGuildId(guilds[0].guild_id);
+      setAutoPicked(true);
     }
-  }, [canUseGlobalConfig, guilds, selectedGuildId]);
+  }, [autoPicked, guildsLoaded, canManageBot, guilds, selectedGuildId]);
 
   useEffect(() => {
     if (!user) return;
