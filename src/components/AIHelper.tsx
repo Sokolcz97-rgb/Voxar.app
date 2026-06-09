@@ -89,10 +89,10 @@ export function AIHelper() {
 
       if (data?.escalated) {
         toast({
-          title: "Eskalováno majiteli",
+          title: t("ai.escalated"),
           description: data.ticket_id
-            ? `Založil jsem ticket #${String(data.ticket_id).slice(0, 8)} s vysokou prioritou.`
-            : "Tvůj problém byl předán adminovi.",
+            ? t("ai.escalatedWithTicket", { id: String(data.ticket_id).slice(0, 8) })
+            : t("ai.escalatedNoTicket"),
         });
       }
     } catch (e) {
