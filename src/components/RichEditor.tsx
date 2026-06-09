@@ -28,11 +28,17 @@ interface Props {
   disableUploads?: boolean;
   /** Hide the built-in upload toolbar buttons (use external Attach button via ref instead). */
   hideUploadButtons?: boolean;
+  /** Hide the entire formatting toolbar (compact chat mode). */
+  hideToolbar?: boolean;
+  /** Called when the user presses Enter (without Shift). Return true to indicate handled. */
+  onEnterSubmit?: () => void;
 }
 
 export interface RichEditorHandle {
   openFilePicker: (accept?: string) => void;
   isUploading: () => boolean;
+  clear: () => void;
+  focus: () => void;
 }
 
 const PRESET_COLORS = [
