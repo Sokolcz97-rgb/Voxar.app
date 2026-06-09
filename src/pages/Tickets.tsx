@@ -136,16 +136,16 @@ const Tickets = () => {
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
-        <div className="flex items-end justify-between gap-4 flex-wrap mb-8">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("tickets.tagline")}</p>
-            <h1 className="font-display font-black text-3xl md:text-4xl mt-1">
-              {isStaff ? t("tickets.titleStaff") : t("tickets.titleUser")}
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {isStaff ? t("tickets.subtitleStaff") : t("tickets.subtitleUser")}
-            </p>
-          </div>
+        <PageHero
+          eyebrow={t("tickets.tagline")}
+          title={isStaff ? t("tickets.titleStaff") : t("tickets.titleUser")}
+          description={isStaff ? t("tickets.subtitleStaff") : t("tickets.subtitleUser")}
+          icon={LifeBuoy}
+        />
+        <div className="flex items-center justify-end gap-2 flex-wrap mb-6">
+          <div></div>
+
+
 
           <div className="flex items-center gap-2">
             <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
