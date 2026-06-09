@@ -147,22 +147,54 @@ const Dashboard = () => {
       <Navbar />
 
       <main className="container py-10 animate-fade-in">
-        <div className="mb-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary text-glow">{t("dashboard.welcome")}</p>
-          <h1 className="font-display font-black text-4xl md:text-5xl mt-2">
-            {profile?.display_name || profile?.username || t("dashboard.fallbackName")}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {t("dashboard.role")}: {roles.length ? roles.join(", ") : "user"}
-          </p>
+        <div className="mb-10 relative overflow-hidden rounded-2xl border border-border/60 glass p-8 md:p-10">
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">
+                {t("dashboard.welcome")}
+              </p>
+              <h1 className="font-display font-black text-4xl md:text-5xl mt-2 truncate">
+                {profile?.display_name || profile?.username || t("dashboard.fallbackName")}
+              </h1>
+              <p className="text-muted-foreground mt-2 text-sm">
+                {t("dashboard.role")}:{" "}
+                <span className="text-foreground/90 font-medium">
+                  {roles.length ? roles.join(", ") : "user"}
+                </span>
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-xl border border-primary/30 bg-primary/5">
+                <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/40 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-primary" />
+                </div>
+                <div className="leading-tight">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Discord</div>
+                  <div className="font-display font-bold text-sm">Správce bota</div>
+                </div>
+              </div>
+              <Button asChild size="lg" className="shadow-[var(--glow-soft)]">
+                <Link to="/dashboard/bot">
+                  <Bot className="h-4 w-4 mr-2" />
+                  Spravovat bota
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {stats.map((s) => (
-            <Card key={s.label} className="glass border-border p-5 hover:border-primary/50 transition-all">
-              <s.icon className="h-5 w-5 text-primary mb-3" />
-              <div className="font-display text-3xl font-bold">{s.value}</div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">{s.label}</div>
+            <Card
+              key={s.label}
+              className="glass border-border p-5 hover:border-primary/60 hover:-translate-y-0.5 transition-all relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <s.icon className="h-5 w-5 text-primary mb-3 relative" />
+              <div className="font-display text-3xl font-bold relative">{s.value}</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1 relative">{s.label}</div>
             </Card>
           ))}
         </div>
@@ -171,20 +203,6 @@ const Dashboard = () => {
         {user && <ActivityChart userId={user.id} />}
         {user && <RecommendedThreads userId={user.id} />}
 
-        <Card className="glass border-border p-6 mb-10 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-              <Bot className="h-6 w-6 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-display font-bold text-lg">Discord bot</h3>
-              <p className="text-sm text-muted-foreground">Příkazy, auto-moderace, uvítací zprávy, embedy a notifikace</p>
-            </div>
-          </div>
-          <Button asChild>
-            <Link to="/dashboard/bot">Spravovat bota</Link>
-          </Button>
-        </Card>
 
         <h2 className="font-display text-2xl font-bold mb-4">{t("dashboard.myActivity")}</h2>
         <div className="grid lg:grid-cols-2 gap-4 mb-10">
