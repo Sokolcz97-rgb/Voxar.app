@@ -1,5 +1,37 @@
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, ChannelType } from 'discord.js';
 import { getConfig } from './config.js';
+import { supabase } from './supabase.js';
+
+// ------------------------------------------------------------
+// Image moderation via Supabase edge function `moderate-image`
+// (Lovable AI Gemini vision). Returns null on error/no-result.
+// ------------------------------------------------------------
+const IMG_EXT = /\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i;
+function imageUrlsFromMessage(message) {
+  const urls = [];
+  for (const a of message.attachments?.values?.() || []) {
+    const ct = a.contentType || '';
+    if (ct.startsWith('image/') || IMG_EXT.test(a.url || '')) urls.push(a.url);
+  }
+  for (const e of message.embeds || []) {
+    if (e?.image?.url) urls.push(e.image.url);
+    if (e?.thumbnail?.url && IMG_EXT.test(e.thumbnail.url)) urls.push(e.thumbnail.url);
+  }
+  return urls.slice(0, 4);
+}
+
+export async function moderateImages(urls) {
+  if (!urls?.length) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('moderate-image', { body: { urls } });
+    if (error) { console.error('moderate-image invoke', error.message); return null; }
+    return data || null;
+  } catch (e) {
+    console.error('moderate-image exception', e?.message || e);
+    return null;
+  }
+}
+
 
 // ============================================================
 // Anti-scam: detekce podvodných odkazů / phishingu / scamů
