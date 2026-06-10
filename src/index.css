@@ -78,12 +78,30 @@
   html { scroll-behavior: smooth; }
   body {
     @apply bg-background text-foreground font-body antialiased;
+    background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 15% 10%, hsl(var(--primary) / 0.08), transparent 40%),
-      radial-gradient(circle at 85% 90%, hsl(var(--accent) / 0.08), transparent 45%);
+      radial-gradient(circle at 12% 8%, hsl(var(--primary) / 0.10), transparent 42%),
+      radial-gradient(circle at 88% 92%, hsl(var(--accent) / 0.07), transparent 45%),
+      linear-gradient(hsl(var(--primary) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.035) 1px, transparent 1px);
+    background-size: auto, auto, 56px 56px, 56px 56px;
     background-attachment: fixed;
   }
+  /* Subtle plexus/circuit overlay across whole site (from logo bg) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><g fill='none' stroke='%2300e5ff' stroke-width='0.6' stroke-opacity='0.18'><path d='M50 80 L180 140 L120 260 L260 220 L320 360 L180 420 L50 380'/><path d='M420 60 L540 140 L500 280 L580 360 L460 460 L340 420 L300 540'/><path d='M260 220 L420 60'/><path d='M320 360 L500 280'/><path d='M180 420 L460 460'/></g><g fill='%2300e5ff' fill-opacity='0.35'><circle cx='50' cy='80' r='1.8'/><circle cx='180' cy='140' r='1.8'/><circle cx='120' cy='260' r='1.8'/><circle cx='260' cy='220' r='1.8'/><circle cx='320' cy='360' r='1.8'/><circle cx='180' cy='420' r='1.8'/><circle cx='50' cy='380' r='1.8'/><circle cx='420' cy='60' r='1.8'/><circle cx='540' cy='140' r='1.8'/><circle cx='500' cy='280' r='1.8'/><circle cx='580' cy='360' r='1.8'/><circle cx='460' cy='460' r='1.8'/><circle cx='340' cy='420' r='1.8'/><circle cx='300' cy='540' r='1.8'/></g></svg>");
+    background-size: 600px 600px;
+    opacity: 0.55;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
   h1, h2, h3, h4 { @apply font-display tracking-wide; }
+  ::selection { background: hsl(var(--primary) / 0.35); color: hsl(var(--foreground)); }
 }
 
 @layer utilities {
