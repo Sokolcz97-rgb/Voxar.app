@@ -99,12 +99,6 @@
   }
   .border-glow { box-shadow: var(--glow-soft); }
   .border-glow-intense { box-shadow: var(--glow-intense); }
-  .neon-grid {
-    background-image:
-      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
   .gradient-hero { background: var(--gradient-hero); }
   .gradient-primary { background: var(--gradient-primary); }
   .gradient-glitch {
