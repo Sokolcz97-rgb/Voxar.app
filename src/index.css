@@ -105,34 +105,48 @@
 }
 
 @layer utilities {
-  .text-glow { text-shadow: 0 0 20px hsl(var(--primary) / 0.6); }
+  .text-glow { text-shadow: 0 0 12px hsl(var(--primary) / 0.7), 0 0 28px hsl(var(--primary) / 0.35); }
+  .text-glow-intense {
+    text-shadow:
+      0 0 6px hsl(var(--primary) / 0.95),
+      0 0 18px hsl(var(--primary) / 0.7),
+      0 0 36px hsl(var(--primary) / 0.45),
+      0 0 72px hsl(var(--primary) / 0.25);
+  }
   .border-glow { box-shadow: var(--glow-soft); }
+  .border-glow-intense { box-shadow: var(--glow-intense); }
   .neon-grid {
     background-image:
-      linear-gradient(hsl(var(--primary) / 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.07) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   .gradient-hero { background: var(--gradient-hero); }
   .gradient-primary { background: var(--gradient-primary); }
+  .gradient-glitch {
+    background: var(--gradient-glitch);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
   .glass {
-    background: hsl(222 40% 8% / 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border));
+    background: hsl(220 35% 5% / 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(var(--primary) / 0.12);
   }
   .glass-strong {
-    background: hsl(222 45% 7% / 0.78);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    border: 1px solid hsl(var(--border));
+    background: hsl(220 40% 4% / 0.8);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid hsl(var(--primary) / 0.18);
   }
-  /* Premium card with hover lift + gradient sheen */
+  /* Premium card with hover lift + gradient sheen + cyan corner glow */
   .premium-card {
     position: relative;
     overflow: hidden;
-    border: 1px solid hsl(var(--border) / 0.7);
-    background: linear-gradient(145deg, hsl(222 40% 9% / 0.7) 0%, hsl(222 45% 6% / 0.7) 100%);
+    border: 1px solid hsl(var(--primary) / 0.15);
+    background: linear-gradient(145deg, hsl(220 35% 6% / 0.85) 0%, hsl(220 40% 3% / 0.85) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transition: var(--transition-smooth);
@@ -141,25 +155,99 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0) 0%, hsl(var(--primary) / 0.08) 100%);
+    background:
+      radial-gradient(circle at 0% 0%, hsl(var(--primary) / 0.18), transparent 45%),
+      radial-gradient(circle at 100% 100%, hsl(var(--accent) / 0.10), transparent 45%);
     opacity: 0;
     transition: opacity 0.35s ease;
     pointer-events: none;
   }
   .premium-card:hover {
     transform: translateY(-3px);
-    border-color: hsl(var(--primary) / 0.55);
-    box-shadow: 0 12px 40px -12px hsl(var(--primary) / 0.35), var(--shadow-card);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow:
+      0 14px 50px -12px hsl(var(--primary) / 0.45),
+      0 0 0 1px hsl(var(--primary) / 0.25),
+      var(--shadow-card);
   }
   .premium-card:hover::before { opacity: 1; }
 
   /* Soft section background bands */
   .section-band {
     background:
-      radial-gradient(circle at 80% 0%, hsl(var(--primary) / 0.08), transparent 55%),
-      radial-gradient(circle at 0% 100%, hsl(var(--accent) / 0.08), transparent 55%);
+      radial-gradient(circle at 80% 0%, hsl(var(--primary) / 0.10), transparent 55%),
+      radial-gradient(circle at 0% 100%, hsl(var(--accent) / 0.07), transparent 55%);
+  }
+
+  /* Glitch text effect mimicking the logo */
+  .glitch {
+    position: relative;
+    color: hsl(var(--foreground));
+  }
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .glitch::before {
+    color: hsl(var(--accent));
+    transform: translate(-2px, 0);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    mix-blend-mode: screen;
+    opacity: 0.7;
+  }
+  .glitch::after {
+    color: hsl(var(--primary));
+    transform: translate(2px, 0);
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    mix-blend-mode: screen;
+    opacity: 0.7;
+  }
+
+  /* Scanline overlay for cyber feel */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      hsl(var(--primary) / 0.04) 3px,
+      transparent 4px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  /* Animated cyan border sweep */
+  .border-sweep {
+    position: relative;
+  }
+  .border-sweep::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from var(--angle, 0deg), transparent 60%, hsl(var(--primary) / 0.8) 75%, hsl(var(--primary-glow)) 85%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    animation: sweep 4s linear infinite;
+    pointer-events: none;
   }
 }
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes sweep { to { --angle: 360deg; } }
 
 
 @keyframes pulse-glow {
