@@ -73,7 +73,8 @@ const AppRoutes = () => {
       <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/servery" element={<Servers />} />
       <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
-      <Route path="/admin/roles" element={<ProtectedRoute requireEditor><AdminUsersRoles /></ProtectedRoute>} />
+      {/* /admin/roles je alias - přesměrováno na sjednocenou stránku /admin/users */}
+      <Route path="/admin/roles" element={<Navigate to="/admin/users" replace />} />
       <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
       <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
