@@ -19,6 +19,11 @@ import {
   Keyboard,
   LayoutDashboard,
   ChevronRight,
+  Menu,
+  Trophy,
+  Server,
+  Newspaper,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,6 +32,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export function Navbar() {
   const { user, isAdmin, isEditor, signOut } = useAuth();
@@ -87,7 +100,7 @@ export function Navbar() {
           >
             <Keyboard className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
             <Link to="/forum">{t("nav.forum")}</Link>
           </Button>
           <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
@@ -104,15 +117,135 @@ export function Navbar() {
               <Link to={`/${p.slug}`}>{p.nav_label}</Link>
             </Button>
           ))}
+
+          {/* Mobile hamburger menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-foreground"
+                aria-label="Menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[85vw] max-w-sm bg-card/95 backdrop-blur-xl border-l border-primary/20 p-0 flex flex-col"
+            >
+              <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
+                <SheetTitle className="font-display tracking-[0.18em] text-glow-intense">
+                  {settings.site_name}
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+                {[
+                  { to: "/forum", label: t("nav.forum"), icon: MessageCircle },
+                  { to: "/leaderboard", label: t("nav.leaderboard"), icon: Trophy },
+                  { to: "/servery", label: "Servery", icon: Server },
+                  { to: "/novinky", label: "Novinky", icon: Newspaper },
+                  ...navPages.map((p) => ({
+                    to: `/${p.slug}`,
+                    label: p.nav_label,
+                    icon: ChevronRight,
+                  })),
+                  ...(user
+                    ? [
+                        {
+                          to: "/messages",
+                          label: t("nav.messages"),
+                          icon: MessageSquare,
+                          badge: unreadMessages,
+                        },
+                        {
+                          to: "/tickets",
+                          label: t("nav.tickets"),
+                          icon: LifeBuoy,
+                          badge: openTickets,
+                        },
+                        {
+                          to: "/dashboard",
+                          label: t("nav.dashboard"),
+                          icon: LayoutDashboard,
+                        },
+                        {
+                          to: "/profile",
+                          label: t("nav.profile"),
+                          icon: UserIcon,
+                        },
+                      ]
+                    : []),
+                  ...(isAdmin || isEditor
+                    ? [{ to: "/admin", label: t("nav.admin"), icon: Shield, primary: true }]
+                    : []),
+                ].map((item: any) => (
+                  <SheetClose asChild key={item.to}>
+                    <Link
+                      to={item.to}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-primary/10 transition-colors"
+                    >
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-md border ${
+                          item.primary
+                            ? "bg-primary/20 border-primary/40"
+                            : "bg-primary/10 border-primary/20"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <span
+                        className={`flex-1 text-sm font-medium ${
+                          item.primary ? "text-primary" : ""
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      {item.badge > 0 && (
+                        <span className="h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
+                          {item.badge}
+                        </span>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </Link>
+                  </SheetClose>
+                ))}
+              </nav>
+              {user && (
+                <div className="p-3 border-t border-border/60">
+                  <SheetClose asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={handleSignOut}
+                      className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {t("nav.signOut")}
+                    </Button>
+                  </SheetClose>
+                </div>
+              )}
+              {!user && (
+                <div className="p-3 border-t border-border/60">
+                  <SheetClose asChild>
+                    <Button asChild variant="default" className="w-full">
+                      <Link to="/auth">{t("nav.signIn")}</Link>
+                    </Button>
+                  </SheetClose>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+
           {user ? (
             <>
-              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex relative">
+              <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex relative">
                 <Link to="/messages">
                   {t("nav.messages")}
                   <NotifBadge count={unreadMessages} />
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+              <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
                 <Link to="/dashboard">{t("nav.dashboard")}</Link>
               </Button>
               <LanguageSwitcher />
