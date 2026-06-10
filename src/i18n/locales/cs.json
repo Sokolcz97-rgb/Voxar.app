@@ -1,14 +1,14 @@
 {
   "nav": {
     "forum": "Fórum",
-    "messages": "Zprávy",
+    "messages": "Soukromé zprávy",
     "dashboard": "Dashboard",
-    "admin": "Admin",
-    "profile": "Profil",
-    "tickets": "Tickety",
+    "admin": "Administrace",
+    "profile": "Můj profil",
+    "tickets": "Moje tickety",
     "signOut": "Odhlásit se",
-    "signIn": "Přihlásit",
-    "leaderboard": "Žebříček"
+    "signIn": "Přihlásit se",
+    "leaderboard": "Žebříček hráčů"
   },
   "search": {
     "label": "Hledat",

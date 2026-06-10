@@ -1,14 +1,14 @@
 {
   "nav": {
     "forum": "Forum",
-    "messages": "Messages",
+    "messages": "Private messages",
     "dashboard": "Dashboard",
-    "admin": "Admin",
-    "profile": "Profile",
-    "tickets": "Tickets",
+    "admin": "Administration",
+    "profile": "My profile",
+    "tickets": "My tickets",
     "signOut": "Sign out",
     "signIn": "Sign in",
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Player leaderboard"
   },
   "search": {
     "label": "Search",
