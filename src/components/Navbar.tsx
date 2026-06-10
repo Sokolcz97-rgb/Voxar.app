@@ -19,6 +19,11 @@ import {
   Keyboard,
   LayoutDashboard,
   ChevronRight,
+  Menu,
+  Trophy,
+  Server,
+  Newspaper,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,6 +32,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export function Navbar() {
   const { user, isAdmin, isEditor, signOut } = useAuth();
