@@ -31,27 +31,31 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/60">
+    <header className="sticky top-0 z-50 glass-strong border-b border-primary/20 shadow-[0_4px_30px_-10px_hsl(var(--primary)/0.4)]">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/" className="flex items-center gap-3 group">
           <div className="relative">
             {settings.logo_url ? (
               <img
                 src={settings.logo_url}
                 alt={settings.site_name}
-                className="h-7 w-7 object-contain transition-transform group-hover:scale-110"
+                className="h-8 w-8 object-contain transition-transform group-hover:scale-110 drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]"
               />
             ) : (
               <>
-                <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
-                <div className="absolute inset-0 blur-lg bg-primary/40 -z-10" />
+                <Gamepad2 className="h-8 w-8 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
+                <div className="absolute inset-0 blur-xl bg-primary/50 -z-10" />
               </>
             )}
           </div>
-          <span className="font-display font-bold text-lg tracking-widest text-glow">
+          <span
+            className="font-display font-black text-lg sm:text-xl tracking-[0.18em] text-glow-intense glitch"
+            data-text={settings.site_name}
+          >
             {settings.site_name}
           </span>
         </Link>
+
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <GlobalSearch />
