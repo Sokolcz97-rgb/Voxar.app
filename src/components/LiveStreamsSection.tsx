@@ -63,20 +63,39 @@ function StreamCard({ s }: { s: LiveStream }) {
               <Tv className="h-10 w-10 text-muted-foreground" />
             </div>
           )}
-          <Badge
-            className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px]"
-            style={{ backgroundColor: meta.brand }}
-          >
-            <Radio className="h-3 w-3 animate-pulse" /> Live
-          </Badge>
-          <Badge
-            variant="outline"
-            className="absolute top-2 right-2 border-0 text-white"
-            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-          >
-            <Eye className="h-3 w-3 mr-1" />
-            {formatViewers(s.viewer_count)}
-          </Badge>
+          {s.is_live ? (
+            <>
+              <Badge
+                className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px]"
+                style={{ backgroundColor: meta.brand }}
+              >
+                <Radio className="h-3 w-3 animate-pulse" /> Live
+              </Badge>
+              <Badge
+                variant="outline"
+                className="absolute top-2 right-2 border-0 text-white"
+                style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                {formatViewers(s.viewer_count)}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <Badge className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px] bg-amber-500/90">
+                <CalendarClock className="h-3 w-3" /> Naplánováno
+              </Badge>
+              {s.scheduled_start_at && (
+                <Badge
+                  variant="outline"
+                  className="absolute top-2 right-2 border-0 text-white"
+                  style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                >
+                  {formatSchedule(s.scheduled_start_at)}
+                </Badge>
+              )}
+            </>
+          )}
         </div>
         <div className="p-4">
           <div className="flex items-start gap-3">
