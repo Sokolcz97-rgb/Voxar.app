@@ -136,7 +136,9 @@ export function LiveStreamsSection() {
   };
   streams.forEach((s) => byPlatform[s.platform].push(s));
 
-  const totalLive = streams.length;
+  const totalLive = streams.filter((s) => s.is_live).length;
+  const totalScheduled = streams.filter((s) => !s.is_live).length;
+  const totalAny = streams.length;
 
   return (
     <section className="container pb-32">
@@ -149,15 +151,23 @@ export function LiveStreamsSection() {
             Live streamy
           </h2>
         </div>
-        {totalLive > 0 && (
-          <Badge className="bg-destructive/20 text-destructive border-destructive/40 gap-2 px-3 py-1 text-sm">
-            <Radio className="h-3 w-3 animate-pulse" />
-            {totalLive} {totalLive === 1 ? "stream" : totalLive < 5 ? "streamy" : "streamů"} online
-          </Badge>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {totalLive > 0 && (
+            <Badge className="bg-destructive/20 text-destructive border-destructive/40 gap-2 px-3 py-1 text-sm">
+              <Radio className="h-3 w-3 animate-pulse" />
+              {totalLive} {totalLive === 1 ? "stream" : totalLive < 5 ? "streamy" : "streamů"} online
+            </Badge>
+          )}
+          {totalScheduled > 0 && (
+            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/40 gap-2 px-3 py-1 text-sm">
+              <CalendarClock className="h-3 w-3" />
+              {totalScheduled} naplánováno
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {totalLive === 0 ? (
+      {totalAny === 0 ? (
         <Card className="glass border-border p-10 text-center">
           <Tv className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
           <p className="text-muted-foreground">
@@ -170,9 +180,11 @@ export function LiveStreamsSection() {
             const list = byPlatform[p];
             if (list.length === 0) return null;
             const meta = PLATFORM_META[p];
+            const liveCount = list.filter((s) => s.is_live).length;
+            const upCount = list.length - liveCount;
             return (
               <div key={p}>
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
                   <div
                     className="w-1 h-8 rounded-full"
                     style={{ backgroundColor: meta.brand }}
@@ -183,13 +195,23 @@ export function LiveStreamsSection() {
                   >
                     {meta.label}
                   </h3>
-                  <Badge
-                    variant="outline"
-                    className="border-0 font-bold"
-                    style={{ backgroundColor: meta.bg, color: meta.brand }}
-                  >
-                    {list.length} live
-                  </Badge>
+                  {liveCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="border-0 font-bold"
+                      style={{ backgroundColor: meta.bg, color: meta.brand }}
+                    >
+                      {liveCount} live
+                    </Badge>
+                  )}
+                  {upCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="border-0 font-bold bg-amber-500/15 text-amber-400"
+                    >
+                      {upCount} naplánováno
+                    </Badge>
+                  )}
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {list.map((s) => (
