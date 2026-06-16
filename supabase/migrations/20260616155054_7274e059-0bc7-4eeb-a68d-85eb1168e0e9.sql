@@ -1,0 +1,1 @@
+ALTER TABLE public.live_streams_cache ADD COLUMN IF NOT EXISTS scheduled_start_at timestamptz;

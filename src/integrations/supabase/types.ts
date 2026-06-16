@@ -898,6 +898,7 @@ export type Database = {
           id: string
           is_live: boolean
           platform: string
+          scheduled_start_at: string | null
           started_at: string | null
           stream_url: string
           thumbnail_url: string | null
@@ -912,6 +913,7 @@ export type Database = {
           id?: string
           is_live?: boolean
           platform: string
+          scheduled_start_at?: string | null
           started_at?: string | null
           stream_url: string
           thumbnail_url?: string | null
@@ -926,6 +928,7 @@ export type Database = {
           id?: string
           is_live?: boolean
           platform?: string
+          scheduled_start_at?: string | null
           started_at?: string | null
           stream_url?: string
           thumbnail_url?: string | null
