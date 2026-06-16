@@ -87,6 +87,7 @@ async function checkTwitch(
       thumbnail_url: thumb || null,
       stream_url: `https://twitch.tv/${h.login}`,
       started_at: s.started_at ?? null,
+      scheduled_start_at: null,
       checked_at: checkedAt,
     };
   });
