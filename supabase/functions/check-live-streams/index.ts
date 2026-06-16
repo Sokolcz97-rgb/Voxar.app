@@ -28,6 +28,7 @@ type StreamRecord = {
   thumbnail_url: string | null;
   stream_url: string;
   started_at: string | null;
+  scheduled_start_at: string | null;
   checked_at: string;
 };
 
