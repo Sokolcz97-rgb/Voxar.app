@@ -127,6 +127,7 @@ async function checkKick(
           thumbnail_url: live.thumbnail?.url ?? null,
           stream_url: `https://kick.com/${h.login}`,
           started_at: live.created_at ?? null,
+          scheduled_start_at: null,
           checked_at: checkedAt,
         });
       } catch (e) {
