@@ -20,6 +20,23 @@ function formatViewers(n: number) {
   return String(n);
 }
 
+function formatSchedule(iso: string) {
+  const d = new Date(iso);
+  const diffMs = d.getTime() - Date.now();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `za ${Math.max(1, mins)} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `za ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `za ${days} d`;
+  return d.toLocaleDateString("cs-CZ", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function StreamCard({ s }: { s: LiveStream }) {
   const meta = PLATFORM_META[s.platform];
   const fallback = (s.display_name || s.handle || "?")
