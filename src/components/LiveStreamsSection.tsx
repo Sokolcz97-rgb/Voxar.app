@@ -2,7 +2,7 @@ import { useLiveStreams, LiveStream } from "@/hooks/useLiveStreams";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tv, Eye, Radio } from "lucide-react";
+import { Tv, Eye, Radio, CalendarClock } from "lucide-react";
 
 const PLATFORM_META: Record<
   LiveStream["platform"],
