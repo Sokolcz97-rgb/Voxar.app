@@ -13,6 +13,7 @@ export type LiveStream = {
   thumbnail_url: string | null;
   stream_url: string;
   started_at: string | null;
+  scheduled_start_at: string | null;
   display_name?: string | null;
   avatar_url?: string | null;
 };
@@ -25,7 +26,8 @@ export function useLiveStreams() {
     const { data } = await supabase
       .from("live_streams_cache")
       .select("*")
-      .eq("is_live", true)
+      .or("is_live.eq.true,scheduled_start_at.not.is.null")
+      .order("is_live", { ascending: false })
       .order("viewer_count", { ascending: false });
 
     const rows = (data ?? []) as LiveStream[];

@@ -28,6 +28,7 @@ type StreamRecord = {
   thumbnail_url: string | null;
   stream_url: string;
   started_at: string | null;
+  scheduled_start_at: string | null;
   checked_at: string;
 };
 
@@ -86,6 +87,7 @@ async function checkTwitch(
       thumbnail_url: thumb || null,
       stream_url: `https://twitch.tv/${h.login}`,
       started_at: s.started_at ?? null,
+      scheduled_start_at: null,
       checked_at: checkedAt,
     };
   });
@@ -125,6 +127,7 @@ async function checkKick(
           thumbnail_url: live.thumbnail?.url ?? null,
           stream_url: `https://kick.com/${h.login}`,
           started_at: live.created_at ?? null,
+          scheduled_start_at: null,
           checked_at: checkedAt,
         });
       } catch (e) {
@@ -144,8 +147,11 @@ async function checkYouTube(
   const out: StreamRecord[] = [];
   await Promise.all(
     handles.map(async (h) => {
+      const handle = h.login.startsWith("@") ? h.login : `@${h.login}`;
+      let pushedLive = false;
+
+      // ---- 1) Detect a CURRENTLY LIVE broadcast ----
       try {
-        const handle = h.login.startsWith("@") ? h.login : `@${h.login}`;
         const liveUrl = `https://www.youtube.com/${handle}/live`;
         const res = await fetch(liveUrl, {
           headers: {
@@ -157,16 +163,11 @@ async function checkYouTube(
           redirect: "follow",
         });
         const html = await res.text();
-
-        // 1) Primary: /live page redirects to the live broadcast — canonical
-        //    link is the live videoId.
         const canonical = html.match(
           /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
         );
         let videoId = canonical?.[1] ?? "";
 
-        // 2) Fallback: some IPs (notably EU) don't get the redirect. Scrape
-        //    the channel page (/@handle) for a "LIVE" badge next to a video.
         if (!videoId) {
           try {
             const chRes = await fetch(`https://www.youtube.com/${handle}`, {
@@ -178,7 +179,6 @@ async function checkYouTube(
               },
             });
             const chHtml = await chRes.text();
-            // Live videos on the channel page have LIVE_NOW badge near the videoId
             const m =
               chHtml.match(
                 /"videoId":"([A-Za-z0-9_-]{11})"[^{}]{0,3000}?BADGE_STYLE_TYPE_LIVE_NOW/,
@@ -195,82 +195,133 @@ async function checkYouTube(
         console.log(
           `[yt] ${h.login} status=${res.status} videoId=${videoId || "none"}`,
         );
-        if (!videoId) {
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
 
-        // Verify the videoId really belongs to this channel and is currently
-        // live — use the no-quota oEmbed endpoint for ownership + title +
-        // thumbnail, and re-check live status on the watch page.
-        const [oembedRes, watchRes] = await Promise.all([
-          fetch(
-            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
-          ),
-          fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        if (videoId) {
+          const [oembedRes, watchRes] = await Promise.all([
+            fetch(
+              `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+            ),
+            fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9",
+                Cookie: "CONSENT=YES+cb; SOCS=CAI",
+              },
+            }),
+          ]);
+          if (oembedRes.ok) {
+            const oembed = await oembedRes.json();
+            const expected = handle.toLowerCase();
+            const author = String(oembed.author_url ?? "").toLowerCase();
+            const watchHtml = await watchRes.text();
+            const stillLive =
+              watchHtml.includes('"isLiveBroadcast":true') ||
+              watchHtml.includes('"isLiveNow":true') ||
+              /"liveBroadcastContent":"live"/.test(watchHtml);
+            if (author.includes(expected) && stillLive) {
+              const ogImg = watchHtml.match(
+                /<meta property="og:image" content="([^"]+)"/,
+              );
+              const thumb =
+                ogImg?.[1] ??
+                String(oembed.thumbnail_url ?? "").replace(
+                  "hqdefault.jpg",
+                  "maxresdefault.jpg",
+                ) ??
+                `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+              const viewersMatch = watchHtml.match(
+                /"concurrentViewers":"(\d+)"/,
+              );
+              const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
+              out.push({
+                user_id: h.user_id,
+                platform: "youtube",
+                handle: h.login,
+                is_live: true,
+                title: oembed.title ?? null,
+                game_name: null,
+                viewer_count: viewers,
+                thumbnail_url: thumb,
+                stream_url: `https://www.youtube.com/watch?v=${videoId}`,
+                started_at: null,
+                scheduled_start_at: null,
+                checked_at: checkedAt,
+              });
+              pushedLive = true;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("YouTube live scrape error for", h.login, e);
+      }
+
+      // ---- 2) Detect the SOONEST UPCOMING scheduled stream ----
+      try {
+        const upRes = await fetch(
+          `https://www.youtube.com/${handle}/streams`,
+          {
             headers: {
               "User-Agent":
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
               "Accept-Language": "en-US,en;q=0.9",
               Cookie: "CONSENT=YES+cb; SOCS=CAI",
             },
-          }),
-        ]);
-        if (!oembedRes.ok) {
-          console.warn(`[yt] oembed failed for ${h.login} vid=${videoId}`);
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
-        const oembed = await oembedRes.json();
-        const expected = handle.toLowerCase();
-        const author = String(oembed.author_url ?? "").toLowerCase();
-        if (!author.includes(expected)) {
-          console.warn(
-            `[yt] author mismatch for ${h.login}: got ${author}, expected ${expected}`,
-          );
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
-
-        const watchHtml = await watchRes.text();
-        const stillLive =
-          watchHtml.includes('"isLiveBroadcast":true') ||
-          watchHtml.includes('"isLiveNow":true') ||
-          /"liveBroadcastContent":"live"/.test(watchHtml);
-        if (!stillLive) {
-          out.push(offlineRec(h.user_id, "youtube", h.login));
-          return;
-        }
-
-        const ogImg = watchHtml.match(
-          /<meta property="og:image" content="([^"]+)"/,
+          },
         );
-        const thumb =
-          ogImg?.[1] ??
-          String(oembed.thumbnail_url ?? "").replace(
-            "hqdefault.jpg",
-            "maxresdefault.jpg",
-          ) ??
-          `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-        const viewersMatch = watchHtml.match(/"concurrentViewers":"(\d+)"/);
-        const viewers = viewersMatch ? Number(viewersMatch[1]) : 0;
+        if (!upRes.ok) return;
+        const upHtml = await upRes.text();
+        const upRegex =
+          /"videoId":"([A-Za-z0-9_-]{11})"[\s\S]{0,6000}?"upcomingEventData":\{[^}]*?"startTime":"(\d+)"/g;
+        let best: { videoId: string; ts: number } | null = null;
+        const nowSec = Math.floor(Date.now() / 1000);
+        let m: RegExpExecArray | null;
+        while ((m = upRegex.exec(upHtml)) !== null) {
+          const ts = Number(m[2]);
+          if (!Number.isFinite(ts) || ts < nowSec) continue;
+          if (!best || ts < best.ts) best = { videoId: m[1], ts };
+        }
+        if (!best) return;
+
+        const titleMatch = upHtml.match(
+          new RegExp(
+            `"videoId":"${best.videoId}"[\\s\\S]{0,2500}?"title":\\{"runs":\\[\\{"text":"([^"\\\\]{1,200})"`,
+          ),
+        );
+        const title = titleMatch?.[1] ?? null;
+        const scheduledIso = new Date(best.ts * 1000).toISOString();
+        console.log(
+          `[yt] ${h.login} upcoming videoId=${best.videoId} at ${scheduledIso}`,
+        );
+
+        if (pushedLive) {
+          // Attach the next scheduled time to the live record
+          const existing = out.find(
+            (r) =>
+              r.user_id === h.user_id &&
+              r.platform === "youtube" &&
+              r.is_live,
+          );
+          if (existing) existing.scheduled_start_at = scheduledIso;
+          return;
+        }
 
         out.push({
           user_id: h.user_id,
           platform: "youtube",
           handle: h.login,
-          is_live: true,
-          title: oembed.title ?? null,
+          is_live: false,
+          title,
           game_name: null,
-          viewer_count: viewers,
-          thumbnail_url: thumb,
-          stream_url: `https://www.youtube.com/watch?v=${videoId}`,
+          viewer_count: 0,
+          thumbnail_url: `https://i.ytimg.com/vi/${best.videoId}/hqdefault.jpg`,
+          stream_url: `https://www.youtube.com/watch?v=${best.videoId}`,
           started_at: null,
+          scheduled_start_at: scheduledIso,
           checked_at: checkedAt,
         });
       } catch (e) {
-        console.error("YouTube scrape error for", h.login, e);
-        out.push(offlineRec(h.user_id, "youtube", h.login));
+        console.error("YouTube upcoming scrape error for", h.login, e);
       }
     }),
   );
@@ -299,6 +350,7 @@ function offlineRec(
     thumbnail_url: null,
     stream_url: url,
     started_at: null,
+    scheduled_start_at: null,
     checked_at: new Date().toISOString(),
   };
 }

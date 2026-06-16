@@ -2,7 +2,7 @@ import { useLiveStreams, LiveStream } from "@/hooks/useLiveStreams";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tv, Eye, Radio } from "lucide-react";
+import { Tv, Eye, Radio, CalendarClock } from "lucide-react";
 
 const PLATFORM_META: Record<
   LiveStream["platform"],
@@ -18,6 +18,23 @@ const PLATFORM_ORDER: LiveStream["platform"][] = ["twitch", "youtube", "kick"];
 function formatViewers(n: number) {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
   return String(n);
+}
+
+function formatSchedule(iso: string) {
+  const d = new Date(iso);
+  const diffMs = d.getTime() - Date.now();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `za ${Math.max(1, mins)} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `za ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `za ${days} d`;
+  return d.toLocaleDateString("cs-CZ", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function StreamCard({ s }: { s: LiveStream }) {
@@ -46,20 +63,39 @@ function StreamCard({ s }: { s: LiveStream }) {
               <Tv className="h-10 w-10 text-muted-foreground" />
             </div>
           )}
-          <Badge
-            className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px]"
-            style={{ backgroundColor: meta.brand }}
-          >
-            <Radio className="h-3 w-3 animate-pulse" /> Live
-          </Badge>
-          <Badge
-            variant="outline"
-            className="absolute top-2 right-2 border-0 text-white"
-            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-          >
-            <Eye className="h-3 w-3 mr-1" />
-            {formatViewers(s.viewer_count)}
-          </Badge>
+          {s.is_live ? (
+            <>
+              <Badge
+                className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px]"
+                style={{ backgroundColor: meta.brand }}
+              >
+                <Radio className="h-3 w-3 animate-pulse" /> Live
+              </Badge>
+              <Badge
+                variant="outline"
+                className="absolute top-2 right-2 border-0 text-white"
+                style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                {formatViewers(s.viewer_count)}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <Badge className="absolute top-2 left-2 gap-1 border-0 text-white font-bold uppercase tracking-wider text-[10px] bg-amber-500/90">
+                <CalendarClock className="h-3 w-3" /> Naplánováno
+              </Badge>
+              {s.scheduled_start_at && (
+                <Badge
+                  variant="outline"
+                  className="absolute top-2 right-2 border-0 text-white"
+                  style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                >
+                  {formatSchedule(s.scheduled_start_at)}
+                </Badge>
+              )}
+            </>
+          )}
         </div>
         <div className="p-4">
           <div className="flex items-start gap-3">
@@ -100,7 +136,9 @@ export function LiveStreamsSection() {
   };
   streams.forEach((s) => byPlatform[s.platform].push(s));
 
-  const totalLive = streams.length;
+  const totalLive = streams.filter((s) => s.is_live).length;
+  const totalScheduled = streams.filter((s) => !s.is_live).length;
+  const totalAny = streams.length;
 
   return (
     <section className="container pb-32">
@@ -113,15 +151,23 @@ export function LiveStreamsSection() {
             Live streamy
           </h2>
         </div>
-        {totalLive > 0 && (
-          <Badge className="bg-destructive/20 text-destructive border-destructive/40 gap-2 px-3 py-1 text-sm">
-            <Radio className="h-3 w-3 animate-pulse" />
-            {totalLive} {totalLive === 1 ? "stream" : totalLive < 5 ? "streamy" : "streamů"} online
-          </Badge>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {totalLive > 0 && (
+            <Badge className="bg-destructive/20 text-destructive border-destructive/40 gap-2 px-3 py-1 text-sm">
+              <Radio className="h-3 w-3 animate-pulse" />
+              {totalLive} {totalLive === 1 ? "stream" : totalLive < 5 ? "streamy" : "streamů"} online
+            </Badge>
+          )}
+          {totalScheduled > 0 && (
+            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/40 gap-2 px-3 py-1 text-sm">
+              <CalendarClock className="h-3 w-3" />
+              {totalScheduled} naplánováno
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {totalLive === 0 ? (
+      {totalAny === 0 ? (
         <Card className="glass border-border p-10 text-center">
           <Tv className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
           <p className="text-muted-foreground">
@@ -134,9 +180,11 @@ export function LiveStreamsSection() {
             const list = byPlatform[p];
             if (list.length === 0) return null;
             const meta = PLATFORM_META[p];
+            const liveCount = list.filter((s) => s.is_live).length;
+            const upCount = list.length - liveCount;
             return (
               <div key={p}>
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
                   <div
                     className="w-1 h-8 rounded-full"
                     style={{ backgroundColor: meta.brand }}
@@ -147,13 +195,23 @@ export function LiveStreamsSection() {
                   >
                     {meta.label}
                   </h3>
-                  <Badge
-                    variant="outline"
-                    className="border-0 font-bold"
-                    style={{ backgroundColor: meta.bg, color: meta.brand }}
-                  >
-                    {list.length} live
-                  </Badge>
+                  {liveCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="border-0 font-bold"
+                      style={{ backgroundColor: meta.bg, color: meta.brand }}
+                    >
+                      {liveCount} live
+                    </Badge>
+                  )}
+                  {upCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="border-0 font-bold bg-amber-500/15 text-amber-400"
+                    >
+                      {upCount} naplánováno
+                    </Badge>
+                  )}
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {list.map((s) => (
