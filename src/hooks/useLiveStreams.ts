@@ -13,6 +13,7 @@ export type LiveStream = {
   thumbnail_url: string | null;
   stream_url: string;
   started_at: string | null;
+  scheduled_start_at: string | null;
   display_name?: string | null;
   avatar_url?: string | null;
 };
