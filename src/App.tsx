@@ -33,6 +33,7 @@ import AdminGames from "./pages/AdminGames.tsx";
 import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
+import AdminChatBot from "./pages/AdminChatBot.tsx";
 import DashboardBot from "./pages/DashboardBot.tsx";
 import DashboardBotGuilds from "./pages/DashboardBotGuilds.tsx";
 import Novinky from "./pages/Novinky.tsx";
