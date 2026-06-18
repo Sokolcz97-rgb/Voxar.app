@@ -79,6 +79,7 @@ const AppRoutes = () => {
       <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
       <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
+      <Route path="/admin/chat-bot" element={<ProtectedRoute requireEditor><AdminChatBot /></ProtectedRoute>} />
       <Route path="/admin/novinky" element={<ProtectedRoute requireEditor><AdminNovinky /></ProtectedRoute>} />
       <Route path="/admin/forum-categories" element={<ProtectedRoute requireEditor><AdminForumCategories /></ProtectedRoute>} />
       <Route path="/admin/stats" element={<ProtectedRoute requireEditor><AdminStats /></ProtectedRoute>} />
