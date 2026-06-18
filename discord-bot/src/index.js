@@ -12,6 +12,8 @@ import { verifySupabaseConnection } from './supabase.js';
 import { registerGuildSlashCommands, handleSlashCommand } from './slashCommands.js';
 import { startCommandsRealtime } from './commandsRealtime.js';
 import { startServerStats } from './serverStats.js';
+import { startTwitchChat } from './twitchChat.js';
+import { startYouTubeChat } from './youtubeChat.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -40,6 +42,8 @@ client.once('clientReady', async () => {
   startCommandsRealtime(client);
   startTicketsConfigRealtime(client);
   startServerStats(client);
+  startTwitchChat().catch((e) => console.error('startTwitchChat', e?.message || e));
+  startYouTubeChat().catch((e) => console.error('startYouTubeChat', e?.message || e));
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
