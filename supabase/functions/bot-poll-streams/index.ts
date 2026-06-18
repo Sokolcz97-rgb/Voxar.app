@@ -15,6 +15,7 @@ type Row = {
   enabled: boolean;
   last_notified_at: string | null;
   last_video_id: string | null;
+  last_upload_id: string | null;
 };
 
 function fmt(template: string, vars: Record<string, string>) {
@@ -85,6 +86,25 @@ async function pollTwitch(rows: Row[], supabase: any) {
   }
 }
 
+async function resolveChannelId(handle: string, ua: string): Promise<string | null> {
+  if (handle.startsWith("UC") && handle.length === 24) return handle;
+  const h = handle.startsWith("@") ? handle : `@${handle}`;
+  try {
+    const res = await fetch(`https://www.youtube.com/${h}`, {
+      headers: { "User-Agent": ua, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
+      redirect: "follow",
+    });
+    const html = await res.text();
+    const m = html.match(/"channelId":"(UC[A-Za-z0-9_-]{22})"/) ||
+              html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[A-Za-z0-9_-]{22})"/) ||
+              html.match(/\/channel\/(UC[A-Za-z0-9_-]{22})/);
+    return m?.[1] ?? null;
+  } catch (e) {
+    console.error("resolveChannelId", handle, e);
+    return null;
+  }
+}
+
 async function pollYouTube(rows: Row[], supabase: any) {
   if (rows.length === 0) return;
   const UA =
@@ -92,66 +112,69 @@ async function pollYouTube(rows: Row[], supabase: any) {
 
   for (const row of rows) {
     try {
-      const handle = row.handle.startsWith("@") ? row.handle : `@${row.handle}`;
-      const liveUrl = row.handle.startsWith("UC") && row.handle.length === 24
-        ? `https://www.youtube.com/channel/${row.handle}/live`
-        : `https://www.youtube.com/${handle}/live`;
-      const res = await fetch(liveUrl, {
-        headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
-        redirect: "follow",
-      });
-      const html = await res.text();
-      const canonical = html.match(
-        /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})"/,
-      );
-      const videoId = canonical?.[1] ?? "";
-      if (!videoId) continue;
-      if (videoId === row.last_video_id) continue;
+      const channelId = await resolveChannelId(row.handle, UA);
+      if (!channelId) { console.warn(`[yt] no channelId for ${row.handle}`); continue; }
 
-      // Verify video belongs to this channel (oEmbed) and is currently live.
-      const [oembedRes, watchRes] = await Promise.all([
-        fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`),
-        fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-          headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
-        }),
-      ]);
-      if (!oembedRes.ok) continue;
-      const oembed = await oembedRes.json();
-      if (!String(oembed.author_url ?? "").toLowerCase().includes(handle.toLowerCase())) {
-        console.warn(`[yt] author mismatch ${row.handle} vid=${videoId}`);
-        continue;
+      // RSS feed lists the 15 newest uploads (also live broadcasts once they go live)
+      const feedRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
+        headers: { "User-Agent": UA },
+      });
+      if (!feedRes.ok) { console.warn(`[yt] feed ${row.handle} status=${feedRes.status}`); continue; }
+      const xml = await feedRes.text();
+      const entry = xml.match(/<entry>[\s\S]*?<\/entry>/);
+      if (!entry) continue;
+      const videoId = entry[0].match(/<yt:videoId>([A-Za-z0-9_-]{11})<\/yt:videoId>/)?.[1];
+      const title = entry[0].match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? "";
+      const published = entry[0].match(/<published>([^<]+)<\/published>/)?.[1];
+      if (!videoId) continue;
+      if (videoId === row.last_upload_id) continue;
+
+      // Skip very old videos on first run (avoid spam): only notify if published in last 24h
+      if (!row.last_upload_id && published) {
+        const ageHours = (Date.now() - new Date(published).getTime()) / 36e5;
+        if (ageHours > 24) {
+          await supabase.from("bot_stream_notifications")
+            .update({ last_upload_id: videoId })
+            .eq("id", row.id);
+          continue;
+        }
       }
+
+      // Check if the video is currently live to pick the right label
+      const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        headers: { "User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", Cookie: "CONSENT=YES+cb; SOCS=CAI" },
+      });
       const watchHtml = await watchRes.text();
-      const stillLive =
+      const isLive =
         watchHtml.includes('"isLiveBroadcast":true') ||
         watchHtml.includes('"isLiveNow":true') ||
         /"liveBroadcastContent":"live"/.test(watchHtml);
-      if (!stillLive) continue;
 
-      const title = String(oembed.title ?? "");
       const url = `https://youtu.be/${videoId}`;
       const ogImg = watchHtml.match(/<meta property="og:image" content="([^"]+)"/);
-      const thumbUrl =
-        ogImg?.[1] ??
-        String(oembed.thumbnail_url ?? "").replace("hqdefault.jpg", "maxresdefault.jpg") ??
-        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+      const thumbUrl = ogImg?.[1] ?? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
       const content = fmt(row.template, { handle: row.handle, title, url, game: "" });
       const embed = {
         title: title || row.handle,
         url,
-        color: 0xff0033,
-        author: { name: `${row.handle} je živě na YouTube` },
+        color: isLive ? 0xff0033 : 0xcc0000,
+        author: { name: isLive ? `${row.handle} je živě na YouTube` : `${row.handle} nahrál nové video` },
         image: { url: thumbUrl },
       };
       await sendDiscord(row, content, embed, supabase);
       await supabase.from("bot_stream_notifications")
-        .update({ last_notified_at: new Date().toISOString(), last_video_id: videoId })
+        .update({
+          last_notified_at: new Date().toISOString(),
+          last_video_id: isLive ? videoId : row.last_video_id,
+          last_upload_id: videoId,
+        })
         .eq("id", row.id);
     } catch (e) {
       console.error("yt scrape error", row.handle, e);
     }
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
