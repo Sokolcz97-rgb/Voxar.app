@@ -3,7 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
-  Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare,
+  Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
 } from "lucide-react";
 
 type Section = {
