@@ -589,6 +589,213 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_bot_automod: {
+        Row: {
+          action: string
+          allow_links_for_mods: boolean
+          allow_links_for_subs: boolean
+          blocked_words: string[]
+          caps_min_length: number
+          channel_id: string
+          created_at: string
+          link_whitelist: string[]
+          max_caps_pct: number
+          max_emojis: number
+          max_links: number
+          spam_threshold: number
+          spam_window_seconds: number
+          timeout_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          action?: string
+          allow_links_for_mods?: boolean
+          allow_links_for_subs?: boolean
+          blocked_words?: string[]
+          caps_min_length?: number
+          channel_id: string
+          created_at?: string
+          link_whitelist?: string[]
+          max_caps_pct?: number
+          max_emojis?: number
+          max_links?: number
+          spam_threshold?: number
+          spam_window_seconds?: number
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          allow_links_for_mods?: boolean
+          allow_links_for_subs?: boolean
+          blocked_words?: string[]
+          caps_min_length?: number
+          channel_id?: string
+          created_at?: string
+          link_whitelist?: string[]
+          max_caps_pct?: number
+          max_emojis?: number
+          max_links?: number
+          spam_threshold?: number
+          spam_window_seconds?: number
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_bot_automod_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: true
+            referencedRelation: "chat_bot_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_bot_channels: {
+        Row: {
+          antiscam_enabled: boolean
+          automod_enabled: boolean
+          channel_id: string | null
+          created_at: string
+          display_name: string | null
+          enabled: boolean
+          handle: string
+          id: string
+          last_connected_at: string | null
+          last_status: string | null
+          owner_user_id: string | null
+          platform: string
+          updated_at: string
+          welcome_enabled: boolean
+          welcome_message: string | null
+        }
+        Insert: {
+          antiscam_enabled?: boolean
+          automod_enabled?: boolean
+          channel_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          enabled?: boolean
+          handle: string
+          id?: string
+          last_connected_at?: string | null
+          last_status?: string | null
+          owner_user_id?: string | null
+          platform: string
+          updated_at?: string
+          welcome_enabled?: boolean
+          welcome_message?: string | null
+        }
+        Update: {
+          antiscam_enabled?: boolean
+          automod_enabled?: boolean
+          channel_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          enabled?: boolean
+          handle?: string
+          id?: string
+          last_connected_at?: string | null
+          last_status?: string | null
+          owner_user_id?: string | null
+          platform?: string
+          updated_at?: string
+          welcome_enabled?: boolean
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      chat_bot_commands: {
+        Row: {
+          channel_id: string
+          cooldown_seconds: number
+          created_at: string
+          enabled: boolean
+          id: string
+          mods_only: boolean
+          response: string
+          trigger: string
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          channel_id: string
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mods_only?: boolean
+          response: string
+          trigger: string
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          channel_id?: string
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mods_only?: boolean
+          response?: string
+          trigger?: string
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_bot_commands_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_bot_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_bot_log: {
+        Row: {
+          action: string
+          channel_id: string | null
+          created_at: string
+          id: string
+          message: string | null
+          platform: string
+          reason: string | null
+          viewer_id: string | null
+          viewer_name: string | null
+        }
+        Insert: {
+          action: string
+          channel_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          platform: string
+          reason?: string | null
+          viewer_id?: string | null
+          viewer_name?: string | null
+        }
+        Update: {
+          action?: string
+          channel_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          platform?: string
+          reason?: string | null
+          viewer_id?: string | null
+          viewer_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_bot_log_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_bot_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
