@@ -40,6 +40,7 @@ const groups: Group[] = [
       { icon: MessageSquare, title: "Kategorie fóra", desc: "Vytvářet a spravovat diskuzní kategorie", to: "/admin/forum-categories" },
       { icon: Newspaper, title: "Novinky (IGDB)", desc: "Sync nadcházejících herních vydání", to: "/admin/novinky" },
       { icon: Radio, title: "Streamy", desc: "Featured streamery (Twitch, YouTube, Kick)", to: "/admin/streams" },
+      { icon: Bot, title: "Chat bot (Twitch & YouTube)", desc: "Automod, anti-scam, uvítání a vlastní příkazy v chatu", to: "/admin/chat-bot" },
     ],
   },
   {
