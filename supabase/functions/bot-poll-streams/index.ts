@@ -15,6 +15,7 @@ type Row = {
   enabled: boolean;
   last_notified_at: string | null;
   last_video_id: string | null;
+  last_upload_id: string | null;
 };
 
 function fmt(template: string, vars: Record<string, string>) {
