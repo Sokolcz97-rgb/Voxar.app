@@ -174,8 +174,8 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>
             Přidat / převzít můj server
             {discordUsername ? ` · ${discordUsername}` : ""}
@@ -186,73 +186,75 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        {guilds.length === 0 ? (
-          <div className="py-8 flex flex-col items-center gap-3">
-            <Button onClick={startDiscordOAuth} disabled={oauthLoading}>
-              {oauthLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <LogIn className="h-4 w-4 mr-2" />
-              )}
-              Přihlásit se přes Discord
-            </Button>
-            <p className="text-xs text-muted-foreground text-center max-w-sm">
-              Otevře se vyskakovací okno Discordu. Pokud ti ho prohlížeč blokuje, povol popup pro tento web.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-y-auto -mx-6 px-6 space-y-2">
-            <div className="flex items-center justify-between gap-2 sticky top-0 bg-background/90 backdrop-blur py-2 z-10">
-              <p className="text-xs text-muted-foreground">
-                {guilds.length} serverů · vyber, který chceš vlastnit
-              </p>
-              <Button size="sm" variant="ghost" onClick={startDiscordOAuth} disabled={oauthLoading}>
-                {oauthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Přepnout účet"}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6">
+          {guilds.length === 0 ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-3 min-h-[200px]">
+              <Button onClick={startDiscordOAuth} disabled={oauthLoading}>
+                {oauthLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <LogIn className="h-4 w-4 mr-2" />
+                )}
+                Přihlásit se přes Discord
               </Button>
+              <p className="text-xs text-muted-foreground text-center max-w-sm">
+                Otevře se vyskakovací okno Discordu. Pokud ti ho prohlížeč blokuje, povol popup pro tento web.
+              </p>
             </div>
-            {guilds.map((g) => {
-              const ex = existing.find((x) => x.guild_id === g.id);
-              const mine =
-                ex &&
-                ((!!user && ex.owner_user_id === user.id) ||
-                  (!!discordUserId && ex.owner_discord_id === discordUserId));
-              const submitting = submittingIds.has(g.id);
-              return (
-                <div key={g.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                  {g.icon_url ? (
-                    <img src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
-                      {g.name.slice(0, 2).toUpperCase()}
+          ) : (
+            <div className="space-y-2 pb-2">
+              <div className="flex items-center justify-between gap-2 sticky top-0 bg-background/90 backdrop-blur py-2 z-10">
+                <p className="text-xs text-muted-foreground">
+                  {guilds.length} serverů · vyber, který chceš vlastnit
+                </p>
+                <Button size="sm" variant="ghost" onClick={startDiscordOAuth} disabled={oauthLoading}>
+                  {oauthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Přepnout účet"}
+                </Button>
+              </div>
+              {guilds.map((g) => {
+                const ex = existing.find((x) => x.guild_id === g.id);
+                const mine =
+                  ex &&
+                  ((!!user && ex.owner_user_id === user.id) ||
+                    (!!discordUserId && ex.owner_discord_id === discordUserId));
+                const submitting = submittingIds.has(g.id);
+                return (
+                  <div key={g.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                    {g.icon_url ? (
+                      <img src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
+                        {g.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{g.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {g.owner ? "Vlastník" : "Administrátor"}
+                        {g.approximate_member_count != null && ` · ${g.approximate_member_count} členů`}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{g.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {g.owner ? "Vlastník" : "Administrátor"}
-                      {g.approximate_member_count != null && ` · ${g.approximate_member_count} členů`}
-                    </div>
+                    {mine ? (
+                      <Badge variant="default">Tvůj · {ex!.status}</Badge>
+                    ) : (
+                      <Button size="sm" onClick={() => claimGuild(g)} disabled={submitting}>
+                        {submitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : ex ? (
+                          "Převzít vlastnictví"
+                        ) : (
+                          "Přidat & schválit"
+                        )}
+                      </Button>
+                    )}
                   </div>
-                  {mine ? (
-                    <Badge variant="default">Tvůj · {ex!.status}</Badge>
-                  ) : (
-                    <Button size="sm" onClick={() => claimGuild(g)} disabled={submitting}>
-                      {submitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : ex ? (
-                        "Převzít vlastnictví"
-                      ) : (
-                        "Přidat & schválit"
-                      )}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 pb-6 pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Zavřít</Button>
         </DialogFooter>
       </DialogContent>
