@@ -230,29 +230,25 @@ export default function DashboardBotGuilds() {
 
 
   const requestGuild = async (g: DiscordGuildOption) => {
+    if (!oauthState) {
+      toast.error("Chybí ověřená Discord session — zkus to znovu.");
+      return;
+    }
     setSubmittingIds((s) => new Set(s).add(g.id));
     try {
-      // Skip if already registered
-      const existing = guilds.find((x) => x.guild_id === g.id);
-      if (existing) {
-        toast.info(`${g.name}: již registrováno (${statusLabel[existing.status]})`);
-        return;
-      }
-      const { error } = await supabase.from("bot_guilds").insert({
-        guild_id: g.id,
-        name: g.name,
-        icon_url: g.icon_url,
-        owner_user_id: user?.id ?? null,
-        owner_discord_id: discordUserId,
-        source: "request",
-        status: "pending",
-        member_count: g.approximate_member_count,
+      const { data, error } = await supabase.functions.invoke("bot-guild-claim", {
+        body: { state: oauthState, guild_id: g.id },
       });
-      if (error) {
-        toast.error(error.message);
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Nepodařilo se převzít server");
         return;
       }
-      toast.success(`${g.name} odeslán ke schválení`);
+      const existing = guilds.find((x) => x.guild_id === g.id);
+      toast.success(
+        existing
+          ? `${g.name}: vlastnictví převzato a server schválen`
+          : `${g.name}: přidáno a schváleno`,
+      );
       await load();
     } finally {
       setSubmittingIds((s) => {
