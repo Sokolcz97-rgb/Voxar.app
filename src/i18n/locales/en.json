@@ -58,7 +58,8 @@
     "stats": {
       "players": "Humans",
       "streams": "Streams",
-      "online": "Online"
+      "online": "Online",
+      "visitors": "Real-time visitors"
     },
     "topPlayers": {
       "title": "Top players",

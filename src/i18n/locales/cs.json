@@ -58,7 +58,8 @@
     "stats": {
       "players": "Lidí",
       "streams": "Streamů",
-      "online": "Online"
+      "online": "Online",
+      "visitors": "Návštěvníci v reálném čase"
     },
     "topPlayers": {
       "title": "Top hráči",
