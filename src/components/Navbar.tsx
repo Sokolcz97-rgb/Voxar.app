@@ -340,6 +340,17 @@ export function Navbar() {
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
+                      onClick={() => navigate("/profile")}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
+                        <Settings className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
                       onClick={() => navigate("/messages")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
