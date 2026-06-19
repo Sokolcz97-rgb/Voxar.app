@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle } from "lucide-react";
 import { ChatBotPlatformPanel } from "@/components/ChatBotPlatformPanel";
+import { DiscordGuildPicker } from "@/components/DiscordGuildPicker";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
@@ -181,6 +182,7 @@ const DashboardBot = () => {
   // Picker dialog state — opens automatically the first time the user lands
   // on the dashboard so they can pick which server to configure.
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
   const [hasPickedScope, setHasPickedScope] = useState(false);
 
   useEffect(() => {
@@ -594,17 +596,39 @@ const DashboardBot = () => {
               )}
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
-              <Button variant="default" asChild className="gap-2">
-                <Link to="/dashboard/bot/guilds">
-                  <Plus className="h-4 w-4" /> Přidat / spravovat mé servery
-                </Link>
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={() => { setClaimOpen(true); }}
+              >
+                <Plus className="h-4 w-4" /> Přidat / převzít můj server
               </Button>
+              {canManageBot && (
+                <Button variant="outline" asChild className="gap-2">
+                  <Link to="/dashboard/bot/guilds">Schvalovací stránka (admin)</Link>
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setPickerOpen(false)}>
                 Zavřít
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DiscordGuildPicker
+          open={claimOpen}
+          onOpenChange={setClaimOpen}
+          onClaimed={async () => {
+            // Reload guilds so the new server appears in the scope switcher
+            const { data } = await supabase
+              .from("bot_guilds")
+              .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
+              .eq("status", "approved")
+              .order("name");
+            setGuilds(((data as any) ?? []) as GuildOption[]);
+          }}
+        />
+
 
 
         <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">

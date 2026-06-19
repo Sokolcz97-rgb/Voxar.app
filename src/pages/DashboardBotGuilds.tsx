@@ -94,16 +94,24 @@ export default function DashboardBotGuilds() {
   };
 
   useEffect(() => {
-    load();
     (async () => {
       const { data } = await supabase.rpc("can", {
         _module: "bot",
         _action: "manage",
       });
-      setCanManage(Boolean(data));
+      const allowed = Boolean(data);
+      setCanManage(allowed);
+      if (!allowed) {
+        // Page is admin-only — bounce regular users back to bot dashboard.
+        toast.error("Tato stránka je dostupná jen adminům bota.");
+        navigate("/dashboard/bot", { replace: true });
+        return;
+      }
       const { data: did } = await supabase.rpc("current_user_discord_id");
       setMyDiscordId((did as string) || null);
+      await load();
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPickerForNonce = async (nonce: string) => {
