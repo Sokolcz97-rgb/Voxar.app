@@ -178,7 +178,7 @@ async function openTicket(interaction, ticketCategoryId = null) {
 
   // Determine parent category: only explicit config/category selection.
   // Do not fall back to panel channel, otherwise tickets can leak into the panel area.
-  let parentId = ticketCategory?.discord_category_id || cfg?.category_id || undefined;
+  let parentId = cfg?.category_id || ticketCategory?.discord_category_id || undefined;
   if (parentId) {
     const candidate = await guild.channels.fetch(parentId).catch(() => null);
     if (!candidate || candidate.type !== ChannelType.GuildCategory) {
