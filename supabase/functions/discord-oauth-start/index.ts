@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const origin = String(body.origin ?? "").replace(/\/+$/, "");
+    const prompt = body.prompt === "none" ? "none" : "consent";
     if (!origin || !/^https?:\/\//.test(origin)) {
       return new Response(JSON.stringify({ error: "invalid origin" }), {
         status: 400,
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
       state,
       // prompt=none → Discord přeskočí potvrzovací obrazovku, pokud uživatel
       // už dříve autorizoval naši aplikaci.
-      prompt: "none",
+      prompt,
     });
     const url = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
     return new Response(JSON.stringify({ url, state: nonce }), {
