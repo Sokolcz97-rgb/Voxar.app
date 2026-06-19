@@ -595,7 +595,7 @@ const DashboardBot = () => {
                 </div>
               )}
             </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between px-6 pb-6 pt-2">
               <Button
                 variant="default"
                 className="gap-2"
