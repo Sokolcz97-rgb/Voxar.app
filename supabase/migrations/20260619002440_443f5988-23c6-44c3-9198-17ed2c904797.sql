@@ -1,0 +1,1 @@
+REVOKE SELECT (notify_sound, notify_browser) ON public.profiles FROM anon, authenticated;
