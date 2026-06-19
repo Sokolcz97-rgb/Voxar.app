@@ -122,6 +122,7 @@ const DashboardBot = () => {
   const [guilds, setGuilds] = useState<GuildOption[]>([]);
   const [guildsLoaded, setGuildsLoaded] = useState(false);
   const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
+  const [botCategory, setBotCategory] = useState<"discord" | "twitch" | "youtube">("discord");
   const canManageBot = can("bot", "manage");
   const canViewBot = can("bot", "view");
   const canUseGlobalConfig = canManageBot || canViewBot;
