@@ -489,6 +489,11 @@ const DashboardBot = () => {
         </div>
 
 
+        {botCategory !== "discord" && (
+          <ChatBotPlatformPanel platform={botCategory} />
+        )}
+
+        {botCategory === "discord" && <>
         {/* Server picker dialog */}
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
