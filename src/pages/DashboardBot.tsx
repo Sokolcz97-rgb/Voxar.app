@@ -149,6 +149,7 @@ const DashboardBot = () => {
   const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
   const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
 
+  const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
   const [scope, setScope] = useState<"mine" | "foreign">("mine");
 
   // Load list of guilds user can manage (admin sees all approved + pending; owner sees own approved)
@@ -166,11 +167,12 @@ const DashboardBot = () => {
   }, [user]);
 
   const isMine = (g: GuildOption) =>
-    !!user && g.owner_user_id === user.id;
+    (!!user && g.owner_user_id === user.id) ||
+    (!!myDiscordId && g.owner_discord_id === myDiscordId);
   const scopedGuilds = useMemo(
     () => guilds.filter((g) => (scope === "mine" ? isMine(g) : !isMine(g))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [guilds, scope, user]
+    [guilds, scope, user, myDiscordId]
   );
 
   // Picker dialog state — opens automatically the first time the user lands
@@ -612,6 +614,7 @@ const DashboardBot = () => {
         <DiscordGuildPicker
           open={claimOpen}
           onOpenChange={setClaimOpen}
+          onDiscordConnected={setMyDiscordId}
           onClaimed={async () => {
             // Reload guilds so the new server appears in the scope switcher
             const { data } = await supabase
