@@ -594,17 +594,39 @@ const DashboardBot = () => {
               )}
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
-              <Button variant="default" asChild className="gap-2">
-                <Link to="/dashboard/bot/guilds">
-                  <Plus className="h-4 w-4" /> Přidat / spravovat mé servery
-                </Link>
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={() => { setClaimOpen(true); }}
+              >
+                <Plus className="h-4 w-4" /> Přidat / převzít můj server
               </Button>
+              {canManageBot && (
+                <Button variant="outline" asChild className="gap-2">
+                  <Link to="/dashboard/bot/guilds">Schvalovací stránka (admin)</Link>
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setPickerOpen(false)}>
                 Zavřít
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DiscordGuildPicker
+          open={claimOpen}
+          onOpenChange={setClaimOpen}
+          onClaimed={async () => {
+            // Reload guilds so the new server appears in the scope switcher
+            const { data } = await supabase
+              .from("bot_guilds")
+              .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
+              .eq("status", "approved")
+              .order("name");
+            setGuilds(((data as any) ?? []) as GuildOption[]);
+          }}
+        />
+
 
 
         <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">
