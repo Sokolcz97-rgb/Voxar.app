@@ -40,21 +40,16 @@ const Index = () => {
 
   useEffect(() => {
     const loadStats = async () => {
-      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const [{ count: totalProfiles }, { count: onlineNow }, { count: streams }] = await Promise.all([
+      const [{ count: totalProfiles }, { count: streams }] = await Promise.all([
         supabase
           .from("profiles")
           .select("user_id", { count: "exact", head: true }),
-        supabase
-          .from("profiles")
-          .select("user_id", { count: "exact", head: true })
-          .gte("last_seen_at", fiveMinAgo),
         supabase
           .from("live_streams_cache")
           .select("id", { count: "exact", head: true })
           .eq("is_live", true),
       ]);
-      setStats({ players: totalProfiles ?? 0, streams: streams ?? 0, online: onlineNow ?? 0 });
+      setStats({ players: totalProfiles ?? 0, streams: streams ?? 0 });
     };
     loadStats();
     const interval = setInterval(loadStats, 60_000);
