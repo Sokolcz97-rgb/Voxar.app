@@ -201,6 +201,11 @@ export function Navbar() {
                           label: t("nav.profile"),
                           icon: UserIcon,
                         },
+                        {
+                          to: "/profile",
+                          label: t("nav.profileSettings"),
+                          icon: Settings,
+                        },
                       ]
                     : []),
                   ...(isAdmin || isEditor
