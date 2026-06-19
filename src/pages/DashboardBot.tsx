@@ -1277,6 +1277,21 @@ function TicketsConfigCard({
           </div>
         </div>
 
+        <div className="border-t border-border pt-4 space-y-3">
+          <div>
+            <div className="font-medium">Vlastní web (externí webhook)</div>
+            <p className="text-xs text-muted-foreground">
+              Bot na tuto URL pošle JSON při událostech ticketu (`ticket.created`, `ticket.reply`, `ticket.status`, `ticket.deleted`). Pro vlastní web mimo tuto aplikaci.
+            </p>
+          </div>
+          <Input
+            placeholder="https://tvuj-web.cz/api/discord-tickets"
+            value={cfg.external_webhook_url ?? ""}
+            onChange={(e) => setCfg({ ...cfg, external_webhook_url: e.target.value })}
+            disabled={!isManager}
+          />
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <Button onClick={save} disabled={!isManager}>Uložit</Button>
           <Button
