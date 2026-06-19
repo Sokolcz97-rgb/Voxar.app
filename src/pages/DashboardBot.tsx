@@ -13,7 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle } from "lucide-react";
+import { ChatBotPlatformPanel } from "@/components/ChatBotPlatformPanel";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
@@ -121,6 +122,7 @@ const DashboardBot = () => {
   const [guilds, setGuilds] = useState<GuildOption[]>([]);
   const [guildsLoaded, setGuildsLoaded] = useState(false);
   const [selectedGuildId, setSelectedGuildId] = useState<string>(GLOBAL_KEY);
+  const [botCategory, setBotCategory] = useState<"discord" | "twitch" | "youtube">("discord");
   const canManageBot = can("bot", "manage");
   const canViewBot = can("bot", "view");
   const canUseGlobalConfig = canManageBot || canViewBot;
@@ -397,38 +399,48 @@ const DashboardBot = () => {
           <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">Discord</p>
+              <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">
+                {botCategory === "discord" ? "Discord" : botCategory === "twitch" ? "Twitch chat" : "YouTube chat"}
+              </p>
               <h1 className="font-display font-black text-4xl md:text-5xl mt-2 flex items-center gap-3">
                 <Bot className="h-10 w-10" /> Správce bota
               </h1>
-              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                {selectedGuild ? (
-                  <>
-                    {selectedGuild.icon_url ? (
-                      <img src={selectedGuild.icon_url} className="h-5 w-5 rounded-full" alt="" />
-                    ) : (
-                      <Server className="h-4 w-4" />
-                    )}
-                    <span className="text-foreground/90 font-medium">{selectedGuild.name}</span>
-                    <code className="text-xs">{selectedGuild.guild_id}</code>
-                  </>
-                ) : (
-                  <>
-                    <Globe className="h-4 w-4" />
-                    <span className="text-foreground/90 font-medium">Globální / šablony</span>
-                  </>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="ml-2 border-primary/40 hover:border-primary/80">
-                  <Server className="h-3.5 w-3.5 mr-1.5" />
-                  Změnit server
-                </Button>
-              </div>
+              {botCategory === "discord" ? (
+                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  {selectedGuild ? (
+                    <>
+                      {selectedGuild.icon_url ? (
+                        <img src={selectedGuild.icon_url} className="h-5 w-5 rounded-full" alt="" />
+                      ) : (
+                        <Server className="h-4 w-4" />
+                      )}
+                      <span className="text-foreground/90 font-medium">{selectedGuild.name}</span>
+                      <code className="text-xs">{selectedGuild.guild_id}</code>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4" />
+                      <span className="text-foreground/90 font-medium">Globální / šablony</span>
+                    </>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="ml-2 border-primary/40 hover:border-primary/80">
+                    <Server className="h-3.5 w-3.5 mr-1.5" />
+                    Změnit server
+                  </Button>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Sdílený chat bot — moderace, anti-scam, uvítání a vlastní příkazy přímo v chatu streamu.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3 flex-wrap shrink-0">
-              <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")} className="border-primary/40 hover:border-primary/80">
-                <Server className="h-4 w-4 mr-2" />
-                Servery bota
-              </Button>
+              {botCategory === "discord" && (
+                <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")} className="border-primary/40 hover:border-primary/80">
+                  <Server className="h-4 w-4 mr-2" />
+                  Servery bota
+                </Button>
+              )}
               <Card className="glass border-border/60 p-4 flex items-center gap-3 hover:border-primary/60 hover:-translate-y-0.5 transition-all relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className={`h-3 w-3 rounded-full relative ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
@@ -443,6 +455,45 @@ const DashboardBot = () => {
           </div>
         </div>
 
+        {/* Category switcher: Discord / Twitch / YouTube */}
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {([
+            { key: "discord", label: "Discord bot", desc: "Servery, automod, tickety, embed", Icon: MessageCircle },
+            { key: "twitch", label: "Twitch chat bot", desc: "Moderace a příkazy v Twitch chatu", Icon: Twitch },
+            { key: "youtube", label: "YouTube chat bot", desc: "Moderace a příkazy v Live chatu", Icon: Youtube },
+          ] as const).map((cat) => {
+            const active = botCategory === cat.key;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setBotCategory(cat.key)}
+                className={`text-left p-4 rounded-xl border transition-all glass ${
+                  active
+                    ? "border-primary bg-primary/10 [box-shadow:var(--glow-soft)]"
+                    : "border-border hover:border-primary/60 hover:-translate-y-0.5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center border ${active ? "bg-primary/20 border-primary/60" : "bg-secondary/40 border-border"}`}>
+                    <cat.Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-display font-bold">{cat.label}</div>
+                    <div className="text-xs text-muted-foreground">{cat.desc}</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+
+        {botCategory !== "discord" && (
+          <ChatBotPlatformPanel platform={botCategory} />
+        )}
+
+        {botCategory === "discord" && <>
         {/* Server picker dialog */}
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
@@ -920,6 +971,7 @@ const DashboardBot = () => {
           </TabsContent>
           </div>
         </Tabs>
+        </>}
       </main>
     </div>
   );
