@@ -109,7 +109,7 @@ type Welcome = { id: string; channel_id: string; message_type: string; content: 
 type StreamNotif = { id: string; platform: string; handle: string; discord_channel_id: string; template: string; enabled: boolean; guild_id: string | null };
 type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null; guild_id: string | null };
 type BotStatus = { last_heartbeat: string | null; version: string | null; guild_count: number | null };
-type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null };
+type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null; owner_user_id?: string | null; owner_discord_id?: string | null };
 type TicketCategory = { id: string; guild_id: string; label: string; description: string | null; emoji: string | null; discord_category_id: string | null; position: number; enabled: boolean };
 
 const GLOBAL_KEY = "__global__";
