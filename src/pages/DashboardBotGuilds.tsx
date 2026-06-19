@@ -76,6 +76,7 @@ export default function DashboardBotGuilds() {
   const [pickerGuilds, setPickerGuilds] = useState<DiscordGuildOption[]>([]);
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
   const [discordUserId, setDiscordUserId] = useState<string | null>(null);
+  const [oauthState, setOauthState] = useState<string | null>(null);
   const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
   const [scope, setScope] = useState<"mine" | "foreign">("mine");
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
@@ -116,7 +117,11 @@ export default function DashboardBotGuilds() {
     setPickerGuilds((data as any).guilds || []);
     setDiscordUsername((data as any).discord_username || null);
     setDiscordUserId((data as any).discord_user_id || null);
+    setOauthState(nonce);
     setPickerOpen(true);
+    // Refresh ownership data so the picker can label already-claimed rows.
+    void load();
+    if ((data as any).discord_user_id) setMyDiscordId((data as any).discord_user_id);
   };
 
   // Fallback: when popup is blocked and the callback redirected the whole tab back
@@ -225,29 +230,25 @@ export default function DashboardBotGuilds() {
 
 
   const requestGuild = async (g: DiscordGuildOption) => {
+    if (!oauthState) {
+      toast.error("Chybí ověřená Discord session — zkus to znovu.");
+      return;
+    }
     setSubmittingIds((s) => new Set(s).add(g.id));
     try {
-      // Skip if already registered
-      const existing = guilds.find((x) => x.guild_id === g.id);
-      if (existing) {
-        toast.info(`${g.name}: již registrováno (${statusLabel[existing.status]})`);
-        return;
-      }
-      const { error } = await supabase.from("bot_guilds").insert({
-        guild_id: g.id,
-        name: g.name,
-        icon_url: g.icon_url,
-        owner_user_id: user?.id ?? null,
-        owner_discord_id: discordUserId,
-        source: "request",
-        status: "pending",
-        member_count: g.approximate_member_count,
+      const { data, error } = await supabase.functions.invoke("bot-guild-claim", {
+        body: { state: oauthState, guild_id: g.id },
       });
-      if (error) {
-        toast.error(error.message);
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Nepodařilo se převzít server");
         return;
       }
-      toast.success(`${g.name} odeslán ke schválení`);
+      const existing = guilds.find((x) => x.guild_id === g.id);
+      toast.success(
+        existing
+          ? `${g.name}: vlastnictví převzato a server schválen`
+          : `${g.name}: přidáno a schváleno`,
+      );
       await load();
     } finally {
       setSubmittingIds((s) => {
@@ -484,23 +485,33 @@ export default function DashboardBotGuilds() {
                           ` · ${g.approximate_member_count} členů`}
                       </div>
                     </div>
-                    {existing ? (
-                      <Badge variant={statusVariant[existing.status] as any}>
-                        {statusLabel[existing.status]}
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => requestGuild(g)}
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Požádat o přidání"
-                        )}
-                      </Button>
-                    )}
+                    {(() => {
+                      const mine =
+                        existing &&
+                        ((!!user && existing.owner_user_id === user.id) ||
+                          (!!discordUserId && existing.owner_discord_id === discordUserId));
+                      if (mine) {
+                        return (
+                          <Badge variant={statusVariant[existing!.status] as any}>
+                            {statusLabel[existing!.status]} · vlastním
+                          </Badge>
+                        );
+                      }
+                      const label = existing
+                        ? existing.owner_user_id
+                          ? "Převzít vlastnictví"
+                          : "Přidat & schválit"
+                        : "Přidat & schválit";
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => requestGuild(g)}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : label}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 );
               })
