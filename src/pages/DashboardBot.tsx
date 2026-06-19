@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
 import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle } from "lucide-react";
 import { ChatBotPlatformPanel } from "@/components/ChatBotPlatformPanel";
+import { DiscordGuildPicker } from "@/components/DiscordGuildPicker";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
 import { EmbedBuilder } from "@/components/EmbedBuilder";
 import { GuildResourceSelect, GuildResourceLabel } from "@/components/GuildResourceSelect";
@@ -181,6 +182,7 @@ const DashboardBot = () => {
   // Picker dialog state — opens automatically the first time the user lands
   // on the dashboard so they can pick which server to configure.
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
   const [hasPickedScope, setHasPickedScope] = useState(false);
 
   useEffect(() => {
