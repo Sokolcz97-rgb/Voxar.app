@@ -26,6 +26,7 @@ import {
   Server,
   Newspaper,
   MessageCircle,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
