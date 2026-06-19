@@ -593,7 +593,12 @@ const DashboardBot = () => {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
+              <Button variant="default" asChild className="gap-2">
+                <Link to="/dashboard/bot/guilds">
+                  <Plus className="h-4 w-4" /> Přidat / spravovat mé servery
+                </Link>
+              </Button>
               <Button variant="outline" onClick={() => setPickerOpen(false)}>
                 Zavřít
               </Button>
