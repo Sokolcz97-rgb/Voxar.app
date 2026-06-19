@@ -24,6 +24,9 @@ interface DiscordGuildOption {
 
 interface ExistingGuild {
   guild_id: string;
+  name: string | null;
+  icon_url: string | null;
+  member_count: number | null;
   owner_user_id: string | null;
   owner_discord_id: string | null;
   status: string;
@@ -55,7 +58,8 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
   const loadExisting = async () => {
     const { data } = await supabase
       .from("bot_guilds")
-      .select("guild_id, owner_user_id, owner_discord_id, status");
+      .select("guild_id, name, icon_url, member_count, owner_user_id, owner_discord_id, status")
+      .order("name");
     setExisting((data as ExistingGuild[]) ?? []);
   };
 
@@ -172,6 +176,23 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
     }
   };
 
+  const isMine = (ex: ExistingGuild) =>
+    (!!user && ex.owner_user_id === user.id) ||
+    (!!discordUserId && ex.owner_discord_id === discordUserId);
+  const ownedExisting = existing.filter(isMine);
+  const visibleGuilds = [
+    ...guilds,
+    ...ownedExisting
+      .filter((ex) => !guilds.some((g) => g.id === ex.guild_id))
+      .map((ex) => ({
+        id: ex.guild_id,
+        name: ex.name || ex.guild_id,
+        icon_url: ex.icon_url,
+        owner: true,
+        approximate_member_count: ex.member_count,
+      })),
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
@@ -187,7 +208,7 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6">
-          {guilds.length === 0 ? (
+          {visibleGuilds.length === 0 ? (
             <div className="py-8 flex flex-col items-center justify-center gap-3 min-h-[200px]">
               <Button onClick={startDiscordOAuth} disabled={oauthLoading}>
                 {oauthLoading ? (
@@ -205,18 +226,15 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
             <div className="space-y-2 pb-2">
               <div className="flex items-center justify-between gap-2 sticky top-0 bg-background/90 backdrop-blur py-2 z-10">
                 <p className="text-xs text-muted-foreground">
-                  {guilds.length} serverů · vyber, který chceš vlastnit
+                  {visibleGuilds.length} serverů · vyber, který chceš vlastnit
                 </p>
                 <Button size="sm" variant="ghost" onClick={startDiscordOAuth} disabled={oauthLoading}>
                   {oauthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Přepnout účet"}
                 </Button>
               </div>
-              {guilds.map((g) => {
+              {visibleGuilds.map((g) => {
                 const ex = existing.find((x) => x.guild_id === g.id);
-                const mine =
-                  ex &&
-                  ((!!user && ex.owner_user_id === user.id) ||
-                    (!!discordUserId && ex.owner_discord_id === discordUserId));
+                const mine = ex && isMine(ex);
                 const submitting = submittingIds.has(g.id);
                 return (
                   <div key={g.id} className="flex items-center gap-3 p-3 border rounded-lg">
