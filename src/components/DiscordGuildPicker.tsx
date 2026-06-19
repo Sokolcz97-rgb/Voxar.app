@@ -35,6 +35,7 @@ interface ExistingGuild {
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onDiscordConnected?: (discordUserId: string | null) => void;
   /** Called after a guild is successfully claimed/added — parent should reload its lists. */
   onClaimed?: (guildId: string) => void;
 };
@@ -45,7 +46,7 @@ type Props = {
  * `bot-guild-claim` edge function. Verified Discord owners/admins get
  * automatic approval — no admin review needed.
  */
-export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
+export function DiscordGuildPicker({ open, onOpenChange, onDiscordConnected, onClaimed }: Props) {
   const { user } = useAuth();
   const [oauthLoading, setOauthLoading] = useState(false);
   const [guilds, setGuilds] = useState<DiscordGuildOption[]>([]);
@@ -77,7 +78,9 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
     }
     setGuilds((data as any).guilds || []);
     setDiscordUsername((data as any).discord_username || null);
-    setDiscordUserId((data as any).discord_user_id || null);
+    const connectedDiscordId = (data as any).discord_user_id || null;
+    setDiscordUserId(connectedDiscordId);
+    onDiscordConnected?.(connectedDiscordId);
     setOauthState(nonce);
     await loadExisting();
   };
