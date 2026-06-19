@@ -117,7 +117,7 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
     };
   }, []);
 
-  const startDiscordOAuth = async () => {
+  const startDiscordOAuth = async (prompt: "consent" | "none" = "consent") => {
     setOauthLoading(true);
     const w = 500, h = 800;
     const left = window.screenX + Math.max(0, (window.outerWidth - w) / 2);
@@ -129,7 +129,7 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
     );
     try {
       const { data, error } = await supabase.functions.invoke("discord-oauth-start", {
-        body: { origin: window.location.origin },
+        body: { origin: window.location.origin, prompt },
       });
       if (error || !(data as any)?.url) {
         popup?.close();
@@ -210,7 +210,7 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
         <div className="flex-1 min-h-0 overflow-y-auto px-6">
           {visibleGuilds.length === 0 ? (
             <div className="py-8 flex flex-col items-center justify-center gap-3 min-h-[200px]">
-              <Button onClick={startDiscordOAuth} disabled={oauthLoading}>
+              <Button onClick={() => startDiscordOAuth("consent")} disabled={oauthLoading}>
                 {oauthLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -228,7 +228,7 @@ export function DiscordGuildPicker({ open, onOpenChange, onClaimed }: Props) {
                 <p className="text-xs text-muted-foreground">
                   {visibleGuilds.length} serverů · vyber, který chceš vlastnit
                 </p>
-                <Button size="sm" variant="ghost" onClick={startDiscordOAuth} disabled={oauthLoading}>
+                <Button size="sm" variant="ghost" onClick={() => startDiscordOAuth("consent")} disabled={oauthLoading}>
                   {oauthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Přepnout účet"}
                 </Button>
               </div>
