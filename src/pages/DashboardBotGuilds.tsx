@@ -485,23 +485,33 @@ export default function DashboardBotGuilds() {
                           ` · ${g.approximate_member_count} členů`}
                       </div>
                     </div>
-                    {existing ? (
-                      <Badge variant={statusVariant[existing.status] as any}>
-                        {statusLabel[existing.status]}
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => requestGuild(g)}
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Požádat o přidání"
-                        )}
-                      </Button>
-                    )}
+                    {(() => {
+                      const mine =
+                        existing &&
+                        ((!!user && existing.owner_user_id === user.id) ||
+                          (!!discordUserId && existing.owner_discord_id === discordUserId));
+                      if (mine) {
+                        return (
+                          <Badge variant={statusVariant[existing!.status] as any}>
+                            {statusLabel[existing!.status]} · vlastním
+                          </Badge>
+                        );
+                      }
+                      const label = existing
+                        ? existing.owner_user_id
+                          ? "Převzít vlastnictví"
+                          : "Přidat & schválit"
+                        : "Přidat & schválit";
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => requestGuild(g)}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : label}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 );
               })
