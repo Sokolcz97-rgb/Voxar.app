@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNavPages } from "@/hooks/usePages";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LogOut,
   Shield,
