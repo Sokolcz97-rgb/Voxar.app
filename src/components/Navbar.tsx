@@ -277,9 +277,6 @@ export function Navbar() {
                   <NotifBadge count={unreadMessages} />
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
-                <Link to="/dashboard">{t("nav.dashboard")}</Link>
-              </Button>
               <LanguageSwitcher />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
