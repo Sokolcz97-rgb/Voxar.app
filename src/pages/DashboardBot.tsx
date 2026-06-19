@@ -156,12 +156,16 @@ const DashboardBot = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const g = await supabase
-        .from("bot_guilds")
-        .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
-        .eq("status", "approved")
-        .order("name");
+      const [g, did] = await Promise.all([
+        supabase
+          .from("bot_guilds")
+          .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
+          .eq("status", "approved")
+          .order("name"),
+        supabase.rpc("current_user_discord_id"),
+      ]);
       setGuilds(((g.data as any) ?? []) as GuildOption[]);
+      setMyDiscordId((did.data as string) || null);
       setGuildsLoaded(true);
     })();
   }, [user]);
