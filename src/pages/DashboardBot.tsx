@@ -1065,6 +1065,7 @@ function TicketsConfigCard({
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
+      external_webhook_url: cfg.external_webhook_url,
     };
     const { error } = await supabase.from("bot_tickets_config").update(ticketConfigPayload as any).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
@@ -1274,6 +1275,21 @@ function TicketsConfigCard({
               disabled={!isManager}
             />
           </div>
+        </div>
+
+        <div className="border-t border-border pt-4 space-y-3">
+          <div>
+            <div className="font-medium">Vlastní web (externí webhook)</div>
+            <p className="text-xs text-muted-foreground">
+              Bot na tuto URL pošle JSON při událostech ticketu (`ticket.created`, `ticket.reply`, `ticket.status`, `ticket.deleted`). Pro vlastní web mimo tuto aplikaci.
+            </p>
+          </div>
+          <Input
+            placeholder="https://tvuj-web.cz/api/discord-tickets"
+            value={cfg.external_webhook_url ?? ""}
+            onChange={(e) => setCfg({ ...cfg, external_webhook_url: e.target.value })}
+            disabled={!isManager}
+          />
         </div>
 
         <div className="flex flex-wrap gap-2">

@@ -511,6 +511,7 @@ export type Database = {
       bot_tickets_config: {
         Row: {
           category_id: string | null
+          external_webhook_url: string | null
           guild_id: string | null
           id: string
           mirror_enabled: boolean
@@ -526,6 +527,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          external_webhook_url?: string | null
           guild_id?: string | null
           id?: string
           mirror_enabled?: boolean
@@ -541,6 +543,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          external_webhook_url?: string | null
           guild_id?: string | null
           id?: string
           mirror_enabled?: boolean
@@ -1650,8 +1653,10 @@ export type Database = {
           description: string
           discord_channel_id: string | null
           discord_message_id: string | null
+          guild_id: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          source: string
           status: Database["public"]["Enums"]["ticket_status"]
           subject: string
           updated_at: string
@@ -1664,8 +1669,10 @@ export type Database = {
           description: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
+          guild_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          source?: string
           status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
           updated_at?: string
@@ -1678,8 +1685,10 @@ export type Database = {
           description?: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
+          guild_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          source?: string
           status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
           updated_at?: string

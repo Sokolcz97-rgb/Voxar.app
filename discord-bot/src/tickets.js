@@ -265,6 +265,53 @@ async function openTicket(interaction, ticketCategoryId = null) {
       components: [closeRow],
     });
 
+    // Create a mirrored web ticket so it appears in the dashboard
+    let webTicketId = null;
+    try {
+      // Resolve web user_id: 1) discord identity, 2) guild owner fallback
+      let webUserId = null;
+      try {
+        const { data: ident } = await supabase
+          .schema('auth')
+          .from('identities')
+          .select('user_id')
+          .eq('provider', 'discord')
+          .eq('provider_id', interaction.user.id)
+          .maybeSingle();
+        if (ident?.user_id) webUserId = ident.user_id;
+      } catch (e) { console.warn('lookup discord identity', e?.message || e); }
+      if (!webUserId) {
+        const { data: g } = await supabase
+          .from('bot_guilds').select('owner_user_id').eq('guild_id', guild.id).maybeSingle();
+        if (g?.owner_user_id) webUserId = g.owner_user_id;
+      }
+      if (webUserId) {
+        const subject = `${ticketCategory?.label ? `[${ticketCategory.label}] ` : ''}Ticket od ${interaction.user.tag}`.slice(0, 200);
+        const description = `${cfg?.welcome_md || 'Ticket otevřen přes Discord.'}\n\n_Autor:_ **${interaction.user.tag}** (Discord)\n_Server:_ **${guild.name}**`;
+        const { data: created, error: tErr } = await supabase
+          .from('tickets')
+          .insert({
+            user_id: webUserId,
+            subject,
+            description,
+            status: 'open',
+            priority: 'medium',
+            category: ticketCategory?.label || null,
+            guild_id: guild.id,
+            source: 'discord',
+            discord_channel_id: channel.id,
+          })
+          .select('id')
+          .single();
+        if (tErr) console.error('create web ticket mirror', tErr);
+        else webTicketId = created?.id || null;
+      } else {
+        console.warn(`No web user_id resolvable for guild ${guild.id} / user ${interaction.user.id}; skipping web mirror`);
+      }
+    } catch (e) {
+      console.error('mirror web ticket', e);
+    }
+
     try {
       await supabase.from('bot_open_tickets').insert({
         guild_id: guild.id,
@@ -273,10 +320,34 @@ async function openTicket(interaction, ticketCategoryId = null) {
         user_tag: interaction.user.tag,
         category_id: ticketCategory?.id || null,
         category_label: ticketCategory?.label || null,
+        web_ticket_id: webTicketId,
       });
     } catch (e) {
       console.error('track open ticket', e);
     }
+
+    // Optional: notify external webhook for this guild (custom website)
+    try {
+      const { data: gcfg } = await supabase
+        .from('bot_tickets_config')
+        .select('external_webhook_url')
+        .eq('guild_id', guild.id).maybeSingle();
+      if (gcfg?.external_webhook_url) {
+        fetch(gcfg.external_webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'ticket.created',
+            guild_id: guild.id,
+            channel_id: channel.id,
+            web_ticket_id: webTicketId,
+            user: { id: interaction.user.id, tag: interaction.user.tag },
+            category: ticketCategory?.label || null,
+            created_at: new Date().toISOString(),
+          }),
+        }).catch((e) => console.warn('external webhook (created) failed', e?.message || e));
+      }
+    } catch (e) { console.warn('external webhook lookup', e?.message || e); }
 
     await interaction.editReply({
       content: `🎫 Ticket vytvořen: <#${channel.id}>`,
