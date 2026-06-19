@@ -76,6 +76,8 @@ export default function DashboardBotGuilds() {
   const [pickerGuilds, setPickerGuilds] = useState<DiscordGuildOption[]>([]);
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
   const [discordUserId, setDiscordUserId] = useState<string | null>(null);
+  const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
+  const [scope, setScope] = useState<"mine" | "foreign">("mine");
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
 
 
