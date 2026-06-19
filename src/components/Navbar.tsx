@@ -56,13 +56,37 @@ export function Navbar() {
     navigate("/");
   };
 
+  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!user) { setProfile(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setProfile(data ?? null);
+    })();
+    const ch = supabase
+      .channel(`profile-nav-${user.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` }, (payload) => {
+        const p = payload.new as { display_name: string | null; avatar_url: string | null };
+        setProfile({ display_name: p.display_name, avatar_url: p.avatar_url });
+      })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [user]);
+
   const displayName =
+    profile?.display_name ||
     (user?.user_metadata?.display_name as string) ||
     (user?.user_metadata?.username as string) ||
     user?.email?.split("@")[0] ||
     "Uživatel";
   const email = user?.email ?? "";
-  const avatarUrl = (user?.user_metadata?.avatar_url as string) || "";
+  const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || "";
 
   return (
     <header className="sticky top-0 z-50 glass-strong border-b border-primary/20 shadow-[0_4px_30px_-10px_hsl(var(--primary)/0.4)]">
