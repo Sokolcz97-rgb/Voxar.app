@@ -22,13 +22,13 @@ import { SEO } from "@/components/SEO";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
-  const { visitorCount } = usePresence();
+  const { visitorCount, registeredCount } = usePresence();
   const { t } = useTranslation();
   const ed = useInlineEditor();
   const { discord } = useFeaturedDiscord();
   const { settings } = useSiteSettings();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
-  const [stats, setStats] = useState({ players: 0, streams: 0, online: 0 });
+  const [stats, setStats] = useState({ players: 0, streams: 0 });
 
   useEffect(() => {
     fetchPageBySlug("home", isEditor).then((p) => {
@@ -40,21 +40,16 @@ const Index = () => {
 
   useEffect(() => {
     const loadStats = async () => {
-      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const [{ count: totalProfiles }, { count: onlineNow }, { count: streams }] = await Promise.all([
+      const [{ count: totalProfiles }, { count: streams }] = await Promise.all([
         supabase
           .from("profiles")
           .select("user_id", { count: "exact", head: true }),
-        supabase
-          .from("profiles")
-          .select("user_id", { count: "exact", head: true })
-          .gte("last_seen_at", fiveMinAgo),
         supabase
           .from("live_streams_cache")
           .select("id", { count: "exact", head: true })
           .eq("is_live", true),
       ]);
-      setStats({ players: totalProfiles ?? 0, streams: streams ?? 0, online: onlineNow ?? 0 });
+      setStats({ players: totalProfiles ?? 0, streams: streams ?? 0 });
     };
     loadStats();
     const interval = setInterval(loadStats, 60_000);
@@ -155,12 +150,12 @@ const Index = () => {
 
             {/* Stats strip */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-16 sm:mt-20 max-w-3xl mx-auto">
-              {[
-                { value: String(stats.players), label: t("home.stats.players") },
-                { value: String(stats.streams), label: t("home.stats.streams") },
-                { value: String(stats.online), label: t("home.stats.online") },
-                { value: String(visitorCount), label: t("home.stats.visitors") },
-              ].map((s) => (
+            {[
+              { value: String(stats.players), label: t("home.stats.players") },
+              { value: String(stats.streams), label: t("home.stats.streams") },
+              { value: String(registeredCount), label: t("home.stats.online") },
+              { value: String(visitorCount), label: t("home.stats.visitors") },
+            ].map((s) => (
                 <div key={s.label} className="premium-card rounded-xl p-4 sm:p-5">
                   <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow relative">{s.value}</div>
                   <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-1 relative leading-tight">{s.label}</div>

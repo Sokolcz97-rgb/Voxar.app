@@ -8,18 +8,21 @@ interface PresenceContextValue {
   onlineIds: Set<string>;
   isOnline: (userId: string | null | undefined) => boolean;
   visitorCount: number;
+  registeredCount: number;
 }
 
 const PresenceContext = createContext<PresenceContextValue>({
   onlineIds: new Set(),
   isOnline: () => false,
   visitorCount: 0,
+  registeredCount: 0,
 });
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
   const [visitorCount, setVisitorCount] = useState(0);
+  const [registeredCount, setRegisteredCount] = useState(0);
   const anonKeyRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
@@ -35,7 +38,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         .flat()
         .forEach((p) => p.user_id && ids.add(p.user_id));
       setOnlineIds(ids);
-      setVisitorCount(ids.size);
+      setVisitorCount(Object.keys(state).length);
+      setRegisteredCount(ids.size);
     };
 
     const heartbeat = () => {
@@ -75,8 +79,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       onlineIds,
       isOnline: (id) => (id ? onlineIds.has(id) : false),
       visitorCount,
+      registeredCount,
     }),
-    [onlineIds, visitorCount],
+    [onlineIds, visitorCount, registeredCount],
   );
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
