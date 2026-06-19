@@ -109,7 +109,7 @@ type Welcome = { id: string; channel_id: string; message_type: string; content: 
 type StreamNotif = { id: string; platform: string; handle: string; discord_channel_id: string; template: string; enabled: boolean; guild_id: string | null };
 type StatusCheck = { id: string; label: string; target_type: string; target: string; discord_channel_id: string; enabled: boolean; last_status: string | null; guild_id: string | null };
 type BotStatus = { last_heartbeat: string | null; version: string | null; guild_count: number | null };
-type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null };
+type GuildOption = { id: string; guild_id: string; name: string; icon_url: string | null; owner_user_id?: string | null; owner_discord_id?: string | null };
 type TicketCategory = { id: string; guild_id: string; label: string; description: string | null; emoji: string | null; discord_category_id: string | null; position: number; enabled: boolean };
 
 const GLOBAL_KEY = "__global__";
@@ -148,19 +148,35 @@ const DashboardBot = () => {
   const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
   const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
 
+  const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
+  const [scope, setScope] = useState<"mine" | "foreign">("mine");
+
   // Load list of guilds user can manage (admin sees all approved + pending; owner sees own approved)
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("bot_guilds")
-        .select("id, guild_id, name, icon_url, status")
-        .eq("status", "approved")
-        .order("name");
-      setGuilds(((data as any) ?? []) as GuildOption[]);
+      const [g, did] = await Promise.all([
+        supabase
+          .from("bot_guilds")
+          .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
+          .eq("status", "approved")
+          .order("name"),
+        supabase.rpc("current_user_discord_id"),
+      ]);
+      setGuilds(((g.data as any) ?? []) as GuildOption[]);
+      setMyDiscordId((did.data as any) ?? null);
       setGuildsLoaded(true);
     })();
   }, [user]);
+
+  const isMine = (g: GuildOption) =>
+    (!!user && g.owner_user_id === user.id) ||
+    (!!myDiscordId && g.owner_discord_id === myDiscordId);
+  const scopedGuilds = useMemo(
+    () => guilds.filter((g) => (scope === "mine" ? isMine(g) : !isMine(g))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [guilds, scope, myDiscordId, user]
+  );
 
   // Picker dialog state — opens automatically the first time the user lands
   // on the dashboard so they can pick which server to configure.
@@ -505,7 +521,27 @@ const DashboardBot = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto -mx-6 px-6 space-y-2">
-              {canUseGlobalConfig && (
+              {canManageBot && (
+                <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === "mine" ? "default" : "outline"}
+                    onClick={() => setScope("mine")}
+                  >
+                    Moje servery ({guilds.filter(isMine).length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === "foreign" ? "default" : "outline"}
+                    onClick={() => setScope("foreign")}
+                  >
+                    Cizí servery — admin ({guilds.filter((g) => !isMine(g)).length})
+                  </Button>
+                </div>
+              )}
+              {canUseGlobalConfig && scope === "mine" && (
                 <button
                   type="button"
                   onClick={() => pickScope(GLOBAL_KEY)}
@@ -522,7 +558,7 @@ const DashboardBot = () => {
                   </div>
                 </button>
               )}
-              {guilds.map((g) => (
+              {scopedGuilds.map((g) => (
                 <button
                   key={g.guild_id}
                   type="button"
@@ -544,9 +580,11 @@ const DashboardBot = () => {
                   </div>
                 </button>
               ))}
-              {guilds.length === 0 && (
+              {scopedGuilds.length === 0 && (
                 <div className="px-3 py-6 text-sm text-muted-foreground text-center">
-                  Nemáš žádné schválené servery.
+                  {scope === "mine"
+                    ? "Nemáš žádné vlastní servery."
+                    : "Žádné cizí servery ke správě."}
                   <div className="mt-2">
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/dashboard/bot/guilds">Přejít na Servery bota</Link>
