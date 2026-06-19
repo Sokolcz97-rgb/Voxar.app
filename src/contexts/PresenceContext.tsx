@@ -8,12 +8,14 @@ interface PresenceContextValue {
   onlineIds: Set<string>;
   isOnline: (userId: string | null | undefined) => boolean;
   visitorCount: number;
+  registeredCount: number;
 }
 
 const PresenceContext = createContext<PresenceContextValue>({
   onlineIds: new Set(),
   isOnline: () => false,
   visitorCount: 0,
+  registeredCount: 0,
 });
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
