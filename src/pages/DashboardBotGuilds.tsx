@@ -100,6 +100,8 @@ export default function DashboardBotGuilds() {
         _action: "manage",
       });
       setCanManage(Boolean(data));
+      const { data: did } = await supabase.rpc("current_user_discord_id");
+      setMyDiscordId((did as string) || null);
     })();
   }, []);
 
