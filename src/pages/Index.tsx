@@ -42,14 +42,14 @@ const Index = () => {
       const [{ count: totalProfiles }, { count: onlineNow }, { count: streams }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("*", { count: "exact", head: true }),
+          .select("user_id", { count: "exact", head: true }),
         supabase
           .from("profiles")
-          .select("*", { count: "exact", head: true })
+          .select("user_id", { count: "exact", head: true })
           .gte("last_seen_at", fiveMinAgo),
         supabase
           .from("live_streams_cache")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("is_live", true),
       ]);
       setStats({ players: totalProfiles ?? 0, streams: streams ?? 0, online: onlineNow ?? 0 });
