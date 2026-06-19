@@ -514,15 +514,15 @@ const DashboardBot = () => {
         {botCategory === "discord" && <>
         {/* Server picker dialog */}
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-          <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden p-0">
+            <DialogHeader className="px-6 pt-6 pb-2">
               <DialogTitle>Vyber server</DialogTitle>
               <DialogDescription>
                 Zvol server, který chceš spravovat. Můžeš to kdykoli změnit tlačítkem
                 „Změnit server".
               </DialogDescription>
             </DialogHeader>
-            <div className="overflow-y-auto -mx-6 px-6 space-y-2">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-2">
               {canManageBot && (
                 <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
                   <Button
