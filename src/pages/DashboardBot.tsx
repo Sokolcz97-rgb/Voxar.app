@@ -148,19 +148,35 @@ const DashboardBot = () => {
   const [newStream, setNewStream] = useState({ platform: "twitch", handle: "", channel: "", webhook: "", template: "🔴 {handle} právě vysílá: {title}" });
   const [newCheck, setNewCheck] = useState({ label: "", target: "", channel: "", webhook: "" });
 
+  const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
+  const [scope, setScope] = useState<"mine" | "foreign">("mine");
+
   // Load list of guilds user can manage (admin sees all approved + pending; owner sees own approved)
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("bot_guilds")
-        .select("id, guild_id, name, icon_url, status")
-        .eq("status", "approved")
-        .order("name");
-      setGuilds(((data as any) ?? []) as GuildOption[]);
+      const [g, did] = await Promise.all([
+        supabase
+          .from("bot_guilds")
+          .select("id, guild_id, name, icon_url, status, owner_user_id, owner_discord_id")
+          .eq("status", "approved")
+          .order("name"),
+        supabase.rpc("current_user_discord_id"),
+      ]);
+      setGuilds(((g.data as any) ?? []) as GuildOption[]);
+      setMyDiscordId((did.data as any) ?? null);
       setGuildsLoaded(true);
     })();
   }, [user]);
+
+  const isMine = (g: GuildOption) =>
+    (!!user && g.owner_user_id === user.id) ||
+    (!!myDiscordId && g.owner_discord_id === myDiscordId);
+  const scopedGuilds = useMemo(
+    () => guilds.filter((g) => (scope === "mine" ? isMine(g) : !isMine(g))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [guilds, scope, myDiscordId, user]
+  );
 
   // Picker dialog state — opens automatically the first time the user lands
   // on the dashboard so they can pick which server to configure.
