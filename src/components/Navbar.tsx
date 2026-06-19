@@ -26,6 +26,7 @@ import {
   Server,
   Newspaper,
   MessageCircle,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -200,6 +201,11 @@ export function Navbar() {
                           label: t("nav.profile"),
                           icon: UserIcon,
                         },
+                        {
+                          to: "/profile",
+                          label: t("nav.profileSettings"),
+                          icon: Settings,
+                        },
                       ]
                     : []),
                   ...(isAdmin || isEditor
@@ -330,6 +336,17 @@ export function Navbar() {
                         <UserIcon className="h-4 w-4 text-primary" />
                       </div>
                       <span className="flex-1 text-sm font-medium">{t("nav.profile")}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => navigate("/profile")}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
+                        <Settings className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </DropdownMenuItem>
 
