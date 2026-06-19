@@ -301,14 +301,21 @@ export default function DashboardBotGuilds() {
     load();
   };
 
-  const filtered = filter === "all" ? guilds : guilds.filter((g) => g.status === filter);
+  const isMine = (g: BotGuild) =>
+    (!!user && g.owner_user_id === user.id) ||
+    (!!myDiscordId && g.owner_discord_id === myDiscordId);
+
+  const scoped = guilds.filter((g) => (scope === "mine" ? isMine(g) : !isMine(g)));
+  const filtered = filter === "all" ? scoped : scoped.filter((g) => g.status === filter);
   const counts = {
-    all: guilds.length,
-    pending: guilds.filter((g) => g.status === "pending").length,
-    approved: guilds.filter((g) => g.status === "approved").length,
-    rejected: guilds.filter((g) => g.status === "rejected").length,
-    suspended: guilds.filter((g) => g.status === "suspended").length,
+    all: scoped.length,
+    pending: scoped.filter((g) => g.status === "pending").length,
+    approved: scoped.filter((g) => g.status === "approved").length,
+    rejected: scoped.filter((g) => g.status === "rejected").length,
+    suspended: scoped.filter((g) => g.status === "suspended").length,
   };
+  const mineCount = guilds.filter(isMine).length;
+  const foreignCount = guilds.length - mineCount;
 
   return (
     <div className="min-h-screen bg-background">
