@@ -117,7 +117,11 @@ export default function DashboardBotGuilds() {
     setPickerGuilds((data as any).guilds || []);
     setDiscordUsername((data as any).discord_username || null);
     setDiscordUserId((data as any).discord_user_id || null);
+    setOauthState(nonce);
     setPickerOpen(true);
+    // Refresh ownership data so the picker can label already-claimed rows.
+    void load();
+    if ((data as any).discord_user_id) setMyDiscordId((data as any).discord_user_id);
   };
 
   // Fallback: when popup is blocked and the callback redirected the whole tab back
