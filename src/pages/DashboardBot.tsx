@@ -971,6 +971,7 @@ const DashboardBot = () => {
           </TabsContent>
           </div>
         </Tabs>
+        </>}
       </main>
     </div>
   );
