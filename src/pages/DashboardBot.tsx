@@ -1065,6 +1065,7 @@ function TicketsConfigCard({
       mirror_enabled: cfg.mirror_enabled,
       sync_channel_id: cfg.sync_channel_id,
       sync_webhook_url: cfg.sync_webhook_url,
+      external_webhook_url: cfg.external_webhook_url,
     };
     const { error } = await supabase.from("bot_tickets_config").update(ticketConfigPayload as any).eq("id", cfg.id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
