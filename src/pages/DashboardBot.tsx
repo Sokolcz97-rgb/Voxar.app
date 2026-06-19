@@ -521,7 +521,27 @@ const DashboardBot = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto -mx-6 px-6 space-y-2">
-              {canUseGlobalConfig && (
+              {canManageBot && (
+                <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === "mine" ? "default" : "outline"}
+                    onClick={() => setScope("mine")}
+                  >
+                    Moje servery ({guilds.filter(isMine).length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === "foreign" ? "default" : "outline"}
+                    onClick={() => setScope("foreign")}
+                  >
+                    Cizí servery — admin ({guilds.filter((g) => !isMine(g)).length})
+                  </Button>
+                </div>
+              )}
+              {canUseGlobalConfig && scope === "mine" && (
                 <button
                   type="button"
                   onClick={() => pickScope(GLOBAL_KEY)}
@@ -538,7 +558,7 @@ const DashboardBot = () => {
                   </div>
                 </button>
               )}
-              {guilds.map((g) => (
+              {scopedGuilds.map((g) => (
                 <button
                   key={g.guild_id}
                   type="button"
@@ -560,9 +580,11 @@ const DashboardBot = () => {
                   </div>
                 </button>
               ))}
-              {guilds.length === 0 && (
+              {scopedGuilds.length === 0 && (
                 <div className="px-3 py-6 text-sm text-muted-foreground text-center">
-                  Nemáš žádné schválené servery.
+                  {scope === "mine"
+                    ? "Nemáš žádné vlastní servery."
+                    : "Žádné cizí servery ke správě."}
                   <div className="mt-2">
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/dashboard/bot/guilds">Přejít na Servery bota</Link>
