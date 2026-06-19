@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePresence } from "@/contexts/PresenceContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
 import { LiveStreamsSection } from "@/components/LiveStreamsSection";
