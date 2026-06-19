@@ -76,6 +76,8 @@ export default function DashboardBotGuilds() {
   const [pickerGuilds, setPickerGuilds] = useState<DiscordGuildOption[]>([]);
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
   const [discordUserId, setDiscordUserId] = useState<string | null>(null);
+  const [myDiscordId, setMyDiscordId] = useState<string | null>(null);
+  const [scope, setScope] = useState<"mine" | "foreign">("mine");
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
 
 
@@ -98,6 +100,8 @@ export default function DashboardBotGuilds() {
         _action: "manage",
       });
       setCanManage(Boolean(data));
+      const { data: did } = await supabase.rpc("current_user_discord_id");
+      setMyDiscordId((did as string) || null);
     })();
   }, []);
 
@@ -297,14 +301,21 @@ export default function DashboardBotGuilds() {
     load();
   };
 
-  const filtered = filter === "all" ? guilds : guilds.filter((g) => g.status === filter);
+  const isMine = (g: BotGuild) =>
+    (!!user && g.owner_user_id === user.id) ||
+    (!!myDiscordId && g.owner_discord_id === myDiscordId);
+
+  const scoped = guilds.filter((g) => (scope === "mine" ? isMine(g) : !isMine(g)));
+  const filtered = filter === "all" ? scoped : scoped.filter((g) => g.status === filter);
   const counts = {
-    all: guilds.length,
-    pending: guilds.filter((g) => g.status === "pending").length,
-    approved: guilds.filter((g) => g.status === "approved").length,
-    rejected: guilds.filter((g) => g.status === "rejected").length,
-    suspended: guilds.filter((g) => g.status === "suspended").length,
+    all: scoped.length,
+    pending: scoped.filter((g) => g.status === "pending").length,
+    approved: scoped.filter((g) => g.status === "approved").length,
+    rejected: scoped.filter((g) => g.status === "rejected").length,
+    suspended: scoped.filter((g) => g.status === "suspended").length,
   };
+  const mineCount = guilds.filter(isMine).length;
+  const foreignCount = guilds.length - mineCount;
 
   return (
     <div className="min-h-screen bg-background">
@@ -376,6 +387,25 @@ export default function DashboardBotGuilds() {
         </div>
 
 
+        <div className="flex gap-2 mb-3 flex-wrap">
+          <Button
+            variant={scope === "mine" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setScope("mine")}
+          >
+            Moje servery ({mineCount})
+          </Button>
+          {canManage && (
+            <Button
+              variant={scope === "foreign" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScope("foreign")}
+            >
+              Cizí servery — admin ({foreignCount})
+            </Button>
+          )}
+        </div>
+
         <div className="flex gap-2 mb-4 flex-wrap">
           {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
             <Button
@@ -391,7 +421,9 @@ export default function DashboardBotGuilds() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Registrované servery</CardTitle>
+            <CardTitle>
+              {scope === "mine" ? "Moje registrované servery" : "Cizí servery (správa adminem)"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
