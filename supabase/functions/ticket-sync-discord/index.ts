@@ -279,6 +279,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // -------- External per-guild webhook (custom website integration) --------
+    if (externalWebhookUrl) {
+      fetch(externalWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: `ticket.${body.event}`,
+          guild_id: webGuildId,
+          ticket: {
+            id: ticket.id,
+            subject: ticket.subject,
+            status: body.new_status || ticket.status,
+            priority: ticket.priority,
+            category: ticket.category,
+            source: (ticket as { source?: string }).source || 'web',
+            discord_channel_id: ticket.discord_channel_id,
+          },
+          actor: { user_id: user.id, name: actorName },
+          author: { user_id: ticket.user_id, name: authorName },
+          reply_content: body.reply_content ? trunc(stripHtml(body.reply_content), 4000) : undefined,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch((e) => console.warn('external webhook failed', e?.message || e));
+    }
+
+
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
