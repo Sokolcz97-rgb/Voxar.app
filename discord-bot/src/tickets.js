@@ -268,22 +268,48 @@ async function openTicket(interaction, ticketCategoryId = null) {
     // Create a mirrored web ticket so it appears in the dashboard
     let webTicketId = null;
     try {
-      // Resolve web user_id: 1) discord identity, 2) guild owner fallback
+      // Resolve web user_id: 1) user_discord_links, 2) auth.identities (discord),
+      // 3) guild owner_user_id, 4) link via owner_discord_id, 5) any admin
       let webUserId = null;
       try {
-        const { data: ident } = await supabase
-          .schema('auth')
-          .from('identities')
+        const { data: link } = await supabase
+          .from('user_discord_links')
           .select('user_id')
-          .eq('provider', 'discord')
-          .eq('provider_id', interaction.user.id)
+          .eq('discord_user_id', interaction.user.id)
           .maybeSingle();
-        if (ident?.user_id) webUserId = ident.user_id;
-      } catch (e) { console.warn('lookup discord identity', e?.message || e); }
+        if (link?.user_id) webUserId = link.user_id;
+      } catch (e) { console.warn('lookup user_discord_links', e?.message || e); }
+      if (!webUserId) {
+        try {
+          const { data: ident } = await supabase
+            .schema('auth')
+            .from('identities')
+            .select('user_id')
+            .eq('provider', 'discord')
+            .eq('provider_id', interaction.user.id)
+            .maybeSingle();
+          if (ident?.user_id) webUserId = ident.user_id;
+        } catch (e) { console.warn('lookup discord identity', e?.message || e); }
+      }
       if (!webUserId) {
         const { data: g } = await supabase
-          .from('bot_guilds').select('owner_user_id').eq('guild_id', guild.id).maybeSingle();
+          .from('bot_guilds').select('owner_user_id, owner_discord_id').eq('guild_id', guild.id).maybeSingle();
         if (g?.owner_user_id) webUserId = g.owner_user_id;
+        if (!webUserId && g?.owner_discord_id) {
+          const { data: ownerLink } = await supabase
+            .from('user_discord_links')
+            .select('user_id')
+            .eq('discord_user_id', g.owner_discord_id)
+            .maybeSingle();
+          if (ownerLink?.user_id) webUserId = ownerLink.user_id;
+        }
+      }
+      if (!webUserId) {
+        try {
+          const { data: admin } = await supabase
+            .from('user_roles').select('user_id').eq('role', 'admin').limit(1).maybeSingle();
+          if (admin?.user_id) webUserId = admin.user_id;
+        } catch (e) { console.warn('lookup admin fallback', e?.message || e); }
       }
       if (webUserId) {
         const subject = `${ticketCategory?.label ? `[${ticketCategory.label}] ` : ''}Ticket od ${interaction.user.tag}`.slice(0, 200);
