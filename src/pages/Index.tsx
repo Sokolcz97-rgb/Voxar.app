@@ -28,7 +28,7 @@ const Index = () => {
   const { discord } = useFeaturedDiscord();
   const { settings } = useSiteSettings();
   const [customBlocks, setCustomBlocks] = useState<Block[]>([]);
-  const [stats, setStats] = useState({ players: 0, streams: 0, online: 0 });
+  const [stats, setStats] = useState({ players: 0, streams: 0 });
 
   useEffect(() => {
     fetchPageBySlug("home", isEditor).then((p) => {
