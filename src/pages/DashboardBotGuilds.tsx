@@ -387,6 +387,25 @@ export default function DashboardBotGuilds() {
         </div>
 
 
+        <div className="flex gap-2 mb-3 flex-wrap">
+          <Button
+            variant={scope === "mine" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setScope("mine")}
+          >
+            Moje servery ({mineCount})
+          </Button>
+          {canManage && (
+            <Button
+              variant={scope === "foreign" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScope("foreign")}
+            >
+              Cizí servery — admin ({foreignCount})
+            </Button>
+          )}
+        </div>
+
         <div className="flex gap-2 mb-4 flex-wrap">
           {(["all", "pending", "approved", "rejected", "suspended"] as const).map((s) => (
             <Button
@@ -402,7 +421,9 @@ export default function DashboardBotGuilds() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Registrované servery</CardTitle>
+            <CardTitle>
+              {scope === "mine" ? "Moje registrované servery" : "Cizí servery (správa adminem)"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
