@@ -99,6 +99,15 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
 
+    if (me?.id) {
+      await supabase.from("user_discord_links").upsert({
+        user_id,
+        discord_user_id: me.id,
+        discord_username: me?.username ?? null,
+        updated_at: new Date().toISOString(),
+      });
+    }
+
     const completeUrl = `${origin}/discord-oauth-complete?discord_session=${encodeURIComponent(nonce)}`;
     return Response.redirect(completeUrl, 302);
   } catch (e) {
