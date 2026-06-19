@@ -22,6 +22,7 @@ import { SEO } from "@/components/SEO";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
+  const { visitorCount } = usePresence();
   const { t } = useTranslation();
   const ed = useInlineEditor();
   const { discord } = useFeaturedDiscord();
