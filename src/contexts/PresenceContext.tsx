@@ -35,7 +35,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         .flat()
         .forEach((p) => p.user_id && ids.add(p.user_id));
       setOnlineIds(ids);
-      setVisitorCount(Object.keys(state).length);
+      setVisitorCount(ids.size);
     };
 
     const heartbeat = () => {
