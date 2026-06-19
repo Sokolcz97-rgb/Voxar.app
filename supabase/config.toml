@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.moderate-image]
 verify_jwt = false
+
+[functions.bot-guild-claim]
+verify_jwt = true
