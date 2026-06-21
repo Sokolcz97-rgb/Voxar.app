@@ -1,9 +1,28 @@
 // Moderate an image URL using Lovable AI (Gemini vision).
 // Returns { scam, nsfw, severe, reason, categories[] }
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function authorize(req: Request): Promise<boolean> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice(7);
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims?.sub) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const IMG_EXT = /\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i;
 
