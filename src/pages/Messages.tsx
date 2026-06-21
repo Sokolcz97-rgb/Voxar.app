@@ -335,7 +335,7 @@ const Messages = () => {
           actions={
             <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
               <DialogTrigger asChild>
-                <Button variant="hero" size="lg" className="bevel-3d shadow-[var(--glow-soft)]">
+                <Button variant="hero" size="lg" className="shadow-[var(--glow-primary)]">
                   <Plus className="h-4 w-4 mr-1" />{t("messages.new")}
                 </Button>
               </DialogTrigger>
