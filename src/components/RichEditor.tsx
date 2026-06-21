@@ -97,9 +97,9 @@ function ToolbarBtn({
       title={title}
       aria-label={title}
       className={cn(
-        "h-8 w-8 inline-flex items-center justify-center rounded-md text-sm transition-colors",
-        "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-        active && "bg-primary/15 text-primary",
+        "icon-3d h-9 w-9 inline-flex items-center justify-center rounded-md text-sm",
+        "text-muted-foreground hover:text-foreground",
+        active && "is-active",
         disabled && "opacity-40 cursor-not-allowed"
       )}
     >
@@ -363,7 +363,7 @@ export const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEdito
   return (
     <div className={cn("rounded-md border border-border bg-background/40", className)}>
       {!hideToolbar && (
-      <div className="relative flex flex-wrap items-center gap-0.5 border-b border-border bg-secondary/30 p-1 rounded-t-md">
+      <div className="relative flex flex-wrap items-center gap-1.5 border-b border-border bg-secondary/30 p-2 rounded-t-md">
         <ToolbarBtn title={t("editor.bold")} onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>
           <Bold className="h-4 w-4" />
         </ToolbarBtn>
