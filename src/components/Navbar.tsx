@@ -272,7 +272,7 @@ export function Navbar() {
 
           {user ? (
             <>
-              <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex relative">
+              <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex relative nav-3d">
                 <Link to="/messages">
                   {t("nav.messages")}
                   <NotifBadge count={unreadMessages} />
