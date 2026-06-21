@@ -62,8 +62,8 @@ export function PageHero({
           )}
           <div className="flex items-start gap-3 mt-2">
             {Icon && (
-              <div className="hidden sm:flex w-12 h-12 rounded-xl bg-primary/15 border border-primary/40 items-center justify-center shrink-0 shadow-[var(--glow-soft)]">
-                <Icon className="h-5 w-5 text-primary" />
+              <div className="hidden sm:flex w-14 h-14 icon-cube-3d items-center justify-center shrink-0">
+                <Icon className="h-6 w-6" />
               </div>
             )}
             <h1 className="font-display font-black text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight">
