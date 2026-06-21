@@ -1,4 +1,4 @@
-
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +24,23 @@ function maskBasic(text: string): { clean: string; flagged: boolean } {
     }
   }
   return { clean, flagged };
+}
+
+async function authorize(req: Request): Promise<{ ok: boolean; status?: number }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return { ok: false, status: 401 };
+  const token = authHeader.slice(7);
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims?.sub) return { ok: false, status: 401 };
+    return { ok: true };
+  } catch {
+    return { ok: false, status: 401 };
+  }
 }
 
 async function aiModerate(text: string): Promise<{ severe: boolean; reason: string }> {
@@ -61,6 +78,14 @@ async function aiModerate(text: string): Promise<{ severe: boolean; reason: stri
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const auth = await authorize(req);
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: auth.status ?? 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { content, useAI } = await req.json();
     if (typeof content !== "string" || !content.trim()) {
@@ -81,13 +106,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        clean,
-        flagged,
-        severe,
-        reason,
-        blocked: severe, // if severe, frontend should refuse to post
-      }),
+      JSON.stringify({ clean, flagged, severe, reason, blocked: severe }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
