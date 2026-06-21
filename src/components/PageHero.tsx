@@ -62,8 +62,8 @@ export function PageHero({
           )}
           <div className="flex items-start gap-3 mt-2">
             {Icon && (
-              <div className="hidden sm:flex w-12 h-12 rounded-xl bg-primary/15 border border-primary/40 items-center justify-center shrink-0 shadow-[var(--glow-soft)]">
-                <Icon className="h-5 w-5 text-primary" />
+              <div className="hidden sm:flex w-14 h-14 icon-cube-3d items-center justify-center shrink-0">
+                <Icon className="h-6 w-6" />
               </div>
             )}
             <h1 className="font-display font-black text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight">
@@ -87,8 +87,8 @@ export function PageHero({
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             {badge && BadgeIcon && (
               <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-xl border border-primary/30 bg-primary/5">
-                <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/40 flex items-center justify-center">
-                  <BadgeIcon className="h-4 w-4 text-primary" />
+                <div className="w-10 h-10 icon-cube-3d flex items-center justify-center">
+                  <BadgeIcon className="h-4 w-4" />
                 </div>
                 <div className="leading-tight">
                   {badge.sublabel && (
