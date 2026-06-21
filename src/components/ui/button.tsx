@@ -10,15 +10,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary-glow hover:shadow-[var(--glow-soft)] hover:-translate-y-0.5",
+          "btn-3d hover:-translate-y-0.5",
         hero:
-          "relative overflow-hidden text-primary-foreground bg-gradient-to-r from-primary via-primary-glow to-accent bg-[length:200%_100%] bg-[position:0%_50%] hover:bg-[position:100%_50%] shadow-[var(--glow-soft)] hover:shadow-[var(--glow-primary)] hover:-translate-y-0.5",
+          "btn-3d hover:-translate-y-0.5",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-[0_0_20px_hsl(var(--destructive)/0.45)]",
+          "btn-3d text-destructive-foreground hover:shadow-[0_0_20px_hsl(var(--destructive)/0.45)]",
         outline:
-          "border border-primary/40 bg-background/40 backdrop-blur-sm text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/70 hover:shadow-[var(--glow-soft)]",
+          "btn-3d",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:border-primary/30 border border-transparent",
+          "btn-3d",
         ghost: "hover:bg-primary/10 hover:text-primary",
         link: "text-primary underline-offset-4 hover:underline",
       },
