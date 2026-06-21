@@ -328,8 +328,8 @@ export function Navbar() {
                       onClick={() => navigate("/profile")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
-                        <UserIcon className="h-4 w-4 text-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center icon-cube-3d">
+                        <UserIcon className="h-4 w-4" />
                       </div>
                       <span className="flex-1 text-sm font-medium">{t("nav.profile")}</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -339,8 +339,8 @@ export function Navbar() {
                       onClick={() => navigate("/profile")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
-                        <Settings className="h-4 w-4 text-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center icon-cube-3d">
+                        <Settings className="h-4 w-4" />
                       </div>
                       <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -350,8 +350,8 @@ export function Navbar() {
                       onClick={() => navigate("/messages")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20 relative">
-                        <MessageSquare className="h-4 w-4 text-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center icon-cube-3d relative">
+                        <MessageSquare className="h-4 w-4" />
                         {unreadMessages > 0 && (
                           <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
                             {unreadMessages}
@@ -366,8 +366,8 @@ export function Navbar() {
                       onClick={() => navigate("/tickets")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20 relative">
-                        <LifeBuoy className="h-4 w-4 text-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center icon-cube-3d relative">
+                        <LifeBuoy className="h-4 w-4" />
                         {openTickets > 0 && (
                           <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
                             {openTickets}
@@ -382,8 +382,8 @@ export function Navbar() {
                       onClick={() => navigate("/dashboard")}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
-                        <LayoutDashboard className="h-4 w-4 text-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center icon-cube-3d">
+                        <LayoutDashboard className="h-4 w-4" />
                       </div>
                       <span className="flex-1 text-sm font-medium">{t("nav.dashboard")}</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -398,8 +398,8 @@ export function Navbar() {
                           onClick={() => navigate("/admin")}
                           className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
-                            <Shield className="h-4 w-4 text-primary" />
+                          <div className="flex h-9 w-9 items-center justify-center icon-cube-3d">
+                            <Shield className="h-4 w-4" />
                           </div>
                           <span className="flex-1 text-sm font-medium text-primary">{t("nav.admin")}</span>
                           <ChevronRight className="h-4 w-4 text-primary" />
