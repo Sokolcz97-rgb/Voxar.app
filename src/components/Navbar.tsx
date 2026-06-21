@@ -128,20 +128,20 @@ export function Navbar() {
           >
             <Keyboard className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex nav-3d">
             <Link to="/forum">{t("nav.forum")}</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex nav-3d">
             <Link to="/leaderboard">{t("nav.leaderboard")}</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex nav-3d">
             <Link to="/servery">Servery</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex nav-3d">
             <Link to="/novinky">Novinky</Link>
           </Button>
           {navPages.map((p) => (
-            <Button key={p.slug} variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+            <Button key={p.slug} variant="ghost" size="sm" asChild className="hidden md:inline-flex nav-3d">
               <Link to={`/${p.slug}`}>{p.nav_label}</Link>
             </Button>
           ))}
