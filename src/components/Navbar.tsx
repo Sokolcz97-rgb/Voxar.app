@@ -219,13 +219,11 @@ export function Navbar() {
                       className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-primary/10 transition-colors"
                     >
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-md border ${
-                          item.primary
-                            ? "bg-primary/20 border-primary/40"
-                            : "bg-primary/10 border-primary/20"
+                        className={`flex h-10 w-10 items-center justify-center icon-cube-3d ${
+                          item.primary ? "ring-1 ring-primary/60" : ""
                         }`}
                       >
-                        <item.icon className="h-4 w-4 text-primary" />
+                        <item.icon className="h-4 w-4" />
                       </div>
                       <span
                         className={`flex-1 text-sm font-medium ${
