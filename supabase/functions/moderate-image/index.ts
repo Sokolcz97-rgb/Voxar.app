@@ -113,6 +113,11 @@ async function classifyImage(url: string): Promise<{
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!(await authorize(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   try {
     const body = await req.json().catch(() => ({}));
     const urls: string[] = Array.isArray(body?.urls)
