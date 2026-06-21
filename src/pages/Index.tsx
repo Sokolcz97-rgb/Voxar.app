@@ -180,8 +180,8 @@ const Index = () => {
                 className="group glass rounded-xl p-6 hover:border-primary/60 transition-all duration-300 hover:translate-y-[-4px] animate-fade-in"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:border-primary transition-all">
-                  <f.icon className="h-5 w-5 text-primary" />
+                <div className="w-12 h-12 icon-cube-3d flex items-center justify-center mb-5">
+                  <f.icon className="h-5 w-5" />
                 </div>
                 <h3 className="font-display font-bold text-lg mb-1">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
