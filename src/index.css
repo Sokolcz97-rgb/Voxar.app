@@ -539,7 +539,7 @@
     filter: blur(3px);
     pointer-events: none;
   }
-  .btn-3d > * { position: relative; z-index: 1; transform: translateZ(10px); }
+  .btn-3d > * { position: relative; z-index: 1; transform: translateZ(10px); color: hsl(var(--primary-foreground)); }
   .btn-3d:hover {
     transform: perspective(900px) rotateX(4deg) translateY(-3px) scale(1.03);
     box-shadow:
