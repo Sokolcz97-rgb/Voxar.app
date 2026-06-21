@@ -116,19 +116,19 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center flex-wrap">
               {user ? (
-                <Button size="xl" variant="hero" asChild>
+                <Button size="xl" variant="hero" className="btn-3d" asChild>
                   <Link to="/dashboard">
                     {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
                 <>
-                  <Button size="xl" variant="hero" asChild>
+                  <Button size="xl" variant="hero" className="btn-3d" asChild>
                     <Link to="/auth">
                       {t("home.signUp")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button size="xl" variant="outline" asChild>
+                  <Button size="xl" variant="outline" className="btn-3d" asChild>
                     <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
@@ -137,7 +137,7 @@ const Index = () => {
                 <Button
                   size="xl"
                   asChild
-                  className="bg-[#5865F2] text-white hover:bg-[#4752C4] hover:-translate-y-0.5 shadow-[0_0_24px_rgba(88,101,242,0.35)] hover:shadow-[0_0_40px_rgba(88,101,242,0.55)] transition-all"
+                  className="btn-3d btn-3d-discord text-white"
                 >
                   <a href={discord.invite_url} target="_blank" rel="noreferrer">
                     <MessageCircle className="mr-1 h-4 w-4" />
@@ -145,7 +145,8 @@ const Index = () => {
                   </a>
                 </Button>
               )}
-              <InviteBotButton size="xl" variant="outline" />
+              <InviteBotButton size="xl" variant="outline" className="btn-3d" />
+
             </div>
 
             {/* Stats strip */}

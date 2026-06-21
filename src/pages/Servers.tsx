@@ -138,12 +138,12 @@ const Servers = () => {
         {/* TOGGLE */}
         <div className="mb-8 flex justify-center">
 
-          <div className="inline-flex p-1 rounded-xl glass border border-border">
+          <div className="inline-flex p-1 rounded-xl glass border border-border gap-1">
             <Button
               size="sm"
               variant={view === "discord" ? "default" : "ghost"}
               onClick={() => setView("discord")}
-              className={view === "discord" ? "bg-[#5865F2] hover:bg-[#5865F2]/90 text-white" : ""}
+              className={view === "discord" ? "btn-3d btn-3d-discord text-white" : "btn-3d"}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               {t("servers.discordTitle")} ({discords.length})
@@ -152,11 +152,13 @@ const Servers = () => {
               size="sm"
               variant={view === "game" ? "default" : "ghost"}
               onClick={() => setView("game")}
+              className="btn-3d"
             >
               <ServerIcon className="h-4 w-4 mr-2" />
               {t("servers.title")} ({servers.length})
             </Button>
           </div>
+
         </div>
 
         {/* DISCORD SERVERS */}
