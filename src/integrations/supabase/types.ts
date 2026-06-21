@@ -801,21 +801,33 @@ export type Database = {
       }
       conversations: {
         Row: {
+          cleared_at_a: string | null
+          cleared_at_b: string | null
           created_at: string
+          hidden_at_a: string | null
+          hidden_at_b: string | null
           id: string
           updated_at: string
           user_a: string
           user_b: string
         }
         Insert: {
+          cleared_at_a?: string | null
+          cleared_at_b?: string | null
           created_at?: string
+          hidden_at_a?: string | null
+          hidden_at_b?: string | null
           id?: string
           updated_at?: string
           user_a: string
           user_b: string
         }
         Update: {
+          cleared_at_a?: string | null
+          cleared_at_b?: string | null
           created_at?: string
+          hidden_at_a?: string | null
+          hidden_at_b?: string | null
           id?: string
           updated_at?: string
           user_a?: string
@@ -1802,6 +1814,10 @@ export type Database = {
     }
     Functions: {
       can: { Args: { _action: string; _module: string }; Returns: boolean }
+      clear_conversation_for_me: {
+        Args: { _conv_id: string }
+        Returns: undefined
+      }
       current_user_discord_id: { Args: never; Returns: string }
       discord_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_featured_streamers: {
@@ -1844,6 +1860,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hide_conversation_for_me: {
+        Args: { _conv_id: string }
+        Returns: undefined
       }
       is_guild_manager: {
         Args: { _guild_id: string; _user_id: string }

@@ -412,9 +412,10 @@ const DashboardBot = () => {
       <Navbar />
       <main className="container py-10 animate-fade-in">
         {/* Hero header */}
-        <div className="mb-8 relative overflow-hidden rounded-2xl border border-border/60 glass p-8 md:p-10">
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+        <div className="mb-8 relative overflow-hidden rounded-2xl ornate-frame runic-overlay rune-sweep p-8 md:p-10">
+          <span className="ornate-corners-bottom" />
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/25 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="min-w-0">
               <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">

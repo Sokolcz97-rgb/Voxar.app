@@ -90,25 +90,26 @@ export function Navbar() {
   const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || "";
 
   return (
-    <header className="sticky top-0 z-50 glass-strong border-b border-primary/20 shadow-[0_4px_30px_-10px_hsl(var(--primary)/0.4)]">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 glass-strong border-b border-primary/30 shadow-[0_4px_30px_-10px_hsl(var(--primary)/0.5)] relative overflow-hidden">
+      {/* gaming-style scanline + sweep */}
+      <div className="pointer-events-none absolute inset-0 opacity-60"
+        style={{ background: "repeating-linear-gradient(to bottom, transparent 0, transparent 3px, hsl(var(--primary)/0.05) 4px, transparent 5px)" }} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
+      <div className="container flex h-16 items-center justify-between relative">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="relative">
+          <div className="relative faceted-plate bevel-3d px-2 py-1.5">
             {settings.logo_url ? (
               <img
                 src={settings.logo_url}
                 alt={settings.site_name}
-                className="h-8 w-8 object-contain transition-transform group-hover:scale-110 drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]"
+                className="h-7 w-7 object-contain transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]"
               />
             ) : (
-              <>
-                <Gamepad2 className="h-8 w-8 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_8px_hsl(var(--primary)/0.8)]" />
-                <div className="absolute inset-0 blur-xl bg-primary/50 -z-10" />
-              </>
+              <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
             )}
           </div>
           <span
-            className="font-display font-black text-lg sm:text-xl tracking-[0.18em] text-glow-intense glitch"
+            className="font-display font-black text-lg sm:text-xl tracking-[0.22em] text-glow-intense glitch"
             data-text={settings.site_name}
           >
             {settings.site_name}
