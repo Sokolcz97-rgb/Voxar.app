@@ -97,9 +97,9 @@ function ToolbarBtn({
       title={title}
       aria-label={title}
       className={cn(
-        "h-8 w-8 inline-flex items-center justify-center rounded-md text-sm transition-colors",
-        "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-        active && "bg-primary/15 text-primary",
+        "icon-3d h-9 w-9 inline-flex items-center justify-center rounded-md text-sm",
+        "text-muted-foreground hover:text-foreground",
+        active && "is-active",
         disabled && "opacity-40 cursor-not-allowed"
       )}
     >
