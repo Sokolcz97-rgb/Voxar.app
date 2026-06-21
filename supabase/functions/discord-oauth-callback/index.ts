@@ -38,6 +38,18 @@ Deno.serve(async (req) => {
     const { nonce, origin, user_id } = stateObj;
     if (!nonce || !origin || !user_id) return htmlError("Neúplný state.");
 
+    // Allowlist of trusted origins to prevent open-redirect via crafted state.
+    const ALLOWED_ORIGINS = new Set([
+      "https://studiovoxario.com",
+      "https://www.studiovoxario.com",
+      "https://apex-zone-central.lovable.app",
+    ]);
+    const isLovablePreview = /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(origin)
+      || /^https:\/\/id-preview--[a-z0-9-]+\.lovable\.app$/i.test(origin);
+    if (!ALLOWED_ORIGINS.has(origin) && !isLovablePreview) {
+      return htmlError("Nepovolený origin v state.");
+    }
+
     // Exchange code -> access_token
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
