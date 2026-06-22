@@ -145,11 +145,6 @@
     -webkit-backdrop-filter: blur(18px) saturate(165%);
     border: 1px solid hsl(var(--primary) / 0.12);
   }
-  @media (min-width: 1024px) {
-    body {
-      padding-left: 212px;
-    }
-  }
   /* Premium card with hover lift + gradient sheen + cyan corner glow */
   .premium-card {
     position: relative;
