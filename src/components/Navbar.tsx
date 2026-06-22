@@ -201,20 +201,20 @@ export function Navbar() {
         <div className="relative w-10 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-3" />
 
         {/* Scrollable rail */}
-        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col items-center gap-2 px-2 pb-3">
+        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col items-stretch gap-1.5 px-2 pb-3">
           {primaryRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {userRail.length > 0 && (
-            <div className="my-1 w-8 h-px bg-border/60" />
+            <div className="my-1 mx-2 h-px bg-border/60" />
           )}
           {userRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {adminRail.length > 0 && (
-            <div className="my-1 w-8 h-px bg-border/60" />
+            <div className="my-1 mx-2 h-px bg-border/60" />
           )}
           {adminRail.map((item) => (
             <RailLink key={item.to} item={item} />
