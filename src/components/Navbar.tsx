@@ -114,17 +114,18 @@ export function Navbar() {
   ];
 
   const userRail: RailItem[] = user
+    ? [{ to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages }]
+    : [];
+
+  const profileMenuItems: RailItem[] = user
     ? [
-        { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
-        { to: "/tickets", label: t("nav.tickets"), icon: LifeBuoy, badge: openTickets },
         { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+        { to: "/tickets", label: t("nav.tickets"), icon: LifeBuoy, badge: openTickets },
+        ...(isAdmin || isEditor ? [{ to: "/admin", label: t("nav.admin"), icon: Shield, primary: true }] : []),
       ]
     : [];
 
-  const adminRail: RailItem[] =
-    (isAdmin || isEditor)
-      ? [{ to: "/admin", label: t("nav.admin"), icon: Shield, primary: true }]
-      : [];
+  const adminRail: RailItem[] = [];
 
   const isActive = (to: string) =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
