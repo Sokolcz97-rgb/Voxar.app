@@ -167,7 +167,7 @@ export function Navbar() {
       {/* =========================== DESKTOP: vertical glass pill rail =========================== */}
       <aside
         className="desktop-glass-rail hidden lg:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 w-[188px] max-h-[88vh] flex-col items-stretch
-                   rounded-[2.25rem] glass-strong border border-primary/30
+                   rounded-[2.25rem] glass-nav border border-primary/30
                    shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.15)]
                    overflow-hidden"
         aria-label="Hlavní navigace"
