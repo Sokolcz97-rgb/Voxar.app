@@ -387,7 +387,7 @@ export function Navbar() {
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-                  {[...primaryRail, ...userRail, ...adminRail].map((item) => (
+                  {[...primaryRail, ...userRail, ...adminRail, ...profileMenuItems].map((item) => (
                     <SheetClose asChild key={item.to}>
                       <Link
                         to={item.to}
