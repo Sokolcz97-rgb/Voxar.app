@@ -123,7 +123,7 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   /* Push page content right of the fixed vertical rail on large screens */
   @media (min-width: 1024px) {
-    body { padding-left: 200px; }
+    body { padding-left: 88px; }
   }
   /* Premium card with hover lift + gradient sheen + cyan corner glow */
   .premium-card {

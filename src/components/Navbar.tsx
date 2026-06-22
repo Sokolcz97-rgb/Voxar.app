@@ -114,17 +114,18 @@ export function Navbar() {
   ];
 
   const userRail: RailItem[] = user
+    ? [{ to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages }]
+    : [];
+
+  const profileMenuItems: RailItem[] = user
     ? [
-        { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
-        { to: "/tickets", label: t("nav.tickets"), icon: LifeBuoy, badge: openTickets },
         { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+        { to: "/tickets", label: t("nav.tickets"), icon: LifeBuoy, badge: openTickets },
+        ...(isAdmin || isEditor ? [{ to: "/admin", label: t("nav.admin"), icon: Shield, primary: true }] : []),
       ]
     : [];
 
-  const adminRail: RailItem[] =
-    (isAdmin || isEditor)
-      ? [{ to: "/admin", label: t("nav.admin"), icon: Shield, primary: true }]
-      : [];
+  const adminRail: RailItem[] = [];
 
   const isActive = (to: string) =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
@@ -132,28 +133,27 @@ export function Navbar() {
   const RailLink = ({ item }: { item: RailItem }) => {
     const active = isActive(item.to);
     return (
-      <Link
-        to={item.to}
-        aria-label={item.label}
-        title={item.label}
-        className={`relative group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors ${
-          active
-            ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)] bg-primary/10"
-            : "hover:bg-primary/5"
-        } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
-      >
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl icon-cube-3d ${item.primary ? "ring-1 ring-primary/60" : ""}`}>
-          <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
-        </div>
-        <span className={`flex-1 text-sm font-medium truncate ${active || item.primary ? "text-primary" : "text-foreground"}`}>
+      <Tooltip delayDuration={150}>
+        <TooltipTrigger asChild>
+          <Link
+            to={item.to}
+            aria-label={item.label}
+            className={`relative group flex h-11 w-11 items-center justify-center rounded-xl transition-all icon-cube-3d ${
+              active ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)]" : ""
+            } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
+          >
+            <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            {item.badge && item.badge > 0 ? (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                {item.badge}
+              </span>
+            ) : null}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="font-display tracking-wider">
           {item.label}
-        </span>
-        {item.badge && item.badge > 0 ? (
-          <span className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
-            {item.badge}
-          </span>
-        ) : null}
-      </Link>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -161,7 +161,7 @@ export function Navbar() {
     <TooltipProvider>
       {/* =========================== DESKTOP: vertical glass pill rail =========================== */}
       <aside
-        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[188px] flex-col
+        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[72px] flex-col items-center
                    rounded-[2.25rem] glass-strong border border-primary/30
                    shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.15)]
                    overflow-hidden"
@@ -179,7 +179,7 @@ export function Navbar() {
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
 
         {/* Logo */}
-        <Link to="/" className="relative mt-4 mb-2 flex items-center gap-3 px-4 group" aria-label={settings.site_name}>
+        <Link to="/" className="relative mt-4 mb-3 flex items-center justify-center group" aria-label={settings.site_name}>
           <div className="faceted-plate bevel-3d p-2 rounded-xl">
             {settings.logo_url ? (
               <img
@@ -191,28 +191,25 @@ export function Navbar() {
               <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
             )}
           </div>
-          <span className="font-display font-black text-sm tracking-[0.12em] text-glow-intense glitch truncate" data-text={settings.site_name}>
-            {settings.site_name}
-          </span>
         </Link>
 
-        <div className="relative mx-4 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-2" />
+        <div className="relative w-10 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-3" />
 
         {/* Scrollable rail */}
-        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 px-2 pb-3">
+        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col items-center gap-2 px-2 pb-3">
           {primaryRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {userRail.length > 0 && (
-            <div className="my-1 mx-2 h-px bg-border/60" />
+            <div className="my-1 w-8 h-px bg-border/60" />
           )}
           {userRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {adminRail.length > 0 && (
-            <div className="my-1 mx-2 h-px bg-border/60" />
+            <div className="my-1 w-8 h-px bg-border/60" />
           )}
           {adminRail.map((item) => (
             <RailLink key={item.to} item={item} />
@@ -220,7 +217,7 @@ export function Navbar() {
         </nav>
 
         {/* Footer cluster */}
-        <div className="relative w-full flex items-center justify-center gap-3 px-2 py-3 border-t border-border/50">
+        <div className="relative w-full flex flex-col items-center gap-2 px-2 py-3 border-t border-border/50">
           <Tooltip delayDuration={150}>
             <TooltipTrigger asChild>
               <button
@@ -288,6 +285,27 @@ export function Navbar() {
                     <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuItem>
+                </div>
+                <DropdownMenuSeparator className="bg-border/60" />
+                <div className="p-1.5 space-y-0.5">
+                  {profileMenuItems.map((item) => (
+                    <DropdownMenuItem
+                      key={item.to}
+                      onClick={() => navigate(item.to)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
+                    >
+                      <div className={`flex h-9 w-9 items-center justify-center icon-cube-3d ${item.primary ? "ring-1 ring-primary/60" : ""}`}>
+                        <item.icon className={`h-4 w-4 ${item.primary ? "text-primary" : ""}`} />
+                      </div>
+                      <span className={`flex-1 text-sm font-medium ${item.primary ? "text-primary" : ""}`}>{item.label}</span>
+                      {item.badge && item.badge > 0 ? (
+                        <span className="h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
+                          {item.badge}
+                        </span>
+                      ) : null}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </DropdownMenuItem>
+                  ))}
                 </div>
                 <DropdownMenuSeparator className="bg-border/60" />
                 <div className="p-1.5">
@@ -369,7 +387,7 @@ export function Navbar() {
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-                  {[...primaryRail, ...userRail, ...adminRail].map((item) => (
+                  {[...primaryRail, ...userRail, ...adminRail, ...profileMenuItems].map((item) => (
                     <SheetClose asChild key={item.to}>
                       <Link
                         to={item.to}
