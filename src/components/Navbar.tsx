@@ -133,28 +133,27 @@ export function Navbar() {
   const RailLink = ({ item }: { item: RailItem }) => {
     const active = isActive(item.to);
     return (
-      <Link
-        to={item.to}
-        aria-label={item.label}
-        title={item.label}
-        className={`relative group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors ${
-          active
-            ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)] bg-primary/10"
-            : "hover:bg-primary/5"
-        } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
-      >
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl icon-cube-3d ${item.primary ? "ring-1 ring-primary/60" : ""}`}>
-          <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
-        </div>
-        <span className={`flex-1 text-sm font-medium truncate ${active || item.primary ? "text-primary" : "text-foreground"}`}>
+      <Tooltip delayDuration={150}>
+        <TooltipTrigger asChild>
+          <Link
+            to={item.to}
+            aria-label={item.label}
+            className={`relative group flex h-11 w-11 items-center justify-center rounded-xl transition-all icon-cube-3d ${
+              active ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)]" : ""
+            } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
+          >
+            <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            {item.badge && item.badge > 0 ? (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                {item.badge}
+              </span>
+            ) : null}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="font-display tracking-wider">
           {item.label}
-        </span>
-        {item.badge && item.badge > 0 ? (
-          <span className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
-            {item.badge}
-          </span>
-        ) : null}
-      </Link>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
