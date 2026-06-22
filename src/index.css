@@ -114,14 +114,36 @@
     border: 1px solid hsl(var(--primary) / 0.12);
   }
   .glass-strong {
-    background: linear-gradient(160deg, hsl(220 40% 8% / 0.22) 0%, hsl(220 45% 4% / 0.32) 100%);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid hsl(var(--primary) / 0.18);
+    background: linear-gradient(160deg, hsl(220 40% 8% / 0.06) 0%, hsl(220 45% 4% / 0.12) 100%);
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid hsl(var(--primary) / 0.12);
   }
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
-  /* Floating centered rail — no global page offset; pages use full width */
+  .desktop-glass-rail {
+    min-height: 430px;
+    height: min(72vh, 560px);
+  }
+  .rail-link-flat {
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.13), hsl(var(--background) / 0.28) 52%, hsl(var(--primary) / 0.08));
+    border: 1px solid hsl(var(--primary) / 0.25);
+    box-shadow: inset 0 1px 0 hsl(var(--primary) / 0.18), 0 0 12px hsl(var(--primary) / 0.16);
+  }
+  .rail-link-flat:hover {
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.20), hsl(var(--background) / 0.34) 52%, hsl(var(--primary) / 0.12));
+    border-color: hsl(var(--primary) / 0.52);
+    box-shadow: inset 0 1px 0 hsl(var(--primary) / 0.28), 0 0 18px hsl(var(--primary) / 0.34);
+  }
+  .rail-icon-flat {
+    background: hsl(var(--background) / 0.24);
+    border: 1px solid hsl(var(--primary) / 0.18);
+  }
+  @media (min-width: 1024px) {
+    body {
+      padding-left: 212px;
+    }
+  }
   /* Premium card with hover lift + gradient sheen + cyan corner glow */
   .premium-card {
     position: relative;
