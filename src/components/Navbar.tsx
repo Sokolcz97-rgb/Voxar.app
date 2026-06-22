@@ -161,7 +161,7 @@ export function Navbar() {
     <TooltipProvider>
       {/* =========================== DESKTOP: vertical glass pill rail =========================== */}
       <aside
-        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[72px] flex-col items-center
+        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[188px] flex-col
                    rounded-[2.25rem] glass-strong border border-primary/30
                    shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.15)]
                    overflow-hidden"
