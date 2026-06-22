@@ -138,11 +138,11 @@ export function Navbar() {
           <Link
             to={item.to}
             aria-label={item.label}
-            className={`relative group flex h-9 w-full items-center gap-3 rounded-xl px-3 transition-all icon-cube-3d ${
+            className={`rail-link-flat relative group flex h-9 w-full items-center gap-3 rounded-xl px-3 transition-all ${
               active ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)]" : ""
             } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <div className="rail-icon-flat flex h-7 w-7 shrink-0 items-center justify-center rounded-lg">
               <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
             </div>
             <span className={`text-sm font-medium truncate ${active || item.primary ? "text-primary" : ""}`}>
@@ -166,7 +166,7 @@ export function Navbar() {
     <TooltipProvider>
       {/* =========================== DESKTOP: vertical glass pill rail =========================== */}
       <aside
-        className="hidden lg:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 w-[188px] max-h-[88vh] flex-col items-stretch
+        className="desktop-glass-rail hidden lg:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 w-[188px] max-h-[88vh] flex-col items-stretch
                    rounded-[2.25rem] glass-strong border border-primary/30
                    shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.15)]
                    overflow-hidden"
@@ -174,7 +174,7 @@ export function Navbar() {
       >
         {/* scanline texture */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-50"
+          className="pointer-events-none absolute inset-0 opacity-25"
           style={{
             background:
               "repeating-linear-gradient(to bottom, transparent 0, transparent 3px, hsl(var(--primary)/0.05) 4px, transparent 5px)",
