@@ -138,13 +138,18 @@ export function Navbar() {
           <Link
             to={item.to}
             aria-label={item.label}
-            className={`relative group flex h-11 w-11 items-center justify-center rounded-xl transition-all icon-cube-3d ${
+            className={`relative group flex h-9 w-full items-center gap-3 rounded-xl px-3 transition-all icon-cube-3d ${
               active ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)]" : ""
             } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
           >
-            <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+              <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            </div>
+            <span className={`text-sm font-medium truncate ${active || item.primary ? "text-primary" : ""}`}>
+              {item.label}
+            </span>
             {item.badge && item.badge > 0 ? (
-              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+              <span className="ml-auto h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
                 {item.badge}
               </span>
             ) : null}
