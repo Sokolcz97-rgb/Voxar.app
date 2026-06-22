@@ -220,7 +220,7 @@ export function Navbar() {
         </nav>
 
         {/* Footer cluster */}
-        <div className="relative w-full flex flex-col items-center gap-2 px-2 py-3 border-t border-border/50">
+        <div className="relative w-full flex items-center justify-center gap-3 px-2 py-3 border-t border-border/50">
           <Tooltip delayDuration={150}>
             <TooltipTrigger asChild>
               <button
