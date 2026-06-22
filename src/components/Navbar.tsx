@@ -179,7 +179,7 @@ export function Navbar() {
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
 
         {/* Logo */}
-        <Link to="/" className="relative mt-4 mb-2 flex items-center gap-3 px-4 group" aria-label={settings.site_name}>
+        <Link to="/" className="relative mt-4 mb-3 flex items-center justify-center group" aria-label={settings.site_name}>
           <div className="faceted-plate bevel-3d p-2 rounded-xl">
             {settings.logo_url ? (
               <img
@@ -191,12 +191,9 @@ export function Navbar() {
               <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
             )}
           </div>
-          <span className="font-display font-black text-sm tracking-[0.12em] text-glow-intense glitch truncate" data-text={settings.site_name}>
-            {settings.site_name}
-          </span>
         </Link>
 
-        <div className="relative mx-4 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-2" />
+        <div className="relative w-10 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-3" />
 
         {/* Scrollable rail */}
         <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 px-2 pb-3">
