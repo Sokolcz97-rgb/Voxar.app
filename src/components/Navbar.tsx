@@ -138,13 +138,18 @@ export function Navbar() {
           <Link
             to={item.to}
             aria-label={item.label}
-            className={`relative group flex h-11 w-11 items-center justify-center rounded-xl transition-all icon-cube-3d ${
+            className={`relative group flex h-9 w-full items-center gap-3 rounded-xl px-3 transition-all icon-cube-3d ${
               active ? "ring-1 ring-primary/70 shadow-[0_0_18px_hsl(var(--primary)/0.45)]" : ""
             } ${item.primary ? "ring-1 ring-primary/60" : ""}`}
           >
-            <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+              <item.icon className={`h-4 w-4 ${active || item.primary ? "text-primary" : ""}`} />
+            </div>
+            <span className={`text-sm font-medium truncate ${active || item.primary ? "text-primary" : ""}`}>
+              {item.label}
+            </span>
             {item.badge && item.badge > 0 ? (
-              <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+              <span className="ml-auto h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
                 {item.badge}
               </span>
             ) : null}
@@ -161,7 +166,7 @@ export function Navbar() {
     <TooltipProvider>
       {/* =========================== DESKTOP: vertical glass pill rail =========================== */}
       <aside
-        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[72px] flex-col items-center
+        className="hidden lg:flex fixed left-3 top-3 bottom-3 z-50 w-[188px] flex-col items-stretch
                    rounded-[2.25rem] glass-strong border border-primary/30
                    shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6),inset_0_1px_0_hsl(var(--primary)/0.15)]
                    overflow-hidden"
@@ -196,20 +201,20 @@ export function Navbar() {
         <div className="relative w-10 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-3" />
 
         {/* Scrollable rail */}
-        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col items-center gap-2 px-2 pb-3">
+        <nav className="relative flex-1 w-full overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col items-stretch gap-1.5 px-2 pb-3">
           {primaryRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {userRail.length > 0 && (
-            <div className="my-1 w-8 h-px bg-border/60" />
+            <div className="my-1 mx-2 h-px bg-border/60" />
           )}
           {userRail.map((item) => (
             <RailLink key={item.to} item={item} />
           ))}
 
           {adminRail.length > 0 && (
-            <div className="my-1 w-8 h-px bg-border/60" />
+            <div className="my-1 mx-2 h-px bg-border/60" />
           )}
           {adminRail.map((item) => (
             <RailLink key={item.to} item={item} />
