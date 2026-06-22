@@ -217,7 +217,7 @@ export function Navbar() {
         </nav>
 
         {/* Footer cluster */}
-        <div className="relative w-full flex items-center justify-center gap-3 px-2 py-3 border-t border-border/50">
+        <div className="relative w-full flex flex-col items-center gap-2 px-2 py-3 border-t border-border/50">
           <Tooltip delayDuration={150}>
             <TooltipTrigger asChild>
               <button
@@ -285,6 +285,27 @@ export function Navbar() {
                     <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuItem>
+                </div>
+                <DropdownMenuSeparator className="bg-border/60" />
+                <div className="p-1.5 space-y-0.5">
+                  {profileMenuItems.map((item) => (
+                    <DropdownMenuItem
+                      key={item.to}
+                      onClick={() => navigate(item.to)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
+                    >
+                      <div className={`flex h-9 w-9 items-center justify-center icon-cube-3d ${item.primary ? "ring-1 ring-primary/60" : ""}`}>
+                        <item.icon className={`h-4 w-4 ${item.primary ? "text-primary" : ""}`} />
+                      </div>
+                      <span className={`flex-1 text-sm font-medium ${item.primary ? "text-primary" : ""}`}>{item.label}</span>
+                      {item.badge && item.badge > 0 ? (
+                        <span className="h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
+                          {item.badge}
+                        </span>
+                      ) : null}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </DropdownMenuItem>
+                  ))}
                 </div>
                 <DropdownMenuSeparator className="bg-border/60" />
                 <div className="p-1.5">
