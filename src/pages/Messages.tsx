@@ -717,7 +717,7 @@ const Messages = () => {
       </main>
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent className="ornate-frame border-0">
+        <AlertDialogContent className="ornate-frame border-0 !fixed">
           <span className="ornate-corners-bottom" />
           <AlertDialogHeader>
             <AlertDialogTitle>{confirmLabels.title}</AlertDialogTitle>
