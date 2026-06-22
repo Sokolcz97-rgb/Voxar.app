@@ -114,17 +114,14 @@
     border: 1px solid hsl(var(--primary) / 0.12);
   }
   .glass-strong {
-    background: linear-gradient(160deg, hsl(220 40% 8% / 0.55) 0%, hsl(220 45% 4% / 0.7) 100%);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid hsl(var(--primary) / 0.22);
+    background: linear-gradient(160deg, hsl(220 40% 8% / 0.22) 0%, hsl(220 45% 4% / 0.32) 100%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid hsl(var(--primary) / 0.18);
   }
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
-  /* Push page content right of the fixed vertical rail on large screens */
-  @media (min-width: 1024px) {
-    body { padding-left: 200px; }
-  }
+  /* Floating centered rail — no global page offset; pages use full width */
   /* Premium card with hover lift + gradient sheen + cyan corner glow */
   .premium-card {
     position: relative;
