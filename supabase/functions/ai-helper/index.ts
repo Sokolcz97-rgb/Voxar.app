@@ -1,5 +1,6 @@
 // AI Auto-Helper for NEONHUB community — with tool calling + owner escalation
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { geminiChatCompletion } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -297,21 +298,13 @@ async function executeTool(
   }
 }
 
-async function callAI(messages: ChatMsg[], apiKey: string) {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages,
-      tools,
-      tool_choice: "auto",
-    }),
+async function callAI(messages: ChatMsg[], _apiKey: string) {
+  return await geminiChatCompletion({
+    model: "gemini-2.5-pro",
+    messages: messages as any,
+    tools,
+    tool_choice: "auto",
   });
-  return r;
 }
 
 Deno.serve(async (req) => {
@@ -371,8 +364,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY");
+    if (!GEMINI_KEY) throw new Error("GOOGLE_GEMINI_API_KEY not configured");
 
     const convo: ChatMsg[] = [
       { role: "system", content: SYSTEM_PROMPT },
@@ -384,7 +377,7 @@ Deno.serve(async (req) => {
 
     // Tool loop, max 6 rounds
     for (let i = 0; i < 6; i++) {
-      const resp = await callAI(convo, LOVABLE_API_KEY);
+      const resp = await callAI(convo, GEMINI_KEY);
       if (resp.status === 429) {
         return new Response(
           JSON.stringify({ error: "Příliš mnoho dotazů. Zkus to za chvíli znovu." }),

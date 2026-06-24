@@ -1,6 +1,7 @@
 // Moderate an image URL using Lovable AI (Gemini vision).
 // Returns { scam, nsfw, severe, reason, categories[] }
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { geminiChatCompletion } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +39,7 @@ async function classifyImage(url: string): Promise<{
   reason: string;
   categories: string[];
 }> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  const apiKey = Deno.env.get("GOOGLE_GEMINI_API_KEY");
   if (!apiKey) return { scam: false, nsfw: false, severe: false, reason: "no key", categories: [] };
 
   const sys =
@@ -68,23 +69,19 @@ async function classifyImage(url: string): Promise<{
     "Když confidence < 0.85, severe MUSÍ být false.\n" +
     "reason krátce česky. categories krátké tagy.";
 
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: sys },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Vyhodnoť tento obrázek." },
-            { type: "image_url", image_url: { url } },
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
-    }),
+  const r = await geminiChatCompletion({
+    model: "gemini-2.5-flash",
+    messages: [
+      { role: "system", content: sys },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Vyhodnoť tento obrázek." },
+          { type: "image_url", image_url: { url } },
+        ],
+      },
+    ],
+    response_format: { type: "json_object" },
   });
   if (!r.ok) {
     const t = await r.text().catch(() => "");

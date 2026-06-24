@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { geminiChatCompletion } from '../_shared/gemini.ts';
 
 interface Body {
   text: string;
@@ -42,9 +43,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not set' }), {
+    const GEMINI_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    if (!GEMINI_KEY) {
+      return new Response(JSON.stringify({ error: 'GOOGLE_GEMINI_API_KEY not set' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -53,19 +54,12 @@ Deno.serve(async (req) => {
     const langName = target === 'cs' ? 'Czech (čeština)' : 'English';
     const systemPrompt = `You are a translation engine. Translate the user's message to ${langName}. Preserve formatting, emoji, mentions, URLs and code blocks. If the text is already in the target language, return it unchanged. Respond ONLY with the translation, no explanations, no quotes.`;
 
-    const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text },
-        ],
-      }),
+    const resp = await geminiChatCompletion({
+      model: 'gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ],
     });
 
     if (!resp.ok) {
@@ -76,11 +70,11 @@ Deno.serve(async (req) => {
         });
       }
       if (resp.status === 402) {
-        return new Response(JSON.stringify({ error: 'Vyčerpané kredity Lovable AI.' }), {
+        return new Response(JSON.stringify({ error: 'Vyčerpané kredity Google Gemini.' }), {
           status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      return new Response(JSON.stringify({ error: 'AI gateway error', detail: errText }), {
+      return new Response(JSON.stringify({ error: 'Gemini API error', detail: errText }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

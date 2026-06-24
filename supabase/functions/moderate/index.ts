@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { geminiChatCompletion } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,26 +45,22 @@ async function authorize(req: Request): Promise<{ ok: boolean; status?: number }
 }
 
 async function aiModerate(text: string): Promise<{ severe: boolean; reason: string }> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  const apiKey = Deno.env.get("GOOGLE_GEMINI_API_KEY");
   if (!apiKey) return { severe: false, reason: "" };
   try {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a content moderator. Reply ONLY with JSON: {\"severe\":boolean,\"reason\":string}. " +
-              "Mark severe=true ONLY for: explicit sexual content, threats of violence, hate speech against protected groups, " +
-              "or sharing personal data (phone numbers, addresses). Mild profanity = NOT severe. Reply in Czech.",
-          },
-          { role: "user", content: text.slice(0, 2000) },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const r = await geminiChatCompletion({
+      model: "gemini-2.5-flash-lite",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a content moderator. Reply ONLY with JSON: {\"severe\":boolean,\"reason\":string}. " +
+            "Mark severe=true ONLY for: explicit sexual content, threats of violence, hate speech against protected groups, " +
+            "or sharing personal data (phone numbers, addresses). Mild profanity = NOT severe. Reply in Czech.",
+        },
+        { role: "user", content: text.slice(0, 2000) },
+      ],
+      response_format: { type: "json_object" },
     });
     if (!r.ok) return { severe: false, reason: "" };
     const data = await r.json();
