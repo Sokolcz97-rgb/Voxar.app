@@ -298,21 +298,13 @@ async function executeTool(
   }
 }
 
-async function callAI(messages: ChatMsg[], apiKey: string) {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages,
-      tools,
-      tool_choice: "auto",
-    }),
+async function callAI(messages: ChatMsg[], _apiKey: string) {
+  return await geminiChatCompletion({
+    model: "gemini-2.5-pro",
+    messages: messages as any,
+    tools,
+    tool_choice: "auto",
   });
-  return r;
 }
 
 Deno.serve(async (req) => {
