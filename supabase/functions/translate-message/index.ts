@@ -1,5 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { geminiChatCompletion } from '../_shared/gemini.ts';
 
 interface Body {
   text: string;
