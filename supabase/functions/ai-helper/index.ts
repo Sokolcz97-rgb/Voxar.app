@@ -1,5 +1,6 @@
 // AI Auto-Helper for NEONHUB community — with tool calling + owner escalation
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { geminiChatCompletion } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
