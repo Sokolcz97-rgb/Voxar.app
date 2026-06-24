@@ -70,11 +70,11 @@ Deno.serve(async (req) => {
         });
       }
       if (resp.status === 402) {
-        return new Response(JSON.stringify({ error: 'Vyčerpané kredity Lovable AI.' }), {
+        return new Response(JSON.stringify({ error: 'Vyčerpané kredity Google Gemini.' }), {
           status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      return new Response(JSON.stringify({ error: 'AI gateway error', detail: errText }), {
+      return new Response(JSON.stringify({ error: 'Gemini API error', detail: errText }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
