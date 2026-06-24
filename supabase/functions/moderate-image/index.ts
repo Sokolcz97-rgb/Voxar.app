@@ -1,6 +1,7 @@
 // Moderate an image URL using Lovable AI (Gemini vision).
 // Returns { scam, nsfw, severe, reason, categories[] }
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { geminiChatCompletion } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
