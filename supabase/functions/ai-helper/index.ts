@@ -377,7 +377,7 @@ Deno.serve(async (req) => {
 
     // Tool loop, max 6 rounds
     for (let i = 0; i < 6; i++) {
-      const resp = await callAI(convo, LOVABLE_API_KEY);
+      const resp = await callAI(convo, GEMINI_KEY);
       if (resp.status === 429) {
         return new Response(
           JSON.stringify({ error: "Příliš mnoho dotazů. Zkus to za chvíli znovu." }),
