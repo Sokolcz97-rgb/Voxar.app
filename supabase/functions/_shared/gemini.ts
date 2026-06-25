@@ -22,23 +22,16 @@ type ChatCompletionRequest = {
   response_format?: { type?: string };
 };
 
-// Map our OpenAI-style model names to Gemini model IDs.
-// Free tier — Pro modely (2.5/3.1 Pro) mají kvótu 0, používáme jen Flash varianty.
+// Map our model names to REST-compatible Gemini IDs.
+// REST `generateContent` v současné době podporuje pouze 1.5 / 2.0 / 2.5 řadu.
+// "Gemini 3" a "3.5" modely viditelné v AI Studiu jsou jen pro Live API.
 function mapModel(m?: string): string {
   if (!m) return "gemini-2.5-flash";
   const id = m.replace(/^google\//, "");
-  // Pro → fallback na nejvýkonnější dostupný Flash na free tieru
-  if (id.includes("pro")) return "gemini-3.5-flash";
-  // explicitní průchod pro známé free-tier modely
-  if (id === "gemini-3.5-flash") return "gemini-3.5-flash";
-  if (id === "gemini-3-flash" || id === "gemini-3-flash-preview") return "gemini-3-flash";
-  if (id === "gemini-3.1-flash-lite") return "gemini-3.1-flash-lite";
-  if (id === "gemini-2.5-flash-lite") return "gemini-2.5-flash-lite";
-  if (id === "gemini-2.5-flash") return "gemini-2.5-flash";
-  // generické fallbacky
-  if (id.includes("flash-lite")) return "gemini-3.1-flash-lite";
+  if (id.includes("pro")) return "gemini-2.5-flash"; // Pro není na free tieru
+  if (id.includes("flash-lite")) return "gemini-2.5-flash-lite";
   if (id.includes("flash")) return "gemini-2.5-flash";
-  return id;
+  return "gemini-2.5-flash";
 }
 
 function partsFromContent(content: any): any[] {
