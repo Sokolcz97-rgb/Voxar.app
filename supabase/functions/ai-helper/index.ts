@@ -300,7 +300,7 @@ async function executeTool(
 
 async function callAI(messages: ChatMsg[], _apiKey: string) {
   return await geminiChatCompletion({
-    model: "gemini-2.5-pro",
+    model: "gemini-3.5-flash",
     messages: messages as any,
     tools,
     tool_choice: "auto",
