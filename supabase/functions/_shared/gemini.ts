@@ -163,8 +163,11 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
 
   if (!resp.ok) {
     const txt = await resp.text();
-    // Pass through 429/402-equivalent statuses
-    return new Response(txt, { status: resp.status });
+    console.error(`[gemini] ${resp.status} for model ${model}: ${txt.slice(0, 500)}`);
+    return new Response(
+      JSON.stringify({ error: `Gemini ${resp.status}`, detail: txt.slice(0, 500), model }),
+      { status: resp.status, headers: { "Content-Type": "application/json" } },
+    );
   }
 
   const data = await resp.json();
