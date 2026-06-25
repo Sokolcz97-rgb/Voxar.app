@@ -22,23 +22,16 @@ type ChatCompletionRequest = {
   response_format?: { type?: string };
 };
 
-// Map our OpenAI-style model names to Gemini model IDs.
-// Free tier — Pro modely (2.5/3.1 Pro) mají kvótu 0, používáme jen Flash varianty.
+// Map our model names to REST-compatible Gemini IDs.
+// REST `generateContent` v současné době podporuje pouze 1.5 / 2.0 / 2.5 řadu.
+// "Gemini 3" a "3.5" modely viditelné v AI Studiu jsou jen pro Live API.
 function mapModel(m?: string): string {
   if (!m) return "gemini-2.5-flash";
   const id = m.replace(/^google\//, "");
-  // Pro → fallback na nejvýkonnější dostupný Flash na free tieru
-  if (id.includes("pro")) return "gemini-3.5-flash";
-  // explicitní průchod pro známé free-tier modely
-  if (id === "gemini-3.5-flash") return "gemini-3.5-flash";
-  if (id === "gemini-3-flash" || id === "gemini-3-flash-preview") return "gemini-3-flash";
-  if (id === "gemini-3.1-flash-lite") return "gemini-3.1-flash-lite";
-  if (id === "gemini-2.5-flash-lite") return "gemini-2.5-flash-lite";
-  if (id === "gemini-2.5-flash") return "gemini-2.5-flash";
-  // generické fallbacky
-  if (id.includes("flash-lite")) return "gemini-3.1-flash-lite";
+  if (id.includes("pro")) return "gemini-2.5-flash"; // Pro není na free tieru
+  if (id.includes("flash-lite")) return "gemini-2.5-flash-lite";
   if (id.includes("flash")) return "gemini-2.5-flash";
-  return id;
+  return "gemini-2.5-flash";
 }
 
 function partsFromContent(content: any): any[] {
@@ -143,7 +136,17 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
     return new Response(JSON.stringify({ error: "GOOGLE_GEMINI_API_KEY not set" }), { status: 500 });
   }
 
-  const model = mapModel(req.model);
+  const primary = mapModel(req.model);
+  // Fallback chain pro free tier — pokud je primární model přetížený (503) nebo
+  // dojde rate-limit (429), zkusíme postupně ostatní dostupné Flash modely.
+  const fallbackChain = [
+    primary,
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+  ].filter((m, i, arr) => arr.indexOf(m) === i);
+
   const { systemInstruction, contents } = convertMessages(req.messages);
   const tools = convertTools(req.tools);
 
@@ -154,17 +157,33 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
     body.generationConfig = { responseMimeType: "application/json" };
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let resp: Response | null = null;
+  let lastDetail = "";
+  let usedModel = primary;
+  for (const m of fallbackChain) {
+    usedModel = m;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (resp.ok) break;
+    lastDetail = await resp.text();
+    console.error(`[gemini] ${resp.status} for model ${m}: ${lastDetail.slice(0, 300)}`);
+    // Fallback jen pro přetížení/limit, ne pro 4xx (špatný klíč/request)
+    if (resp.status !== 503 && resp.status !== 429 && resp.status !== 500) break;
+  }
 
-  if (!resp.ok) {
-    const txt = await resp.text();
-    // Pass through 429/402-equivalent statuses
-    return new Response(txt, { status: resp.status });
+  if (!resp || !resp.ok) {
+    return new Response(
+      JSON.stringify({
+        error: `Gemini ${resp?.status ?? "error"}`,
+        detail: lastDetail.slice(0, 500),
+        model: usedModel,
+      }),
+      { status: resp?.status ?? 500, headers: { "Content-Type": "application/json" } },
+    );
   }
 
   const data = await resp.json();
@@ -197,7 +216,7 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
         finish_reason: toolCalls.length ? "tool_calls" : "stop",
       },
     ],
-    model,
+    model: usedModel,
   };
 
   return new Response(JSON.stringify(openaiShaped), {
