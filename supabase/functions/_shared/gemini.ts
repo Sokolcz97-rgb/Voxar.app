@@ -141,10 +141,10 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
   // dojde rate-limit (429), zkusíme postupně ostatní dostupné Flash modely.
   const fallbackChain = [
     primary,
-    "gemini-3-flash",
     "gemini-2.5-flash",
-    "gemini-3.1-flash-lite",
     "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
   ].filter((m, i, arr) => arr.indexOf(m) === i);
 
   const { systemInstruction, contents } = convertMessages(req.messages);
