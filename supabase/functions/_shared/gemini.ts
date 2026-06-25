@@ -223,7 +223,7 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
         finish_reason: toolCalls.length ? "tool_calls" : "stop",
       },
     ],
-    model,
+    model: usedModel,
   };
 
   return new Response(JSON.stringify(openaiShaped), {
