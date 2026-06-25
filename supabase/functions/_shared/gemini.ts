@@ -143,7 +143,17 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
     return new Response(JSON.stringify({ error: "GOOGLE_GEMINI_API_KEY not set" }), { status: 500 });
   }
 
-  const model = mapModel(req.model);
+  const primary = mapModel(req.model);
+  // Fallback chain pro free tier — pokud je primární model přetížený (503) nebo
+  // dojde rate-limit (429), zkusíme postupně ostatní dostupné Flash modely.
+  const fallbackChain = [
+    primary,
+    "gemini-3-flash",
+    "gemini-2.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash-lite",
+  ].filter((m, i, arr) => arr.indexOf(m) === i);
+
   const { systemInstruction, contents } = convertMessages(req.messages);
   const tools = convertTools(req.tools);
 
@@ -154,19 +164,32 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
     body.generationConfig = { responseMimeType: "application/json" };
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let resp: Response | null = null;
+  let lastDetail = "";
+  let usedModel = primary;
+  for (const m of fallbackChain) {
+    usedModel = m;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (resp.ok) break;
+    lastDetail = await resp.text();
+    console.error(`[gemini] ${resp.status} for model ${m}: ${lastDetail.slice(0, 300)}`);
+    // Fallback jen pro přetížení/limit, ne pro 4xx (špatný klíč/request)
+    if (resp.status !== 503 && resp.status !== 429 && resp.status !== 500) break;
+  }
 
-  if (!resp.ok) {
-    const txt = await resp.text();
-    console.error(`[gemini] ${resp.status} for model ${model}: ${txt.slice(0, 500)}`);
+  if (!resp || !resp.ok) {
     return new Response(
-      JSON.stringify({ error: `Gemini ${resp.status}`, detail: txt.slice(0, 500), model }),
-      { status: resp.status, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: `Gemini ${resp?.status ?? "error"}`,
+        detail: lastDetail.slice(0, 500),
+        model: usedModel,
+      }),
+      { status: resp?.status ?? 500, headers: { "Content-Type": "application/json" } },
     );
   }
 
