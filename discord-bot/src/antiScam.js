@@ -268,6 +268,7 @@ export async function runAntiScam(message) {
 
   // Pokud text není scam, zkusíme obrázkovou analýzu (Gemini vision)
   let imgResult = null;
+  let evidenceImages = [];
   if (!detection) {
     const urls = imageUrlsFromMessage(message);
     if (urls.length) {
@@ -275,6 +276,7 @@ export async function runAntiScam(message) {
       if (imgResult?.severe) {
         const kind = imgResult.scam ? 'image_scam' : 'image_nsfw';
         detection = { type: kind, match: imgResult.reason || (imgResult.scam ? 'scam image' : 'nsfw image') };
+        evidenceImages = urls;
       }
     }
   }
