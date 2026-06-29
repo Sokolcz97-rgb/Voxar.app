@@ -233,7 +233,23 @@ async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageC
     value: `[Otevřít formulář pro nahlášení](${reportUrl})\nZkopíruj ID účtu: \`${user.id}\``,
   });
 
-  await alertCh.send({ embeds: [embed] }).catch((e) => console.error('alert send', e?.message));
+  let files = [];
+  if (evidenceImages?.length && canAttachEvidence) {
+    files = await fetchImageAttachments(evidenceImages);
+    if (files.length) {
+      embed.addFields({
+        name: '🖼️ Náhled (spoiler – jen pro adminy)',
+        value: `Přiloženo ${files.length} obrázek/ů jako spoiler. Klikni pro zobrazení a ručně ověř, zda nešlo o omyl AI.`,
+      });
+    }
+  } else if (evidenceImages?.length && !canAttachEvidence) {
+    embed.addFields({
+      name: '⚠️ Náhled nepřiložen',
+      value: 'Alerts kanál je viditelný pro @everyone – screen není přiložen, aby ho neviděli běžní členové. Omez viditelnost kanálu jen na adminy a náhled se začne přikládat.',
+    });
+  }
+
+  await alertCh.send({ embeds: [embed], files }).catch((e) => console.error('alert send', e?.message));
 }
 
 function hasBypassRole(member, cfg) {
