@@ -133,10 +133,15 @@ export async function handleSlashCommand(interaction) {
   const name = interaction.commandName;
   const guildId = interaction.guild?.id ?? null;
 
-  // Maintenance kill-switch
+  // Admin commands (config/automod/welcome/cmd/ticketpanel/status/stream/say) –
+  // dostupné i v režimu údržby, aby šel bot ovládat bez dashboardu.
+  const adminHandled = await handleAdminSlashCommand(interaction);
+  if (adminHandled) return true;
+
+  // Maintenance kill-switch (po admin commandech, aby admin mohl údržbu vypnout)
   if (guildId) {
     const cfg = await getConfig(guildId);
-    if (cfg.bot_maintenance) {
+    if (cfg.bot_maintenance && name !== 'help' && name !== 'ping') {
       await interaction.reply({ content: '🛠️ Bot je v režimu údržby.', ephemeral: true });
       return true;
     }
@@ -149,23 +154,20 @@ export async function handleSlashCommand(interaction) {
   }
 
   if (name === 'help') {
+    const embeds = buildHelpEmbeds();
     const { data } = await supabase
       .from('bot_commands')
       .select('name, description, guild_id')
       .eq('enabled', true)
       .or(`guild_id.eq.${guildId},guild_id.is.null`)
       .order('name');
-    const lines = [
-      '**Vestavěné příkazy**',
-      '`/ping` `/help` `/serverinfo` `/userinfo` `/avatar` `/purge` `/kick` `/ban`',
-    ];
     if (data?.length) {
-      lines.push('', '**Vlastní příkazy**');
-      for (const c of data) {
-        lines.push(`\`/${sanitizeName(c.name)}\`${c.description ? ` – ${c.description}` : ''}`);
-      }
+      const customLines = data.map((c) => `\`/${sanitizeName(c.name)}\`${c.description ? ` – ${c.description}` : ''}`).join('\n');
+      embeds.push(
+        new EmbedBuilder().setTitle('✨ Vlastní příkazy').setColor(0xf59e0b).setDescription(customLines.slice(0, 4000)),
+      );
     }
-    await interaction.reply({ content: lines.join('\n'), ephemeral: true });
+    await interaction.reply({ embeds, ephemeral: true });
     return true;
   }
 
