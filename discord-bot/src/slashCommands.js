@@ -10,6 +10,7 @@ import {
 import { supabase } from './supabase.js';
 import { getConfig } from './config.js';
 import { translateText } from './translate.js';
+import { ADMIN_DEFS, handleAdminSlashCommand, buildHelpEmbeds } from './adminSlashCommands.js';
 
 // ---------------- Built-in slash commands ----------------
 
