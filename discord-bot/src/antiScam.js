@@ -1,4 +1,4 @@
-import { EmbedBuilder, ChannelType } from 'discord.js';
+import { EmbedBuilder, ChannelType, AttachmentBuilder, PermissionsBitField } from 'discord.js';
 import { getConfig } from './config.js';
 import { supabase } from './supabase.js';
 
