@@ -166,11 +166,41 @@ export function detectSuspiciousAccount(member) {
   return reasons.length ? reasons.join('; ') : null;
 }
 
-async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageContent }) {
+async function fetchImageAttachments(urls, { spoiler = true, max = 4 } = {}) {
+  const out = [];
+  for (const url of (urls || []).slice(0, max)) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.startsWith('image/')) continue;
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > 7 * 1024 * 1024) continue; // bezpečný limit pro Discord upload
+      const extFromCt = ct.split('/')[1]?.split(';')[0] || 'png';
+      const base = `evidence-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${extFromCt}`;
+      const name = spoiler ? `SPOILER_${base}` : base;
+      out.push(new AttachmentBuilder(buf, { name }));
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageContent, evidenceImages }) {
   const channelId = cfg.default_alerts_channel || cfg.default_log_channel;
   if (!channelId) return;
   const alertCh = await guild.channels.fetch(channelId).catch(() => null);
   if (!alertCh?.isTextBased?.()) return;
+
+  // Bezpečnostní kontrola: pokud má @everyone do alerts kanálu View, NEpřikládáme obrázky –
+  // posíláme jen textový alert, aby důkazní screeny neviděli běžní členové.
+  let canAttachEvidence = true;
+  try {
+    const everyone = guild.roles.everyone;
+    const perms = alertCh.permissionsFor(everyone);
+    if (perms?.has(PermissionsBitField.Flags.ViewChannel)) canAttachEvidence = false;
+  } catch { canAttachEvidence = false; }
 
   const reportUrl = `https://dis.gd/request`;
   const embed = new EmbedBuilder()
