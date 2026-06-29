@@ -339,7 +339,9 @@ export async function runAntiScam(message) {
     evidence: `Match: \`${detection.match}\``,
     channel: message.channel,
     messageContent: message.content,
+    evidenceImages,
   }).catch(() => {});
+
 
   return true;
 }
