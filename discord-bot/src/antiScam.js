@@ -1,4 +1,4 @@
-import { EmbedBuilder, ChannelType } from 'discord.js';
+import { EmbedBuilder, ChannelType, AttachmentBuilder, PermissionsBitField } from 'discord.js';
 import { getConfig } from './config.js';
 import { supabase } from './supabase.js';
 
@@ -166,11 +166,41 @@ export function detectSuspiciousAccount(member) {
   return reasons.length ? reasons.join('; ') : null;
 }
 
-async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageContent }) {
+async function fetchImageAttachments(urls, { spoiler = true, max = 4 } = {}) {
+  const out = [];
+  for (const url of (urls || []).slice(0, max)) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.startsWith('image/')) continue;
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > 7 * 1024 * 1024) continue; // bezpečný limit pro Discord upload
+      const extFromCt = ct.split('/')[1]?.split(';')[0] || 'png';
+      const base = `evidence-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${extFromCt}`;
+      const name = spoiler ? `SPOILER_${base}` : base;
+      out.push(new AttachmentBuilder(buf, { name }));
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageContent, evidenceImages }) {
   const channelId = cfg.default_alerts_channel || cfg.default_log_channel;
   if (!channelId) return;
   const alertCh = await guild.channels.fetch(channelId).catch(() => null);
   if (!alertCh?.isTextBased?.()) return;
+
+  // Bezpečnostní kontrola: pokud má @everyone do alerts kanálu View, NEpřikládáme obrázky –
+  // posíláme jen textový alert, aby důkazní screeny neviděli běžní členové.
+  let canAttachEvidence = true;
+  try {
+    const everyone = guild.roles.everyone;
+    const perms = alertCh.permissionsFor(everyone);
+    if (perms?.has(PermissionsBitField.Flags.ViewChannel)) canAttachEvidence = false;
+  } catch { canAttachEvidence = false; }
 
   const reportUrl = `https://dis.gd/request`;
   const embed = new EmbedBuilder()
@@ -203,7 +233,23 @@ async function sendAlert(guild, cfg, { user, reason, evidence, channel, messageC
     value: `[Otevřít formulář pro nahlášení](${reportUrl})\nZkopíruj ID účtu: \`${user.id}\``,
   });
 
-  await alertCh.send({ embeds: [embed] }).catch((e) => console.error('alert send', e?.message));
+  let files = [];
+  if (evidenceImages?.length && canAttachEvidence) {
+    files = await fetchImageAttachments(evidenceImages);
+    if (files.length) {
+      embed.addFields({
+        name: '🖼️ Náhled (spoiler – jen pro adminy)',
+        value: `Přiloženo ${files.length} obrázek/ů jako spoiler. Klikni pro zobrazení a ručně ověř, zda nešlo o omyl AI.`,
+      });
+    }
+  } else if (evidenceImages?.length && !canAttachEvidence) {
+    embed.addFields({
+      name: '⚠️ Náhled nepřiložen',
+      value: 'Alerts kanál je viditelný pro @everyone – screen není přiložen, aby ho neviděli běžní členové. Omez viditelnost kanálu jen na adminy a náhled se začne přikládat.',
+    });
+  }
+
+  await alertCh.send({ embeds: [embed], files }).catch((e) => console.error('alert send', e?.message));
 }
 
 function hasBypassRole(member, cfg) {
@@ -222,6 +268,7 @@ export async function runAntiScam(message) {
 
   // Pokud text není scam, zkusíme obrázkovou analýzu (Gemini vision)
   let imgResult = null;
+  let evidenceImages = [];
   if (!detection) {
     const urls = imageUrlsFromMessage(message);
     if (urls.length) {
@@ -229,6 +276,7 @@ export async function runAntiScam(message) {
       if (imgResult?.severe) {
         const kind = imgResult.scam ? 'image_scam' : 'image_nsfw';
         detection = { type: kind, match: imgResult.reason || (imgResult.scam ? 'scam image' : 'nsfw image') };
+        evidenceImages = urls;
       }
     }
   }
@@ -246,6 +294,7 @@ export async function runAntiScam(message) {
       evidence: `Match: \`${detection.match}\``,
       channel: message.channel,
       messageContent: message.content,
+      evidenceImages,
     }).catch(() => {});
     return false;
   }
@@ -290,7 +339,9 @@ export async function runAntiScam(message) {
     evidence: `Match: \`${detection.match}\``,
     channel: message.channel,
     messageContent: message.content,
+    evidenceImages,
   }).catch(() => {});
+
 
   return true;
 }
@@ -490,6 +541,15 @@ export async function scanGuildMessages(guild, { perChannel = 30 } = {}) {
         } catch {}
       }
       actioned.push({ user: m.author, channel: ch, reason, banned, kicked });
+      // per-action alert s náhledem screenu (spoiler)
+      const statusNote = banned ? ' → 🔨 BAN' : kicked ? ' → 👢 KICK (ban selhal)' : ' (ban i kick selhaly)';
+      await sendAlert(guild, cfg, {
+        user: m.author,
+        reason: `${reason}${statusNote}`,
+        channel: ch,
+        messageContent: m.content,
+        evidenceImages: urls,
+      }).catch(() => {});
       // krátká pauza kvůli AI rate-limitu
       await new Promise((r) => setTimeout(r, 250));
     }
