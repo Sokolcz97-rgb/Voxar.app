@@ -541,6 +541,15 @@ export async function scanGuildMessages(guild, { perChannel = 30 } = {}) {
         } catch {}
       }
       actioned.push({ user: m.author, channel: ch, reason, banned, kicked });
+      // per-action alert s náhledem screenu (spoiler)
+      const statusNote = banned ? ' → 🔨 BAN' : kicked ? ' → 👢 KICK (ban selhal)' : ' (ban i kick selhaly)';
+      await sendAlert(guild, cfg, {
+        user: m.author,
+        reason: `${reason}${statusNote}`,
+        channel: ch,
+        messageContent: m.content,
+        evidenceImages: urls,
+      }).catch(() => {});
       // krátká pauza kvůli AI rate-limitu
       await new Promise((r) => setTimeout(r, 250));
     }
