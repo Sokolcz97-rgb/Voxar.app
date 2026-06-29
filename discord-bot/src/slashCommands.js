@@ -98,7 +98,7 @@ export async function registerGuildSlashCommands(client, guildId) {
     const appId = client.application?.id ?? client.user?.id;
     if (!token || !appId || !guildId) return;
     const custom = await buildCustomDefsForGuild(guildId);
-    const body = [...BUILTIN_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
+    const body = [...BUILTIN_DEFS, ...ADMIN_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(Routes.applicationGuildCommands(appId, guildId), { body });
     console.log(`🔧 Slash commands zaregistrovány pro ${guildId} (${body.length})`);
