@@ -70,12 +70,14 @@ Deno.serve(async (req) => {
     const results: any[] = [];
     for (const c of (checks ?? []) as Check[]) {
       const status = await ping(c.target);
-      const changed = c.last_status && c.last_status !== status;
+      const prev = c.last_status;
+      // Notify on any real transition, OR on first observation when it's already down.
+      const changed = (prev && prev !== status) || (!prev && status === "down");
       const update: any = { last_checked_at: now, last_status: status };
-      if (changed) update.last_changed_at = now;
+      if (!prev || prev !== status) update.last_changed_at = now;
       await supabase.from("bot_status_checks").update(update).eq("id", c.id);
       if (changed) await notify(c, status, supabase);
-      results.push({ id: c.id, status, changed });
+      results.push({ id: c.id, target: c.target, status, changed, prev });
     }
     return new Response(JSON.stringify({ checked: results.length, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
