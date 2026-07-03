@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.bot-guild-claim]
 verify_jwt = true
+
+[functions.bot-check-status]
+verify_jwt = false

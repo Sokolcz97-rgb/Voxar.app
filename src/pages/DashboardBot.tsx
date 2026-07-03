@@ -1007,18 +1007,27 @@ const DashboardBot = () => {
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
               </Card>
             )}
-            <Card className="glass border-border p-6">
+            <Card className="glass border-border p-6 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">Automatická kontrola běží každou minutu. Můžeš ji spustit i ručně.</p>
+                <Button size="sm" variant="secondary" onClick={async () => {
+                  const { data, error } = await supabase.functions.invoke("bot-check-status", { body: {} });
+                  if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                  else { toast({ title: `Zkontrolováno: ${data?.checked ?? 0}` }); void loadAll(); }
+                }}>Zkontrolovat teď</Button>
+              </div>
               {checks.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nic se nemonitoruje.</p>
               ) : (
                 <ul className="divide-y divide-border">
-                  {checks.map((c) => (
+                  {checks.map((c: any) => (
                     <li key={c.id} className="py-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className={`h-2.5 w-2.5 rounded-full ${c.last_status === "up" ? "bg-green-500" : c.last_status === "down" ? "bg-red-500" : "bg-muted-foreground"}`} />
                         <div>
-                          <div className="font-medium">{c.label}</div>
+                          <div className="font-medium">{c.label} <span className="text-xs text-muted-foreground">{c.last_status ? `· ${c.last_status.toUpperCase()}` : "· zatím nezkontrolováno"}</span></div>
                           <code className="text-xs text-muted-foreground">{c.target} → <GuildResourceLabel guildId={c.guild_id} id={c.discord_channel_id} kind="channel" /></code>
+                          {c.last_checked_at && <div className="text-[10px] text-muted-foreground">poslední ping: {new Date(c.last_checked_at).toLocaleString()}</div>}
                         </div>
                       </div>
                       {isManager && <Button size="icon" variant="ghost" onClick={() => deleteRow("bot_status_checks", c.id)}><Trash2 className="h-4 w-4" /></Button>}
