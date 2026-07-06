@@ -11,11 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { ArrowLeft, Shield, Search, UserCog, ChevronDown, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Shield, Search, UserCog, ChevronDown, Plus, Trash2, Pencil, Ban, Lock, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { clearPermissionsCache } from "@/hooks/usePermissions";
 
 type Role = {
@@ -42,7 +45,30 @@ interface ProfileRow {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  bio?: string | null;
 }
+
+type Restriction = {
+  user_id: string;
+  can_post_forum: boolean;
+  can_comment: boolean;
+  can_message: boolean;
+  can_upload: boolean;
+  muted_until: string | null;
+  banned_until: string | null;
+  reason: string | null;
+};
+
+const DEFAULT_RESTRICTION = (uid: string): Restriction => ({
+  user_id: uid,
+  can_post_forum: true,
+  can_comment: true,
+  can_message: true,
+  can_upload: true,
+  muted_until: null,
+  banned_until: null,
+  reason: null,
+});
 
 const BUILTIN_ENUM = new Set(["admin", "editor", "user", "banned", "content_creator"]);
 
