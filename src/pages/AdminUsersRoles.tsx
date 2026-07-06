@@ -102,6 +102,14 @@ const AdminUsersRoles = () => {
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // Edit / restriction / delete state
+  const [editUser, setEditUser] = useState<ProfileRow | null>(null);
+  const [editForm, setEditForm] = useState({ display_name: "", username: "", bio: "" });
+  const [restrictUser, setRestrictUser] = useState<ProfileRow | null>(null);
+  const [restriction, setRestriction] = useState<Restriction | null>(null);
+  const [deleteUser, setDeleteUser] = useState<ProfileRow | null>(null);
+  const [busy, setBusy] = useState(false);
+
   // Roles tab state
   const [perms, setPerms] = useState<Permission[]>([]);
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
@@ -121,7 +129,7 @@ const AdminUsersRoles = () => {
 
   const loadUsers = async (q: string) => {
     setLoadingUsers(true);
-    let query = supabase.from("profiles").select("user_id, username, display_name, avatar_url").limit(50);
+    let query = supabase.from("profiles").select("user_id, username, display_name, avatar_url, bio").limit(50);
     if (q.trim()) query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%`);
     const { data: profs } = await query;
     setProfiles(profs ?? []);
