@@ -721,6 +721,119 @@ const AdminUsersRoles = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit user */}
+      <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upravit uživatele</DialogTitle>
+            <DialogDescription>Změny profilu uživatele</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Zobrazované jméno</Label>
+              <Input value={editForm.display_name} onChange={(e) => setEditForm((f) => ({ ...f, display_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Uživatelské jméno</Label>
+              <Input value={editForm.username} onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Bio</Label>
+              <Textarea rows={3} value={editForm.bio} onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditUser(null)}>Zrušit</Button>
+            <Button onClick={saveEditUser} disabled={busy}>Uložit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restrictions */}
+      <Dialog open={!!restrictUser} onOpenChange={(o) => { if (!o) { setRestrictUser(null); setRestriction(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Omezení uživatele</DialogTitle>
+            <DialogDescription>
+              {restrictUser?.display_name || restrictUser?.username || "Uživatel"} — nastav, co smí na webu dělat.
+            </DialogDescription>
+          </DialogHeader>
+          {restriction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "can_post_forum", label: "Zakládat témata" },
+                  { key: "can_comment", label: "Psát komentáře" },
+                  { key: "can_message", label: "Posílat DM zprávy" },
+                  { key: "can_upload", label: "Nahrávat přílohy" },
+                ].map((f) => (
+                  <label key={f.key} className="flex items-center justify-between gap-2 p-2 rounded border border-border bg-background/40">
+                    <span className="text-sm">{f.label}</span>
+                    <Switch
+                      checked={(restriction as any)[f.key]}
+                      onCheckedChange={(v) => setRestriction((r) => r ? ({ ...r, [f.key]: v }) as Restriction : r)}
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Umlčet do</Label>
+                  <Input
+                    type="datetime-local"
+                    value={restriction.muted_until ? restriction.muted_until.slice(0, 16) : ""}
+                    onChange={(e) => setRestriction((r) => r ? { ...r, muted_until: e.target.value ? new Date(e.target.value).toISOString() : null } : r)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Dočasný ban do</Label>
+                  <Input
+                    type="datetime-local"
+                    value={restriction.banned_until ? restriction.banned_until.slice(0, 16) : ""}
+                    onChange={(e) => setRestriction((r) => r ? { ...r, banned_until: e.target.value ? new Date(e.target.value).toISOString() : null } : r)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Důvod (interní)</Label>
+                <Textarea
+                  rows={2}
+                  value={restriction.reason ?? ""}
+                  onChange={(e) => setRestriction((r) => r ? { ...r, reason: e.target.value } : r)}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+            <Button variant="ghost" className="text-destructive" onClick={clearRestriction} disabled={busy}>
+              Vymazat všechna omezení
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => { setRestrictUser(null); setRestriction(null); }}>Zrušit</Button>
+              <Button onClick={saveRestriction} disabled={busy}>Uložit</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete user */}
+      <Dialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Smazat uživatele?</DialogTitle>
+            <DialogDescription>
+              Trvale smaže účet <b>{deleteUser?.display_name || deleteUser?.username}</b> včetně přihlášení. Tuto akci nelze vrátit.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteUser(null)}>Zrušit</Button>
+            <Button variant="destructive" onClick={doDeleteUser} disabled={busy}>
+              <Trash2 className="h-4 w-4 mr-1" /> Smazat
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
