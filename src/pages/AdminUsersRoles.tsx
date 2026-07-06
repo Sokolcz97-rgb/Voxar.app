@@ -11,11 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { ArrowLeft, Shield, Search, UserCog, ChevronDown, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Shield, Search, UserCog, ChevronDown, Plus, Trash2, Pencil, Ban, Lock, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { clearPermissionsCache } from "@/hooks/usePermissions";
 
 type Role = {
@@ -42,7 +45,30 @@ interface ProfileRow {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  bio?: string | null;
 }
+
+type Restriction = {
+  user_id: string;
+  can_post_forum: boolean;
+  can_comment: boolean;
+  can_message: boolean;
+  can_upload: boolean;
+  muted_until: string | null;
+  banned_until: string | null;
+  reason: string | null;
+};
+
+const DEFAULT_RESTRICTION = (uid: string): Restriction => ({
+  user_id: uid,
+  can_post_forum: true,
+  can_comment: true,
+  can_message: true,
+  can_upload: true,
+  muted_until: null,
+  banned_until: null,
+  reason: null,
+});
 
 const BUILTIN_ENUM = new Set(["admin", "editor", "user", "banned", "content_creator"]);
 
@@ -76,6 +102,14 @@ const AdminUsersRoles = () => {
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // Edit / restriction / delete state
+  const [editUser, setEditUser] = useState<ProfileRow | null>(null);
+  const [editForm, setEditForm] = useState({ display_name: "", username: "", bio: "" });
+  const [restrictUser, setRestrictUser] = useState<ProfileRow | null>(null);
+  const [restriction, setRestriction] = useState<Restriction | null>(null);
+  const [deleteUser, setDeleteUser] = useState<ProfileRow | null>(null);
+  const [busy, setBusy] = useState(false);
+
   // Roles tab state
   const [perms, setPerms] = useState<Permission[]>([]);
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
@@ -95,7 +129,7 @@ const AdminUsersRoles = () => {
 
   const loadUsers = async (q: string) => {
     setLoadingUsers(true);
-    let query = supabase.from("profiles").select("user_id, username, display_name, avatar_url").limit(50);
+    let query = supabase.from("profiles").select("user_id, username, display_name, avatar_url, bio").limit(50);
     if (q.trim()) query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%`);
     const { data: profs } = await query;
     setProfiles(profs ?? []);
@@ -215,6 +249,109 @@ const AdminUsersRoles = () => {
     }
     clearPermissionsCache();
   };
+
+  // ===== User admin actions =====
+  const openEditUser = (p: ProfileRow) => {
+    setEditUser(p);
+    setEditForm({
+      display_name: p.display_name ?? "",
+      username: p.username ?? "",
+      bio: p.bio ?? "",
+    });
+  };
+
+  const saveEditUser = async () => {
+    if (!editUser) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        display_name: editForm.display_name.trim() || null,
+        username: editForm.username.trim() || null,
+        bio: editForm.bio.trim() || null,
+      })
+      .eq("user_id", editUser.user_id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Uloženo");
+    setEditUser(null);
+    loadUsers(search);
+  };
+
+  const toggleBanUser = async (p: ProfileRow) => {
+    if (p.user_id === user?.id) return toast.error("Nemůžeš zabanovat sám sebe");
+    const bannedRole = allRoles.find((r) => r.slug === "banned");
+    if (!bannedRole) return toast.error("Role 'banned' neexistuje");
+    await toggleRole(p.user_id, bannedRole);
+  };
+
+  const openRestrict = async (p: ProfileRow) => {
+    setRestrictUser(p);
+    const { data } = await supabase
+      .from("user_restrictions")
+      .select("*")
+      .eq("user_id", p.user_id)
+      .maybeSingle();
+    setRestriction((data as Restriction) ?? DEFAULT_RESTRICTION(p.user_id));
+  };
+
+  const saveRestriction = async () => {
+    if (!restriction || !restrictUser) return;
+    setBusy(true);
+    const payload = {
+      user_id: restrictUser.user_id,
+      can_post_forum: restriction.can_post_forum,
+      can_comment: restriction.can_comment,
+      can_message: restriction.can_message,
+      can_upload: restriction.can_upload,
+      muted_until: restriction.muted_until,
+      banned_until: restriction.banned_until,
+      reason: restriction.reason,
+      updated_by: user?.id ?? null,
+    };
+    const { error } = await supabase
+      .from("user_restrictions")
+      .upsert(payload, { onConflict: "user_id" });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Omezení uloženo");
+    setRestrictUser(null);
+    setRestriction(null);
+  };
+
+  const clearRestriction = async () => {
+    if (!restrictUser) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("user_restrictions")
+      .delete()
+      .eq("user_id", restrictUser.user_id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Omezení zrušeno");
+    setRestrictUser(null);
+    setRestriction(null);
+  };
+
+  const doDeleteUser = async () => {
+    if (!deleteUser) return;
+    if (deleteUser.user_id === user?.id) {
+      toast.error("Nemůžeš smazat sám sebe");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+      body: { user_id: deleteUser.user_id },
+    });
+    setBusy(false);
+    if (error || (data as any)?.error) {
+      return toast.error(error?.message || (data as any)?.error || "Chyba");
+    }
+    toast.success("Uživatel smazán");
+    setDeleteUser(null);
+    setProfiles((ps) => ps.filter((x) => x.user_id !== deleteUser.user_id));
+  };
+
 
   const openNew = () => {
     setEditingRole(null);
@@ -392,6 +529,35 @@ const AdminUsersRoles = () => {
                         </div>
                       </PopoverContent>
                     </Popover>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" aria-label="Akce">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-md w-56">
+                        <DropdownMenuItem onClick={() => openEditUser(p)}>
+                          <Pencil className="h-4 w-4 mr-2" /> Upravit profil
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openRestrict(p)}>
+                          <Lock className="h-4 w-4 mr-2" /> Omezení
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toggleBanUser(p)}>
+                          <Ban className="h-4 w-4 mr-2" />
+                          {userRoleIds.includes(allRoles.find((r) => r.slug === "banned")?.id ?? "")
+                            ? "Odbanovat"
+                            : "Zabanovat"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setDeleteUser(p)}
+                          disabled={p.user_id === user?.id}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Smazat uživatele
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </Card>
                 );
               })}
@@ -552,6 +718,119 @@ const AdminUsersRoles = () => {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpenCreate(false)}>Zrušit</Button>
             <Button onClick={handleSaveRole}>{editingRole ? "Uložit" : "Vytvořit"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit user */}
+      <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upravit uživatele</DialogTitle>
+            <DialogDescription>Změny profilu uživatele</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Zobrazované jméno</Label>
+              <Input value={editForm.display_name} onChange={(e) => setEditForm((f) => ({ ...f, display_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Uživatelské jméno</Label>
+              <Input value={editForm.username} onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Bio</Label>
+              <Textarea rows={3} value={editForm.bio} onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditUser(null)}>Zrušit</Button>
+            <Button onClick={saveEditUser} disabled={busy}>Uložit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restrictions */}
+      <Dialog open={!!restrictUser} onOpenChange={(o) => { if (!o) { setRestrictUser(null); setRestriction(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Omezení uživatele</DialogTitle>
+            <DialogDescription>
+              {restrictUser?.display_name || restrictUser?.username || "Uživatel"} — nastav, co smí na webu dělat.
+            </DialogDescription>
+          </DialogHeader>
+          {restriction && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "can_post_forum", label: "Zakládat témata" },
+                  { key: "can_comment", label: "Psát komentáře" },
+                  { key: "can_message", label: "Posílat DM zprávy" },
+                  { key: "can_upload", label: "Nahrávat přílohy" },
+                ].map((f) => (
+                  <label key={f.key} className="flex items-center justify-between gap-2 p-2 rounded border border-border bg-background/40">
+                    <span className="text-sm">{f.label}</span>
+                    <Switch
+                      checked={(restriction as any)[f.key]}
+                      onCheckedChange={(v) => setRestriction((r) => r ? ({ ...r, [f.key]: v }) as Restriction : r)}
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Umlčet do</Label>
+                  <Input
+                    type="datetime-local"
+                    value={restriction.muted_until ? restriction.muted_until.slice(0, 16) : ""}
+                    onChange={(e) => setRestriction((r) => r ? { ...r, muted_until: e.target.value ? new Date(e.target.value).toISOString() : null } : r)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Dočasný ban do</Label>
+                  <Input
+                    type="datetime-local"
+                    value={restriction.banned_until ? restriction.banned_until.slice(0, 16) : ""}
+                    onChange={(e) => setRestriction((r) => r ? { ...r, banned_until: e.target.value ? new Date(e.target.value).toISOString() : null } : r)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Důvod (interní)</Label>
+                <Textarea
+                  rows={2}
+                  value={restriction.reason ?? ""}
+                  onChange={(e) => setRestriction((r) => r ? { ...r, reason: e.target.value } : r)}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+            <Button variant="ghost" className="text-destructive" onClick={clearRestriction} disabled={busy}>
+              Vymazat všechna omezení
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => { setRestrictUser(null); setRestriction(null); }}>Zrušit</Button>
+              <Button onClick={saveRestriction} disabled={busy}>Uložit</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete user */}
+      <Dialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Smazat uživatele?</DialogTitle>
+            <DialogDescription>
+              Trvale smaže účet <b>{deleteUser?.display_name || deleteUser?.username}</b> včetně přihlášení. Tuto akci nelze vrátit.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteUser(null)}>Zrušit</Button>
+            <Button variant="destructive" onClick={doDeleteUser} disabled={busy}>
+              <Trash2 className="h-4 w-4 mr-1" /> Smazat
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1732,6 +1732,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_restrictions: {
+        Row: {
+          banned_until: string | null
+          can_comment: boolean
+          can_message: boolean
+          can_post_forum: boolean
+          can_upload: boolean
+          created_at: string
+          muted_until: string | null
+          reason: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_until?: string | null
+          can_comment?: boolean
+          can_message?: boolean
+          can_post_forum?: boolean
+          can_upload?: boolean
+          created_at?: string
+          muted_until?: string | null
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_until?: string | null
+          can_comment?: boolean
+          can_message?: boolean
+          can_post_forum?: boolean
+          can_upload?: boolean
+          created_at?: string
+          muted_until?: string | null
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1869,6 +1911,7 @@ export type Database = {
         Args: { _guild_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }
         Returns: boolean
