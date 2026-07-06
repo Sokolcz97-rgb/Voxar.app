@@ -529,6 +529,35 @@ const AdminUsersRoles = () => {
                         </div>
                       </PopoverContent>
                     </Popover>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" aria-label="Akce">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-md w-56">
+                        <DropdownMenuItem onClick={() => openEditUser(p)}>
+                          <Pencil className="h-4 w-4 mr-2" /> Upravit profil
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openRestrict(p)}>
+                          <Lock className="h-4 w-4 mr-2" /> Omezení
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toggleBanUser(p)}>
+                          <Ban className="h-4 w-4 mr-2" />
+                          {userRoleIds.includes(allRoles.find((r) => r.slug === "banned")?.id ?? "")
+                            ? "Odbanovat"
+                            : "Zabanovat"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setDeleteUser(p)}
+                          disabled={p.user_id === user?.id}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Smazat uživatele
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </Card>
                 );
               })}
