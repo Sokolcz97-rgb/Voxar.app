@@ -250,6 +250,109 @@ const AdminUsersRoles = () => {
     clearPermissionsCache();
   };
 
+  // ===== User admin actions =====
+  const openEditUser = (p: ProfileRow) => {
+    setEditUser(p);
+    setEditForm({
+      display_name: p.display_name ?? "",
+      username: p.username ?? "",
+      bio: p.bio ?? "",
+    });
+  };
+
+  const saveEditUser = async () => {
+    if (!editUser) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        display_name: editForm.display_name.trim() || null,
+        username: editForm.username.trim() || null,
+        bio: editForm.bio.trim() || null,
+      })
+      .eq("user_id", editUser.user_id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Uloženo");
+    setEditUser(null);
+    loadUsers(search);
+  };
+
+  const toggleBanUser = async (p: ProfileRow) => {
+    if (p.user_id === user?.id) return toast.error("Nemůžeš zabanovat sám sebe");
+    const bannedRole = allRoles.find((r) => r.slug === "banned");
+    if (!bannedRole) return toast.error("Role 'banned' neexistuje");
+    await toggleRole(p.user_id, bannedRole);
+  };
+
+  const openRestrict = async (p: ProfileRow) => {
+    setRestrictUser(p);
+    const { data } = await supabase
+      .from("user_restrictions")
+      .select("*")
+      .eq("user_id", p.user_id)
+      .maybeSingle();
+    setRestriction((data as Restriction) ?? DEFAULT_RESTRICTION(p.user_id));
+  };
+
+  const saveRestriction = async () => {
+    if (!restriction || !restrictUser) return;
+    setBusy(true);
+    const payload = {
+      user_id: restrictUser.user_id,
+      can_post_forum: restriction.can_post_forum,
+      can_comment: restriction.can_comment,
+      can_message: restriction.can_message,
+      can_upload: restriction.can_upload,
+      muted_until: restriction.muted_until,
+      banned_until: restriction.banned_until,
+      reason: restriction.reason,
+      updated_by: user?.id ?? null,
+    };
+    const { error } = await supabase
+      .from("user_restrictions")
+      .upsert(payload, { onConflict: "user_id" });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Omezení uloženo");
+    setRestrictUser(null);
+    setRestriction(null);
+  };
+
+  const clearRestriction = async () => {
+    if (!restrictUser) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("user_restrictions")
+      .delete()
+      .eq("user_id", restrictUser.user_id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Omezení zrušeno");
+    setRestrictUser(null);
+    setRestriction(null);
+  };
+
+  const doDeleteUser = async () => {
+    if (!deleteUser) return;
+    if (deleteUser.user_id === user?.id) {
+      toast.error("Nemůžeš smazat sám sebe");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+      body: { user_id: deleteUser.user_id },
+    });
+    setBusy(false);
+    if (error || (data as any)?.error) {
+      return toast.error(error?.message || (data as any)?.error || "Chyba");
+    }
+    toast.success("Uživatel smazán");
+    setDeleteUser(null);
+    setProfiles((ps) => ps.filter((x) => x.user_id !== deleteUser.user_id));
+  };
+
+
   const openNew = () => {
     setEditingRole(null);
     setName(""); setSlug(""); setDescription(""); setColor("#3b82f6");
