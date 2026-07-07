@@ -23,6 +23,7 @@ import { MultiChannelPicker } from "@/components/MultiChannelPicker";
 import { MultiRolePicker } from "@/components/MultiRolePicker";
 import { BotFaq } from "@/components/BotFaq";
 import { ServerStatsCard } from "@/components/ServerStatsCard";
+import { MinecraftPanel } from "@/components/MinecraftPanel";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
@@ -645,6 +646,7 @@ const DashboardBot = () => {
               { v: "tickets", l: "Tickety" },
               { v: "status", l: "Status checks" },
               { v: "serverstats", l: "Server Stats" },
+              { v: "games", l: "Games" },
               { v: "faq", l: "FAQ / Návod" },
             ].map((tab) => (
               <TabsTrigger
@@ -1041,6 +1043,18 @@ const DashboardBot = () => {
           {/* SERVER STATS */}
           <TabsContent value="serverstats" className="mt-4">
             <ServerStatsCard guildId={guildIdOrNull()} isManager={isManager} />
+          </TabsContent>
+
+          {/* GAMES */}
+          <TabsContent value="games" className="mt-4">
+            <Tabs defaultValue="minecraft" className="space-y-4">
+              <TabsList className="bg-card/40 border border-border">
+                <TabsTrigger value="minecraft">Minecraft</TabsTrigger>
+              </TabsList>
+              <TabsContent value="minecraft">
+                <MinecraftPanel guildId={guildIdOrNull()} isManager={isManager} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* FAQ */}
