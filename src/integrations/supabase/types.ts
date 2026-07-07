@@ -250,6 +250,168 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_minecraft_config: {
+        Row: {
+          achievement_channel: string | null
+          achievement_format: string
+          allow_chat_relay: boolean
+          allow_commands: boolean
+          allow_discord_to_mc: boolean
+          chat_channel: string | null
+          chat_format: string
+          console_channel: string | null
+          death_channel: string | null
+          death_format: string
+          enabled: boolean
+          guild_id: string
+          id: string
+          join_format: string
+          join_leave_channel: string | null
+          leave_format: string
+          link_role_id: string | null
+          plugin_token: string
+          server_address: string | null
+          server_status_channel: string | null
+          server_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          achievement_channel?: string | null
+          achievement_format?: string
+          allow_chat_relay?: boolean
+          allow_commands?: boolean
+          allow_discord_to_mc?: boolean
+          chat_channel?: string | null
+          chat_format?: string
+          console_channel?: string | null
+          death_channel?: string | null
+          death_format?: string
+          enabled?: boolean
+          guild_id: string
+          id?: string
+          join_format?: string
+          join_leave_channel?: string | null
+          leave_format?: string
+          link_role_id?: string | null
+          plugin_token?: string
+          server_address?: string | null
+          server_status_channel?: string | null
+          server_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          achievement_channel?: string | null
+          achievement_format?: string
+          allow_chat_relay?: boolean
+          allow_commands?: boolean
+          allow_discord_to_mc?: boolean
+          chat_channel?: string | null
+          chat_format?: string
+          console_channel?: string | null
+          death_channel?: string | null
+          death_format?: string
+          enabled?: boolean
+          guild_id?: string
+          id?: string
+          join_format?: string
+          join_leave_channel?: string | null
+          leave_format?: string
+          link_role_id?: string | null
+          plugin_token?: string
+          server_address?: string | null
+          server_status_channel?: string | null
+          server_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_minecraft_config_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: true
+            referencedRelation: "bot_guilds"
+            referencedColumns: ["guild_id"]
+          },
+        ]
+      }
+      bot_minecraft_links: {
+        Row: {
+          discord_user_id: string | null
+          guild_id: string
+          id: string
+          minecraft_name: string
+          minecraft_uuid: string
+          user_id: string | null
+          verified_at: string
+        }
+        Insert: {
+          discord_user_id?: string | null
+          guild_id: string
+          id?: string
+          minecraft_name: string
+          minecraft_uuid: string
+          user_id?: string | null
+          verified_at?: string
+        }
+        Update: {
+          discord_user_id?: string | null
+          guild_id?: string
+          id?: string
+          minecraft_name?: string
+          minecraft_uuid?: string
+          user_id?: string | null
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_minecraft_links_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "bot_guilds"
+            referencedColumns: ["guild_id"]
+          },
+        ]
+      }
+      bot_minecraft_pending_links: {
+        Row: {
+          code: string
+          created_at: string
+          discord_user_id: string | null
+          expires_at: string
+          guild_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discord_user_id?: string | null
+          expires_at?: string
+          guild_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discord_user_id?: string | null
+          expires_at?: string
+          guild_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_minecraft_pending_links_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "bot_guilds"
+            referencedColumns: ["guild_id"]
+          },
+        ]
+      }
       bot_open_tickets: {
         Row: {
           category_id: string | null
