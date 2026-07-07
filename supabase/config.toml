@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.bot-check-status]
 verify_jwt = false
+
+[functions.minecraft-bridge]
+verify_jwt = false
