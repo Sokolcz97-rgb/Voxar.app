@@ -110,6 +110,21 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         ],
       },
       {
+        id: "games-minecraft",
+        title: "Games → Minecraft",
+        items: [
+          { q: "Co Minecraft integrace umí?", a: "Propojí Minecraft server s Discord serverem: přeposílá chat oběma směry, oznamuje join/leave/úmrtí/achievementy, umí propojit MC účet s Discord účtem (a přiřadit roli), a volitelně ukazuje status serveru." },
+          { q: "Jaké pluginy jsou podporované?", a: "Doporučené je DiscordSRV (nejrozšířenější, Paper/Spigot). Podporujeme i DiscordIntegration a DSB. Pro cokoliv jiného (Fabric, Velocity, vlastní backend) je k dispozici REST bridge — plugin nebo mod volá naši HTTP endpoint." },
+          { q: "Jak nastavím DiscordSRV?", a: "1) V dashboardu (Games → Minecraft) zapni integraci, vyber typ „DiscordSRV“, přiřaď kanály (chat, join/leave, úmrtí, achievementy). 2) Ulož a zkopíruj Plugin token z karty „REST bridge“. 3) V DiscordSRV configu na serveru nastav webhook / bridge na náš endpoint a vlož token do hlavičky x-mc-token. 4) Kanály v DiscordSRV configu spáruj se stejnými Discord ID, které jsi zvolil v dashboardu." },
+          { q: "Jak funguje REST bridge (vlastní plugin/mod)?", a: "POST na endpoint (URL najdeš v panelu) s hlavičkou x-mc-token a JSON: {action, name, uuid, message}. Akce: chat, join, leave, death, achievement, server_status, verify_link. Bot pak zprávu odešle do odpovídajícího Discord kanálu." },
+          { q: "Jak propojím svůj MC účet s Discordem?", a: "1) V panelu klikni na „Vygenerovat kód“ (platí 15 minut). 2) Přihlaš se na MC server. 3) Napiš do chatu /discord link KÓD (nebo ekvivalent u tvého pluginu). 4) Plugin pošle na bridge verify_link s tvým UUID + kódem a propojení se uloží. Pokud máš nastavenou „Roli po propojení“, bot ti ji přiřadí automaticky." },
+          { q: "Chat neprochází z MC do Discordu", a: "Zkontroluj: integrace je zapnutá, plugin token je aktuální (mohl být rotován), v dashboardu je zvolen „Chat“ kanál, přepínač „Chat MC → Discord“ je zapnutý a plugin skutečně volá endpoint (v pluginu si zapni debug log)." },
+          { q: "Chat neprochází z Discordu do MC", a: "Přepínač „Chat Discord → MC“ musí být zapnutý. Bot označí zprávy z chat kanálu a plugin si je vyzvedne (u DiscordSRV to dělá plugin sám; u REST bridge zatím pull endpoint jen vrací prázdné pole)." },
+          { q: "Rotace tokenu", a: "Tlačítko ↻ vedle tokenu vygeneruje nový. Starý okamžitě přestane fungovat — nezapomeň nový vložit do configu pluginu." },
+          { q: "Bezpečnost", a: "Token nikdy nesdílej veřejně (funguje jako heslo). Endpoint je HTTPS, komunikace probíhá jen s naším backendem — plugin nemá přístup k žádným jiným datům než k tomu, co si sám pošle." },
+        ],
+      },
+      {
         id: "general",
         title: "Obecné / problémy",
         items: [
@@ -213,6 +228,21 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
           { q: "Permissions required", a: "Manage Channels — so the bot can create the category, channels, and rename them." },
           { q: "Can I have fewer than 4 stats?", a: "Yes — set unused slots to \"— off —\". Only enabled ones are created." },
           { q: "What does Web / Bot status show?", a: "Web shows UP or DOWN based on the Web maintenance toggle in Basics. Bot shows UP whenever it's running (if it goes down, values simply stop updating)." },
+        ],
+      },
+      {
+        id: "games-minecraft",
+        title: "Games → Minecraft",
+        items: [
+          { q: "What does the Minecraft integration do?", a: "It bridges your Minecraft server with Discord: two-way chat relay, join/leave/death/achievement announcements, Minecraft ↔ Discord account linking (with optional role assignment) and optional server-status messages." },
+          { q: "Which plugins are supported?", a: "Recommended is DiscordSRV (most common, Paper/Spigot). We also support DiscordIntegration and DSB. For anything else (Fabric, Velocity, custom) use the REST bridge — the plugin/mod calls our HTTP endpoint." },
+          { q: "How to set up DiscordSRV", a: "1) In the dashboard (Games → Minecraft) enable the integration, pick type “DiscordSRV”, assign channels. 2) Save and copy the Plugin token from the “REST bridge” card. 3) In DiscordSRV config point the bridge/webhook at our endpoint and place the token in the x-mc-token header. 4) Map DiscordSRV channel IDs to the same Discord IDs you chose in the dashboard." },
+          { q: "How does the REST bridge work?", a: "POST to the endpoint shown in the panel with header x-mc-token and JSON: {action, name, uuid, message}. Actions: chat, join, leave, death, achievement, server_status, verify_link. The bot then sends the message to the matching Discord channel." },
+          { q: "How to link my MC account to Discord", a: "1) Click “Generate code” in the panel (valid 15 min). 2) Join the MC server. 3) Type /discord link CODE in game (or your plugin's equivalent). 4) The plugin sends verify_link with your UUID + code, the link is saved, and if you configured a “link role” the bot assigns it automatically." },
+          { q: "Chat doesn't reach Discord", a: "Check: integration enabled, plugin token current (may have been rotated), Chat channel selected, “Chat MC → Discord” switch on, and that the plugin is actually calling the endpoint (enable plugin debug logs)." },
+          { q: "Chat doesn't reach Minecraft", a: "The “Chat Discord → MC” switch must be on. The bot picks up messages from the chat channel and the plugin pulls them (DiscordSRV handles this itself; for REST bridge the pull endpoint currently returns an empty list)." },
+          { q: "Token rotation", a: "The ↻ button next to the token generates a new one. The old one stops working immediately — paste the new value into your plugin config." },
+          { q: "Security", a: "Never share the token publicly (it acts as a password). The endpoint is HTTPS and only talks to our backend — the plugin has no access to anything beyond what it sends itself." },
         ],
       },
       {
