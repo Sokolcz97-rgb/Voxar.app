@@ -144,24 +144,27 @@ async function pollYouTube(rows: Row[], supabase: any) {
   const UA =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 
-  for (const row of rows) {
+  await Promise.all(rows.map(async (row) => {
     try {
       const channelId = await resolveChannelId(row.handle, UA);
-      if (!channelId) { console.warn(`[yt] no channelId for ${row.handle}`); continue; }
+      if (!channelId) { console.warn(`[yt] no channelId for ${row.handle}`); return; }
+
+      // Register WebSub push subscription so future uploads arrive instantly (no wait for poll)
+      ensureWebSub(row, channelId, supabase).catch((e) => console.error("websub", e));
 
       // RSS feed lists the 15 newest uploads (also live broadcasts once they go live)
       const feedRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
         headers: { "User-Agent": UA },
       });
-      if (!feedRes.ok) { console.warn(`[yt] feed ${row.handle} status=${feedRes.status}`); continue; }
+      if (!feedRes.ok) { console.warn(`[yt] feed ${row.handle} status=${feedRes.status}`); return; }
       const xml = await feedRes.text();
       const entry = xml.match(/<entry>[\s\S]*?<\/entry>/);
-      if (!entry) continue;
+      if (!entry) return;
       const videoId = entry[0].match(/<yt:videoId>([A-Za-z0-9_-]{11})<\/yt:videoId>/)?.[1];
       const title = entry[0].match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? "";
       const published = entry[0].match(/<published>([^<]+)<\/published>/)?.[1];
-      if (!videoId) continue;
-      if (videoId === row.last_upload_id) continue;
+      if (!videoId) return;
+      if (videoId === row.last_upload_id) return;
 
       // Skip very old videos on first run (avoid spam): only notify if published in last 24h
       if (!row.last_upload_id && published) {
@@ -170,7 +173,7 @@ async function pollYouTube(rows: Row[], supabase: any) {
           await supabase.from("bot_stream_notifications")
             .update({ last_upload_id: videoId })
             .eq("id", row.id);
-          continue;
+          return;
         }
       }
 
@@ -206,7 +209,7 @@ async function pollYouTube(rows: Row[], supabase: any) {
     } catch (e) {
       console.error("yt scrape error", row.handle, e);
     }
-  }
+  }));
 }
 
 
