@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.minecraft-bridge]
 verify_jwt = false
+
+[functions.yt-websub]
+verify_jwt = false
