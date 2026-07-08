@@ -595,6 +595,7 @@ export type Database = {
           handle: string
           id: string
           last_notified_at: string | null
+          last_subscribed_at: string | null
           last_upload_id: string | null
           last_video_id: string | null
           platform: string
@@ -609,6 +610,7 @@ export type Database = {
           handle: string
           id?: string
           last_notified_at?: string | null
+          last_subscribed_at?: string | null
           last_upload_id?: string | null
           last_video_id?: string | null
           platform: string
@@ -623,6 +625,7 @@ export type Database = {
           handle?: string
           id?: string
           last_notified_at?: string | null
+          last_subscribed_at?: string | null
           last_upload_id?: string | null
           last_video_id?: string | null
           platform?: string
