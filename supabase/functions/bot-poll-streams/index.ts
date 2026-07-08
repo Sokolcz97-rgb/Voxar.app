@@ -16,7 +16,41 @@ type Row = {
   last_notified_at: string | null;
   last_video_id: string | null;
   last_upload_id: string | null;
+  last_subscribed_at: string | null;
 };
+
+const WEBSUB_HUB = "https://pubsubhubbub.appspot.com/subscribe";
+const CALLBACK_BASE = "https://rioexuvgvmdwvidfakxy.supabase.co/functions/v1/yt-websub";
+
+async function ensureWebSub(row: Row, channelId: string, supabase: any) {
+  // Refresh subscription every 4 days (hub lease is typically 5 days)
+  const fresh = row.last_subscribed_at &&
+    Date.now() - new Date(row.last_subscribed_at).getTime() < 4 * 86400 * 1000;
+  if (fresh) return;
+  try {
+    const body = new URLSearchParams({
+      "hub.mode": "subscribe",
+      "hub.topic": `https://www.youtube.com/xml/feeds/videos.xml?channel_id=${channelId}`,
+      "hub.callback": `${CALLBACK_BASE}?id=${row.id}`,
+      "hub.verify": "async",
+      "hub.lease_seconds": "432000",
+    });
+    const res = await fetch(WEBSUB_HUB, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    if (res.status === 202 || res.ok) {
+      await supabase.from("bot_stream_notifications")
+        .update({ last_subscribed_at: new Date().toISOString() })
+        .eq("id", row.id);
+    } else {
+      console.warn("websub subscribe failed", row.handle, res.status, await res.text());
+    }
+  } catch (e) {
+    console.error("websub subscribe error", row.handle, e);
+  }
+}
 
 function fmt(template: string, vars: Record<string, string>) {
   return template.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
