@@ -126,6 +126,9 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         ],
       },
       {
+        id: "games-minecraft",
+        title: "Games → Minecraft",
+        items: [
           { q: "Co Minecraft integrace umí?", a: "Propojí Minecraft server s Discord serverem: přeposílá chat oběma směry, oznamuje join/leave/úmrtí/achievementy, umí propojit MC účet s Discord účtem (a přiřadit roli), a volitelně ukazuje status serveru." },
           { q: "Jaké pluginy jsou podporované?", a: "Doporučené je DiscordSRV (nejrozšířenější, Paper/Spigot). Podporujeme i DiscordIntegration a DSB. Pro cokoliv jiného (Fabric, Velocity, vlastní backend) je k dispozici REST bridge — plugin nebo mod volá naši HTTP endpoint." },
           { q: "Jak nastavím DiscordSRV?", a: "1) V dashboardu (Games → Minecraft) zapni integraci, vyber typ „DiscordSRV“, přiřaď kanály (chat, join/leave, úmrtí, achievementy). 2) Ulož a zkopíruj Plugin token z karty „REST bridge“. 3) V DiscordSRV configu na serveru nastav webhook / bridge na náš endpoint a vlož token do hlavičky x-mc-token. 4) Kanály v DiscordSRV configu spáruj se stejnými Discord ID, které jsi zvolil v dashboardu." },
