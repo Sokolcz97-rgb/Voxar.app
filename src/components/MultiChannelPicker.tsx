@@ -9,12 +9,14 @@ export function MultiChannelPicker({
   onChange,
   disabled,
   placeholder,
+  kind = "text",
 }: {
   guildId: string | null;
   value: string[];
   onChange: (v: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  kind?: "text" | "voice" | "category";
 }) {
   const add = (id: string | null) => {
     if (!id || value.includes(id)) return;
@@ -26,7 +28,7 @@ export function MultiChannelPicker({
     <div className="space-y-2">
       <GuildResourceSelect
         guildId={guildId}
-        kind="text"
+        kind={kind as any}
         value={null}
         onChange={add}
         disabled={disabled}
