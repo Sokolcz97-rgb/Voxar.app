@@ -527,6 +527,8 @@ export function buildHelpEmbeds() {
       { name: '/status add|list|remove|toggle', value: 'Sledování dostupnosti URL / služeb.' },
       { name: '/stream add|list|remove', value: 'Notifikace o živých streamech (Twitch/YouTube/Kick).' },
       { name: '/say <kanál> <text>', value: 'Pošle zprávu botem do kanálu.' },
+      { name: '/body me|user|top|config', value: 'Bodový systém — zobrazit vlastní / cizí body, žebříček a konfiguraci.' },
+      { name: '/body add|remove|set|reset|toggle|set-goal-channel|set-minutes-per-point', value: 'Správa bodového systému (Manage Server).' },
     );
 
   const auto = new EmbedBuilder()
