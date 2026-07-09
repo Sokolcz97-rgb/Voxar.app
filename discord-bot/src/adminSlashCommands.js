@@ -543,6 +543,7 @@ export function buildHelpEmbeds() {
       { name: 'Server stats', value: 'Aktualizace statistik (členové, online) v názvech kanálů.' },
       { name: 'Twitch / YouTube chat', value: 'Mostování chatu ze streamů do Discordu.' },
       { name: 'Status checks', value: 'Pravidelný ping URL → alert při výpadku.' },
+      { name: 'Bodový systém (voice)', value: 'Bot počítá čas členů ve voice a přiděluje body. Milníky se hlásí do zvoleného „goal“ kanálu.' },
     );
 
   return [general, mod, admin, auto];
