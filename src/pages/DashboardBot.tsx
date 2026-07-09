@@ -24,6 +24,7 @@ import { MultiRolePicker } from "@/components/MultiRolePicker";
 import { BotFaq } from "@/components/BotFaq";
 import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { MinecraftPanel } from "@/components/MinecraftPanel";
+import { PointsPanel } from "@/components/PointsPanel";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   Select,
@@ -646,6 +647,7 @@ const DashboardBot = () => {
               { v: "tickets", l: "Tickety" },
               { v: "status", l: "Status checks" },
               { v: "serverstats", l: "Server Stats" },
+              { v: "points", l: "Bodový systém" },
               { v: "games", l: "Games" },
               { v: "faq", l: "FAQ / Návod" },
             ].map((tab) => (
@@ -1046,6 +1048,10 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* GAMES */}
+          <TabsContent value="points" className="mt-4">
+            <PointsPanel guildId={guildIdOrNull()} isManager={isManager} />
+          </TabsContent>
+
           <TabsContent value="games" className="mt-4">
             <Tabs defaultValue="minecraft" className="space-y-4">
               <TabsList className="bg-card/40 border border-border">
