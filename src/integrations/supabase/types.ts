@@ -484,6 +484,120 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_points: {
+        Row: {
+          guild_id: string
+          last_milestone: number
+          points: number
+          total_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          guild_id: string
+          last_milestone?: number
+          points?: number
+          total_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          guild_id?: string
+          last_milestone?: number
+          points?: number
+          total_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bot_points_config: {
+        Row: {
+          announce_message: string
+          bonus_multiplier: number
+          bonus_role_ids: string[]
+          created_at: string
+          enabled: boolean
+          goal_channel_id: string | null
+          guild_id: string
+          ignore_afk: boolean
+          ignore_deafened: boolean
+          ignore_muted: boolean
+          ignored_channel_ids: string[]
+          milestones: number[]
+          min_members: number
+          minutes_per_point: number
+          repeat_every: number
+          updated_at: string
+        }
+        Insert: {
+          announce_message?: string
+          bonus_multiplier?: number
+          bonus_role_ids?: string[]
+          created_at?: string
+          enabled?: boolean
+          goal_channel_id?: string | null
+          guild_id: string
+          ignore_afk?: boolean
+          ignore_deafened?: boolean
+          ignore_muted?: boolean
+          ignored_channel_ids?: string[]
+          milestones?: number[]
+          min_members?: number
+          minutes_per_point?: number
+          repeat_every?: number
+          updated_at?: string
+        }
+        Update: {
+          announce_message?: string
+          bonus_multiplier?: number
+          bonus_role_ids?: string[]
+          created_at?: string
+          enabled?: boolean
+          goal_channel_id?: string | null
+          guild_id?: string
+          ignore_afk?: boolean
+          ignore_deafened?: boolean
+          ignore_muted?: boolean
+          ignored_channel_ids?: string[]
+          milestones?: number[]
+          min_members?: number
+          minutes_per_point?: number
+          repeat_every?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_points_log: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          delta: number
+          guild_id: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          delta: number
+          guild_id: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          delta?: number
+          guild_id?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bot_server_stats: {
         Row: {
           category_id: string | null
@@ -721,6 +835,27 @@ export type Database = {
           transcripts_enabled?: boolean
           updated_at?: string
           welcome_md?: string | null
+        }
+        Relationships: []
+      }
+      bot_voice_sessions: {
+        Row: {
+          channel_id: string
+          guild_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          guild_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          guild_id?: string
+          joined_at?: string
+          user_id?: string
         }
         Relationships: []
       }

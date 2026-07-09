@@ -110,6 +110,22 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
         ],
       },
       {
+        id: "points",
+        title: "Bodový systém (voice)",
+        items: [
+          { q: "Jak body fungují?", a: "Bot počítá čas členů v hlasových kanálech. Výchozí poměr je 1 bod = 10 minut ve voice (nastavitelné). Body se ukládají per server, nikoliv globálně." },
+          { q: "Jak se počítá čas?", a: "Bot startuje session při vstupu do voice a ukončuje ji při odchodu (nebo změně kanálu / muteu / deafenu, pokud máš tyto stavy nastavené jako ignorované). Každých 5 min se dělá průběžný checkpoint, aby dlouhé pobyty ve voice nestály na jednom balíku." },
+          { q: "Jak nastavím oznámení o milnících?", a: "Zvol „Goal kanál“ a doplň seznam milníků (např. „10, 100, 1000“). Když někdo hodnotu překročí, bot pošle zprávu podle šablony. Volitelně nastav „Opakovaný milník po X bodech“ — pak bot hlásí i každé násobky (např. 100, 200, 300…)." },
+          { q: "Můžu body ručně upravit (event, soutěž)?", a: "Ano. V panelu je karta „Ruční úprava bodů“ — zadej Discord ID uživatele a přidej / odeber / nastav / vynuluj body. Změny se zapisují do auditu (bot_points_log). To samé jde ze samotného Discordu příkazy /body add|remove|set|reset (Manage Server)." },
+          { q: "Jak si uživatel zobrazí své body?", a: "Napíše /body me. Pro cizí body /body user @jméno. Top 10 přes /body top. Konfiguraci ukáže /body config." },
+          { q: "Ignorovat mute / deafen / AFK", a: "Standardně bot nepočítá čas, když je uživatel mutovaný / deafenovaný nebo v AFK kanálu. Přepínače v panelu ti dovolí toto chování změnit." },
+          { q: "Minimum lidí v kanálu", a: "Aby se body nesbíraly samotou, nastav např. 2 — čas se počítá jen když je v kanálu aspoň tolik lidí (kontrola se dělá při vstupu)." },
+          { q: "Bonus role × násobitel", a: "Vyber role, které dostávají násobené body (např. Booster × 2). Násobič se aplikuje při zápisu — retroaktivně se staré body nepřepočítávají." },
+          { q: "Kdy se změny projeví?", a: "Bot cachuje konfiguraci 30 sekund, takže po uložení počkej krátkou chvíli." },
+          { q: "Jaká oprávnění bot potřebuje?", a: "„Connect“ + „View Channels“ pro sledování voice stavů. Pro oznámení milníků potřebuje „Send Messages“ v goal kanálu. Pokud nechceš, aby bot fyzicky připojoval do voice, není potřeba — sleduje jen stavy, nepřipojuje se." },
+        ],
+      },
+      {
         id: "games-minecraft",
         title: "Games → Minecraft",
         items: [
@@ -228,6 +244,22 @@ const FAQ: Record<Lang, { title: string; intro: string; sections: { id: string; 
           { q: "Permissions required", a: "Manage Channels — so the bot can create the category, channels, and rename them." },
           { q: "Can I have fewer than 4 stats?", a: "Yes — set unused slots to \"— off —\". Only enabled ones are created." },
           { q: "What does Web / Bot status show?", a: "Web shows UP or DOWN based on the Web maintenance toggle in Basics. Bot shows UP whenever it's running (if it goes down, values simply stop updating)." },
+        ],
+      },
+      {
+        id: "points",
+        title: "Voice points",
+        items: [
+          { q: "How do points work?", a: "The bot tracks how long members stay in voice channels. Default rate is 1 point per 10 minutes (configurable). Points are stored per server, not globally." },
+          { q: "How is time counted?", a: "A session starts when a user joins voice and ends when they leave / switch channel / go mute / go deaf (if you flagged those as ignored). A checkpoint runs every 5 minutes so long sessions get credited progressively." },
+          { q: "Milestone announcements", a: "Pick a goal channel and a list of milestones (e.g. \"10, 100, 1000\"). When a user crosses one, the bot posts using your template. You can also set \"Repeat every X points\" for periodic milestones (every 100, 200…)." },
+          { q: "Manual adjustments (events, contests)", a: "Use the \"Manual point adjustment\" card — enter the user's Discord ID and add / remove / set / reset. Everything is audit-logged. Same actions from Discord: /body add|remove|set|reset (Manage Server)." },
+          { q: "How does a user see their own points?", a: "/body me for own. /body user @name for someone else. /body top for the top 10. /body config for the current setup." },
+          { q: "Ignore mute / deafen / AFK", a: "By default the bot skips time when the user is muted, deafened or in the AFK channel. Switches in the panel let you change this." },
+          { q: "Minimum members in channel", a: "So people can't farm alone, set e.g. 2 — time counts only when at least that many people are in the channel (checked at session start)." },
+          { q: "Bonus roles × multiplier", a: "Pick roles that receive multiplied points (e.g. Booster × 2). Multiplier is applied at write time — old points aren't retroactively rescaled." },
+          { q: "When do config changes apply?", a: "The bot caches configuration for 30 seconds, so wait a moment after saving." },
+          { q: "Permissions", a: "\"Connect\" + \"View Channels\" to observe voice states. \"Send Messages\" in the goal channel for milestone posts. The bot does NOT need to join voice — it only watches state." },
         ],
       },
       {

@@ -11,6 +11,7 @@ import { supabase } from './supabase.js';
 import { getConfig } from './config.js';
 import { translateText } from './translate.js';
 import { ADMIN_DEFS, handleAdminSlashCommand, buildHelpEmbeds } from './adminSlashCommands.js';
+import { POINTS_DEFS, handlePointsSlash } from './voicePoints.js';
 
 // ---------------- Built-in slash commands ----------------
 
@@ -98,7 +99,7 @@ export async function registerGuildSlashCommands(client, guildId) {
     const appId = client.application?.id ?? client.user?.id;
     if (!token || !appId || !guildId) return;
     const custom = await buildCustomDefsForGuild(guildId);
-    const body = [...BUILTIN_DEFS, ...ADMIN_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
+    const body = [...BUILTIN_DEFS, ...ADMIN_DEFS, ...POINTS_DEFS, ...custom, ...CONTEXT_MENU_DEFS].map((c) => c.toJSON());
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(Routes.applicationGuildCommands(appId, guildId), { body });
     console.log(`🔧 Slash commands zaregistrovány pro ${guildId} (${body.length})`);
@@ -137,6 +138,10 @@ export async function handleSlashCommand(interaction) {
   // dostupné i v režimu údržby, aby šel bot ovládat bez dashboardu.
   const adminHandled = await handleAdminSlashCommand(interaction);
   if (adminHandled) return true;
+
+  // /body – bodový systém (view + admin)
+  const pointsHandled = await handlePointsSlash(interaction);
+  if (pointsHandled) return true;
 
   // Maintenance kill-switch (po admin commandech, aby admin mohl údržbu vypnout)
   if (guildId) {

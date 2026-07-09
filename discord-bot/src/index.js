@@ -14,6 +14,7 @@ import { startCommandsRealtime } from './commandsRealtime.js';
 import { startServerStats } from './serverStats.js';
 import { startTwitchChat } from './twitchChat.js';
 import { startYouTubeChat } from './youtubeChat.js';
+import { initVoicePoints, handleVoiceStateUpdate } from './voicePoints.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -29,6 +30,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.DirectMessages,
   ],
   partials: [Partials.Channel, Partials.Message, Partials.GuildMember, Partials.Reaction, Partials.User],
@@ -44,6 +46,7 @@ client.once('clientReady', async () => {
   startServerStats(client);
   startTwitchChat().catch((e) => console.error('startTwitchChat', e?.message || e));
   startYouTubeChat().catch((e) => console.error('startYouTubeChat', e?.message || e));
+  initVoicePoints(client).catch((e) => console.error('initVoicePoints', e?.message || e));
   // Setup ticket panels + slash commandy pro schválené guildy
   for (const guild of client.guilds.cache.values()) {
     if (await isGuildApproved(guild.id)) {
@@ -124,6 +127,10 @@ client.on('guildMemberAdd', async (member) => {
   } catch (e) {
     console.error('guildMemberAdd', e);
   }
+});
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+  handleVoiceStateUpdate(oldState, newState);
 });
 
 // Translate via flag reaction → post translation into a thread, then remove the reaction
