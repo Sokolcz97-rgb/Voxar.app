@@ -43,6 +43,7 @@ import AdminStats from "./pages/AdminStats.tsx";
 import DiscordOAuthComplete from "./pages/DiscordOAuthComplete.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
+import Orders from "./pages/Orders.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -86,6 +87,7 @@ const AppRoutes = () => {
       <Route path="/novinky" element={<Novinky />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
