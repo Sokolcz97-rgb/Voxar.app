@@ -161,8 +161,7 @@ const Messages = () => {
     });
 
     if (user) {
-      supabase.from("messages").update({ read_at: new Date().toISOString() })
-        .eq("conversation_id", activeId).neq("sender_id", user.id).is("read_at", null)
+      (supabase.rpc as any)("mark_conversation_read", { _conversation_id: activeId })
         .then(() => { window.dispatchEvent(new Event("messages:read")); });
     }
 
@@ -175,8 +174,8 @@ const Messages = () => {
           setMessages((prev) => prev.find((m) => m.id === msg.id) ? prev : [...prev, msg]);
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
           if (user && msg.sender_id !== user.id) {
-            supabase.from("messages").update({ read_at: new Date().toISOString() })
-              .eq("id", msg.id).then(() => { window.dispatchEvent(new Event("messages:read")); });
+            (supabase.rpc as any)("mark_message_read", { _message_id: msg.id })
+              .then(() => { window.dispatchEvent(new Event("messages:read")); });
           }
         }
       ).subscribe();
