@@ -2259,6 +2259,10 @@ export type Database = {
         Args: { _guild_id: string; _user_id: string }
         Returns: boolean
       }
+      mark_conversation_read: {
+        Args: { _conversation_id: string }
+        Returns: number
+      }
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
