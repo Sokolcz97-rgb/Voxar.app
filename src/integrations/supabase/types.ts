@@ -1531,6 +1531,51 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          price: number | null
+          status: Database["public"]["Enums"]["order_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["order_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["order_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           created_at: string
@@ -2220,6 +2265,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "editor" | "user" | "banned" | "content_creator"
       bot_guild_status: "pending" | "approved" | "rejected" | "suspended"
+      order_status: "paid" | "done" | "processing" | "cancelled" | "paused"
       server_connection_type: "ip_port" | "invite_code"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
@@ -2352,6 +2398,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "editor", "user", "banned", "content_creator"],
       bot_guild_status: ["pending", "approved", "rejected", "suspended"],
+      order_status: ["paid", "done", "processing", "cancelled", "paused"],
       server_connection_type: ["ip_port", "invite_code"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
