@@ -527,6 +527,7 @@ export type Database = {
           milestones: number[]
           min_members: number
           minutes_per_point: number
+          public_leaderboard: boolean
           repeat_every: number
           updated_at: string
         }
@@ -545,6 +546,7 @@ export type Database = {
           milestones?: number[]
           min_members?: number
           minutes_per_point?: number
+          public_leaderboard?: boolean
           repeat_every?: number
           updated_at?: string
         }
@@ -563,6 +565,7 @@ export type Database = {
           milestones?: number[]
           min_members?: number
           minutes_per_point?: number
+          public_leaderboard?: boolean
           repeat_every?: number
           updated_at?: string
         }
