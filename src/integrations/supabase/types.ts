@@ -1885,6 +1885,12 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          contact_address: string | null
+          contact_full_name: string | null
+          contact_ico: string | null
+          contact_registration: string | null
+          contact_section_title: string | null
+          contact_zip: string | null
           favicon_url: string | null
           footer_text: string | null
           hero_badge: string | null
@@ -1904,6 +1910,12 @@ export type Database = {
           web_tickets_notify_channel_id: string | null
         }
         Insert: {
+          contact_address?: string | null
+          contact_full_name?: string | null
+          contact_ico?: string | null
+          contact_registration?: string | null
+          contact_section_title?: string | null
+          contact_zip?: string | null
           favicon_url?: string | null
           footer_text?: string | null
           hero_badge?: string | null
@@ -1923,6 +1935,12 @@ export type Database = {
           web_tickets_notify_channel_id?: string | null
         }
         Update: {
+          contact_address?: string | null
+          contact_full_name?: string | null
+          contact_ico?: string | null
+          contact_registration?: string | null
+          contact_section_title?: string | null
+          contact_zip?: string | null
           favicon_url?: string | null
           footer_text?: string | null
           hero_badge?: string | null
@@ -2231,6 +2249,12 @@ export type Database = {
       get_public_site_settings: {
         Args: never
         Returns: {
+          contact_address: string
+          contact_full_name: string
+          contact_ico: string
+          contact_registration: string
+          contact_section_title: string
+          contact_zip: string
           favicon_url: string
           footer_text: string
           hero_badge: string
