@@ -206,16 +206,56 @@ const Index = () => {
       </main>
 
       <footer className="border-t border-border/60 py-8">
-        <div className="container flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
-          <div>
-            <span className="font-display tracking-widest">{settings.site_name}</span>{" "}
-            {settings.footer_text || `© 2026 — ${t("home.footer.tagline")}`}
+        <div className="container space-y-6">
+          {(settings.contact_full_name || settings.contact_address || settings.contact_zip || settings.contact_ico || settings.contact_registration) && (
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-display font-bold text-lg text-foreground mb-3">
+                {settings.contact_section_title || "Kontakt a informace"}
+              </h2>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-muted-foreground">
+                {settings.contact_full_name && (
+                  <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
+                    <dt className="font-medium text-foreground">Jméno a Příjmení:</dt>
+                    <dd>{settings.contact_full_name}</dd>
+                  </div>
+                )}
+                {settings.contact_address && (
+                  <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
+                    <dt className="font-medium text-foreground">Adresa:</dt>
+                    <dd>{settings.contact_address}</dd>
+                  </div>
+                )}
+                {settings.contact_zip && (
+                  <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
+                    <dt className="font-medium text-foreground">PSČ:</dt>
+                    <dd>{settings.contact_zip}</dd>
+                  </div>
+                )}
+                {settings.contact_ico && (
+                  <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
+                    <dt className="font-medium text-foreground">IČO:</dt>
+                    <dd>{settings.contact_ico}</dd>
+                  </div>
+                )}
+              </dl>
+              {settings.contact_registration && (
+                <p className="text-xs text-muted-foreground mt-3 whitespace-pre-line">
+                  {settings.contact_registration}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
+            <div>
+              <span className="font-display tracking-widest">{settings.site_name}</span>{" "}
+              {settings.footer_text || `© 2026 — ${t("home.footer.tagline")}`}
+            </div>
+            <nav className="flex items-center gap-4">
+              <a href="/terms" className="hover:text-primary transition-colors">{t("home.footer.terms")}</a>
+              <span className="opacity-40">·</span>
+              <a href="/privacy" className="hover:text-primary transition-colors">{t("home.footer.privacy")}</a>
+            </nav>
           </div>
-          <nav className="flex items-center gap-4">
-            <a href="/terms" className="hover:text-primary transition-colors">{t("home.footer.terms")}</a>
-            <span className="opacity-40">·</span>
-            <a href="/privacy" className="hover:text-primary transition-colors">{t("home.footer.privacy")}</a>
-          </nav>
         </div>
       </footer>
       <EditPageButton slug="home" />
