@@ -16,6 +16,12 @@ export type SiteSettings = {
   web_tickets_guild_id: string | null;
   web_tickets_category_id: string | null;
   web_tickets_notify_channel_id: string | null;
+  contact_section_title: string | null;
+  contact_full_name: string | null;
+  contact_address: string | null;
+  contact_zip: string | null;
+  contact_ico: string | null;
+  contact_registration: string | null;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -34,6 +40,12 @@ const DEFAULTS: SiteSettings = {
   web_tickets_guild_id: null,
   web_tickets_category_id: null,
   web_tickets_notify_channel_id: null,
+  contact_section_title: "Kontakt a informace",
+  contact_full_name: null,
+  contact_address: null,
+  contact_zip: null,
+  contact_ico: null,
+  contact_registration: null,
 };
 
 type Ctx = {
