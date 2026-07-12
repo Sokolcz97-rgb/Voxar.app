@@ -73,6 +73,8 @@ const AdminSiteSettings = () => {
       contact_zip: form.contact_zip,
       contact_ico: form.contact_ico,
       contact_registration: form.contact_registration,
+      contact_phone_dial_code: form.contact_phone_dial_code,
+      contact_phone_number: form.contact_phone_number,
       updated_by: user?.id ?? null,
     };
     const { error } = await supabase
@@ -260,6 +262,54 @@ const AdminSiteSettings = () => {
               onChange={(e) => update("contact_ico", e.target.value)}
               placeholder="12345678"
             />
+          </div>
+          <div>
+            <Label>Telefon</Label>
+            <div className="flex gap-2">
+              <Select
+                value={form.contact_phone_dial_code || "+420"}
+                onValueChange={(v) => update("contact_phone_dial_code", v)}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Předvolba" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {[
+                    ["+420", "🇨🇿 CZ +420"],
+                    ["+421", "🇸🇰 SK +421"],
+                    ["+43", "🇦🇹 AT +43"],
+                    ["+49", "🇩🇪 DE +49"],
+                    ["+48", "🇵🇱 PL +48"],
+                    ["+36", "🇭🇺 HU +36"],
+                    ["+44", "🇬🇧 UK +44"],
+                    ["+33", "🇫🇷 FR +33"],
+                    ["+34", "🇪🇸 ES +34"],
+                    ["+39", "🇮🇹 IT +39"],
+                    ["+31", "🇳🇱 NL +31"],
+                    ["+32", "🇧🇪 BE +32"],
+                    ["+41", "🇨🇭 CH +41"],
+                    ["+45", "🇩🇰 DK +45"],
+                    ["+46", "🇸🇪 SE +46"],
+                    ["+47", "🇳🇴 NO +47"],
+                    ["+351", "🇵🇹 PT +351"],
+                    ["+353", "🇮🇪 IE +353"],
+                    ["+380", "🇺🇦 UA +380"],
+                    ["+1", "🇺🇸 US/CA +1"],
+                  ].map(([v, l]) => (
+                    <SelectItem key={v} value={v}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                className="flex-1"
+                value={form.contact_phone_number ?? ""}
+                onChange={(e) => update("contact_phone_number", e.target.value)}
+                placeholder="777 123 456"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Vyber předvolbu a zadej zbytek čísla. Zobrazí se v patičce jako klikací odkaz.
+            </p>
           </div>
           <div>
             <Label>Údaj o zápisu</Label>
