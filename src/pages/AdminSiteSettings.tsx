@@ -67,6 +67,12 @@ const AdminSiteSettings = () => {
       web_tickets_guild_id: form.web_tickets_guild_id,
       web_tickets_category_id: form.web_tickets_category_id,
       web_tickets_notify_channel_id: form.web_tickets_notify_channel_id,
+      contact_section_title: form.contact_section_title,
+      contact_full_name: form.contact_full_name,
+      contact_address: form.contact_address,
+      contact_zip: form.contact_zip,
+      contact_ico: form.contact_ico,
+      contact_registration: form.contact_registration,
       updated_by: user?.id ?? null,
     };
     const { error } = await supabase
