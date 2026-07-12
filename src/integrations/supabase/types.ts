@@ -1888,6 +1888,8 @@ export type Database = {
           contact_address: string | null
           contact_full_name: string | null
           contact_ico: string | null
+          contact_phone_dial_code: string | null
+          contact_phone_number: string | null
           contact_registration: string | null
           contact_section_title: string | null
           contact_zip: string | null
@@ -1913,6 +1915,8 @@ export type Database = {
           contact_address?: string | null
           contact_full_name?: string | null
           contact_ico?: string | null
+          contact_phone_dial_code?: string | null
+          contact_phone_number?: string | null
           contact_registration?: string | null
           contact_section_title?: string | null
           contact_zip?: string | null
@@ -1938,6 +1942,8 @@ export type Database = {
           contact_address?: string | null
           contact_full_name?: string | null
           contact_ico?: string | null
+          contact_phone_dial_code?: string | null
+          contact_phone_number?: string | null
           contact_registration?: string | null
           contact_section_title?: string | null
           contact_zip?: string | null
@@ -2252,6 +2258,8 @@ export type Database = {
           contact_address: string
           contact_full_name: string
           contact_ico: string
+          contact_phone_dial_code: string
+          contact_phone_number: string
           contact_registration: string
           contact_section_title: string
           contact_zip: string
