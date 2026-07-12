@@ -22,6 +22,8 @@ export type SiteSettings = {
   contact_zip: string | null;
   contact_ico: string | null;
   contact_registration: string | null;
+  contact_phone_dial_code: string | null;
+  contact_phone_number: string | null;
 };
 
 const DEFAULTS: SiteSettings = {
