@@ -73,6 +73,8 @@ const AdminSiteSettings = () => {
       contact_zip: form.contact_zip,
       contact_ico: form.contact_ico,
       contact_registration: form.contact_registration,
+      contact_phone_dial_code: form.contact_phone_dial_code,
+      contact_phone_number: form.contact_phone_number,
       updated_by: user?.id ?? null,
     };
     const { error } = await supabase
