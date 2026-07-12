@@ -207,7 +207,7 @@ const Index = () => {
 
       <footer className="border-t border-border/60 py-8">
         <div className="container space-y-6">
-          {(settings.contact_full_name || settings.contact_address || settings.contact_zip || settings.contact_ico || settings.contact_registration) && (
+          {(settings.contact_full_name || settings.contact_address || settings.contact_zip || settings.contact_ico || settings.contact_registration || settings.contact_phone_number) && (
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-display font-bold text-lg text-foreground mb-3">
                 {settings.contact_section_title || "Kontakt a informace"}
@@ -235,6 +235,19 @@ const Index = () => {
                   <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
                     <dt className="font-medium text-foreground">IČO:</dt>
                     <dd>{settings.contact_ico}</dd>
+                  </div>
+                )}
+                {settings.contact_phone_number && (
+                  <div className="flex flex-col sm:flex-row sm:gap-2 sm:justify-center">
+                    <dt className="font-medium text-foreground">Telefon:</dt>
+                    <dd>
+                      <a
+                        href={`tel:${(settings.contact_phone_dial_code || "").replace(/\s+/g, "")}${settings.contact_phone_number.replace(/\s+/g, "")}`}
+                        className="hover:text-primary transition-colors"
+                      >
+                        {(settings.contact_phone_dial_code || "").trim()} {settings.contact_phone_number}
+                      </a>
+                    </dd>
                   </div>
                 )}
               </dl>
