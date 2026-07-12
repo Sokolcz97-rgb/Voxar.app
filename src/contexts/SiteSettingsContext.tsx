@@ -48,6 +48,8 @@ const DEFAULTS: SiteSettings = {
   contact_zip: null,
   contact_ico: null,
   contact_registration: null,
+  contact_phone_dial_code: "+420",
+  contact_phone_number: null,
 };
 
 type Ctx = {
