@@ -216,6 +216,62 @@ const AdminSiteSettings = () => {
           </div>
         </Card>
 
+        <Card className="glass border-border p-6 space-y-5 mb-5">
+          <h2 className="font-display font-bold text-xl">Kontakt a informace (patička)</h2>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Zobrazí se v patičce webu. Prázdná pole se nevykreslí.
+          </p>
+          <div>
+            <Label>Nadpis sekce</Label>
+            <Input
+              value={form.contact_section_title ?? ""}
+              onChange={(e) => update("contact_section_title", e.target.value)}
+              placeholder="Kontakt a informace"
+            />
+          </div>
+          <div>
+            <Label>Jméno a Příjmení</Label>
+            <Input
+              value={form.contact_full_name ?? ""}
+              onChange={(e) => update("contact_full_name", e.target.value)}
+              placeholder="Jan Novák"
+            />
+          </div>
+          <div>
+            <Label>Adresa</Label>
+            <Input
+              value={form.contact_address ?? ""}
+              onChange={(e) => update("contact_address", e.target.value)}
+              placeholder="Ulice 123, Město"
+            />
+          </div>
+          <div>
+            <Label>PSČ</Label>
+            <Input
+              value={form.contact_zip ?? ""}
+              onChange={(e) => update("contact_zip", e.target.value)}
+              placeholder="123 45"
+            />
+          </div>
+          <div>
+            <Label>IČO</Label>
+            <Input
+              value={form.contact_ico ?? ""}
+              onChange={(e) => update("contact_ico", e.target.value)}
+              placeholder="12345678"
+            />
+          </div>
+          <div>
+            <Label>Údaj o zápisu</Label>
+            <Textarea
+              rows={2}
+              value={form.contact_registration ?? ""}
+              onChange={(e) => update("contact_registration", e.target.value)}
+              placeholder="Zapsán v živnostenském rejstříku…"
+            />
+          </div>
+        </Card>
+
         <Card className="glass border-border p-6 space-y-5">
           <h2 className="font-display font-bold text-xl">Synchronizace ticketů s Discordem</h2>
 
