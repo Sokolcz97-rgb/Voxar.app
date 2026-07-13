@@ -10,11 +10,14 @@ interface InlineEditorState {
   slug: string | null;
   blocks: Block[];
   selectedId: string | null;
+  settingsOpen: boolean;
   dirty: boolean;
   device: "desktop" | "tablet" | "mobile";
   start: (pageId: string, slug: string, blocks: Block[]) => void;
   exit: () => void;
   setSelected: (id: string | null) => void;
+  openSettings: (id: string) => void;
+  closeSettings: () => void;
   setDevice: (d: "desktop" | "tablet" | "mobile") => void;
   addBlock: (type: BlockType, atIndex?: number) => void;
   updateBlock: (b: Block) => void;
