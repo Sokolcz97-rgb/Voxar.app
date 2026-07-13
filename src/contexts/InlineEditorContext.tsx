@@ -36,19 +36,24 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
   const [slug, setSlug] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
   const start = useCallback((id: string, s: string, init: Block[]) => {
-    setPageId(id); setSlug(s); setBlocks(init); setSelectedId(null);
+    setPageId(id); setSlug(s); setBlocks(init); setSelectedId(null); setSettingsOpen(false);
     setDirty(false); setDevice("desktop"); setActive(true);
   }, []);
 
   const exit = useCallback(() => {
     if (dirty && !confirm("Máš neuložené změny. Opravdu zavřít editor?")) return;
-    setActive(false); setPageId(null); setSlug(null); setBlocks([]); setSelectedId(null); setDirty(false);
+    setActive(false); setPageId(null); setSlug(null); setBlocks([]); setSelectedId(null); setSettingsOpen(false); setDirty(false);
   }, [dirty]);
+
+  const openSettings = useCallback((id: string) => { setSelectedId(id); setSettingsOpen(true); }, []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+
 
   const update = useCallback((next: Block[]) => { setBlocks(next); setDirty(true); }, []);
 
