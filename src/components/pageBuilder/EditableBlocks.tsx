@@ -50,14 +50,6 @@ function EditableBlock({ block, index }: { block: Block; index: number }) {
             title="Upravit obsah / nastavení (nebo poklepej na blok)">
             <Settings2 className="h-4 w-4" />
           </button>
-          <button onClick={(e) => {
-              e.stopPropagation();
-              if (confirm("Smazat blok?")) removeBlock(block.id);
-            }}
-            className="p-1.5 rounded bg-card border border-border hover:border-destructive hover:text-destructive"
-            title="Smazat">
-            <Trash2 className="h-4 w-4" />
-          </button>
         </div>
       )}
     </div>
