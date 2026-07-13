@@ -62,6 +62,7 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
     if (atIndex === undefined) update([...blocks, nb]);
     else update([...blocks.slice(0, atIndex), nb, ...blocks.slice(atIndex)]);
     setSelectedId(nb.id);
+    setSettingsOpen(true);
   }, [blocks, update]);
 
   const updateBlock = useCallback((b: Block) => {
