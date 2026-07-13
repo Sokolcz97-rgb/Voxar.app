@@ -9,7 +9,7 @@ import { BLOCK_LABELS } from "@/lib/pageBuilder/types";
  * Used only when editor is active.
  */
 function EditableBlock({ block, index }: { block: Block; index: number }) {
-  const { selectedId, setSelected, openSettings, removeBlock, moveBlock, blocks } = useInlineEditor();
+  const { selectedId, setSelected, openSettings, moveBlock, blocks } = useInlineEditor();
   const isSelected = selectedId === block.id;
   const last = index === blocks.length - 1;
 
