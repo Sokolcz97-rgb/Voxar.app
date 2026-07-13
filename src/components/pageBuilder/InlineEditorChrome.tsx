@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { X, Save, Eye, Monitor, Tablet, Smartphone, Loader2 } from "lucide-react";
+import { X, Save, Eye, Monitor, Tablet, Smartphone, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import { BlockPalette } from "./BlockPalette";
 import { BlockSettings } from "./BlockSettings";
-import type { BlockType } from "@/lib/pageBuilder/types";
+import { BLOCK_LABELS, type BlockType } from "@/lib/pageBuilder/types";
 
 const DEVICE_WIDTHS = { desktop: "100%", tablet: "820px", mobile: "390px" };
 
