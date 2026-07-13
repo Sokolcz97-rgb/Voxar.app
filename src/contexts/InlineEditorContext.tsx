@@ -115,11 +115,11 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
   }, [active, dirty]);
 
   const value = useMemo<InlineEditorState>(() => ({
-    active, pageId, slug, blocks, selectedId, dirty, device,
-    start, exit, setSelected: setSelectedId, setDevice,
+    active, pageId, slug, blocks, selectedId, settingsOpen, dirty, device,
+    start, exit, setSelected: setSelectedId, openSettings, closeSettings, setDevice,
     addBlock, updateBlock, removeBlock, moveBlock,
     saveDraft, publish, saving,
-  }), [active, pageId, slug, blocks, selectedId, dirty, device, start, exit,
+  }), [active, pageId, slug, blocks, selectedId, settingsOpen, dirty, device, start, exit, openSettings, closeSettings,
        addBlock, updateBlock, removeBlock, moveBlock, saveDraft, publish, saving]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
