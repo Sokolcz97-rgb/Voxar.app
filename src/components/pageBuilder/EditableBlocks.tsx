@@ -9,7 +9,7 @@ import { BLOCK_LABELS } from "@/lib/pageBuilder/types";
  * Used only when editor is active.
  */
 function EditableBlock({ block, index }: { block: Block; index: number }) {
-  const { selectedId, setSelected, removeBlock, moveBlock, blocks } = useInlineEditor();
+  const { selectedId, setSelected, openSettings, removeBlock, moveBlock, blocks } = useInlineEditor();
   const isSelected = selectedId === block.id;
   const last = index === blocks.length - 1;
 
@@ -21,6 +21,7 @@ function EditableBlock({ block, index }: { block: Block; index: number }) {
           : "outline outline-2 outline-transparent hover:outline-primary/40 hover:outline-offset-2 rounded-sm"
       }`}
       onClick={(e) => { e.stopPropagation(); setSelected(block.id); }}
+      onDoubleClick={(e) => { e.stopPropagation(); openSettings(block.id); }}
     >
       <BlockRenderer block={block} />
 
@@ -44,9 +45,9 @@ function EditableBlock({ block, index }: { block: Block; index: number }) {
             title="Přesunout dolů">
             <ChevronDown className="h-4 w-4" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setSelected(block.id); }}
+          <button onClick={(e) => { e.stopPropagation(); openSettings(block.id); }}
             className="p-1.5 rounded bg-card border border-border hover:border-primary"
-            title="Nastavení">
+            title="Upravit obsah / nastavení (nebo poklepej na blok)">
             <Settings2 className="h-4 w-4" />
           </button>
           <button onClick={(e) => {

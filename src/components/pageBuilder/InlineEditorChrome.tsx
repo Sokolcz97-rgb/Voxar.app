@@ -93,7 +93,7 @@ export function InlineEditorChrome() {
       </aside>
 
       {/* SETTINGS SHEET (right) */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && ed.setSelected(null)}>
+      <Sheet open={ed.settingsOpen && !!selected} onOpenChange={(o) => { if (!o) ed.closeSettings(); }}>
         <SheetContent side="right" className="w-[380px] sm:w-[420px] z-[120]">
           <SheetHeader><SheetTitle>Nastavení bloku</SheetTitle></SheetHeader>
           {selected && (

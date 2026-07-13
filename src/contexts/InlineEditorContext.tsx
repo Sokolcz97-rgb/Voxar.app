@@ -10,11 +10,14 @@ interface InlineEditorState {
   slug: string | null;
   blocks: Block[];
   selectedId: string | null;
+  settingsOpen: boolean;
   dirty: boolean;
   device: "desktop" | "tablet" | "mobile";
   start: (pageId: string, slug: string, blocks: Block[]) => void;
   exit: () => void;
   setSelected: (id: string | null) => void;
+  openSettings: (id: string) => void;
+  closeSettings: () => void;
   setDevice: (d: "desktop" | "tablet" | "mobile") => void;
   addBlock: (type: BlockType, atIndex?: number) => void;
   updateBlock: (b: Block) => void;
@@ -33,19 +36,24 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
   const [slug, setSlug] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
 
   const start = useCallback((id: string, s: string, init: Block[]) => {
-    setPageId(id); setSlug(s); setBlocks(init); setSelectedId(null);
+    setPageId(id); setSlug(s); setBlocks(init); setSelectedId(null); setSettingsOpen(false);
     setDirty(false); setDevice("desktop"); setActive(true);
   }, []);
 
   const exit = useCallback(() => {
     if (dirty && !confirm("Máš neuložené změny. Opravdu zavřít editor?")) return;
-    setActive(false); setPageId(null); setSlug(null); setBlocks([]); setSelectedId(null); setDirty(false);
+    setActive(false); setPageId(null); setSlug(null); setBlocks([]); setSelectedId(null); setSettingsOpen(false); setDirty(false);
   }, [dirty]);
+
+  const openSettings = useCallback((id: string) => { setSelectedId(id); setSettingsOpen(true); }, []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+
 
   const update = useCallback((next: Block[]) => { setBlocks(next); setDirty(true); }, []);
 
@@ -54,6 +62,7 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
     if (atIndex === undefined) update([...blocks, nb]);
     else update([...blocks.slice(0, atIndex), nb, ...blocks.slice(atIndex)]);
     setSelectedId(nb.id);
+    setSettingsOpen(true);
   }, [blocks, update]);
 
   const updateBlock = useCallback((b: Block) => {
@@ -107,11 +116,11 @@ export function InlineEditorProvider({ children }: { children: React.ReactNode }
   }, [active, dirty]);
 
   const value = useMemo<InlineEditorState>(() => ({
-    active, pageId, slug, blocks, selectedId, dirty, device,
-    start, exit, setSelected: setSelectedId, setDevice,
+    active, pageId, slug, blocks, selectedId, settingsOpen, dirty, device,
+    start, exit, setSelected: setSelectedId, openSettings, closeSettings, setDevice,
     addBlock, updateBlock, removeBlock, moveBlock,
     saveDraft, publish, saving,
-  }), [active, pageId, slug, blocks, selectedId, dirty, device, start, exit,
+  }), [active, pageId, slug, blocks, selectedId, settingsOpen, dirty, device, start, exit, openSettings, closeSettings,
        addBlock, updateBlock, removeBlock, moveBlock, saveDraft, publish, saving]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
