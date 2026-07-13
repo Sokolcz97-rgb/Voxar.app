@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown, Trash2, Plus, Settings2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Settings2 } from "lucide-react";
 import type { Block } from "@/lib/pageBuilder/types";
 import { BlockRenderer } from "@/lib/pageBuilder/BlockRenderer";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
