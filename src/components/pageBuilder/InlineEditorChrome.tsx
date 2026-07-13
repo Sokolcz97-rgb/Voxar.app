@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { X, Save, Eye, Monitor, Tablet, Smartphone, Loader2 } from "lucide-react";
+import { X, Save, Eye, Monitor, Tablet, Smartphone, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import { BlockPalette } from "./BlockPalette";
 import { BlockSettings } from "./BlockSettings";
-import type { BlockType } from "@/lib/pageBuilder/types";
+import { BLOCK_LABELS, type BlockType } from "@/lib/pageBuilder/types";
 
 const DEVICE_WIDTHS = { desktop: "100%", tablet: "820px", mobile: "390px" };
 
@@ -94,12 +94,35 @@ export function InlineEditorChrome() {
 
       {/* SETTINGS SHEET (right) */}
       <Sheet open={ed.settingsOpen && !!selected} onOpenChange={(o) => { if (!o) ed.closeSettings(); }}>
-        <SheetContent side="right" className="w-[380px] sm:w-[420px] z-[120]">
-          <SheetHeader><SheetTitle>Nastavení bloku</SheetTitle></SheetHeader>
+        <SheetContent side="right" className="w-[380px] sm:w-[420px] z-[120] flex flex-col p-0">
+          <SheetHeader className="px-6 pt-6 pb-3 border-b border-border">
+            <SheetTitle>Nastavení bloku</SheetTitle>
+            {selected && (
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                {BLOCK_LABELS[selected.type]}
+              </p>
+            )}
+          </SheetHeader>
           {selected && (
-            <ScrollArea className="h-[calc(100vh-80px)] mt-4 pr-4">
-              <BlockSettings block={selected} onChange={ed.updateBlock} />
-            </ScrollArea>
+            <>
+              <ScrollArea className="flex-1 px-6 py-4">
+                <BlockSettings block={selected} onChange={ed.updateBlock} />
+              </ScrollArea>
+              <div className="border-t border-border p-4">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    if (confirm("Smazat tento blok?")) {
+                      ed.removeBlock(selected.id);
+                      ed.closeSettings();
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Smazat blok
+                </Button>
+              </div>
+            </>
           )}
         </SheetContent>
       </Sheet>

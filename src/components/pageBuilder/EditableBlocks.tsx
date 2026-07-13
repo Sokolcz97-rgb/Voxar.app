@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown, Trash2, Plus, Settings2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Settings2 } from "lucide-react";
 import type { Block } from "@/lib/pageBuilder/types";
 import { BlockRenderer } from "@/lib/pageBuilder/BlockRenderer";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
@@ -9,7 +9,7 @@ import { BLOCK_LABELS } from "@/lib/pageBuilder/types";
  * Used only when editor is active.
  */
 function EditableBlock({ block, index }: { block: Block; index: number }) {
-  const { selectedId, setSelected, openSettings, removeBlock, moveBlock, blocks } = useInlineEditor();
+  const { selectedId, setSelected, openSettings, moveBlock, blocks } = useInlineEditor();
   const isSelected = selectedId === block.id;
   const last = index === blocks.length - 1;
 
@@ -49,14 +49,6 @@ function EditableBlock({ block, index }: { block: Block; index: number }) {
             className="p-1.5 rounded bg-card border border-border hover:border-primary"
             title="Upravit obsah / nastavení (nebo poklepej na blok)">
             <Settings2 className="h-4 w-4" />
-          </button>
-          <button onClick={(e) => {
-              e.stopPropagation();
-              if (confirm("Smazat blok?")) removeBlock(block.id);
-            }}
-            className="p-1.5 rounded bg-card border border-border hover:border-destructive hover:text-destructive"
-            title="Smazat">
-            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       )}
