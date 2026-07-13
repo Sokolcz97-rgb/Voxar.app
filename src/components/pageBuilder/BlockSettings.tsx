@@ -19,13 +19,13 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
           <div><Label>Úroveň</Label>
             <Select value={String(block.level)} onValueChange={(v) => set({ level: Number(v) as 1 | 2 | 3 } as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="1">H1</SelectItem><SelectItem value="2">H2</SelectItem><SelectItem value="3">H3</SelectItem></SelectContent>
+              <SelectContent className="z-[130]"><SelectItem value="1">H1</SelectItem><SelectItem value="2">H2</SelectItem><SelectItem value="3">H3</SelectItem></SelectContent>
             </Select>
           </div>
           <div><Label>Zarovnání</Label>
             <Select value={block.align} onValueChange={(v) => set({ align: v as any } as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
+              <SelectContent className="z-[130]"><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
             </Select>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
         <div><Label>Zarovnání</Label>
           <Select value={block.align} onValueChange={(v) => set({ align: v as any } as any)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
+            <SelectContent className="z-[130]"><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
           </Select>
         </div>
       </div>
@@ -65,13 +65,13 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
           <div><Label>Styl</Label>
             <Select value={block.variant} onValueChange={(v) => set({ variant: v as any } as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="default">Plný</SelectItem><SelectItem value="outline">Obrys</SelectItem><SelectItem value="secondary">Sekundární</SelectItem></SelectContent>
+              <SelectContent className="z-[130]"><SelectItem value="default">Plný</SelectItem><SelectItem value="outline">Obrys</SelectItem><SelectItem value="secondary">Sekundární</SelectItem></SelectContent>
             </Select>
           </div>
           <div><Label>Zarovnání</Label>
             <Select value={block.align} onValueChange={(v) => set({ align: v as any } as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
+              <SelectContent className="z-[130]"><SelectItem value="left">Vlevo</SelectItem><SelectItem value="center">Na střed</SelectItem><SelectItem value="right">Vpravo</SelectItem></SelectContent>
             </Select>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
     return <div><Label>Styl</Label>
       <Select value={block.style} onValueChange={(v) => set({ style: v as any } as any)}>
         <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent><SelectItem value="solid">Plná čára</SelectItem><SelectItem value="dashed">Přerušovaná</SelectItem><SelectItem value="glow">Neonová</SelectItem></SelectContent>
+        <SelectContent className="z-[130]"><SelectItem value="solid">Plná čára</SelectItem><SelectItem value="dashed">Přerušovaná</SelectItem><SelectItem value="glow">Neonová</SelectItem></SelectContent>
       </Select>
     </div>;
   }
@@ -110,7 +110,7 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
         <div><Label>Poměr stran</Label>
           <Select value={block.ratio} onValueChange={(v) => set({ ratio: v as any } as any)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="16:9">16:9</SelectItem><SelectItem value="4:3">4:3</SelectItem><SelectItem value="1:1">1:1</SelectItem></SelectContent>
+            <SelectContent className="z-[130]"><SelectItem value="16:9">16:9</SelectItem><SelectItem value="4:3">4:3</SelectItem><SelectItem value="1:1">1:1</SelectItem></SelectContent>
           </Select>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
         <div><Label>Sloupců</Label>
           <Select value={String(block.columns)} onValueChange={(v) => set({ columns: Number(v) as 2 | 3 | 4 } as any)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="2">2</SelectItem><SelectItem value="3">3</SelectItem><SelectItem value="4">4</SelectItem></SelectContent>
+            <SelectContent className="z-[130]"><SelectItem value="2">2</SelectItem><SelectItem value="3">3</SelectItem><SelectItem value="4">4</SelectItem></SelectContent>
           </Select>
         </div>
         {block.items.map((it) => (
@@ -201,7 +201,7 @@ export function BlockSettings({ block, onChange }: { block: Block; onChange: (b:
         <div><Label>Pozadí</Label>
           <Select value={block.background} onValueChange={(v) => set({ background: v as any } as any)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[130]">
               <SelectItem value="none">Bez pozadí</SelectItem>
               <SelectItem value="muted">Tlumené</SelectItem>
               <SelectItem value="primary">Primární barva</SelectItem>
