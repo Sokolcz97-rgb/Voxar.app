@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
   Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
+  Package, ClipboardList,
 } from "lucide-react";
 
 type Section = {
@@ -50,6 +51,15 @@ const groups: Group[] = [
     sections: [
       { icon: Gamepad2, title: "Hry", desc: "Katalog her pro server list", to: "/admin/games" },
       { icon: MessageCircle, title: "Discord servery", desc: "Spravovat invite odkazy a featured tlačítko", to: "/admin/discord" },
+    ],
+  },
+  {
+    key: "orders",
+    label: "Zakázky",
+    hint: "3D tisk – objednávky a katalog modelů",
+    sections: [
+      { icon: ClipboardList, title: "Přehled zakázek", desc: "Skrytý přehled všech zakázek od zákazníků", to: "/zakazky" },
+      { icon: Package, title: "Katalog 3D modelů", desc: "Public Domain modely nabízené v objednávkovém formuláři", to: "/admin/order-models" },
     ],
   },
   {
