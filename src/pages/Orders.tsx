@@ -40,6 +40,11 @@ interface Order {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  product_size: string | null;
+  product_url: string | null;
+  phone: string | null;
+  notify_preference: string | null;
+  is_public_request: boolean | null;
 }
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -281,6 +286,8 @@ export default function Orders() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold truncate">{o.title}</h3>
                         <Badge variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</Badge>
+                        {o.is_public_request && <Badge variant="outline">Zákazník</Badge>}
+                        {o.product_size && <Badge variant="outline">Velikost {o.product_size}</Badge>}
                       </div>
                       {o.description && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{o.description}</p>
@@ -288,8 +295,15 @@ export default function Orders() {
                       <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1">
                         {o.customer_name && <span>👤 {o.customer_name}</span>}
                         {o.customer_email && <span>✉ {o.customer_email}</span>}
+                        {o.phone && <span>📞 {o.phone}</span>}
+                        {o.notify_preference && <span>📣 {o.notify_preference === "email" ? "E-mail" : "Telefon"}</span>}
                         {o.price != null && <span>💰 {o.price} {o.currency}</span>}
                         <span>🕒 {new Date(o.created_at).toLocaleDateString("cs-CZ")}</span>
+                        {o.product_url && (
+                          <a href={o.product_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                            🔗 Model
+                          </a>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">

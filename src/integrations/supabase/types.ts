@@ -1534,6 +1534,45 @@ export type Database = {
         }
         Relationships: []
       }
+      order_models: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          license: string
+          name: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          license?: string
+          name: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          license?: string
+          name?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -1543,8 +1582,14 @@ export type Database = {
           customer_name: string | null
           description: string | null
           id: string
+          is_public_request: boolean
+          model_id: string | null
           notes: string | null
+          notify_preference: string | null
+          phone: string | null
           price: number | null
+          product_size: string | null
+          product_url: string | null
           status: Database["public"]["Enums"]["order_status"]
           title: string
           updated_at: string
@@ -1557,8 +1602,14 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           id?: string
+          is_public_request?: boolean
+          model_id?: string | null
           notes?: string | null
+          notify_preference?: string | null
+          phone?: string | null
           price?: number | null
+          product_size?: string | null
+          product_url?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           title: string
           updated_at?: string
@@ -1571,8 +1622,14 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           id?: string
+          is_public_request?: boolean
+          model_id?: string | null
           notes?: string | null
+          notify_preference?: string | null
+          phone?: string | null
           price?: number | null
+          product_size?: string | null
+          product_url?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           title?: string
           updated_at?: string

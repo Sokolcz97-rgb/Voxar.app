@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
@@ -272,6 +273,21 @@ const Profile = () => {
             </form>
           )}
         </Card>
+
+        {!loading && (
+          <Card className="glass border-border p-6 mt-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-semibold">Moje zakázky</div>
+                <div className="text-xs text-muted-foreground">Přehled vámi vytvořených zakázek na 3D tisk</div>
+              </div>
+            </div>
+            <Button asChild variant="outline"><Link to="/profile/zakazky">Otevřít</Link></Button>
+          </Card>
+        )}
 
         {!loading && (
           <Card className="glass border-border p-8 mt-6">
