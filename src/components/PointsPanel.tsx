@@ -37,6 +37,14 @@ type LeaderRow = {
   last_milestone: number;
 };
 
+type MemberInfo = {
+  id: string;
+  nick: string | null;
+  username: string;
+  global_name: string | null;
+  avatar_url: string | null;
+};
+
 const DEFAULTS = (guildId: string): PointsConfig => ({
   guild_id: guildId,
   enabled: true,
