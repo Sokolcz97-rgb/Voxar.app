@@ -20,6 +20,7 @@ import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import type { Block } from "@/lib/pageBuilder/types";
 import { SEO } from "@/components/SEO";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { CapabilitiesShowcase } from "@/components/CapabilitiesShowcase";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
