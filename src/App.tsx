@@ -47,6 +47,7 @@ import Orders from "./pages/Orders.tsx";
 import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
 import AdminOrderModels from "./pages/AdminOrderModels.tsx";
+import LiveNow from "./pages/LiveNow.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
