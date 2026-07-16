@@ -194,6 +194,11 @@ const Index = () => {
           </div>
         </section>
 
+        {/* CAPABILITIES */}
+        <CapabilitiesShowcase />
+
+
+
         {/* LIVE STREAMS */}
         <LiveStreamsSection />
 
