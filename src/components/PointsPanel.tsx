@@ -102,8 +102,33 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
     }
     setCfg(row);
     setMilestonesText((row.milestones ?? []).join(", "));
-    setBoard((b.data as LeaderRow[]) ?? []);
+    const rows = (b.data as LeaderRow[]) ?? [];
+    setBoard(rows);
     setLoading(false);
+    // Fetch nicknames in background
+    if (rows.length > 0) {
+      void fetchMembers(rows.map((r) => r.user_id));
+    } else {
+      setMembers({});
+    }
+  };
+
+  const fetchMembers = async (ids: string[]) => {
+    if (!guildId || ids.length === 0) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("discord-guild-members", {
+        body: { guild_id: guildId, user_ids: ids },
+      });
+      if (error) return;
+      const m = (data as { members?: Record<string, MemberInfo> })?.members ?? {};
+      setMembers(m);
+    } catch { /* ignore */ }
+  };
+
+  const displayName = (uid: string) => {
+    const m = members[uid];
+    if (!m) return null;
+    return m.nick || m.global_name || m.username || null;
   };
 
   const save = async () => {
