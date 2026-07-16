@@ -280,16 +280,6 @@ export function Navbar() {
                     <span className="flex-1 text-sm font-medium">{t("nav.profile")}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate("/profile")}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-primary/10 focus:bg-primary/10"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center icon-cube-3d">
-                      <Settings className="h-4 w-4" />
-                    </div>
-                    <span className="flex-1 text-sm font-medium">{t("nav.profileSettings")}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </DropdownMenuItem>
                 </div>
                 <DropdownMenuSeparator className="bg-border/60" />
                 <div className="p-1.5 space-y-0.5">
