@@ -2027,6 +2027,54 @@ export type Database = {
           },
         ]
       }
+      site_announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          link_label: string | null
+          link_url: string | null
+          sort_order: number
+          starts_at: string | null
+          title: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           contact_address: string | null
