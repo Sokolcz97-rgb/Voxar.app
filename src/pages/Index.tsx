@@ -19,6 +19,7 @@ import { InlineEditorFrame } from "@/components/pageBuilder/InlineEditorChrome";
 import { useInlineEditor } from "@/contexts/InlineEditorContext";
 import type { Block } from "@/lib/pageBuilder/types";
 import { SEO } from "@/components/SEO";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 
 const Index = () => {
   const { user, isEditor } = useAuth();
@@ -92,6 +93,7 @@ const Index = () => {
       <Navbar />
 
       <main>
+        <AnnouncementBar />
         {/* HERO */}
         <section className="container relative pt-24 pb-32">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
