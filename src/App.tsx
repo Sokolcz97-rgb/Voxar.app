@@ -95,6 +95,7 @@ const AppRoutes = () => {
       <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
       <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
+      <Route path="/live" element={<LiveNow />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
