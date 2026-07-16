@@ -37,6 +37,14 @@ type LeaderRow = {
   last_milestone: number;
 };
 
+type MemberInfo = {
+  id: string;
+  nick: string | null;
+  username: string;
+  global_name: string | null;
+  avatar_url: string | null;
+};
+
 const DEFAULTS = (guildId: string): PointsConfig => ({
   guild_id: guildId,
   enabled: true,
@@ -72,9 +80,10 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
   const [adjReason, setAdjReason] = useState("");
   const [adjBusy, setAdjBusy] = useState(false);
   const [milestonesText, setMilestonesText] = useState("");
+  const [members, setMembers] = useState<Record<string, MemberInfo>>({});
 
   useEffect(() => {
-    if (!guildId) { setCfg(null); setBoard([]); setLoading(false); return; }
+    if (!guildId) { setCfg(null); setBoard([]); setMembers({}); setLoading(false); return; }
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
@@ -93,8 +102,33 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
     }
     setCfg(row);
     setMilestonesText((row.milestones ?? []).join(", "));
-    setBoard((b.data as LeaderRow[]) ?? []);
+    const rows = (b.data as LeaderRow[]) ?? [];
+    setBoard(rows);
     setLoading(false);
+    // Fetch nicknames in background
+    if (rows.length > 0) {
+      void fetchMembers(rows.map((r) => r.user_id));
+    } else {
+      setMembers({});
+    }
+  };
+
+  const fetchMembers = async (ids: string[]) => {
+    if (!guildId || ids.length === 0) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("discord-guild-members", {
+        body: { guild_id: guildId, user_ids: ids },
+      });
+      if (error) return;
+      const m = (data as { members?: Record<string, MemberInfo> })?.members ?? {};
+      setMembers(m);
+    } catch { /* ignore */ }
+  };
+
+  const displayName = (uid: string) => {
+    const m = members[uid];
+    if (!m) return null;
+    return m.nick || m.global_name || m.username || null;
   };
 
   const save = async () => {
@@ -339,18 +373,37 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
           <p className="text-sm text-muted-foreground">Zatím nikdo nemá body. Až někdo bude ve voice, čísla naskočí.</p>
         ) : (
           <div className="divide-y divide-border">
-            {board.map((r, i) => (
-              <div key={r.user_id} className="py-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-8 text-center font-bold ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{["🥇", "🥈", "🥉"][i] || `${i + 1}.`}</div>
-                  <code className="text-xs truncate">{r.user_id}</code>
+            {board.map((r, i) => {
+              const m = members[r.user_id];
+              const name = displayName(r.user_id);
+              const initials = (name || r.user_id).slice(0, 2).toUpperCase();
+              return (
+                <div key={r.user_id} className="py-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 text-center font-bold ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{["🥇", "🥈", "🥉"][i] || `${i + 1}.`}</div>
+                    {m?.avatar_url ? (
+                      <img src={m.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold shrink-0">{initials}</div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{name ?? r.user_id}</div>
+                      {m ? (
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          @{m.username}{m.nick && m.global_name && m.nick !== m.global_name ? ` · ${m.global_name}` : ""}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-muted-foreground truncate font-mono">{r.user_id}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-sm flex items-center gap-3 shrink-0">
+                    <span className="font-bold">{r.points} b.</span>
+                    <span className="text-muted-foreground">{fmtMinutes(r.total_minutes)}</span>
+                  </div>
                 </div>
-                <div className="text-sm flex items-center gap-3 shrink-0">
-                  <span className="font-bold">{r.points} b.</span>
-                  <span className="text-muted-foreground">{fmtMinutes(r.total_minutes)}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
