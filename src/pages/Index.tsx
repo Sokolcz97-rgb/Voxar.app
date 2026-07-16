@@ -199,8 +199,9 @@ const Index = () => {
 
 
 
-        {/* LIVE STREAMS */}
-        <LiveStreamsSection />
+        {/* LIVE STREAMS moved to /live */}
+
+
 
         {/* TOP PLAYERS */}
         <TopPlayersPreview />
