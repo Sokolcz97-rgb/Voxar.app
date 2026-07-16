@@ -80,9 +80,10 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
   const [adjReason, setAdjReason] = useState("");
   const [adjBusy, setAdjBusy] = useState(false);
   const [milestonesText, setMilestonesText] = useState("");
+  const [members, setMembers] = useState<Record<string, MemberInfo>>({});
 
   useEffect(() => {
-    if (!guildId) { setCfg(null); setBoard([]); setLoading(false); return; }
+    if (!guildId) { setCfg(null); setBoard([]); setMembers({}); setLoading(false); return; }
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
