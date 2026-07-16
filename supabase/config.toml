@@ -1,31 +1,25 @@
 project_id = "rioexuvgvmdwvidfakxy"
 
-[functions.ai-helper]
-verify_jwt = false
-
-[functions.delete-account]
-verify_jwt = true
-
-[functions.discord-oauth-callback]
-verify_jwt = false
-
-[functions.translate-message]
-verify_jwt = false
-
-[functions.moderate-image]
-verify_jwt = false
-
-[functions.bot-guild-claim]
-verify_jwt = true
-
-[functions.bot-check-status]
-verify_jwt = false
-
-[functions.minecraft-bridge]
-verify_jwt = false
-
-[functions.yt-websub]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.ai-helper]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.bot-check-status]
+    verify_jwt = false
+  [functions.bot-guild-claim]
+    verify_jwt = true
+  [functions.delete-account]
+    verify_jwt = true
+  [functions.discord-oauth-callback]
+    verify_jwt = false
+  [functions.minecraft-bridge]
+    verify_jwt = false
+  [functions.moderate-image]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.translate-message]
+    verify_jwt = false
+  [functions.yt-websub]
+    verify_jwt = false
