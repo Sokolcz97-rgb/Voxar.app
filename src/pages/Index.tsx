@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePresence } from "@/contexts/PresenceContext";
 import { Zap, Users, MessageSquare, Shield, Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { TopPlayersPreview } from "@/components/TopPlayersPreview";
-import { LiveStreamsSection } from "@/components/LiveStreamsSection";
+
 import { InviteBotButton } from "@/components/InviteBotButton";
 import { useFeaturedDiscord } from "@/hooks/useFeaturedDiscord";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
@@ -199,8 +199,9 @@ const Index = () => {
 
 
 
-        {/* LIVE STREAMS */}
-        <LiveStreamsSection />
+        {/* LIVE STREAMS moved to /live */}
+
+
 
         {/* TOP PLAYERS */}
         <TopPlayersPreview />

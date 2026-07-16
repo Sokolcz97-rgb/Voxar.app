@@ -47,6 +47,7 @@ import Orders from "./pages/Orders.tsx";
 import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
 import AdminOrderModels from "./pages/AdminOrderModels.tsx";
+import LiveNow from "./pages/LiveNow.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -94,6 +95,7 @@ const AppRoutes = () => {
       <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
       <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
+      <Route path="/live" element={<LiveNow />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

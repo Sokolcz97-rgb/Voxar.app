@@ -26,6 +26,7 @@ import {
   Server,
   Newspaper,
   MessageCircle,
+  Radio,
   Settings,
   LogIn,
 } from "lucide-react";
@@ -114,8 +115,11 @@ export function Navbar() {
   ];
 
   const userRail: RailItem[] = user
-    ? [{ to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages }]
-    : [];
+    ? [
+        { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
+        { to: "/live", label: "Live Now", icon: Radio },
+      ]
+    : [{ to: "/live", label: "Live Now", icon: Radio }];
 
   const profileMenuItems: RailItem[] = user
     ? [
