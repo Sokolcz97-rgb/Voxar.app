@@ -345,9 +345,9 @@ export function Navbar() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
         <div className="container flex h-16 items-center justify-between relative">
           <Link to="/" className="flex items-center gap-3 group">
-            <span className="relative px-3 py-1.5 rounded-lg font-display font-black text-sm tracking-[0.16em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-300 to-primary transition-all duration-300 group-hover:tracking-[0.22em] group-hover:drop-shadow-[0_0_14px_hsl(var(--primary)/0.9)]">
+            <span className="relative inline-flex items-center px-3 py-1.5 rounded-lg font-display font-black text-sm tracking-[0.16em] uppercase text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)] transition-all duration-300 group-hover:tracking-[0.22em] group-hover:drop-shadow-[0_0_14px_hsl(var(--primary)/0.9)]">
               <span className="absolute inset-0 rounded-lg border border-primary/40 bg-primary/5 shadow-[inset_0_1px_0_hsl(var(--primary)/0.25),0_0_14px_hsl(var(--primary)/0.25)] group-hover:shadow-[inset_0_1px_0_hsl(var(--primary)/0.35),0_0_20px_hsl(var(--primary)/0.45)] transition-all" />
-              <span className="relative">Úvod</span>
+              <span className="relative z-10">Úvod</span>
             </span>
             <span
               className="font-display font-black text-lg tracking-[0.22em] text-glow-intense glitch"
