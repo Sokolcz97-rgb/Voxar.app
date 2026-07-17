@@ -321,9 +321,6 @@ export async function runAntiScam(message) {
   // 1) smaz zprávu
   await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
 
-  // 1) smaz zprávu
-  await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
-
   // U měkkých detekcí (AI text, NSFW obrázek) nebanujeme — jen mazat + alert
   if (isSoft) {
     await sendAlert(message.guild, cfg, {
