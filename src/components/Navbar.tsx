@@ -15,7 +15,6 @@ import {
   LogOut,
   Shield,
   User as UserIcon,
-  Gamepad2,
   MessageSquare,
   LifeBuoy,
   Keyboard,
@@ -187,19 +186,16 @@ export function Navbar() {
         {/* edge glow */}
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
 
-        {/* Logo */}
-        <Link to="/" className="relative mt-4 mb-3 flex items-center justify-center group" aria-label={settings.site_name}>
-          <div className="faceted-plate bevel-3d p-2 rounded-xl">
-            {settings.logo_url ? (
-              <img
-                src={settings.logo_url}
-                alt={settings.site_name}
-                className="h-7 w-7 object-contain transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]"
-              />
-            ) : (
-              <Gamepad2 className="h-7 w-7 text-primary transition-transform group-hover:scale-110 drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
-            )}
-          </div>
+        {/* Úvod */}
+        <Link
+          to="/"
+          className="relative mt-4 mb-2 flex items-center justify-center group"
+          aria-label="Úvod"
+        >
+          <span className="relative px-4 py-2 rounded-xl font-display font-black text-xl tracking-[0.18em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-300 to-primary transition-all duration-300 group-hover:tracking-[0.26em] group-hover:drop-shadow-[0_0_18px_hsl(var(--primary)/0.9)]">
+            <span className="absolute inset-0 rounded-xl border border-primary/40 bg-primary/5 shadow-[inset_0_1px_0_hsl(var(--primary)/0.25),0_0_20px_hsl(var(--primary)/0.25)] group-hover:shadow-[inset_0_1px_0_hsl(var(--primary)/0.35),0_0_28px_hsl(var(--primary)/0.45)] transition-all" />
+            <span className="relative">Úvod</span>
+          </span>
         </Link>
 
         <div className="relative w-10 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent mb-3" />
@@ -349,17 +345,10 @@ export function Navbar() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent shadow-[0_0_12px_hsl(var(--primary)/0.9)]" />
         <div className="container flex h-16 items-center justify-between relative">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative faceted-plate bevel-3d px-2 py-1.5">
-              {settings.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt={settings.site_name}
-                  className="h-7 w-7 object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]"
-                />
-              ) : (
-                <Gamepad2 className="h-7 w-7 text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
-              )}
-            </div>
+            <span className="relative px-3 py-1.5 rounded-lg font-display font-black text-sm tracking-[0.16em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-300 to-primary transition-all duration-300 group-hover:tracking-[0.22em] group-hover:drop-shadow-[0_0_14px_hsl(var(--primary)/0.9)]">
+              <span className="absolute inset-0 rounded-lg border border-primary/40 bg-primary/5 shadow-[inset_0_1px_0_hsl(var(--primary)/0.25),0_0_14px_hsl(var(--primary)/0.25)] group-hover:shadow-[inset_0_1px_0_hsl(var(--primary)/0.35),0_0_20px_hsl(var(--primary)/0.45)] transition-all" />
+              <span className="relative">Úvod</span>
+            </span>
             <span
               className="font-display font-black text-lg tracking-[0.22em] text-glow-intense glitch"
               data-text={settings.site_name}
