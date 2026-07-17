@@ -297,7 +297,11 @@ export async function runAntiScam(message) {
 
   if (!detection) return false;
 
-  const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
+  // "Měkké" detekce (AI text / NSFW obrázek bez známek scamu) → jen mazat + alert, žádný ban
+  const isSoft = detection.type === 'ai_text' || detection.type === 'image_nsfw';
+  const reason = isSoft
+    ? `Problémový obsah (${detection.type}: ${detection.match})`
+    : `Scam/phishing (${detection.type}: ${detection.match})`;
 
 
   // Bypass: pokud má uživatel některou z bypass rolí, zprávu nesmazat ani nebanovat – pouze alert.
@@ -316,6 +320,22 @@ export async function runAntiScam(message) {
 
   // 1) smaz zprávu
   await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
+
+  // 1) smaz zprávu
+  await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
+
+  // U měkkých detekcí (AI text, NSFW obrázek) nebanujeme — jen mazat + alert
+  if (isSoft) {
+    await sendAlert(message.guild, cfg, {
+      user: message.author,
+      reason: `${reason} → 🧹 SMAZÁNO (bez banu)`,
+      evidence: `Match: \`${detection.match}\``,
+      channel: message.channel,
+      messageContent: message.content,
+      evidenceImages,
+    }).catch(() => {});
+    return true;
+  }
 
   // 2) ban bez varování (smaz posledních 24h zpráv) — pokud ban selže, fallback kick
   let banned = false;
