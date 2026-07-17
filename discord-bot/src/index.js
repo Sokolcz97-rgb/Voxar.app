@@ -130,6 +130,9 @@ client.on('messageUpdate', async (oldMsg, newMsg) => {
   } catch (e) {
     console.error('messageUpdate antiScam', e?.message || e);
   }
+});
+
+
 
 client.on('guildMemberAdd', async (member) => {
   try {
