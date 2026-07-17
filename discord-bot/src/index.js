@@ -117,6 +117,23 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+// Když Discord doplní embed (rozbalený odkaz na obrázek) dodatečně, znovu spusť anti-scam
+client.on('messageUpdate', async (oldMsg, newMsg) => {
+  try {
+    const msg = newMsg?.partial ? await newMsg.fetch().catch(() => null) : newMsg;
+    if (!msg || !msg.guild || msg.author?.bot) return;
+    if (!(await isGuildApproved(msg.guild.id))) return;
+    const hadImages = (oldMsg?.embeds?.length || 0) + (oldMsg?.attachments?.size || 0);
+    const hasImages = (msg.embeds?.length || 0) + (msg.attachments?.size || 0);
+    if (hasImages <= hadImages) return; // nic nového (např. edit textu)
+    await runAntiScam(msg);
+  } catch (e) {
+    console.error('messageUpdate antiScam', e?.message || e);
+  }
+});
+
+
+
 client.on('guildMemberAdd', async (member) => {
   try {
     if (!(await isGuildApproved(member.guild.id))) return;

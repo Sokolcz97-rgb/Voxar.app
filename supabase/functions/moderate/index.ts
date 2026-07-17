@@ -31,6 +31,9 @@ async function authorize(req: Request): Promise<{ ok: boolean; status?: number }
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return { ok: false, status: 401 };
   const token = authHeader.slice(7);
+  // Allow service-role callers (bot backend) to bypass user auth
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (svc && token === svc) return { ok: true };
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

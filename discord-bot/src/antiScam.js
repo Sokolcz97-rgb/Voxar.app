@@ -265,24 +265,43 @@ export async function runAntiScam(message) {
 
   const ageDays = (Date.now() - message.author.createdTimestamp) / (1000 * 60 * 60 * 24);
   let detection = detectScam(message.content || '', { accountAgeDays: ageDays });
-
-  // Pokud text není scam, zkusíme obrázkovou analýzu (Gemini vision)
-  let imgResult = null;
   let evidenceImages = [];
-  if (!detection) {
-    const urls = imageUrlsFromMessage(message);
-    if (urls.length) {
-      imgResult = await moderateImages(urls);
-      if (imgResult?.severe) {
-        const kind = imgResult.scam ? 'image_scam' : 'image_nsfw';
-        detection = { type: kind, match: imgResult.reason || (imgResult.scam ? 'scam image' : 'nsfw image') };
-        evidenceImages = urls;
+
+  // Vždy skenuj přiložené obrázky přes AI (Gemini vision), nezávisle na textové detekci
+  const urls = imageUrlsFromMessage(message);
+  if (urls.length) {
+    const imgResult = await moderateImages(urls);
+    // Reaguj na jakoukoli flag (scam/nsfw/severe), ne jen na "severe"
+    if (imgResult && (imgResult.severe || imgResult.scam || imgResult.nsfw)) {
+      if (!detection) {
+        const kind = imgResult.scam ? 'image_scam' : (imgResult.nsfw ? 'image_nsfw' : 'image_severe');
+        detection = { type: kind, match: imgResult.reason || kind };
       }
+      evidenceImages = urls;
     }
   }
+
+  // AI textová moderace (výhrůžky, hate, explicit) – jen když je text a zatím není detekce
+  if (!detection && (message.content || '').trim().length >= 3) {
+    try {
+      const { data } = await supabase.functions.invoke('moderate', {
+        body: { content: message.content, useAI: true },
+      });
+      if (data?.severe) {
+        detection = { type: 'ai_text', match: (data.reason || 'severe content').slice(0, 200) };
+      }
+    } catch (e) {
+      console.error('moderate text invoke', e?.message || e);
+    }
+  }
+
   if (!detection) return false;
 
-  const reason = `Scam/phishing (${detection.type}: ${detection.match})`;
+  // "Měkké" detekce (AI text / NSFW obrázek bez známek scamu) → jen mazat + alert, žádný ban
+  const isSoft = detection.type === 'ai_text' || detection.type === 'image_nsfw';
+  const reason = isSoft
+    ? `Problémový obsah (${detection.type}: ${detection.match})`
+    : `Scam/phishing (${detection.type}: ${detection.match})`;
 
 
   // Bypass: pokud má uživatel některou z bypass rolí, zprávu nesmazat ani nebanovat – pouze alert.
@@ -301,6 +320,19 @@ export async function runAntiScam(message) {
 
   // 1) smaz zprávu
   await message.delete().catch((e) => console.error('anti-scam delete failed', e?.message));
+
+  // U měkkých detekcí (AI text, NSFW obrázek) nebanujeme — jen mazat + alert
+  if (isSoft) {
+    await sendAlert(message.guild, cfg, {
+      user: message.author,
+      reason: `${reason} → 🧹 SMAZÁNO (bez banu)`,
+      evidence: `Match: \`${detection.match}\``,
+      channel: message.channel,
+      messageContent: message.content,
+      evidenceImages,
+    }).catch(() => {});
+    return true;
+  }
 
   // 2) ban bez varování (smaz posledních 24h zpráv) — pokud ban selže, fallback kick
   let banned = false;

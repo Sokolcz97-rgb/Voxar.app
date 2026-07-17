@@ -9,6 +9,14 @@ const corsHeaders = {
 };
 
 async function authorize(req: Request): Promise<boolean> {
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  // Allow service-role callers (bot backend) to bypass user auth
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (svc && token && token === svc) return true;
+  return await _authorizeUser(req);
+}
+async function _authorizeUser(req: Request): Promise<boolean> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return false;
   const token = authHeader.slice(7);
