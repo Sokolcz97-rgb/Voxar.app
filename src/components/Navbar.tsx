@@ -192,8 +192,8 @@ export function Navbar() {
           className="relative mt-4 mb-2 flex items-center justify-center group"
           aria-label="Úvod"
         >
-          <span className="relative px-4 py-2 rounded-xl font-display font-black text-xl tracking-[0.18em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-300 to-primary transition-all duration-300 group-hover:tracking-[0.26em] group-hover:drop-shadow-[0_0_18px_hsl(var(--primary)/0.9)]">
-            <span className="absolute inset-0 rounded-xl border border-primary/40 bg-primary/5 shadow-[inset_0_1px_0_hsl(var(--primary)/0.25),0_0_20px_hsl(var(--primary)/0.25)] group-hover:shadow-[inset_0_1px_0_hsl(var(--primary)/0.35),0_0_28px_hsl(var(--primary)/0.45)] transition-all" />
+          <span className="relative inline-flex items-center justify-center px-4 py-2 rounded-xl font-display font-black text-lg tracking-[0.24em] uppercase text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)] transition-all duration-300 group-hover:tracking-[0.30em] group-hover:drop-shadow-[0_0_18px_hsl(var(--primary)/0.95)]">
+            <span className="absolute inset-0 rounded-xl border border-primary/50 bg-primary/10 shadow-[inset_0_1px_0_hsl(var(--primary)/0.3),0_0_20px_hsl(var(--primary)/0.3)] group-hover:shadow-[inset_0_1px_0_hsl(var(--primary)/0.4),0_0_28px_hsl(var(--primary)/0.5)] transition-all" />
             <span className="relative">Úvod</span>
           </span>
         </Link>
