@@ -15,7 +15,6 @@ import {
   LogOut,
   Shield,
   User as UserIcon,
-  Gamepad2,
   MessageSquare,
   LifeBuoy,
   Keyboard,
