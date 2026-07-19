@@ -12,7 +12,8 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest } = require("./updater.cjs");
+const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
@@ -84,6 +85,13 @@ function createTray() {
     },
     { type: "separator" },
     {
+    { type: "separator" },
+    {
+      label: "Vrátit na poslední funkční verzi…",
+      click: () => triggerRollbackFlow("Ruční požadavek z tray menu.").catch(() => {}),
+    },
+    { type: "separator" },
+    {
       label: "Ukončit",
       click: () => {
         isQuitting = true;
@@ -122,6 +130,25 @@ function createMainWindow() {
   });
 
   mainWindow.loadURL(APP_URL);
+
+  // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
+  mainWindow.webContents.once("did-finish-load", () => {
+    rollback.scheduleHealthyMark(() => mainWindow);
+  });
+
+  // Zaznamenej pády renderu — spustí nabídku rollbacku při dalším startu i teď.
+  mainWindow.webContents.on("render-process-gone", (_e, details) => {
+    if (details?.reason && details.reason !== "clean-exit") {
+      rollback.recordCrash(`renderer:${details.reason}`);
+      triggerRollbackFlow(`Vykreslovací proces spadl (${details.reason}).`).catch(() => {});
+    }
+  });
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc, url, isMainFrame) => {
+    if (isMainFrame && code !== -3 /* ABORTED */) {
+      rollback.recordCrash(`load-failed:${code} ${desc}`);
+    }
+  });
+
 
   // Open external links in system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -251,6 +278,40 @@ ipcMain.handle("launcher:continue", () => {
   }
 });
 
+// -------- Rollback flow --------
+let rollbackInProgress = false;
+async function triggerRollbackFlow(reason) {
+  if (rollbackInProgress) return { status: "busy" };
+  rollbackInProgress = true;
+  try {
+    const manifest = await fetchManifest().catch(() => null);
+    const res = await rollback.performRollback({
+      manifest,
+      parentWindow: mainWindow || launcherWindow,
+      reason,
+      installVerified,
+    });
+    if (res?.status && res.status !== "installing" && res.status !== "declined") {
+      await require("electron").dialog.showMessageBox(mainWindow || launcherWindow, {
+        type: "error",
+        title: "Rollback selhal",
+        message: `Nepodařilo se vrátit na předchozí verzi (${res.status})`,
+        detail:
+          res.error
+            ? String(res.error)
+            : "Zkontrolujte diagnostiku v launcheru nebo kontaktujte podporu.",
+      });
+    }
+    return res;
+  } finally {
+    rollbackInProgress = false;
+  }
+}
+ipcMain.handle("app:rollback", () => triggerRollbackFlow("Ruční požadavek z aplikace."));
+ipcMain.handle("launcher:rollback", () => triggerRollbackFlow("Ruční požadavek z launcheru."));
+ipcMain.handle("launcher:rollback-state", () => rollback.readState());
+
+
 function createLauncher() {
   launcherWindow = new BrowserWindow({
     width: 460,
@@ -317,11 +378,27 @@ async function runLauncherSequence() {
   }, 20000);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
     const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen"];
     cb(allowed.includes(permission));
   });
+
+  // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
+  const { suspicious, prev } = rollback.recordStartAttempt();
+  if (suspicious && (prev.consecutiveFailures || 0) >= 1) {
+    try {
+      const manifest = await fetchManifest().catch(() => null);
+      await rollback.performRollback({
+        manifest,
+        parentWindow: null,
+        reason: `Předchozí spuštění verze ${prev.lastStartVersion} skončilo neočekávaně${prev.lastCrash ? " (" + prev.lastCrash.reason + ")" : ""}.`,
+        installVerified,
+      });
+    } catch (e) {
+      console.error("startup rollback failed", e);
+    }
+  }
 
   runLauncherSequence();
 
@@ -334,4 +411,8 @@ app.on("second-instance", () => showMain());
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin" && !settings.closeToTray) app.quit();
 });
-app.on("before-quit", () => (isQuitting = true));
+app.on("before-quit", () => {
+  isQuitting = true;
+  rollback.recordCleanExit();
+});
+

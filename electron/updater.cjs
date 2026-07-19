@@ -426,4 +426,80 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   }
 }
 
-module.exports = { checkForUpdates, getDiagnostics };
+/**
+ * Stáhne installer z asset.installerUrl, ověří SHA-256 + Authenticode
+ * a spustí ho. Sdílená cesta pro update i rollback.
+ */
+async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
+  if (!asset || !asset.installerUrl) return { status: "no-asset" };
+  const platform = process.platform;
+  const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
+  const dest = path.join(os.tmpdir(), `StudioVoxario-${version || "asset"}${ext}`);
+  log(`${label}: stahuji ${asset.installerUrl} → ${dest}`);
+
+  const progressWin = new BrowserWindow({
+    width: 420, height: 180, resizable: false, minimizable: false, maximizable: false,
+    autoHideMenuBar: true, backgroundColor: "#0a0a0f",
+    title: label, parent: parentWindow || undefined, modal: false,
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  });
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0a0a0f;color:#e5e7eb;padding:24px}
+    h3{margin:0 0 12px;font-weight:600}
+    .bar{height:10px;background:#1f2937;border-radius:8px;overflow:hidden;margin-top:8px}
+    .fill{height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#f97316);transition:width .2s}
+    .pct{margin-top:8px;font-size:12px;color:#94a3b8;text-align:right}
+  </style></head><body>
+    <h3>${label} — StudioVoxario ${version || ""}</h3>
+    <div class="bar"><div class="fill" id="f"></div></div>
+    <div class="pct" id="p">0 %</div>
+  </body></html>`;
+  progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+
+  try {
+    const download = await downloadFile(asset.installerUrl, dest, (p) => {
+      const pct = Math.round(p * 100);
+      progressWin.webContents
+        .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
+        .catch(() => {});
+    });
+    progressWin.close();
+    log(`${label}: staženo ${download.size} B, SHA-256=${download.sha256}`);
+
+    const expectedHash = String(asset.sha256 || "").toLowerCase().trim();
+    const expectedSize = Number(asset.size || 0);
+    if (!expectedHash) { try { fs.unlinkSync(dest); } catch {} return { status: "no-hash" }; }
+    if (expectedSize && download.size !== expectedSize) { try { fs.unlinkSync(dest); } catch {} return { status: "size-mismatch" }; }
+    if (download.sha256.toLowerCase() !== expectedHash) { try { fs.unlinkSync(dest); } catch {} return { status: "hash-mismatch" }; }
+
+    const sig = await verifyCodeSignature(dest);
+    if (sig.supported && !sig.ok) { try { fs.unlinkSync(dest); } catch {} return { status: "signature-invalid", sig }; }
+    const expectedPublisher = asset.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null;
+    if (sig.supported && expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
+      try { fs.unlinkSync(dest); } catch {}
+      return { status: "publisher-mismatch", sig };
+    }
+    log(`${label}: ověřeno, spouštím instalátor.`);
+
+    if (platform === "win32") {
+      await shell.openPath(dest);
+      new Notification({ title: "StudioVoxario", body: `${label}: instalátor se spouští, aplikace se ukončí.` }).show();
+      setTimeout(() => app.quit(), 1500);
+    } else {
+      shell.showItemInFolder(dest);
+    }
+    return { status: "installing", version, path: dest };
+  } catch (err) {
+    try { progressWin.close(); } catch {}
+    log(`${label}: chyba — ${err.message || err}`);
+    return { status: "error", error: String(err.message || err) };
+  }
+}
+
+/** Pouze stáhne manifest — využívá rollback, aby nemusel duplikovat URL. */
+async function fetchManifest() {
+  return fetchJson(MANIFEST_URL);
+}
+
+module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest };
+
