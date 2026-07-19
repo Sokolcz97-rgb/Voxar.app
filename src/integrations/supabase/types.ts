@@ -2515,6 +2515,200 @@ export type Database = {
           },
         ]
       }
+      vox_channels: {
+        Row: {
+          category: string | null
+          created_at: string
+          guild_id: string
+          id: string
+          name: string
+          position: number
+          type: Database["public"]["Enums"]["vox_channel_type"]
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          guild_id: string
+          id?: string
+          name: string
+          position?: number
+          type?: Database["public"]["Enums"]["vox_channel_type"]
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          guild_id?: string
+          id?: string
+          name?: string
+          position?: number
+          type?: Database["public"]["Enums"]["vox_channel_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_channels_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_guild_members: {
+        Row: {
+          guild_id: string
+          joined_at: string
+          nickname: string | null
+          role: Database["public"]["Enums"]["vox_member_role"]
+          user_id: string
+        }
+        Insert: {
+          guild_id: string
+          joined_at?: string
+          nickname?: string | null
+          role?: Database["public"]["Enums"]["vox_member_role"]
+          user_id: string
+        }
+        Update: {
+          guild_id?: string
+          joined_at?: string
+          nickname?: string | null
+          role?: Database["public"]["Enums"]["vox_member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_guild_members_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_guilds: {
+        Row: {
+          created_at: string
+          icon_url: string | null
+          id: string
+          invite_code: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          invite_code?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vox_messages: {
+        Row: {
+          attachments: Json
+          author_id: string
+          channel_id: string
+          content: string
+          created_at: string
+          edited_at: string | null
+          id: string
+        }
+        Insert: {
+          attachments?: Json
+          author_id: string
+          channel_id: string
+          content?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string
+          channel_id?: string
+          content?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vox_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_presence: {
+        Row: {
+          custom_status: string | null
+          last_seen: string
+          status: Database["public"]["Enums"]["vox_presence_status"]
+          user_id: string
+        }
+        Insert: {
+          custom_status?: string | null
+          last_seen?: string
+          status?: Database["public"]["Enums"]["vox_presence_status"]
+          user_id: string
+        }
+        Update: {
+          custom_status?: string | null
+          last_seen?: string
+          status?: Database["public"]["Enums"]["vox_presence_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vox_voice_participants: {
+        Row: {
+          channel_id: string
+          is_deafened: boolean
+          is_muted: boolean
+          joined_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          is_deafened?: boolean
+          is_muted?: boolean
+          joined_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          is_deafened?: boolean
+          is_muted?: boolean
+          joined_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_voice_participants_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vox_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       site_settings_public: {
@@ -2637,6 +2831,10 @@ export type Database = {
         Args: { _guild_id: string; _user_id: string }
         Returns: boolean
       }
+      is_vox_member: {
+        Args: { _guild: string; _user: string }
+        Returns: boolean
+      }
       mark_conversation_read: {
         Args: { _conversation_id: string }
         Returns: number
@@ -2664,6 +2862,19 @@ export type Database = {
         Args: { _action: string; _module: string; _user_id: string }
         Returns: boolean
       }
+      vox_channel_guild: { Args: { _channel: string }; Returns: string }
+      vox_heartbeat: {
+        Args: {
+          _custom?: string
+          _status?: Database["public"]["Enums"]["vox_presence_status"]
+        }
+        Returns: undefined
+      }
+      vox_join_by_invite: { Args: { _code: string }; Returns: string }
+      vox_member_role: {
+        Args: { _guild: string; _user: string }
+        Returns: Database["public"]["Enums"]["vox_member_role"]
+      }
     }
     Enums: {
       app_role: "admin" | "editor" | "user" | "banned" | "content_creator"
@@ -2672,6 +2883,9 @@ export type Database = {
       server_connection_type: "ip_port" | "invite_code"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "resolved" | "closed"
+      vox_channel_type: "text" | "voice"
+      vox_member_role: "owner" | "mod" | "member"
+      vox_presence_status: "online" | "idle" | "dnd" | "offline"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2805,6 +3019,9 @@ export const Constants = {
       server_connection_type: ["ip_port", "invite_code"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "resolved", "closed"],
+      vox_channel_type: ["text", "voice"],
+      vox_member_role: ["owner", "mod", "member"],
+      vox_presence_status: ["online", "idle", "dnd", "offline"],
     },
   },
 } as const
