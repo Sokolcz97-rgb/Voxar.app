@@ -10,6 +10,8 @@ import { SelfPanel } from "@/components/vox/SelfPanel";
 import { ChatView } from "@/components/vox/ChatView";
 import { VoiceView } from "@/components/vox/VoiceView";
 import { CreateGuildDialog, JoinGuildDialog } from "@/components/vox/CreateGuildDialog";
+import { AppUserSettings } from "@/components/vox/AppUserSettings";
+import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
