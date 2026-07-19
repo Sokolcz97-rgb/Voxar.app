@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "notes": "První oficiální vydání launcheru s automatickými aktualizacemi.",
+  "version": "1.1.0",
+  "notes": "Opraven launcher — kontrola aktualizací nyní vždy proběhne před spuštěním staré verze a nabídne stažení nového instalátoru.",
   "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/44fd60f5-caf1-4fd2-9029-0c1f1ae70de6/StudioVoxarioSetup.exe",
   "platforms": {
     "win32": {
