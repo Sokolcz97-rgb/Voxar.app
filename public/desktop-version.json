@@ -5,7 +5,7 @@
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
-  "notes": "Alfa 0.0.7 — plovoucí ikonka „stáhnout aktualizaci\" v aplikaci (bez restartu), tichá kontrola aktualizací s cache-bustem, tlačítko „Uložit nastavení\" v panelu rolí.",
+  "notes": "Alfa 0.0.7 (hotfix.1) — vestavěná přihlašovací obrazovka v aplikaci (dřív se nepřihlášeným otevřel web /auth mimo app layout). Plovoucí ikonka „stáhnout aktualizaci\" v aplikaci, tichá kontrola aktualizací s cache-bustem, tlačítko „Uložit nastavení\" v panelu rolí.",
   "channels": {
     "stable": {
       "version": "0.0.7-alpha",
