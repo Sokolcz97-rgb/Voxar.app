@@ -89,7 +89,15 @@ export default function DashboardBotGuilds() {
       .select("*")
       .order("requested_at", { ascending: false });
     if (error) toast.error(error.message);
-    setGuilds((data as BotGuild[]) || []);
+    const rows = (data as any[]) || [];
+    // Load staff-only review notes and merge (only visible to bot managers)
+    const { data: reviewRows } = await supabase
+      .from("bot_guilds_review")
+      .select("guild_row_id, notes");
+    const notesById = new Map<string, string | null>();
+    (reviewRows || []).forEach((r: any) => notesById.set(r.guild_row_id, r.notes));
+    const merged: BotGuild[] = rows.map((r) => ({ ...r, notes: notesById.get(r.id) ?? null }));
+    setGuilds(merged);
     setLoading(false);
   };
 
