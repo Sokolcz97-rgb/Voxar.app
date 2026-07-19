@@ -11,26 +11,34 @@
       font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
       user-select: none;
-      -webkit-app-region: drag;
     }
+    .titlebar {
+      height: 28px; -webkit-app-region: drag;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 8px; color: #64748b; font-size: 11px;
+    }
+    .titlebar button {
+      -webkit-app-region: no-drag;
+      background: transparent; border: 0; color: #94a3b8;
+      font-size: 12px; padding: 4px 10px; cursor: pointer; border-radius: 6px;
+    }
+    .titlebar button:hover { background: rgba(255,255,255,0.06); color: #e5e7eb; }
+
     .wrap {
-      height: 100%;
+      height: calc(100% - 28px);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 18px;
-      text-align: center;
-      padding: 24px;
+      gap: 14px; text-align: center; padding: 16px 24px 24px;
       box-sizing: border-box;
     }
     .logo {
-      width: 72px; height: 72px;
-      border-radius: 18px;
+      width: 64px; height: 64px; border-radius: 16px;
       background: linear-gradient(135deg, #06b6d4, #22d3ee);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 28px; color: #0a0a0f;
+      font-weight: 800; font-size: 24px; color: #0a0a0f;
       box-shadow: 0 10px 40px -10px rgba(34, 211, 238, 0.6);
     }
-    h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+    h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
     .status { color: #94a3b8; font-size: 13px; min-height: 18px; }
     .bar {
       width: 260px; height: 6px;
@@ -43,29 +51,198 @@
       border-radius: 999px;
       animation: slide 1.4s ease-in-out infinite;
     }
-    .version { position: absolute; bottom: 12px; font-size: 11px; color: #475569; }
+    .ver { font-size: 11px; color: #475569; }
     @keyframes slide {
       0% { margin-left: -30%; width: 30%; }
       50% { width: 50%; }
       100% { margin-left: 100%; width: 30%; }
     }
+
+    /* Diagnostics view */
+    .diag {
+      display: none; flex-direction: column;
+      height: calc(100% - 28px); width: 100%;
+      padding: 12px 16px 12px; box-sizing: border-box;
+      text-align: left; user-select: text;
+    }
+    body.diag-open .wrap { display: none; }
+    body.diag-open .diag { display: flex; }
+    body.diag-open { overflow: hidden; }
+    body.diag-open html, body.diag-open body { user-select: text; }
+
+    .diag h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #e5e7eb; }
+    .grid { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px;
+      font-size: 11px; margin-bottom: 8px; }
+    .grid .k { color: #64748b; }
+    .grid .v { color: #cbd5e1; word-break: break-all; font-family: ui-monospace,Menlo,Consolas,monospace; }
+    .grid .v.err { color: #f87171; }
+    .grid .v.ok  { color: #34d399; }
+
+    .logs {
+      flex: 1; min-height: 0;
+      background: #020617; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 8px; font-family: ui-monospace,Menlo,Consolas,monospace;
+      font-size: 10.5px; color: #94a3b8; overflow: auto; white-space: pre-wrap;
+    }
+    .row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    }
+    .btn:hover { background: #334155; }
+    .btn.primary { background: linear-gradient(135deg,#06b6d4,#0891b2); border-color: transparent; color: #0a0a0f; font-weight: 600; }
+    .toast {
+      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; border: 1px solid #334155; color: #a5f3fc;
+      padding: 6px 12px; border-radius: 6px; font-size: 11px;
+      opacity: 0; transition: opacity .2s;
+    }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
+  <div class="titlebar">
+    <button id="toggleDiag">Diagnostika</button>
+  </div>
+
+  <!-- Splash -->
   <div class="wrap">
     <div class="logo">SV</div>
     <h1>StudioVoxario</h1>
     <div class="status" id="status">Spouštění…</div>
     <div class="bar"><div class="fill"></div></div>
+    <div class="ver" id="ver"></div>
   </div>
-  <div class="version" id="ver"></div>
+
+  <!-- Diagnostics -->
+  <div class="diag">
+    <h2>Diagnostika aktualizací</h2>
+    <div class="grid" id="diagGrid"></div>
+    <div class="logs" id="logs">(logy se načítají…)</div>
+    <div class="row">
+      <button class="btn" id="refreshBtn">Obnovit</button>
+      <button class="btn" id="recheckBtn">Znovu zkontrolovat</button>
+      <button class="btn" id="copyBtn">Kopírovat vše</button>
+      <button class="btn" id="copyLogsBtn">Kopírovat jen logy</button>
+      <button class="btn" id="openLogsBtn">Otevřít soubor</button>
+      <button class="btn primary" id="continueBtn">Pokračovat do aplikace</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
   <script>
-    const { ipcRenderer } = require('electron');
-    ipcRenderer.on('launcher:status', (_e, msg) => {
-      document.getElementById('status').textContent = msg;
+    const { ipcRenderer, clipboard } = require('electron');
+
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
+    const verEl = $('ver');
+    const logsEl = $('logs');
+    const gridEl = $('diagGrid');
+    const toastEl = $('toast');
+
+    ipcRenderer.on('launcher:status', (_e, msg) => { statusEl.textContent = msg; });
+    ipcRenderer.on('launcher:log', (_e, line) => {
+      logsEl.textContent += (logsEl.dataset.filled ? '\n' : '') + line;
+      logsEl.dataset.filled = '1';
+      logsEl.scrollTop = logsEl.scrollHeight;
     });
-    ipcRenderer.invoke('launcher:version').then(v => {
-      document.getElementById('ver').textContent = 'v' + v;
+
+    ipcRenderer.invoke('launcher:version').then(v => { verEl.textContent = 'Launcher v' + v; });
+
+    function toast(msg) {
+      toastEl.textContent = msg; toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 1400);
+    }
+
+    function fmt(v) {
+      if (v === null || v === undefined || v === '') return '—';
+      if (typeof v === 'object') return JSON.stringify(v, null, 2);
+      return String(v);
+    }
+
+    async function renderDiag() {
+      const d = await ipcRenderer.invoke('launcher:diagnostics');
+      gridEl.innerHTML = '';
+      const rows = [
+        ['Stav', d.status, d.status === 'error' || String(d.status).includes('mismatch') ? 'err'
+                        : d.status === 'up-to-date' || d.status === 'installing' ? 'ok' : ''],
+        ['Aktuální verze', d.currentVersion],
+        ['Vzdálená verze', d.remoteVersion],
+        ['Manifest URL', d.manifestUrl],
+        ['Installer URL', d.installerUrl],
+        ['Očekávaný SHA-256', d.expectedSha256],
+        ['Stažený SHA-256', d.downloadedSha256,
+          d.expectedSha256 && d.downloadedSha256
+            ? (d.expectedSha256.toLowerCase() === d.downloadedSha256.toLowerCase() ? 'ok' : 'err')
+            : ''],
+        ['Očekávaná velikost', d.expectedSize],
+        ['Stažená velikost', d.downloadedSize],
+        ['Poslední kontrola', d.lastCheckAt],
+        ['Poslední chyba', d.lastError, d.lastError ? 'err' : ''],
+      ];
+      for (const [k, v, cls] of rows) {
+        const kd = document.createElement('div'); kd.className = 'k'; kd.textContent = k;
+        const vd = document.createElement('div'); vd.className = 'v ' + (cls || ''); vd.textContent = fmt(v);
+        gridEl.appendChild(kd); gridEl.appendChild(vd);
+      }
+      logsEl.textContent = (d.logs || []).join('\n') || '(zatím žádné logy)';
+      logsEl.dataset.filled = '1';
+      logsEl.scrollTop = logsEl.scrollHeight;
+      return d;
+    }
+
+    function buildReport(d) {
+      const lines = [
+        'StudioVoxario Launcher — diagnostický report',
+        '=============================================',
+        'Stav:                ' + fmt(d.status),
+        'Aktuální verze:      ' + fmt(d.currentVersion),
+        'Vzdálená verze:      ' + fmt(d.remoteVersion),
+        'Manifest URL:        ' + fmt(d.manifestUrl),
+        'Installer URL:       ' + fmt(d.installerUrl),
+        'Očekávaný SHA-256:   ' + fmt(d.expectedSha256),
+        'Stažený SHA-256:     ' + fmt(d.downloadedSha256),
+        'Očekávaná velikost:  ' + fmt(d.expectedSize),
+        'Stažená velikost:    ' + fmt(d.downloadedSize),
+        'Poslední kontrola:   ' + fmt(d.lastCheckAt),
+        'Poslední chyba:      ' + fmt(d.lastError),
+        '',
+        '--- Manifest ---',
+        JSON.stringify(d.manifest, null, 2),
+        '',
+        '--- Logy ---',
+        (d.logs || []).join('\n'),
+      ];
+      return lines.join('\n');
+    }
+
+    $('toggleDiag').addEventListener('click', async () => {
+      const opened = document.body.classList.toggle('diag-open');
+      $('toggleDiag').textContent = opened ? 'Zpět' : 'Diagnostika';
+      if (opened) await renderDiag();
+    });
+    $('refreshBtn').addEventListener('click', renderDiag);
+    $('recheckBtn').addEventListener('click', async () => {
+      toast('Spouštím kontrolu…');
+      ipcRenderer.invoke('launcher:recheck').finally(renderDiag);
+    });
+    $('copyBtn').addEventListener('click', async () => {
+      const d = await renderDiag();
+      clipboard.writeText(buildReport(d));
+      toast('Report zkopírován do schránky');
+    });
+    $('copyLogsBtn').addEventListener('click', async () => {
+      const d = await renderDiag();
+      clipboard.writeText((d.logs || []).join('\n'));
+      toast('Logy zkopírovány');
+    });
+    $('openLogsBtn').addEventListener('click', async () => {
+      const p = await ipcRenderer.invoke('launcher:open-logs');
+      toast(p ? 'Otevírám soubor…' : 'Nepodařilo se uložit soubor');
+    });
+    $('continueBtn').addEventListener('click', () => {
+      ipcRenderer.invoke('launcher:continue');
     });
   </script>
 </body>

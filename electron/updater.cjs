@@ -73,14 +73,59 @@ function isNewer(remote, current) {
 
 let checking = false;
 
+// Persistent diagnostics — snapshot of the last update check for the launcher UI.
+const diagnostics = {
+  manifestUrl: MANIFEST_URL,
+  currentVersion: null,
+  manifest: null,
+  remoteVersion: null,
+  installerUrl: null,
+  expectedSha256: null,
+  expectedSize: null,
+  downloadedSha256: null,
+  downloadedSize: null,
+  status: "idle",
+  lastError: null,
+  lastCheckAt: null,
+  logs: [],
+};
+
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}`;
+  diagnostics.logs.push(line);
+  if (diagnostics.logs.length > 200) diagnostics.logs.splice(0, diagnostics.logs.length - 200);
+  try { console.log(line); } catch {}
+  // Broadcast to any listening launcher window
+  try {
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) w.webContents.send("launcher:log", line);
+    });
+  } catch {}
+}
+
+function getDiagnostics() {
+  return { ...diagnostics, logs: diagnostics.logs.slice() };
+}
+
 async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   if (checking) return { status: "busy" };
   checking = true;
+  diagnostics.status = "checking";
+  diagnostics.lastError = null;
+  diagnostics.currentVersion = app.getVersion();
+  diagnostics.lastCheckAt = new Date().toISOString();
+  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
+  log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
     const manifest = await fetchJson(MANIFEST_URL);
+    diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
+    diagnostics.remoteVersion = remote;
+    log(`Manifest OK — vzdálená verze ${remote}`);
     if (!remote || !isNewer(remote, current)) {
+      diagnostics.status = "up-to-date";
+      log(`Není novější verze (${current} ≥ ${remote}).`);
       if (!silent) {
         await dialog.showMessageBox(parentWindow, {
           type: "info",
@@ -98,8 +143,15 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       (platform === "win32" ? { installerUrl: manifest.installerUrl } : null);
 
     if (!asset || !asset.installerUrl) {
+      diagnostics.status = "no-asset";
+      log(`Manifest neobsahuje installer pro platformu ${platform}.`);
       return { status: "no-asset" };
     }
+    diagnostics.installerUrl = asset.installerUrl;
+    diagnostics.expectedSha256 = (asset.sha256 || manifest.sha256 || null);
+    diagnostics.expectedSize = Number(asset.size || manifest.size || 0) || null;
+    log(`Vybraný installer: ${asset.installerUrl}`);
+    if (diagnostics.expectedSha256) log(`Očekávaný SHA-256: ${diagnostics.expectedSha256}`);
 
     const { response } = await dialog.showMessageBox(parentWindow, {
       type: "question",
@@ -113,7 +165,11 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       defaultId: 0,
       cancelId: 1,
     });
-    if (response !== 0) return { status: "postponed" };
+    if (response !== 0) {
+      diagnostics.status = "postponed";
+      log("Uživatel odložil aktualizaci.");
+      return { status: "postponed" };
+    }
 
     // Progress window
     const progressWin = new BrowserWindow({
@@ -139,14 +195,13 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       <h3>Stahuji StudioVoxario ${remote}…</h3>
       <div class="bar"><div class="fill" id="f"></div></div>
       <div class="pct" id="p">0 %</div>
-      <script>
-        const { ipcRenderer } = require ? require('electron') : { ipcRenderer: null };
-      </script>
     </body></html>`;
     progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
     const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
+    log(`Stahování zahájeno → ${dest}`);
+    diagnostics.status = "downloading";
 
     const download = await downloadFile(asset.installerUrl, dest, (p) => {
       const pct = Math.round(p * 100);
@@ -158,13 +213,18 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     });
 
     progressWin.close();
+    diagnostics.downloadedSha256 = download.sha256;
+    diagnostics.downloadedSize = download.size;
+    log(`Staženo ${download.size} B, SHA-256=${download.sha256}`);
 
     // Integrity verification — SHA-256 must match the manifest (and size if provided).
-    // Refuse to run the installer if the file has been tampered with or corrupted in transit.
     const expectedHash = String(asset.sha256 || manifest.sha256 || "").toLowerCase().trim();
     const expectedSize = Number(asset.size || manifest.size || 0);
     if (!expectedHash) {
       try { fs.unlinkSync(dest); } catch {}
+      diagnostics.status = "no-hash";
+      diagnostics.lastError = "Manifest neobsahuje SHA-256.";
+      log("CHYBA: manifest bez SHA-256, aktualizace zamítnuta.");
       await dialog.showMessageBox(parentWindow, {
         type: "error",
         title: "Aktualizace zamítnuta",
@@ -177,6 +237,9 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     }
     if (expectedSize && download.size !== expectedSize) {
       try { fs.unlinkSync(dest); } catch {}
+      diagnostics.status = "size-mismatch";
+      diagnostics.lastError = `Velikost ${download.size} ≠ ${expectedSize}`;
+      log(`CHYBA: nesouhlasí velikost (${download.size} vs ${expectedSize}).`);
       await dialog.showMessageBox(parentWindow, {
         type: "error",
         title: "Aktualizace zamítnuta",
@@ -187,6 +250,9 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     }
     if (download.sha256.toLowerCase() !== expectedHash) {
       try { fs.unlinkSync(dest); } catch {}
+      diagnostics.status = "hash-mismatch";
+      diagnostics.lastError = `SHA-256 neshoda (očekáváno ${expectedHash}, získáno ${download.sha256})`;
+      log("CHYBA: neshoda SHA-256, instalátor smazán.");
       await dialog.showMessageBox(parentWindow, {
         type: "error",
         title: "Aktualizace zamítnuta",
@@ -199,6 +265,9 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       });
       return { status: "hash-mismatch" };
     }
+
+    diagnostics.status = "installing";
+    log("Integrita OK, spouštím instalátor.");
 
     if (platform === "win32") {
       await shell.openPath(dest);
@@ -219,6 +288,9 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     return { status: "installing", version: remote };
   } catch (err) {
     console.error("update check failed", err);
+    diagnostics.status = "error";
+    diagnostics.lastError = String(err.message || err);
+    log(`CHYBA: ${diagnostics.lastError}`);
     if (!silent) {
       await dialog.showMessageBox(parentWindow, {
         type: "error",
@@ -233,4 +305,4 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   }
 }
 
-module.exports = { checkForUpdates };
+module.exports = { checkForUpdates, getDiagnostics };
