@@ -157,6 +157,14 @@ const diagnostics = {
   status: "idle",
   lastError: null,
   lastCheckAt: null,
+  // Retry / backoff diagnostika
+  retryAttempts: 0,
+  retryMaxAttempts: 0,
+  retryLastError: null,
+  retryLastErrorAt: null,
+  retryNextDelayMs: null,
+  retryNextAt: null,
+  retryPhase: null, // "manifest" | "download"
   logs: [],
 };
 
