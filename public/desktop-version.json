@@ -31,7 +31,7 @@
       }
     },
     "beta": {
-      "version": "0.0.7-alpha",
+      "version": "0.0.8-alpha",
       "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
       "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
       "size": 85890925,
