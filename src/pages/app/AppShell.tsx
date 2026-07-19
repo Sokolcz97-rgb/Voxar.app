@@ -33,6 +33,9 @@ export default function AppShell() {
   // Voice connection tracking across channels
   const [voiceConn, setVoiceConn] = useState<{ channel: VoxChannel | null; api: any } | null>(null);
 
+  // In-app view: main content, user settings, or server settings
+  const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
+
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
   }, [loading, user, navigate]);
