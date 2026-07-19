@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
+const { execFile } = require("child_process");
 
 const MANIFEST_URL =
   process.env.STUDIOVOXARIO_UPDATE_URL ||
