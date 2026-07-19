@@ -336,8 +336,59 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       return { status: "hash-mismatch" };
     }
 
+    // Authenticode / codesign verification — chrání i proti platnému hashi z podvrženého manifestu,
+    // pokud útočník nemá platný certifikát vydavatele.
+    const expectedPublisher = (asset.publisher || manifest.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null);
+    diagnostics.expectedPublisher = expectedPublisher;
+    log("Ověřuji digitální podpis instalátoru…");
+    const sig = await verifyCodeSignature(dest);
+    diagnostics.signatureStatus = sig.status || null;
+    diagnostics.signatureSubject = sig.subject || null;
+    diagnostics.signatureThumbprint = sig.thumbprint || null;
+    diagnostics.signatureTimestamped = sig.timestamped ?? null;
+
+    if (!sig.supported) {
+      log(`Podpis nelze ověřit na této platformě (${process.platform}) — přeskočeno.`);
+    } else if (!sig.ok) {
+      try { fs.unlinkSync(dest); } catch {}
+      diagnostics.status = "signature-invalid";
+      diagnostics.lastError = `Neplatný podpis: ${sig.status}${sig.error ? " — " + sig.error : ""}`;
+      log(`CHYBA: neplatný digitální podpis (${sig.status}). Instalátor smazán.`);
+      await dialog.showMessageBox(parentWindow, {
+        type: "error",
+        title: "Aktualizace zamítnuta",
+        message: "Ověření podpisu selhalo",
+        detail:
+          `Digitální podpis instalátoru je neplatný nebo chybí.\n\n` +
+          `Stav: ${sig.status}\n` +
+          (sig.statusMessage ? `Zpráva: ${sig.statusMessage}\n` : "") +
+          (sig.subject ? `Podepsáno: ${sig.subject}\n` : "") +
+          `\nSoubor byl smazán a nespustí se.`,
+      });
+      return { status: "signature-invalid" };
+    } else {
+      log(`Podpis OK — ${sig.subject || "(neznámý subjekt)"} [${sig.thumbprint || "-"}]`);
+      if (expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
+        try { fs.unlinkSync(dest); } catch {}
+        diagnostics.status = "publisher-mismatch";
+        diagnostics.lastError = `Vydavatel "${sig.subject}" ≠ očekávaný "${expectedPublisher}"`;
+        log(`CHYBA: podpis platný, ale vydavatel neodpovídá. Instalátor smazán.`);
+        await dialog.showMessageBox(parentWindow, {
+          type: "error",
+          title: "Aktualizace zamítnuta",
+          message: "Neočekávaný vydavatel",
+          detail:
+            `Instalátor je podepsaný, ale jiným subjektem, než uvádí manifest.\n\n` +
+            `Očekáváno: ${expectedPublisher}\n` +
+            `Nalezeno:  ${sig.subject}\n\n` +
+            `Soubor byl smazán a nespustí se.`,
+        });
+        return { status: "publisher-mismatch" };
+      }
+    }
+
     diagnostics.status = "installing";
-    log("Integrita OK, spouštím instalátor.");
+    log("Integrita i podpis OK, spouštím instalátor.");
 
     if (platform === "win32") {
       await shell.openPath(dest);
