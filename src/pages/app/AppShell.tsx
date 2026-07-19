@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+
 import { toast } from "@/hooks/use-toast";
 import { GuildRail, type VoxGuild } from "@/components/vox/GuildRail";
 import { ChannelSidebar, type VoxChannel } from "@/components/vox/ChannelSidebar";
