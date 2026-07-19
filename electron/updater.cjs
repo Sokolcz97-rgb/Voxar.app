@@ -658,5 +658,5 @@ async function fetchManifest() {
   return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
 }
 
-module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest };
+module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload };
 
