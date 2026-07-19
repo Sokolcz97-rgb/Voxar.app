@@ -358,13 +358,14 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       diagnostics.status = "up-to-date";
       log(`Není novější verze (${current} ≥ ${remote}).`);
       if (!silent) {
-        await dialog.showMessageBox(parentWindow, {
-          type: "info",
+        await notifyUser({
+          parentWindow, type: "info",
           title: "StudioVoxario",
           message: "Máte nejnovější verzi",
           detail: `Aktuální verze: ${current}`,
         });
       }
+
       return { status: "up-to-date", current };
     }
 
