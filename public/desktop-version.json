@@ -1,10 +1,11 @@
 {
   "version": "1.0.0",
   "notes": "První oficiální vydání launcheru s automatickými aktualizacemi.",
-  "installerUrl": "/__l5e/assets-v1/c71977e9-3c62-42a5-9e5b-9c6058f851e5/StudioVoxarioSetup.exe",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/c71977e9-3c62-42a5-9e5b-9c6058f851e5/StudioVoxarioSetup.exe",
   "platforms": {
     "win32": {
-      "installerUrl": "/__l5e/assets-v1/c71977e9-3c62-42a5-9e5b-9c6058f851e5/StudioVoxarioSetup.exe"
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/c71977e9-3c62-42a5-9e5b-9c6058f851e5/StudioVoxarioSetup.exe"
     }
   }
 }
+
