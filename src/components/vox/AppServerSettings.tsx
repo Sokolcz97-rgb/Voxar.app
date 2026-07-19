@@ -328,13 +328,41 @@ export function AppServerSettings({
                     <div className="text-sm truncate">{m.display_name || m.nickname || m.user_id.slice(0,8)}</div>
                     <div className="text-[11px] text-muted-foreground">{m.role}</div>
                   </div>
-                  {isOwner && m.user_id !== user?.id && (
+                  {(isOwner || isAdmin) && m.user_id !== user?.id && m.role !== "owner" && (
                     <>
-                      {m.role !== "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "mod")}>Povýšit</Button>}
-                      {m.role === "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "member")}>Sundat</Button>}
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => kickMember(m)}>Kick</Button>
+                      {isOwner && m.role !== "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "mod")}>Povýšit</Button>}
+                      {isOwner && m.role === "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "member")}>Sundat</Button>}
+                      <Button size="sm" variant="ghost" title="Umlčet" onClick={() => muteMember(m)}>
+                        <MicOff className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-amber-400" title="Vyhodit" onClick={() => kickMember(m)}>
+                        <UserX className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" title="Zabanovat" onClick={() => banMember(m)}>
+                        <Ban className="w-4 h-4" />
+                      </Button>
                     </>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "bans" && isAdmin && (
+            <div className="space-y-1.5">
+              {bans.length === 0 && <div className="text-sm text-muted-foreground">Žádné bany na tomto serveru.</div>}
+              {bans.map((b) => (
+                <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/40">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-xs font-semibold">
+                    {b.avatar_url ? <img src={b.avatar_url} alt="" className="w-full h-full object-cover" /> : (b.display_name || "?").slice(0,2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate">{b.display_name || b.user_id.slice(0,8)}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {b.reason ? `Důvod: ${b.reason}` : "Bez důvodu"} · {new Date(b.created_at).toLocaleString("cs-CZ")}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => unbanUser(b.user_id)}>Odbanovat</Button>
                 </div>
               ))}
             </div>
