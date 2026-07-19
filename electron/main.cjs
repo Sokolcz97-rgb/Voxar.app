@@ -12,7 +12,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
