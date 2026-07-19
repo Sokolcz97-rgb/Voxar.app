@@ -216,33 +216,74 @@ ipcMain.handle("app:quit", () => {
   app.quit();
 });
 ipcMain.handle("app:reload", () => mainWindow?.webContents.reload());
+ipcMain.handle("app:check-updates", () =>
+  checkForUpdates({ silent: false, parentWindow: mainWindow })
+);
+ipcMain.handle("launcher:version", () => app.getVersion());
+
+function createLauncher() {
+  launcherWindow = new BrowserWindow({
+    width: 420,
+    height: 300,
+    frame: false,
+    resizable: false,
+    backgroundColor: "#020617",
+    show: true,
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+    },
+  });
+  launcherWindow.loadFile(path.join(__dirname, "launcher.html"));
+  launcherWindow.on("closed", () => (launcherWindow = null));
+}
+
+function setLauncherStatus(msg) {
+  try { launcherWindow?.webContents.send("launcher:status", msg); } catch {}
+}
+
+async function runLauncherSequence() {
+  createLauncher();
+  setLauncherStatus("Kontrola aktualizací…");
+
+  try {
+    const result = await Promise.race([
+      checkForUpdates({ silent: true, parentWindow: launcherWindow }),
+      new Promise((r) => setTimeout(() => r({ status: "timeout" }), 8000)),
+    ]);
+    if (result?.status === "installing") {
+      setLauncherStatus("Instaluji novou verzi…");
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  setLauncherStatus("Načítání aplikace…");
+  createMainWindow();
+  createTray();
+  applyAutoStart(settings.autoStart);
+
+  mainWindow.webContents.once("did-finish-load", () => {
+    setTimeout(() => {
+      launcherWindow?.close();
+      launcherWindow = null;
+      if (!settings.startMinimized) mainWindow?.show();
+    }, 400);
+  });
+}
 
 app.whenReady().then(() => {
-  // Notifications permission auto-allow for our own domain
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
     const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen"];
     cb(allowed.includes(permission));
   });
 
-  createMainWindow();
-  createTray();
-  applyAutoStart(settings.autoStart);
+  runLauncherSequence();
 
-  // Try auto-updater (optional; requires published GitHub releases)
-  try {
-    const { autoUpdater } = require("electron-updater");
-    autoUpdater.autoDownload = true;
-    autoUpdater.on("update-downloaded", () => {
-      new Notification({
-        title: "StudioVoxario",
-        body: "Nová verze stažena – restartujte aplikaci pro instalaci.",
-      }).show();
-    });
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {});
-    setInterval(() => autoUpdater.checkForUpdatesAndNotify().catch(() => {}), 6 * 60 * 60 * 1000);
-  } catch {
-    // electron-updater not installed or no update feed configured – ignore
-  }
+  setInterval(() => {
+    checkForUpdates({ silent: true, parentWindow: mainWindow }).catch(() => {});
+  }, 4 * 60 * 60 * 1000);
 });
 
 app.on("second-instance", () => showMain());
