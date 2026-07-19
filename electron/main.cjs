@@ -37,6 +37,10 @@ const defaultSettings = {
   notifications: true,
   hardwareAcceleration: true,
   startMinimized: false,
+  // Kanál aktualizací: "stable" = veřejný Release, "beta" = předběžné Alpha buildy.
+  // Beta vyžaduje odemčení přístupovým kódem (viz `betaUnlocked`).
+  updateChannel: "stable",
+  betaUnlocked: false,
 };
 
 function loadSettings() {
@@ -243,12 +247,27 @@ function openSettings() {
 ipcMain.handle("settings:get", () => settings);
 ipcMain.handle("settings:set", (_e, next) => {
   const prev = settings;
-  settings = { ...settings, ...next };
+  const merged = { ...settings, ...next };
+  // Bezpečnostní pojistka: nedovol přepnout na "beta" bez unlocku.
+  if (merged.updateChannel === "beta" && !merged.betaUnlocked) {
+    merged.updateChannel = "stable";
+  }
+  settings = merged;
   saveSettings(settings);
   if (prev.autoStart !== settings.autoStart || prev.startMinimized !== settings.startMinimized) {
     applyAutoStart(settings.autoStart);
   }
   return settings;
+});
+// Odemčení Beta kanálu — přijímá již OVĚŘENÝ příznak z renderu (Supabase RPC
+// `redeem_download_code` se volá v UI, kde je uživatelská session). Main
+// process jen zapíše flag do settings.
+ipcMain.handle("settings:unlock-beta", (_e, ok) => {
+  if (ok === true) {
+    settings = { ...settings, betaUnlocked: true };
+    saveSettings(settings);
+  }
+  return { betaUnlocked: !!settings.betaUnlocked };
 });
 ipcMain.handle("app:version", () => app.getVersion());
 ipcMain.handle("app:quit", () => {
@@ -257,7 +276,11 @@ ipcMain.handle("app:quit", () => {
 });
 ipcMain.handle("app:reload", () => mainWindow?.webContents.reload());
 ipcMain.handle("app:check-updates", () =>
-  checkForUpdates({ silent: false, parentWindow: mainWindow })
+  checkForUpdates({
+    silent: false,
+    parentWindow: mainWindow,
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  })
 );
 ipcMain.handle("launcher:version", () => app.getVersion());
 ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
@@ -396,10 +419,12 @@ async function runLauncherSequence() {
 
   let result = { status: "skipped" };
   try {
-    // Wait for the update check to actually finish (fetchJson has its own 15s timeout).
-    // Do NOT race with a short timer — otherwise the old version boots before the
-    // update prompt is answered and the user never sees it.
-    result = await checkForUpdates({ silent: true, parentWindow: launcherWindow });
+    result = await checkForUpdates({
+      silent: true,
+      parentWindow: launcherWindow,
+      channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+    });
+  } catch (e) {
   } catch (e) {
     console.error("launcher update check error", e);
   }
