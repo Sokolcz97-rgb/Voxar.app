@@ -1,24 +1,36 @@
 {
-  "version": "1.3.4-alpha",
+  "version": "1.3.5-alpha",
   "channel": "alpha",
-  "notes": "Alpha 1.3.4 — SV ikona nyní správně embedovaná i v StudioVoxario.exe (zástupce na ploše a taskbar).",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/e1b3912a-2212-4f4e-b247-82135a5b2105/StudioVoxarioSetup-1.3.4-alpha.exe",
-  "sha256": "65d3ab4512657c4fff2fdb0a34be9b9d3763a1796bb2113c95d7f78efcfe2de0",
-  "size": 85827693,
+  "notes": "Alpha 1.3.5 — tichá instalace aktualizace (bez wizardu), automatický restart aplikace, ukončení běžící instance před přepsáním souborů. Základní anti-tamper (zákaz DevTools a debug přepínačů v produkčním buildu).",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/239ea483-740f-460a-923f-5430014c8d22/StudioVoxarioSetup-1.3.5-alpha.exe",
+  "sha256": "4f5afd3243f6e18355c4836ca30b536afeecc96e0c12f8e4bc59dcd03aac9fe8",
+  "size": 85804962,
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/e1b3912a-2212-4f4e-b247-82135a5b2105/StudioVoxarioSetup-1.3.4-alpha.exe",
-      "sha256": "65d3ab4512657c4fff2fdb0a34be9b9d3763a1796bb2113c95d7f78efcfe2de0",
-      "size": 85827693,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/239ea483-740f-460a-923f-5430014c8d22/StudioVoxarioSetup-1.3.5-alpha.exe",
+      "sha256": "4f5afd3243f6e18355c4836ca30b536afeecc96e0c12f8e4bc59dcd03aac9fe8",
+      "size": 85804962,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     }
   },
   "history": {
+    "1.3.5-alpha": {
+      "notes": "Tichá instalace aktualizace + auto-restart, killswitch běžící instance, anti-tamper (DevTools/debug flagy zakázány v produkci).",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/239ea483-740f-460a-923f-5430014c8d22/StudioVoxarioSetup-1.3.5-alpha.exe",
+          "sha256": "4f5afd3243f6e18355c4836ca30b536afeecc96e0c12f8e4bc59dcd03aac9fe8",
+          "size": 85804962,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
     "1.3.4-alpha": {
       "notes": "SV ikona embedovaná do StudioVoxario.exe — zástupce na ploše i taskbar zobrazí správnou ikonu.",
       "platforms": {
@@ -43,7 +55,6 @@
         }
       }
     },
-
     "1.3.2-alpha": {
       "notes": "Update prompt, informační a chybové hlášky přesunuty přímo do launcheru — už žádné systémové dialogy.",
       "platforms": {

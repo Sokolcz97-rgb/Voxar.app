@@ -618,12 +618,22 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
 
 
     if (platform === "win32") {
-      await shell.openPath(dest);
+      // Tichá instalace: NSIS /S — bez wizardu, po dokončení auto-spustí novou verzi.
+      // Nejprve ukončíme aplikaci, aby installer mohl přepsat běžící exe/DLLs.
+      try {
+        const { spawn } = require("child_process");
+        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
+        child.unref();
+        log("Instalátor spuštěn v tichém režimu (/S). Ukončuji aplikaci pro přepsání souborů.");
+      } catch (e) {
+        log(`Nepodařilo se spustit tichý installer (${e.message}), zkouším fallback.`);
+        await shell.openPath(dest);
+      }
       new Notification({
         title: "StudioVoxario",
-        body: "Integrita ověřena. Instalátor se spouští, aplikace se ukončí.",
+        body: "Aktualizace se instaluje na pozadí. Aplikace se za chvíli sama restartuje.",
       }).show();
-      setTimeout(() => app.quit(), 1500);
+      setTimeout(() => app.quit(), 800);
     } else {
       await dialog.showMessageBox(parentWindow, {
         type: "info",
@@ -734,9 +744,15 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
 
     if (platform === "win32") {
-      await shell.openPath(dest);
-      new Notification({ title: "StudioVoxario", body: `${label}: instalátor se spouští, aplikace se ukončí.` }).show();
-      setTimeout(() => app.quit(), 1500);
+      try {
+        const { spawn } = require("child_process");
+        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
+        child.unref();
+      } catch {
+        await shell.openPath(dest);
+      }
+      new Notification({ title: "StudioVoxario", body: `${label}: tichá instalace probíhá, aplikace se restartuje.` }).show();
+      setTimeout(() => app.quit(), 800);
     } else {
       shell.showItemInFolder(dest);
     }

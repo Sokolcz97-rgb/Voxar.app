@@ -16,6 +16,17 @@ const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelA
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
+
+// Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
+// obcházení web security přes CLI flagy.
+if (app.isPackaged) {
+  const forbiddenFlags = ["--remote-debugging-port", "--inspect", "--inspect-brk", "--disable-web-security", "--no-sandbox"];
+  const argv = process.argv.slice(1);
+  if (argv.some((a) => forbiddenFlags.some((f) => a.startsWith(f)))) {
+    console.error("Zakázaný spouštěcí přepínač detekován, aplikace se ukončí.");
+    app.exit(1);
+  }
+}
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
 let launcherWindow = null;
 
@@ -124,6 +135,10 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: true,
+      // Anti-tamper: v produkčních buildech zakážeme DevTools + remote debugging,
+      // aby uživatel nemohl injektovat vlastní JS do renderu.
+      devTools: !app.isPackaged,
+      webSecurity: true,
     },
   });
 

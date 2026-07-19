@@ -1,6 +1,7 @@
 ; StudioVoxario NSIS Installer
 Unicode true
 !include "MUI2.nsh"
+!include "LogicLib.nsh"
 
 Name "StudioVoxario"
 OutFile "StudioVoxarioSetup.exe"
@@ -26,7 +27,15 @@ BrandingText "StudioVoxario"
 !insertmacro MUI_LANGUAGE "Czech"
 !insertmacro MUI_LANGUAGE "English"
 
+; Kill running instance before install so exe/DLLs aren't locked.
+!macro KillRunning
+  DetailPrint "Ukončuji běžící StudioVoxario…"
+  nsExec::Exec 'taskkill /F /IM StudioVoxario.exe /T'
+  Sleep 800
+!macroend
+
 Section "StudioVoxario" SecMain
+  !insertmacro KillRunning
   SetOutPath "$INSTDIR"
   File /r "release\StudioVoxario-win32-x64\*.*"
 
@@ -46,7 +55,7 @@ Section "StudioVoxario" SecMain
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "Publisher" "StudioVoxario"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
-    "DisplayVersion" "1.3.4-alpha"
+    "DisplayVersion" "1.3.5-alpha"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
@@ -55,7 +64,16 @@ Section "StudioVoxario" SecMain
     "NoRepair" 1
 SectionEnd
 
+; Auto-run the app after a silent install (/S).
+Function .onInstSuccess
+  ${If} ${Silent}
+    Exec '"$INSTDIR\StudioVoxario.exe"'
+  ${EndIf}
+FunctionEnd
+
 Section "Uninstall"
+  nsExec::Exec 'taskkill /F /IM StudioVoxario.exe /T'
+  Sleep 500
   Delete "$SMPROGRAMS\StudioVoxario\StudioVoxario.lnk"
   Delete "$SMPROGRAMS\StudioVoxario\Odinstalovat.lnk"
   RMDir  "$SMPROGRAMS\StudioVoxario"
