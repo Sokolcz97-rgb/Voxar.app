@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload } from "lucide-react";
+import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxMember } from "@/components/vox/MemberList";
 
@@ -39,6 +39,7 @@ export type VoxRole = {
   badge_url: string | null;
   position: number;
   is_default: boolean;
+  hoist: boolean;
   permissions: Record<string, boolean>;
 };
 
@@ -126,6 +127,21 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
     if (selectedId === id) setSelectedId(null);
   };
 
+  const swapPositions = async (i: number, j: number) => {
+    if (i < 0 || j < 0 || i >= roles.length || j >= roles.length) return;
+    const a = roles[i], b = roles[j];
+    const next = [...roles];
+    next[i] = { ...a, position: b.position };
+    next[j] = { ...b, position: a.position };
+    // Roles list is displayed in position DESC; keep sort stable.
+    next.sort((x, y) => y.position - x.position);
+    setRoles(next);
+    await Promise.all([
+      supabase.from("vox_roles").update({ position: b.position }).eq("id", a.id),
+      supabase.from("vox_roles").update({ position: a.position }).eq("id", b.id),
+    ]);
+  };
+
   const toggleAssignment = async (userId: string, roleId: string, on: boolean) => {
     if (on) {
       const { error } = await supabase.from("vox_member_roles").insert({ guild_id: guildId, user_id: userId, role_id: roleId });
@@ -166,19 +182,41 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
             </Button>
           )}
         </div>
-        {roles.map(r => (
-          <button
+        {roles.map((r, idx) => (
+          <div
             key={r.id}
-            onClick={() => setSelectedId(r.id)}
             className={cn(
-              "w-full flex items-center gap-2 text-left px-2 py-1.5 rounded text-sm",
-              selectedId === r.id ? "bg-primary/15" : "hover:bg-secondary/60"
+              "group w-full flex items-center gap-1 text-left px-2 py-1.5 rounded text-sm",
+              selectedId === r.id ? "bg-primary/15" : "hover:bg-secondary/60",
             )}
           >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: r.color }} />
-            <span className="flex-1 truncate">{r.name}</span>
-            {r.is_default && <span className="text-[10px] text-muted-foreground">výchozí</span>}
-          </button>
+            <button onClick={() => setSelectedId(r.id)} className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: r.color }} />
+              <span className="flex-1 truncate">{r.name}</span>
+              {r.hoist && <span className="text-[9.5px] text-primary/80 uppercase tracking-wider">hoist</span>}
+              {r.is_default && <span className="text-[10px] text-muted-foreground">výchozí</span>}
+            </button>
+            {canManage && (
+              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
+                <button
+                  disabled={idx === 0}
+                  onClick={() => swapPositions(idx, idx - 1)}
+                  className="p-0.5 rounded hover:bg-secondary disabled:opacity-30"
+                  title="Nahoru"
+                >
+                  <ArrowUp className="w-3 h-3" />
+                </button>
+                <button
+                  disabled={idx === roles.length - 1}
+                  onClick={() => swapPositions(idx, idx + 1)}
+                  className="p-0.5 rounded hover:bg-secondary disabled:opacity-30"
+                  title="Dolů"
+                >
+                  <ArrowDown className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
@@ -218,6 +256,20 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
                     onChange={(e) => patchRole(selected.id, { color: e.target.value })} />
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-start justify-between gap-3 rounded-md border border-border/40 p-3">
+              <div>
+                <div className="text-sm font-medium">Zobrazit členy s touto rolí odděleně</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Členové budou v seznamu členů vedeni v samostatné kategorii pod názvem role (podobně jako na Discordu).
+                </div>
+              </div>
+              <Switch
+                checked={!!selected.hoist}
+                disabled={!canManage}
+                onCheckedChange={(v) => patchRole(selected.id, { hoist: v })}
+              />
             </div>
 
             <div>

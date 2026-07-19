@@ -82,32 +82,10 @@ export default function AppShell() {
       const myMember = memb?.find((m: any) => m.user_id === user.id);
       setIsAdmin(myMember?.role === "owner" || myMember?.role === "mod");
 
-      const memberIds = memb?.map((m: any) => m.user_id) ?? [];
-      const [{ data: profs }, { data: pres }] = await Promise.all([
-        memberIds.length
-          ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", memberIds)
-          : Promise.resolve({ data: [] as any[] }),
-        memberIds.length
-          ? supabase.from("vox_presence").select("user_id, status, last_seen").in("user_id", memberIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
-      const profMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p]));
-      const now = Date.now();
-      const presMap = Object.fromEntries((pres ?? []).map((p: any) => {
-        const stale = now - new Date(p.last_seen).getTime() > 90_000;
-        return [p.user_id, stale ? "offline" : p.status];
-      }));
-      setMembers((memb ?? []).map((m: any) => ({
-        user_id: m.user_id,
-        nickname: m.nickname,
-        role: m.role,
-        display_name: profMap[m.user_id]?.display_name ?? null,
-        avatar_url: profMap[m.user_id]?.avatar_url ?? null,
-        status: presMap[m.user_id] ?? "offline",
-      })));
+      setMembers(await buildMembers(activeGuildId, memb ?? []));
     })();
 
-    // realtime channels + participants
+    // realtime channels + members + roles
     const ch = supabase.channel(`vox_meta_${activeGuildId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_channels", filter: `guild_id=eq.${activeGuildId}` },
         async () => {
@@ -115,6 +93,10 @@ export default function AppShell() {
           setChannels((data ?? []) as VoxChannel[]);
         })
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_guild_members", filter: `guild_id=eq.${activeGuildId}` },
+        () => { void loadGuildMembers(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_roles", filter: `guild_id=eq.${activeGuildId}` },
+        () => { void loadGuildMembers(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_member_roles", filter: `guild_id=eq.${activeGuildId}` },
         () => { void loadGuildMembers(); })
       .subscribe();
 
@@ -127,13 +109,14 @@ export default function AppShell() {
     return () => { supabase.removeChannel(ch); supabase.removeChannel(vp); };
   }, [activeGuildId, user]);
 
-  const loadGuildMembers = async () => {
-    if (!activeGuildId) return;
-    const { data: memb } = await supabase.from("vox_guild_members").select("user_id, nickname, role").eq("guild_id", activeGuildId);
-    const ids = memb?.map((m: any) => m.user_id) ?? [];
-    const [{ data: profs }, { data: pres }] = await Promise.all([
-      ids.length ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids) : Promise.resolve({ data: [] }),
-      ids.length ? supabase.from("vox_presence").select("user_id, status, last_seen").in("user_id", ids) : Promise.resolve({ data: [] }),
+  /** Rozšíří členy o profil, presence a přiřazené vlastní role (seřazené podle position DESC). */
+  const buildMembers = async (guildId: string, memb: any[]): Promise<VoxMember[]> => {
+    const ids = memb.map((m: any) => m.user_id);
+    const [{ data: profs }, { data: pres }, { data: roles }, { data: memberRoles }] = await Promise.all([
+      ids.length ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids) : Promise.resolve({ data: [] as any[] }),
+      ids.length ? supabase.from("vox_presence").select("user_id, status, last_seen").in("user_id", ids) : Promise.resolve({ data: [] as any[] }),
+      supabase.from("vox_roles").select("*").eq("guild_id", guildId),
+      supabase.from("vox_member_roles").select("user_id, role_id").eq("guild_id", guildId),
     ]);
     const profMap = Object.fromEntries(((profs ?? []) as any[]).map((p) => [p.user_id, p]));
     const now = Date.now();
@@ -141,12 +124,33 @@ export default function AppShell() {
       const stale = now - new Date(p.last_seen).getTime() > 90_000;
       return [p.user_id, stale ? "offline" : p.status];
     }));
-    setMembers((memb ?? []).map((m: any) => ({
-      user_id: m.user_id, nickname: m.nickname, role: m.role,
+    const roleMap = Object.fromEntries(((roles ?? []) as any[]).map((r) => [r.id, {
+      ...r,
+      permissions: (r.permissions ?? {}) as Record<string, boolean>,
+    }]));
+    const userRoles: Record<string, any[]> = {};
+    ((memberRoles ?? []) as any[]).forEach((mr) => {
+      const r = roleMap[mr.role_id];
+      if (!r) return;
+      (userRoles[mr.user_id] ||= []).push(r);
+    });
+    Object.values(userRoles).forEach((list) => list.sort((a, b) => (b.position ?? 0) - (a.position ?? 0)));
+
+    return memb.map((m: any) => ({
+      user_id: m.user_id,
+      nickname: m.nickname,
+      role: m.role,
       display_name: profMap[m.user_id]?.display_name ?? null,
       avatar_url: profMap[m.user_id]?.avatar_url ?? null,
       status: presMap[m.user_id] ?? "offline",
-    })));
+      roles: userRoles[m.user_id] ?? [],
+    }));
+  };
+
+  const loadGuildMembers = async () => {
+    if (!activeGuildId) return;
+    const { data: memb } = await supabase.from("vox_guild_members").select("user_id, nickname, role").eq("guild_id", activeGuildId);
+    setMembers(await buildMembers(activeGuildId, memb ?? []));
   };
 
   const refreshVoice = async () => {
@@ -256,7 +260,7 @@ export default function AppShell() {
             ) : activeChannel ? (
               <>
                 {activeChannel.type === "text"
-                  ? <ChatView channel={activeChannel} />
+                  ? <ChatView channel={activeChannel} members={members} />
                   : <VoiceView
                       channel={activeChannel}
                       onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}

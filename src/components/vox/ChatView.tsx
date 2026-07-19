@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { VoxChannel } from "./ChannelSidebar";
+import type { VoxMember } from "./MemberList";
+import { RoleBadge } from "./VoxRolesPanel";
 
 interface Msg {
   id: string;
@@ -19,7 +21,7 @@ interface Msg {
 
 interface ProfileLite { user_id: string; display_name: string | null; avatar_url: string | null; }
 
-export function ChatView({ channel }: { channel: VoxChannel }) {
+export function ChatView({ channel, members = [] }: { channel: VoxChannel; members?: VoxMember[] }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -95,7 +97,9 @@ export function ChatView({ channel }: { channel: VoxChannel }) {
           const prev = messages[i - 1];
           const compact = prev && prev.author_id === m.author_id &&
             (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime()) < 5 * 60_000;
-          const name = p?.display_name || m.author_id.slice(0, 8);
+          const member = members.find((mm) => mm.user_id === m.author_id);
+          const topRole = member?.roles?.[0] ?? null;
+          const name = member?.nickname || p?.display_name || m.author_id.slice(0, 8);
           const mine = m.author_id === user?.id;
           return (
             <div key={m.id} className={cn("group flex gap-3", compact ? "pl-11" : "")}>
@@ -108,8 +112,14 @@ export function ChatView({ channel }: { channel: VoxChannel }) {
               )}
               <div className="flex-1 min-w-0">
                 {!compact && (
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-semibold text-sm">{name}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span
+                      className="font-semibold text-sm"
+                      style={topRole ? { color: topRole.color } : undefined}
+                    >
+                      {name}
+                    </span>
+                    {topRole && <RoleBadge role={topRole} />}
                     <span className="text-[11px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
                     </span>
