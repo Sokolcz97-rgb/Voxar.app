@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { MicTester } from "@/components/vox/MicTester";
 
 type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "about";
 
