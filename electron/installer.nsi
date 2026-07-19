@@ -55,7 +55,7 @@ Section "StudioVoxario" SecMain
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "Publisher" "StudioVoxario"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
-    "DisplayVersion" "1.3.6-alpha"
+    "DisplayVersion" "1.3.7-alpha"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \

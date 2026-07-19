@@ -1,26 +1,38 @@
 {
-  "version": "1.3.6-alpha",
+  "version": "1.3.7-alpha",
   "channel": "alpha",
-  "notes": "Alpha 1.3.6 — správně embedovaná SV ikona v StudioVoxario.exe (build s wine + rcedit). Zástupce na ploše, taskbar i Průzkumník teď zobrazují SV monogram místo výchozí Electron ikony.",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/1d817f86-124f-41dd-a268-13e65bc7cf74/StudioVoxarioSetup-1.3.6-alpha.exe",
-  "sha256": "863e853004bc23687e83e7d8162324f9b2eb06f1947375524c9566864e2356b8",
-  "size": 83815766,
+  "notes": "Alpha 1.3.7 — „Zkontrolovat aktualizace" nyní obchází HTTP cache (přesná detekce nové verze) a všechny update dialogy (dotaz, chyby integrity/podpisu, „máte nejnovější verzi") běží v interním tmavém modalu — už žádná klasická Windows okna.",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
+  "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
+  "size": 83799951,
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/1d817f86-124f-41dd-a268-13e65bc7cf74/StudioVoxarioSetup-1.3.6-alpha.exe",
-      "sha256": "863e853004bc23687e83e7d8162324f9b2eb06f1947375524c9566864e2356b8",
-      "size": 83815766,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
+      "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
+      "size": 83799951,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     }
   },
   "history": {
+    "1.3.7-alpha": {
+      "notes": "Cache-bust manifest fetche + všechny update dialogy v interním tmavém modalu (žádné nativní Windows okno).",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
+          "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
+          "size": 83799951,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
     "1.3.6-alpha": {
-      "notes": "Správně embedovaná SV ikona v .exe (build s wine + rcedit) — zástupce, taskbar i Průzkumník zobrazují SV monogram.",
+      "notes": "Správně embedovaná SV ikona v .exe (build s wine + rcedit).",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/1d817f86-124f-41dd-a268-13e65bc7cf74/StudioVoxarioSetup-1.3.6-alpha.exe",
