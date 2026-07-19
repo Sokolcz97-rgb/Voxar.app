@@ -282,6 +282,18 @@ ipcMain.handle("app:check-updates", () =>
     channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
   })
 );
+// Živá kontrola pro FAB ikonku v aplikaci — bez dialogů.
+ipcMain.handle("app:check-updates-quiet", () =>
+  checkForUpdatesQuiet({
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  })
+);
+ipcMain.handle("app:install-update-now", () =>
+  installUpdateFromRenderer({
+    parentWindow: mainWindow,
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  })
+);
 ipcMain.handle("launcher:version", () => app.getVersion());
 ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
 ipcMain.handle("launcher:recheck", () =>
