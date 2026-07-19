@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check } from "lucide-react";
+import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -22,10 +22,11 @@ interface Props {
   onCreateChannel: (type: "text" | "voice") => void;
   isAdmin: boolean;
   voiceParticipants: Record<string, Array<{ user_id: string; nickname?: string; is_muted?: boolean }>>;
+  onOpenServerSettings?: () => void;
 }
 
 export function ChannelSidebar({
-  guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants,
+  guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants, onOpenServerSettings,
 }: Props) {
   const [collapsedCats, setCollapsed] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
@@ -46,11 +47,16 @@ export function ChannelSidebar({
 
   return (
     <div className="w-60 h-full flex flex-col bg-[hsl(222_35%_5%)] border-r border-border/40">
-      <div className="h-12 px-4 flex items-center justify-between border-b border-border/50 shadow-sm">
-        <span className="font-semibold text-sm truncate">{guildName}</span>
+      <div className="h-12 px-4 flex items-center justify-between border-b border-border/50 shadow-sm gap-1">
+        <span className="font-semibold text-sm truncate flex-1">{guildName}</span>
         {inviteCode && (
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={copyInvite} title="Kopírovat pozvánkový kód">
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </Button>
+        )}
+        {onOpenServerSettings && (
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onOpenServerSettings} title="Nastavení serveru">
+            <Settings className="w-3.5 h-3.5" />
           </Button>
         )}
       </div>

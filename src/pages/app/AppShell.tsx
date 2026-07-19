@@ -10,6 +10,8 @@ import { SelfPanel } from "@/components/vox/SelfPanel";
 import { ChatView } from "@/components/vox/ChatView";
 import { VoiceView } from "@/components/vox/VoiceView";
 import { CreateGuildDialog, JoinGuildDialog } from "@/components/vox/CreateGuildDialog";
+import { AppUserSettings } from "@/components/vox/AppUserSettings";
+import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
@@ -30,6 +32,9 @@ export default function AppShell() {
 
   // Voice connection tracking across channels
   const [voiceConn, setVoiceConn] = useState<{ channel: VoxChannel | null; api: any } | null>(null);
+
+  // In-app view: main content, user settings, or server settings
+  const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -179,12 +184,27 @@ export default function AppShell() {
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
 
+  const selfPanel = (
+    <SelfPanel
+      displayName={displayName}
+      avatarUrl={profile?.avatar_url}
+      status="Online"
+      muted={voiceConn?.api?.muted ?? false}
+      deafened={voiceConn?.api?.deafened ?? false}
+      connectedChannelName={voiceConn?.channel?.name ?? null}
+      onToggleMute={() => voiceConn?.api?.toggleMute?.()}
+      onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
+      onLeaveVoice={() => voiceConn?.api?.leave?.()}
+      onOpenSettings={() => setView("user-settings")}
+    />
+  );
+
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
       <GuildRail
         guilds={guilds}
         activeId={activeGuildId}
-        onSelect={setActiveGuildId}
+        onSelect={(id) => { setActiveGuildId(id); setView("main"); }}
         onCreate={() => setCreateOpen(true)}
         onJoin={() => setJoinOpen(true)}
       />
@@ -197,56 +217,81 @@ export default function AppShell() {
               inviteCode={inviteCode}
               channels={channels}
               activeId={activeChannel?.id ?? null}
-              onSelect={setActiveChannel}
+              onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
               onCreateChannel={createChannel}
               isAdmin={isAdmin}
               voiceParticipants={voiceParticipants}
+              onOpenServerSettings={() => setView("server-settings")}
             />
-            <SelfPanel
-              displayName={displayName}
-              avatarUrl={profile?.avatar_url}
-              status="Online"
-              muted={voiceConn?.api?.muted ?? false}
-              deafened={voiceConn?.api?.deafened ?? false}
-              connectedChannelName={voiceConn?.channel?.name ?? null}
-              onToggleMute={() => voiceConn?.api?.toggleMute?.()}
-              onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
-              onLeaveVoice={() => voiceConn?.api?.leave?.()}
-              onOpenSettings={() => navigate("/profile")}
-            />
+            {selfPanel}
           </div>
 
           <div className="flex-1 flex min-w-0">
-            {activeChannel ? (
-              activeChannel.type === "text"
-                ? <ChatView channel={activeChannel} />
-                : <VoiceView
-                    channel={activeChannel}
-                    onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
-                  />
+            {view === "user-settings" ? (
+              <AppUserSettings onClose={() => setView("main")} />
+            ) : view === "server-settings" ? (
+              <AppServerSettings
+                guild={activeGuild}
+                channels={channels}
+                members={members}
+                inviteCode={inviteCode}
+                isOwner={members.find(m => m.user_id === user.id)?.role === "owner"}
+                isAdmin={isAdmin}
+                onClose={() => setView("main")}
+                onGuildUpdated={() => { void loadGuilds(); }}
+                onGuildDeleted={() => { setView("main"); void loadGuilds(); }}
+              />
+            ) : activeChannel ? (
+              <>
+                {activeChannel.type === "text"
+                  ? <ChatView channel={activeChannel} />
+                  : <VoiceView
+                      channel={activeChannel}
+                      onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
+                    />}
+                <MemberList members={members} />
+              </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 Vyber kanál
               </div>
             )}
-            <MemberList members={members} />
           </div>
         </>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
-          <div className="text-3xl font-bold">Vítej ve StudioVoxario</div>
-          <p className="text-muted-foreground max-w-md">
-            Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
-          </p>
-          <div className="flex gap-3">
-            <button className="px-5 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={() => setCreateOpen(true)}>
-              Vytvořit server
-            </button>
-            <button className="px-5 py-2 rounded-md bg-secondary hover:bg-secondary/80" onClick={() => setJoinOpen(true)}>
-              Připojit se
-            </button>
+        <>
+          {/* No active guild: still show a persistent sidebar with SelfPanel */}
+          <div className="w-60 flex flex-col bg-[hsl(222_35%_5%)] border-r border-border/40">
+            <div className="h-12 px-4 flex items-center border-b border-border/50 shadow-sm">
+              <span className="font-semibold text-sm truncate">StudioVoxario</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 text-sm text-muted-foreground">
+              Zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánku.
+            </div>
+            {selfPanel}
           </div>
-        </div>
+
+          <div className="flex-1 flex min-w-0">
+            {view === "user-settings" ? (
+              <AppUserSettings onClose={() => setView("main")} />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
+                <div className="text-3xl font-bold">Vítej ve StudioVoxario</div>
+                <p className="text-muted-foreground max-w-md">
+                  Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
+                </p>
+                <div className="flex gap-3">
+                  <button className="px-5 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={() => setCreateOpen(true)}>
+                    Vytvořit server
+                  </button>
+                  <button className="px-5 py-2 rounded-md bg-secondary hover:bg-secondary/80" onClick={() => setJoinOpen(true)}>
+                    Připojit se
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
