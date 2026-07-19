@@ -548,15 +548,19 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     return { status: "installing", version: remote };
   } catch (err) {
     console.error("update check failed", err);
-    diagnostics.status = "error";
-    diagnostics.lastError = String(err.message || err);
-    log(`CHYBA: ${diagnostics.lastError}`);
-    if (!silent) {
+    const msg = String(err.message || err);
+    const canceled = /canceled/i.test(msg);
+    diagnostics.status = canceled ? "canceled" : "error";
+    diagnostics.lastError = canceled ? "Zrušeno uživatelem" : msg;
+    updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
+    try { progressWin && !progressWin.isDestroyed() && progressWin.close(); } catch {}
+    log(canceled ? "Stahování zrušeno uživatelem." : `CHYBA: ${diagnostics.lastError}`);
+    if (!silent && !canceled) {
       await dialog.showMessageBox(parentWindow, {
         type: "error",
         title: "Aktualizace selhala",
         message: "Nepodařilo se zkontrolovat aktualizace",
-        detail: String(err.message || err),
+        detail: msg,
       });
     }
     return { status: "error", error: String(err.message || err) };
