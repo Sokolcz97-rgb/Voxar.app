@@ -124,6 +124,25 @@ function createMainWindow() {
 
   mainWindow.loadURL(APP_URL);
 
+  // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
+  mainWindow.webContents.once("did-finish-load", () => {
+    rollback.scheduleHealthyMark(() => mainWindow);
+  });
+
+  // Zaznamenej pády renderu — spustí nabídku rollbacku při dalším startu i teď.
+  mainWindow.webContents.on("render-process-gone", (_e, details) => {
+    if (details?.reason && details.reason !== "clean-exit") {
+      rollback.recordCrash(`renderer:${details.reason}`);
+      triggerRollbackFlow(`Vykreslovací proces spadl (${details.reason}).`).catch(() => {});
+    }
+  });
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc, url, isMainFrame) => {
+    if (isMainFrame && code !== -3 /* ABORTED */) {
+      rollback.recordCrash(`load-failed:${code} ${desc}`);
+    }
+  });
+
+
   // Open external links in system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     try {
