@@ -282,11 +282,19 @@ export default function DashboardBotGuilds() {
       .update({
         status,
         reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id ?? null,
-        ...(notes !== undefined ? { notes } : {}),
       })
       .eq("id", g.id);
     if (error) return toast.error(error.message);
+    // Store staff-only review meta (notes + reviewer) in the separate protected table
+    const { error: reviewErr } = await supabase
+      .from("bot_guilds_review")
+      .upsert({
+        guild_row_id: g.id,
+        reviewed_by: user?.id ?? null,
+        ...(notes !== undefined ? { notes } : {}),
+        updated_at: new Date().toISOString(),
+      });
+    if (reviewErr) return toast.error(reviewErr.message);
     toast.success(`Stav: ${statusLabel[status]}`);
     load();
   };
