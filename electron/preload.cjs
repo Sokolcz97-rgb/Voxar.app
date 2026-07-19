@@ -30,4 +30,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   unlockBeta: (ok) => ipcRenderer.invoke("settings:unlock-beta", ok === true),
   quitApp: () => ipcRenderer.invoke("app:quit"),
   reloadApp: () => ipcRenderer.invoke("app:reload"),
+  hardReloadApp: () => ipcRenderer.invoke("app:hard-reload"),
+  relaunchApp: () => ipcRenderer.invoke("app:relaunch"),
+  openDevTools: () => ipcRenderer.invoke("app:open-devtools"),
+  getDiagnostics: () => ipcRenderer.invoke("app:diagnostics"),
+  rollbackApp: () => ipcRenderer.invoke("app:rollback"),
 });
