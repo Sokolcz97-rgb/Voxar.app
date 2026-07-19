@@ -152,10 +152,12 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
     setSelectedId((data as VoxRole).id);
   };
 
-  const patchRole = async (id: string, patch: Partial<VoxRole>) => {
+  /**
+   * Lokální patch role — pouze do stavu, aby uživatel viděl náhled a mohl
+   * potvrdit tlačítkem „Uložit nastavení". Persistence probíhá v `saveAll`.
+   */
+  const patchRole = (id: string, patch: Partial<VoxRole>) => {
     setRoles(rs => rs.map(r => r.id === id ? { ...r, ...patch } as VoxRole : r));
-    const { error } = await supabase.from("vox_roles").update(patch as any).eq("id", id);
-    if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); load(); }
   };
 
   const deleteRole = async (id: string) => {
