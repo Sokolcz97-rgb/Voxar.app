@@ -526,6 +526,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     }
 
     diagnostics.status = "installing";
+    updateProgress({ phase: "installing", label: `Spouštím instalátor ${remote}`, pct: 1 });
     log("Integrita i podpis OK, spouštím instalátor.");
 
     if (platform === "win32") {
