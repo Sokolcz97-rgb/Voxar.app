@@ -1210,6 +1210,42 @@ export type Database = {
         }
         Relationships: []
       }
+      download_access_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          label: string | null
+          max_uses: number | null
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_uses?: number | null
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_uses?: number | null
+          uses?: number
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2864,6 +2900,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_download_code: { Args: { _code: string }; Returns: boolean }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }
