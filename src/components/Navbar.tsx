@@ -28,6 +28,7 @@ import {
   Radio,
   Settings,
   LogIn,
+  Download,
 } from "lucide-react";
 import {
   DropdownMenu,
