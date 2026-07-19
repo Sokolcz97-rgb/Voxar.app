@@ -52,6 +52,7 @@ import MyForms from "./pages/MyForms.tsx";
 import FormEditor from "./pages/FormEditor.tsx";
 import FormResults from "./pages/FormResults.tsx";
 import PublicForm from "./pages/PublicForm.tsx";
+import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
