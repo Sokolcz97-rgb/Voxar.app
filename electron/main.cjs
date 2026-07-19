@@ -12,7 +12,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
@@ -311,6 +311,44 @@ async function triggerRollbackFlow(reason) {
 ipcMain.handle("app:rollback", () => triggerRollbackFlow("Ruční požadavek z aplikace."));
 ipcMain.handle("launcher:rollback", () => triggerRollbackFlow("Ruční požadavek z launcheru."));
 ipcMain.handle("launcher:rollback-state", () => rollback.readState());
+
+// -------- In-launcher prompt bridge --------
+// Nahrazuje nativní dialog.showMessageBox pro update prompt / info / chyby,
+// aby to nebyly OS pop-upy, ale integrované UI v launcheru.
+const pendingPrompts = new Map(); // id -> { resolve }
+let promptSeq = 0;
+ipcMain.handle("launcher:prompt-response", (_e, { id, response, ok }) => {
+  const p = pendingPrompts.get(id);
+  if (!p) return false;
+  pendingPrompts.delete(id);
+  p.resolve({ response, ok: ok !== false });
+  return true;
+});
+
+setUiBridge((payload) => {
+  const win = launcherWindow;
+  if (!win || win.isDestroyed() || !win.webContents) return null; // → fallback na dialog
+  return new Promise((resolve) => {
+    const id = ++promptSeq;
+    pendingPrompts.set(id, { resolve });
+    try {
+      win.show();
+      win.focus();
+      win.webContents.send("launcher:prompt", { id, ...payload });
+    } catch (e) {
+      pendingPrompts.delete(id);
+      resolve(null);
+    }
+    // Bezpečnostní timeout — pokud UI neodpoví do 10 min, uvolníme handler.
+    setTimeout(() => {
+      if (pendingPrompts.has(id)) {
+        pendingPrompts.delete(id);
+        resolve(null);
+      }
+    }, 10 * 60 * 1000);
+  });
+});
+
 
 
 function createLauncher() {

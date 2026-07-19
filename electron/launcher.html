@@ -98,7 +98,56 @@
       opacity: 0; transition: opacity .2s;
     }
     .toast.show { opacity: 1; }
+
+    /* In-launcher prompt modal */
+    .modal-mask {
+      position: fixed; inset: 0;
+      background: rgba(2, 6, 23, 0.72); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 50; padding: 20px; -webkit-app-region: no-drag;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      max-width: 420px; width: 100%;
+      background: linear-gradient(180deg, #0f172a 0%, #0b1224 100%);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      border-radius: 14px; padding: 18px 20px;
+      box-shadow: 0 20px 60px -20px rgba(6, 182, 212, 0.4), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      color: #e5e7eb; user-select: text;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+    .modal .head { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .modal .ic {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#06b6d4,#22d3ee); color: #0a0a0f; font-weight: 800;
+    }
+    .modal .ic.err { background: linear-gradient(135deg,#f87171,#ef4444); color: #fff; }
+    .modal .ic.ok  { background: linear-gradient(135deg,#34d399,#10b981); color: #052e1a; }
+    .modal h3 { margin: 0; font-size: 14px; font-weight: 600; }
+    .modal .msg { font-size: 13px; color: #e5e7eb; margin: 4px 0 6px; }
+    .modal .detail {
+      font-size: 12px; color: #94a3b8; white-space: pre-wrap;
+      max-height: 180px; overflow: auto;
+      background: rgba(2, 6, 23, 0.6); border: 1px solid #1e293b;
+      border-radius: 8px; padding: 8px 10px;
+    }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+    .modal .mbtn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;
+      transition: background .15s, transform .05s;
+    }
+    .modal .mbtn:hover { background: #334155; }
+    .modal .mbtn:active { transform: scale(0.98); }
+    .modal .mbtn.primary {
+      background: linear-gradient(135deg,#06b6d4,#0891b2);
+      border-color: transparent; color: #0a0a0f; font-weight: 600;
+    }
+    .modal .mbtn.primary:hover { filter: brightness(1.08); }
   </style>
+
 </head>
 <body>
   <div class="titlebar">
@@ -153,6 +202,20 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- In-launcher modal (nahrazuje OS dialog) -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="head">
+        <div class="ic" id="modalIc">i</div>
+        <h3 id="modalTitle">StudioVoxario</h3>
+      </div>
+      <div class="msg" id="modalMsg"></div>
+      <div class="detail" id="modalDetail" style="display:none;"></div>
+      <div class="actions" id="modalActions"></div>
+    </div>
+  </div>
+
 
   <script>
     const { ipcRenderer, clipboard } = require('electron');
@@ -229,6 +292,62 @@
         cancelBtn.style.display = 'none';
       }
     });
+
+    // ---- In-launcher modal prompt (nahrazuje OS dialog) ----
+    const modalMask = $('modalMask');
+    const modalIc = $('modalIc');
+    const modalTitle = $('modalTitle');
+    const modalMsg = $('modalMsg');
+    const modalDetail = $('modalDetail');
+    const modalActions = $('modalActions');
+
+    function closeModal() {
+      modalMask.classList.remove('show');
+      modalActions.innerHTML = '';
+    }
+    function respond(id, response, ok = true) {
+      ipcRenderer.invoke('launcher:prompt-response', { id, response, ok }).catch(() => {});
+      closeModal();
+    }
+
+    ipcRenderer.on('launcher:prompt', (_e, p) => {
+      if (!p || typeof p.id !== 'number') return;
+      // Ikona podle typu
+      modalIc.classList.remove('err', 'ok');
+      if (p.type === 'error') { modalIc.classList.add('err'); modalIc.textContent = '!'; }
+      else if (p.type === 'info' && /nejnov/i.test(p.message || '')) { modalIc.classList.add('ok'); modalIc.textContent = '✓'; }
+      else if (p.kind === 'question') { modalIc.textContent = '↑'; }
+      else { modalIc.textContent = 'i'; }
+
+      modalTitle.textContent = p.title || 'StudioVoxario';
+      modalMsg.textContent = p.message || '';
+      if (p.detail) { modalDetail.style.display = ''; modalDetail.textContent = p.detail; }
+      else { modalDetail.style.display = 'none'; modalDetail.textContent = ''; }
+
+      modalActions.innerHTML = '';
+      const buttons = Array.isArray(p.buttons) && p.buttons.length ? p.buttons : ['OK'];
+      const defaultId = typeof p.defaultId === 'number' ? p.defaultId : 0;
+      buttons.forEach((label, idx) => {
+        const b = document.createElement('button');
+        b.className = 'mbtn' + (idx === defaultId ? ' primary' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => respond(p.id, idx, true));
+        modalActions.appendChild(b);
+      });
+      modalMask.classList.add('show');
+      // ESC = cancel
+      const onKey = (ev) => {
+        if (ev.key === 'Escape') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, typeof p.cancelId === 'number' ? p.cancelId : buttons.length - 1, true);
+        } else if (ev.key === 'Enter') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, defaultId, true);
+        }
+      };
+      document.addEventListener('keydown', onKey);
+    });
+
 
     cancelBtn.addEventListener('click', async () => {
       cancelBtn.disabled = true;

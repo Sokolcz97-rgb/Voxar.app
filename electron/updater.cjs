@@ -308,6 +308,35 @@ async function withRetry(fn, { phase, label, maxAttempts = 5, baseDelayMs = 1500
   throw lastErr;
 }
 
+// ---- UI bridge: umožní směrovat dotazy/notifikace do launcheru místo nativního OS dialogu.
+// Nastavuje se z main.cjs. Když není nastaveno (nebo bridge vrátí null), padáme zpět na dialog.
+let uiBridge = null;
+function setUiBridge(fn) { uiBridge = typeof fn === "function" ? fn : null; }
+
+async function askUser({ parentWindow, title, message, detail, buttons, defaultId = 0, cancelId = 1 }) {
+  if (uiBridge) {
+    try {
+      const r = await uiBridge({ kind: "question", title, message, detail, buttons, defaultId, cancelId });
+      if (r && typeof r.response === "number") return r.response;
+    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na systémový dialog.`); }
+  }
+  const { response } = await dialog.showMessageBox(parentWindow, {
+    type: "question", title, message, detail, buttons, defaultId, cancelId,
+  });
+  return response;
+}
+async function notifyUser({ parentWindow, type = "info", title, message, detail }) {
+  if (uiBridge) {
+    try {
+      const r = await uiBridge({ kind: "notice", type, title, message, detail });
+      if (r && r.ok) return;
+    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na systémový dialog.`); }
+  }
+  await dialog.showMessageBox(parentWindow, { type, title, message, detail });
+}
+
+
+
 
 async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   if (checking) return { status: "busy" };
@@ -329,13 +358,14 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       diagnostics.status = "up-to-date";
       log(`Není novější verze (${current} ≥ ${remote}).`);
       if (!silent) {
-        await dialog.showMessageBox(parentWindow, {
-          type: "info",
+        await notifyUser({
+          parentWindow, type: "info",
           title: "StudioVoxario",
           message: "Máte nejnovější verzi",
           detail: `Aktuální verze: ${current}`,
         });
       }
+
       return { status: "up-to-date", current };
     }
 
@@ -355,8 +385,8 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     log(`Vybraný installer: ${asset.installerUrl}`);
     if (diagnostics.expectedSha256) log(`Očekávaný SHA-256: ${diagnostics.expectedSha256}`);
 
-    const { response } = await dialog.showMessageBox(parentWindow, {
-      type: "question",
+    const response = await askUser({
+      parentWindow,
       title: "Nová verze StudioVoxario",
       message: `Je k dispozici verze ${remote}`,
       detail:
@@ -367,6 +397,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       defaultId: 0,
       cancelId: 1,
     });
+
     if (response !== 0) {
       diagnostics.status = "postponed";
       log("Uživatel odložil aktualizaci.");
@@ -730,6 +761,7 @@ function resetPinState() { return pinning.resetPins(); }
 
 module.exports = {
   checkForUpdates, getDiagnostics, installVerified, fetchManifest,
-  cancelActiveDownload, getPinState, resetPinState,
+  cancelActiveDownload, getPinState, resetPinState, setUiBridge,
 };
+
 
