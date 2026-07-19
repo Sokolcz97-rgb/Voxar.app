@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import winInstaller from "@/assets/downloads/windows-installer-0.0.5.asset.json";
+import winInstaller from "@/assets/downloads/windows-installer-0.0.6.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
-import linuxAsset from "@/assets/downloads/linux-0.0.5.asset.json";
+import linuxAsset from "@/assets/downloads/linux-0.0.6.asset.json";
 
 const ACCESS_KEY = "sv_download_access_v1";
 
