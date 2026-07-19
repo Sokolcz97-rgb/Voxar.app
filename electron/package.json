@@ -1,0 +1,8 @@
+{
+  "name": "studiovoxario-desktop",
+  "version": "1.0.0",
+  "description": "StudioVoxario desktop klient",
+  "author": "StudioVoxario",
+  "main": "main.cjs",
+  "private": true
+}
