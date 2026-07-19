@@ -84,11 +84,18 @@ export function AppUserSettings({ onClose }: Props) {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name, bio, avatar_url").eq("user_id", user.id).maybeSingle()
+    supabase.from("profiles")
+      .select("display_name, username, bio, avatar_url, twitch_username, youtube_handle, kick_username")
+      .eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
-        setDisplayName((data as any)?.display_name ?? "");
-        setBio((data as any)?.bio ?? "");
-        setAvatarUrl((data as any)?.avatar_url ?? null);
+        const d: any = data || {};
+        setDisplayName(d.display_name ?? "");
+        setUsername(d.username ?? "");
+        setBio(d.bio ?? "");
+        setAvatarUrl(d.avatar_url ?? null);
+        setTwitch(d.twitch_username ?? "");
+        setYoutube(d.youtube_handle ?? "");
+        setKick(d.kick_username ?? "");
       });
   }, [user]);
 
