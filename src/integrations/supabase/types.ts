@@ -204,12 +204,10 @@ export type Database = {
           id: string
           member_count: number | null
           name: string
-          notes: string | null
           owner_discord_id: string | null
           owner_user_id: string | null
           requested_at: string
           reviewed_at: string | null
-          reviewed_by: string | null
           source: string
           status: Database["public"]["Enums"]["bot_guild_status"]
           updated_at: string
@@ -221,12 +219,10 @@ export type Database = {
           id?: string
           member_count?: number | null
           name: string
-          notes?: string | null
           owner_discord_id?: string | null
           owner_user_id?: string | null
           requested_at?: string
           reviewed_at?: string | null
-          reviewed_by?: string | null
           source?: string
           status?: Database["public"]["Enums"]["bot_guild_status"]
           updated_at?: string
@@ -238,17 +234,44 @@ export type Database = {
           id?: string
           member_count?: number | null
           name?: string
-          notes?: string | null
           owner_discord_id?: string | null
           owner_user_id?: string | null
           requested_at?: string
           reviewed_at?: string | null
-          reviewed_by?: string | null
           source?: string
           status?: Database["public"]["Enums"]["bot_guild_status"]
           updated_at?: string
         }
         Relationships: []
+      }
+      bot_guilds_review: {
+        Row: {
+          guild_row_id: string
+          notes: string | null
+          reviewed_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          guild_row_id: string
+          notes?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          guild_row_id?: string
+          notes?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_guilds_review_guild_row_id_fkey"
+            columns: ["guild_row_id"]
+            isOneToOne: true
+            referencedRelation: "bot_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_minecraft_config: {
         Row: {
