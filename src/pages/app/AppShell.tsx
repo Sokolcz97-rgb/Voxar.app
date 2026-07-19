@@ -1,0 +1,256 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
+import { GuildRail, type VoxGuild } from "@/components/vox/GuildRail";
+import { ChannelSidebar, type VoxChannel } from "@/components/vox/ChannelSidebar";
+import { MemberList, type VoxMember } from "@/components/vox/MemberList";
+import { SelfPanel } from "@/components/vox/SelfPanel";
+import { ChatView } from "@/components/vox/ChatView";
+import { VoiceView } from "@/components/vox/VoiceView";
+import { CreateGuildDialog, JoinGuildDialog } from "@/components/vox/CreateGuildDialog";
+import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
+import { Loader2 } from "lucide-react";
+
+export default function AppShell() {
+  useVoxHeartbeat("online");
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const [guilds, setGuilds] = useState<VoxGuild[]>([]);
+  const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
+  const [channels, setChannels] = useState<VoxChannel[]>([]);
+  const [activeChannel, setActiveChannel] = useState<VoxChannel | null>(null);
+  const [members, setMembers] = useState<VoxMember[]>([]);
+  const [voiceParticipants, setVoiceParticipants] = useState<Record<string, any[]>>({});
+  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+
+  // Voice connection tracking across channels
+  const [voiceConn, setVoiceConn] = useState<{ channel: VoxChannel | null; api: any } | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/auth");
+  }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("display_name, avatar_url").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setProfile(data as any));
+  }, [user]);
+
+  // Load guilds
+  const loadGuilds = async () => {
+    if (!user) return;
+    const { data: memberships } = await supabase.from("vox_guild_members").select("guild_id").eq("user_id", user.id);
+    const ids = memberships?.map((m: any) => m.guild_id) ?? [];
+    if (!ids.length) { setGuilds([]); setActiveGuildId(null); return; }
+    const { data } = await supabase.from("vox_guilds").select("id, name, icon_url").in("id", ids).order("created_at");
+    setGuilds((data ?? []) as VoxGuild[]);
+    setActiveGuildId((prev) => prev && data?.some((g: any) => g.id === prev) ? prev : (data?.[0]?.id ?? null));
+  };
+
+  useEffect(() => { loadGuilds(); }, [user]);
+
+  const activeGuild = useMemo(() => guilds.find((g) => g.id === activeGuildId) ?? null, [guilds, activeGuildId]);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!activeGuildId || !user) { setChannels([]); setMembers([]); setActiveChannel(null); return; }
+    (async () => {
+      const [{ data: chs }, { data: memb }, { data: g }] = await Promise.all([
+        supabase.from("vox_channels").select("*").eq("guild_id", activeGuildId).order("position"),
+        supabase.from("vox_guild_members").select("user_id, nickname, role").eq("guild_id", activeGuildId),
+        supabase.from("vox_guilds").select("invite_code, owner_id").eq("id", activeGuildId).maybeSingle(),
+      ]);
+      setChannels((chs ?? []) as VoxChannel[]);
+      setActiveChannel((prev) => {
+        if (prev && chs?.some((c: any) => c.id === prev.id && c.guild_id === activeGuildId)) return prev;
+        return (chs?.find((c: any) => c.type === "text") ?? chs?.[0]) as VoxChannel ?? null;
+      });
+      setInviteCode((g as any)?.invite_code ?? null);
+
+      const myMember = memb?.find((m: any) => m.user_id === user.id);
+      setIsAdmin(myMember?.role === "owner" || myMember?.role === "mod");
+
+      const memberIds = memb?.map((m: any) => m.user_id) ?? [];
+      const [{ data: profs }, { data: pres }] = await Promise.all([
+        memberIds.length
+          ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", memberIds)
+          : Promise.resolve({ data: [] as any[] }),
+        memberIds.length
+          ? supabase.from("vox_presence").select("user_id, status, last_seen").in("user_id", memberIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const profMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p]));
+      const now = Date.now();
+      const presMap = Object.fromEntries((pres ?? []).map((p: any) => {
+        const stale = now - new Date(p.last_seen).getTime() > 90_000;
+        return [p.user_id, stale ? "offline" : p.status];
+      }));
+      setMembers((memb ?? []).map((m: any) => ({
+        user_id: m.user_id,
+        nickname: m.nickname,
+        role: m.role,
+        display_name: profMap[m.user_id]?.display_name ?? null,
+        avatar_url: profMap[m.user_id]?.avatar_url ?? null,
+        status: presMap[m.user_id] ?? "offline",
+      })));
+    })();
+
+    // realtime channels + participants
+    const ch = supabase.channel(`vox_meta_${activeGuildId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_channels", filter: `guild_id=eq.${activeGuildId}` },
+        async () => {
+          const { data } = await supabase.from("vox_channels").select("*").eq("guild_id", activeGuildId).order("position");
+          setChannels((data ?? []) as VoxChannel[]);
+        })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_guild_members", filter: `guild_id=eq.${activeGuildId}` },
+        () => { void loadGuildMembers(); })
+      .subscribe();
+
+    // Voice participants across all channels of this guild
+    const vp = supabase.channel(`vox_vp_all_${activeGuildId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_voice_participants" }, () => refreshVoice())
+      .subscribe();
+    refreshVoice();
+
+    return () => { supabase.removeChannel(ch); supabase.removeChannel(vp); };
+  }, [activeGuildId, user]);
+
+  const loadGuildMembers = async () => {
+    if (!activeGuildId) return;
+    const { data: memb } = await supabase.from("vox_guild_members").select("user_id, nickname, role").eq("guild_id", activeGuildId);
+    const ids = memb?.map((m: any) => m.user_id) ?? [];
+    const [{ data: profs }, { data: pres }] = await Promise.all([
+      ids.length ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids) : Promise.resolve({ data: [] }),
+      ids.length ? supabase.from("vox_presence").select("user_id, status, last_seen").in("user_id", ids) : Promise.resolve({ data: [] }),
+    ]);
+    const profMap = Object.fromEntries(((profs ?? []) as any[]).map((p) => [p.user_id, p]));
+    const now = Date.now();
+    const presMap = Object.fromEntries(((pres ?? []) as any[]).map((p) => {
+      const stale = now - new Date(p.last_seen).getTime() > 90_000;
+      return [p.user_id, stale ? "offline" : p.status];
+    }));
+    setMembers((memb ?? []).map((m: any) => ({
+      user_id: m.user_id, nickname: m.nickname, role: m.role,
+      display_name: profMap[m.user_id]?.display_name ?? null,
+      avatar_url: profMap[m.user_id]?.avatar_url ?? null,
+      status: presMap[m.user_id] ?? "offline",
+    })));
+  };
+
+  const refreshVoice = async () => {
+    const chIds = channels.filter(c => c.type === "voice").map(c => c.id);
+    if (!chIds.length) { setVoiceParticipants({}); return; }
+    const { data } = await supabase.from("vox_voice_participants")
+      .select("channel_id, user_id, is_muted").in("channel_id", chIds);
+    const map: Record<string, any[]> = {};
+    const memberNames = Object.fromEntries(members.map(m => [m.user_id, m.display_name || m.nickname || m.user_id.slice(0, 6)]));
+    (data ?? []).forEach((p: any) => {
+      (map[p.channel_id] ||= []).push({ user_id: p.user_id, nickname: memberNames[p.user_id], is_muted: p.is_muted });
+    });
+    setVoiceParticipants(map);
+  };
+
+  useEffect(() => { void refreshVoice(); }, [channels, members]);
+
+  const createChannel = async (type: "text" | "voice") => {
+    if (!activeGuildId) return;
+    const name = window.prompt(`Název ${type === "text" ? "textového" : "hlasového"} kanálu:`);
+    if (!name) return;
+    const { error } = await supabase.from("vox_channels").insert({
+      guild_id: activeGuildId,
+      name: name.trim().toLowerCase().replace(/\s+/g, "-"),
+      type,
+      category: type === "text" ? "Textové kanály" : "Hlasové kanály",
+      position: channels.length,
+    });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+  };
+
+  if (loading) {
+    return <div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  }
+  if (!user) return null;
+
+  const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
+
+  return (
+    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
+      <GuildRail
+        guilds={guilds}
+        activeId={activeGuildId}
+        onSelect={setActiveGuildId}
+        onCreate={() => setCreateOpen(true)}
+        onJoin={() => setJoinOpen(true)}
+      />
+
+      {activeGuild ? (
+        <>
+          <div className="flex flex-col">
+            <ChannelSidebar
+              guildName={activeGuild.name}
+              inviteCode={inviteCode}
+              channels={channels}
+              activeId={activeChannel?.id ?? null}
+              onSelect={setActiveChannel}
+              onCreateChannel={createChannel}
+              isAdmin={isAdmin}
+              voiceParticipants={voiceParticipants}
+            />
+            <SelfPanel
+              displayName={displayName}
+              avatarUrl={profile?.avatar_url}
+              status="Online"
+              muted={voiceConn?.api?.muted ?? false}
+              deafened={voiceConn?.api?.deafened ?? false}
+              connectedChannelName={voiceConn?.channel?.name ?? null}
+              onToggleMute={() => voiceConn?.api?.toggleMute?.()}
+              onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
+              onLeaveVoice={() => voiceConn?.api?.leave?.()}
+              onOpenSettings={() => navigate("/profile")}
+            />
+          </div>
+
+          <div className="flex-1 flex min-w-0">
+            {activeChannel ? (
+              activeChannel.type === "text"
+                ? <ChatView channel={activeChannel} />
+                : <VoiceView
+                    channel={activeChannel}
+                    onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
+                  />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                Vyber kanál
+              </div>
+            )}
+            <MemberList members={members} />
+          </div>
+        </>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
+          <div className="text-3xl font-bold">Vítej ve StudioVoxario</div>
+          <p className="text-muted-foreground max-w-md">
+            Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
+          </p>
+          <div className="flex gap-3">
+            <button className="px-5 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={() => setCreateOpen(true)}>
+              Vytvořit server
+            </button>
+            <button className="px-5 py-2 rounded-md bg-secondary hover:bg-secondary/80" onClick={() => setJoinOpen(true)}>
+              Připojit se
+            </button>
+          </div>
+        </div>
+      )}
+
+      <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
+      <JoinGuildDialog open={joinOpen} onOpenChange={setJoinOpen} onJoined={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
+    </div>
+  );
+}
