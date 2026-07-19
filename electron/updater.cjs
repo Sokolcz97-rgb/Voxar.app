@@ -1,6 +1,6 @@
 // StudioVoxario custom launcher-updater
 // Fetches a JSON manifest and offers to install a newer version.
-const { app, dialog, shell, Notification, BrowserWindow } = require("electron");
+const { app, dialog, shell, Notification, BrowserWindow, ipcMain } = require("electron");
 const https = require("https");
 const http = require("http");
 const fs = require("fs");
@@ -14,12 +14,25 @@ const MANIFEST_URL =
   process.env.STUDIOVOXARIO_UPDATE_URL ||
   "https://studiovoxario.com/desktop-version.json";
 
-function fetchJson(url) {
+function fetchJson(url, { bustCache = false } = {}) {
   return new Promise((resolve, reject) => {
-    const lib = url.startsWith("https") ? https : http;
-    const req = lib.get(url, { headers: { "User-Agent": "StudioVoxario-Launcher" } }, (res) => {
+    // Cache-bust: přidej ?t=<ts>, aby CDN/prohlížeč nevrátil starý manifest při
+    // ručním „Zkontrolovat aktualizace" — jinak by uživatel nikdy neviděl novou verzi.
+    let finalUrl = url;
+    if (bustCache) {
+      const sep = url.includes("?") ? "&" : "?";
+      finalUrl = `${url}${sep}t=${Date.now()}`;
+    }
+    const lib = finalUrl.startsWith("https") ? https : http;
+    const req = lib.get(finalUrl, {
+      headers: {
+        "User-Agent": "StudioVoxario-Launcher",
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        "Pragma": "no-cache",
+      },
+    }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return resolve(fetchJson(res.headers.location));
+        return resolve(fetchJson(res.headers.location, { bustCache: false }));
       }
       if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
       let data = "";
