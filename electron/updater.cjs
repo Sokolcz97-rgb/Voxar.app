@@ -421,17 +421,35 @@ async function notifyUser({ parentWindow, type = "info", title, message, detail 
 
 
 
-async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
+// Vybere blok z manifestu podle kanálu (stable / beta).
+// Když v manifestu žádné `channels` nejsou, chová se zpětně kompatibilně a
+// vezme kořen manifestu. Beta zabalí do stable, když ještě neexistuje.
+function pickChannel(manifest, channel = "stable") {
+  if (!manifest || typeof manifest !== "object") return manifest;
+  const channels = manifest.channels;
+  if (channels && typeof channels === "object") {
+    const primary = channels[channel] || channels.stable || channels.beta;
+    if (primary) {
+      // Merge: kořenové hodnoty (např. publisher) fungují jako defaults.
+      return { ...manifest, ...primary };
+    }
+  }
+  return manifest;
+}
+
+async function checkForUpdates({ silent = true, parentWindow = null, channel = "stable" } = {}) {
   if (checking) return { status: "busy" };
   checking = true;
   diagnostics.status = "checking";
   diagnostics.lastError = null;
   diagnostics.currentVersion = app.getVersion();
+  diagnostics.channel = channel;
   diagnostics.lastCheckAt = new Date().toISOString();
-  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
+  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion} (kanál: ${channel})`);
   log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
-    const manifest = await withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
+    const rawManifest = await withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
+    const manifest = pickChannel(rawManifest, channel);
     diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
@@ -689,22 +707,23 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
 
 
     if (platform === "win32") {
-      // Tichá instalace: NSIS /S — bez wizardu, po dokončení auto-spustí novou verzi.
-      // Nejprve ukončíme aplikaci, aby installer mohl přepsat běžící exe/DLLs.
+      // Tichá instalace: NSIS /S. Ještě NEUKONČUJEME appku — nejdřív ukážeme
+      // uživateli jasný in-app modal, ať vidí, že se něco děje. Až po jeho
+      // potvrzení (nebo 6 s auto-close) appku zavřeme, aby installer mohl
+      // přepsat souboru; NSIS má taskkill fallback.
       try {
         const { spawn } = require("child_process");
         const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
         child.unref();
-        log("Instalátor spuštěn v tichém režimu (/S). Ukončuji aplikaci pro přepsání souborů.");
+        log("Instalátor spuštěn v tichém režimu (/S).");
       } catch (e) {
         log(`Nepodařilo se spustit tichý installer (${e.message}), zkouším fallback.`);
         await shell.openPath(dest);
       }
-      new Notification({
-        title: "StudioVoxario",
-        body: "Aktualizace se instaluje na pozadí. Aplikace se za chvíli sama restartuje.",
-      }).show();
-      setTimeout(() => app.quit(), 800);
+      // Persistentní in-app modal (auto-close). Použije launcher UI bridge,
+      // jinak fallback na interní tmavý modal — nikdy nativní Windows okno.
+      showInstallingModal(parentWindow, remote).catch(() => {});
+      setTimeout(() => app.quit(), 6000);
     } else {
       await notifyUser({ parentWindow, type: "info",
         title: "Aktualizace stažena",
