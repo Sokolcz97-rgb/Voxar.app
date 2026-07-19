@@ -59,6 +59,70 @@ function downloadFile(url, dest, onProgress) {
   });
 }
 
+// -------- Authenticode / codesign verification --------
+// Windows: PowerShell Get-AuthenticodeSignature. macOS: codesign. Linux: skipped.
+function verifyCodeSignature(filePath) {
+  return new Promise((resolve) => {
+    if (process.platform === "win32") {
+      const ps =
+        `$ErrorActionPreference='Stop';` +
+        `$s = Get-AuthenticodeSignature -LiteralPath '${filePath.replace(/'/g, "''")}';` +
+        `$o = [ordered]@{` +
+          `status = [string]$s.Status;` +
+          `statusMessage = [string]$s.StatusMessage;` +
+          `subject = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Subject } else { $null };` +
+          `issuer = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Issuer } else { $null };` +
+          `thumbprint = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Thumbprint } else { $null };` +
+          `notAfter = if ($s.SignerCertificate) { [string]$s.SignerCertificate.NotAfter } else { $null };` +
+          `timeStamperCert = if ($s.TimeStamperCertificate) { [string]$s.TimeStamperCertificate.Subject } else { $null }` +
+        `};` +
+        `$o | ConvertTo-Json -Compress`;
+      execFile(
+        "powershell.exe",
+        ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps],
+        { timeout: 20000, windowsHide: true },
+        (err, stdout, stderr) => {
+          if (err) return resolve({ supported: true, ok: false, status: "error", error: String(stderr || err.message) });
+          try {
+            const info = JSON.parse(stdout);
+            resolve({
+              supported: true,
+              ok: info.status === "Valid",
+              status: info.status,
+              statusMessage: info.statusMessage,
+              subject: info.subject,
+              issuer: info.issuer,
+              thumbprint: info.thumbprint,
+              notAfter: info.notAfter,
+              timestamped: !!info.timeStamperCert,
+            });
+          } catch (e) {
+            resolve({ supported: true, ok: false, status: "parse-error", error: String(e), raw: stdout });
+          }
+        }
+      );
+      return;
+    }
+    if (process.platform === "darwin") {
+      execFile(
+        "codesign",
+        ["--verify", "--deep", "--strict", "--verbose=2", filePath],
+        { timeout: 20000 },
+        (err, _stdout, stderr) => {
+          if (err) return resolve({ supported: true, ok: false, status: "invalid", error: String(stderr || err.message) });
+          // Fetch authority for display
+          execFile("codesign", ["-dv", "--verbose=4", filePath], { timeout: 20000 }, (_e, _o, info) => {
+            const authority = /Authority=(.+)/.exec(info || "")?.[1] || null;
+            resolve({ supported: true, ok: true, status: "Valid", subject: authority });
+          });
+        }
+      );
+      return;
+    }
+    resolve({ supported: false, ok: true, status: "unsupported-platform" });
+  });
+}
+
 // Semver-lite: "1.2.3" > "1.2.0"
 function isNewer(remote, current) {
   const parse = (v) => String(v).replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
@@ -85,6 +149,11 @@ const diagnostics = {
   expectedSize: null,
   downloadedSha256: null,
   downloadedSize: null,
+  expectedPublisher: null,
+  signatureStatus: null,
+  signatureSubject: null,
+  signatureThumbprint: null,
+  signatureTimestamped: null,
   status: "idle",
   lastError: null,
   lastCheckAt: null,
