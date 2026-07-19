@@ -28,6 +28,7 @@ import {
   Radio,
   Settings,
   LogIn,
+  Download,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -117,8 +118,13 @@ export function Navbar() {
     ? [
         { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
         { to: "/live", label: "Live Now", icon: Radio },
+        { to: "/desktop", label: "Ke stažení", icon: Download },
       ]
-    : [{ to: "/live", label: "Live Now", icon: Radio }];
+    : [
+        { to: "/live", label: "Live Now", icon: Radio },
+        { to: "/desktop", label: "Ke stažení", icon: Download },
+      ];
+
 
   const profileMenuItems: RailItem[] = user
     ? [

@@ -2,6 +2,7 @@ import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, Refresh
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
 
@@ -16,19 +17,31 @@ export default function Download() {
   const downloads = [
     {
       os: "Windows 10 / 11",
-      file: winAsset.url,
-      note: "Rozbalte ZIP a spusťte StudioVoxario.exe",
+      file: winInstaller.url,
+      filename: "StudioVoxarioSetup.exe",
+      note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
+      size: "~82 MB",
+      primary: true,
+    },
+    {
+      os: "Windows (přenosná ZIP)",
+      file: winAsset.url,
+      filename: "StudioVoxario-win32-x64.zip",
+      note: "Bez instalace – rozbalte a spusťte StudioVoxario.exe.",
+      icon: "📦",
       size: "~114 MB",
     },
     {
       os: "Linux (x64)",
       file: linuxAsset.url,
+      filename: "StudioVoxario-linux-x64.tar.gz",
       note: "tar xzf a spusťte ./StudioVoxario",
       icon: "🐧",
       size: "~110 MB",
     },
   ];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,19 +60,19 @@ export default function Download() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-10">
+        <div className="grid md:grid-cols-3 gap-4 mb-10">
           {downloads.map((d) => (
-            <Card key={d.os} className="p-6 hover:border-primary/50 transition-colors">
+            <Card key={d.os} className={`p-6 transition-colors ${d.primary ? "border-primary/60 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)]" : "hover:border-primary/50"}`}>
               <div className="flex items-start gap-4">
                 <div className="text-4xl">{d.icon}</div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
                   <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
                   <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
-                  <Button asChild className="w-full">
-                    <a href={d.file} download>
+                  <Button asChild className="w-full" variant={d.primary ? "default" : "outline"}>
+                    <a href={d.file} download={d.filename}>
                       <DownloadIcon className="w-4 h-4 mr-2" />
-                      Stáhnout
+                      {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
                     </a>
                   </Button>
                 </div>
@@ -67,6 +80,7 @@ export default function Download() {
             </Card>
           ))}
         </div>
+
 
         <Card className="p-6 mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
