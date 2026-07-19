@@ -418,20 +418,83 @@ async function notifyUser({ parentWindow, type = "info", title, message, detail 
   await showInAppModal(parentWindow, { type, title, message, detail, buttons: ["OK"] });
 }
 
+/**
+ * Persistentní modal „Instaluji aktualizaci..." — po vybalení installeru
+ * a před quitem appky. Nemá tlačítka, zavírá se sám za ~6 s (kdy volá app.quit).
+ * Preferuje UI bridge (integrovaný launcher UI), aby to nikdy nebyl OS pop-up.
+ */
+async function showInstallingModal(parentWindow, version) {
+  const title = "Instaluji aktualizaci";
+  const message = `StudioVoxario ${version}`;
+  const detail =
+    "Nová verze se právě instaluje na pozadí.\n" +
+    "Aplikace se za chvíli sama zavře a znovu spustí.\n\n" +
+    "Nezavírejte prosím počítač.";
+  if (uiBridge) {
+    try {
+      await uiBridge({ kind: "installing", title, message, detail, version });
+      return;
+    } catch (e) { log(`UI bridge (installing) selhal (${e.message || e}) — fallback na in-app modal.`); }
+  }
+  // In-process modal bez tlačítek — auto-close za 5.5 s.
+  const win = new BrowserWindow({
+    width: 460, height: 220, resizable: false, minimizable: false, maximizable: false,
+    frame: false, alwaysOnTop: true, backgroundColor: "#0a0a0f", show: false,
+    parent: parentWindow && !parentWindow.isDestroyed() ? parentWindow : undefined,
+    webPreferences: { nodeIntegration: true, contextIsolation: false },
+  });
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    html,body{margin:0;padding:0;background:#0a0a0f;color:#e5e7eb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+    .wrap{padding:22px 24px}
+    h3{margin:0 0 6px;font-size:15px;color:#22d3ee}
+    .msg{font-size:14px;font-weight:600;margin-bottom:8px}
+    .detail{font-size:12.5px;color:#cbd5e1;white-space:pre-wrap;line-height:1.55}
+    .bar{margin-top:14px;height:6px;background:#1f2937;border-radius:6px;overflow:hidden;position:relative}
+    .bar::after{content:'';position:absolute;left:-40%;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,#22d3ee,transparent);animation:l 1.4s infinite}
+    @keyframes l{to{left:100%}}
+  </style></head><body><div class="wrap">
+    <h3>${escapeHtml(title)}</h3>
+    <div class="msg">${escapeHtml(message)}</div>
+    <div class="detail">${escapeHtml(detail)}</div>
+    <div class="bar"></div>
+  </div></body></html>`;
+  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  win.once("ready-to-show", () => { try { win.show(); win.focus(); } catch {} });
+  setTimeout(() => { try { if (!win.isDestroyed()) win.close(); } catch {} }, 5500);
+}
 
 
 
-async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
+
+// Vybere blok z manifestu podle kanálu (stable / beta).
+// Když v manifestu žádné `channels` nejsou, chová se zpětně kompatibilně a
+// vezme kořen manifestu. Beta zabalí do stable, když ještě neexistuje.
+function pickChannel(manifest, channel = "stable") {
+  if (!manifest || typeof manifest !== "object") return manifest;
+  const channels = manifest.channels;
+  if (channels && typeof channels === "object") {
+    const primary = channels[channel] || channels.stable || channels.beta;
+    if (primary) {
+      // Merge: kořenové hodnoty (např. publisher) fungují jako defaults.
+      return { ...manifest, ...primary };
+    }
+  }
+  return manifest;
+}
+
+async function checkForUpdates({ silent = true, parentWindow = null, channel = "stable" } = {}) {
   if (checking) return { status: "busy" };
   checking = true;
   diagnostics.status = "checking";
   diagnostics.lastError = null;
   diagnostics.currentVersion = app.getVersion();
+  diagnostics.channel = channel;
   diagnostics.lastCheckAt = new Date().toISOString();
-  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
+  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion} (kanál: ${channel})`);
   log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
-    const manifest = await withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
+    const rawManifest = await withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
+    const manifest = pickChannel(rawManifest, channel);
     diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
@@ -689,22 +752,23 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
 
 
     if (platform === "win32") {
-      // Tichá instalace: NSIS /S — bez wizardu, po dokončení auto-spustí novou verzi.
-      // Nejprve ukončíme aplikaci, aby installer mohl přepsat běžící exe/DLLs.
+      // Tichá instalace: NSIS /S. Ještě NEUKONČUJEME appku — nejdřív ukážeme
+      // uživateli jasný in-app modal, ať vidí, že se něco děje. Až po jeho
+      // potvrzení (nebo 6 s auto-close) appku zavřeme, aby installer mohl
+      // přepsat souboru; NSIS má taskkill fallback.
       try {
         const { spawn } = require("child_process");
         const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
         child.unref();
-        log("Instalátor spuštěn v tichém režimu (/S). Ukončuji aplikaci pro přepsání souborů.");
+        log("Instalátor spuštěn v tichém režimu (/S).");
       } catch (e) {
         log(`Nepodařilo se spustit tichý installer (${e.message}), zkouším fallback.`);
         await shell.openPath(dest);
       }
-      new Notification({
-        title: "StudioVoxario",
-        body: "Aktualizace se instaluje na pozadí. Aplikace se za chvíli sama restartuje.",
-      }).show();
-      setTimeout(() => app.quit(), 800);
+      // Persistentní in-app modal (auto-close). Použije launcher UI bridge,
+      // jinak fallback na interní tmavý modal — nikdy nativní Windows okno.
+      showInstallingModal(parentWindow, remote).catch(() => {});
+      setTimeout(() => app.quit(), 6000);
     } else {
       await notifyUser({ parentWindow, type: "info",
         title: "Aktualizace stažena",

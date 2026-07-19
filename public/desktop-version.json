@@ -1,67 +1,63 @@
 {
-  "version": "1.3.8-alpha",
-  "channel": "alpha",
-  "notes": "Alpha 1.3.8 — opravený tab „Aplikace\" v Nastavení uživatele (žádné věčné načítání, fallback pro starší preload API) + Neon AI nový nástroj contact_admin (DM adminovi + založení technického ticketu s plným kontextem eskalace).",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
-  "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
-  "size": 81932525,
+  "version": "0.0.4-alpha",
+  "channel": "beta",
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
+  "notes": "Alfa 0.0.4 — reset verzování (0.0.x baseline), in-app modal „Instaluji aktualizaci…\" místo tichého pozadí, výběr kanálu aktualizací (Release / Beta) v Nastavení → Aplikace. Beta vyžaduje přístupový kód.",
+  "channels": {
+    "stable": {
+      "version": "0.0.4-alpha",
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+      "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+      "size": 30480417,
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+          "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+          "size": 30480417,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
+    "beta": {
+      "version": "0.0.4-alpha",
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+      "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+      "size": 30480417,
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+          "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+          "size": 30480417,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    }
+  },
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+  "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+  "size": 30480417,
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
-      "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
-      "size": 81932525,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+      "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+      "size": 30480417,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     }
   },
   "history": {
-    "1.3.8-alpha": {
-      "notes": "Opravený Aplikace tab v Nastavení + Neon AI contact_admin (DM + technický ticket).",
+    "0.0.4-alpha": {
+      "notes": "Reset verze na 0.0.x. In-app „Instaluji…\" modal místo tichého pozadí. Výběr kanálu Release/Beta v Nastavení → Aplikace (Beta = přístupový kód).",
       "platforms": {
         "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
-          "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
-          "size": 81932525,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.7-alpha": {
-      "notes": "Cache-bust manifest fetche + všechny update dialogy v interním tmavém modalu (žádné nativní Windows okno).",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
-          "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
-          "size": 83799951,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.6-alpha": {
-      "notes": "Správně embedovaná SV ikona v .exe (build s wine + rcedit).",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/1d817f86-124f-41dd-a268-13e65bc7cf74/StudioVoxarioSetup-1.3.6-alpha.exe",
-          "sha256": "863e853004bc23687e83e7d8162324f9b2eb06f1947375524c9566864e2356b8",
-          "size": 83815766,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.5-alpha": {
-      "notes": "Tichá instalace aktualizace + auto-restart, killswitch běžící instance, anti-tamper.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/239ea483-740f-460a-923f-5430014c8d22/StudioVoxarioSetup-1.3.5-alpha.exe",
-          "sha256": "4f5afd3243f6e18355c4836ca30b536afeecc96e0c12f8e4bc59dcd03aac9fe8",
-          "size": 85804962,
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0378484e-d8ae-4561-8249-cb9de37ddf78/StudioVoxarioSetup-0.0.4-alpha.exe",
+          "sha256": "3284089d8866431e7929487c680bf4c5f689ece39562b9db314f791de8d34e75",
+          "size": 30480417,
           "publisher": "StudioVoxario",
           "allowUnsigned": true
         }

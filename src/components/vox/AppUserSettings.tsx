@@ -367,7 +367,7 @@ function ToggleRow({ label, val, onChange }: { label: string; val: boolean; onCh
 function AboutPanel({ userEmail }: { userEmail: string }) {
   const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
   const isDesktop = !!desktop?.isDesktop;
-  const APP_VERSION_FALLBACK = "1.3.8-alpha";
+  const APP_VERSION_FALLBACK = "0.0.4-alpha";
   const [version, setVersion] = useState<string>(APP_VERSION_FALLBACK);
   const [checking, setChecking] = useState(false);
 
@@ -429,6 +429,8 @@ type AppPrefs = {
   notifications: boolean;
   hardwareAcceleration: boolean;
   startMinimized: boolean;
+  updateChannel?: "stable" | "beta";
+  betaUnlocked?: boolean;
 };
 
 function AppSettingsPanel() {
@@ -439,12 +441,14 @@ function AppSettingsPanel() {
     desktop?.getAppSettings || desktop?.getSettings;
   const setFn: undefined | ((p: Partial<AppPrefs>) => Promise<any>) =
     desktop?.setAppSettings || desktop?.setSettings;
+  const unlockFn: undefined | ((ok: boolean) => Promise<any>) = desktop?.unlockBeta;
   const quitFn: undefined | (() => any) = desktop?.quitApp || desktop?.quit;
   const reloadFn: undefined | (() => any) = desktop?.reloadApp;
 
   const defaults: AppPrefs = {
     minimizeToTray: true, closeToTray: true, autoStart: false,
     notifications: true, hardwareAcceleration: true, startMinimized: false,
+    updateChannel: "stable", betaUnlocked: false,
   };
   const [prefs, setPrefs] = useState<AppPrefs | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -513,6 +517,24 @@ function AppSettingsPanel() {
       <ToggleRow label="Startovat minimalizovaně" val={prefs.startMinimized} onChange={(v) => patch({ startMinimized: v })} />
       <ToggleRow label="Systémové notifikace" val={prefs.notifications} onChange={(v) => patch({ notifications: v })} />
       <ToggleRow label="Hardwarová akcelerace" val={prefs.hardwareAcceleration} onChange={(v) => patch({ hardwareAcceleration: v })} />
+
+      <UpdateChannelRow
+        channel={prefs.updateChannel || "stable"}
+        unlocked={!!prefs.betaUnlocked}
+        onChange={(ch) => patch({ updateChannel: ch })}
+        onUnlock={async (code) => {
+          const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
+          if (error || data !== true) {
+            toast({ title: "Neplatný kód", description: error?.message || "Kód nebyl uznán.", variant: "destructive" });
+            return false;
+          }
+          if (unlockFn) await unlockFn(true);
+          await patch({ betaUnlocked: true, updateChannel: "beta" });
+          toast({ title: "Beta odemčena", description: "Budete dostávat předběžné buildy." });
+          return true;
+        }}
+      />
+
       <p className="text-xs text-muted-foreground pt-2">
         Změny hardwarové akcelerace se projeví po restartu aplikace.
         {saving && " • Ukládám…"}
@@ -521,6 +543,75 @@ function AppSettingsPanel() {
         {reloadFn && <Button variant="outline" onClick={() => reloadFn()}>Restartovat okno</Button>}
         {quitFn && <Button variant="destructive" onClick={() => quitFn()}>Ukončit aplikaci</Button>}
       </div>
+    </div>
+  );
+}
+
+function UpdateChannelRow({
+  channel, unlocked, onChange, onUnlock,
+}: {
+  channel: "stable" | "beta";
+  unlocked: boolean;
+  onChange: (c: "stable" | "beta") => void;
+  onUnlock: (code: string) => Promise<boolean>;
+}) {
+  const [showCode, setShowCode] = useState(false);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <div className="pt-3 border-t border-border/40 space-y-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm font-medium">Kanál aktualizací</div>
+          <div className="text-xs text-muted-foreground">
+            Release = stabilní veřejné verze. Beta = předběžné buildy (vyžaduje přístupový kód).
+          </div>
+        </div>
+        <div className="flex rounded-md overflow-hidden border border-border/40">
+          <button
+            className={cn("px-3 py-1.5 text-xs", channel === "stable" ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:bg-secondary/60")}
+            onClick={() => onChange("stable")}
+          >
+            Release
+          </button>
+          <button
+            className={cn("px-3 py-1.5 text-xs", channel === "beta" ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:bg-secondary/60")}
+            onClick={() => {
+              if (unlocked) onChange("beta");
+              else setShowCode(true);
+            }}
+          >
+            Beta
+          </button>
+        </div>
+      </div>
+      {showCode && !unlocked && (
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Zadejte přístupový kód"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="h-8 text-sm"
+          />
+          <Button
+            size="sm"
+            disabled={busy || !code.trim()}
+            onClick={async () => {
+              setBusy(true);
+              const ok = await onUnlock(code);
+              setBusy(false);
+              if (ok) { setShowCode(false); setCode(""); }
+            }}
+          >
+            {busy ? "Ověřuji…" : "Odemknout"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowCode(false)}>Zrušit</Button>
+        </div>
+      )}
+      {unlocked && channel === "beta" && (
+        <p className="text-xs text-emerald-400">✓ Beta kanál odemčen — dostáváte předběžné buildy.</p>
+      )}
     </div>
   );
 }
