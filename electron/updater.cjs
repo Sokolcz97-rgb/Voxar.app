@@ -761,6 +761,7 @@ function resetPinState() { return pinning.resetPins(); }
 
 module.exports = {
   checkForUpdates, getDiagnostics, installVerified, fetchManifest,
-  cancelActiveDownload, getPinState, resetPinState,
+  cancelActiveDownload, getPinState, resetPinState, setUiBridge,
 };
+
 
