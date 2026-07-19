@@ -1,29 +1,29 @@
 {
-  "version": "0.0.7-alpha",
+  "version": "0.0.8-alpha",
   "channel": "stable",
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
-  "notes": "Alfa 0.0.7 (hotfix.2 — 0.0.7a) — oprava hlasového kanálu: uživatelé se už neslyší sami sebe (echo). Mikrofon jde teď přímo do WebRTC, což obnovuje echo canceller prohlížeče. VAD (auto-detekce hlasu) přepíná track.enabled místo WebAudio gate. + vestavěná přihlašovací obrazovka v aplikaci, plovoucí ikonka aktualizace, Uložit v panelu rolí.",
+  "notes": "Alfa 0.0.8 — vestavěná vývojářská konzole v aplikaci (Ctrl+Shift+`) s manuálním reloadem, hard-reloadem (cache-bust), relaunchem, DevTools, rollbackem buildu, vyčištěním storage a živým logem console.log/warn/error + diagnostika. Ikonka v levém dolním rohu app okna.",
   "channels": {
     "stable": {
-      "version": "0.0.7-alpha",
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-      "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-      "size": 85890925,
+      "version": "0.0.8-alpha",
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+      "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+      "size": 83821286,
       "platforms": {
         "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-          "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-          "size": 85890925,
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+          "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+          "size": 83821286,
           "publisher": "StudioVoxario",
           "allowUnsigned": true
         },
         "linux": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/b4695ef2-67d1-410f-a5fd-8b6729853f3a/StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
-          "sha256": "47ebbe34751b3205e7e0a2feeed8ee2c8b63c25e8625cceed8b66354e5d1caf3",
-          "size": 114745277,
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/902a9b0c-6db9-4952-969e-cbe7ec3c813d/StudioVoxario-linux-x64-0.0.8-alpha.tar.gz",
+          "sha256": "7e87df3b926c7d026bcc1abc769285d9ba022ba7fef8fcba65f0564488269566",
+          "size": 110704222,
           "publisher": "StudioVoxario",
           "allowUnsigned": true,
           "format": "tar.gz"
@@ -31,22 +31,22 @@
       }
     },
     "beta": {
-      "version": "0.0.7-alpha",
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-      "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-      "size": 85890925,
+      "version": "0.0.8-alpha",
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+      "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+      "size": 83821286,
       "platforms": {
         "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-          "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-          "size": 85890925,
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+          "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+          "size": 83821286,
           "publisher": "StudioVoxario",
           "allowUnsigned": true
         },
         "linux": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/b4695ef2-67d1-410f-a5fd-8b6729853f3a/StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
-          "sha256": "47ebbe34751b3205e7e0a2feeed8ee2c8b63c25e8625cceed8b66354e5d1caf3",
-          "size": 114745277,
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/902a9b0c-6db9-4952-969e-cbe7ec3c813d/StudioVoxario-linux-x64-0.0.8-alpha.tar.gz",
+          "sha256": "7e87df3b926c7d026bcc1abc769285d9ba022ba7fef8fcba65f0564488269566",
+          "size": 110704222,
           "publisher": "StudioVoxario",
           "allowUnsigned": true,
           "format": "tar.gz"
@@ -54,29 +54,45 @@
       }
     }
   },
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-  "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-  "size": 85890925,
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+  "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+  "size": 83821286,
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
-      "sha256": "bfced3b4a45fbc492ba96b5178c4a0e4d59420ad679615f5ea5b40d385bf7a3b",
-      "size": 85890925,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+      "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+      "size": 83821286,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     },
     "linux": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/b4695ef2-67d1-410f-a5fd-8b6729853f3a/StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
-      "sha256": "47ebbe34751b3205e7e0a2feeed8ee2c8b63c25e8625cceed8b66354e5d1caf3",
-      "size": 114745277,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/902a9b0c-6db9-4952-969e-cbe7ec3c813d/StudioVoxario-linux-x64-0.0.8-alpha.tar.gz",
+      "sha256": "7e87df3b926c7d026bcc1abc769285d9ba022ba7fef8fcba65f0564488269566",
+      "size": 110704222,
       "publisher": "StudioVoxario",
       "allowUnsigned": true,
       "format": "tar.gz"
     }
   },
   "history": {
+    "0.0.8-alpha": {
+      "notes": "Vývojářská konzole v aplikaci (Ctrl+Shift+`) — reload, hard reload, relaunch, DevTools, rollback, vyčištění storage, live log a diagnostika.",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/55af6c8a-33ef-4577-8cfd-66bcb0010197/StudioVoxarioSetup-0.0.8-alpha.exe",
+          "sha256": "c5e73bd0b450523839e63d75c52cb13ea77d5a696d2d3078578cbb2d17d8b27d",
+          "size": 83821286
+        },
+        "linux": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/902a9b0c-6db9-4952-969e-cbe7ec3c813d/StudioVoxario-linux-x64-0.0.8-alpha.tar.gz",
+          "sha256": "7e87df3b926c7d026bcc1abc769285d9ba022ba7fef8fcba65f0564488269566",
+          "size": 110704222,
+          "format": "tar.gz"
+        }
+      }
+    },
     "0.0.7-alpha": {
-      "notes": "In-app FAB pro dostupné aktualizace, tichá kontrola (cache-bust), Uložit v panelu rolí.",
+      "notes": "In-app FAB pro dostupné aktualizace, tichá kontrola (cache-bust), Uložit v panelu rolí, in-app přihlašovací obrazovka, oprava echa v hlasovém kanálu.",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/fc1cf98d-bd59-48eb-b4b4-337d21559ab4/StudioVoxarioSetup-0.0.7-alpha.exe",
@@ -87,22 +103,6 @@
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/b4695ef2-67d1-410f-a5fd-8b6729853f3a/StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
           "sha256": "47ebbe34751b3205e7e0a2feeed8ee2c8b63c25e8625cceed8b66354e5d1caf3",
           "size": 114745277,
-          "format": "tar.gz"
-        }
-      }
-    },
-    "0.0.6-alpha": {
-      "notes": "Kritická oprava: 0.0.5 launcher padal s SyntaxError (duplicitní catch v main.cjs).",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9a2d83b1-2f3e-4b91-8a51-e4eda6ced5d7/StudioVoxarioSetup-0.0.6-alpha.exe",
-          "sha256": "bd63ee1e4096b1a1088f4ce4d4a3f42bff691ca14b16420e9d722276bac4888c",
-          "size": 81924356
-        },
-        "linux": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a5b6606f-0fdd-4b3b-8698-45fdc14d6c26/StudioVoxario-linux-x64-0.0.6-alpha.tar.gz",
-          "sha256": "15b69a3ded52a8c870531ab515b34f3fed79ef31238958ba956b28c67ed8900d",
-          "size": 107197804,
           "format": "tar.gz"
         }
       }
