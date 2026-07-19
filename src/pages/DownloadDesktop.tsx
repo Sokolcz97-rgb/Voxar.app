@@ -88,7 +88,7 @@ export default function Download() {
     {
       os: "Windows 10 / 11",
       file: winInstaller.url,
-      filename: "StudioVoxarioSetup-0.0.6-alpha.exe",
+      filename: "StudioVoxarioSetup-0.0.7-alpha.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
       size: "~78 MB · v0.0.6-Alpha",
@@ -105,8 +105,8 @@ export default function Download() {
     {
       os: "Linux (x64)",
       file: linuxAsset.url,
-      filename: "StudioVoxario-linux-x64-0.0.6-alpha.tar.gz",
-      note: "tar xzf StudioVoxario-linux-x64-0.0.6-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
+      filename: "StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
+      note: "tar xzf StudioVoxario-linux-x64-0.0.7-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
       icon: "🐧",
       size: "~102 MB · v0.0.6-Alpha",
     },
