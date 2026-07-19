@@ -425,7 +425,6 @@ async function runLauncherSequence() {
       channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
     });
   } catch (e) {
-  } catch (e) {
     console.error("launcher update check error", e);
   }
 
