@@ -339,8 +339,11 @@
   },
   "notFound": {
     "title": "404 — Stránka nenalezena",
-    "desc": "Tato stránka neexistuje."
+    "desc": "Tato stránka neexistuje.",
+    "subtitle": "Jejda! Tuhle stránku jsme nenašli.",
+    "back": "Zpět na úvod"
   },
+
   "lang": {
     "switch": "Jazyk"
   },
