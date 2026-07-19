@@ -148,7 +148,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
 
-    await downloadFile(asset.installerUrl, dest, (p) => {
+    const download = await downloadFile(asset.installerUrl, dest, (p) => {
       const pct = Math.round(p * 100);
       progressWin.webContents
         .executeJavaScript(
@@ -159,19 +159,60 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
 
     progressWin.close();
 
+    // Integrity verification — SHA-256 must match the manifest (and size if provided).
+    // Refuse to run the installer if the file has been tampered with or corrupted in transit.
+    const expectedHash = String(asset.sha256 || manifest.sha256 || "").toLowerCase().trim();
+    const expectedSize = Number(asset.size || manifest.size || 0);
+    if (!expectedHash) {
+      try { fs.unlinkSync(dest); } catch {}
+      await dialog.showMessageBox(parentWindow, {
+        type: "error",
+        title: "Aktualizace zamítnuta",
+        message: "Chybí kontrolní součet",
+        detail:
+          "Manifest neobsahuje SHA-256 hash instalátoru, takže integritu nelze ověřit. " +
+          "Aktualizace byla z bezpečnostních důvodů zrušena.",
+      });
+      return { status: "no-hash" };
+    }
+    if (expectedSize && download.size !== expectedSize) {
+      try { fs.unlinkSync(dest); } catch {}
+      await dialog.showMessageBox(parentWindow, {
+        type: "error",
+        title: "Aktualizace zamítnuta",
+        message: "Neplatná velikost souboru",
+        detail: `Očekáváno ${expectedSize} B, staženo ${download.size} B. Soubor byl smazán.`,
+      });
+      return { status: "size-mismatch" };
+    }
+    if (download.sha256.toLowerCase() !== expectedHash) {
+      try { fs.unlinkSync(dest); } catch {}
+      await dialog.showMessageBox(parentWindow, {
+        type: "error",
+        title: "Aktualizace zamítnuta",
+        message: "Ověření integrity selhalo",
+        detail:
+          `Kontrolní součet staženého instalátoru neodpovídá manifestu.\n\n` +
+          `Očekáváno: ${expectedHash}\n` +
+          `Získáno:   ${download.sha256}\n\n` +
+          `Soubor mohl být poškozen při přenosu nebo podvržen. Byl smazán a nespustí se.`,
+      });
+      return { status: "hash-mismatch" };
+    }
+
     if (platform === "win32") {
       await shell.openPath(dest);
       new Notification({
         title: "StudioVoxario",
-        body: "Instalátor se spouští. Aplikace se ukončí.",
+        body: "Integrita ověřena. Instalátor se spouští, aplikace se ukončí.",
       }).show();
       setTimeout(() => app.quit(), 1500);
     } else {
       await dialog.showMessageBox(parentWindow, {
         type: "info",
         title: "Aktualizace stažena",
-        message: "Instalátor byl stažen",
-        detail: dest,
+        message: "Instalátor byl stažen a ověřen",
+        detail: `${dest}\n\nSHA-256: ${download.sha256}`,
       });
       shell.showItemInFolder(dest);
     }
