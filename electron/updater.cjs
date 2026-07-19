@@ -690,7 +690,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       try { fs.unlinkSync(dest); } catch {}
       return { status: "publisher-mismatch", sig };
     }
-    if (sig.supported) {
+    if (sig.supported && sig.ok && sig.thumbprint) {
       const pinCheck = pinning.verifyAgainstPins(sig.thumbprint);
       if (!pinCheck.trusted) {
         try { fs.unlinkSync(dest); } catch {}
