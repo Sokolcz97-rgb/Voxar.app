@@ -523,12 +523,12 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
   progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
   try {
-    const download = await downloadFile(asset.installerUrl, dest, (p) => {
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
       const pct = Math.round(p * 100);
       progressWin.webContents
         .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
         .catch(() => {});
-    });
+    }), { phase: "download", label: `${label}: stažení` });
     progressWin.close();
     log(`${label}: staženo ${download.size} B, SHA-256=${download.sha256}`);
 
