@@ -85,6 +85,13 @@ function createTray() {
     },
     { type: "separator" },
     {
+    { type: "separator" },
+    {
+      label: "Vrátit na poslední funkční verzi…",
+      click: () => triggerRollbackFlow("Ruční požadavek z tray menu.").catch(() => {}),
+    },
+    { type: "separator" },
+    {
       label: "Ukončit",
       click: () => {
         isQuitting = true;
