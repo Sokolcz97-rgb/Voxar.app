@@ -1297,6 +1297,127 @@ export type Database = {
         }
         Relationships: []
       }
+      form_fields: {
+        Row: {
+          created_at: string
+          description: string | null
+          form_id: string
+          id: string
+          label: string
+          options: Json
+          position: number
+          required: boolean
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          form_id: string
+          id?: string
+          label: string
+          options?: Json
+          position?: number
+          required?: boolean
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          form_id?: string
+          id?: string
+          label?: string
+          options?: Json
+          position?: number
+          required?: boolean
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_responses: {
+        Row: {
+          answers: Json
+          form_id: string
+          id: string
+          respondent_id: string | null
+          submitted_at: string
+        }
+        Insert: {
+          answers?: Json
+          form_id: string
+          id?: string
+          respondent_id?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          answers?: Json
+          form_id?: string
+          id?: string
+          respondent_id?: string | null
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_responses_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forms: {
+        Row: {
+          accent_color: string | null
+          allow_anonymous: boolean
+          cover_emoji: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          owner_id: string
+          slug: string
+          success_message: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          allow_anonymous?: boolean
+          cover_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          owner_id: string
+          slug: string
+          success_message?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          allow_anonymous?: boolean
+          cover_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          owner_id?: string
+          slug?: string
+          success_message?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       forum_categories: {
         Row: {
           created_at: string
