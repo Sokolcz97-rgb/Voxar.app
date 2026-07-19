@@ -178,6 +178,13 @@
             : ''],
         ['Očekávaná velikost', d.expectedSize],
         ['Stažená velikost', d.downloadedSize],
+        ['Očekávaný vydavatel', d.expectedPublisher],
+        ['Stav podpisu', d.signatureStatus,
+          d.signatureStatus === 'Valid' ? 'ok'
+          : (d.signatureStatus && d.signatureStatus !== 'unsupported-platform' ? 'err' : '')],
+        ['Podepsáno', d.signatureSubject],
+        ['Thumbprint', d.signatureThumbprint],
+        ['Časové razítko', d.signatureTimestamped == null ? null : (d.signatureTimestamped ? 'ano' : 'ne')],
         ['Poslední kontrola', d.lastCheckAt],
         ['Poslední chyba', d.lastError, d.lastError ? 'err' : ''],
       ];
