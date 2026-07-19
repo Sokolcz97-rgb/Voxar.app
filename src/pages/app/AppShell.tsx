@@ -260,7 +260,7 @@ export default function AppShell() {
             ) : activeChannel ? (
               <>
                 {activeChannel.type === "text"
-                  ? <ChatView channel={activeChannel} />
+                  ? <ChatView channel={activeChannel} members={members} />
                   : <VoiceView
                       channel={activeChannel}
                       onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
