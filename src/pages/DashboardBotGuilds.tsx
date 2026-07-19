@@ -42,7 +42,7 @@ interface BotGuild {
   source: string;
   requested_at: string;
   reviewed_at: string | null;
-  notes: string | null;
+  notes?: string | null;
   member_count: number | null;
 }
 
