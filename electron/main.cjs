@@ -75,6 +75,10 @@ function createTray() {
     { label: "Nastavení aplikace", click: () => openSettings() },
     { type: "separator" },
     {
+      label: "Zkontrolovat aktualizace",
+      click: () => checkForUpdates({ silent: false, parentWindow: mainWindow }),
+    },
+    {
       label: "Otevřít web v prohlížeči",
       click: () => shell.openExternal(APP_URL),
     },
