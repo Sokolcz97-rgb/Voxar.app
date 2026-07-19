@@ -367,7 +367,7 @@ function ToggleRow({ label, val, onChange }: { label: string; val: boolean; onCh
 function AboutPanel({ userEmail }: { userEmail: string }) {
   const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
   const isDesktop = !!desktop?.isDesktop;
-  const APP_VERSION_FALLBACK = "1.3.7-alpha";
+  const APP_VERSION_FALLBACK = "1.3.8-alpha";
   const [version, setVersion] = useState<string>(APP_VERSION_FALLBACK);
   const [checking, setChecking] = useState(false);
 
