@@ -91,7 +91,7 @@ export default function Download() {
       filename: "StudioVoxarioSetup-0.0.5-alpha.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
-      size: "~29 MB · v0.0.4-Alpha",
+      size: "~78 MB · v0.0.5-Alpha",
       primary: true,
     },
     {
@@ -105,10 +105,10 @@ export default function Download() {
     {
       os: "Linux (x64)",
       file: linuxAsset.url,
-      filename: "StudioVoxario-linux-x64.tar.gz",
-      note: "tar xzf a spusťte ./StudioVoxario",
+      filename: "StudioVoxario-linux-x64-0.0.5-alpha.tar.gz",
+      note: "tar xzf StudioVoxario-linux-x64-0.0.5-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
       icon: "🐧",
-      size: "~110 MB",
+      size: "~102 MB · v0.0.5-Alpha",
     },
   ];
 
