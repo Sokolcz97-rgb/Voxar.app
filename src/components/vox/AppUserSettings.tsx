@@ -50,9 +50,16 @@ export function AppUserSettings({ onClose }: Props) {
 
   // Profile
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Connections
+  const [twitch, setTwitch] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [kick, setKick] = useState("");
+  const [savingConn, setSavingConn] = useState(false);
 
   // Password
   const [newPw, setNewPw] = useState("");
