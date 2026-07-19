@@ -251,6 +251,7 @@ ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
 ipcMain.handle("launcher:recheck", () =>
   checkForUpdates({ silent: false, parentWindow: launcherWindow || mainWindow })
 );
+ipcMain.handle("launcher:cancel-download", () => cancelActiveDownload());
 ipcMain.handle("launcher:open-logs", () => {
   try {
     const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");
