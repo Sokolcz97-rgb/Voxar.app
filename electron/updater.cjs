@@ -564,7 +564,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
 
 /** Pouze stáhne manifest — využívá rollback, aby nemusel duplikovat URL. */
 async function fetchManifest() {
-  return fetchJson(MANIFEST_URL);
+  return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
 }
 
 module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest };
