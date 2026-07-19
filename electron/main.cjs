@@ -492,6 +492,15 @@ app.whenReady().then(async () => {
 
   runLauncherSequence();
 
+  // Živá quiet-kontrola pro FAB v UI (bez dialogů). První hned po startu,
+  // pak každých 15 min. Manifest se fetchuje s cache-bustem, takže výsledek
+  // je vždy aktuální — už žádné „vyskočí stará verze".
+  const quietTick = () => checkForUpdatesQuiet({
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  }).catch(() => {});
+  setTimeout(quietTick, 8_000);
+  setInterval(quietTick, 15 * 60 * 1000);
+
   setInterval(() => {
     checkForUpdates({
       silent: true,
