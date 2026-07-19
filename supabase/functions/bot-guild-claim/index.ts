@@ -59,7 +59,6 @@ Deno.serve(async (req) => {
       source: existing ? (existing.owner_user_id ? "transferred" : "claim") : "claim",
       member_count: match.approximate_member_count ?? null,
       reviewed_at: new Date().toISOString(),
-      reviewed_by: user.id,
     };
 
     let result;
@@ -69,6 +68,15 @@ Deno.serve(async (req) => {
       result = await admin.from("bot_guilds").insert(patch).select().maybeSingle();
     }
     if (result.error) return json({ error: result.error.message }, 500);
+
+    // Track reviewer separately in staff-only table
+    if (result.data?.id) {
+      await admin.from("bot_guilds_review").upsert({
+        guild_row_id: result.data.id,
+        reviewed_by: user.id,
+        updated_at: new Date().toISOString(),
+      });
+    }
 
     return json({ ok: true, guild: result.data });
   } catch (e) {

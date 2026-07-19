@@ -42,7 +42,7 @@ interface BotGuild {
   source: string;
   requested_at: string;
   reviewed_at: string | null;
-  notes: string | null;
+  notes?: string | null;
   member_count: number | null;
 }
 
@@ -89,7 +89,15 @@ export default function DashboardBotGuilds() {
       .select("*")
       .order("requested_at", { ascending: false });
     if (error) toast.error(error.message);
-    setGuilds((data as BotGuild[]) || []);
+    const rows = (data as any[]) || [];
+    // Load staff-only review notes and merge (only visible to bot managers)
+    const { data: reviewRows } = await supabase
+      .from("bot_guilds_review")
+      .select("guild_row_id, notes");
+    const notesById = new Map<string, string | null>();
+    (reviewRows || []).forEach((r: any) => notesById.set(r.guild_row_id, r.notes));
+    const merged: BotGuild[] = rows.map((r) => ({ ...r, notes: notesById.get(r.id) ?? null }));
+    setGuilds(merged);
     setLoading(false);
   };
 
@@ -274,11 +282,19 @@ export default function DashboardBotGuilds() {
       .update({
         status,
         reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id ?? null,
-        ...(notes !== undefined ? { notes } : {}),
       })
       .eq("id", g.id);
     if (error) return toast.error(error.message);
+    // Store staff-only review meta (notes + reviewer) in the separate protected table
+    const { error: reviewErr } = await supabase
+      .from("bot_guilds_review")
+      .upsert({
+        guild_row_id: g.id,
+        reviewed_by: user?.id ?? null,
+        ...(notes !== undefined ? { notes } : {}),
+        updated_at: new Date().toISOString(),
+      });
+    if (reviewErr) return toast.error(reviewErr.message);
     toast.success(`Stav: ${statusLabel[status]}`);
     load();
   };
