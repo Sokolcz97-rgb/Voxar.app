@@ -21,7 +21,7 @@ interface Msg {
 
 interface ProfileLite { user_id: string; display_name: string | null; avatar_url: string | null; }
 
-export function ChatView({ channel }: { channel: VoxChannel }) {
+export function ChatView({ channel, members = [] }: { channel: VoxChannel; members?: VoxMember[] }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
