@@ -185,6 +185,64 @@ function getDiagnostics() {
   return { ...diagnostics, logs: diagnostics.logs.slice() };
 }
 
+// ------- Retry s exponenciálním backoffem pro síťové operace -------
+const RETRYABLE_PATTERNS = [
+  /ETIMEDOUT/i, /ENETUNREACH/i, /ENOTFOUND/i, /ECONNRESET/i, /ECONNREFUSED/i,
+  /EAI_AGAIN/i, /EPIPE/i, /socket hang up/i, /network/i, /timeout/i,
+  /HTTP 5\d\d/i, /HTTP 408/i, /HTTP 429/i,
+];
+function isRetryable(err) {
+  const msg = String(err?.message || err || "");
+  return RETRYABLE_PATTERNS.some((r) => r.test(msg));
+}
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+/**
+ * Zabalí async operaci do retry smyčky s exponenciálním backoffem + jitterem.
+ * Aktualizuje diagnostiku (retryAttempts, retryNextDelayMs, retryLastError, …)
+ * a broadcastuje log, aby to launcher UI viděl v reálném čase.
+ */
+async function withRetry(fn, { phase, label, maxAttempts = 5, baseDelayMs = 1500, maxDelayMs = 60_000 } = {}) {
+  diagnostics.retryPhase = phase;
+  diagnostics.retryMaxAttempts = maxAttempts;
+  diagnostics.retryAttempts = 0;
+  diagnostics.retryLastError = null;
+  diagnostics.retryLastErrorAt = null;
+  diagnostics.retryNextDelayMs = null;
+  diagnostics.retryNextAt = null;
+
+  let attempt = 0;
+  let lastErr;
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    diagnostics.retryAttempts = attempt;
+    try {
+      const result = await fn(attempt);
+      if (attempt > 1) log(`${label}: úspěch na ${attempt}. pokus.`);
+      diagnostics.retryNextDelayMs = null;
+      diagnostics.retryNextAt = null;
+      return result;
+    } catch (err) {
+      lastErr = err;
+      const retryable = isRetryable(err) && attempt < maxAttempts;
+      diagnostics.retryLastError = String(err?.message || err);
+      diagnostics.retryLastErrorAt = new Date().toISOString();
+      if (!retryable) {
+        log(`${label}: pokus ${attempt}/${maxAttempts} selhal (nelze opakovat) — ${diagnostics.retryLastError}`);
+        throw err;
+      }
+      const expo = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1));
+      const jitter = Math.round(expo * (0.5 + Math.random() * 0.5)); // 50–100 % okno
+      diagnostics.retryNextDelayMs = jitter;
+      diagnostics.retryNextAt = new Date(Date.now() + jitter).toISOString();
+      log(`${label}: pokus ${attempt}/${maxAttempts} selhal (${diagnostics.retryLastError}). Nový pokus za ${Math.round(jitter / 1000)} s.`);
+      await sleep(jitter);
+    }
+  }
+  throw lastErr;
+}
+
+
 async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   if (checking) return { status: "busy" };
   checking = true;
