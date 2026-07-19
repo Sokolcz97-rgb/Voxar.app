@@ -2612,10 +2612,46 @@ export type Database = {
           },
         ]
       }
+      vox_guild_bans: {
+        Row: {
+          banned_by: string | null
+          created_at: string
+          guild_id: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_by?: string | null
+          created_at?: string
+          guild_id: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_by?: string | null
+          created_at?: string
+          guild_id?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_guild_bans_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vox_guild_members: {
         Row: {
           guild_id: string
           joined_at: string
+          muted_until: string | null
           nickname: string | null
           role: Database["public"]["Enums"]["vox_member_role"]
           user_id: string
@@ -2623,6 +2659,7 @@ export type Database = {
         Insert: {
           guild_id: string
           joined_at?: string
+          muted_until?: string | null
           nickname?: string | null
           role?: Database["public"]["Enums"]["vox_member_role"]
           user_id: string
@@ -2630,6 +2667,7 @@ export type Database = {
         Update: {
           guild_id?: string
           joined_at?: string
+          muted_until?: string | null
           nickname?: string | null
           role?: Database["public"]["Enums"]["vox_member_role"]
           user_id?: string
@@ -3018,6 +3056,10 @@ export type Database = {
         Args: { _action: string; _module: string; _user_id: string }
         Returns: boolean
       }
+      vox_ban_member: {
+        Args: { _guild: string; _reason?: string; _user: string }
+        Returns: undefined
+      }
       vox_channel_guild: { Args: { _channel: string }; Returns: string }
       vox_has_perm: {
         Args: { _guild: string; _perm: string; _user: string }
@@ -3031,9 +3073,21 @@ export type Database = {
         Returns: undefined
       }
       vox_join_by_invite: { Args: { _code: string }; Returns: string }
+      vox_kick_member: {
+        Args: { _guild: string; _user: string }
+        Returns: undefined
+      }
       vox_member_role: {
         Args: { _guild: string; _user: string }
         Returns: Database["public"]["Enums"]["vox_member_role"]
+      }
+      vox_mute_member: {
+        Args: { _guild: string; _minutes: number; _user: string }
+        Returns: undefined
+      }
+      vox_unban_member: {
+        Args: { _guild: string; _user: string }
+        Returns: undefined
       }
     }
     Enums: {

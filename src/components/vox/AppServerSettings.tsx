@@ -10,14 +10,23 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2, ShieldCheck } from "lucide-react";
+import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2, ShieldCheck, Ban, MicOff, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxGuild } from "@/components/vox/GuildRail";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
 import type { VoxMember } from "@/components/vox/MemberList";
 import { VoxRolesPanel } from "@/components/vox/VoxRolesPanel";
 
-type Tab = "overview" | "invite" | "roles" | "channels" | "members" | "danger";
+type Tab = "overview" | "invite" | "roles" | "channels" | "members" | "bans" | "danger";
+
+interface BanRow {
+  id: string;
+  user_id: string;
+  reason: string | null;
+  created_at: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+}
 
 interface Props {
   guild: VoxGuild;
@@ -125,17 +134,55 @@ export function AppServerSettings({
   };
 
   const kickMember = async (m: VoxMember) => {
-    if (!window.confirm(`Odebrat ${m.display_name || m.nickname || "člena"}?`)) return;
-    const { error } = await supabase.from("vox_guild_members").delete()
-      .eq("guild_id", guild.id).eq("user_id", m.user_id);
+    if (!window.confirm(`Vyhodit ${m.display_name || m.nickname || "člena"}?`)) return;
+    const { error } = await supabase.rpc("vox_kick_member", { _guild: guild.id, _user: m.user_id });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else toast({ title: "Odebráno" });
+    else toast({ title: "Vyhozeno" });
+  };
+  const banMember = async (m: VoxMember) => {
+    const reason = window.prompt(`Zabanovat ${m.display_name || m.nickname || "člena"}? (nepovinný důvod)`, "");
+    if (reason === null) return;
+    const { error } = await supabase.rpc("vox_ban_member", { _guild: guild.id, _user: m.user_id, _reason: reason || null });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else { toast({ title: "Zabanováno" }); loadBans(); }
+  };
+  const muteMember = async (m: VoxMember) => {
+    const raw = window.prompt(`Umlčet na kolik minut? (0 = zrušit umlčení)`, "10");
+    if (raw === null) return;
+    const mins = parseInt(raw, 10);
+    if (Number.isNaN(mins)) return;
+    const { error } = await supabase.rpc("vox_mute_member", { _guild: guild.id, _user: m.user_id, _minutes: mins });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else toast({ title: mins > 0 ? `Umlčeno na ${mins} min` : "Umlčení zrušeno" });
   };
   const setRole = async (m: VoxMember, role: "member" | "mod" | "owner") => {
     const { error } = await supabase.from("vox_guild_members").update({ role })
       .eq("guild_id", guild.id).eq("user_id", m.user_id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
   };
+
+  const [bans, setBans] = useState<BanRow[]>([]);
+  const loadBans = async () => {
+    const { data } = await supabase.from("vox_guild_bans")
+      .select("id, user_id, reason, created_at")
+      .eq("guild_id", guild.id)
+      .order("created_at", { ascending: false });
+    if (!data) { setBans([]); return; }
+    const ids = data.map(b => b.user_id);
+    let profiles: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("user_id, display_name, avatar_url").in("user_id", ids);
+      profs?.forEach(p => { profiles[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url }; });
+    }
+    setBans(data.map(b => ({ ...b, display_name: profiles[b.user_id]?.display_name, avatar_url: profiles[b.user_id]?.avatar_url })));
+  };
+  const unbanUser = async (userId: string) => {
+    const { error } = await supabase.rpc("vox_unban_member", { _guild: guild.id, _user: userId });
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else { toast({ title: "Odbanováno" }); loadBans(); }
+  };
+  useEffect(() => { if (tab === "bans") loadBans(); /* eslint-disable-next-line */ }, [tab, guild.id]);
 
   const deleteGuild = async () => {
     const { error } = await supabase.from("vox_guilds").delete().eq("id", guild.id);
@@ -158,6 +205,7 @@ export function AppServerSettings({
     { key: "roles", label: "Role & oprávnění", icon: ShieldCheck, adminOnly: true },
     { key: "channels", label: "Kanály", icon: Hash, adminOnly: true },
     { key: "members", label: "Členové", icon: Users },
+    { key: "bans", label: "Bany", icon: Ban, adminOnly: true },
     { key: "danger", label: isOwner ? "Nebezpečná zóna" : "Opustit server", icon: Trash2 },
   ];
 
@@ -280,13 +328,41 @@ export function AppServerSettings({
                     <div className="text-sm truncate">{m.display_name || m.nickname || m.user_id.slice(0,8)}</div>
                     <div className="text-[11px] text-muted-foreground">{m.role}</div>
                   </div>
-                  {isOwner && m.user_id !== user?.id && (
+                  {(isOwner || isAdmin) && m.user_id !== user?.id && m.role !== "owner" && (
                     <>
-                      {m.role !== "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "mod")}>Povýšit</Button>}
-                      {m.role === "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "member")}>Sundat</Button>}
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => kickMember(m)}>Kick</Button>
+                      {isOwner && m.role !== "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "mod")}>Povýšit</Button>}
+                      {isOwner && m.role === "mod" && <Button size="sm" variant="ghost" onClick={() => setRole(m, "member")}>Sundat</Button>}
+                      <Button size="sm" variant="ghost" title="Umlčet" onClick={() => muteMember(m)}>
+                        <MicOff className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-amber-400" title="Vyhodit" onClick={() => kickMember(m)}>
+                        <UserX className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" title="Zabanovat" onClick={() => banMember(m)}>
+                        <Ban className="w-4 h-4" />
+                      </Button>
                     </>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "bans" && isAdmin && (
+            <div className="space-y-1.5">
+              {bans.length === 0 && <div className="text-sm text-muted-foreground">Žádné bany na tomto serveru.</div>}
+              {bans.map((b) => (
+                <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/40">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-xs font-semibold">
+                    {b.avatar_url ? <img src={b.avatar_url} alt="" className="w-full h-full object-cover" /> : (b.display_name || "?").slice(0,2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate">{b.display_name || b.user_id.slice(0,8)}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {b.reason ? `Důvod: ${b.reason}` : "Bez důvodu"} · {new Date(b.created_at).toLocaleString("cs-CZ")}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => unbanUser(b.user_id)}>Odbanovat</Button>
                 </div>
               ))}
             </div>
