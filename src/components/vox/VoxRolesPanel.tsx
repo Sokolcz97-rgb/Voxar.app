@@ -127,6 +127,21 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
     if (selectedId === id) setSelectedId(null);
   };
 
+  const swapPositions = async (i: number, j: number) => {
+    if (i < 0 || j < 0 || i >= roles.length || j >= roles.length) return;
+    const a = roles[i], b = roles[j];
+    const next = [...roles];
+    next[i] = { ...a, position: b.position };
+    next[j] = { ...b, position: a.position };
+    // Roles list is displayed in position DESC; keep sort stable.
+    next.sort((x, y) => y.position - x.position);
+    setRoles(next);
+    await Promise.all([
+      supabase.from("vox_roles").update({ position: b.position }).eq("id", a.id),
+      supabase.from("vox_roles").update({ position: a.position }).eq("id", b.id),
+    ]);
+  };
+
   const toggleAssignment = async (userId: string, roleId: string, on: boolean) => {
     if (on) {
       const { error } = await supabase.from("vox_member_roles").insert({ guild_id: guildId, user_id: userId, role_id: roleId });
