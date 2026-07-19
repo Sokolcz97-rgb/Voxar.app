@@ -32,6 +32,9 @@ function fetchJson(url) {
   });
 }
 
+// Držíme referenci na běžící download request, ať ho lze zvenčí zrušit.
+let activeDownload = null;
+
 function downloadFile(url, dest, onProgress) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith("https") ? https : http;
@@ -42,22 +45,55 @@ function downloadFile(url, dest, onProgress) {
       if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
       const total = parseInt(res.headers["content-length"] || "0", 10);
       let received = 0;
+      const startTs = Date.now();
+      let lastEmit = 0;
       const hash = crypto.createHash("sha256");
       const file = fs.createWriteStream(dest);
+      activeDownload = { req, dest };
       res.on("data", (chunk) => {
         received += chunk.length;
         hash.update(chunk);
-        if (onProgress && total) onProgress(received / total);
+        const now = Date.now();
+        if (onProgress && (now - lastEmit > 200 || (total && received === total))) {
+          lastEmit = now;
+          const elapsed = (now - startTs) / 1000;
+          const speedBps = elapsed > 0 ? received / elapsed : 0;
+          const etaSec = total && speedBps > 0 ? (total - received) / speedBps : null;
+          try {
+            onProgress({
+              received,
+              total,
+              pct: total ? received / total : 0,
+              speedBps,
+              etaSec,
+            });
+          } catch {}
+        }
       });
       res.pipe(file);
       file.on("finish", () =>
-        file.close(() => resolve({ path: dest, sha256: hash.digest("hex"), size: received }))
+        file.close(() => {
+          if (activeDownload && activeDownload.req === req) activeDownload = null;
+          resolve({ path: dest, sha256: hash.digest("hex"), size: received });
+        })
       );
-      file.on("error", reject);
+      file.on("error", (e) => { activeDownload = null; reject(e); });
+      res.on("error", (e) => { activeDownload = null; reject(e); });
     });
-    req.on("error", reject);
+    req.on("error", (e) => { activeDownload = null; reject(e); });
   });
 }
+
+/** Zruší běžící stahování — jádro pro tlačítko „Zrušit" v launcheru. */
+function cancelActiveDownload() {
+  if (!activeDownload) return false;
+  const { req, dest } = activeDownload;
+  activeDownload = null;
+  try { req.destroy(new Error("canceled")); } catch {}
+  setTimeout(() => { try { fs.unlinkSync(dest); } catch {} }, 50);
+  return true;
+}
+
 
 // -------- Authenticode / codesign verification --------
 // Windows: PowerShell Get-AuthenticodeSignature. macOS: codesign. Linux: skipped.
