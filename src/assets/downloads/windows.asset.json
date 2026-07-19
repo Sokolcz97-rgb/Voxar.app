@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "91663914-f9ed-4338-a3a7-0073f612c155",
+  "asset_id": "446a2071-4f60-4f10-83f5-336cf0f15467",
   "project_id": "d53f3d8b-928c-40db-a7b3-8e9279cdfda6",
-  "url": "/__l5e/assets-v1/91663914-f9ed-4338-a3a7-0073f612c155/StudioVoxario-win-x64.zip",
-  "r2_key": "a/v1/d53f3d8b-928c-40db-a7b3-8e9279cdfda6/91663914-f9ed-4338-a3a7-0073f612c155/StudioVoxario-win-x64.zip",
-  "original_filename": "StudioVoxario-win-x64.zip",
-  "size": 119488376,
+  "url": "/__l5e/assets-v1/446a2071-4f60-4f10-83f5-336cf0f15467/StudioVoxario-win32-x64.zip",
+  "r2_key": "a/v1/d53f3d8b-928c-40db-a7b3-8e9279cdfda6/446a2071-4f60-4f10-83f5-336cf0f15467/StudioVoxario-win32-x64.zip",
+  "original_filename": "StudioVoxario-win32-x64.zip",
+  "size": 110852290,
   "content_type": "application/zip",
-  "created_at": "2026-07-19T00:51:11Z"
+  "created_at": "2026-07-19T01:53:40Z"
 }
