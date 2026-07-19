@@ -52,6 +52,7 @@ import MyForms from "./pages/MyForms.tsx";
 import FormEditor from "./pages/FormEditor.tsx";
 import FormResults from "./pages/FormResults.tsx";
 import PublicForm from "./pages/PublicForm.tsx";
+import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -104,6 +105,7 @@ const AppRoutes = () => {
       <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
       <Route path="/f/:slug" element={<PublicForm />} />
+      <Route path="/desktop" element={<DownloadDesktop />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
