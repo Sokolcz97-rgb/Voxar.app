@@ -76,6 +76,8 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [savedRoles, setSavedRoles] = useState<Record<string, VoxRole>>({}); // last-persisted snapshot per role
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -83,7 +85,9 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
       supabase.from("vox_roles").select("*").eq("guild_id", guildId).order("position", { ascending: false }),
       supabase.from("vox_member_roles").select("user_id, role_id").eq("guild_id", guildId),
     ]);
-    setRoles((r || []) as VoxRole[]);
+    const list = (r || []) as VoxRole[];
+    setRoles(list);
+    setSavedRoles(Object.fromEntries(list.map(x => [x.id, x])));
     const map: Record<string, string[]> = {};
     (a || []).forEach((row: any) => {
       (map[row.user_id] ||= []).push(row.role_id);
@@ -94,6 +98,41 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [guildId]);
+
+  /** Šalanda mezi lokální editací a serverem: která role má rozdíl proti poslednímu uložení. */
+  const dirtyIds = useMemo(() => {
+    const s = new Set<string>();
+    roles.forEach(r => {
+      const saved = savedRoles[r.id];
+      if (!saved) { s.add(r.id); return; }
+      if (JSON.stringify({ ...r }) !== JSON.stringify({ ...saved })) s.add(r.id);
+    });
+    return s;
+  }, [roles, savedRoles]);
+  const isDirty = dirtyIds.size > 0;
+
+  const saveAll = async () => {
+    if (!isDirty) { toast({ title: "Není co ukládat" }); return; }
+    setSaving(true);
+    try {
+      const results = await Promise.all(
+        Array.from(dirtyIds).map(id => {
+          const r = roles.find(x => x.id === id);
+          if (!r) return null;
+          const { id: _id, guild_id: _g, ...patch } = r as any;
+          return supabase.from("vox_roles").update(patch).eq("id", id);
+        })
+      );
+      const err = results.find((x: any) => x && x.error)?.error;
+      if (err) throw err;
+      setSavedRoles(Object.fromEntries(roles.map(x => [x.id, x])));
+      toast({ title: "Uloženo", description: `Aktualizováno rolí: ${dirtyIds.size}. Změny se projeví okamžitě.` });
+    } catch (e: any) {
+      toast({ title: "Uložení selhalo", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const selected = useMemo(() => roles.find(r => r.id === selectedId) || null, [roles, selectedId]);
 
