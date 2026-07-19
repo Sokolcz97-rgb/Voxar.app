@@ -600,8 +600,18 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
   progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
   try {
-    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
-      const pct = Math.round(p * 100);
+    updateProgress({
+      phase: "download", label: `${label} — stahuji ${version || ""}`,
+      received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
+      canceled: false, startedAt: new Date().toISOString(),
+    });
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
+      updateProgress({
+        phase: "download", label: `${label} — stahuji ${version || ""}`,
+        received: s.received, total: s.total, pct: s.pct,
+        speedBps: s.speedBps, etaSec: s.etaSec,
+      });
+      const pct = Math.round(s.pct * 100);
       progressWin.webContents
         .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
         .catch(() => {});
