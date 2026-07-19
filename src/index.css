@@ -712,8 +712,8 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
   /* Cards & dialogs: tighter padding on mobile */
   .container { padding-left: 1rem; padding-right: 1rem; }
 }
-/* All dialog/sheet content: never wider than viewport */
-[role="dialog"], [data-radix-popper-content-wrapper] {
+/* Popover content: never wider than viewport (dialogs handled by their own max-w utilities) */
+[data-radix-popper-content-wrapper] {
   max-width: 100vw;
 }
 /* Disable text selection callout on tap for nav items */
