@@ -91,7 +91,7 @@ export default function Download() {
       filename: "StudioVoxarioSetup-0.0.7-alpha.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
-      size: "~78 MB · v0.0.6-Alpha",
+      size: "~82 MB · v0.0.7-Alpha",
       primary: true,
     },
     {
