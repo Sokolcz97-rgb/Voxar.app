@@ -6,6 +6,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const crypto = require("crypto");
 
 const MANIFEST_URL =
   process.env.STUDIOVOXARIO_UPDATE_URL ||
@@ -40,13 +41,17 @@ function downloadFile(url, dest, onProgress) {
       if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
       const total = parseInt(res.headers["content-length"] || "0", 10);
       let received = 0;
+      const hash = crypto.createHash("sha256");
       const file = fs.createWriteStream(dest);
       res.on("data", (chunk) => {
         received += chunk.length;
+        hash.update(chunk);
         if (onProgress && total) onProgress(received / total);
       });
       res.pipe(file);
-      file.on("finish", () => file.close(() => resolve(dest)));
+      file.on("finish", () =>
+        file.close(() => resolve({ path: dest, sha256: hash.digest("hex"), size: received }))
+      );
       file.on("error", reject);
     });
     req.on("error", reject);
