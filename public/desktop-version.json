@@ -1,24 +1,36 @@
 {
-  "version": "1.3.7-alpha",
+  "version": "1.3.8-alpha",
   "channel": "alpha",
-  "notes": "Alpha 1.3.7 — ruční kontrola aktualizací nyní obchází HTTP cache (přesná detekce nové verze) a všechny update dialogy (dotaz, chyby integrity/podpisu, hláška o nejnovější verzi) běží v interním tmavém modalu — už žádná klasická Windows okna.",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
-  "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
-  "size": 83799951,
+  "notes": "Alpha 1.3.8 — opravený tab „Aplikace\" v Nastavení uživatele (žádné věčné načítání, fallback pro starší preload API) + Neon AI nový nástroj contact_admin (DM adminovi + založení technického ticketu s plným kontextem eskalace).",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
+  "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
+  "size": 81932525,
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/949af035-470f-4f01-b2e5-64300a105e87/StudioVoxarioSetup-1.3.7-alpha.exe",
-      "sha256": "b3c9f8e893fee610ec26197d5139a0460382bf438ab8b4c85c875271de00ae0d",
-      "size": 83799951,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
+      "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
+      "size": 81932525,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     }
   },
   "history": {
+    "1.3.8-alpha": {
+      "notes": "Opravený Aplikace tab v Nastavení + Neon AI contact_admin (DM + technický ticket).",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/9c194b99-8247-463a-a906-36d48e9ecce7/StudioVoxarioSetup-1.3.8-alpha.exe",
+          "sha256": "7ec57eee7e538aae818b062ecaf776615c757ce024f0a18159f587e4fd848ad5",
+          "size": 81932525,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
     "1.3.7-alpha": {
       "notes": "Cache-bust manifest fetche + všechny update dialogy v interním tmavém modalu (žádné nativní Windows okno).",
       "platforms": {
@@ -44,7 +56,7 @@
       }
     },
     "1.3.5-alpha": {
-      "notes": "Tichá instalace aktualizace + auto-restart, killswitch běžící instance, anti-tamper (DevTools/debug flagy zakázány v produkci).",
+      "notes": "Tichá instalace aktualizace + auto-restart, killswitch běžící instance, anti-tamper.",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/239ea483-740f-460a-923f-5430014c8d22/StudioVoxarioSetup-1.3.5-alpha.exe",
@@ -52,76 +64,6 @@
           "size": 85804962,
           "publisher": "StudioVoxario",
           "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.4-alpha": {
-      "notes": "SV ikona embedovaná do StudioVoxario.exe — zástupce na ploše i taskbar zobrazí správnou ikonu.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/e1b3912a-2212-4f4e-b247-82135a5b2105/StudioVoxarioSetup-1.3.4-alpha.exe",
-          "sha256": "65d3ab4512657c4fff2fdb0a34be9b9d3763a1796bb2113c95d7f78efcfe2de0",
-          "size": 85827693,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.3-alpha": {
-      "notes": "Nová aplikační ikona (SV monogram) — sjednoceno mezi launcherem, taskbarem, zástupcem na ploše i webem.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/09a33348-e004-4a8e-84e5-89919c242d90/StudioVoxarioSetup-1.3.3-alpha.exe",
-          "sha256": "82b4e6adaf27ba5ab0042ae96a8345e0eefdc0e87412f28db6ce42aa9f0dd8db",
-          "size": 85820909,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.2-alpha": {
-      "notes": "Update prompt, informační a chybové hlášky přesunuty přímo do launcheru — už žádné systémové dialogy.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
-          "sha256": "705037f6f4e8e5167e73641694da22a8241825f0eb76c3c6cdca34db94e7269f",
-          "size": 81271339,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.1-alpha": {
-      "notes": "Obnovena neon-V ikona; allowUnsigned pro alfa (bez code-sign certifikátu).",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
-          "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
-          "size": 85783732,
-          "publisher": "StudioVoxario",
-          "allowUnsigned": true
-        }
-      }
-    },
-    "1.3.0-alpha": {
-      "notes": "Nativní /app UI (Discord/TeamSpeak styl), voice mesh, presence.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
-          "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
-          "size": 280312353,
-          "publisher": "StudioVoxario"
-        }
-      }
-    },
-    "1.2.0": {
-      "notes": "Progress panel, pinning, rollback, retry, SHA-256 + Authenticode.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
-          "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
-          "size": 81143500,
-          "publisher": "StudioVoxario"
         }
       }
     }
