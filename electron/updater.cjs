@@ -73,14 +73,59 @@ function isNewer(remote, current) {
 
 let checking = false;
 
+// Persistent diagnostics — snapshot of the last update check for the launcher UI.
+const diagnostics = {
+  manifestUrl: MANIFEST_URL,
+  currentVersion: null,
+  manifest: null,
+  remoteVersion: null,
+  installerUrl: null,
+  expectedSha256: null,
+  expectedSize: null,
+  downloadedSha256: null,
+  downloadedSize: null,
+  status: "idle",
+  lastError: null,
+  lastCheckAt: null,
+  logs: [],
+};
+
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}`;
+  diagnostics.logs.push(line);
+  if (diagnostics.logs.length > 200) diagnostics.logs.splice(0, diagnostics.logs.length - 200);
+  try { console.log(line); } catch {}
+  // Broadcast to any listening launcher window
+  try {
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) w.webContents.send("launcher:log", line);
+    });
+  } catch {}
+}
+
+function getDiagnostics() {
+  return { ...diagnostics, logs: diagnostics.logs.slice() };
+}
+
 async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   if (checking) return { status: "busy" };
   checking = true;
+  diagnostics.status = "checking";
+  diagnostics.lastError = null;
+  diagnostics.currentVersion = app.getVersion();
+  diagnostics.lastCheckAt = new Date().toISOString();
+  log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
+  log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
     const manifest = await fetchJson(MANIFEST_URL);
+    diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
+    diagnostics.remoteVersion = remote;
+    log(`Manifest OK — vzdálená verze ${remote}`);
     if (!remote || !isNewer(remote, current)) {
+      diagnostics.status = "up-to-date";
+      log(`Není novější verze (${current} ≥ ${remote}).`);
       if (!silent) {
         await dialog.showMessageBox(parentWindow, {
           type: "info",
