@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import winInstaller from "@/assets/downloads/windows-installer-0.0.7.asset.json";
+import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
-import linuxAsset from "@/assets/downloads/linux-0.0.7.asset.json";
+import linuxAsset from "@/assets/downloads/linux.asset.json";
 
 const ACCESS_KEY = "sv_download_access_v1";
 
@@ -88,10 +88,10 @@ export default function Download() {
     {
       os: "Windows 10 / 11",
       file: winInstaller.url,
-      filename: "StudioVoxarioSetup-0.0.7-alpha.exe",
+      filename: "StudioVoxarioSetup-0.0.8-alpha.1.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
-      size: "~82 MB · v0.0.7-Alpha",
+      size: "~82 MB · v0.0.8-alpha.1",
       primary: true,
     },
     {
@@ -105,10 +105,10 @@ export default function Download() {
     {
       os: "Linux (x64)",
       file: linuxAsset.url,
-      filename: "StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
-      note: "tar xzf StudioVoxario-linux-x64-0.0.7-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
+      filename: "StudioVoxario-linux-x64-0.0.8-alpha.1.tar.gz",
+      note: "tar xzf StudioVoxario-linux-x64-0.0.8-alpha.1.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
       icon: "🐧",
-      size: "~109 MB · v0.0.7-Alpha",
+      size: "~109 MB · v0.0.8-alpha.1",
     },
   ];
 
