@@ -8,11 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
-  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell,
+  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { SocialHandleField } from "@/components/SocialHandleField";
 
-type TabKey = "profile" | "account" | "voice" | "appearance" | "notifications" | "about";
+type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "about";
 
 interface Props {
   onClose: () => void;
@@ -48,9 +50,16 @@ export function AppUserSettings({ onClose }: Props) {
 
   // Profile
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Connections
+  const [twitch, setTwitch] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [kick, setKick] = useState("");
+  const [savingConn, setSavingConn] = useState(false);
 
   // Password
   const [newPw, setNewPw] = useState("");
@@ -75,11 +84,18 @@ export function AppUserSettings({ onClose }: Props) {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name, bio, avatar_url").eq("user_id", user.id).maybeSingle()
+    supabase.from("profiles")
+      .select("display_name, username, bio, avatar_url, twitch_username, youtube_handle, kick_username")
+      .eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
-        setDisplayName((data as any)?.display_name ?? "");
-        setBio((data as any)?.bio ?? "");
-        setAvatarUrl((data as any)?.avatar_url ?? null);
+        const d: any = data || {};
+        setDisplayName(d.display_name ?? "");
+        setUsername(d.username ?? "");
+        setBio(d.bio ?? "");
+        setAvatarUrl(d.avatar_url ?? null);
+        setTwitch(d.twitch_username ?? "");
+        setYoutube(d.youtube_handle ?? "");
+        setKick(d.kick_username ?? "");
       });
   }, [user]);
 
@@ -119,11 +135,25 @@ export function AppUserSettings({ onClose }: Props) {
     setSavingProfile(true);
     const { error } = await supabase.from("profiles").update({
       display_name: displayName.trim() || null,
+      username: username.trim() || null,
       bio: bio.trim() || null,
-    }).eq("user_id", user.id);
+    } as any).eq("user_id", user.id);
     setSavingProfile(false);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else toast({ title: "Uloženo", description: "Profil aktualizován." });
+  };
+
+  const saveConnections = async () => {
+    if (!user) return;
+    setSavingConn(true);
+    const { error } = await supabase.from("profiles").update({
+      twitch_username: twitch.trim() || null,
+      youtube_handle: youtube.trim() || null,
+      kick_username: kick.trim() || null,
+    } as any).eq("user_id", user.id);
+    setSavingConn(false);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else toast({ title: "Uloženo", description: "Propojení aktualizována." });
   };
 
   const changePassword = async () => {
@@ -138,6 +168,7 @@ export function AppUserSettings({ onClose }: Props) {
 
   const tabs: { key: TabKey; label: string; icon: any }[] = [
     { key: "profile", label: "Profil", icon: UserIcon },
+    { key: "connections", label: "Propojení", icon: Link2 },
     { key: "account", label: "Účet a heslo", icon: Lock },
     { key: "voice", label: "Hlas a video", icon: Mic },
     { key: "notifications", label: "Notifikace", icon: Bell },
@@ -185,19 +216,21 @@ export function AppUserSettings({ onClose }: Props) {
 
           {tab === "profile" && (
             <div className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-2xl font-bold">
-                  {avatarUrl
-                    ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                    : (displayName || user?.email || "?").slice(0, 2).toUpperCase()}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Avatar spravuj v <button className="underline hover:text-foreground" onClick={onClose}>uživatelském profilu</button>.
-                </div>
-              </div>
+              {user && (
+                <AvatarUpload
+                  userId={user.id}
+                  avatarUrl={avatarUrl}
+                  fallback={(displayName || username || user?.email || "?").slice(0, 2).toUpperCase()}
+                  onChange={setAvatarUrl}
+                />
+              )}
               <div>
                 <Label>Zobrazované jméno</Label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Uživatelské jméno</Label>
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" />
               </div>
               <div>
                 <Label>Bio</Label>
@@ -209,6 +242,21 @@ export function AppUserSettings({ onClose }: Props) {
               </div>
               <Button onClick={saveProfile} disabled={savingProfile}>
                 {savingProfile ? "Ukládám…" : "Uložit změny"}
+              </Button>
+            </div>
+          )}
+
+          {tab === "connections" && (
+            <div className="space-y-5">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Radio className="w-4 h-4 text-primary" />
+                Propojení streamovacích účtů — použije se v přehledu i pro upozornění na živé vysílání.
+              </p>
+              <SocialHandleField id="tw" label="Twitch" color="#9146FF" value={twitch} onChange={setTwitch} platform="twitch" />
+              <SocialHandleField id="yt" label="YouTube" color="#FF0033" value={youtube} onChange={setYoutube} platform="youtube" />
+              <SocialHandleField id="ki" label="Kick" color="#53FC18" value={kick} onChange={setKick} platform="kick" />
+              <Button onClick={saveConnections} disabled={savingConn}>
+                {savingConn ? "Ukládám…" : "Uložit propojení"}
               </Button>
             </div>
           )}
@@ -297,13 +345,7 @@ export function AppUserSettings({ onClose }: Props) {
             </div>
           )}
 
-          {tab === "about" && (
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Aplikace</span><span>StudioVoxario</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Verze</span><span>{(window as any)?.svUpdater ? "Desktop" : "Web"}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Uživatel</span><span className="truncate ml-2">{user?.email}</span></div>
-            </div>
-          )}
+          {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
       </div>
     </div>
@@ -315,6 +357,63 @@ function ToggleRow({ label, val, onChange }: { label: string; val: boolean; onCh
     <div className="flex items-center justify-between py-2 border-b border-border/20">
       <span className="text-sm">{label}</span>
       <Switch checked={val} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
+function AboutPanel({ userEmail }: { userEmail: string }) {
+  const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
+  const isDesktop = !!desktop?.isDesktop;
+  const [version, setVersion] = useState<string>("—");
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    if (isDesktop && typeof desktop.getVersion === "function") {
+      desktop.getVersion().then((v: string) => setVersion(v || "—")).catch(() => {});
+    }
+  }, [isDesktop, desktop]);
+
+  const platformLabel = (() => {
+    if (!isDesktop) return "Webová verze (prohlížeč)";
+    const p = String(desktop?.platform || "").toLowerCase();
+    const arch = desktop?.arch ? ` · ${desktop.arch}` : "";
+    if (p === "win32") return `Windows${arch}`;
+    if (p === "darwin") return `macOS${arch}`;
+    if (p === "linux") return `Linux${arch}`;
+    return `${p || "Desktop"}${arch}`;
+  })();
+
+  const checkUpdates = async () => {
+    if (!isDesktop || typeof desktop.checkForUpdates !== "function") return;
+    setChecking(true);
+    try { await desktop.checkForUpdates(); } finally { setChecking(false); }
+  };
+
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="flex justify-between gap-4 py-2 border-b border-border/20">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="truncate text-right">{value}</span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-1 text-sm">
+      {row("Aplikace", "StudioVoxario")}
+      {row("Verze", isDesktop ? version : "Webová verze")}
+      {row("Prostředí", platformLabel)}
+      {isDesktop && desktop?.electronVersion && row("Electron", desktop.electronVersion)}
+      {isDesktop && desktop?.chromeVersion && row("Chromium", desktop.chromeVersion)}
+      {row("Přihlášen jako", userEmail || "—")}
+      {row("Web", <a href="https://studiovoxario.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">studiovoxario.com</a>)}
+      {isDesktop && (
+        <div className="pt-4">
+          <Button onClick={checkUpdates} disabled={checking} variant="outline" className="gap-2">
+            <RefreshCw className={cn("w-4 h-4", checking && "animate-spin")} />
+            {checking ? "Kontroluji…" : "Zkontrolovat aktualizace"}
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground pt-3">© StudioVoxario</p>
     </div>
   );
 }
