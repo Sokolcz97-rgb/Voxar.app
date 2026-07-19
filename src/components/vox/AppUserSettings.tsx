@@ -345,13 +345,7 @@ export function AppUserSettings({ onClose }: Props) {
             </div>
           )}
 
-          {tab === "about" && (
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Aplikace</span><span>StudioVoxario</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Verze</span><span>{(window as any)?.svUpdater ? "Desktop" : "Web"}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Uživatel</span><span className="truncate ml-2">{user?.email}</span></div>
-            </div>
-          )}
+          {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
       </div>
     </div>
