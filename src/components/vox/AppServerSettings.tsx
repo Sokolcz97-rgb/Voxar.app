@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2 } from "lucide-react";
+import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxGuild } from "@/components/vox/GuildRail";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
