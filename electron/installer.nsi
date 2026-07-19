@@ -4,7 +4,7 @@ Unicode true
 !include "LogicLib.nsh"
 
 Name "StudioVoxario"
-OutFile "StudioVoxarioSetup.exe"
+OutFile "StudioVoxarioSetup-1.3.8-alpha.exe"
 InstallDir "$LOCALAPPDATA\StudioVoxario"
 InstallDirRegKey HKCU "Software\StudioVoxario" "InstallDir"
 RequestExecutionLevel user
