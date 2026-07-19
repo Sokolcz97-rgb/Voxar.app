@@ -246,17 +246,19 @@ async function runLauncherSequence() {
   createLauncher();
   setLauncherStatus("Kontrola aktualizací…");
 
+  let result = { status: "skipped" };
   try {
-    const result = await Promise.race([
-      checkForUpdates({ silent: true, parentWindow: launcherWindow }),
-      new Promise((r) => setTimeout(() => r({ status: "timeout" }), 8000)),
-    ]);
-    if (result?.status === "installing") {
-      setLauncherStatus("Instaluji novou verzi…");
-      return;
-    }
+    // Wait for the update check to actually finish (fetchJson has its own 15s timeout).
+    // Do NOT race with a short timer — otherwise the old version boots before the
+    // update prompt is answered and the user never sees it.
+    result = await checkForUpdates({ silent: true, parentWindow: launcherWindow });
   } catch (e) {
-    console.error(e);
+    console.error("launcher update check error", e);
+  }
+
+  if (result?.status === "installing") {
+    setLauncherStatus("Instaluji novou verzi… aplikace se ukončí.");
+    return; // installer will replace the app; do not boot the old UI
   }
 
   setLauncherStatus("Načítání aplikace…");
@@ -271,6 +273,15 @@ async function runLauncherSequence() {
       if (!settings.startMinimized) mainWindow?.show();
     }, 400);
   });
+
+  // Safety net: if the window never finishes loading (offline etc.), close the launcher after 20s.
+  setTimeout(() => {
+    if (launcherWindow) {
+      launcherWindow.close();
+      launcherWindow = null;
+      mainWindow?.show();
+    }
+  }, 20000);
 }
 
 app.whenReady().then(() => {
