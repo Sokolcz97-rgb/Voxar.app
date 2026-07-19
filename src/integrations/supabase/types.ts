@@ -2787,6 +2787,13 @@ export type Database = {
           notify_sound: boolean
         }[]
       }
+      get_my_permissions: {
+        Args: never
+        Returns: {
+          action: string
+          module: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { _other_user: string }
         Returns: string
