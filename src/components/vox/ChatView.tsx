@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { VoxChannel } from "./ChannelSidebar";
+import type { VoxMember } from "./MemberList";
+import { RoleBadge } from "./VoxRolesPanel";
 
 interface Msg {
   id: string;
