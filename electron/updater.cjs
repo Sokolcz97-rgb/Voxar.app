@@ -201,8 +201,34 @@ const diagnostics = {
   retryNextDelayMs: null,
   retryNextAt: null,
   retryPhase: null, // "manifest" | "download"
+  // Živý průběh stahování / instalace pro launcher UI
+  progress: {
+    phase: null,          // "download" | "verify" | "signature" | "installing" | "done" | "canceled"
+    label: null,
+    received: 0,
+    total: 0,
+    pct: 0,
+    speedBps: 0,
+    etaSec: null,
+    canceled: false,
+    startedAt: null,
+    updatedAt: null,
+  },
   logs: [],
 };
+
+function broadcast(channel, payload) {
+  try {
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) w.webContents.send(channel, payload);
+    });
+  } catch {}
+}
+
+function updateProgress(patch) {
+  diagnostics.progress = { ...diagnostics.progress, ...patch, updatedAt: new Date().toISOString() };
+  broadcast("launcher:progress", diagnostics.progress);
+}
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
