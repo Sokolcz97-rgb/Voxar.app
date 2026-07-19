@@ -378,11 +378,27 @@ async function runLauncherSequence() {
   }, 20000);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
     const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen"];
     cb(allowed.includes(permission));
   });
+
+  // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
+  const { suspicious, prev } = rollback.recordStartAttempt();
+  if (suspicious && (prev.consecutiveFailures || 0) >= 1) {
+    try {
+      const manifest = await fetchManifest().catch(() => null);
+      await rollback.performRollback({
+        manifest,
+        parentWindow: null,
+        reason: `Předchozí spuštění verze ${prev.lastStartVersion} skončilo neočekávaně${prev.lastCrash ? " (" + prev.lastCrash.reason + ")" : ""}.`,
+        installVerified,
+      });
+    } catch (e) {
+      console.error("startup rollback failed", e);
+    }
+  }
 
   runLauncherSequence();
 
@@ -395,4 +411,8 @@ app.on("second-instance", () => showMain());
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin" && !settings.closeToTray) app.quit();
 });
-app.on("before-quit", () => (isQuitting = true));
+app.on("before-quit", () => {
+  isQuitting = true;
+  rollback.recordCleanExit();
+});
+
