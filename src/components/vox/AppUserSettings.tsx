@@ -486,4 +486,3 @@ function AppSettingsPanel() {
     </div>
   );
 }
-}
