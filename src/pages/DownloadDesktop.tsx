@@ -1,4 +1,4 @@
-import { Download, Monitor, Info, Shield, Bell, Package, RefreshCw } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
