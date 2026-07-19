@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   chromeVersion: process.versions.chrome,
   nodeVersion: process.versions.node,
   getVersion: () => ipcRenderer.invoke("app:version"),
-  checkForUpdates: () => ipcRenderer.invoke("updater:check-now"),
+  checkForUpdates: () => ipcRenderer.invoke("app:check-updates"),
   setBadge: (count) => ipcRenderer.send("set-badge", Number(count) || 0),
   notify: (title, body, url) =>
     ipcRenderer.send("show-notification", { title, body, url }),
