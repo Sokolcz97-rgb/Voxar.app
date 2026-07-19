@@ -400,9 +400,19 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
     log(`Stahování zahájeno → ${dest}`);
     diagnostics.status = "downloading";
+    updateProgress({
+      phase: "download", label: `Stahuji StudioVoxario ${remote}`,
+      received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
+      canceled: false, startedAt: new Date().toISOString(),
+    });
 
-    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
-      const pct = Math.round(p * 100);
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
+      updateProgress({
+        phase: "download", label: `Stahuji StudioVoxario ${remote}`,
+        received: s.received, total: s.total, pct: s.pct,
+        speedBps: s.speedBps, etaSec: s.etaSec,
+      });
+      const pct = Math.round(s.pct * 100);
       progressWin.webContents
         .executeJavaScript(
           `document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`
