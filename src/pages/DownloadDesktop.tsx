@@ -16,15 +16,17 @@ export default function Download() {
   const downloads = [
     {
       os: "Windows 10 / 11",
-      file: "/downloads/StudioVoxario-win-x64.zip",
-      note: "Rozbalte a spusťte StudioVoxario.exe",
+      file: winAsset.url,
+      note: "Rozbalte ZIP a spusťte StudioVoxario.exe",
       icon: "🪟",
+      size: "~114 MB",
     },
     {
       os: "Linux (x64)",
-      file: "/downloads/StudioVoxario-linux-x64.tar.gz",
+      file: linuxAsset.url,
       note: "tar xzf a spusťte ./StudioVoxario",
       icon: "🐧",
+      size: "~110 MB",
     },
   ];
 
