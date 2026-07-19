@@ -485,7 +485,7 @@ Deno.serve(async (req) => {
           serviceClient,
           userId,
         });
-        if (fname === "contact_owner" && (result as any)?.ok) {
+        if ((fname === "contact_admin" || fname === "contact_owner") && (result as any)?.ok) {
           escalated = true;
           escalatedTicketId = (result as any).ticket_id ?? null;
         }
