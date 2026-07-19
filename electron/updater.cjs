@@ -633,6 +633,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       return { status: "publisher-mismatch", sig };
     }
     log(`${label}: ověřeno, spouštím instalátor.`);
+    updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
 
     if (platform === "win32") {
       await shell.openPath(dest);
@@ -644,8 +645,11 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     return { status: "installing", version, path: dest };
   } catch (err) {
     try { progressWin.close(); } catch {}
-    log(`${label}: chyba — ${err.message || err}`);
-    return { status: "error", error: String(err.message || err) };
+    const msg = String(err.message || err);
+    const canceled = /canceled/i.test(msg);
+    updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
+    log(`${label}: ${canceled ? "zrušeno uživatelem" : "chyba — " + msg}`);
+    return { status: canceled ? "canceled" : "error", error: msg };
   }
 }
 
