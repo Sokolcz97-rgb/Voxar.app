@@ -203,6 +203,20 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- In-launcher modal (nahrazuje OS dialog) -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="head">
+        <div class="ic" id="modalIc">i</div>
+        <h3 id="modalTitle">StudioVoxario</h3>
+      </div>
+      <div class="msg" id="modalMsg"></div>
+      <div class="detail" id="modalDetail" style="display:none;"></div>
+      <div class="actions" id="modalActions"></div>
+    </div>
+  </div>
+
+
   <script>
     const { ipcRenderer, clipboard } = require('electron');
 
