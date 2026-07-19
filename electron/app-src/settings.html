@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nastavení – StudioVoxario</title>
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --panel: #12121a;
+        --border: #1f1f2e;
+        --text: #e6e6ef;
+        --muted: #8a8a9a;
+        --accent: #17e9ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+      }
+      .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 10px;
+      }
+      .label { font-size: 14px; }
+      .desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .switch { position: relative; width: 44px; height: 24px; }
+      .switch input { display: none; }
+      .slider {
+        position: absolute; inset: 0; background: #2a2a3a; border-radius: 999px;
+        cursor: pointer; transition: background 0.2s;
+      }
+      .slider::before {
+        content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px;
+        background: white; border-radius: 50%; transition: transform 0.2s;
+      }
+      input:checked + .slider { background: var(--accent); }
+      input:checked + .slider::before { transform: translateX(20px); }
+      .actions { display: flex; gap: 10px; margin-top: 20px; }
+      button {
+        flex: 1; padding: 10px; background: transparent; color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px;
+      }
+      button:hover { border-color: var(--accent); color: var(--accent); }
+      .ver { text-align: center; color: var(--muted); font-size: 11px; margin-top: 14px; }
+    </style>
+  </head>
+  <body>
+    <h1>Nastavení aplikace</h1>
+    <p class="sub">Přizpůsobte si chování desktop klienta.</p>
+
+    <div id="settings"></div>
+
+    <div class="actions">
+      <button onclick="svSettings.reload()">Obnovit obsah</button>
+      <button onclick="svSettings.reload()">Obnovit aplikaci</button>
+      <button onclick="svSettings.checkUpdates()">Zkontrolovat aktualizace</button>
+      <button onclick="svSettings.quit()">Ukončit aplikaci</button>
+    </div>
+    <div class="ver" id="ver"></div>
+
+    <script>
+      const items = [
+        { key: "notifications", label: "Desktop notifikace", desc: "Zobrazit systémové oznámení." },
+        { key: "minimizeToTray", label: "Minimalizovat do tray", desc: "Skrýt do lišty při minimalizaci." },
+        { key: "closeToTray", label: "Zavřít do tray", desc: "Aplikace poběží dál v pozadí." },
+        { key: "autoStart", label: "Spustit s Windows", desc: "Automatický start po přihlášení." },
+        { key: "startMinimized", label: "Start minimalizovaně", desc: "Při startu zůstat v trayi." },
+        { key: "hardwareAcceleration", label: "HW akcelerace", desc: "Vypnout jen při problémech (restart)." },
+      ];
+      async function render() {
+        const s = await svSettings.get();
+        const root = document.getElementById("settings");
+        root.innerHTML = items.map(it => `
+          <div class="row">
+            <div>
+              <div class="label">${it.label}</div>
+              <div class="desc">${it.desc}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-key="${it.key}" ${s[it.key] ? "checked" : ""}/>
+              <span class="slider"></span>
+            </label>
+          </div>
+        `).join("");
+        root.querySelectorAll("input[type=checkbox]").forEach(cb => {
+          cb.addEventListener("change", async () => {
+            await svSettings.set({ [cb.dataset.key]: cb.checked });
+          });
+        });
+        document.getElementById("ver").textContent = "StudioVoxario Desktop v" + await svSettings.version();
+      }
+      render();
+    </script>
+  </body>
+</html>

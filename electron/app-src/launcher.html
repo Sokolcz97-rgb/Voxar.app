@@ -1,0 +1,491 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>StudioVoxario Launcher</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: radial-gradient(ellipse at top, #0f172a 0%, #020617 70%);
+      color: #e5e7eb;
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .titlebar {
+      height: 28px; -webkit-app-region: drag;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 8px; color: #64748b; font-size: 11px;
+    }
+    .titlebar button {
+      -webkit-app-region: no-drag;
+      background: transparent; border: 0; color: #94a3b8;
+      font-size: 12px; padding: 4px 10px; cursor: pointer; border-radius: 6px;
+    }
+    .titlebar button:hover { background: rgba(255,255,255,0.06); color: #e5e7eb; }
+
+    .wrap {
+      height: calc(100% - 28px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; text-align: center; padding: 16px 24px 24px;
+      box-sizing: border-box;
+    }
+    .logo {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: linear-gradient(135deg, #06b6d4, #22d3ee);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 24px; color: #0a0a0f;
+      box-shadow: 0 10px 40px -10px rgba(34, 211, 238, 0.6);
+    }
+    h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
+    .status { color: #94a3b8; font-size: 13px; min-height: 18px; }
+    .bar {
+      width: 260px; height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px; overflow: hidden;
+    }
+    .fill {
+      height: 100%; width: 30%;
+      background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      border-radius: 999px;
+      animation: slide 1.4s ease-in-out infinite;
+    }
+    .ver { font-size: 11px; color: #475569; }
+    @keyframes slide {
+      0% { margin-left: -30%; width: 30%; }
+      50% { width: 50%; }
+      100% { margin-left: 100%; width: 30%; }
+    }
+
+    /* Diagnostics view */
+    .diag {
+      display: none; flex-direction: column;
+      height: calc(100% - 28px); width: 100%;
+      padding: 12px 16px 12px; box-sizing: border-box;
+      text-align: left; user-select: text;
+    }
+    body.diag-open .wrap { display: none; }
+    body.diag-open .diag { display: flex; }
+    body.diag-open { overflow: hidden; }
+    body.diag-open html, body.diag-open body { user-select: text; }
+
+    .diag h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #e5e7eb; }
+    .grid { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px;
+      font-size: 11px; margin-bottom: 8px; }
+    .grid .k { color: #64748b; }
+    .grid .v { color: #cbd5e1; word-break: break-all; font-family: ui-monospace,Menlo,Consolas,monospace; }
+    .grid .v.err { color: #f87171; }
+    .grid .v.ok  { color: #34d399; }
+
+    .logs {
+      flex: 1; min-height: 0;
+      background: #020617; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 8px; font-family: ui-monospace,Menlo,Consolas,monospace;
+      font-size: 10.5px; color: #94a3b8; overflow: auto; white-space: pre-wrap;
+    }
+    .row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    }
+    .btn:hover { background: #334155; }
+    .btn.primary { background: linear-gradient(135deg,#06b6d4,#0891b2); border-color: transparent; color: #0a0a0f; font-weight: 600; }
+    .toast {
+      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; border: 1px solid #334155; color: #a5f3fc;
+      padding: 6px 12px; border-radius: 6px; font-size: 11px;
+      opacity: 0; transition: opacity .2s;
+    }
+    .toast.show { opacity: 1; }
+
+    /* In-launcher prompt modal */
+    .modal-mask {
+      position: fixed; inset: 0;
+      background: rgba(2, 6, 23, 0.72); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 50; padding: 20px; -webkit-app-region: no-drag;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      max-width: 420px; width: 100%;
+      background: linear-gradient(180deg, #0f172a 0%, #0b1224 100%);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      border-radius: 14px; padding: 18px 20px;
+      box-shadow: 0 20px 60px -20px rgba(6, 182, 212, 0.4), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      color: #e5e7eb; user-select: text;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+    .modal .head { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .modal .ic {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#06b6d4,#22d3ee); color: #0a0a0f; font-weight: 800;
+    }
+    .modal .ic.err { background: linear-gradient(135deg,#f87171,#ef4444); color: #fff; }
+    .modal .ic.ok  { background: linear-gradient(135deg,#34d399,#10b981); color: #052e1a; }
+    .modal h3 { margin: 0; font-size: 14px; font-weight: 600; }
+    .modal .msg { font-size: 13px; color: #e5e7eb; margin: 4px 0 6px; }
+    .modal .detail {
+      font-size: 12px; color: #94a3b8; white-space: pre-wrap;
+      max-height: 180px; overflow: auto;
+      background: rgba(2, 6, 23, 0.6); border: 1px solid #1e293b;
+      border-radius: 8px; padding: 8px 10px;
+    }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+    .modal .mbtn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; cursor: pointer;
+      transition: background .15s, transform .05s;
+    }
+    .modal .mbtn:hover { background: #334155; }
+    .modal .mbtn:active { transform: scale(0.98); }
+    .modal .mbtn.primary {
+      background: linear-gradient(135deg,#06b6d4,#0891b2);
+      border-color: transparent; color: #0a0a0f; font-weight: 600;
+    }
+    .modal .mbtn.primary:hover { filter: brightness(1.08); }
+  </style>
+
+</head>
+<body>
+  <div class="titlebar">
+    <button id="toggleDiag">Diagnostika</button>
+  </div>
+
+  <!-- Splash -->
+  <div class="wrap">
+    <div class="logo">SV</div>
+    <h1>StudioVoxario</h1>
+    <div class="status" id="status">Spouštění…</div>
+
+    <!-- Indeterminate bar (běží před známým průběhem) -->
+    <div class="bar" id="indetBar"><div class="fill"></div></div>
+
+    <!-- Determinate progress panel (aktivní při stahování / instalaci) -->
+    <div id="progressPanel" style="display:none;width:320px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#94a3b8;margin-bottom:4px;">
+        <span id="progLabel">Stahování…</span>
+        <span id="progPct" style="color:#22d3ee;font-weight:600;">0 %</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">
+        <div id="progFill" style="height:100%;width:0%;background:linear-gradient(90deg,#06b6d4,#22d3ee);transition:width .2s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#64748b;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;">
+        <span id="progBytes">0 / ? B</span>
+        <span id="progSpeed">— B/s</span>
+        <span id="progEta">ETA —</span>
+      </div>
+      <div style="margin-top:10px;text-align:center;">
+        <button id="cancelBtn" class="btn" style="font-size:11px;">Zrušit</button>
+      </div>
+    </div>
+
+    <div class="ver" id="ver"></div>
+  </div>
+
+
+  <!-- Diagnostics -->
+  <div class="diag">
+    <h2>Diagnostika aktualizací</h2>
+    <div class="grid" id="diagGrid"></div>
+    <div class="logs" id="logs">(logy se načítají…)</div>
+    <div class="row">
+      <button class="btn" id="refreshBtn">Obnovit</button>
+      <button class="btn" id="recheckBtn">Znovu zkontrolovat</button>
+      <button class="btn" id="copyBtn">Kopírovat vše</button>
+      <button class="btn" id="copyLogsBtn">Kopírovat jen logy</button>
+      <button class="btn" id="openLogsBtn">Otevřít soubor</button>
+      <button class="btn primary" id="continueBtn">Pokračovat do aplikace</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- In-launcher modal (nahrazuje OS dialog) -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="head">
+        <div class="ic" id="modalIc">i</div>
+        <h3 id="modalTitle">StudioVoxario</h3>
+      </div>
+      <div class="msg" id="modalMsg"></div>
+      <div class="detail" id="modalDetail" style="display:none;"></div>
+      <div class="actions" id="modalActions"></div>
+    </div>
+  </div>
+
+
+  <script>
+    const { ipcRenderer, clipboard } = require('electron');
+
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
+    const verEl = $('ver');
+    const logsEl = $('logs');
+    const gridEl = $('diagGrid');
+    const toastEl = $('toast');
+
+    ipcRenderer.on('launcher:status', (_e, msg) => { statusEl.textContent = msg; });
+    ipcRenderer.on('launcher:log', (_e, line) => {
+      logsEl.textContent += (logsEl.dataset.filled ? '\n' : '') + line;
+      logsEl.dataset.filled = '1';
+      logsEl.scrollTop = logsEl.scrollHeight;
+    });
+
+    // ---- Progress panel ----
+    const progressPanel = $('progressPanel');
+    const indetBar = $('indetBar');
+    const progLabel = $('progLabel');
+    const progPct = $('progPct');
+    const progFill = $('progFill');
+    const progBytes = $('progBytes');
+    const progSpeed = $('progSpeed');
+    const progEta = $('progEta');
+    const cancelBtn = $('cancelBtn');
+
+    function fmtBytes(n) {
+      if (!n && n !== 0) return '?';
+      const u = ['B','KB','MB','GB']; let i = 0; let v = n;
+      while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+      return v.toFixed(v >= 10 ? 0 : 1) + ' ' + u[i];
+    }
+    function fmtEta(sec) {
+      if (sec == null || !isFinite(sec) || sec < 0) return '—';
+      sec = Math.round(sec);
+      if (sec < 60) return sec + ' s';
+      const m = Math.floor(sec / 60), s = sec % 60;
+      if (m < 60) return m + ' m ' + s + ' s';
+      const h = Math.floor(m / 60); return h + ' h ' + (m % 60) + ' m';
+    }
+
+    ipcRenderer.on('launcher:progress', (_e, p) => {
+      if (!p || !p.phase) return;
+      progressPanel.style.display = 'block';
+      indetBar.style.display = 'none';
+      const pct = Math.max(0, Math.min(1, Number(p.pct) || 0));
+      progLabel.textContent = p.label || p.phase;
+      progFill.style.width = (pct * 100).toFixed(1) + '%';
+
+      if (p.phase === 'download') {
+        progPct.textContent = Math.round(pct * 100) + ' %';
+        progBytes.textContent = fmtBytes(p.received) + ' / ' + fmtBytes(p.total || 0);
+        progSpeed.textContent = fmtBytes(p.speedBps || 0) + '/s';
+        progEta.textContent = 'ETA ' + fmtEta(p.etaSec);
+        cancelBtn.style.display = '';
+        cancelBtn.disabled = false;
+      } else if (p.phase === 'installing') {
+        progPct.textContent = '…';
+        progFill.style.width = '100%';
+        progBytes.textContent = 'instalace probíhá';
+        progSpeed.textContent = '';
+        progEta.textContent = '';
+        cancelBtn.style.display = 'none';
+      } else if (p.phase === 'canceled') {
+        progPct.textContent = 'zrušeno';
+        progBytes.textContent = '—'; progSpeed.textContent = ''; progEta.textContent = '';
+        cancelBtn.style.display = 'none';
+        setTimeout(() => { progressPanel.style.display = 'none'; indetBar.style.display = ''; }, 1200);
+      } else if (p.phase === 'error') {
+        progPct.textContent = 'chyba';
+        cancelBtn.style.display = 'none';
+      }
+    });
+
+    // ---- In-launcher modal prompt (nahrazuje OS dialog) ----
+    const modalMask = $('modalMask');
+    const modalIc = $('modalIc');
+    const modalTitle = $('modalTitle');
+    const modalMsg = $('modalMsg');
+    const modalDetail = $('modalDetail');
+    const modalActions = $('modalActions');
+
+    function closeModal() {
+      modalMask.classList.remove('show');
+      modalActions.innerHTML = '';
+    }
+    function respond(id, response, ok = true) {
+      ipcRenderer.invoke('launcher:prompt-response', { id, response, ok }).catch(() => {});
+      closeModal();
+    }
+
+    ipcRenderer.on('launcher:prompt', (_e, p) => {
+      if (!p || typeof p.id !== 'number') return;
+      // Ikona podle typu
+      modalIc.classList.remove('err', 'ok');
+      if (p.type === 'error') { modalIc.classList.add('err'); modalIc.textContent = '!'; }
+      else if (p.type === 'info' && /nejnov/i.test(p.message || '')) { modalIc.classList.add('ok'); modalIc.textContent = '✓'; }
+      else if (p.kind === 'question') { modalIc.textContent = '↑'; }
+      else { modalIc.textContent = 'i'; }
+
+      modalTitle.textContent = p.title || 'StudioVoxario';
+      modalMsg.textContent = p.message || '';
+      if (p.detail) { modalDetail.style.display = ''; modalDetail.textContent = p.detail; }
+      else { modalDetail.style.display = 'none'; modalDetail.textContent = ''; }
+
+      modalActions.innerHTML = '';
+      const buttons = Array.isArray(p.buttons) && p.buttons.length ? p.buttons : ['OK'];
+      const defaultId = typeof p.defaultId === 'number' ? p.defaultId : 0;
+      buttons.forEach((label, idx) => {
+        const b = document.createElement('button');
+        b.className = 'mbtn' + (idx === defaultId ? ' primary' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => respond(p.id, idx, true));
+        modalActions.appendChild(b);
+      });
+      modalMask.classList.add('show');
+      // ESC = cancel
+      const onKey = (ev) => {
+        if (ev.key === 'Escape') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, typeof p.cancelId === 'number' ? p.cancelId : buttons.length - 1, true);
+        } else if (ev.key === 'Enter') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, defaultId, true);
+        }
+      };
+      document.addEventListener('keydown', onKey);
+    });
+
+
+    cancelBtn.addEventListener('click', async () => {
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = 'Rušení…';
+      const ok = await ipcRenderer.invoke('launcher:cancel-download');
+      toast(ok ? 'Stahování zrušeno' : 'Není co rušit');
+      cancelBtn.textContent = 'Zrušit';
+    });
+
+    ipcRenderer.invoke('launcher:version').then(v => { verEl.textContent = 'Launcher v' + v; });
+
+    function toast(msg) {
+      toastEl.textContent = msg; toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 1400);
+    }
+
+    function fmt(v) {
+      if (v === null || v === undefined || v === '') return '—';
+      if (typeof v === 'object') return JSON.stringify(v, null, 2);
+      return String(v);
+    }
+
+    async function renderDiag() {
+      const d = await ipcRenderer.invoke('launcher:diagnostics');
+      gridEl.innerHTML = '';
+      const rows = [
+        ['Stav', d.status, d.status === 'error' || String(d.status).includes('mismatch') ? 'err'
+                        : d.status === 'up-to-date' || d.status === 'installing' ? 'ok' : ''],
+        ['Aktuální verze', d.currentVersion],
+        ['Vzdálená verze', d.remoteVersion],
+        ['Manifest URL', d.manifestUrl],
+        ['Installer URL', d.installerUrl],
+        ['Očekávaný SHA-256', d.expectedSha256],
+        ['Stažený SHA-256', d.downloadedSha256,
+          d.expectedSha256 && d.downloadedSha256
+            ? (d.expectedSha256.toLowerCase() === d.downloadedSha256.toLowerCase() ? 'ok' : 'err')
+            : ''],
+        ['Očekávaná velikost', d.expectedSize],
+        ['Stažená velikost', d.downloadedSize],
+        ['Očekávaný vydavatel', d.expectedPublisher],
+        ['Stav podpisu', d.signatureStatus,
+          d.signatureStatus === 'Valid' ? 'ok'
+          : (d.signatureStatus && d.signatureStatus !== 'unsupported-platform' ? 'err' : '')],
+        ['Podepsáno', d.signatureSubject],
+        ['Thumbprint', d.signatureThumbprint],
+        ['Časové razítko', d.signatureTimestamped == null ? null : (d.signatureTimestamped ? 'ano' : 'ne')],
+        ['Pin trust', d.pinTrust,
+          d.pinTrust === 'pinned' ? 'ok'
+          : d.pinTrust === 'tofu' ? '' 
+          : d.pinTrust ? 'err' : ''],
+        ['Pinované otisky', (d.pinnedThumbprints || []).join(', ') || null],
+        ['Rotace pinů', d.pinRotation ? (d.pinRotation.changed ? ('změněno: ' + d.pinRotation.reason) : ('bez změny: ' + d.pinRotation.reason)) : null],
+        ['Poslední kontrola', d.lastCheckAt],
+        ['Retry fáze', d.retryPhase],
+        ['Pokusy', d.retryAttempts && d.retryMaxAttempts ? (d.retryAttempts + ' / ' + d.retryMaxAttempts) : null],
+        ['Další pokus za', d.retryNextDelayMs != null ? (Math.round(d.retryNextDelayMs / 1000) + ' s') : null],
+        ['Další pokus v', d.retryNextAt],
+        ['Poslední síťová chyba', d.retryLastError, d.retryLastError ? 'err' : ''],
+        ['Čas síťové chyby', d.retryLastErrorAt],
+        ['Poslední chyba', d.lastError, d.lastError ? 'err' : ''],
+      ];
+      for (const [k, v, cls] of rows) {
+        const kd = document.createElement('div'); kd.className = 'k'; kd.textContent = k;
+        const vd = document.createElement('div'); vd.className = 'v ' + (cls || ''); vd.textContent = fmt(v);
+        gridEl.appendChild(kd); gridEl.appendChild(vd);
+      }
+      logsEl.textContent = (d.logs || []).join('\n') || '(zatím žádné logy)';
+      logsEl.dataset.filled = '1';
+      logsEl.scrollTop = logsEl.scrollHeight;
+      return d;
+    }
+
+    function buildReport(d) {
+      const lines = [
+        'StudioVoxario Launcher — diagnostický report',
+        '=============================================',
+        'Stav:                ' + fmt(d.status),
+        'Aktuální verze:      ' + fmt(d.currentVersion),
+        'Vzdálená verze:      ' + fmt(d.remoteVersion),
+        'Manifest URL:        ' + fmt(d.manifestUrl),
+        'Installer URL:       ' + fmt(d.installerUrl),
+        'Očekávaný SHA-256:   ' + fmt(d.expectedSha256),
+        'Stažený SHA-256:     ' + fmt(d.downloadedSha256),
+        'Očekávaná velikost:  ' + fmt(d.expectedSize),
+        'Stažená velikost:    ' + fmt(d.downloadedSize),
+        'Očekávaný vydavatel: ' + fmt(d.expectedPublisher),
+        'Stav podpisu:        ' + fmt(d.signatureStatus),
+        'Podepsáno:           ' + fmt(d.signatureSubject),
+        'Thumbprint:          ' + fmt(d.signatureThumbprint),
+        'Časové razítko:      ' + fmt(d.signatureTimestamped),
+        'Pin trust:           ' + fmt(d.pinTrust),
+        'Pinované otisky:     ' + fmt((d.pinnedThumbprints || []).join(', ')),
+        'Rotace pinů:         ' + (d.pinRotation ? JSON.stringify(d.pinRotation) : '—'),
+        'Poslední kontrola:   ' + fmt(d.lastCheckAt),
+        'Retry fáze:          ' + fmt(d.retryPhase),
+        'Pokusy:              ' + fmt(d.retryAttempts) + ' / ' + fmt(d.retryMaxAttempts),
+        'Další pokus za (ms): ' + fmt(d.retryNextDelayMs),
+        'Další pokus v:       ' + fmt(d.retryNextAt),
+        'Síťová chyba:        ' + fmt(d.retryLastError),
+        'Čas síťové chyby:    ' + fmt(d.retryLastErrorAt),
+        'Poslední chyba:      ' + fmt(d.lastError),
+        '',
+        '--- Manifest ---',
+        JSON.stringify(d.manifest, null, 2),
+        '',
+        '--- Logy ---',
+        (d.logs || []).join('\n'),
+      ];
+      return lines.join('\n');
+    }
+
+    $('toggleDiag').addEventListener('click', async () => {
+      const opened = document.body.classList.toggle('diag-open');
+      $('toggleDiag').textContent = opened ? 'Zpět' : 'Diagnostika';
+      if (opened) await renderDiag();
+    });
+    $('refreshBtn').addEventListener('click', renderDiag);
+    $('recheckBtn').addEventListener('click', async () => {
+      toast('Spouštím kontrolu…');
+      ipcRenderer.invoke('launcher:recheck').finally(renderDiag);
+    });
+    $('copyBtn').addEventListener('click', async () => {
+      const d = await renderDiag();
+      clipboard.writeText(buildReport(d));
+      toast('Report zkopírován do schránky');
+    });
+    $('copyLogsBtn').addEventListener('click', async () => {
+      const d = await renderDiag();
+      clipboard.writeText((d.logs || []).join('\n'));
+      toast('Logy zkopírovány');
+    });
+    $('openLogsBtn').addEventListener('click', async () => {
+      const p = await ipcRenderer.invoke('launcher:open-logs');
+      toast(p ? 'Otevírám soubor…' : 'Nepodařilo se uložit soubor');
+    });
+    $('continueBtn').addEventListener('click', () => {
+      ipcRenderer.invoke('launcher:continue');
+    });
+  </script>
+</body>
+</html>
