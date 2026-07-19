@@ -717,5 +717,11 @@ async function fetchManifest() {
   return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
 }
 
-module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload };
+function getPinState() { return pinning.loadPins(); }
+function resetPinState() { return pinning.resetPins(); }
+
+module.exports = {
+  checkForUpdates, getDiagnostics, installVerified, fetchManifest,
+  cancelActiveDownload, getPinState, resetPinState,
+};
 
