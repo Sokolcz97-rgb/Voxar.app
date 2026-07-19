@@ -105,6 +105,7 @@ const AppRoutes = () => {
       <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
       <Route path="/f/:slug" element={<PublicForm />} />
+      <Route path="/desktop" element={<DownloadDesktop />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
