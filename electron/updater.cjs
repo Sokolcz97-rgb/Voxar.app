@@ -385,8 +385,8 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     log(`Vybraný installer: ${asset.installerUrl}`);
     if (diagnostics.expectedSha256) log(`Očekávaný SHA-256: ${diagnostics.expectedSha256}`);
 
-    const { response } = await dialog.showMessageBox(parentWindow, {
-      type: "question",
+    const response = await askUser({
+      parentWindow,
       title: "Nová verze StudioVoxario",
       message: `Je k dispozici verze ${remote}`,
       detail:
@@ -397,6 +397,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       defaultId: 0,
       cancelId: 1,
     });
+
     if (response !== 0) {
       diagnostics.status = "postponed";
       log("Uživatel odložil aktualizaci.");
