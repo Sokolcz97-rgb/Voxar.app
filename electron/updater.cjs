@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
+const { execFile } = require("child_process");
 
 const MANIFEST_URL =
   process.env.STUDIOVOXARIO_UPDATE_URL ||
@@ -58,6 +59,70 @@ function downloadFile(url, dest, onProgress) {
   });
 }
 
+// -------- Authenticode / codesign verification --------
+// Windows: PowerShell Get-AuthenticodeSignature. macOS: codesign. Linux: skipped.
+function verifyCodeSignature(filePath) {
+  return new Promise((resolve) => {
+    if (process.platform === "win32") {
+      const ps =
+        `$ErrorActionPreference='Stop';` +
+        `$s = Get-AuthenticodeSignature -LiteralPath '${filePath.replace(/'/g, "''")}';` +
+        `$o = [ordered]@{` +
+          `status = [string]$s.Status;` +
+          `statusMessage = [string]$s.StatusMessage;` +
+          `subject = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Subject } else { $null };` +
+          `issuer = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Issuer } else { $null };` +
+          `thumbprint = if ($s.SignerCertificate) { [string]$s.SignerCertificate.Thumbprint } else { $null };` +
+          `notAfter = if ($s.SignerCertificate) { [string]$s.SignerCertificate.NotAfter } else { $null };` +
+          `timeStamperCert = if ($s.TimeStamperCertificate) { [string]$s.TimeStamperCertificate.Subject } else { $null }` +
+        `};` +
+        `$o | ConvertTo-Json -Compress`;
+      execFile(
+        "powershell.exe",
+        ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps],
+        { timeout: 20000, windowsHide: true },
+        (err, stdout, stderr) => {
+          if (err) return resolve({ supported: true, ok: false, status: "error", error: String(stderr || err.message) });
+          try {
+            const info = JSON.parse(stdout);
+            resolve({
+              supported: true,
+              ok: info.status === "Valid",
+              status: info.status,
+              statusMessage: info.statusMessage,
+              subject: info.subject,
+              issuer: info.issuer,
+              thumbprint: info.thumbprint,
+              notAfter: info.notAfter,
+              timestamped: !!info.timeStamperCert,
+            });
+          } catch (e) {
+            resolve({ supported: true, ok: false, status: "parse-error", error: String(e), raw: stdout });
+          }
+        }
+      );
+      return;
+    }
+    if (process.platform === "darwin") {
+      execFile(
+        "codesign",
+        ["--verify", "--deep", "--strict", "--verbose=2", filePath],
+        { timeout: 20000 },
+        (err, _stdout, stderr) => {
+          if (err) return resolve({ supported: true, ok: false, status: "invalid", error: String(stderr || err.message) });
+          // Fetch authority for display
+          execFile("codesign", ["-dv", "--verbose=4", filePath], { timeout: 20000 }, (_e, _o, info) => {
+            const authority = /Authority=(.+)/.exec(info || "")?.[1] || null;
+            resolve({ supported: true, ok: true, status: "Valid", subject: authority });
+          });
+        }
+      );
+      return;
+    }
+    resolve({ supported: false, ok: true, status: "unsupported-platform" });
+  });
+}
+
 // Semver-lite: "1.2.3" > "1.2.0"
 function isNewer(remote, current) {
   const parse = (v) => String(v).replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
@@ -84,6 +149,11 @@ const diagnostics = {
   expectedSize: null,
   downloadedSha256: null,
   downloadedSize: null,
+  expectedPublisher: null,
+  signatureStatus: null,
+  signatureSubject: null,
+  signatureThumbprint: null,
+  signatureTimestamped: null,
   status: "idle",
   lastError: null,
   lastCheckAt: null,
@@ -266,8 +336,59 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       return { status: "hash-mismatch" };
     }
 
+    // Authenticode / codesign verification — chrání i proti platnému hashi z podvrženého manifestu,
+    // pokud útočník nemá platný certifikát vydavatele.
+    const expectedPublisher = (asset.publisher || manifest.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null);
+    diagnostics.expectedPublisher = expectedPublisher;
+    log("Ověřuji digitální podpis instalátoru…");
+    const sig = await verifyCodeSignature(dest);
+    diagnostics.signatureStatus = sig.status || null;
+    diagnostics.signatureSubject = sig.subject || null;
+    diagnostics.signatureThumbprint = sig.thumbprint || null;
+    diagnostics.signatureTimestamped = sig.timestamped ?? null;
+
+    if (!sig.supported) {
+      log(`Podpis nelze ověřit na této platformě (${process.platform}) — přeskočeno.`);
+    } else if (!sig.ok) {
+      try { fs.unlinkSync(dest); } catch {}
+      diagnostics.status = "signature-invalid";
+      diagnostics.lastError = `Neplatný podpis: ${sig.status}${sig.error ? " — " + sig.error : ""}`;
+      log(`CHYBA: neplatný digitální podpis (${sig.status}). Instalátor smazán.`);
+      await dialog.showMessageBox(parentWindow, {
+        type: "error",
+        title: "Aktualizace zamítnuta",
+        message: "Ověření podpisu selhalo",
+        detail:
+          `Digitální podpis instalátoru je neplatný nebo chybí.\n\n` +
+          `Stav: ${sig.status}\n` +
+          (sig.statusMessage ? `Zpráva: ${sig.statusMessage}\n` : "") +
+          (sig.subject ? `Podepsáno: ${sig.subject}\n` : "") +
+          `\nSoubor byl smazán a nespustí se.`,
+      });
+      return { status: "signature-invalid" };
+    } else {
+      log(`Podpis OK — ${sig.subject || "(neznámý subjekt)"} [${sig.thumbprint || "-"}]`);
+      if (expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
+        try { fs.unlinkSync(dest); } catch {}
+        diagnostics.status = "publisher-mismatch";
+        diagnostics.lastError = `Vydavatel "${sig.subject}" ≠ očekávaný "${expectedPublisher}"`;
+        log(`CHYBA: podpis platný, ale vydavatel neodpovídá. Instalátor smazán.`);
+        await dialog.showMessageBox(parentWindow, {
+          type: "error",
+          title: "Aktualizace zamítnuta",
+          message: "Neočekávaný vydavatel",
+          detail:
+            `Instalátor je podepsaný, ale jiným subjektem, než uvádí manifest.\n\n` +
+            `Očekáváno: ${expectedPublisher}\n` +
+            `Nalezeno:  ${sig.subject}\n\n` +
+            `Soubor byl smazán a nespustí se.`,
+        });
+        return { status: "publisher-mismatch" };
+      }
+    }
+
     diagnostics.status = "installing";
-    log("Integrita OK, spouštím instalátor.");
+    log("Integrita i podpis OK, spouštím instalátor.");
 
     if (platform === "win32") {
       await shell.openPath(dest);

@@ -1,14 +1,16 @@
 {
   "version": "1.1.0",
-  "notes": "Opraven launcher — kontrola aktualizací nyní vždy proběhne před spuštěním staré verze a nabídne stažení nového instalátoru. Přidána kontrola integrity (SHA-256) staženého instalátoru.",
+  "notes": "Opraven launcher — kontrola aktualizací nyní vždy proběhne před spuštěním staré verze a nabídne stažení nového instalátoru. Přidána kontrola integrity (SHA-256) a ověření Authenticode podpisu staženého instalátoru.",
   "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
   "sha256": "8da783dbe129565c19aa5da4634538c3d3d5f684e7567bf20030f5dfa21378ff",
   "size": 85674137,
+  "publisher": "StudioVoxario",
   "platforms": {
     "win32": {
       "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
       "sha256": "8da783dbe129565c19aa5da4634538c3d3d5f684e7567bf20030f5dfa21378ff",
-      "size": 85674137
+      "size": 85674137,
+      "publisher": "StudioVoxario"
     }
   }
 }
