@@ -12,7 +12,8 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest } = require("./updater.cjs");
+const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
