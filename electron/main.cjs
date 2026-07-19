@@ -124,6 +124,10 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: true,
+      // Anti-tamper: v produkčních buildech zakážeme DevTools + remote debugging,
+      // aby uživatel nemohl injektovat vlastní JS do renderu.
+      devTools: !app.isPackaged,
+      webSecurity: true,
     },
   });
 
