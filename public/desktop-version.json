@@ -1,23 +1,35 @@
 {
-  "version": "1.2.0",
-  "notes": "Nová verze s progresivním panelem stahování (procenta, rychlost, ETA, zrušení), certificate pinningem podpisů (TOFU + bezpečná rotace), automatickým rollbackem, retry s exponenciálním backoffem, ověřením SHA-256 i Authenticode a rozšířenou diagnostikou v launcheru.",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
-  "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
-  "size": 81143500,
+  "version": "1.3.0-alpha",
+  "channel": "alpha",
+  "notes": "Alpha 1.3.0 — nativní Discord/TeamSpeak UI (/app) s GuildRail, kanály, chatem, WebRTC voice mesh a presence. Electron shell nyní bootuje rovnou do desktopové aplikace, ne do webu.",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
+  "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
+  "size": 280312353,
   "publisher": "StudioVoxario",
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
-      "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
-      "size": 81143500,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
+      "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
+      "size": 280312353,
       "publisher": "StudioVoxario"
     }
   },
   "history": {
+    "1.3.0-alpha": {
+      "notes": "Alpha — nativní /app UI (Discord/TeamSpeak styl), voice mesh, presence.",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
+          "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
+          "size": 280312353,
+          "publisher": "StudioVoxario"
+        }
+      }
+    },
     "1.2.0": {
-      "notes": "Aktuální verze — progress panel, pinning, rollback, retry, SHA-256 + Authenticode.",
+      "notes": "Progress panel, pinning, rollback, retry, SHA-256 + Authenticode.",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
