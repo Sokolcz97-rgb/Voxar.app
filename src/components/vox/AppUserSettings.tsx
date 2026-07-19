@@ -135,11 +135,25 @@ export function AppUserSettings({ onClose }: Props) {
     setSavingProfile(true);
     const { error } = await supabase.from("profiles").update({
       display_name: displayName.trim() || null,
+      username: username.trim() || null,
       bio: bio.trim() || null,
-    }).eq("user_id", user.id);
+    } as any).eq("user_id", user.id);
     setSavingProfile(false);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else toast({ title: "Uloženo", description: "Profil aktualizován." });
+  };
+
+  const saveConnections = async () => {
+    if (!user) return;
+    setSavingConn(true);
+    const { error } = await supabase.from("profiles").update({
+      twitch_username: twitch.trim() || null,
+      youtube_handle: youtube.trim() || null,
+      kick_username: kick.trim() || null,
+    } as any).eq("user_id", user.id);
+    setSavingConn(false);
+    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    else toast({ title: "Uloženo", description: "Propojení aktualizována." });
   };
 
   const changePassword = async () => {
@@ -154,6 +168,7 @@ export function AppUserSettings({ onClose }: Props) {
 
   const tabs: { key: TabKey; label: string; icon: any }[] = [
     { key: "profile", label: "Profil", icon: UserIcon },
+    { key: "connections", label: "Propojení", icon: Link2 },
     { key: "account", label: "Účet a heslo", icon: Lock },
     { key: "voice", label: "Hlas a video", icon: Mic },
     { key: "notifications", label: "Notifikace", icon: Bell },
