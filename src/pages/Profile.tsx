@@ -277,25 +277,50 @@ const Profile = () => {
         </Card>
 
         {!loading && (
-          <Card className="glass border-border p-6 mt-6 flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-                <Package className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="font-semibold">Moje zakázky</div>
-                <div className="text-xs text-muted-foreground">Přehled vámi vytvořených zakázek na 3D tisk</div>
-              </div>
-            </div>
-            <Button asChild variant="outline"><Link to="/profile/zakazky">Otevřít</Link></Button>
-          </Card>
-        )}
-
-        {!loading && (
-          <Card className="glass border-border p-8 mt-6">
+          <Card className="glass border-border p-8">
             <AccountSettings />
           </Card>
         )}
+        </div>
+
+        <aside className="space-y-6">
+          <Card className="glass border-border p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <AppWindow className="h-5 w-5 text-primary" />
+              <h3 className="font-display font-bold text-lg">Aplikace</h3>
+            </div>
+
+            <div className="pl-2 border-l-2 border-primary/30 space-y-3">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Formuláře</div>
+
+              <Link to="/profile/formulare" className="block group">
+                <div className="rounded-lg p-3 bg-primary/5 hover:bg-primary/10 border border-primary/20 transition">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-primary" />
+                    <div className="font-semibold text-sm">Moje formuláře</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Vytvořte formulář pro nábor, průzkum nebo zpětnou vazbu — sdílejte odkazem a sbírejte odpovědi.
+                  </div>
+                </div>
+              </Link>
+
+              <div className="text-xs uppercase tracking-wider text-muted-foreground pt-2">Zakázky</div>
+              <Link to="/profile/zakazky" className="block group">
+                <div className="rounded-lg p-3 bg-muted/30 hover:bg-muted/50 border border-border transition">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    <div className="font-semibold text-sm">Moje zakázky</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Přehled vámi vytvořených zakázek na 3D tisk.
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </Card>
+        </aside>
+        </div>
       </main>
     </div>
   );
