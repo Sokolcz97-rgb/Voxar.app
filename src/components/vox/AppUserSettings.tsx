@@ -367,12 +367,13 @@ function ToggleRow({ label, val, onChange }: { label: string; val: boolean; onCh
 function AboutPanel({ userEmail }: { userEmail: string }) {
   const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
   const isDesktop = !!desktop?.isDesktop;
-  const [version, setVersion] = useState<string>("—");
+  const APP_VERSION_FALLBACK = "1.3.7-alpha";
+  const [version, setVersion] = useState<string>(APP_VERSION_FALLBACK);
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (isDesktop && typeof desktop.getVersion === "function") {
-      desktop.getVersion().then((v: string) => setVersion(v || "—")).catch(() => {});
+      desktop.getVersion().then((v: string) => setVersion(v || APP_VERSION_FALLBACK)).catch(() => {});
     }
   }, [isDesktop, desktop]);
 
