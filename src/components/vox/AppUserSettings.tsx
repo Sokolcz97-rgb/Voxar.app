@@ -403,12 +403,12 @@ function AboutPanel({ userEmail }: { userEmail: string }) {
   return (
     <div className="space-y-1 text-sm">
       {row("Aplikace", "StudioVoxario")}
-      {row("Verze", isDesktop ? version : "Webová verze")}
+      {row("Verze", version)}
+      {row("Kanál", "alpha")}
       {row("Prostředí", platformLabel)}
       {isDesktop && desktop?.electronVersion && row("Electron", desktop.electronVersion)}
       {isDesktop && desktop?.chromeVersion && row("Chromium", desktop.chromeVersion)}
       {row("Přihlášen jako", userEmail || "—")}
-      {row("Web", <a href="https://studiovoxario.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">studiovoxario.com</a>)}
       {isDesktop && (
         <div className="pt-4">
           <Button onClick={checkUpdates} disabled={checking} variant="outline" className="gap-2">
