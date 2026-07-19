@@ -8,31 +8,41 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Jsi NEON — přátelský AI asistent herní komunity NEONHUB.
-Odpovídáš stručně, česky, v gaming tónu (ale profesionálně). Markdown OK.
+const SYSTEM_PROMPT = `Jsi NEON — přátelský AI asistent StudioVoxario.
+Pomáháš uživatelům jak na webu, tak v desktopové aplikaci (Discord-like klient
+s hlasovými/textovými kanály, servery, DM, tickety, formuláři, zakázkami,
+bodovým systémem atd.). Odpovídáš stručně, česky, přátelsky, ale profesionálně.
+Markdown OK.
 
 # Co umíš
-Máš přístup k nástrojům (tools), pomocí kterých můžeš číst živá data webu:
-fórum, herní servery, Discord servery, streamy, novinky/hry, statistiky a profil
-přihlášeného uživatele. Když uživatel chce konkrétní info ("kde najdu...",
-"co je nového...", "kdo streamuje..."), VŽDY zavolej nejdřív vhodný tool a
-odpověz až podle reálných dat.
+Máš přístup k nástrojům (tools) — fórum, herní/discord servery, streamy,
+novinky/hry, statistiky, profil přihlášeného uživatele. Když uživatel chce
+konkrétní info ("kde najdu…", "co je nového…", "kdo streamuje…"), VŽDY zavolej
+nejdřív vhodný tool a odpověz podle reálných dat.
 
-# Eskalace na majitele
-Pokud narazíš na TECHNICKÝ problém, který sám nevyřešíš (chyba webu, něco
-nefunguje, podezření na bug, výpadek bota, problém s platbou/účtem který
-neumíš opravit), použij tool "contact_owner". Ten automaticky založí
-ticket s vysokou prioritou pro majitele/admina. Uživateli pak řekni, že jsi
-problém eskaloval a kdy se může čekat odpověď.
+Umíš také poradit s ovládáním aplikace: kde je Nastavení (klikni na ikonu
+ozubeného kola u svého profilu vlevo dole), jak vytvořit server / kanál / pozvánku,
+jak si nastavit avatar, hlas/video, notifikace, autostart, tray atd.
 
-NEVOLEJ contact_owner zbytečně — jen pro skutečné technické problémy. Běžné
-dotazy "jak na to" vyřeš sám nebo doporuč "/tickets".
+# Eskalace na skutečného člověka
+Pokud narazíš na problém, který sám nevyřešíš (technická chyba, výpadek,
+podezření na bug, platba/účet, něco potřebuje lidské rozhodnutí, nebo
+uživatel sám žádá skutečného pracovníka/podporu), NEODMÍTAJ — použij nástroj
+"contact_admin". Ten:
+ 1) založí ticket s vysokou prioritou
+ 2) rovnou pošle majiteli/adminovi soukromou zprávu (DM) v aplikaci s
+    kontextem, aby to viděl okamžitě.
+Uživateli pak řekni česky, že jsi ho spojil s reálným pracovníkem a odpoví mu
+co nejdřív (klidně odkaž na /messages a /tickets).
+
+NEVOLEJ contact_admin zbytečně — jen pro reálné případy. Běžné "jak na to"
+vyřeš sám.
 
 # Pravidla
 - Nevymýšlej si funkce ani URL.
 - Citlivé věci (právo, peníze, zdraví) → odkaž jinam.
 - Soukromí → "/privacy". Pravidla → "/terms".
-- Drž odpovědi pod 5 vět, pokud uživatel nechce detail.`;
+- Drž odpovědi pod 6 vět, pokud uživatel nechce detail.`;
 
 type ChatMsg = {
   role: "system" | "user" | "assistant" | "tool";
@@ -132,9 +142,9 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "contact_owner",
+      name: "contact_admin",
       description:
-        "ESKALACE: Založí ticket s vysokou prioritou pro majitele/admina. Použij JEN pro skutečné technické problémy, které neumíš sám vyřešit.",
+        "ESKALACE: Založí ticket a rovnou pošle majiteli/adminovi soukromou zprávu v aplikaci (DM) s kontextem konverzace. Použij pro reálné technické problémy, nebo když uživatel výslovně chce mluvit se skutečným pracovníkem.",
       parameters: {
         type: "object",
         properties: {
@@ -258,19 +268,22 @@ async function executeTool(
           .eq("user_id", userId);
         return { ...profile, roles: (roles ?? []).map((r: any) => r.role) };
       }
+      case "contact_admin":
       case "contact_owner": {
         const subject = String(args.subject ?? "Eskalace od AI asistenta").slice(0, 200);
         const description = String(args.description ?? "").slice(0, 4000);
         const priority = ["low", "medium", "high", "urgent"].includes(args.priority)
           ? args.priority
           : "high";
-        // Find an owner/admin to assign
+        // Find an owner/admin to assign / DM
         const { data: admin } = await serviceClient
           .from("user_roles")
           .select("user_id")
           .eq("role", "admin")
           .limit(1)
           .maybeSingle();
+        const adminId = (admin as any)?.user_id ?? null;
+
         const { data: ticket, error } = await serviceClient
           .from("tickets")
           .insert({
@@ -279,15 +292,61 @@ async function executeTool(
             description: `🤖 Tento ticket byl založen automaticky AI asistentem NEON.\n\n${description}`,
             priority,
             category: "technical",
-            assigned_to: admin?.user_id ?? null,
+            assigned_to: adminId,
           })
           .select("id")
           .single();
         if (error) return { ok: false, error: error.message };
+
+        // Fire-and-forget DM to the admin so they see it instantly in the app.
+        let dmSent = false;
+        if (adminId && adminId !== userId) {
+          try {
+            const [a, b] = userId < adminId ? [userId, adminId] : [adminId, userId];
+            let convId: string | null = null;
+            const { data: existing } = await serviceClient
+              .from("conversations")
+              .select("id")
+              .eq("user_a", a)
+              .eq("user_b", b)
+              .maybeSingle();
+            if ((existing as any)?.id) {
+              convId = (existing as any).id;
+            } else {
+              const { data: created } = await serviceClient
+                .from("conversations")
+                .insert({ user_a: a, user_b: b })
+                .select("id")
+                .single();
+              convId = (created as any)?.id ?? null;
+            }
+            if (convId) {
+              const body =
+                `🤖 **NEON AI eskalace**\n\n` +
+                `Uživatel žádá o pomoc skutečného pracovníka.\n\n` +
+                `**Předmět:** ${subject}\n` +
+                `**Priorita:** ${priority}\n` +
+                `**Ticket:** #${String((ticket as any).id).slice(0, 8)}\n\n` +
+                `${description}`;
+              await serviceClient.from("messages").insert({
+                conversation_id: convId,
+                sender_id: userId,
+                content: body,
+              });
+              dmSent = true;
+            }
+          } catch (e) {
+            console.error("contact_admin DM failed", e);
+          }
+        }
+
         return {
           ok: true,
-          ticket_id: ticket.id,
-          message: "Ticket s vysokou prioritou byl založen a přiřazen majiteli.",
+          ticket_id: (ticket as any).id,
+          dm_sent: dmSent,
+          message: dmSent
+            ? "Ticket založen a soukromá zpráva odeslána adminovi."
+            : "Ticket založen. DM se nepodařilo odeslat, admin bude kontaktován přes ticket.",
         };
       }
       default:
@@ -426,7 +485,7 @@ Deno.serve(async (req) => {
           serviceClient,
           userId,
         });
-        if (fname === "contact_owner" && (result as any)?.ok) {
+        if ((fname === "contact_admin" || fname === "contact_owner") && (result as any)?.ok) {
           escalated = true;
           escalatedTicketId = (result as any).ticket_id ?? null;
         }

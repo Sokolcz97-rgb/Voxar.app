@@ -8,13 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
-  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw,
+  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw, MonitorCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
 
-type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "about";
+type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "about";
 
 interface Props {
   onClose: () => void;
@@ -173,6 +173,7 @@ export function AppUserSettings({ onClose }: Props) {
     { key: "voice", label: "Hlas a video", icon: Mic },
     { key: "notifications", label: "Notifikace", icon: Bell },
     { key: "appearance", label: "Vzhled", icon: Palette },
+    { key: "app", label: "Aplikace", icon: MonitorCog },
     { key: "about", label: "O aplikaci", icon: Info },
   ];
 
@@ -345,6 +346,8 @@ export function AppUserSettings({ onClose }: Props) {
             </div>
           )}
 
+          {tab === "app" && <AppSettingsPanel />}
+
           {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
       </div>
@@ -414,6 +417,72 @@ function AboutPanel({ userEmail }: { userEmail: string }) {
         </div>
       )}
       <p className="text-xs text-muted-foreground pt-3">© StudioVoxario</p>
+    </div>
+  );
+}
+
+type AppPrefs = {
+  minimizeToTray: boolean;
+  closeToTray: boolean;
+  autoStart: boolean;
+  notifications: boolean;
+  hardwareAcceleration: boolean;
+  startMinimized: boolean;
+};
+
+function AppSettingsPanel() {
+  const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
+  const isDesktop = !!desktop?.isDesktop;
+  const [prefs, setPrefs] = useState<AppPrefs | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isDesktop || typeof desktop.getAppSettings !== "function") return;
+    desktop.getAppSettings().then((s: AppPrefs) => setPrefs(s)).catch(() => {});
+  }, [isDesktop, desktop]);
+
+  const patch = async (p: Partial<AppPrefs>) => {
+    if (!prefs || typeof desktop.setAppSettings !== "function") return;
+    const next = { ...prefs, ...p };
+    setPrefs(next);
+    setSaving(true);
+    try { await desktop.setAppSettings(p); } finally { setSaving(false); }
+  };
+
+  if (!isDesktop) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-md border border-border/40 bg-secondary/30 p-4 text-sm">
+          <p className="font-medium mb-1">Nastavení desktopové aplikace</p>
+          <p className="text-muted-foreground">
+            Tato nastavení (tray, autostart, hardwarová akcelerace…) jsou dostupná jen v desktopové
+            aplikaci StudioVoxario. Stáhni si ji na <a className="text-primary hover:underline" href="/desktop">/desktop</a>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!prefs) {
+    return <p className="text-sm text-muted-foreground">Načítám nastavení…</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <ToggleRow label="Minimalizovat do tray" val={prefs.minimizeToTray} onChange={(v) => patch({ minimizeToTray: v })} />
+      <ToggleRow label="Zavřít do tray místo ukončení" val={prefs.closeToTray} onChange={(v) => patch({ closeToTray: v })} />
+      <ToggleRow label="Spouštět při startu systému" val={prefs.autoStart} onChange={(v) => patch({ autoStart: v })} />
+      <ToggleRow label="Startovat minimalizovaně" val={prefs.startMinimized} onChange={(v) => patch({ startMinimized: v })} />
+      <ToggleRow label="Systémové notifikace" val={prefs.notifications} onChange={(v) => patch({ notifications: v })} />
+      <ToggleRow label="Hardwarová akcelerace" val={prefs.hardwareAcceleration} onChange={(v) => patch({ hardwareAcceleration: v })} />
+      <p className="text-xs text-muted-foreground pt-2">
+        Změny hardwarové akcelerace se projeví po restartu aplikace.
+        {saving && " • Ukládám…"}
+      </p>
+      <div className="flex gap-2 pt-2">
+        <Button variant="outline" onClick={() => desktop.reloadApp?.()}>Restartovat okno</Button>
+        <Button variant="destructive" onClick={() => desktop.quitApp?.()}>Ukončit aplikaci</Button>
+      </div>
     </div>
   );
 }

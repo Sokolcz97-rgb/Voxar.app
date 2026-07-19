@@ -13,4 +13,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   setBadge: (count) => ipcRenderer.send("set-badge", Number(count) || 0),
   notify: (title, body, url) =>
     ipcRenderer.send("show-notification", { title, body, url }),
+  // App-level (Electron) preferences — surfaced in the in-app Settings.
+  getAppSettings: () => ipcRenderer.invoke("settings:get"),
+  setAppSettings: (patch) => ipcRenderer.invoke("settings:set", patch),
+  quitApp: () => ipcRenderer.invoke("app:quit"),
+  reloadApp: () => ipcRenderer.invoke("app:reload"),
 });
