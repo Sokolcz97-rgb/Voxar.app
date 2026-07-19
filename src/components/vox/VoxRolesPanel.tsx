@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload, ArrowUp, ArrowDown, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxMember } from "@/components/vox/MemberList";
 
