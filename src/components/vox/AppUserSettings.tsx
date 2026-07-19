@@ -25,15 +25,18 @@ const VOICE_PREF_KEY = "sv.voicePrefs";
 type VoicePrefs = {
   inputDeviceId?: string;
   outputDeviceId?: string;
-  inputVolume: number;
-  outputVolume: number;
+  inputGainDb: number;         // -30..+20 dB
+  outputVolume: number;         // 0..200 %
+  autoDetect: boolean;          // Automatická detekce hlasu (VAD)
+  vadThresholdDb: number;       // -80..-10 dB
   noiseSuppression: boolean;
   echoCancellation: boolean;
   autoGainControl: boolean;
   pushToTalk: boolean;
 };
 const defaultVoice: VoicePrefs = {
-  inputVolume: 100, outputVolume: 100,
+  inputGainDb: 0, outputVolume: 100,
+  autoDetect: true, vadThresholdDb: -50,
   noiseSuppression: true, echoCancellation: true, autoGainControl: true, pushToTalk: false,
 };
 
@@ -308,10 +311,14 @@ export function AppUserSettings({ onClose }: Props) {
                 </select>
               </div>
               <div>
-                <Label>Hlasitost vstupu ({voice.inputVolume}%)</Label>
-                <input type="range" min={0} max={200} value={voice.inputVolume}
-                  onChange={(e) => saveVoice({ inputVolume: Number(e.target.value) })}
+                <div className="flex items-center justify-between">
+                  <Label>Zesílení vstupu ({voice.inputGainDb > 0 ? "+" : ""}{voice.inputGainDb} dB)</Label>
+                  <span className="text-xs text-muted-foreground">-30 dB … +20 dB</span>
+                </div>
+                <input type="range" min={-30} max={20} step={1} value={voice.inputGainDb}
+                  onChange={(e) => saveVoice({ inputGainDb: Number(e.target.value) })}
                   className="w-full mt-2 accent-primary" />
+                <p className="text-[11px] text-muted-foreground mt-1">0 dB = původní hlasitost mikrofonu. Kladné hodnoty zesilují, záporné ztlumují.</p>
               </div>
               <div>
                 <Label>Hlasitost výstupu ({voice.outputVolume}%)</Label>
@@ -320,6 +327,18 @@ export function AppUserSettings({ onClose }: Props) {
                   className="w-full mt-2 accent-primary" />
               </div>
               <div className="space-y-3 pt-2 border-t border-border/40">
+                <ToggleRow label="Automatická detekce hlasu (VAD)" val={voice.autoDetect} onChange={(v) => saveVoice({ autoDetect: v })} />
+                {voice.autoDetect && (
+                  <div className="pl-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Práh detekce ({voice.vadThresholdDb} dB)</Label>
+                      <span className="text-[11px] text-muted-foreground">tišší než práh = ticho</span>
+                    </div>
+                    <input type="range" min={-80} max={-10} step={1} value={voice.vadThresholdDb}
+                      onChange={(e) => saveVoice({ vadThresholdDb: Number(e.target.value) })}
+                      className="w-full mt-2 accent-primary" />
+                  </div>
+                )}
                 <ToggleRow label="Potlačení šumu" val={voice.noiseSuppression} onChange={(v) => saveVoice({ noiseSuppression: v })} />
                 <ToggleRow label="Potlačení ozvěny" val={voice.echoCancellation} onChange={(v) => saveVoice({ echoCancellation: v })} />
                 <ToggleRow label="Automatické zesílení" val={voice.autoGainControl} onChange={(v) => saveVoice({ autoGainControl: v })} />
