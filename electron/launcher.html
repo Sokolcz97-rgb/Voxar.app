@@ -186,6 +186,12 @@
         ['Thumbprint', d.signatureThumbprint],
         ['Časové razítko', d.signatureTimestamped == null ? null : (d.signatureTimestamped ? 'ano' : 'ne')],
         ['Poslední kontrola', d.lastCheckAt],
+        ['Retry fáze', d.retryPhase],
+        ['Pokusy', d.retryAttempts && d.retryMaxAttempts ? (d.retryAttempts + ' / ' + d.retryMaxAttempts) : null],
+        ['Další pokus za', d.retryNextDelayMs != null ? (Math.round(d.retryNextDelayMs / 1000) + ' s') : null],
+        ['Další pokus v', d.retryNextAt],
+        ['Poslední síťová chyba', d.retryLastError, d.retryLastError ? 'err' : ''],
+        ['Čas síťové chyby', d.retryLastErrorAt],
         ['Poslední chyba', d.lastError, d.lastError ? 'err' : ''],
       ];
       for (const [k, v, cls] of rows) {
