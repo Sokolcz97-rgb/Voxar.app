@@ -433,20 +433,52 @@ type AppPrefs = {
 function AppSettingsPanel() {
   const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
   const isDesktop = !!desktop?.isDesktop;
+  // Support both new (getAppSettings/setAppSettings/quitApp) and legacy (getSettings/setSettings/quit) preload APIs
+  const getFn: undefined | (() => Promise<AppPrefs>) =
+    desktop?.getAppSettings || desktop?.getSettings;
+  const setFn: undefined | ((p: Partial<AppPrefs>) => Promise<any>) =
+    desktop?.setAppSettings || desktop?.setSettings;
+  const quitFn: undefined | (() => any) = desktop?.quitApp || desktop?.quit;
+  const reloadFn: undefined | (() => any) = desktop?.reloadApp;
+
+  const defaults: AppPrefs = {
+    minimizeToTray: true, closeToTray: true, autoStart: false,
+    notifications: true, hardwareAcceleration: true, startMinimized: false,
+  };
   const [prefs, setPrefs] = useState<AppPrefs | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isDesktop || typeof desktop.getAppSettings !== "function") return;
-    desktop.getAppSettings().then((s: AppPrefs) => setPrefs(s)).catch(() => {});
-  }, [isDesktop, desktop]);
+    if (!isDesktop) return;
+    if (typeof getFn !== "function") {
+      setError("Tato verze aplikace ještě nepodporuje in-app nastavení. Aktualizuj aplikaci na nejnovější verzi.");
+      setPrefs(defaults);
+      return;
+    }
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      if (!cancelled) {
+        setError((prev) => prev ?? "Načítání trvá déle než obvykle — zobrazuji výchozí hodnoty.");
+        setPrefs((prev) => prev ?? defaults);
+      }
+    }, 3500);
+    Promise.resolve()
+      .then(() => getFn())
+      .then((s: AppPrefs) => { if (!cancelled) setPrefs({ ...defaults, ...(s || {}) }); })
+      .catch((e: any) => { if (!cancelled) { setError(String(e?.message || e)); setPrefs(defaults); } })
+      .finally(() => window.clearTimeout(t));
+    return () => { cancelled = true; window.clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDesktop]);
 
   const patch = async (p: Partial<AppPrefs>) => {
-    if (!prefs || typeof desktop.setAppSettings !== "function") return;
+    if (!prefs) return;
     const next = { ...prefs, ...p };
     setPrefs(next);
+    if (typeof setFn !== "function") return;
     setSaving(true);
-    try { await desktop.setAppSettings(p); } finally { setSaving(false); }
+    try { await setFn(p); } finally { setSaving(false); }
   };
 
   if (!isDesktop) {
@@ -469,6 +501,11 @@ function AppSettingsPanel() {
 
   return (
     <div className="space-y-3">
+      {error && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
+          {error}
+        </div>
+      )}
       <ToggleRow label="Minimalizovat do tray" val={prefs.minimizeToTray} onChange={(v) => patch({ minimizeToTray: v })} />
       <ToggleRow label="Zavřít do tray místo ukončení" val={prefs.closeToTray} onChange={(v) => patch({ closeToTray: v })} />
       <ToggleRow label="Spouštět při startu systému" val={prefs.autoStart} onChange={(v) => patch({ autoStart: v })} />
@@ -480,8 +517,8 @@ function AppSettingsPanel() {
         {saving && " • Ukládám…"}
       </p>
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" onClick={() => desktop.reloadApp?.()}>Restartovat okno</Button>
-        <Button variant="destructive" onClick={() => desktop.quitApp?.()}>Ukončit aplikaci</Button>
+        {reloadFn && <Button variant="outline" onClick={() => reloadFn()}>Restartovat okno</Button>}
+        {quitFn && <Button variant="destructive" onClick={() => quitFn()}>Ukončit aplikaci</Button>}
       </div>
     </div>
   );
