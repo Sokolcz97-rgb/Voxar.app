@@ -2,6 +2,7 @@ import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, Refresh
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
 
@@ -16,19 +17,31 @@ export default function Download() {
   const downloads = [
     {
       os: "Windows 10 / 11",
-      file: winAsset.url,
-      note: "Rozbalte ZIP a spusťte StudioVoxario.exe",
+      file: winInstaller.url,
+      filename: "StudioVoxarioSetup.exe",
+      note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
+      size: "~82 MB",
+      primary: true,
+    },
+    {
+      os: "Windows (přenosná ZIP)",
+      file: winAsset.url,
+      filename: "StudioVoxario-win32-x64.zip",
+      note: "Bez instalace – rozbalte a spusťte StudioVoxario.exe.",
+      icon: "📦",
       size: "~114 MB",
     },
     {
       os: "Linux (x64)",
       file: linuxAsset.url,
+      filename: "StudioVoxario-linux-x64.tar.gz",
       note: "tar xzf a spusťte ./StudioVoxario",
       icon: "🐧",
       size: "~110 MB",
     },
   ];
+
 
   return (
     <div className="min-h-screen bg-background">
