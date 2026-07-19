@@ -319,6 +319,7 @@ export default function AppShell() {
         onOpenChange={setCreateChannelOpen}
         onCreate={createChannel}
       />
+      <DesktopUpdateFab />
     </div>
   );
 }
