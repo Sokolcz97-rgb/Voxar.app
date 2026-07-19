@@ -308,6 +308,12 @@ export default function AppShell() {
 
       <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
       <JoinGuildDialog open={joinOpen} onOpenChange={setJoinOpen} onJoined={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
+      <CreateChannelDialog
+        open={createChannelOpen}
+        initialType={createChannelType}
+        onOpenChange={setCreateChannelOpen}
+        onCreate={createChannel}
+      />
     </div>
   );
 }
