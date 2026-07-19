@@ -22,10 +22,11 @@ interface Props {
   onCreateChannel: (type: "text" | "voice") => void;
   isAdmin: boolean;
   voiceParticipants: Record<string, Array<{ user_id: string; nickname?: string; is_muted?: boolean }>>;
+  onOpenServerSettings?: () => void;
 }
 
 export function ChannelSidebar({
-  guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants,
+  guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants, onOpenServerSettings,
 }: Props) {
   const [collapsedCats, setCollapsed] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
