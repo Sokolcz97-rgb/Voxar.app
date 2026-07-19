@@ -682,7 +682,16 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       try { fs.unlinkSync(dest); } catch {}
       return { status: "publisher-mismatch", sig };
     }
-    log(`${label}: ověřeno, spouštím instalátor.`);
+    if (sig.supported) {
+      const pinCheck = pinning.verifyAgainstPins(sig.thumbprint);
+      if (!pinCheck.trusted) {
+        try { fs.unlinkSync(dest); } catch {}
+        log(`${label}: pin-mismatch (${pinCheck.reason}), instalátor zamítnut.`);
+        return { status: "pin-mismatch", sig, pinCheck };
+      }
+      // Rollback NEROTUJE piny — jen ověří.
+    }
+    log(`${label}: ověřeno (podpis + pin), spouštím instalátor.`);
     updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
 
     if (platform === "win32") {
