@@ -250,6 +250,8 @@ ipcMain.handle("launcher:recheck", () =>
   checkForUpdates({ silent: false, parentWindow: launcherWindow || mainWindow })
 );
 ipcMain.handle("launcher:cancel-download", () => cancelActiveDownload());
+ipcMain.handle("launcher:pins", () => getPinState());
+ipcMain.handle("launcher:pins-reset", () => resetPinState());
 ipcMain.handle("launcher:open-logs", () => {
   try {
     const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");
