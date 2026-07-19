@@ -151,9 +151,10 @@ export function useVoxVoice(channelId: string | null) {
       const raw = await navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: prefs.inputDeviceId ? { exact: prefs.inputDeviceId } : undefined,
-          echoCancellation: prefs.echoCancellation ?? true,
-          noiseSuppression: prefs.noiseSuppression ?? true,
-          autoGainControl: prefs.autoGainControl ?? true,
+          // Force DSP on to prevent echo loop — remote audio picked up by mic must be cancelled.
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         },
         video: false,
       });
