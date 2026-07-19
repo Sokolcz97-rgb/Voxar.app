@@ -551,14 +551,12 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       diagnostics.status = "no-hash";
       diagnostics.lastError = "Manifest neobsahuje SHA-256.";
       log("CHYBA: manifest bez SHA-256, aktualizace zamítnuta.");
-      await dialog.showMessageBox(parentWindow, {
-        type: "error",
+      await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace zamítnuta",
         message: "Chybí kontrolní součet",
         detail:
           "Manifest neobsahuje SHA-256 hash instalátoru, takže integritu nelze ověřit. " +
-          "Aktualizace byla z bezpečnostních důvodů zrušena.",
-      });
+          "Aktualizace byla z bezpečnostních důvodů zrušena." });
       return { status: "no-hash" };
     }
     if (expectedSize && download.size !== expectedSize) {
@@ -566,12 +564,10 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       diagnostics.status = "size-mismatch";
       diagnostics.lastError = `Velikost ${download.size} ≠ ${expectedSize}`;
       log(`CHYBA: nesouhlasí velikost (${download.size} vs ${expectedSize}).`);
-      await dialog.showMessageBox(parentWindow, {
-        type: "error",
+      await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace zamítnuta",
         message: "Neplatná velikost souboru",
-        detail: `Očekáváno ${expectedSize} B, staženo ${download.size} B. Soubor byl smazán.`,
-      });
+        detail: `Očekáváno ${expectedSize} B, staženo ${download.size} B. Soubor byl smazán.` });
       return { status: "size-mismatch" };
     }
     if (download.sha256.toLowerCase() !== expectedHash) {
@@ -579,16 +575,14 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       diagnostics.status = "hash-mismatch";
       diagnostics.lastError = `SHA-256 neshoda (očekáváno ${expectedHash}, získáno ${download.sha256})`;
       log("CHYBA: neshoda SHA-256, instalátor smazán.");
-      await dialog.showMessageBox(parentWindow, {
-        type: "error",
+      await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace zamítnuta",
         message: "Ověření integrity selhalo",
         detail:
           `Kontrolní součet staženého instalátoru neodpovídá manifestu.\n\n` +
           `Očekáváno: ${expectedHash}\n` +
           `Získáno:   ${download.sha256}\n\n` +
-          `Soubor mohl být poškozen při přenosu nebo podvržen. Byl smazán a nespustí se.`,
-      });
+          `Soubor mohl být poškozen při přenosu nebo podvržen. Byl smazán a nespustí se.` });
       return { status: "hash-mismatch" };
     }
 
@@ -616,8 +610,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
         diagnostics.status = "signature-invalid";
         diagnostics.lastError = `Neplatný podpis: ${sig.status}${sig.error ? " — " + sig.error : ""}`;
         log(`CHYBA: neplatný digitální podpis (${sig.status}). Instalátor smazán.`);
-        await dialog.showMessageBox(parentWindow, {
-          type: "error",
+        await notifyUser({ parentWindow, type: "error",
           title: "Aktualizace zamítnuta",
           message: "Ověření podpisu selhalo",
           detail:
@@ -625,8 +618,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
             `Stav: ${sig.status}\n` +
             (sig.statusMessage ? `Zpráva: ${sig.statusMessage}\n` : "") +
             (sig.subject ? `Podepsáno: ${sig.subject}\n` : "") +
-            `\nSoubor byl smazán a nespustí se.`,
-        });
+            `\nSoubor byl smazán a nespustí se.` });
         return { status: "signature-invalid" };
       }
     } else {
@@ -636,16 +628,14 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
         diagnostics.status = "publisher-mismatch";
         diagnostics.lastError = `Vydavatel "${sig.subject}" ≠ očekávaný "${expectedPublisher}"`;
         log(`CHYBA: podpis platný, ale vydavatel neodpovídá. Instalátor smazán.`);
-        await dialog.showMessageBox(parentWindow, {
-          type: "error",
+        await notifyUser({ parentWindow, type: "error",
           title: "Aktualizace zamítnuta",
           message: "Neočekávaný vydavatel",
           detail:
             `Instalátor je podepsaný, ale jiným subjektem, než uvádí manifest.\n\n` +
             `Očekáváno: ${expectedPublisher}\n` +
             `Nalezeno:  ${sig.subject}\n\n` +
-            `Soubor byl smazán a nespustí se.`,
-        });
+            `Soubor byl smazán a nespustí se.` });
         return { status: "publisher-mismatch" };
       }
 
@@ -660,8 +650,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
         diagnostics.status = "pin-mismatch";
         diagnostics.lastError = `Thumbprint ${pinCheck.actual || "?"} není mezi pinovanými certifikáty.`;
         log(`CHYBA: certificate pinning selhal (${pinCheck.reason}). Instalátor smazán.`);
-        await dialog.showMessageBox(parentWindow, {
-          type: "error",
+        await notifyUser({ parentWindow, type: "error",
           title: "Aktualizace zamítnuta",
           message: "Neznámý podepisující certifikát",
           detail:
@@ -669,8 +658,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
             `otisků aplikace.\n\n` +
             `Nalezený otisk: ${pinCheck.actual || "-"}\n` +
             `Pinované otisky: ${(pinCheck.pins || []).join(", ") || "(žádné)"}\n\n` +
-            `Soubor byl smazán a nespustí se.`,
-        });
+            `Soubor byl smazán a nespustí se.` });
         return { status: "pin-mismatch" };
       }
       log(`Pinning OK — ${pinCheck.reason}${pinCheck.reason === "tofu" ? " (uložen nový pin)" : ""}.`);
@@ -718,12 +706,10 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
       }).show();
       setTimeout(() => app.quit(), 800);
     } else {
-      await dialog.showMessageBox(parentWindow, {
-        type: "info",
+      await notifyUser({ parentWindow, type: "info",
         title: "Aktualizace stažena",
         message: "Instalátor byl stažen a ověřen",
-        detail: `${dest}\n\nSHA-256: ${download.sha256}`,
-      });
+        detail: `${dest}\n\nSHA-256: ${download.sha256}` });
       shell.showItemInFolder(dest);
     }
     return { status: "installing", version: remote };
@@ -737,12 +723,10 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     try { progressWin && !progressWin.isDestroyed() && progressWin.close(); } catch {}
     log(canceled ? "Stahování zrušeno uživatelem." : `CHYBA: ${diagnostics.lastError}`);
     if (!silent && !canceled) {
-      await dialog.showMessageBox(parentWindow, {
-        type: "error",
+      await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace selhala",
         message: "Nepodařilo se zkontrolovat aktualizace",
-        detail: msg,
-      });
+        detail: msg });
     }
     return { status: "error", error: String(err.message || err) };
   } finally {
