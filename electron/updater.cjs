@@ -361,7 +361,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
   log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
-    const manifest = await withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
+    const manifest = await withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
     diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
@@ -782,7 +782,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
 
 /** Pouze stáhne manifest — využívá rollback, aby nemusel duplikovat URL. */
 async function fetchManifest() {
-  return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
+  return withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
 }
 
 function getPinState() { return pinning.loadPins(); }
