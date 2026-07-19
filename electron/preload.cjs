@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   // App-level (Electron) preferences — surfaced in the in-app Settings.
   getAppSettings: () => ipcRenderer.invoke("settings:get"),
   setAppSettings: (patch) => ipcRenderer.invoke("settings:set", patch),
+  // Beta unlock: renderer ověří kód přes Supabase RPC a předá výsledek main procesu.
+  unlockBeta: (ok) => ipcRenderer.invoke("settings:unlock-beta", ok === true),
   quitApp: () => ipcRenderer.invoke("app:quit"),
   reloadApp: () => ipcRenderer.invoke("app:reload"),
 });

@@ -482,7 +482,11 @@ app.whenReady().then(async () => {
   runLauncherSequence();
 
   setInterval(() => {
-    checkForUpdates({ silent: true, parentWindow: mainWindow }).catch(() => {});
+    checkForUpdates({
+      silent: true,
+      parentWindow: mainWindow,
+      channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+    }).catch(() => {});
   }, 4 * 60 * 60 * 1000);
 });
 
