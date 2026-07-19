@@ -53,7 +53,7 @@ export default function Download() {
                   <p className="text-sm text-muted-foreground mb-4">{d.note}</p>
                   <Button asChild className="w-full">
                     <a href={d.file} download>
-                      <Download className="w-4 h-4 mr-2" />
+                      <DownloadIcon className="w-4 h-4 mr-2" />
                       Stáhnout
                     </a>
                   </Button>
