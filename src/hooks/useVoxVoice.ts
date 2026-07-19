@@ -106,12 +106,15 @@ export function useVoxVoice(channelId: string | null) {
 
     pc.ontrack = (ev) => {
       const [stream] = ev.streams;
+      // Safety: never play back our own stream (would cause echo).
+      if (remoteUserId === user?.id) return;
       updateRemote(remoteUserId, { stream });
       let audio = document.getElementById(`vox-audio-${remoteUserId}`) as HTMLAudioElement | null;
       if (!audio) {
         audio = document.createElement("audio");
         audio.id = `vox-audio-${remoteUserId}`;
         audio.autoplay = true;
+        (audio as any).playsInline = true;
         document.body.appendChild(audio);
       }
       audio.srcObject = stream;
