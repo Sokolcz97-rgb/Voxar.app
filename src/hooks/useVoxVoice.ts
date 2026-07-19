@@ -159,24 +159,15 @@ export function useVoxVoice(channelId: string | null) {
       });
       rawStreamRef.current = raw;
 
-      // Build processing graph: mic -> gain(dB) -> vadGate -> destination
+      // IMPORTANT: publish the raw mic track directly to peers.
+      // Routing mic through WebAudio (MediaStreamDestination) breaks the
+      // browser's echo canceller (AEC needs a direct mic->PC path), which
+      // causes users to hear themselves back from remote peers.
+      localStreamRef.current = raw;
+
+      // Use WebAudio ONLY for metering + VAD (toggles track.enabled).
       const ctx = await ensureCtx();
       const src = ctx.createMediaStreamSource(raw);
-      const gain = ctx.createGain();
-      gain.gain.value = Math.pow(10, (prefs.inputGainDb ?? 0) / 20);
-      gainNodeRef.current = gain;
-
-      const vad = ctx.createGain();
-      vad.gain.value = 1;
-      vadGainRef.current = vad;
-
-      const dest = ctx.createMediaStreamDestination();
-      src.connect(gain);
-      gain.connect(vad);
-      vad.connect(dest);
-      localStreamRef.current = dest.stream;
-
-      // Metering (from raw mic, before gain, so it always reflects real speech)
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       src.connect(analyser);
@@ -191,7 +182,6 @@ export function useVoxVoice(channelId: string | null) {
       const tick = () => {
         if (!alive) return;
         analyser.getByteTimeDomainData(buf);
-        // RMS in [0..1]
         let sum = 0;
         for (let i = 0; i < buf.length; i++) {
           const v = (buf[i] - 128) / 128;
@@ -200,12 +190,13 @@ export function useVoxVoice(channelId: string | null) {
         const rms = Math.sqrt(sum / buf.length);
         setSelfLevel(rms);
 
-        if (auto) {
+        if (auto && !muted) {
           const now = performance.now();
-          if (rms > thresholdLin) openUntil = now + 250; // 250ms hangover
-          const target = now < openUntil ? 1 : 0;
-          // Smooth fade to avoid clicks
-          vad.gain.setTargetAtTime(target, ctx.currentTime, 0.02);
+          if (rms > thresholdLin) openUntil = now + 300;
+          const shouldOpen = now < openUntil;
+          raw.getAudioTracks().forEach((t) => {
+            if (t.enabled !== shouldOpen) t.enabled = shouldOpen;
+          });
         }
         raf = requestAnimationFrame(tick);
       };
