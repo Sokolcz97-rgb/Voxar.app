@@ -21,7 +21,7 @@ export default function Download() {
       filename: "StudioVoxarioSetup.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
-      size: "~82 MB",
+      size: "~77 MB · v1.2.0",
       primary: true,
     },
     {
@@ -30,7 +30,8 @@ export default function Download() {
       filename: "StudioVoxario-win32-x64.zip",
       note: "Bez instalace – rozbalte a spusťte StudioVoxario.exe.",
       icon: "📦",
-      size: "~114 MB",
+      size: "~106 MB · v1.2.0",
+
     },
     {
       os: "Linux (x64)",

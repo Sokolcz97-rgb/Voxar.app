@@ -1,23 +1,34 @@
 {
-  "version": "1.1.0",
-  "notes": "Přidán automatický rollback: launcher detekuje nezdařený start a nabídne návrat na poslední funkční verzi z manifest.history. Součástí je ověření SHA-256 i Authenticode podpisu i pro rollback installer.",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
-  "sha256": "8da783dbe129565c19aa5da4634538c3d3d5f684e7567bf20030f5dfa21378ff",
-  "size": 85674137,
+  "version": "1.2.0",
+  "notes": "Nová verze s progresivním panelem stahování (procenta, rychlost, ETA, zrušení), certificate pinningem podpisů (TOFU + bezpečná rotace), automatickým rollbackem, retry s exponenciálním backoffem, ověřením SHA-256 i Authenticode a rozšířenou diagnostikou v launcheru.",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
+  "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
+  "size": 81143500,
   "publisher": "StudioVoxario",
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
-      "sha256": "8da783dbe129565c19aa5da4634538c3d3d5f684e7567bf20030f5dfa21378ff",
-      "size": 85674137,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
+      "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
+      "size": 81143500,
       "publisher": "StudioVoxario"
     }
   },
   "history": {
+    "1.2.0": {
+      "notes": "Aktuální verze — progress panel, pinning, rollback, retry, SHA-256 + Authenticode.",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
+          "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
+          "size": 81143500,
+          "publisher": "StudioVoxario"
+        }
+      }
+    },
     "1.1.0": {
-      "notes": "Baseline pro rollback — poslední známá funkční verze.",
+      "notes": "Předchozí verze s rollback baseline.",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
