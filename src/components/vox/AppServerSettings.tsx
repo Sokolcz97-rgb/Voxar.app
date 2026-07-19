@@ -42,6 +42,37 @@ export function AppServerSettings({
   const [invite, setInvite] = useState(inviteCode);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onIconFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Neplatný soubor", description: "Vyber prosím obrázek (PNG, JPG, WEBP).", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Soubor je příliš velký", description: "Maximum je 5 MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `${user.id}/guild-icons/${guild.id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+      cacheControl: "3600", upsert: true, contentType: file.type,
+    });
+    if (upErr) {
+      setUploading(false);
+      toast({ title: "Nahrání selhalo", description: upErr.message, variant: "destructive" });
+      return;
+    }
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    setIconUrl(data.publicUrl);
+    setUploading(false);
+    toast({ title: "Ikona nahrána", description: "Nezapomeň uložit změny." });
+  };
 
   useEffect(() => {
     setName(guild.name);
