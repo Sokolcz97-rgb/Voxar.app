@@ -171,6 +171,73 @@
       logsEl.scrollTop = logsEl.scrollHeight;
     });
 
+    // ---- Progress panel ----
+    const progressPanel = $('progressPanel');
+    const indetBar = $('indetBar');
+    const progLabel = $('progLabel');
+    const progPct = $('progPct');
+    const progFill = $('progFill');
+    const progBytes = $('progBytes');
+    const progSpeed = $('progSpeed');
+    const progEta = $('progEta');
+    const cancelBtn = $('cancelBtn');
+
+    function fmtBytes(n) {
+      if (!n && n !== 0) return '?';
+      const u = ['B','KB','MB','GB']; let i = 0; let v = n;
+      while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+      return v.toFixed(v >= 10 ? 0 : 1) + ' ' + u[i];
+    }
+    function fmtEta(sec) {
+      if (sec == null || !isFinite(sec) || sec < 0) return '—';
+      sec = Math.round(sec);
+      if (sec < 60) return sec + ' s';
+      const m = Math.floor(sec / 60), s = sec % 60;
+      if (m < 60) return m + ' m ' + s + ' s';
+      const h = Math.floor(m / 60); return h + ' h ' + (m % 60) + ' m';
+    }
+
+    ipcRenderer.on('launcher:progress', (_e, p) => {
+      if (!p || !p.phase) return;
+      progressPanel.style.display = 'block';
+      indetBar.style.display = 'none';
+      const pct = Math.max(0, Math.min(1, Number(p.pct) || 0));
+      progLabel.textContent = p.label || p.phase;
+      progFill.style.width = (pct * 100).toFixed(1) + '%';
+
+      if (p.phase === 'download') {
+        progPct.textContent = Math.round(pct * 100) + ' %';
+        progBytes.textContent = fmtBytes(p.received) + ' / ' + fmtBytes(p.total || 0);
+        progSpeed.textContent = fmtBytes(p.speedBps || 0) + '/s';
+        progEta.textContent = 'ETA ' + fmtEta(p.etaSec);
+        cancelBtn.style.display = '';
+        cancelBtn.disabled = false;
+      } else if (p.phase === 'installing') {
+        progPct.textContent = '…';
+        progFill.style.width = '100%';
+        progBytes.textContent = 'instalace probíhá';
+        progSpeed.textContent = '';
+        progEta.textContent = '';
+        cancelBtn.style.display = 'none';
+      } else if (p.phase === 'canceled') {
+        progPct.textContent = 'zrušeno';
+        progBytes.textContent = '—'; progSpeed.textContent = ''; progEta.textContent = '';
+        cancelBtn.style.display = 'none';
+        setTimeout(() => { progressPanel.style.display = 'none'; indetBar.style.display = ''; }, 1200);
+      } else if (p.phase === 'error') {
+        progPct.textContent = 'chyba';
+        cancelBtn.style.display = 'none';
+      }
+    });
+
+    cancelBtn.addEventListener('click', async () => {
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = 'Rušení…';
+      const ok = await ipcRenderer.invoke('launcher:cancel-download');
+      toast(ok ? 'Stahování zrušeno' : 'Není co rušit');
+      cancelBtn.textContent = 'Zrušit';
+    });
+
     ipcRenderer.invoke('launcher:version').then(v => { verEl.textContent = 'Launcher v' + v; });
 
     function toast(msg) {
