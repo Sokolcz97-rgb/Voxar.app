@@ -39,9 +39,9 @@ export default function AppShell() {
   // In-app view: main content, user settings, or server settings
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
 
-  useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [loading, user, navigate]);
+  // Note: do NOT redirect to /auth — that would kick the user out of the
+  // Discord-like app shell into the marketing site, which confused visitors.
+  // We render an in-app login gate below when !user.
 
   useEffect(() => {
     if (!user) return;
