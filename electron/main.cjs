@@ -12,7 +12,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics, installVerified, fetchManifest } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
@@ -83,8 +83,6 @@ function createTray() {
       label: "Otevřít web v prohlížeči",
       click: () => shell.openExternal(APP_URL),
     },
-    { type: "separator" },
-    {
     { type: "separator" },
     {
       label: "Vrátit na poslední funkční verzi…",
@@ -251,6 +249,7 @@ ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
 ipcMain.handle("launcher:recheck", () =>
   checkForUpdates({ silent: false, parentWindow: launcherWindow || mainWindow })
 );
+ipcMain.handle("launcher:cancel-download", () => cancelActiveDownload());
 ipcMain.handle("launcher:open-logs", () => {
   try {
     const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");

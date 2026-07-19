@@ -32,6 +32,9 @@ function fetchJson(url) {
   });
 }
 
+// Držíme referenci na běžící download request, ať ho lze zvenčí zrušit.
+let activeDownload = null;
+
 function downloadFile(url, dest, onProgress) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith("https") ? https : http;
@@ -42,22 +45,55 @@ function downloadFile(url, dest, onProgress) {
       if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
       const total = parseInt(res.headers["content-length"] || "0", 10);
       let received = 0;
+      const startTs = Date.now();
+      let lastEmit = 0;
       const hash = crypto.createHash("sha256");
       const file = fs.createWriteStream(dest);
+      activeDownload = { req, dest };
       res.on("data", (chunk) => {
         received += chunk.length;
         hash.update(chunk);
-        if (onProgress && total) onProgress(received / total);
+        const now = Date.now();
+        if (onProgress && (now - lastEmit > 200 || (total && received === total))) {
+          lastEmit = now;
+          const elapsed = (now - startTs) / 1000;
+          const speedBps = elapsed > 0 ? received / elapsed : 0;
+          const etaSec = total && speedBps > 0 ? (total - received) / speedBps : null;
+          try {
+            onProgress({
+              received,
+              total,
+              pct: total ? received / total : 0,
+              speedBps,
+              etaSec,
+            });
+          } catch {}
+        }
       });
       res.pipe(file);
       file.on("finish", () =>
-        file.close(() => resolve({ path: dest, sha256: hash.digest("hex"), size: received }))
+        file.close(() => {
+          if (activeDownload && activeDownload.req === req) activeDownload = null;
+          resolve({ path: dest, sha256: hash.digest("hex"), size: received });
+        })
       );
-      file.on("error", reject);
+      file.on("error", (e) => { activeDownload = null; reject(e); });
+      res.on("error", (e) => { activeDownload = null; reject(e); });
     });
-    req.on("error", reject);
+    req.on("error", (e) => { activeDownload = null; reject(e); });
   });
 }
+
+/** Zruší běžící stahování — jádro pro tlačítko „Zrušit" v launcheru. */
+function cancelActiveDownload() {
+  if (!activeDownload) return false;
+  const { req, dest } = activeDownload;
+  activeDownload = null;
+  try { req.destroy(new Error("canceled")); } catch {}
+  setTimeout(() => { try { fs.unlinkSync(dest); } catch {} }, 50);
+  return true;
+}
+
 
 // -------- Authenticode / codesign verification --------
 // Windows: PowerShell Get-AuthenticodeSignature. macOS: codesign. Linux: skipped.
@@ -165,8 +201,34 @@ const diagnostics = {
   retryNextDelayMs: null,
   retryNextAt: null,
   retryPhase: null, // "manifest" | "download"
+  // Živý průběh stahování / instalace pro launcher UI
+  progress: {
+    phase: null,          // "download" | "verify" | "signature" | "installing" | "done" | "canceled"
+    label: null,
+    received: 0,
+    total: 0,
+    pct: 0,
+    speedBps: 0,
+    etaSec: null,
+    canceled: false,
+    startedAt: null,
+    updatedAt: null,
+  },
   logs: [],
 };
+
+function broadcast(channel, payload) {
+  try {
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) w.webContents.send(channel, payload);
+    });
+  } catch {}
+}
+
+function updateProgress(patch) {
+  diagnostics.progress = { ...diagnostics.progress, ...patch, updatedAt: new Date().toISOString() };
+  broadcast("launcher:progress", diagnostics.progress);
+}
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -338,9 +400,19 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
     log(`Stahování zahájeno → ${dest}`);
     diagnostics.status = "downloading";
+    updateProgress({
+      phase: "download", label: `Stahuji StudioVoxario ${remote}`,
+      received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
+      canceled: false, startedAt: new Date().toISOString(),
+    });
 
-    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
-      const pct = Math.round(p * 100);
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
+      updateProgress({
+        phase: "download", label: `Stahuji StudioVoxario ${remote}`,
+        received: s.received, total: s.total, pct: s.pct,
+        speedBps: s.speedBps, etaSec: s.etaSec,
+      });
+      const pct = Math.round(s.pct * 100);
       progressWin.webContents
         .executeJavaScript(
           `document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`
@@ -454,6 +526,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     }
 
     diagnostics.status = "installing";
+    updateProgress({ phase: "installing", label: `Spouštím instalátor ${remote}`, pct: 1 });
     log("Integrita i podpis OK, spouštím instalátor.");
 
     if (platform === "win32") {
@@ -475,15 +548,19 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     return { status: "installing", version: remote };
   } catch (err) {
     console.error("update check failed", err);
-    diagnostics.status = "error";
-    diagnostics.lastError = String(err.message || err);
-    log(`CHYBA: ${diagnostics.lastError}`);
-    if (!silent) {
+    const msg = String(err.message || err);
+    const canceled = /canceled/i.test(msg);
+    diagnostics.status = canceled ? "canceled" : "error";
+    diagnostics.lastError = canceled ? "Zrušeno uživatelem" : msg;
+    updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
+    try { progressWin && !progressWin.isDestroyed() && progressWin.close(); } catch {}
+    log(canceled ? "Stahování zrušeno uživatelem." : `CHYBA: ${diagnostics.lastError}`);
+    if (!silent && !canceled) {
       await dialog.showMessageBox(parentWindow, {
         type: "error",
         title: "Aktualizace selhala",
         message: "Nepodařilo se zkontrolovat aktualizace",
-        detail: String(err.message || err),
+        detail: msg,
       });
     }
     return { status: "error", error: String(err.message || err) };
@@ -523,8 +600,18 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
   progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
   try {
-    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
-      const pct = Math.round(p * 100);
+    updateProgress({
+      phase: "download", label: `${label} — stahuji ${version || ""}`,
+      received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
+      canceled: false, startedAt: new Date().toISOString(),
+    });
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
+      updateProgress({
+        phase: "download", label: `${label} — stahuji ${version || ""}`,
+        received: s.received, total: s.total, pct: s.pct,
+        speedBps: s.speedBps, etaSec: s.etaSec,
+      });
+      const pct = Math.round(s.pct * 100);
       progressWin.webContents
         .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
         .catch(() => {});
@@ -546,6 +633,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       return { status: "publisher-mismatch", sig };
     }
     log(`${label}: ověřeno, spouštím instalátor.`);
+    updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
 
     if (platform === "win32") {
       await shell.openPath(dest);
@@ -557,8 +645,11 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     return { status: "installing", version, path: dest };
   } catch (err) {
     try { progressWin.close(); } catch {}
-    log(`${label}: chyba — ${err.message || err}`);
-    return { status: "error", error: String(err.message || err) };
+    const msg = String(err.message || err);
+    const canceled = /canceled/i.test(msg);
+    updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
+    log(`${label}: ${canceled ? "zrušeno uživatelem" : "chyba — " + msg}`);
+    return { status: canceled ? "canceled" : "error", error: msg };
   }
 }
 
@@ -567,5 +658,5 @@ async function fetchManifest() {
   return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
 }
 
-module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest };
+module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload };
 
