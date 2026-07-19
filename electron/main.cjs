@@ -220,13 +220,45 @@ ipcMain.handle("app:check-updates", () =>
   checkForUpdates({ silent: false, parentWindow: mainWindow })
 );
 ipcMain.handle("launcher:version", () => app.getVersion());
+ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
+ipcMain.handle("launcher:recheck", () =>
+  checkForUpdates({ silent: false, parentWindow: launcherWindow || mainWindow })
+);
+ipcMain.handle("launcher:open-logs", () => {
+  try {
+    const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");
+    fs.writeFileSync(p, JSON.stringify(getDiagnostics(), null, 2));
+    shell.showItemInFolder(p);
+    return p;
+  } catch (e) {
+    return null;
+  }
+});
+ipcMain.handle("launcher:continue", () => {
+  if (!mainWindow) {
+    createMainWindow();
+    createTray();
+    applyAutoStart(settings.autoStart);
+    mainWindow.webContents.once("did-finish-load", () => {
+      launcherWindow?.close();
+      launcherWindow = null;
+      if (!settings.startMinimized) mainWindow?.show();
+    });
+  } else {
+    launcherWindow?.close();
+    launcherWindow = null;
+    showMain();
+  }
+});
 
 function createLauncher() {
   launcherWindow = new BrowserWindow({
-    width: 420,
-    height: 300,
+    width: 460,
+    height: 340,
+    minWidth: 460,
+    minHeight: 340,
     frame: false,
-    resizable: false,
+    resizable: true,
     backgroundColor: "#020617",
     show: true,
     webPreferences: {
@@ -237,6 +269,7 @@ function createLauncher() {
   launcherWindow.loadFile(path.join(__dirname, "launcher.html"));
   launcherWindow.on("closed", () => (launcherWindow = null));
 }
+
 
 function setLauncherStatus(msg) {
   try { launcherWindow?.webContents.send("launcher:status", msg); } catch {}
