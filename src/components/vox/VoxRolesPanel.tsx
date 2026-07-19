@@ -212,6 +212,32 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   if (loading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Načítám role…</div>;
 
   return (
+    <div className="space-y-4">
+      {canManage && (
+        <div className={cn(
+          "flex items-center justify-between rounded-md border px-3 py-2 text-sm transition",
+          isDirty ? "border-primary/60 bg-primary/10" : "border-border/40 bg-secondary/30"
+        )}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={cn("w-2 h-2 rounded-full", isDirty ? "bg-primary animate-pulse" : "bg-emerald-500")} />
+            <span className="truncate">
+              {isDirty
+                ? `Máš neuložené změny (${dirtyIds.size} ${dirtyIds.size === 1 ? "role" : "rolí"}).`
+                : "Vše je uloženo — změny se v chatu i seznamu členů projeví okamžitě."}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="ghost" onClick={load} disabled={saving} className="h-8">
+              Zahodit
+            </Button>
+            <Button size="sm" onClick={saveAll} disabled={!isDirty || saving} className="h-8">
+              {saving ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+              Uložit nastavení
+            </Button>
+          </div>
+        </div>
+      )}
+
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4">
       {/* Seznam rolí */}
       <div className="space-y-1">
