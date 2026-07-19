@@ -110,9 +110,32 @@
     <div class="logo">SV</div>
     <h1>StudioVoxario</h1>
     <div class="status" id="status">Spouštění…</div>
-    <div class="bar"><div class="fill"></div></div>
+
+    <!-- Indeterminate bar (běží před známým průběhem) -->
+    <div class="bar" id="indetBar"><div class="fill"></div></div>
+
+    <!-- Determinate progress panel (aktivní při stahování / instalaci) -->
+    <div id="progressPanel" style="display:none;width:320px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#94a3b8;margin-bottom:4px;">
+        <span id="progLabel">Stahování…</span>
+        <span id="progPct" style="color:#22d3ee;font-weight:600;">0 %</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">
+        <div id="progFill" style="height:100%;width:0%;background:linear-gradient(90deg,#06b6d4,#22d3ee);transition:width .2s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#64748b;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;">
+        <span id="progBytes">0 / ? B</span>
+        <span id="progSpeed">— B/s</span>
+        <span id="progEta">ETA —</span>
+      </div>
+      <div style="margin-top:10px;text-align:center;">
+        <button id="cancelBtn" class="btn" style="font-size:11px;">Zrušit</button>
+      </div>
+    </div>
+
     <div class="ver" id="ver"></div>
   </div>
+
 
   <!-- Diagnostics -->
   <div class="diag">
