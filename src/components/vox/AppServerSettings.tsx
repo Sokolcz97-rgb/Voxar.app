@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2 } from "lucide-react";
+import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxGuild } from "@/components/vox/GuildRail";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
@@ -42,6 +42,37 @@ export function AppServerSettings({
   const [invite, setInvite] = useState(inviteCode);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onIconFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Neplatný soubor", description: "Vyber prosím obrázek (PNG, JPG, WEBP).", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Soubor je příliš velký", description: "Maximum je 5 MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `${user.id}/guild-icons/${guild.id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+      cacheControl: "3600", upsert: true, contentType: file.type,
+    });
+    if (upErr) {
+      setUploading(false);
+      toast({ title: "Nahrání selhalo", description: upErr.message, variant: "destructive" });
+      return;
+    }
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    setIconUrl(data.publicUrl);
+    setUploading(false);
+    toast({ title: "Ikona nahrána", description: "Nezapomeň uložit změny." });
+  };
 
   useEffect(() => {
     setName(guild.name);
@@ -166,14 +197,26 @@ export function AppServerSettings({
                     ? <img src={iconUrl} alt="" className="w-full h-full object-cover" />
                     : name.slice(0, 2).toUpperCase()}
                 </div>
-                <div className="text-sm text-muted-foreground">Profil serveru — jméno a ikona jsou viditelné všem členům.</div>
+                <div className="flex-1 space-y-2">
+                  <div className="text-sm text-muted-foreground">Ikona serveru — viditelná všem členům. PNG, JPG nebo WEBP do 5 MB.</div>
+                  <div className="flex flex-wrap gap-2">
+                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onIconFileSelected} />
+                    <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                      {uploading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                      {uploading ? "Nahrávám…" : "Nahrát obrázek"}
+                    </Button>
+                    {iconUrl && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setIconUrl("")}>Odebrat</Button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
                 <Label>Název serveru</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" />
               </div>
               <div>
-                <Label>URL ikony serveru</Label>
+                <Label>Nebo URL ikony (nepovinné)</Label>
                 <Input value={iconUrl} onChange={(e) => setIconUrl(e.target.value)} placeholder="https://…" className="mt-1.5" />
               </div>
               <div>

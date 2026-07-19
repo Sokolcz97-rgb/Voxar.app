@@ -12,6 +12,7 @@ import { VoiceView } from "@/components/vox/VoiceView";
 import { CreateGuildDialog, JoinGuildDialog } from "@/components/vox/CreateGuildDialog";
 import { AppUserSettings } from "@/components/vox/AppUserSettings";
 import { AppServerSettings } from "@/components/vox/AppServerSettings";
+import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
@@ -163,18 +164,29 @@ export default function AppShell() {
 
   useEffect(() => { void refreshVoice(); }, [channels, members]);
 
-  const createChannel = async (type: "text" | "voice") => {
+  const [createChannelOpen, setCreateChannelOpen] = useState(false);
+  const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
+
+  const openCreateChannel = (type: "text" | "voice") => {
     if (!activeGuildId) return;
-    const name = window.prompt(`Název ${type === "text" ? "textového" : "hlasového"} kanálu:`);
-    if (!name) return;
+    setCreateChannelType(type);
+    setCreateChannelOpen(true);
+  };
+
+  const createChannel = async (type: "text" | "voice", name: string) => {
+    if (!activeGuildId) return;
     const { error } = await supabase.from("vox_channels").insert({
       guild_id: activeGuildId,
-      name: name.trim().toLowerCase().replace(/\s+/g, "-"),
+      name: name.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
       type,
       category: type === "text" ? "Textové kanály" : "Hlasové kanály",
       position: channels.length,
     });
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    if (error) {
+      toast({ title: "Nelze vytvořit kanál", description: error.message, variant: "destructive" });
+      throw error;
+    }
+    toast({ title: "Kanál vytvořen" });
   };
 
   if (loading) {
@@ -218,7 +230,7 @@ export default function AppShell() {
               channels={channels}
               activeId={activeChannel?.id ?? null}
               onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
-              onCreateChannel={createChannel}
+              onCreateChannel={openCreateChannel}
               isAdmin={isAdmin}
               voiceParticipants={voiceParticipants}
               onOpenServerSettings={() => setView("server-settings")}
@@ -296,6 +308,12 @@ export default function AppShell() {
 
       <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
       <JoinGuildDialog open={joinOpen} onOpenChange={setJoinOpen} onJoined={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
+      <CreateChannelDialog
+        open={createChannelOpen}
+        initialType={createChannelType}
+        onOpenChange={setCreateChannelOpen}
+        onCreate={createChannel}
+      />
     </div>
   );
 }
