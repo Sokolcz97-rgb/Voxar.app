@@ -268,19 +268,22 @@ async function executeTool(
           .eq("user_id", userId);
         return { ...profile, roles: (roles ?? []).map((r: any) => r.role) };
       }
+      case "contact_admin":
       case "contact_owner": {
         const subject = String(args.subject ?? "Eskalace od AI asistenta").slice(0, 200);
         const description = String(args.description ?? "").slice(0, 4000);
         const priority = ["low", "medium", "high", "urgent"].includes(args.priority)
           ? args.priority
           : "high";
-        // Find an owner/admin to assign
+        // Find an owner/admin to assign / DM
         const { data: admin } = await serviceClient
           .from("user_roles")
           .select("user_id")
           .eq("role", "admin")
           .limit(1)
           .maybeSingle();
+        const adminId = (admin as any)?.user_id ?? null;
+
         const { data: ticket, error } = await serviceClient
           .from("tickets")
           .insert({
@@ -289,15 +292,61 @@ async function executeTool(
             description: `🤖 Tento ticket byl založen automaticky AI asistentem NEON.\n\n${description}`,
             priority,
             category: "technical",
-            assigned_to: admin?.user_id ?? null,
+            assigned_to: adminId,
           })
           .select("id")
           .single();
         if (error) return { ok: false, error: error.message };
+
+        // Fire-and-forget DM to the admin so they see it instantly in the app.
+        let dmSent = false;
+        if (adminId && adminId !== userId) {
+          try {
+            const [a, b] = userId < adminId ? [userId, adminId] : [adminId, userId];
+            let convId: string | null = null;
+            const { data: existing } = await serviceClient
+              .from("conversations")
+              .select("id")
+              .eq("user_a", a)
+              .eq("user_b", b)
+              .maybeSingle();
+            if ((existing as any)?.id) {
+              convId = (existing as any).id;
+            } else {
+              const { data: created } = await serviceClient
+                .from("conversations")
+                .insert({ user_a: a, user_b: b })
+                .select("id")
+                .single();
+              convId = (created as any)?.id ?? null;
+            }
+            if (convId) {
+              const body =
+                `🤖 **NEON AI eskalace**\n\n` +
+                `Uživatel žádá o pomoc skutečného pracovníka.\n\n` +
+                `**Předmět:** ${subject}\n` +
+                `**Priorita:** ${priority}\n` +
+                `**Ticket:** #${String((ticket as any).id).slice(0, 8)}\n\n` +
+                `${description}`;
+              await serviceClient.from("messages").insert({
+                conversation_id: convId,
+                sender_id: userId,
+                content: body,
+              });
+              dmSent = true;
+            }
+          } catch (e) {
+            console.error("contact_admin DM failed", e);
+          }
+        }
+
         return {
           ok: true,
-          ticket_id: ticket.id,
-          message: "Ticket s vysokou prioritou byl založen a přiřazen majiteli.",
+          ticket_id: (ticket as any).id,
+          dm_sent: dmSent,
+          message: dmSent
+            ? "Ticket založen a soukromá zpráva odeslána adminovi."
+            : "Ticket založen. DM se nepodařilo odeslat, admin bude kontaktován přes ticket.",
         };
       }
       default:
