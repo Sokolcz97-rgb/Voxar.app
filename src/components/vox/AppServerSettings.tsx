@@ -205,6 +205,7 @@ export function AppServerSettings({
     { key: "roles", label: "Role & oprávnění", icon: ShieldCheck, adminOnly: true },
     { key: "channels", label: "Kanály", icon: Hash, adminOnly: true },
     { key: "members", label: "Členové", icon: Users },
+    { key: "bans", label: "Bany", icon: Ban, adminOnly: true },
     { key: "danger", label: isOwner ? "Nebezpečná zóna" : "Opustit server", icon: Trash2 },
   ];
 
