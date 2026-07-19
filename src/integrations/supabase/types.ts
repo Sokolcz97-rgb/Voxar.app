@@ -2775,6 +2775,7 @@ export type Database = {
           color: string
           created_at: string
           guild_id: string
+          hoist: boolean
           icon: string | null
           id: string
           is_default: boolean
@@ -2788,6 +2789,7 @@ export type Database = {
           color?: string
           created_at?: string
           guild_id: string
+          hoist?: boolean
           icon?: string | null
           id?: string
           is_default?: boolean
@@ -2801,6 +2803,7 @@ export type Database = {
           color?: string
           created_at?: string
           guild_id?: string
+          hoist?: boolean
           icon?: string | null
           id?: string
           is_default?: boolean

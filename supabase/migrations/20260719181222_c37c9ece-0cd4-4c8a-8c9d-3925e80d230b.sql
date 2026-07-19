@@ -1,0 +1,1 @@
+ALTER TABLE public.vox_roles ADD COLUMN IF NOT EXISTS hoist boolean NOT NULL DEFAULT false;
