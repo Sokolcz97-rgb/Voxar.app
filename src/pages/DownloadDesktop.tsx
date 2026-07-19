@@ -54,7 +54,8 @@ export default function Download() {
                 <div className="text-4xl">{d.icon}</div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{d.note}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
+                  <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
                   <Button asChild className="w-full">
                     <a href={d.file} download>
                       <DownloadIcon className="w-4 h-4 mr-2" />
