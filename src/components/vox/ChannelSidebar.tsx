@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check } from "lucide-react";
+import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
