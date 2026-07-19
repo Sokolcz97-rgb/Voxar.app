@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+
 import { toast } from "@/hooks/use-toast";
 import { GuildRail, type VoxGuild } from "@/components/vox/GuildRail";
 import { ChannelSidebar, type VoxChannel } from "@/components/vox/ChannelSidebar";
@@ -14,13 +14,14 @@ import { AppUserSettings } from "@/components/vox/AppUserSettings";
 import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
+import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
 export default function AppShell() {
   useVoxHeartbeat("online");
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  
 
   const [guilds, setGuilds] = useState<VoxGuild[]>([]);
   const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
@@ -38,9 +39,9 @@ export default function AppShell() {
   // In-app view: main content, user settings, or server settings
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
 
-  useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [loading, user, navigate]);
+  // Note: do NOT redirect to /auth — that would kick the user out of the
+  // Discord-like app shell into the marketing site, which confused visitors.
+  // We render an in-app login gate below when !user.
 
   useEffect(() => {
     if (!user) return;
@@ -197,7 +198,7 @@ export default function AppShell() {
   if (loading) {
     return <div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
-  if (!user) return null;
+  if (!user) return <AppAuthGate />;
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
 
