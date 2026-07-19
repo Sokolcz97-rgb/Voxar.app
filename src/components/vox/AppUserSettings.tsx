@@ -346,6 +346,8 @@ export function AppUserSettings({ onClose }: Props) {
             </div>
           )}
 
+          {tab === "app" && <AppSettingsPanel />}
+
           {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
       </div>
