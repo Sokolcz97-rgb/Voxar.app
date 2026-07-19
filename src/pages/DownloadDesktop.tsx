@@ -2,6 +2,8 @@ import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, Refresh
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import winAsset from "@/assets/downloads/windows.asset.json";
+import linuxAsset from "@/assets/downloads/linux.asset.json";
 
 const features = [
   { icon: Bell, title: "Desktop notifikace", desc: "Zprávy, zakázky a stream alerty přímo v systému." },
