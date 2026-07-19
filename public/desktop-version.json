@@ -1,27 +1,40 @@
 {
-  "version": "1.3.1-alpha",
+  "version": "1.3.2-alpha",
   "channel": "alpha",
-  "notes": "Alpha 1.3.1 — obnovena originální neon-V ikona; instalátor v alfě není code-signed, proto povoleno allowUnsigned (integrita je stále ověřena SHA-256).",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
-  "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
-  "size": 85783732,
+  "notes": "Alpha 1.3.2 — nabídka aktualizace, info a chybové hlášky se zobrazují přímo v launcheru (žádný OS pop-up). Integrita ověřena SHA-256, allowUnsigned pro alfa build.",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
+  "sha256": "705037f6f4e8e5167e73641694da22a8241825f0eb76c3c6cdca34db94e7269f",
+  "size": 81271339,
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
-      "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
-      "size": 85783732,
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
+      "sha256": "705037f6f4e8e5167e73641694da22a8241825f0eb76c3c6cdca34db94e7269f",
+      "size": 81271339,
       "publisher": "StudioVoxario",
       "allowUnsigned": true
     }
   },
   "history": {
+    "1.3.2-alpha": {
+      "notes": "Update prompt, informační a chybové hlášky přesunuty přímo do launcheru — už žádné systémové dialogy.",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
+          "sha256": "705037f6f4e8e5167e73641694da22a8241825f0eb76c3c6cdca34db94e7269f",
+          "size": 81271339,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
     "1.3.1-alpha": {
       "notes": "Obnovena neon-V ikona; allowUnsigned pro alfa (bez code-sign certifikátu).",
       "platforms": {
+
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
           "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
