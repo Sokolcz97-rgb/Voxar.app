@@ -25,15 +25,18 @@ const VOICE_PREF_KEY = "sv.voicePrefs";
 type VoicePrefs = {
   inputDeviceId?: string;
   outputDeviceId?: string;
-  inputVolume: number;
-  outputVolume: number;
+  inputGainDb: number;         // -30..+20 dB
+  outputVolume: number;         // 0..200 %
+  autoDetect: boolean;          // Automatická detekce hlasu (VAD)
+  vadThresholdDb: number;       // -80..-10 dB
   noiseSuppression: boolean;
   echoCancellation: boolean;
   autoGainControl: boolean;
   pushToTalk: boolean;
 };
 const defaultVoice: VoicePrefs = {
-  inputVolume: 100, outputVolume: 100,
+  inputGainDb: 0, outputVolume: 100,
+  autoDetect: true, vadThresholdDb: -50,
   noiseSuppression: true, echoCancellation: true, autoGainControl: true, pushToTalk: false,
 };
 
