@@ -142,9 +142,9 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "contact_owner",
+      name: "contact_admin",
       description:
-        "ESKALACE: Založí ticket s vysokou prioritou pro majitele/admina. Použij JEN pro skutečné technické problémy, které neumíš sám vyřešit.",
+        "ESKALACE: Založí ticket a rovnou pošle majiteli/adminovi soukromou zprávu v aplikaci (DM) s kontextem konverzace. Použij pro reálné technické problémy, nebo když uživatel výslovně chce mluvit se skutečným pracovníkem.",
       parameters: {
         type: "object",
         properties: {
