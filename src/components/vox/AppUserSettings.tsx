@@ -216,19 +216,21 @@ export function AppUserSettings({ onClose }: Props) {
 
           {tab === "profile" && (
             <div className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-2xl font-bold">
-                  {avatarUrl
-                    ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                    : (displayName || user?.email || "?").slice(0, 2).toUpperCase()}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Avatar spravuj v <button className="underline hover:text-foreground" onClick={onClose}>uživatelském profilu</button>.
-                </div>
-              </div>
+              {user && (
+                <AvatarUpload
+                  userId={user.id}
+                  avatarUrl={avatarUrl}
+                  fallback={(displayName || username || user?.email || "?").slice(0, 2).toUpperCase()}
+                  onChange={setAvatarUrl}
+                />
+              )}
               <div>
                 <Label>Zobrazované jméno</Label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Uživatelské jméno</Label>
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} className="mt-1.5" />
               </div>
               <div>
                 <Label>Bio</Label>
@@ -240,6 +242,21 @@ export function AppUserSettings({ onClose }: Props) {
               </div>
               <Button onClick={saveProfile} disabled={savingProfile}>
                 {savingProfile ? "Ukládám…" : "Uložit změny"}
+              </Button>
+            </div>
+          )}
+
+          {tab === "connections" && (
+            <div className="space-y-5">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Radio className="w-4 h-4 text-primary" />
+                Propojení streamovacích účtů — použije se v přehledu i pro upozornění na živé vysílání.
+              </p>
+              <SocialHandleField id="tw" label="Twitch" color="#9146FF" value={twitch} onChange={setTwitch} platform="twitch" />
+              <SocialHandleField id="yt" label="YouTube" color="#FF0033" value={youtube} onChange={setYoutube} platform="youtube" />
+              <SocialHandleField id="ki" label="Kick" color="#53FC18" value={kick} onChange={setKick} platform="kick" />
+              <Button onClick={saveConnections} disabled={savingConn}>
+                {savingConn ? "Ukládám…" : "Uložit propojení"}
               </Button>
             </div>
           )}
