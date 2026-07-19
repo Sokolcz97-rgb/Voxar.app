@@ -420,5 +420,6 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
         )}
       </div>
     </div>
+    </div>
   );
 }
