@@ -1,24 +1,38 @@
 {
-  "version": "1.3.0-alpha",
+  "version": "1.3.1-alpha",
   "channel": "alpha",
-  "notes": "Alpha 1.3.0 — nativní Discord/TeamSpeak UI (/app) s GuildRail, kanály, chatem, WebRTC voice mesh a presence. Electron shell nyní bootuje rovnou do desktopové aplikace, ne do webu.",
-  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
-  "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
-  "size": 280312353,
+  "notes": "Alpha 1.3.1 — obnovena originální neon-V ikona; instalátor v alfě není code-signed, proto povoleno allowUnsigned (integrita je stále ověřena SHA-256).",
+  "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
+  "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
+  "size": 85783732,
   "publisher": "StudioVoxario",
+  "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
   "platforms": {
     "win32": {
-      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
-      "sha256": "0c859c95b47f8cba33b10ec186663025b8533b05661f09dbff83390c6a484c37",
-      "size": 280312353,
-      "publisher": "StudioVoxario"
+      "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
+      "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
+      "size": 85783732,
+      "publisher": "StudioVoxario",
+      "allowUnsigned": true
     }
   },
   "history": {
+    "1.3.1-alpha": {
+      "notes": "Obnovena neon-V ikona; allowUnsigned pro alfa (bez code-sign certifikátu).",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/a8e51617-12a1-4c1e-aa4c-a233e4e11e9c/StudioVoxarioSetup.exe",
+          "sha256": "8f2ea2c10f5b3279bac28fa53c9e42fb34a11a8644e7ecc785c7a3003511c4a1",
+          "size": 85783732,
+          "publisher": "StudioVoxario",
+          "allowUnsigned": true
+        }
+      }
+    },
     "1.3.0-alpha": {
-      "notes": "Alpha — nativní /app UI (Discord/TeamSpeak styl), voice mesh, presence.",
+      "notes": "Nativní /app UI (Discord/TeamSpeak styl), voice mesh, presence.",
       "platforms": {
         "win32": {
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/04219a46-8fa6-402f-8ac1-4b307dab01ff/StudioVoxarioSetup.exe",
@@ -35,17 +49,6 @@
           "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/ff315238-cdbc-4fcc-96fc-0810f31c4cd8/StudioVoxarioSetup.exe",
           "sha256": "26a7dfa1473f24f53691f9ad50b8b19043cbdccf647522f89b73095e2dd77a14",
           "size": 81143500,
-          "publisher": "StudioVoxario"
-        }
-      }
-    },
-    "1.1.0": {
-      "notes": "Předchozí verze s rollback baseline.",
-      "platforms": {
-        "win32": {
-          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/0331ec18-1429-428c-9de6-4f2856babed8/StudioVoxarioSetup.exe",
-          "sha256": "8da783dbe129565c19aa5da4634538c3d3d5f684e7567bf20030f5dfa21378ff",
-          "size": 85674137,
           "publisher": "StudioVoxario"
         }
       }
