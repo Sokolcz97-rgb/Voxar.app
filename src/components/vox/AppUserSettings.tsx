@@ -360,3 +360,60 @@ function ToggleRow({ label, val, onChange }: { label: string; val: boolean; onCh
     </div>
   );
 }
+
+function AboutPanel({ userEmail }: { userEmail: string }) {
+  const desktop = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
+  const isDesktop = !!desktop?.isDesktop;
+  const [version, setVersion] = useState<string>("—");
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    if (isDesktop && typeof desktop.getVersion === "function") {
+      desktop.getVersion().then((v: string) => setVersion(v || "—")).catch(() => {});
+    }
+  }, [isDesktop, desktop]);
+
+  const platformLabel = (() => {
+    if (!isDesktop) return "Webová verze (prohlížeč)";
+    const p = String(desktop?.platform || "").toLowerCase();
+    const arch = desktop?.arch ? ` · ${desktop.arch}` : "";
+    if (p === "win32") return `Windows${arch}`;
+    if (p === "darwin") return `macOS${arch}`;
+    if (p === "linux") return `Linux${arch}`;
+    return `${p || "Desktop"}${arch}`;
+  })();
+
+  const checkUpdates = async () => {
+    if (!isDesktop || typeof desktop.checkForUpdates !== "function") return;
+    setChecking(true);
+    try { await desktop.checkForUpdates(); } finally { setChecking(false); }
+  };
+
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="flex justify-between gap-4 py-2 border-b border-border/20">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="truncate text-right">{value}</span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-1 text-sm">
+      {row("Aplikace", "StudioVoxario")}
+      {row("Verze", isDesktop ? version : "Webová verze")}
+      {row("Prostředí", platformLabel)}
+      {isDesktop && desktop?.electronVersion && row("Electron", desktop.electronVersion)}
+      {isDesktop && desktop?.chromeVersion && row("Chromium", desktop.chromeVersion)}
+      {row("Přihlášen jako", userEmail || "—")}
+      {row("Web", <a href="https://studiovoxario.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">studiovoxario.com</a>)}
+      {isDesktop && (
+        <div className="pt-4">
+          <Button onClick={checkUpdates} disabled={checking} variant="outline" className="gap-2">
+            <RefreshCw className={cn("w-4 h-4", checking && "animate-spin")} />
+            {checking ? "Kontroluji…" : "Zkontrolovat aktualizace"}
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground pt-3">© StudioVoxario</p>
+    </div>
+  );
+}
