@@ -1,73 +1,89 @@
-## Architektura
 
-Discord bot vyžaduje trvalé WebSocket spojení (Discord Gateway), což **Lovable Cloud edge funkce nepodporují** (jsou stateless / krátkodobé). Řešení:
+# StudioVoxario Desktop — nativní Discord/TeamSpeak UI
+
+Desktop aplikace dostane vlastní rozhraní `/app` (jen pro Electron shell), oddělené od webu. Web zůstává nedotčen.
+
+## 1. Nový layout aplikace (`src/pages/app/`)
+
+Klasický 4-sloupcový shell:
 
 ```text
-┌─────────────────────┐         ┌──────────────────┐         ┌─────────────┐
-│  Web (Dashboard)    │ ──RW──▶ │  Lovable Cloud   │ ◀──RW── │  Bot (Node) │
-│  /dashboard/bot     │         │  DB + Edge fcí   │         │  externě    │
-└─────────────────────┘         └──────────────────┘         └─────┬───────┘
-                                          ▲                        │
-                                  webhooky (YT/Twitch              ▼
-                                   notifikace, status)      Discord Gateway
+┌──┬────────┬──────────────────────┬────────┐
+│  │        │                      │        │
+│G │Kanály  │  Chat / Voice room   │Členové │
+│R │  #obec │                      │ online │
+│A │  🔊 A  │                      │ idle   │
+│I │  🔊 B  │                      │        │
+│L │        │                      │        │
+├──┴────────┴──────────────────────┴────────┤
+│  [🎤 mute] [🎧 deafen] [⚙]  user@online   │
+└───────────────────────────────────────────┘
 ```
 
-- **Web** = UI v `/dashboard` (a podstránka `/dashboard/bot`) pro nastavení.
-- **DB** = uloží prefix, token (šifrovaně jako secret), kanály, vlastní příkazy, uvítací zprávy, embedy, ticket nastavení, NSFW pravidla, sledované YT/Twitch kanály.
-- **Bot** = samostatný Node.js projekt (discord.js), který si načte konfiguraci z DB a reaguje. Tenhle kód **nepatří do Lovable projektu** — dodám ho jako zvláštní repo / složku k nasazení mimo Lovable.
-- **Edge funkce** v Lovable Cloud zvládnou: cron na Twitch/YouTube polling → zápis do `bot_outbound_queue` → bot to přečte a pošle na Discord; přijímání webhooků z discohook source; přepínání "maintenance" módu (bot/web).
+Komponenty:
+- `GuildRail` — ikony serverů vlevo (kruhy s iniciálami/logem, aktivní má pill indikátor)
+- `ChannelSidebar` — hlavička serveru, seznam textových a hlasových kanálů, kolaps kategorie
+- `ChatView` — zprávy v reálném čase, kompozer s Enter-to-send, typing indikátor, upload obrázků
+- `VoiceView` — dlaždice účastníků s VU-metrem, avatarem, mute stavem, tlačítka Připojit/Odpojit/Sdílet obrazovku (share fáze 2)
+- `MemberList` — presence groupy Online / Idle / DND / Offline, avatary, statusy
+- `SelfPanel` — spodní bar s mikro/sluchátky/nastavení (styl Discord)
+- `AppShell` — držel routing mezi kanály a stavy voice připojení
 
-## Co bude na dashboardu (`/dashboard` karta + `/dashboard/bot`)
+Vizuál: tmavá paleta (deep charcoal `#0e0f13`, panely `#151821`, akcent teal/cyan z existujícího brandu), zaoblené rohy 8px, jemný noise, ikony `lucide-react`. Vlastní scrollbary. Kompaktní hustota textu.
 
-1. **Status bota** — online/offline (heartbeat z bota do `bot_status` tabulky), verze, počet serverů.
-2. **Základ** — prefix, bot token (uložen přes secret tool, ne v DB plain), default kanály (welcome, log, alerts).
-3. **Auto-moderace** — toggle, blokovaná slova (list), max emoji, max mentions, anti-spam práh, akce (warn/mute/kick/ban), NSFW protection toggle + kanály.
-4. **Příkazy** — seznam vestavěných (toggle on/off) + CRUD vlastních (`!název` → odpověď text/embed JSON).
-5. **Uvítací zprávy** — kanál, text nebo embed (JSON editor + náhled), proměnné `{user}`, `{server}`.
-6. **Embed builder + webhook** — formulář pro embed (title/desc/color/fields/image) s importem z discohook URL/JSON, odeslání přes webhook URL na vybraný kanál.
-7. **YouTube / Twitch notifikace** — přidat kanál (handle už máš v profilu), cílový Discord kanál, šablona zprávy. Cron edge function `notify-streams` poolne každých 5 min (Twitch už máš), nové = zápis do outbound queue → bot pošle.
-8. **Ticket systém** — kategorie, support role, uvítací zpráva ticketu (markdown), transcript on close.
-9. **Server/web status** — periodická kontrola (Lovable preview URL + tvoje servery z `servers` tabulky), v případě výpadku → zpráva do zvoleného kanálu. Toggle "maintenance" (web/bot) → bot pošle oznámení.
+## 2. Datový model (nová migrace)
 
-## Databázové změny (jeden migration)
+Nezávislý na existujících `servers`/`conversations` — desktop-only "voxguildy":
 
-Nové tabulky (všechny s RLS přes `can('bot','manage')` permission):
-- `bot_config` (singleton) — prefix, default kanály, auto-mod nastavení (JSONB), NSFW, status, maintenance flagy.
-- `bot_commands` — name, response_type (text/embed), content (JSONB), enabled.
-- `bot_welcome` — channel_id, content/embed JSON, enabled.
-- `bot_stream_notifications` — platform, handle, discord_channel_id, template, last_notified_at.
-- `bot_tickets_config` — category_id, support_role_id, welcome_md, transcripts toggle.
-- `bot_status_checks` — target (url/server_id), discord_channel_id, last_status, last_changed_at.
-- `bot_outbound_queue` — id, channel_id, payload JSONB, sent_at — fronta pro odchozí zprávy z webu/edge.
-- `bot_status` (singleton) — last_heartbeat, version, guild_count (zapisuje bot).
+- `vox_guilds` — id, name, icon_url, owner_id, invite_code
+- `vox_guild_members` — guild_id, user_id, nickname, role (owner/mod/member), joined_at
+- `vox_channels` — id, guild_id, name, type (`text`|`voice`), position, category
+- `vox_messages` — id, channel_id, author_id, content, attachments jsonb, created_at, edited_at
+- `vox_voice_participants` — channel_id, user_id, session_id, joined_at, is_muted, is_deafened (přítomnost v místnosti)
+- `vox_presence` — user_id, status (`online`|`idle`|`dnd`|`offline`), last_seen
 
-Nové permission: `bot:manage`, `bot:view`.
+Všechny s RLS: přístup jen členům guildy, publish do `supabase_realtime` pro `vox_messages`, `vox_voice_participants`, `vox_presence`. GRANTy podle pravidel.
 
-## Edge funkce
+## 3. WebRTC voice (peer-to-peer mesh)
 
-- `bot-poll-streams` (cron 5 min) — Twitch/YouTube → outbound queue.
-- `bot-check-status` (cron 2 min) — ping web + servery → queue + update `bot_status_checks`.
-- `bot-send` — manuální odeslání embedu/zprávy z webu (zapíše do queue).
+- Signaling přes **Supabase Realtime broadcast** na kanálu `voice:{channel_id}`
+- Klient publikuje `join`/`offer`/`answer`/`ice`/`leave` zprávy
+- Každý účastník drží `RTCPeerConnection` s každým dalším (mesh, do ~8 lidí – dostačující)
+- Zvuk: `getUserMedia({audio: {echoCancellation, noiseSuppression, autoGainControl}})`
+- VU-metr přes `AudioContext` + `AnalyserNode`
+- Push-to-talk (klávesa v nastavení) + toggle mute/deafen
+- Reflex do `vox_voice_participants` pro seznam kdo v místnosti (i pro ostatní klienty které se právě dívají)
 
-## Externí bot (mimo Lovable)
+Fáze 2 (odloženo): sdílení obrazovky, video, TURN server (zatím jen public STUN `stun.l.google.com:19302` — funguje pro většinu sítí).
 
-Samostatný `discord-bot/` projekt (Node + discord.js + @supabase/supabase-js se service role klíčem):
-- subscribe na realtime kanál `bot_outbound_queue` → pošle a smaže.
-- listener na Discord events: message → auto-mod check; guildMemberAdd → welcome; reaction na ticket panel → vytvoří kanál.
-- každých 30s heartbeat do `bot_status`.
-- Dodám jako ZIP / instrukce pro nasazení na Railway/Fly.io s `DISCORD_TOKEN` + `SUPABASE_SERVICE_ROLE_KEY`.
+## 4. Presence
 
-## Frontend
+- Klient posílá heartbeat každých 30s do `vox_presence`
+- Po 90s bez heartbeatu → automaticky offline (edge function / DB view s `now() - last_seen`)
+- Ruční přepínač Online/Idle/DND ve `SelfPanel`
 
-- `src/pages/DashboardBot.tsx` — taby (Status, Základ, Auto-mod, Příkazy, Welcome, Embed, Notifikace, Tickety, Status checks).
-- Karta na `src/pages/Dashboard.tsx` s rychlým přehledem (bot online/offline, počet příkazů, počet notifikací) + tlačítko "Spravovat bota".
-- Route `/dashboard/bot` chráněná `requireEditor` + `can('bot','manage')`.
+## 5. Electron integrace
 
-## Co potřebuju potvrdit, než začnu
+- `electron/main.cjs`: při produkčním buildu načte `#/app` (hash routing), tj. hlavní okno je rovnou v aplikaci, nikoli na `/`
+- Zachovat launcher, updater, tray tak jak jsou
+- Přidat globální zkratky: `CmdOrCtrl+Shift+M` mute, PTT klávesa (konfigurovatelná)
+- IPC pro nativní notifikace při zmínce / DM
 
-1. **OK s tím, že bot poběží externě?** (Lovable to fakt nezvládne — žádný hosting Node procesu.) Pokud ano, dodám kód bota a návod nasazení.
-2. **Discohook source** — myslíš import JSON z https://discohook.org? (uložím parser pro jejich formát).
-3. **Rozsah teď** — uděláme to celé v jednom kroku, nebo postupně? Doporučuju fáze:
-   - **Fáze 1**: DB + dashboard karta + UI pro základ, příkazy, welcome, embed/webhook (funguje hned, bez bota — webhooky posílá přímo edge funkce).
-   - **Fáze 2**: Stream notifikace + status checky (edge cron, taky bez bota).
-   - **Fáze 3**: Externí bot pro auto-mod, tickety, gateway eventy.
+## 6. Web zůstává
+
+Web (`/`, `/desktop`, dashboard bota, formuláře atd.) se **nemění**. `/app` bude fungovat i v prohlížeči (pro testování), ale v navbaru se nepromuje — je to primárně desktop endpoint.
+
+## Rozsah implementace v tomto kroku
+
+Postavím kompletní MVP v jedné dodávce:
+1. Migrace tabulek + RLS + realtime publikace
+2. `AppShell` + `GuildRail` + `ChannelSidebar` + `MemberList` + `SelfPanel`
+3. `ChatView` s realtime zprávami a uploadem
+4. `VoiceView` s WebRTC mesh, mute/deafen, VU-metr
+5. Presence heartbeat
+6. CRUD guildy (vytvořit, invite code join) a kanálů (jen owner/mod)
+7. Electron: bootovat rovnou do `/app`
+
+**Není v tomto kroku:** screen share, video, TURN server, mobile parita, migrace existujících `servers`/`messages` do voxguild modelu, role-based permissions na kanály (jen owner/mod vs member), voice aktivita indikátor v seznamu členů (bude jen v místnosti).
+
+Odhadovaná velikost: cca 15–20 nových souborů, 1 migrace, úprava `electron/main.cjs`. Souhlasíš s tímto rozsahem, nebo mám něco přidat/ubrat před stavbou?
