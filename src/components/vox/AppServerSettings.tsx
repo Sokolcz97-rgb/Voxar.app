@@ -10,14 +10,23 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2, ShieldCheck } from "lucide-react";
+import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2, ShieldCheck, Ban, MicOff, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxGuild } from "@/components/vox/GuildRail";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
 import type { VoxMember } from "@/components/vox/MemberList";
 import { VoxRolesPanel } from "@/components/vox/VoxRolesPanel";
 
-type Tab = "overview" | "invite" | "roles" | "channels" | "members" | "danger";
+type Tab = "overview" | "invite" | "roles" | "channels" | "members" | "bans" | "danger";
+
+interface BanRow {
+  id: string;
+  user_id: string;
+  reason: string | null;
+  created_at: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+}
 
 interface Props {
   guild: VoxGuild;
