@@ -8,6 +8,11 @@ interface RemotePeer {
   level: number;
 }
 
+interface PendingIceCandidate {
+  candidate: RTCIceCandidateInit;
+  connectionId?: string;
+}
+
 const ICE = {
   iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
 };
@@ -51,6 +56,14 @@ export function useVoxVoice(channelId: string | null) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const metersRef = useRef<Array<() => void>>([]);
+  const remoteMetersRef = useRef<Record<string, () => void>>({});
+  const pendingIceRef = useRef<Record<string, PendingIceCandidate[]>>({});
+  const peerConnectionIdsRef = useRef<Record<string, string>>({});
+  const reconnectTimersRef = useRef<Record<string, number>>({});
+  const connectedRef = useRef(false);
+  const joiningRef = useRef(false);
+  const mutedRef = useRef(false);
+  const deafenedRef = useRef(false);
 
   const updateRemote = (userId: string, patch: Partial<RemotePeer>) => {
     setRemotes((prev) => ({ ...prev, [userId]: { userId, stream: null, level: 0, ...prev[userId], ...patch } }));
@@ -65,7 +78,9 @@ export function useVoxVoice(channelId: string | null) {
   };
 
   const ensureCtx = async () => {
-    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+    const AudioCtor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) throw new Error("AudioContext není v tomto prohlížeči dostupný");
+    if (!audioContextRef.current) audioContextRef.current = new AudioCtor();
     if (audioContextRef.current.state === "suspended") {
       try { await audioContextRef.current.resume(); } catch {}
     }
@@ -73,7 +88,8 @@ export function useVoxVoice(channelId: string | null) {
   };
 
   const meterStream = (stream: MediaStream, cb: (l: number) => void) => {
-    const ctx = audioContextRef.current!;
+    const ctx = audioContextRef.current;
+    if (!ctx || ctx.state === "closed") return () => {};
     const src = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 512;
@@ -95,17 +111,82 @@ export function useVoxVoice(channelId: string | null) {
     return stop;
   };
 
-  const createPeer = useCallback((remoteUserId: string, initiator: boolean) => {
+  const playRemoteAudio = (audio: HTMLAudioElement) => {
+    audio.play().catch(() => {
+      window.setTimeout(() => {
+        audio.play().catch(() => {});
+      }, 600);
+    });
+  };
+
+  const stopRemotePeer = (remoteUserId: string, removeQueuedIce = true) => {
+    window.clearTimeout(reconnectTimersRef.current[remoteUserId]);
+    delete reconnectTimersRef.current[remoteUserId];
+    const pc = peersRef.current[remoteUserId];
+    if (pc) {
+      try { pc.ontrack = null; pc.onicecandidate = null; pc.onconnectionstatechange = null; pc.oniceconnectionstatechange = null; pc.close(); } catch {}
+      delete peersRef.current[remoteUserId];
+    }
+    remoteMetersRef.current[remoteUserId]?.();
+    delete remoteMetersRef.current[remoteUserId];
+    delete peerConnectionIdsRef.current[remoteUserId];
+    if (removeQueuedIce) delete pendingIceRef.current[remoteUserId];
+    removeRemote(remoteUserId);
+    document.getElementById(`vox-audio-${remoteUserId}`)?.remove();
+  };
+
+  const flushPendingIce = async (remoteUserId: string, pc: RTCPeerConnection) => {
+    if (!pc.remoteDescription) return;
+    const connectionId = peerConnectionIdsRef.current[remoteUserId];
+    const pending = pendingIceRef.current[remoteUserId] ?? [];
+    pendingIceRef.current[remoteUserId] = [];
+    for (const item of pending) {
+      if (item.connectionId && connectionId && item.connectionId !== connectionId) continue;
+      try { await pc.addIceCandidate(new RTCIceCandidate(item.candidate)); } catch {}
+    }
+  };
+
+  const addOrQueueIce = async (remoteUserId: string, candidate: RTCIceCandidateInit, connectionId?: string) => {
+    const pc = peersRef.current[remoteUserId];
+    const currentConnectionId = peerConnectionIdsRef.current[remoteUserId];
+    if (connectionId && currentConnectionId && connectionId !== currentConnectionId) return;
+    if (!pc || !pc.remoteDescription) {
+      pendingIceRef.current[remoteUserId] = [...(pendingIceRef.current[remoteUserId] ?? []), { candidate, connectionId }];
+      return;
+    }
+    try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+  };
+
+  const requestPeerReconnect = (remoteUserId: string, delay = 1200) => {
+    if (reconnectTimersRef.current[remoteUserId]) return;
+    reconnectTimersRef.current[remoteUserId] = window.setTimeout(() => {
+      delete reconnectTimersRef.current[remoteUserId];
+      if (!connectedRef.current || !channelRef.current || !user) return;
+      stopRemotePeer(remoteUserId);
+      if (user.id < remoteUserId) {
+        createPeer(remoteUserId, true);
+      } else {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "renegotiate",
+          payload: { from: user.id, to: remoteUserId },
+        });
+      }
+    }, delay);
+  };
+
+  const createPeer = useCallback((remoteUserId: string, initiator: boolean, connectionId = crypto.randomUUID()) => {
     if (peersRef.current[remoteUserId]) return peersRef.current[remoteUserId];
     const pc = new RTCPeerConnection(ICE);
     peersRef.current[remoteUserId] = pc;
+    peerConnectionIdsRef.current[remoteUserId] = connectionId;
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
     }
 
     pc.ontrack = (ev) => {
-      const [stream] = ev.streams;
+      const stream = ev.streams[0] ?? new MediaStream([ev.track]);
       // Safety: never play back our own stream (would cause echo).
       if (remoteUserId === user?.id) return;
       updateRemote(remoteUserId, { stream });
@@ -117,9 +198,13 @@ export function useVoxVoice(channelId: string | null) {
         (audio as any).playsInline = true;
         document.body.appendChild(audio);
       }
-      audio.srcObject = stream;
-      audio.muted = deafened;
-      meterStream(stream, (l) => updateRemote(remoteUserId, { level: l }));
+      if (audio.srcObject !== stream) audio.srcObject = stream;
+      audio.muted = deafenedRef.current;
+      audio.volume = 1;
+      playRemoteAudio(audio);
+      ev.track.onunmute = () => playRemoteAudio(audio!);
+      remoteMetersRef.current[remoteUserId]?.();
+      remoteMetersRef.current[remoteUserId] = meterStream(stream, (l) => updateRemote(remoteUserId, { level: l }));
     };
 
     pc.onicecandidate = (ev) => {
@@ -127,30 +212,62 @@ export function useVoxVoice(channelId: string | null) {
         channelRef.current.send({
           type: "broadcast",
           event: "ice",
-          payload: { from: user!.id, to: remoteUserId, candidate: ev.candidate },
+          payload: { from: user!.id, to: remoteUserId, candidate: ev.candidate.toJSON(), connectionId: peerConnectionIdsRef.current[remoteUserId] },
         });
       }
     };
 
+    const watchConnection = () => {
+      if (pc.connectionState === "connected") {
+        window.clearTimeout(reconnectTimersRef.current[remoteUserId]);
+        delete reconnectTimersRef.current[remoteUserId];
+        return;
+      }
+      if (pc.connectionState === "failed") requestPeerReconnect(remoteUserId, 500);
+      if (pc.connectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+    };
+    pc.onconnectionstatechange = watchConnection;
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === "failed") requestPeerReconnect(remoteUserId, 500);
+      if (pc.iceConnectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+    };
+
     if (initiator) {
       (async () => {
-        const offer = await pc.createOffer();
+        const offer = await pc.createOffer({ iceRestart: true });
         await pc.setLocalDescription(offer);
         channelRef.current?.send({
           type: "broadcast",
           event: "offer",
-          payload: { from: user!.id, to: remoteUserId, sdp: offer },
+          payload: { from: user!.id, to: remoteUserId, sdp: pc.localDescription?.toJSON() ?? offer, connectionId },
         });
       })();
     }
 
     return pc;
-  }, [user, deafened]);
+  }, [user]);
+
+  const waitForSubscribed = (ch: NonNullable<typeof channelRef.current>) => new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error("Hlasová signalizace se nepřipojila včas")), 10000);
+    ch.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        window.clearTimeout(timeout);
+        resolve();
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        window.clearTimeout(timeout);
+        reject(new Error(`Hlasová signalizace selhala: ${status}`));
+      }
+    });
+  });
 
   const join = useCallback(async () => {
-    if (!user || !channelId || connected) return;
+    if (!user || !channelId || connectedRef.current || joiningRef.current) return;
+    joiningRef.current = true;
     const prefs = readVoicePrefs();
     try {
+      // Autoplay policy: unlock/resume audio strictly from the user's Join click.
+      await ensureCtx();
       const raw = await navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: prefs.inputDeviceId ? { exact: prefs.inputDeviceId } : undefined,
@@ -177,7 +294,7 @@ export function useVoxVoice(channelId: string | null) {
       monitorTracks.forEach((t) => (t.enabled = true));
       const monitorStream = new MediaStream(monitorTracks);
 
-      const ctx = await ensureCtx();
+      const ctx = audioContextRef.current ?? await ensureCtx();
       const src = ctx.createMediaStreamSource(monitorStream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
@@ -204,14 +321,14 @@ export function useVoxVoice(channelId: string | null) {
         const rms = Math.sqrt(sum / buf.length);
         setSelfLevel(rms);
 
-        if (auto && !muted) {
+        if (auto && !mutedRef.current) {
           const now = performance.now();
           if (rms > thresholdLin) openUntil = now + 400;
           const shouldOpen = now < openUntil;
           raw.getAudioTracks().forEach((t) => {
             if (t.enabled !== shouldOpen) t.enabled = shouldOpen;
           });
-        } else if (!auto && !muted) {
+        } else if (!auto && !mutedRef.current) {
           // Always-on when VAD is off
           raw.getAudioTracks().forEach((t) => { if (!t.enabled) t.enabled = true; });
         }
@@ -226,16 +343,9 @@ export function useVoxVoice(channelId: string | null) {
       });
     } catch (e) {
       console.error("Mikrofon nedostupný", e);
+      joiningRef.current = false;
       return;
     }
-
-    await supabase.from("vox_voice_participants").upsert({
-      channel_id: channelId,
-      user_id: user.id,
-      session_id: sessionIdRef.current,
-      is_muted: false,
-      is_deafened: false,
-    });
 
     const ch = supabase.channel(`vox_voice_${channelId}`, { config: { broadcast: { self: false } } });
     channelRef.current = ch;
@@ -246,45 +356,84 @@ export function useVoxVoice(channelId: string | null) {
     });
     ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
       if (payload.to !== user.id) return;
-      const pc = createPeer(payload.from, false);
-      await pc.setRemoteDescription(payload.sdp);
+      if (payload.connectionId && peerConnectionIdsRef.current[payload.from] && peerConnectionIdsRef.current[payload.from] !== payload.connectionId) {
+        stopRemotePeer(payload.from, false);
+      }
+      const pc = createPeer(payload.from, false, payload.connectionId);
+      if (pc.signalingState !== "stable") {
+        try { await pc.setLocalDescription({ type: "rollback" } as RTCSessionDescriptionInit); } catch {}
+      }
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      await flushPendingIce(payload.from, pc);
       const ans = await pc.createAnswer();
       await pc.setLocalDescription(ans);
-      ch.send({ type: "broadcast", event: "answer", payload: { from: user.id, to: payload.from, sdp: ans } });
+      ch.send({ type: "broadcast", event: "answer", payload: { from: user.id, to: payload.from, sdp: pc.localDescription?.toJSON() ?? ans, connectionId: peerConnectionIdsRef.current[payload.from] } });
     });
     ch.on("broadcast", { event: "answer" }, async ({ payload }) => {
       if (payload.to !== user.id) return;
       const pc = peersRef.current[payload.from];
-      if (pc) await pc.setRemoteDescription(payload.sdp);
+      if (!pc) return;
+      if (payload.connectionId && peerConnectionIdsRef.current[payload.from] !== payload.connectionId) return;
+      if (pc.signalingState === "have-local-offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        await flushPendingIce(payload.from, pc);
+      }
     });
     ch.on("broadcast", { event: "ice" }, async ({ payload }) => {
       if (payload.to !== user.id) return;
-      const pc = peersRef.current[payload.from];
-      if (pc) { try { await pc.addIceCandidate(payload.candidate); } catch {} }
+      await addOrQueueIce(payload.from, payload.candidate, payload.connectionId);
+    });
+    ch.on("broadcast", { event: "renegotiate" }, ({ payload }) => {
+      if (payload.to !== user.id || user.id > payload.from) return;
+      stopRemotePeer(payload.from);
+      createPeer(payload.from, true);
     });
     ch.on("broadcast", { event: "leave" }, ({ payload }) => {
-      const pc = peersRef.current[payload.from];
-      if (pc) { pc.close(); delete peersRef.current[payload.from]; }
-      removeRemote(payload.from);
-      const audio = document.getElementById(`vox-audio-${payload.from}`);
-      audio?.remove();
+      stopRemotePeer(payload.from);
     });
 
-    await ch.subscribe();
-    ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
+    try {
+      await waitForSubscribed(ch);
+      await supabase.from("vox_voice_participants").upsert({
+        channel_id: channelId,
+        user_id: user.id,
+        session_id: sessionIdRef.current,
+        is_muted: false,
+        is_deafened: false,
+      });
+      const { data: existing } = await supabase
+        .from("vox_voice_participants")
+        .select("user_id")
+        .eq("channel_id", channelId)
+        .neq("user_id", user.id);
+      (existing ?? []).forEach((row: { user_id: string }) => {
+        if (user.id < row.user_id) createPeer(row.user_id, true);
+      });
+      await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
+    } catch (e) {
+      console.error("Hlasová signalizace selhala", e);
+      await leaveCleanupOnly();
+      joiningRef.current = false;
+      return;
+    }
+    connectedRef.current = true;
     setConnected(true);
-  }, [user, channelId, connected, createPeer]);
+    joiningRef.current = false;
+  }, [user, channelId, createPeer]);
 
-  const leave = useCallback(async () => {
-    if (!user || !channelId) return;
-    channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
-    Object.values(peersRef.current).forEach((pc) => pc.close());
-    peersRef.current = {};
+  const leaveCleanupOnly = async () => {
+    Object.keys(peersRef.current).forEach((remoteUserId) => stopRemotePeer(remoteUserId));
+    Object.values(reconnectTimersRef.current).forEach((timer) => window.clearTimeout(timer));
+    reconnectTimersRef.current = {};
+    pendingIceRef.current = {};
+    peerConnectionIdsRef.current = {};
     document.querySelectorAll("[id^='vox-audio-']").forEach((el) => el.remove());
     metersRef.current.forEach((stop) => { try { stop(); } catch {} });
     metersRef.current = [];
+    Object.values(remoteMetersRef.current).forEach((stop) => { try { stop(); } catch {} });
+    remoteMetersRef.current = {};
     rawStreamRef.current?.getTracks().forEach((t) => t.stop());
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    if (localStreamRef.current !== rawStreamRef.current) localStreamRef.current?.getTracks().forEach((t) => t.stop());
     rawStreamRef.current = null;
     localStreamRef.current = null;
     gainNodeRef.current = null;
@@ -294,6 +443,14 @@ export function useVoxVoice(channelId: string | null) {
     channelRef.current = null;
     setRemotes({});
     setSelfLevel(0);
+  };
+
+  const leave = useCallback(async () => {
+    if (!user || !channelId) return;
+    connectedRef.current = false;
+    joiningRef.current = false;
+    channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
+    await leaveCleanupOnly();
     setConnected(false);
     await supabase.from("vox_voice_participants").delete().eq("channel_id", channelId).eq("user_id", user.id);
   }, [user, channelId]);
@@ -301,6 +458,7 @@ export function useVoxVoice(channelId: string | null) {
   const toggleMute = useCallback(() => {
     setMuted((m) => {
       const nm = !m;
+      mutedRef.current = nm;
       rawStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !nm));
       localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !nm));
       if (user && channelId) {
@@ -315,6 +473,7 @@ export function useVoxVoice(channelId: string | null) {
   const toggleDeafen = useCallback(() => {
     setDeafened((d) => {
       const nd = !d;
+      deafenedRef.current = nd;
       document.querySelectorAll<HTMLAudioElement>("[id^='vox-audio-']").forEach((a) => (a.muted = nd));
       if (nd && !muted) toggleMute();
       if (user && channelId) {
