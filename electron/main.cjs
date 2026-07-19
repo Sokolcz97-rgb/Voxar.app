@@ -12,9 +12,11 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { checkForUpdates } = require("./updater.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com";
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
+let launcherWindow = null;
 
 const defaultSettings = {
   minimizeToTray: true,
