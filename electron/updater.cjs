@@ -481,7 +481,9 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     // Authenticode / codesign verification — chrání i proti platnému hashi z podvrženého manifestu,
     // pokud útočník nemá platný certifikát vydavatele.
     const expectedPublisher = (asset.publisher || manifest.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null);
+    const allowUnsigned = Boolean(asset.allowUnsigned ?? manifest.allowUnsigned ?? false);
     diagnostics.expectedPublisher = expectedPublisher;
+    diagnostics.allowUnsigned = allowUnsigned;
     log("Ověřuji digitální podpis instalátoru…");
     const sig = await verifyCodeSignature(dest);
     diagnostics.signatureStatus = sig.status || null;
@@ -492,22 +494,27 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     if (!sig.supported) {
       log(`Podpis nelze ověřit na této platformě (${process.platform}) — přeskočeno.`);
     } else if (!sig.ok) {
-      try { fs.unlinkSync(dest); } catch {}
-      diagnostics.status = "signature-invalid";
-      diagnostics.lastError = `Neplatný podpis: ${sig.status}${sig.error ? " — " + sig.error : ""}`;
-      log(`CHYBA: neplatný digitální podpis (${sig.status}). Instalátor smazán.`);
-      await dialog.showMessageBox(parentWindow, {
-        type: "error",
-        title: "Aktualizace zamítnuta",
-        message: "Ověření podpisu selhalo",
-        detail:
-          `Digitální podpis instalátoru je neplatný nebo chybí.\n\n` +
-          `Stav: ${sig.status}\n` +
-          (sig.statusMessage ? `Zpráva: ${sig.statusMessage}\n` : "") +
-          (sig.subject ? `Podepsáno: ${sig.subject}\n` : "") +
-          `\nSoubor byl smazán a nespustí se.`,
-      });
-      return { status: "signature-invalid" };
+      if (allowUnsigned) {
+        log(`VAROVÁNÍ: instalátor není digitálně podepsán (${sig.status}). Manifest povoluje allowUnsigned — pokračuji na základě ověřeného SHA-256.`);
+        diagnostics.signatureWarning = `Nepodepsáno (${sig.status}) — povoleno manifestem (alpha).`;
+      } else {
+        try { fs.unlinkSync(dest); } catch {}
+        diagnostics.status = "signature-invalid";
+        diagnostics.lastError = `Neplatný podpis: ${sig.status}${sig.error ? " — " + sig.error : ""}`;
+        log(`CHYBA: neplatný digitální podpis (${sig.status}). Instalátor smazán.`);
+        await dialog.showMessageBox(parentWindow, {
+          type: "error",
+          title: "Aktualizace zamítnuta",
+          message: "Ověření podpisu selhalo",
+          detail:
+            `Digitální podpis instalátoru je neplatný nebo chybí.\n\n` +
+            `Stav: ${sig.status}\n` +
+            (sig.statusMessage ? `Zpráva: ${sig.statusMessage}\n` : "") +
+            (sig.subject ? `Podepsáno: ${sig.subject}\n` : "") +
+            `\nSoubor byl smazán a nespustí se.`,
+        });
+        return { status: "signature-invalid" };
+      }
     } else {
       log(`Podpis OK — ${sig.subject || "(neznámý subjekt)"} [${sig.thumbprint || "-"}]`);
       if (expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
@@ -676,13 +683,14 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     if (download.sha256.toLowerCase() !== expectedHash) { try { fs.unlinkSync(dest); } catch {} return { status: "hash-mismatch" }; }
 
     const sig = await verifyCodeSignature(dest);
-    if (sig.supported && !sig.ok) { try { fs.unlinkSync(dest); } catch {} return { status: "signature-invalid", sig }; }
+    const allowUnsigned = Boolean(asset.allowUnsigned);
+    if (sig.supported && !sig.ok && !allowUnsigned) { try { fs.unlinkSync(dest); } catch {} return { status: "signature-invalid", sig }; }
     const expectedPublisher = asset.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null;
     if (sig.supported && expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
       try { fs.unlinkSync(dest); } catch {}
       return { status: "publisher-mismatch", sig };
     }
-    if (sig.supported) {
+    if (sig.supported && sig.ok && sig.thumbprint) {
       const pinCheck = pinning.verifyAgainstPins(sig.thumbprint);
       if (!pinCheck.trusted) {
         try { fs.unlinkSync(dest); } catch {}
