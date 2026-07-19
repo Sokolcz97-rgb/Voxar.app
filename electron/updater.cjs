@@ -683,7 +683,8 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     if (download.sha256.toLowerCase() !== expectedHash) { try { fs.unlinkSync(dest); } catch {} return { status: "hash-mismatch" }; }
 
     const sig = await verifyCodeSignature(dest);
-    if (sig.supported && !sig.ok) { try { fs.unlinkSync(dest); } catch {} return { status: "signature-invalid", sig }; }
+    const allowUnsigned = Boolean(asset.allowUnsigned);
+    if (sig.supported && !sig.ok && !allowUnsigned) { try { fs.unlinkSync(dest); } catch {} return { status: "signature-invalid", sig }; }
     const expectedPublisher = asset.publisher || process.env.STUDIOVOXARIO_EXPECTED_PUBLISHER || null;
     if (sig.supported && expectedPublisher && sig.subject && !sig.subject.toLowerCase().includes(String(expectedPublisher).toLowerCase())) {
       try { fs.unlinkSync(dest); } catch {}
