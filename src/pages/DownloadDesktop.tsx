@@ -88,7 +88,7 @@ export default function Download() {
     {
       os: "Windows 10 / 11",
       file: winInstaller.url,
-      filename: "StudioVoxarioSetup-0.0.4-alpha.exe",
+      filename: "StudioVoxarioSetup-0.0.5-alpha.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
       size: "~29 MB · v0.0.4-Alpha",
