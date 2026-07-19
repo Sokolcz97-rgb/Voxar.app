@@ -463,6 +463,59 @@ async function showInstallingModal(parentWindow, version) {
   setTimeout(() => { try { if (!win.isDestroyed()) win.close(); } catch {} }, 5500);
 }
 
+function q(s) {
+  return String(s).replace(/"/g, '""');
+}
+
+/**
+ * Windows update watchdog. Runs outside Electron, waits until this process exits,
+ * installs silently, then starts the installed app again.
+ */
+function runWindowsInstallAndRelaunch(installerPath, version) {
+  const exePath = app.getPath("exe");
+  const logPath = path.join(app.getPath("userData"), "last-update-install.log");
+  const scriptPath = path.join(os.tmpdir(), `StudioVoxario-update-${Date.now()}.cmd`);
+  const content = [
+    "@echo off",
+    "setlocal EnableExtensions",
+    `set "SV_PID=${process.pid}"`,
+    `set "SV_INSTALLER=${installerPath}"`,
+    `set "SV_EXE=${exePath}"`,
+    `set "SV_LOG=${logPath}"`,
+    "echo [%date% %time%] StudioVoxario update helper started > \"%SV_LOG%\"",
+    `echo Target version: ${q(version || "unknown")} >> "%SV_LOG%"`,
+    ":wait_old",
+    "tasklist /FI \"PID eq %SV_PID%\" 2>NUL | find /I \"%SV_PID%\" >NUL",
+    "if not errorlevel 1 (",
+    "  timeout /t 1 /nobreak >NUL",
+    "  goto wait_old",
+    ")",
+    "echo [%date% %time%] Old app exited, running installer >> \"%SV_LOG%\"",
+    "\"%SV_INSTALLER%\" /S >> \"%SV_LOG%\" 2>&1",
+    "set \"SV_CODE=%ERRORLEVEL%\"",
+    "echo [%date% %time%] Installer exit code: %SV_CODE% >> \"%SV_LOG%\"",
+    "timeout /t 2 /nobreak >NUL",
+    "if exist \"%SV_EXE%\" (",
+    "  echo [%date% %time%] Relaunching %SV_EXE% >> \"%SV_LOG%\"",
+    "  start \"\" \"%SV_EXE%\"",
+    ") else (",
+    "  echo [%date% %time%] Installed exe not found: %SV_EXE% >> \"%SV_LOG%\"",
+    ")",
+    "endlocal",
+    "exit /b 0",
+    "",
+  ].join("\r\n");
+  fs.writeFileSync(scriptPath, content, "utf8");
+  const { spawn } = require("child_process");
+  const child = spawn("cmd.exe", ["/d", "/c", scriptPath], {
+    detached: true,
+    stdio: "ignore",
+    windowsHide: true,
+  });
+  child.unref();
+  return { scriptPath, logPath };
+}
+
 
 
 
