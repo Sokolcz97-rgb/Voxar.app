@@ -167,19 +167,41 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
             </Button>
           )}
         </div>
-        {roles.map(r => (
-          <button
+        {roles.map((r, idx) => (
+          <div
             key={r.id}
-            onClick={() => setSelectedId(r.id)}
             className={cn(
-              "w-full flex items-center gap-2 text-left px-2 py-1.5 rounded text-sm",
-              selectedId === r.id ? "bg-primary/15" : "hover:bg-secondary/60"
+              "group w-full flex items-center gap-1 text-left px-2 py-1.5 rounded text-sm",
+              selectedId === r.id ? "bg-primary/15" : "hover:bg-secondary/60",
             )}
           >
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: r.color }} />
-            <span className="flex-1 truncate">{r.name}</span>
-            {r.is_default && <span className="text-[10px] text-muted-foreground">výchozí</span>}
-          </button>
+            <button onClick={() => setSelectedId(r.id)} className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: r.color }} />
+              <span className="flex-1 truncate">{r.name}</span>
+              {r.hoist && <span className="text-[9.5px] text-primary/80 uppercase tracking-wider">hoist</span>}
+              {r.is_default && <span className="text-[10px] text-muted-foreground">výchozí</span>}
+            </button>
+            {canManage && (
+              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
+                <button
+                  disabled={idx === 0}
+                  onClick={() => swapPositions(idx, idx - 1)}
+                  className="p-0.5 rounded hover:bg-secondary disabled:opacity-30"
+                  title="Nahoru"
+                >
+                  <ArrowUp className="w-3 h-3" />
+                </button>
+                <button
+                  disabled={idx === roles.length - 1}
+                  onClick={() => swapPositions(idx, idx + 1)}
+                  className="p-0.5 rounded hover:bg-secondary disabled:opacity-30"
+                  title="Dolů"
+                >
+                  <ArrowDown className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
