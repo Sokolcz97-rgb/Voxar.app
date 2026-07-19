@@ -134,8 +134,8 @@ export function MicTester({ deviceId, noiseSuppression = true, echoCancellation 
 
       <p className="text-xs text-muted-foreground">
         {active
-          ? "Mluvte do mikrofonu – měl by se rozsvítit ukazatel. Pomocí „Poslech" si přehrajete vlastní hlas."
-          : "Klikněte na „Spustit test" a povolte přístup k mikrofonu."}
+          ? "Mluvte do mikrofonu – měl by se rozsvítit ukazatel. Pomocí tlačítka Poslech si přehrajete vlastní hlas."
+          : "Klikněte na Spustit test a povolte přístup k mikrofonu."}
       </p>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
