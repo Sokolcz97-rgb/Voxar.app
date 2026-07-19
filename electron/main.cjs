@@ -278,6 +278,40 @@ ipcMain.handle("launcher:continue", () => {
   }
 });
 
+// -------- Rollback flow --------
+let rollbackInProgress = false;
+async function triggerRollbackFlow(reason) {
+  if (rollbackInProgress) return { status: "busy" };
+  rollbackInProgress = true;
+  try {
+    const manifest = await fetchManifest().catch(() => null);
+    const res = await rollback.performRollback({
+      manifest,
+      parentWindow: mainWindow || launcherWindow,
+      reason,
+      installVerified,
+    });
+    if (res?.status && res.status !== "installing" && res.status !== "declined") {
+      await require("electron").dialog.showMessageBox(mainWindow || launcherWindow, {
+        type: "error",
+        title: "Rollback selhal",
+        message: `Nepodařilo se vrátit na předchozí verzi (${res.status})`,
+        detail:
+          res.error
+            ? String(res.error)
+            : "Zkontrolujte diagnostiku v launcheru nebo kontaktujte podporu.",
+      });
+    }
+    return res;
+  } finally {
+    rollbackInProgress = false;
+  }
+}
+ipcMain.handle("app:rollback", () => triggerRollbackFlow("Ruční požadavek z aplikace."));
+ipcMain.handle("launcher:rollback", () => triggerRollbackFlow("Ruční požadavek z launcheru."));
+ipcMain.handle("launcher:rollback-state", () => rollback.readState());
+
+
 function createLauncher() {
   launcherWindow = new BrowserWindow({
     width: 460,
