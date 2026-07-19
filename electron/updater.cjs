@@ -253,7 +253,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
   log(`Kontrola aktualizací — aktuální verze ${diagnostics.currentVersion}`);
   log(`Stahuji manifest: ${MANIFEST_URL}`);
   try {
-    const manifest = await fetchJson(MANIFEST_URL);
+    const manifest = await withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
     diagnostics.manifest = manifest;
     const current = app.getVersion();
     const remote = manifest.version;
