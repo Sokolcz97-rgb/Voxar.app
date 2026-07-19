@@ -1,10 +1,16 @@
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
+
+const ACCESS_KEY = "sv_download_access_v1";
 
 const features = [
   { icon: Bell, title: "Desktop notifikace", desc: "Zprávy, zakázky a stream alerty přímo v systému." },
@@ -13,7 +19,71 @@ const features = [
   { icon: Shield, title: "Vlastní okno", desc: "Bez URL řádku – vypadá a chová se jako Discord." },
 ];
 
+function AccessGate({ onUnlock }: { onUnlock: () => void }) {
+  const { toast } = useToast();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim()) return;
+    setBusy(true);
+    const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
+    setBusy(false);
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (data === true) {
+      localStorage.setItem(ACCESS_KEY, "1");
+      toast({ title: "Přístup povolen" });
+      onUnlock();
+    } else {
+      toast({ title: "Neplatný kód", description: "Zkontrolujte kód nebo požádejte o nový.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto px-4 py-16 max-w-md">
+        <Card className="p-8">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 mb-4">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Chráněná stránka</h1>
+            <p className="text-sm text-muted-foreground">
+              Ke stažení desktop aplikace zadejte přístupový nebo promo kód.
+            </p>
+          </div>
+          <form onSubmit={submit} className="space-y-3">
+            <Input
+              placeholder="Zadejte kód"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              autoFocus
+              className="text-center font-mono tracking-wider"
+            />
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Ověřuji…" : "Odemknout"}
+            </Button>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export default function Download() {
+  const [unlocked, setUnlocked] = useState<boolean>(() => localStorage.getItem(ACCESS_KEY) === "1");
+
+  useEffect(() => {
+    if (unlocked) localStorage.setItem(ACCESS_KEY, "1");
+  }, [unlocked]);
+
+  if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
+
   const downloads = [
     {
       os: "Windows 10 / 11",
@@ -31,8 +101,6 @@ export default function Download() {
       note: "Bez instalace – rozbalte a spusťte StudioVoxario.exe.",
       icon: "📦",
       size: "~106 MB · v1.2.0",
-
-
     },
     {
       os: "Linux (x64)",
@@ -43,7 +111,6 @@ export default function Download() {
       size: "~110 MB",
     },
   ];
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,9 +124,18 @@ export default function Download() {
             StudioVoxario <span className="text-primary">pro počítač</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Nativní desktop klient s notifikacemi, tray ikonou a auto-startem. 
+            Nativní desktop klient s notifikacemi, tray ikonou a auto-startem.
             Vždy synchronizován s webem – žádné manuální aktualizace obsahu.
           </p>
+          <button
+            className="mt-4 text-xs text-muted-foreground underline hover:text-foreground"
+            onClick={() => {
+              localStorage.removeItem(ACCESS_KEY);
+              setUnlocked(false);
+            }}
+          >
+            Odhlásit přístupový kód
+          </button>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-10">
@@ -82,7 +158,6 @@ export default function Download() {
             </Card>
           ))}
         </div>
-
 
         <Card className="p-6 mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -114,7 +189,7 @@ export default function Download() {
             <li>Vše ostatní (tray, auto-start, notifikace) nastavíte v aplikaci přes tray → <b>Nastavení</b>.</li>
           </ol>
           <p className="mt-4 text-xs text-muted-foreground">
-            Aplikace není podepsaná – při prvním spuštění může Windows zobrazit varování „Windows chránil váš počítač". 
+            Aplikace není podepsaná – při prvním spuštění může Windows zobrazit varování „Windows chránil váš počítač".
             Klikněte na <b>Další informace → Přesto spustit</b>.
           </p>
         </Card>
