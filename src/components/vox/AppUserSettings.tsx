@@ -8,11 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
-  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell,
+  User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { SocialHandleField } from "@/components/SocialHandleField";
 
-type TabKey = "profile" | "account" | "voice" | "appearance" | "notifications" | "about";
+type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "about";
 
 interface Props {
   onClose: () => void;
