@@ -2651,6 +2651,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vox_member_roles: {
+        Row: {
+          assigned_at: string
+          guild_id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          guild_id: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          guild_id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_member_roles_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_member_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "vox_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vox_messages: {
         Row: {
           attachments: Json
@@ -2709,6 +2745,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vox_roles: {
+        Row: {
+          badge_url: string | null
+          color: string
+          created_at: string
+          guild_id: string
+          icon: string | null
+          id: string
+          is_default: boolean
+          name: string
+          permissions: Json
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          badge_url?: string | null
+          color?: string
+          created_at?: string
+          guild_id: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          permissions?: Json
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          badge_url?: string | null
+          color?: string
+          created_at?: string
+          guild_id?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          permissions?: Json
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_roles_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vox_voice_participants: {
         Row: {
@@ -2907,6 +2993,10 @@ export type Database = {
         Returns: boolean
       }
       vox_channel_guild: { Args: { _channel: string }; Returns: string }
+      vox_has_perm: {
+        Args: { _guild: string; _perm: string; _user: string }
+        Returns: boolean
+      }
       vox_heartbeat: {
         Args: {
           _custom?: string
