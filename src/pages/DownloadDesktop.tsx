@@ -108,7 +108,7 @@ export default function Download() {
       filename: "StudioVoxario-linux-x64-0.0.7-alpha.tar.gz",
       note: "tar xzf StudioVoxario-linux-x64-0.0.7-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
       icon: "🐧",
-      size: "~102 MB · v0.0.6-Alpha",
+      size: "~109 MB · v0.0.7-Alpha",
     },
   ];
 
