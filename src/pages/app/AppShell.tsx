@@ -13,6 +13,7 @@ import { CreateGuildDialog, JoinGuildDialog } from "@/components/vox/CreateGuild
 import { AppUserSettings } from "@/components/vox/AppUserSettings";
 import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
+import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
