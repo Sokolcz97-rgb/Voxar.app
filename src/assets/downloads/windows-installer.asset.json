@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "531b213e-59ef-4fe3-98b1-004dc81bc541",
+  "asset_id": "e1b3912a-2212-4f4e-b247-82135a5b2105",
   "project_id": "d53f3d8b-928c-40db-a7b3-8e9279cdfda6",
-  "url": "/__l5e/assets-v1/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
-  "r2_key": "a/v1/d53f3d8b-928c-40db-a7b3-8e9279cdfda6/531b213e-59ef-4fe3-98b1-004dc81bc541/StudioVoxarioSetup.exe",
-  "original_filename": "StudioVoxarioSetup.exe",
-  "size": 81271339,
+  "url": "/__l5e/assets-v1/e1b3912a-2212-4f4e-b247-82135a5b2105/StudioVoxarioSetup-1.3.4-alpha.exe",
+  "r2_key": "a/v1/d53f3d8b-928c-40db-a7b3-8e9279cdfda6/e1b3912a-2212-4f4e-b247-82135a5b2105/StudioVoxarioSetup-1.3.4-alpha.exe",
+  "original_filename": "StudioVoxarioSetup-1.3.4-alpha.exe",
+  "size": 85827693,
   "content_type": "application/octet-stream",
-  "created_at": "2026-07-19T10:55:08Z"
+  "created_at": "2026-07-19T12:06:09Z"
 }
