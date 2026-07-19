@@ -75,6 +75,7 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
               const level = isMe ? voice.selfLevel : (voice.remotes[p.user_id]?.level ?? 0);
               const speaking = level > 0.08 && !p.is_muted;
               const name = p.display_name || p.user_id.slice(0, 8);
+              const pct = Math.min(100, Math.round(level * 180));
               return (
                 <div key={p.user_id} className={cn(
                   "aspect-square rounded-xl bg-secondary/70 border-2 flex flex-col items-center justify-center gap-3 p-4 transition-all",
@@ -89,6 +90,12 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
                       : name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="text-sm font-medium truncate max-w-full">{name}{isMe && " (ty)"}</div>
+                  <div className="w-full h-1.5 rounded-full bg-background/60 overflow-hidden">
+                    <div
+                      className={cn("h-full transition-[width] duration-75", p.is_muted ? "bg-destructive/70" : "bg-emerald-400")}
+                      style={{ width: `${p.is_muted ? 0 : pct}%` }}
+                    />
+                  </div>
                   {p.is_muted && <MicOff className="w-4 h-4 text-destructive" />}
                 </div>
               );
