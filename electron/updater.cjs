@@ -191,6 +191,9 @@ const diagnostics = {
   signatureSubject: null,
   signatureThumbprint: null,
   signatureTimestamped: null,
+  pinTrust: null,           // "pinned" | "tofu" | "pin-mismatch" | "no-thumbprint"
+  pinnedThumbprints: [],    // aktuálně důvěryhodné piny
+  pinRotation: null,        // { changed, reason, before, after }
   status: "idle",
   lastError: null,
   lastCheckAt: null,
