@@ -173,6 +173,7 @@ export function AppUserSettings({ onClose }: Props) {
     { key: "voice", label: "Hlas a video", icon: Mic },
     { key: "notifications", label: "Notifikace", icon: Bell },
     { key: "appearance", label: "Vzhled", icon: Palette },
+    { key: "app", label: "Aplikace", icon: MonitorCog },
     { key: "about", label: "O aplikaci", icon: Info },
   ];
 
