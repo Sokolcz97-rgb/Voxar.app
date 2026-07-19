@@ -339,8 +339,11 @@
   },
   "notFound": {
     "title": "404 — Page not found",
-    "desc": "This page does not exist."
+    "desc": "This page does not exist.",
+    "subtitle": "Oops! We couldn't find this page.",
+    "back": "Back to home"
   },
+
   "lang": {
     "switch": "Language"
   },
