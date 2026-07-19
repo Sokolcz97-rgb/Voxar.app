@@ -39,6 +39,7 @@ export type VoxRole = {
   badge_url: string | null;
   position: number;
   is_default: boolean;
+  hoist: boolean;
   permissions: Record<string, boolean>;
 };
 
