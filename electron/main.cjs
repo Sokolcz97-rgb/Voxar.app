@@ -108,7 +108,7 @@ function createMainWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    show: !settings.startMinimized,
+    show: false,
     backgroundColor: "#0a0a0f",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "assets", "icon.png"),
