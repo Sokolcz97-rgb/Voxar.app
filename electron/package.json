@@ -1,8 +1,13 @@
 {
   "name": "studiovoxario-desktop",
+  "productName": "StudioVoxario",
   "version": "1.0.0",
   "description": "StudioVoxario desktop klient",
   "author": "StudioVoxario",
   "main": "main.cjs",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@electron/packager": "^20.0.3",
+    "electron": "^31.7.7"
+  }
 }
