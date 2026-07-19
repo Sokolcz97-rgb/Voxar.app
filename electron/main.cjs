@@ -12,7 +12,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
@@ -282,6 +282,18 @@ ipcMain.handle("app:check-updates", () =>
     channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
   })
 );
+// Živá kontrola pro FAB ikonku v aplikaci — bez dialogů.
+ipcMain.handle("app:check-updates-quiet", () =>
+  checkForUpdatesQuiet({
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  })
+);
+ipcMain.handle("app:install-update-now", () =>
+  installUpdateFromRenderer({
+    parentWindow: mainWindow,
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  })
+);
 ipcMain.handle("launcher:version", () => app.getVersion());
 ipcMain.handle("launcher:diagnostics", () => getDiagnostics());
 ipcMain.handle("launcher:recheck", () =>
@@ -479,6 +491,15 @@ app.whenReady().then(async () => {
   }
 
   runLauncherSequence();
+
+  // Živá quiet-kontrola pro FAB v UI (bez dialogů). První hned po startu,
+  // pak každých 15 min. Manifest se fetchuje s cache-bustem, takže výsledek
+  // je vždy aktuální — už žádné „vyskočí stará verze".
+  const quietTick = () => checkForUpdatesQuiet({
+    channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  }).catch(() => {});
+  setTimeout(quietTick, 8_000);
+  setInterval(quietTick, 15 * 60 * 1000);
 
   setInterval(() => {
     checkForUpdates({

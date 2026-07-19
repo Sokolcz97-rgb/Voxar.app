@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Shield, Crown, Star, User, Heart, Zap, Award, Gem, Flame, Upload, ArrowUp, ArrowDown, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxMember } from "@/components/vox/MemberList";
 
@@ -76,6 +76,8 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [savedRoles, setSavedRoles] = useState<Record<string, VoxRole>>({}); // last-persisted snapshot per role
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -83,7 +85,9 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
       supabase.from("vox_roles").select("*").eq("guild_id", guildId).order("position", { ascending: false }),
       supabase.from("vox_member_roles").select("user_id, role_id").eq("guild_id", guildId),
     ]);
-    setRoles((r || []) as VoxRole[]);
+    const list = (r || []) as VoxRole[];
+    setRoles(list);
+    setSavedRoles(Object.fromEntries(list.map(x => [x.id, x])));
     const map: Record<string, string[]> = {};
     (a || []).forEach((row: any) => {
       (map[row.user_id] ||= []).push(row.role_id);
@@ -94,6 +98,41 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [guildId]);
+
+  /** Šalanda mezi lokální editací a serverem: která role má rozdíl proti poslednímu uložení. */
+  const dirtyIds = useMemo(() => {
+    const s = new Set<string>();
+    roles.forEach(r => {
+      const saved = savedRoles[r.id];
+      if (!saved) { s.add(r.id); return; }
+      if (JSON.stringify({ ...r }) !== JSON.stringify({ ...saved })) s.add(r.id);
+    });
+    return s;
+  }, [roles, savedRoles]);
+  const isDirty = dirtyIds.size > 0;
+
+  const saveAll = async () => {
+    if (!isDirty) { toast({ title: "Není co ukládat" }); return; }
+    setSaving(true);
+    try {
+      const results = await Promise.all(
+        Array.from(dirtyIds).map(id => {
+          const r = roles.find(x => x.id === id);
+          if (!r) return null;
+          const { id: _id, guild_id: _g, ...patch } = r as any;
+          return supabase.from("vox_roles").update(patch).eq("id", id);
+        })
+      );
+      const err = results.find((x: any) => x && x.error)?.error;
+      if (err) throw err;
+      setSavedRoles(Object.fromEntries(roles.map(x => [x.id, x])));
+      toast({ title: "Uloženo", description: `Aktualizováno rolí: ${dirtyIds.size}. Změny se projeví okamžitě.` });
+    } catch (e: any) {
+      toast({ title: "Uložení selhalo", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const selected = useMemo(() => roles.find(r => r.id === selectedId) || null, [roles, selectedId]);
 
@@ -113,10 +152,12 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
     setSelectedId((data as VoxRole).id);
   };
 
-  const patchRole = async (id: string, patch: Partial<VoxRole>) => {
+  /**
+   * Lokální patch role — pouze do stavu, aby uživatel viděl náhled a mohl
+   * potvrdit tlačítkem „Uložit nastavení". Persistence probíhá v `saveAll`.
+   */
+  const patchRole = (id: string, patch: Partial<VoxRole>) => {
     setRoles(rs => rs.map(r => r.id === id ? { ...r, ...patch } as VoxRole : r));
-    const { error } = await supabase.from("vox_roles").update(patch as any).eq("id", id);
-    if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); load(); }
   };
 
   const deleteRole = async (id: string) => {
@@ -171,6 +212,32 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
   if (loading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Načítám role…</div>;
 
   return (
+    <div className="space-y-4">
+      {canManage && (
+        <div className={cn(
+          "flex items-center justify-between rounded-md border px-3 py-2 text-sm transition",
+          isDirty ? "border-primary/60 bg-primary/10" : "border-border/40 bg-secondary/30"
+        )}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={cn("w-2 h-2 rounded-full", isDirty ? "bg-primary animate-pulse" : "bg-emerald-500")} />
+            <span className="truncate">
+              {isDirty
+                ? `Máš neuložené změny (${dirtyIds.size} ${dirtyIds.size === 1 ? "role" : "rolí"}).`
+                : "Vše je uloženo — změny se v chatu i seznamu členů projeví okamžitě."}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="ghost" onClick={load} disabled={saving} className="h-8">
+              Zahodit
+            </Button>
+            <Button size="sm" onClick={saveAll} disabled={!isDirty || saving} className="h-8">
+              {saving ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+              Uložit nastavení
+            </Button>
+          </div>
+        </div>
+      )}
+
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4">
       {/* Seznam rolí */}
       <div className="space-y-1">
@@ -352,6 +419,7 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

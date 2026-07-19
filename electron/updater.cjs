@@ -903,12 +903,60 @@ async function fetchManifest() {
   return withRetry(() => fetchJson(MANIFEST_URL, { bustCache: true }), { phase: "manifest", label: "Manifest" });
 }
 
+/**
+ * Tichá kontrola — vrátí strukturovanou info o dostupnosti aktualizace,
+ * bez jakéhokoli dialogu. Slouží live indikátoru v rendereru:
+ * když je `available: true`, renderer zobrazí ikonku stahování.
+ */
+async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
+  try {
+    const rawManifest = await fetchJson(MANIFEST_URL, { bustCache: true });
+    const manifest = pickChannel(rawManifest, channel);
+    const current = app.getVersion();
+    const remote = manifest.version;
+    const platform = process.platform;
+    const asset =
+      (manifest.platforms && manifest.platforms[platform]) ||
+      (platform === "win32" ? { installerUrl: manifest.installerUrl } : null);
+    const available = !!(remote && isNewer(remote, current) && asset && asset.installerUrl);
+    diagnostics.currentVersion = current;
+    diagnostics.remoteVersion = remote;
+    diagnostics.manifest = manifest;
+    if (available) diagnostics.installerUrl = asset.installerUrl;
+    const payload = { available, current, remote: remote || null, notes: manifest.notes || null, asset: available ? asset : null, channel };
+    // Broadcast do všech oken, aby renderer mohl aktualizovat ikonku.
+    broadcast("update:availability", payload);
+    return payload;
+  } catch (e) {
+    const payload = { available: false, error: String(e?.message || e) };
+    broadcast("update:availability", payload);
+    return payload;
+  }
+}
+
+/**
+ * Provede update přímo z rendereru (kliknutí na ikonku „stáhnout aktualizaci").
+ * Použije už načtený manifest z poslední quiet kontroly nebo znovu.
+ */
+async function installUpdateFromRenderer({ parentWindow = null, channel = "stable" } = {}) {
+  const info = await checkForUpdatesQuiet({ channel });
+  if (!info.available || !info.asset) return { status: "up-to-date" };
+  const res = await installVerified({
+    asset: info.asset,
+    version: info.remote,
+    parentWindow,
+    label: "update",
+  });
+  return res;
+}
+
 function getPinState() { return pinning.loadPins(); }
 function resetPinState() { return pinning.resetPins(); }
 
 module.exports = {
   checkForUpdates, getDiagnostics, installVerified, fetchManifest,
   cancelActiveDownload, getPinState, resetPinState, setUiBridge,
+  checkForUpdatesQuiet, installUpdateFromRenderer,
 };
 
 
