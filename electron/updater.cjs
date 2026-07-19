@@ -322,30 +322,100 @@ async function withRetry(fn, { phase, label, maxAttempts = 5, baseDelayMs = 1500
 }
 
 // ---- UI bridge: umožní směrovat dotazy/notifikace do launcheru místo nativního OS dialogu.
-// Nastavuje se z main.cjs. Když není nastaveno (nebo bridge vrátí null), padáme zpět na dialog.
+// Nastavuje se z main.cjs. Když není nastaveno (nebo bridge vrátí null), padáme zpět na
+// interní tmavý modal (žádné klasické Windows okno).
 let uiBridge = null;
 function setUiBridge(fn) { uiBridge = typeof fn === "function" ? fn : null; }
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+let modalSeq = 0;
+function showInAppModal(parentWindow, { type = "info", title, message, detail, buttons }) {
+  return new Promise((resolve) => {
+    const btns = (buttons && buttons.length ? buttons : ["OK"]);
+    const win = new BrowserWindow({
+      width: 480,
+      height: 300,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      frame: false,
+      alwaysOnTop: true,
+      modal: !!(parentWindow && !parentWindow.isDestroyed()),
+      parent: parentWindow && !parentWindow.isDestroyed() ? parentWindow : undefined,
+      backgroundColor: "#0a0a0f",
+      show: false,
+      title: title || "StudioVoxario",
+      webPreferences: { nodeIntegration: true, contextIsolation: false },
+    });
+    const channel = `sv-modal-response-${++modalSeq}`;
+    const accent = type === "error" ? "#ef4444" : type === "warning" ? "#f59e0b" : "#22d3ee";
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+      html,body{margin:0;padding:0;background:#0a0a0f;color:#e5e7eb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+      .wrap{padding:20px 22px;height:calc(100vh - 40px);display:flex;flex-direction:column;box-sizing:border-box}
+      .titlebar{-webkit-app-region:drag;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+      h3{margin:0 0 8px;font-size:15px;font-weight:600;color:${accent}}
+      .msg{font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:6px}
+      .detail{font-size:12.5px;color:#cbd5e1;white-space:pre-wrap;line-height:1.5;flex:1;overflow:auto;-webkit-app-region:no-drag;padding-right:4px}
+      .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;-webkit-app-region:no-drag}
+      button{cursor:pointer;padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#111827;color:#e5e7eb;font-size:13px;font-family:inherit}
+      button:hover{background:#1f2937}
+      button.primary{background:linear-gradient(90deg,#06b6d4,#22d3ee);border-color:transparent;color:#0a0a0f;font-weight:600}
+      button.primary:hover{filter:brightness(1.08)}
+    </style></head><body>
+      <div class="wrap">
+        <div class="titlebar">StudioVoxario</div>
+        <h3>${escapeHtml(title || "StudioVoxario")}</h3>
+        ${message ? `<div class="msg">${escapeHtml(message)}</div>` : ""}
+        <div class="detail">${escapeHtml(detail || "")}</div>
+        <div class="row">${btns.map((b,i) => `<button data-i="${i}" class="${i===0?'primary':''}">${escapeHtml(b)}</button>`).join("")}</div>
+      </div>
+      <script>
+        const { ipcRenderer } = require("electron");
+        document.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+          ipcRenderer.send(${JSON.stringify(channel)}, parseInt(b.dataset.i,10));
+        }));
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") ipcRenderer.send(${JSON.stringify(channel)}, ${btns.length - 1});
+          if (e.key === "Enter") ipcRenderer.send(${JSON.stringify(channel)}, 0);
+        });
+      </script>
+    </body></html>`;
+    win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+    win.once("ready-to-show", () => { try { win.show(); win.focus(); } catch {} });
+    const onResp = (_e, i) => { done(i); };
+    const done = (i) => {
+      ipcMain.removeListener(channel, onResp);
+      try { if (!win.isDestroyed()) win.close(); } catch {}
+      resolve(typeof i === "number" ? i : -1);
+    };
+    ipcMain.once(channel, onResp);
+    win.on("closed", () => { ipcMain.removeListener(channel, onResp); resolve(-1); });
+  });
+}
 
 async function askUser({ parentWindow, title, message, detail, buttons, defaultId = 0, cancelId = 1 }) {
   if (uiBridge) {
     try {
       const r = await uiBridge({ kind: "question", title, message, detail, buttons, defaultId, cancelId });
       if (r && typeof r.response === "number") return r.response;
-    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na systémový dialog.`); }
+    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na in-app modal.`); }
   }
-  const { response } = await dialog.showMessageBox(parentWindow, {
-    type: "question", title, message, detail, buttons, defaultId, cancelId,
-  });
-  return response;
+  const idx = await showInAppModal(parentWindow, { type: "info", title, message, detail, buttons });
+  return idx < 0 ? cancelId : idx;
 }
 async function notifyUser({ parentWindow, type = "info", title, message, detail }) {
   if (uiBridge) {
     try {
       const r = await uiBridge({ kind: "notice", type, title, message, detail });
       if (r && r.ok) return;
-    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na systémový dialog.`); }
+    } catch (e) { log(`UI bridge selhal (${e.message || e}) — fallback na in-app modal.`); }
   }
-  await dialog.showMessageBox(parentWindow, { type, title, message, detail });
+  await showInAppModal(parentWindow, { type, title, message, detail, buttons: ["OK"] });
 }
 
 
