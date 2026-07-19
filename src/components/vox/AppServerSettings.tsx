@@ -10,13 +10,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2 } from "lucide-react";
+import { Server as ServerIcon, Link2, Users, Trash2, X, Copy, RefreshCcw, Check, Hash, Volume2, Upload, Loader2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoxGuild } from "@/components/vox/GuildRail";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
 import type { VoxMember } from "@/components/vox/MemberList";
+import { VoxRolesPanel } from "@/components/vox/VoxRolesPanel";
 
-type Tab = "overview" | "invite" | "channels" | "members" | "danger";
+type Tab = "overview" | "invite" | "roles" | "channels" | "members" | "danger";
 
 interface Props {
   guild: VoxGuild;
@@ -154,6 +155,7 @@ export function AppServerSettings({
   const tabs: { key: Tab; label: string; icon: any; adminOnly?: boolean }[] = [
     { key: "overview", label: "Přehled", icon: ServerIcon, adminOnly: true },
     { key: "invite", label: "Pozvánky", icon: Link2 },
+    { key: "roles", label: "Role & oprávnění", icon: ShieldCheck, adminOnly: true },
     { key: "channels", label: "Kanály", icon: Hash, adminOnly: true },
     { key: "members", label: "Členové", icon: Users },
     { key: "danger", label: isOwner ? "Nebezpečná zóna" : "Opustit server", icon: Trash2 },
@@ -248,6 +250,10 @@ export function AppServerSettings({
               </div>
             </div>
           )}
+          {tab === "roles" && isAdmin && (
+            <VoxRolesPanel guildId={guild.id} canManage={isAdmin} members={members} />
+          )}
+
 
           {tab === "channels" && isAdmin && (
             <div className="space-y-2">
