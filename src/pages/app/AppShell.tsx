@@ -230,7 +230,7 @@ export default function AppShell() {
               channels={channels}
               activeId={activeChannel?.id ?? null}
               onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
-              onCreateChannel={createChannel}
+              onCreateChannel={openCreateChannel}
               isAdmin={isAdmin}
               voiceParticipants={voiceParticipants}
               onOpenServerSettings={() => setView("server-settings")}
