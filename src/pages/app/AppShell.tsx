@@ -322,6 +322,7 @@ export default function AppShell() {
         onCreate={createChannel}
       />
       <DesktopUpdateFab />
+      <DevConsole />
     </div>
   );
 }
