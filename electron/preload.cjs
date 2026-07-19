@@ -10,6 +10,16 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   nodeVersion: process.versions.node,
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdates: () => ipcRenderer.invoke("app:check-updates"),
+  // „Tichá" kontrola pro FAB v aplikaci — vrací { available, current, remote, notes }.
+  checkUpdatesQuiet: () => ipcRenderer.invoke("app:check-updates-quiet"),
+  // Spuštění instalace přímo z rendereru (kliknutí na ikonku).
+  installUpdateNow: () => ipcRenderer.invoke("app:install-update-now"),
+  // Odběr live oznámení o dostupné aktualizaci (broadcast z main procesu).
+  onUpdateAvailability: (cb) => {
+    const listener = (_e, payload) => { try { cb(payload); } catch {} };
+    ipcRenderer.on("update:availability", listener);
+    return () => ipcRenderer.removeListener("update:availability", listener);
+  },
   setBadge: (count) => ipcRenderer.send("set-badge", Number(count) || 0),
   notify: (title, body, url) =>
     ipcRenderer.send("show-notification", { title, body, url }),
