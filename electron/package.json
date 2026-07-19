@@ -1,7 +1,7 @@
 {
   "name": "studiovoxario-desktop",
   "productName": "StudioVoxario",
-  "version": "0.0.4-alpha",
+  "version": "0.0.5-alpha",
   "description": "StudioVoxario desktop klient",
   "author": "StudioVoxario",
   "main": "main.cjs",
