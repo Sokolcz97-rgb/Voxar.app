@@ -197,14 +197,26 @@ export function AppServerSettings({
                     ? <img src={iconUrl} alt="" className="w-full h-full object-cover" />
                     : name.slice(0, 2).toUpperCase()}
                 </div>
-                <div className="text-sm text-muted-foreground">Profil serveru — jméno a ikona jsou viditelné všem členům.</div>
+                <div className="flex-1 space-y-2">
+                  <div className="text-sm text-muted-foreground">Ikona serveru — viditelná všem členům. PNG, JPG nebo WEBP do 5 MB.</div>
+                  <div className="flex flex-wrap gap-2">
+                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onIconFileSelected} />
+                    <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                      {uploading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                      {uploading ? "Nahrávám…" : "Nahrát obrázek"}
+                    </Button>
+                    {iconUrl && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setIconUrl("")}>Odebrat</Button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
                 <Label>Název serveru</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" />
               </div>
               <div>
-                <Label>URL ikony serveru</Label>
+                <Label>Nebo URL ikony (nepovinné)</Label>
                 <Input value={iconUrl} onChange={(e) => setIconUrl(e.target.value)} placeholder="https://…" className="mt-1.5" />
               </div>
               <div>
