@@ -258,6 +258,20 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
               </div>
             </div>
 
+            <div className="flex items-start justify-between gap-3 rounded-md border border-border/40 p-3">
+              <div>
+                <div className="text-sm font-medium">Zobrazit členy s touto rolí odděleně</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Členové budou v seznamu členů vedeni v samostatné kategorii pod názvem role (podobně jako na Discordu).
+                </div>
+              </div>
+              <Switch
+                checked={!!selected.hoist}
+                disabled={!canManage}
+                onCheckedChange={(v) => patchRole(selected.id, { hoist: v })}
+              />
+            </div>
+
             <div>
               <Label>Ikona</Label>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
