@@ -418,6 +418,51 @@ async function notifyUser({ parentWindow, type = "info", title, message, detail 
   await showInAppModal(parentWindow, { type, title, message, detail, buttons: ["OK"] });
 }
 
+/**
+ * Persistentní modal „Instaluji aktualizaci..." — po vybalení installeru
+ * a před quitem appky. Nemá tlačítka, zavírá se sám za ~6 s (kdy volá app.quit).
+ * Preferuje UI bridge (integrovaný launcher UI), aby to nikdy nebyl OS pop-up.
+ */
+async function showInstallingModal(parentWindow, version) {
+  const title = "Instaluji aktualizaci";
+  const message = `StudioVoxario ${version}`;
+  const detail =
+    "Nová verze se právě instaluje na pozadí.\n" +
+    "Aplikace se za chvíli sama zavře a znovu spustí.\n\n" +
+    "Nezavírejte prosím počítač.";
+  if (uiBridge) {
+    try {
+      await uiBridge({ kind: "installing", title, message, detail, version });
+      return;
+    } catch (e) { log(`UI bridge (installing) selhal (${e.message || e}) — fallback na in-app modal.`); }
+  }
+  // In-process modal bez tlačítek — auto-close za 5.5 s.
+  const win = new BrowserWindow({
+    width: 460, height: 220, resizable: false, minimizable: false, maximizable: false,
+    frame: false, alwaysOnTop: true, backgroundColor: "#0a0a0f", show: false,
+    parent: parentWindow && !parentWindow.isDestroyed() ? parentWindow : undefined,
+    webPreferences: { nodeIntegration: true, contextIsolation: false },
+  });
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    html,body{margin:0;padding:0;background:#0a0a0f;color:#e5e7eb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+    .wrap{padding:22px 24px}
+    h3{margin:0 0 6px;font-size:15px;color:#22d3ee}
+    .msg{font-size:14px;font-weight:600;margin-bottom:8px}
+    .detail{font-size:12.5px;color:#cbd5e1;white-space:pre-wrap;line-height:1.55}
+    .bar{margin-top:14px;height:6px;background:#1f2937;border-radius:6px;overflow:hidden;position:relative}
+    .bar::after{content:'';position:absolute;left:-40%;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,#22d3ee,transparent);animation:l 1.4s infinite}
+    @keyframes l{to{left:100%}}
+  </style></head><body><div class="wrap">
+    <h3>${escapeHtml(title)}</h3>
+    <div class="msg">${escapeHtml(message)}</div>
+    <div class="detail">${escapeHtml(detail)}</div>
+    <div class="bar"></div>
+  </div></body></html>`;
+  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  win.once("ready-to-show", () => { try { win.show(); win.focus(); } catch {} });
+  setTimeout(() => { try { if (!win.isDestroyed()) win.close(); } catch {} }, 5500);
+}
+
 
 
 
