@@ -106,12 +106,15 @@ export function useVoxVoice(channelId: string | null) {
 
     pc.ontrack = (ev) => {
       const [stream] = ev.streams;
+      // Safety: never play back our own stream (would cause echo).
+      if (remoteUserId === user?.id) return;
       updateRemote(remoteUserId, { stream });
       let audio = document.getElementById(`vox-audio-${remoteUserId}`) as HTMLAudioElement | null;
       if (!audio) {
         audio = document.createElement("audio");
         audio.id = `vox-audio-${remoteUserId}`;
         audio.autoplay = true;
+        (audio as any).playsInline = true;
         document.body.appendChild(audio);
       }
       audio.srcObject = stream;
@@ -151,9 +154,10 @@ export function useVoxVoice(channelId: string | null) {
       const raw = await navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: prefs.inputDeviceId ? { exact: prefs.inputDeviceId } : undefined,
-          echoCancellation: prefs.echoCancellation ?? true,
-          noiseSuppression: prefs.noiseSuppression ?? true,
-          autoGainControl: prefs.autoGainControl ?? true,
+          // Force DSP on to prevent echo loop — remote audio picked up by mic must be cancelled.
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         },
         video: false,
       });
