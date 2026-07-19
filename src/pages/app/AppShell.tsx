@@ -21,7 +21,7 @@ import { Loader2 } from "lucide-react";
 export default function AppShell() {
   useVoxHeartbeat("online");
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  
 
   const [guilds, setGuilds] = useState<VoxGuild[]>([]);
   const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
