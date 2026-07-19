@@ -339,7 +339,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
     log(`Stahování zahájeno → ${dest}`);
     diagnostics.status = "downloading";
 
-    const download = await downloadFile(asset.installerUrl, dest, (p) => {
+    const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (p) => {
       const pct = Math.round(p * 100);
       progressWin.webContents
         .executeJavaScript(
