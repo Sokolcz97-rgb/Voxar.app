@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import winInstaller from "@/assets/downloads/windows-installer.asset.json";
+import winInstaller from "@/assets/downloads/windows-installer-0.0.4.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
 
@@ -88,10 +88,10 @@ export default function Download() {
     {
       os: "Windows 10 / 11",
       file: winInstaller.url,
-      filename: "StudioVoxarioSetup.exe",
+      filename: "StudioVoxarioSetup-0.0.4-alpha.exe",
       note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
       icon: "🪟",
-      size: "~80 MB · v0.0.4-Alpha",
+      size: "~29 MB · v0.0.4-Alpha",
       primary: true,
     },
     {
