@@ -275,6 +275,32 @@ ipcMain.handle("app:quit", () => {
   app.quit();
 });
 ipcMain.handle("app:reload", () => mainWindow?.webContents.reload());
+ipcMain.handle("app:hard-reload", () => {
+  try {
+    mainWindow?.webContents.session.clearCache();
+  } catch {}
+  mainWindow?.webContents.reloadIgnoringCache();
+});
+ipcMain.handle("app:relaunch", () => {
+  app.relaunch();
+  isQuitting = true;
+  app.exit(0);
+});
+ipcMain.handle("app:open-devtools", () => {
+  try { mainWindow?.webContents.openDevTools({ mode: "detach" }); } catch {}
+});
+ipcMain.handle("app:diagnostics", () => ({
+  version: app.getVersion(),
+  electron: process.versions.electron,
+  chrome: process.versions.chrome,
+  node: process.versions.node,
+  platform: process.platform,
+  arch: process.arch,
+  channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+  betaUnlocked: !!settings.betaUnlocked,
+  userDataPath: app.getPath("userData"),
+  uptimeSec: Math.round(process.uptime()),
+}));
 ipcMain.handle("app:check-updates", () =>
   checkForUpdates({
     silent: false,
