@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { MicTester } from "@/components/vox/MicTester";
 
 type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "about";
 
@@ -324,6 +325,12 @@ export function AppUserSettings({ onClose }: Props) {
                 <ToggleRow label="Automatické zesílení" val={voice.autoGainControl} onChange={(v) => saveVoice({ autoGainControl: v })} />
                 <ToggleRow label="Push-to-talk (držet mluvit)" val={voice.pushToTalk} onChange={(v) => saveVoice({ pushToTalk: v })} />
               </div>
+              <MicTester
+                deviceId={voice.inputDeviceId}
+                noiseSuppression={voice.noiseSuppression}
+                echoCancellation={voice.echoCancellation}
+                autoGainControl={voice.autoGainControl}
+              />
               <p className="text-xs text-muted-foreground">Změny se použijí při dalším připojení do hlasového kanálu.</p>
             </div>
           )}
