@@ -346,7 +346,7 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
           `document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`
         )
         .catch(() => {});
-    });
+    }), { phase: "download", label: "Stažení instalátoru" });
 
     progressWin.close();
     diagnostics.downloadedSha256 = download.sha256;
