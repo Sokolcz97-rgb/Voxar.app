@@ -805,23 +805,19 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
 
 
     if (platform === "win32") {
-      // Tichá instalace: NSIS /S. Ještě NEUKONČUJEME appku — nejdřív ukážeme
-      // uživateli jasný in-app modal, ať vidí, že se něco děje. Až po jeho
-      // potvrzení (nebo 6 s auto-close) appku zavřeme, aby installer mohl
-      // přepsat souboru; NSIS má taskkill fallback.
       try {
-        const { spawn } = require("child_process");
-        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
-        child.unref();
-        log("Instalátor spuštěn v tichém režimu (/S).");
+        const helper = runWindowsInstallAndRelaunch(dest, remote);
+        log(`Update helper spuštěn: ${helper.scriptPath}; log: ${helper.logPath}`);
       } catch (e) {
-        log(`Nepodařilo se spustit tichý installer (${e.message}), zkouším fallback.`);
-        await shell.openPath(dest);
+        log(`Nepodařilo se spustit update helper (${e.message}), zkouším fallback installeru.`);
+        const { spawn } = require("child_process");
+        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore", windowsHide: true });
+        child.unref();
       }
       // Persistentní in-app modal (auto-close). Použije launcher UI bridge,
       // jinak fallback na interní tmavý modal — nikdy nativní Windows okno.
       showInstallingModal(parentWindow, remote).catch(() => {});
-      setTimeout(() => app.quit(), 6000);
+      setTimeout(() => app.quit(), 2500);
     } else {
       await notifyUser({ parentWindow, type: "info",
         title: "Aktualizace stažena",
@@ -929,14 +925,16 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
 
     if (platform === "win32") {
       try {
-        const { spawn } = require("child_process");
-        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore" });
-        child.unref();
+        const helper = runWindowsInstallAndRelaunch(dest, version);
+        log(`${label}: update helper spuštěn: ${helper.scriptPath}; log: ${helper.logPath}`);
       } catch {
-        await shell.openPath(dest);
+        const { spawn } = require("child_process");
+        const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore", windowsHide: true });
+        child.unref();
       }
       new Notification({ title: "StudioVoxario", body: `${label}: tichá instalace probíhá, aplikace se restartuje.` }).show();
-      setTimeout(() => app.quit(), 800);
+      showInstallingModal(parentWindow, version).catch(() => {});
+      setTimeout(() => app.quit(), 2500);
     } else {
       shell.showItemInFolder(dest);
     }
