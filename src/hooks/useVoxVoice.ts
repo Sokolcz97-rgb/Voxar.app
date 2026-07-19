@@ -161,13 +161,20 @@ export function useVoxVoice(channelId: string | null) {
 
       // IMPORTANT: publish the raw mic track directly to peers.
       // Routing mic through WebAudio (MediaStreamDestination) breaks the
-      // browser's echo canceller (AEC needs a direct mic->PC path), which
-      // causes users to hear themselves back from remote peers.
+      // browser's echo canceller (AEC needs a direct mic->PC path).
       localStreamRef.current = raw;
 
-      // Use WebAudio ONLY for metering + VAD (toggles track.enabled).
+      // For VAD/metering we need a track that is ALWAYS enabled — otherwise
+      // when VAD closes the published track (enabled=false), the analyser
+      // reads silence, RMS stays 0, and the gate never re-opens (deadlock).
+      // Clone the mic track: clones share the underlying source but have an
+      // independent `enabled` flag.
+      const monitorTracks = raw.getAudioTracks().map((t) => t.clone());
+      monitorTracks.forEach((t) => (t.enabled = true));
+      const monitorStream = new MediaStream(monitorTracks);
+
       const ctx = await ensureCtx();
-      const src = ctx.createMediaStreamSource(raw);
+      const src = ctx.createMediaStreamSource(monitorStream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       src.connect(analyser);
@@ -178,6 +185,9 @@ export function useVoxVoice(channelId: string | null) {
       const auto = prefs.autoDetect ?? true;
       const thresholdLin = Math.pow(10, (prefs.vadThresholdDb ?? -50) / 20);
       let openUntil = 0;
+
+      // Start with published track ENABLED so first speech isn't clipped.
+      raw.getAudioTracks().forEach((t) => (t.enabled = true));
 
       const tick = () => {
         if (!alive) return;
@@ -192,16 +202,24 @@ export function useVoxVoice(channelId: string | null) {
 
         if (auto && !muted) {
           const now = performance.now();
-          if (rms > thresholdLin) openUntil = now + 300;
+          if (rms > thresholdLin) openUntil = now + 400;
           const shouldOpen = now < openUntil;
           raw.getAudioTracks().forEach((t) => {
             if (t.enabled !== shouldOpen) t.enabled = shouldOpen;
           });
+        } else if (!auto && !muted) {
+          // Always-on when VAD is off
+          raw.getAudioTracks().forEach((t) => { if (!t.enabled) t.enabled = true; });
         }
         raf = requestAnimationFrame(tick);
       };
       tick();
-      metersRef.current.push(() => { alive = false; cancelAnimationFrame(raf); try { src.disconnect(); } catch {} });
+      metersRef.current.push(() => {
+        alive = false;
+        cancelAnimationFrame(raf);
+        try { src.disconnect(); } catch {}
+        monitorTracks.forEach((t) => { try { t.stop(); } catch {} });
+      });
     } catch (e) {
       console.error("Mikrofon nedostupný", e);
       return;
