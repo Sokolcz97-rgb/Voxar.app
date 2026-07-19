@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package, AppWindow, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -109,13 +109,15 @@ const Profile = () => {
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
-      <main className="container py-10 max-w-2xl animate-fade-in">
+      <main className="container py-10 max-w-6xl animate-fade-in">
         <PageHero
           eyebrow={t("profile.tagline") || "Účet"}
           title={t("profile.title")}
           description={t("profile.subtitle") || "Spravuj svůj profil, sociální sítě, oznámení a zvuky."}
           icon={UserCog}
         />
+        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
         <Card className="glass border-border p-8">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>

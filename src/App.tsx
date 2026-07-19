@@ -48,6 +48,10 @@ import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
 import AdminOrderModels from "./pages/AdminOrderModels.tsx";
 import LiveNow from "./pages/LiveNow.tsx";
+import MyForms from "./pages/MyForms.tsx";
+import FormEditor from "./pages/FormEditor.tsx";
+import FormResults from "./pages/FormResults.tsx";
+import PublicForm from "./pages/PublicForm.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
@@ -96,6 +100,10 @@ const AppRoutes = () => {
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
       <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
       <Route path="/live" element={<LiveNow />} />
+      <Route path="/profile/formulare" element={<ProtectedRoute><MyForms /></ProtectedRoute>} />
+      <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
+      <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
+      <Route path="/f/:slug" element={<PublicForm />} />
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
