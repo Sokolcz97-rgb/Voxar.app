@@ -293,6 +293,62 @@
       }
     });
 
+    // ---- In-launcher modal prompt (nahrazuje OS dialog) ----
+    const modalMask = $('modalMask');
+    const modalIc = $('modalIc');
+    const modalTitle = $('modalTitle');
+    const modalMsg = $('modalMsg');
+    const modalDetail = $('modalDetail');
+    const modalActions = $('modalActions');
+
+    function closeModal() {
+      modalMask.classList.remove('show');
+      modalActions.innerHTML = '';
+    }
+    function respond(id, response, ok = true) {
+      ipcRenderer.invoke('launcher:prompt-response', { id, response, ok }).catch(() => {});
+      closeModal();
+    }
+
+    ipcRenderer.on('launcher:prompt', (_e, p) => {
+      if (!p || typeof p.id !== 'number') return;
+      // Ikona podle typu
+      modalIc.classList.remove('err', 'ok');
+      if (p.type === 'error') { modalIc.classList.add('err'); modalIc.textContent = '!'; }
+      else if (p.type === 'info' && /nejnov/i.test(p.message || '')) { modalIc.classList.add('ok'); modalIc.textContent = '✓'; }
+      else if (p.kind === 'question') { modalIc.textContent = '↑'; }
+      else { modalIc.textContent = 'i'; }
+
+      modalTitle.textContent = p.title || 'StudioVoxario';
+      modalMsg.textContent = p.message || '';
+      if (p.detail) { modalDetail.style.display = ''; modalDetail.textContent = p.detail; }
+      else { modalDetail.style.display = 'none'; modalDetail.textContent = ''; }
+
+      modalActions.innerHTML = '';
+      const buttons = Array.isArray(p.buttons) && p.buttons.length ? p.buttons : ['OK'];
+      const defaultId = typeof p.defaultId === 'number' ? p.defaultId : 0;
+      buttons.forEach((label, idx) => {
+        const b = document.createElement('button');
+        b.className = 'mbtn' + (idx === defaultId ? ' primary' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => respond(p.id, idx, true));
+        modalActions.appendChild(b);
+      });
+      modalMask.classList.add('show');
+      // ESC = cancel
+      const onKey = (ev) => {
+        if (ev.key === 'Escape') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, typeof p.cancelId === 'number' ? p.cancelId : buttons.length - 1, true);
+        } else if (ev.key === 'Enter') {
+          document.removeEventListener('keydown', onKey);
+          respond(p.id, defaultId, true);
+        }
+      };
+      document.addEventListener('keydown', onKey);
+    });
+
+
     cancelBtn.addEventListener('click', async () => {
       cancelBtn.disabled = true;
       cancelBtn.textContent = 'Rušení…';
