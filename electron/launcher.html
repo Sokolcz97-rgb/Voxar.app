@@ -275,6 +275,12 @@
         ['Podepsáno', d.signatureSubject],
         ['Thumbprint', d.signatureThumbprint],
         ['Časové razítko', d.signatureTimestamped == null ? null : (d.signatureTimestamped ? 'ano' : 'ne')],
+        ['Pin trust', d.pinTrust,
+          d.pinTrust === 'pinned' ? 'ok'
+          : d.pinTrust === 'tofu' ? '' 
+          : d.pinTrust ? 'err' : ''],
+        ['Pinované otisky', (d.pinnedThumbprints || []).join(', ') || null],
+        ['Rotace pinů', d.pinRotation ? (d.pinRotation.changed ? ('změněno: ' + d.pinRotation.reason) : ('bez změny: ' + d.pinRotation.reason)) : null],
         ['Poslední kontrola', d.lastCheckAt],
         ['Retry fáze', d.retryPhase],
         ['Pokusy', d.retryAttempts && d.retryMaxAttempts ? (d.retryAttempts + ' / ' + d.retryMaxAttempts) : null],
@@ -313,6 +319,9 @@
         'Podepsáno:           ' + fmt(d.signatureSubject),
         'Thumbprint:          ' + fmt(d.signatureThumbprint),
         'Časové razítko:      ' + fmt(d.signatureTimestamped),
+        'Pin trust:           ' + fmt(d.pinTrust),
+        'Pinované otisky:     ' + fmt((d.pinnedThumbprints || []).join(', ')),
+        'Rotace pinů:         ' + (d.pinRotation ? JSON.stringify(d.pinRotation) : '—'),
         'Poslední kontrola:   ' + fmt(d.lastCheckAt),
         'Retry fáze:          ' + fmt(d.retryPhase),
         'Pokusy:              ' + fmt(d.retryAttempts) + ' / ' + fmt(d.retryMaxAttempts),

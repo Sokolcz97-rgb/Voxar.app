@@ -12,7 +12,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload } = require("./updater.cjs");
+const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
@@ -250,6 +250,8 @@ ipcMain.handle("launcher:recheck", () =>
   checkForUpdates({ silent: false, parentWindow: launcherWindow || mainWindow })
 );
 ipcMain.handle("launcher:cancel-download", () => cancelActiveDownload());
+ipcMain.handle("launcher:pins", () => getPinState());
+ipcMain.handle("launcher:pins-reset", () => resetPinState());
 ipcMain.handle("launcher:open-logs", () => {
   try {
     const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");

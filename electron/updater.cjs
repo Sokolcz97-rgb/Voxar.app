@@ -8,6 +8,7 @@ const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
 const { execFile } = require("child_process");
+const pinning = require("./pinning.cjs");
 
 const MANIFEST_URL =
   process.env.STUDIOVOXARIO_UPDATE_URL ||
@@ -190,6 +191,9 @@ const diagnostics = {
   signatureSubject: null,
   signatureThumbprint: null,
   signatureTimestamped: null,
+  pinTrust: null,           // "pinned" | "tofu" | "pin-mismatch" | "no-thumbprint"
+  pinnedThumbprints: [],    // aktuálně důvěryhodné piny
+  pinRotation: null,        // { changed, reason, before, after }
   status: "idle",
   lastError: null,
   lastCheckAt: null,
@@ -523,11 +527,57 @@ async function checkForUpdates({ silent = true, parentWindow = null } = {}) {
         });
         return { status: "publisher-mismatch" };
       }
+
+      // ---- Certificate pinning ----
+      // Vždy ověř thumbprint proti uloženému seznamu pinů. Pinning běží NAVÍC
+      // vedle publisher/hash kontroly — nelze ho z manifestu vypnout.
+      const pinCheck = pinning.verifyAgainstPins(sig.thumbprint);
+      diagnostics.pinTrust = pinCheck.reason;
+      diagnostics.pinnedThumbprints = pinCheck.pins || pinning.loadPins().thumbprints;
+      if (!pinCheck.trusted) {
+        try { fs.unlinkSync(dest); } catch {}
+        diagnostics.status = "pin-mismatch";
+        diagnostics.lastError = `Thumbprint ${pinCheck.actual || "?"} není mezi pinovanými certifikáty.`;
+        log(`CHYBA: certificate pinning selhal (${pinCheck.reason}). Instalátor smazán.`);
+        await dialog.showMessageBox(parentWindow, {
+          type: "error",
+          title: "Aktualizace zamítnuta",
+          message: "Neznámý podepisující certifikát",
+          detail:
+            `Instalátor je podepsaný certifikátem, který není v seznamu pinovaných ` +
+            `otisků aplikace.\n\n` +
+            `Nalezený otisk: ${pinCheck.actual || "-"}\n` +
+            `Pinované otisky: ${(pinCheck.pins || []).join(", ") || "(žádné)"}\n\n` +
+            `Soubor byl smazán a nespustí se.`,
+        });
+        return { status: "pin-mismatch" };
+      }
+      log(`Pinning OK — ${pinCheck.reason}${pinCheck.reason === "tofu" ? " (uložen nový pin)" : ""}.`);
+
+      // Bezpečná rotace pinů z manifestu — jen když aktuální podpis je už mezi
+      // důvěryhodnými piny (útočník s pouhým manifestem nemůže přidat vlastní).
+      const manifestPins = asset.pinnedThumbprints || manifest.pinnedThumbprints;
+      const pinMode = (asset.pinMode || manifest.pinMode) === "replace" ? "replace" : "add";
+      if (Array.isArray(manifestPins) && manifestPins.length) {
+        const rot = pinning.applyManifestPinUpdate({
+          manifestPins,
+          mode: pinMode,
+          currentTrustedThumbprint: sig.thumbprint,
+        });
+        diagnostics.pinRotation = rot;
+        if (rot.changed) {
+          diagnostics.pinnedThumbprints = rot.after;
+          log(`Piny aktualizovány (${pinMode}): ${rot.before.length} → ${rot.after.length}.`);
+        } else {
+          log(`Rotace pinů přeskočena: ${rot.reason}.`);
+        }
+      }
     }
 
     diagnostics.status = "installing";
     updateProgress({ phase: "installing", label: `Spouštím instalátor ${remote}`, pct: 1 });
-    log("Integrita i podpis OK, spouštím instalátor.");
+    log("Integrita, podpis i pinning OK, spouštím instalátor.");
+
 
     if (platform === "win32") {
       await shell.openPath(dest);
@@ -632,7 +682,16 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       try { fs.unlinkSync(dest); } catch {}
       return { status: "publisher-mismatch", sig };
     }
-    log(`${label}: ověřeno, spouštím instalátor.`);
+    if (sig.supported) {
+      const pinCheck = pinning.verifyAgainstPins(sig.thumbprint);
+      if (!pinCheck.trusted) {
+        try { fs.unlinkSync(dest); } catch {}
+        log(`${label}: pin-mismatch (${pinCheck.reason}), instalátor zamítnut.`);
+        return { status: "pin-mismatch", sig, pinCheck };
+      }
+      // Rollback NEROTUJE piny — jen ověří.
+    }
+    log(`${label}: ověřeno (podpis + pin), spouštím instalátor.`);
     updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
 
     if (platform === "win32") {
@@ -658,5 +717,11 @@ async function fetchManifest() {
   return withRetry(() => fetchJson(MANIFEST_URL), { phase: "manifest", label: "Manifest" });
 }
 
-module.exports = { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload };
+function getPinState() { return pinning.loadPins(); }
+function resetPinState() { return pinning.resetPins(); }
+
+module.exports = {
+  checkForUpdates, getDiagnostics, installVerified, fetchManifest,
+  cancelActiveDownload, getPinState, resetPinState,
+};
 
