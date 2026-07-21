@@ -117,8 +117,10 @@ const AppRoutes = () => {
       <Route path="/:slug" element={<DynamicPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
