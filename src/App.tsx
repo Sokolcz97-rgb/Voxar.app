@@ -58,12 +58,16 @@ import AppShell from "./pages/app/AppShell.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+import { DesktopRouteGuard } from "@/components/DesktopRouteGuard";
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   useGlobalShortcuts();
   return (
+    <>
+      <DesktopRouteGuard />
+
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
