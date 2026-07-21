@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
@@ -18,14 +19,21 @@ export function AppAuthGate() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const navigate = useNavigate();
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast({ title: "Přihlášení selhalo", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Přihlášení selhalo", description: error.message, variant: "destructive" });
+    // Zůstáváme uvnitř React Routeru – žádný window.location reload, žádná
+    // ztráta AuthContextu. AppShell se okamžitě přerenderuje jakmile
+    // onAuthStateChange nastaví user, a tenhle navigate garantuje, že jsme
+    // pořád na /app (kdyby nás cokoli přesměrovalo jinam).
+    navigate("/app", { replace: true });
   };
+
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
