@@ -478,7 +478,10 @@ export function useVoxVoice(channelId: string | null) {
     setDeafened((d) => {
       const nd = !d;
       deafenedRef.current = nd;
-      document.querySelectorAll<HTMLAudioElement>("[id^='vox-audio-']").forEach((a) => (a.muted = nd));
+      document.querySelectorAll<HTMLAudioElement>("[id^='vox-audio-']").forEach((a) => {
+        const uid = a.id.replace("vox-audio-", "");
+        a.muted = nd || localAudio.isMuted(uid);
+      });
       if (nd && !muted) toggleMute();
       if (user && channelId) {
         supabase.from("vox_voice_participants")
@@ -489,7 +492,21 @@ export function useVoxVoice(channelId: string | null) {
     });
   }, [muted, toggleMute, user, channelId]);
 
+  // Re-apply per-user local audio prefs (volume/mute) when they change.
+  useEffect(() => {
+    const apply = () => {
+      document.querySelectorAll<HTMLAudioElement>("[id^='vox-audio-']").forEach((a) => {
+        const uid = a.id.replace("vox-audio-", "");
+        a.muted = deafenedRef.current || localAudio.isMuted(uid);
+        a.volume = Math.max(0, Math.min(1, localAudio.getVolume(uid)));
+      });
+    };
+    apply();
+    return localAudio.subscribe(apply);
+  }, [remotes]);
+
   useEffect(() => () => { void leave(); }, [leave]);
+
 
   return { connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen };
 }
