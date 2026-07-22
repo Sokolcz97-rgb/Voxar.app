@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
 
 import { toast } from "@/hooks/use-toast";
 import { GuildRail, type VoxGuild } from "@/components/vox/GuildRail";
@@ -21,6 +23,8 @@ import { Loader2 } from "lucide-react";
 
 export default function AppShell() {
   useVoxHeartbeat("online");
+  const navigate = useNavigate();
+
   const { user, loading } = useAuth();
   
 
@@ -29,7 +33,9 @@ export default function AppShell() {
   const [channels, setChannels] = useState<VoxChannel[]>([]);
   const [activeChannel, setActiveChannel] = useState<VoxChannel | null>(null);
   const [members, setMembers] = useState<VoxMember[]>([]);
+  const [allRoles, setAllRoles] = useState<any[]>([]);
   const [voiceParticipants, setVoiceParticipants] = useState<Record<string, any[]>>({});
+
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -127,11 +133,14 @@ export default function AppShell() {
       const stale = now - new Date(p.last_seen).getTime() > 90_000;
       return [p.user_id, stale ? "offline" : p.status];
     }));
-    const roleMap = Object.fromEntries(((roles ?? []) as any[]).map((r) => [r.id, {
+    const rolesList = ((roles ?? []) as any[]).map((r) => ({
       ...r,
       permissions: (r.permissions ?? {}) as Record<string, boolean>,
-    }]));
+    }));
+    setAllRoles(rolesList);
+    const roleMap = Object.fromEntries(rolesList.map((r) => [r.id, r]));
     const userRoles: Record<string, any[]> = {};
+
     ((memberRoles ?? []) as any[]).forEach((mr) => {
       const r = roleMap[mr.role_id];
       if (!r) return;
@@ -160,16 +169,17 @@ export default function AppShell() {
     const chIds = channels.filter(c => c.type === "voice").map(c => c.id);
     if (!chIds.length) { setVoiceParticipants({}); return; }
     const { data } = await supabase.from("vox_voice_participants")
-      .select("channel_id, user_id, is_muted").in("channel_id", chIds);
+      .select("channel_id, user_id, is_muted, is_deafened").in("channel_id", chIds);
     const map: Record<string, any[]> = {};
     const memberNames = Object.fromEntries(members.map(m => [m.user_id, m.display_name || m.nickname || m.user_id.slice(0, 6)]));
     (data ?? []).forEach((p: any) => {
-      (map[p.channel_id] ||= []).push({ user_id: p.user_id, nickname: memberNames[p.user_id], is_muted: p.is_muted });
+      (map[p.channel_id] ||= []).push({ user_id: p.user_id, nickname: memberNames[p.user_id], is_muted: p.is_muted, is_deafened: p.is_deafened });
     });
     setVoiceParticipants(map);
   };
 
   useEffect(() => { void refreshVoice(); }, [channels, members]);
+
 
   const [createChannelOpen, setCreateChannelOpen] = useState(false);
   const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
