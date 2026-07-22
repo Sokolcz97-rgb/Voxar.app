@@ -1,6 +1,9 @@
-import { Crown, Shield } from "lucide-react";
+import { useState } from "react";
+import { Crown, Shield, Mic, MicOff, HeadphoneOff, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoleBadge, type VoxRole } from "@/components/vox/VoxRolesPanel";
+import { UserContextMenu } from "@/components/vox/UserContextMenu";
+import { UserProfileModal } from "@/components/vox/UserProfileModal";
 
 export interface VoxMember {
   user_id: string;
@@ -9,8 +12,27 @@ export interface VoxMember {
   display_name?: string | null;
   avatar_url?: string | null;
   status?: "online" | "idle" | "dnd" | "offline";
-  /** Přiřazené vlastní role (řazené podle position DESC). */
   roles?: VoxRole[];
+}
+
+export interface VoiceUserState {
+  channel_id?: string;
+  is_muted?: boolean;
+  is_deafened?: boolean;
+  speaking?: boolean;
+  /** 0..1 audio level for glow intensity */
+  level?: number;
+}
+
+interface MemberListProps {
+  members: VoxMember[];
+  guildId?: string | null;
+  currentUserId?: string | null;
+  allRoles?: VoxRole[];
+  canModerate?: boolean;
+  /** Per-user voice state; presence in map implies user is currently in a voice channel. */
+  voiceState?: Record<string, VoiceUserState>;
+  onMessage?: (m: VoxMember) => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -27,7 +49,6 @@ const statusLabel: Record<string, string> = {
   offline: "Offline",
 };
 
-/** Nejvyšší (nejvíc nahoře v seznamu) role, která hlavního člena barví/zvedá do samostatné kategorie. */
 function topHoistRole(m: VoxMember): VoxRole | null {
   return (m.roles || []).find((r) => r.hoist) || null;
 }
@@ -35,12 +56,111 @@ function topAnyRole(m: VoxMember): VoxRole | null {
   return (m.roles || [])[0] || null;
 }
 
-export function MemberList({ members }: { members: VoxMember[] }) {
-  // Rozdělit online (dnd/idle taky "online" pro účely zvedání) vs offline
-  const offline = members.filter((m) => (m.status || "offline") === "offline");
-  const online = members.filter((m) => (m.status || "offline") !== "offline");
+interface ItemProps {
+  member: VoxMember;
+  guildId: string | null;
+  currentUserId: string | null;
+  allRoles: VoxRole[];
+  canModerate: boolean;
+  voice?: VoiceUserState;
+  onMessage?: (m: VoxMember) => void;
+  onOpenProfile: (m: VoxMember) => void;
+}
 
-  // Skupiny podle hoist rolí (pořadí podle position DESC).
+function UserListItem({
+  member, guildId, currentUserId, allRoles, canModerate, voice, onMessage, onOpenProfile,
+}: ItemProps) {
+  const m = member;
+  const name = m.nickname || m.display_name || m.user_id.slice(0, 8);
+  const top = topAnyRole(m);
+  const isSelf = m.user_id === currentUserId;
+  const inVoice = !!voice;
+  const speaking = !!voice?.speaking && !voice?.is_muted;
+
+  const handleLeftClick = () => {
+    if (isSelf || !onMessage) onOpenProfile(m);
+    else onMessage(m);
+  };
+
+  return (
+    <UserContextMenu
+      member={m}
+      guildId={guildId}
+      allRoles={allRoles}
+      canModerate={canModerate}
+      isSelf={isSelf}
+      onMessage={onMessage}
+      onViewProfile={onOpenProfile}
+    >
+      <li
+        onClick={handleLeftClick}
+        className={cn(
+          "group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer",
+          "transition-all duration-150",
+          "hover:bg-secondary/60 focus-within:bg-secondary/60",
+          speaking && "bg-emerald-500/5 ring-1 ring-emerald-400/60 shadow-[0_0_12px_hsl(160_84%_45%/0.35)]",
+          (m.status || "offline") === "offline" && !inVoice && "opacity-50",
+        )}
+      >
+        <div className="relative shrink-0">
+          <div className={cn(
+            "w-8 h-8 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-semibold",
+            speaking && "ring-2 ring-emerald-400 ring-offset-1 ring-offset-[hsl(222_35%_5%)]",
+          )}>
+            {m.avatar_url
+              ? <img src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
+              : name.slice(0, 2).toUpperCase()}
+          </div>
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[hsl(222_35%_5%)]",
+              statusColor[m.status || "offline"],
+            )}
+          />
+        </div>
+
+        <div className="flex-1 min-w-0 flex items-center gap-1.5">
+          <span
+            className="truncate text-sm font-medium"
+            style={top ? { color: top.color } : undefined}
+          >
+            {name}
+          </span>
+          {top && <RoleBadge role={top} />}
+        </div>
+
+        {/* Voice indicators */}
+        {inVoice && voice?.is_deafened && <HeadphoneOff className="w-3.5 h-3.5 text-destructive shrink-0" />}
+        {inVoice && voice?.is_muted && !voice?.is_deafened && <MicOff className="w-3.5 h-3.5 text-destructive shrink-0" />}
+        {inVoice && !voice?.is_muted && !voice?.is_deafened && (
+          <Volume2 className={cn("w-3.5 h-3.5 shrink-0", speaking ? "text-emerald-400" : "text-muted-foreground/60")} />
+        )}
+
+        {m.role === "owner" && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+        {m.role === "mod" && !top && <Shield className="w-3.5 h-3.5 text-primary shrink-0" />}
+      </li>
+    </UserContextMenu>
+  );
+}
+
+export function MemberList({
+  members,
+  guildId = null,
+  currentUserId = null,
+  allRoles = [],
+  canModerate = false,
+  voiceState = {},
+  onMessage,
+}: MemberListProps) {
+  const [profileMember, setProfileMember] = useState<VoxMember | null>(null);
+
+  const inVoiceList = members.filter((m) => voiceState[m.user_id]);
+  const voiceIds = new Set(inVoiceList.map((m) => m.user_id));
+  const rest = members.filter((m) => !voiceIds.has(m.user_id));
+
+  const offline = rest.filter((m) => (m.status || "offline") === "offline");
+  const online = rest.filter((m) => (m.status || "offline") !== "offline");
+
   const hoistGroups = new Map<string, { role: VoxRole; list: VoxMember[] }>();
   const onlineNoHoist: VoxMember[] = [];
   for (const m of online) {
@@ -57,46 +177,16 @@ export function MemberList({ members }: { members: VoxMember[] }) {
     (a, b) => (b.role.position ?? 0) - (a.role.position ?? 0),
   );
 
-  const renderMember = (m: VoxMember) => {
-    const name = m.nickname || m.display_name || m.user_id.slice(0, 8);
-    const top = topAnyRole(m);
-    return (
-      <li
-        key={m.user_id}
-        className={cn(
-          "flex items-center gap-2 px-2 py-1.5 rounded hover:bg-secondary/60 transition-colors",
-          (m.status || "offline") === "offline" && "opacity-50",
-        )}
-      >
-        <div className="relative shrink-0">
-          <div className="w-8 h-8 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-semibold">
-            {m.avatar_url ? (
-              <img src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              name.slice(0, 2).toUpperCase()
-            )}
-          </div>
-          <span
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[hsl(222_35%_5%)]",
-              statusColor[m.status || "offline"],
-            )}
-          />
-        </div>
-        <div className="flex-1 min-w-0 flex items-center gap-1.5">
-          <span
-            className="truncate text-sm font-medium"
-            style={top ? { color: top.color } : undefined}
-          >
-            {name}
-          </span>
-          {top && <RoleBadge role={top} />}
-        </div>
-        {m.role === "owner" && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-        {m.role === "mod" && !top && <Shield className="w-3.5 h-3.5 text-primary shrink-0" />}
-      </li>
-    );
-  };
+  const itemProps = (m: VoxMember) => ({
+    member: m,
+    guildId,
+    currentUserId,
+    allRoles,
+    canModerate,
+    voice: voiceState[m.user_id],
+    onMessage,
+    onOpenProfile: setProfileMember,
+  });
 
   const renderGroup = (title: string, list: VoxMember[], key: string, dotClass?: string) => {
     if (!list.length) return null;
@@ -106,18 +196,28 @@ export function MemberList({ members }: { members: VoxMember[] }) {
           {dotClass && <span className={cn("w-2 h-2 rounded-full", dotClass)} />}
           {title} — {list.length}
         </div>
-        <ul className="space-y-0.5">{list.map(renderMember)}</ul>
+        <ul className="space-y-0.5">
+          {list.map((m) => <UserListItem key={m.user_id} {...itemProps(m)} />)}
+        </ul>
       </div>
     );
   };
 
   return (
-    <aside className="w-60 h-full bg-[hsl(222_35%_5%)] border-l border-border/40 overflow-y-auto p-3 space-y-4">
-      {orderedHoist.map((g) =>
-        renderGroup(g.role.name, g.list, `hoist-${g.role.id}`),
-      )}
-      {renderGroup("Online", onlineNoHoist, "online", statusColor.online)}
-      {renderGroup(statusLabel.offline, offline, "offline", statusColor.offline)}
-    </aside>
+    <>
+      <aside className="w-60 h-full bg-[hsl(222_35%_5%)] border-l border-border/40 overflow-y-auto p-3 space-y-4">
+        {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
+        {orderedHoist.map((g) => renderGroup(g.role.name, g.list, `hoist-${g.role.id}`))}
+        {renderGroup("Online", onlineNoHoist, "online", statusColor.online)}
+        {renderGroup(statusLabel.offline, offline, "offline", statusColor.offline)}
+      </aside>
+
+      <UserProfileModal
+        member={profileMember}
+        guildId={guildId}
+        open={!!profileMember}
+        onOpenChange={(o) => !o && setProfileMember(null)}
+      />
+    </>
   );
 }
