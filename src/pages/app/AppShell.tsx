@@ -213,6 +213,32 @@ export default function AppShell() {
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
 
+  // Per-user voice state (mute/deafen/speaking) flattened from all voice channels of this guild.
+  const voiceStateByUser: Record<string, { channel_id: string; is_muted?: boolean; is_deafened?: boolean; speaking?: boolean; level?: number }> = {};
+  Object.entries(voiceParticipants).forEach(([chId, list]) => {
+    (list ?? []).forEach((p: any) => {
+      voiceStateByUser[p.user_id] = { channel_id: chId, is_muted: p.is_muted, is_deafened: p.is_deafened };
+    });
+  });
+  // Overlay live speaking level from the currently-joined voice hook.
+  if (voiceConn?.api) {
+    const selfLevel: number = voiceConn.api.selfLevel ?? 0;
+    if (voiceStateByUser[user.id]) {
+      voiceStateByUser[user.id] = { ...voiceStateByUser[user.id], level: selfLevel, speaking: selfLevel > 0.08 && !voiceConn.api.muted };
+    }
+    const remotes = voiceConn.api.remotes ?? {};
+    Object.entries(remotes).forEach(([uid, r]: [string, any]) => {
+      if (voiceStateByUser[uid]) {
+        voiceStateByUser[uid] = { ...voiceStateByUser[uid], level: r.level, speaking: r.level > 0.08 && !voiceStateByUser[uid].is_muted };
+      }
+    });
+  }
+
+  const openDM = (m: VoxMember) => {
+    navigate(`/messages?user=${m.user_id}`);
+  };
+
+
   const selfPanel = (
     <SelfPanel
       displayName={displayName}
@@ -278,7 +304,16 @@ export default function AppShell() {
                       channel={activeChannel}
                       onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
                     />}
-                <MemberList members={members} />
+                <MemberList
+                  members={members}
+                  guildId={activeGuildId}
+                  currentUserId={user.id}
+                  allRoles={allRoles}
+                  canModerate={isAdmin}
+                  voiceState={voiceStateByUser}
+                  onMessage={openDM}
+                />
+
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
