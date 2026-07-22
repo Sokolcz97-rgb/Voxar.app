@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { localAudio } from "@/lib/localAudio";
+
 
 interface RemotePeer {
   userId: string;
@@ -199,9 +201,11 @@ export function useVoxVoice(channelId: string | null) {
         document.body.appendChild(audio);
       }
       if (audio.srcObject !== stream) audio.srcObject = stream;
-      audio.muted = deafenedRef.current;
-      audio.volume = 1;
+      const userMuted = localAudio.isMuted(remoteUserId);
+      audio.muted = deafenedRef.current || userMuted;
+      audio.volume = Math.max(0, Math.min(1, localAudio.getVolume(remoteUserId)));
       playRemoteAudio(audio);
+
       ev.track.onunmute = () => playRemoteAudio(audio!);
       remoteMetersRef.current[remoteUserId]?.();
       remoteMetersRef.current[remoteUserId] = meterStream(stream, (l) => updateRemote(remoteUserId, { level: l }));
