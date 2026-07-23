@@ -49,24 +49,86 @@ function fetchJson(url, { bustCache = false } = {}) {
 // Držíme referenci na běžící download request, ať ho lze zvenčí zrušit.
 let activeDownload = null;
 
+// Idle-timeout mezi chunky — když socket zamrzne, celý pokus spadne rychle.
+const DOWNLOAD_IDLE_TIMEOUT_MS = 30_000;
+// Tvrdý strop na celkovou dobu stahování jednoho pokusu.
+const DOWNLOAD_HARD_TIMEOUT_MS = 15 * 60_000;
+
+/**
+ * Smaže všechny staré/dočasné soubory StudioVoxario v tmpdir.
+ * Volá se před každým novým pokusem, aby se předešlo loopu s poškozenými
+ * částečnými soubory a aby se disk nezaplňoval.
+ */
+function purgeStaleTempFiles(keepPath = null) {
+  try {
+    const tmp = os.tmpdir();
+    for (const name of fs.readdirSync(tmp)) {
+      if (!/^StudioVoxario-/.test(name)) continue;
+      // Nemažeme běžící watchdog script (StudioVoxario-update-*.cmd) —
+      // ten se stará o instalaci a musí přežít.
+      if (/^StudioVoxario-update-.*\.cmd$/i.test(name)) continue;
+      const full = path.join(tmp, name);
+      if (keepPath && path.resolve(full) === path.resolve(keepPath)) continue;
+      try { fs.unlinkSync(full); } catch {}
+    }
+  } catch {}
+}
+
 function downloadFile(url, dest, onProgress) {
   return new Promise((resolve, reject) => {
+    // Stagujeme do .part souboru, na finální cestu přejmenujeme až po dokončení.
+    // Tím zajistíme, že installer/watchdog nikdy nedostane nekompletní binárku.
+    const partPath = dest + ".part";
+    try { fs.unlinkSync(partPath); } catch {}
+
     const lib = url.startsWith("https") ? https : http;
-    const req = lib.get(url, { headers: { "User-Agent": "StudioVoxario-Launcher" } }, (res) => {
+    let settled = false;
+    let idleTimer = null;
+    let hardTimer = null;
+
+    const cleanupTimers = () => {
+      if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+      if (hardTimer) { clearTimeout(hardTimer); hardTimer = null; }
+    };
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      cleanupTimers();
+      activeDownload = null;
+      try { req.destroy(); } catch {}
+      try { fs.unlinkSync(partPath); } catch {}
+      reject(err);
+    };
+
+    const req = lib.get(url, {
+      headers: { "User-Agent": "StudioVoxario-Launcher" },
+      timeout: DOWNLOAD_IDLE_TIMEOUT_MS,
+    }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        cleanupTimers();
+        settled = true; // předáváme rekurzi
         return resolve(downloadFile(res.headers.location, dest, onProgress));
       }
-      if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
+      if (res.statusCode !== 200) return fail(new Error("HTTP " + res.statusCode));
       const total = parseInt(res.headers["content-length"] || "0", 10);
       let received = 0;
       const startTs = Date.now();
       let lastEmit = 0;
       const hash = crypto.createHash("sha256");
-      const file = fs.createWriteStream(dest);
-      activeDownload = { req, dest };
+      const file = fs.createWriteStream(partPath);
+      activeDownload = { req, dest: partPath };
+
+      const bumpIdle = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => fail(new Error(`timeout: no data for ${DOWNLOAD_IDLE_TIMEOUT_MS} ms`)), DOWNLOAD_IDLE_TIMEOUT_MS);
+      };
+      hardTimer = setTimeout(() => fail(new Error("timeout: hard limit reached")), DOWNLOAD_HARD_TIMEOUT_MS);
+      bumpIdle();
+
       res.on("data", (chunk) => {
         received += chunk.length;
         hash.update(chunk);
+        bumpIdle();
         const now = Date.now();
         if (onProgress && (now - lastEmit > 200 || (total && received === total))) {
           lastEmit = now;
@@ -75,26 +137,37 @@ function downloadFile(url, dest, onProgress) {
           const etaSec = total && speedBps > 0 ? (total - received) / speedBps : null;
           try {
             onProgress({
-              received,
-              total,
+              received, total,
               pct: total ? received / total : 0,
-              speedBps,
-              etaSec,
+              speedBps, etaSec,
             });
           } catch {}
         }
       });
       res.pipe(file);
       file.on("finish", () =>
-        file.close(() => {
+        file.close((closeErr) => {
+          if (settled) return;
+          if (closeErr) return fail(closeErr);
+          if (total && received !== total) {
+            return fail(new Error(`incomplete download: ${received}/${total} B`));
+          }
+          try {
+            try { fs.unlinkSync(dest); } catch {}
+            fs.renameSync(partPath, dest);
+          } catch (e) { return fail(e); }
+          settled = true;
+          cleanupTimers();
           if (activeDownload && activeDownload.req === req) activeDownload = null;
           resolve({ path: dest, sha256: hash.digest("hex"), size: received });
         })
       );
-      file.on("error", (e) => { activeDownload = null; reject(e); });
-      res.on("error", (e) => { activeDownload = null; reject(e); });
+      file.on("error", fail);
+      res.on("error", fail);
+      res.on("aborted", () => fail(new Error("stream aborted")));
     });
-    req.on("error", (e) => { activeDownload = null; reject(e); });
+    req.on("error", fail);
+    req.on("timeout", () => fail(new Error("timeout: socket idle")));
   });
 }
 
@@ -104,7 +177,10 @@ function cancelActiveDownload() {
   const { req, dest } = activeDownload;
   activeDownload = null;
   try { req.destroy(new Error("canceled")); } catch {}
-  setTimeout(() => { try { fs.unlinkSync(dest); } catch {} }, 50);
+  setTimeout(() => {
+    try { fs.unlinkSync(dest); } catch {}
+    try { fs.unlinkSync(String(dest).replace(/\.part$/, "")); } catch {}
+  }, 50);
   return true;
 }
 
