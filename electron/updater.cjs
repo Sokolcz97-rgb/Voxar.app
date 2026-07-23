@@ -263,6 +263,11 @@ function isNewer(remote, current) {
 }
 
 let checking = false;
+// Globální zámek proti smyčce: když už jednou spustíme instalační pipeline
+// (stahování/ověření/instalace), další volání (např. z FAB nebo intervalu)
+// hned vrátí busy, dokud pipeline neskončí nebo se aplikace nerestartuje.
+let installing = false;
+
 
 // Persistent diagnostics — snapshot of the last update check for the launcher UI.
 const diagnostics = {
