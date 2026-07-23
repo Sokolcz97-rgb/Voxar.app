@@ -1,89 +1,88 @@
 
-# StudioVoxario Desktop — nativní Discord/TeamSpeak UI
+## Cíl
 
-Desktop aplikace dostane vlastní rozhraní `/app` (jen pro Electron shell), oddělené od webu. Web zůstává nedotčen.
+Nahradit klasické NSIS okno Windowsu vlastním Electron instalátorem se stejným HUD stylem jako aplikace, přidat do launcheru volbu **Stable / Beta** (jako herní launchery) a aktualizovat stránku ke stažení. Auto-update pipeline zůstane na `electron-updater` bez `cmd.exe`.
 
-## 1. Nový layout aplikace (`src/pages/app/`)
+## Rozsah
 
-Klasický 4-sloupcový shell:
+### 1. Vlastní Electron installer (`installer/`)
+Nová malá Electron aplikace zabalená jako single `.exe` přes `@electron/packager` + `electron-installer-windows` **NEBO** self-extracting 7z stub. Zvolím self-extract 7z, který spustí `StudioVoxarioInstaller.exe` (Electron UI). Ten:
 
-```text
-┌──┬────────┬──────────────────────┬────────┐
-│  │        │                      │        │
-│G │Kanály  │  Chat / Voice room   │Členové │
-│R │  #obec │                      │ online │
-│A │  🔊 A  │                      │ idle   │
-│I │  🔊 B  │                      │        │
-│L │        │                      │        │
-├──┴────────┴──────────────────────┴────────┤
-│  [🎤 mute] [🎧 deafen] [⚙]  user@online   │
-└───────────────────────────────────────────┘
+- Zobrazí HUD okno (glassmorphism, cyan/violet, stejné tokeny jako aplikace, bez rámu OS).
+- Kroky: **Vítejte → Volba složky → Volba kanálu (Stable/Beta) → Instalace (progress + log) → Dokončeno / Spustit**.
+- Rozbalí payload (`app.7z` uvnitř exe) do `%LOCALAPPDATA%\StudioVoxario`.
+- Vytvoří Start Menu + Desktop shortcut přes `windows-shortcuts` npm.
+- Zapíše registry `Uninstall\StudioVoxario` (DisplayName, DisplayIcon, UninstallString) — user-scope, žádné UAC.
+- Uloží zvolený kanál do `%LOCALAPPDATA%\StudioVoxario\channel.json`.
+- Uninstaller = stejný Electron binary s `--uninstall` flagem, opět HUD UI.
+- Žádné volání `cmd.exe`, `taskkill`, `.bat`, `.cmd` — jen Node `fs`, `child_process.spawn(..., {detached, windowsHide, stdio: 'ignore'})` pro finální launch aplikace.
+
+Zdrojové soubory:
+```
+installer/
+  package.json
+  main.cjs           # Electron main, IPC, fs, registry
+  preload.cjs
+  ui/
+    index.html       # HUD UI
+    styles.css       # design tokens sdílené s appkou
+    installer.js     # kroky + progress
+  assets/
+    icon.ico
+    bg.png
+  build.cjs          # bundle app.7z do installer resources
 ```
 
-Komponenty:
-- `GuildRail` — ikony serverů vlevo (kruhy s iniciálami/logem, aktivní má pill indikátor)
-- `ChannelSidebar` — hlavička serveru, seznam textových a hlasových kanálů, kolaps kategorie
-- `ChatView` — zprávy v reálném čase, kompozer s Enter-to-send, typing indikátor, upload obrázků
-- `VoiceView` — dlaždice účastníků s VU-metrem, avatarem, mute stavem, tlačítka Připojit/Odpojit/Sdílet obrazovku (share fáze 2)
-- `MemberList` — presence groupy Online / Idle / DND / Offline, avatary, statusy
-- `SelfPanel` — spodní bar s mikro/sluchátky/nastavení (styl Discord)
-- `AppShell` — držel routing mezi kanály a stavy voice připojení
+### 2. Launcher — přepínač Stable / Beta
+V `electron/main.cjs` a `electron/updater.cjs`:
 
-Vizuál: tmavá paleta (deep charcoal `#0e0f13`, panely `#151821`, akcent teal/cyan z existujícího brandu), zaoblené rohy 8px, jemný noise, ikony `lucide-react`. Vlastní scrollbary. Kompaktní hustota textu.
+- Přečíst `channel.json` z userData (fallback `stable`).
+- Přidat IPC `channel:get` / `channel:set`.
+- `autoUpdater.channel = 'stable' | 'beta'` + `setFeedURL` podle kanálu (`latest.yml` vs `beta.yml`, oba už existují).
+- Přechod na beta vyžaduje beta přístupový kód (stejný jako pro `/desktop`) — ověří RPC `redeem_download_code` přes API.
 
-## 2. Datový model (nová migrace)
+V `electron/launcher.html`:
+- Nová sekce **Kanál** vedle "Zkontrolovat aktualizace": dropdown Stable / Beta, tlačítko **Přepnout**.
+- Ukázat aktuální kanál, poslední verze na daném kanálu (z `desktop-version.json`).
 
-Nezávislý na existujících `servers`/`conversations` — desktop-only "voxguildy":
+### 3. Stránka ke stažení (`src/pages/DownloadDesktop.tsx`)
+- Přepínač **Stable / Beta** (Tabs), který mění zobrazené soubory.
+- Karta pro nový `StudioVoxarioSetup-0.0.9-alpha.exe` (custom installer). ZIP a Linux tar.gz zůstávají.
+- Popisky updatnout: "Vlastní HUD instalátor — bez klasického Windows okna".
+- Data brát z `public/desktop-version.json` (rozšířené o `installerType: 'custom-electron'`).
 
-- `vox_guilds` — id, name, icon_url, owner_id, invite_code
-- `vox_guild_members` — guild_id, user_id, nickname, role (owner/mod/member), joined_at
-- `vox_channels` — id, guild_id, name, type (`text`|`voice`), position, category
-- `vox_messages` — id, channel_id, author_id, content, attachments jsonb, created_at, edited_at
-- `vox_voice_participants` — channel_id, user_id, session_id, joined_at, is_muted, is_deafened (přítomnost v místnosti)
-- `vox_presence` — user_id, status (`online`|`idle`|`dnd`|`offline`), last_seen
+### 4. Manifesty
+- `public/desktop-version.json`, `public/latest.yml`, `public/beta.yml` — updatnout URL/velikost/hash **po** nahrání nového buildu jako CDN asset (`lovable-assets create`).
 
-Všechny s RLS: přístup jen členům guildy, publish do `supabase_realtime` pro `vox_messages`, `vox_voice_participants`, `vox_presence`. GRANTy podle pravidel.
+## Omezení, o kterých musíš vědět
 
-## 3. WebRTC voice (peer-to-peer mesh)
+Nemám v tomto sandboxu Windows prostředí ani code-signing certifikát, takže **finální podpis .exe** nemůžu udělat — vlastní installer bude fungovat, ale Windows SmartScreen se stejně zeptá "Přesto spustit", stejně jako u dnešního NSIS. To vyřeší jen zakoupený EV cert.
 
-- Signaling přes **Supabase Realtime broadcast** na kanálu `voice:{channel_id}`
-- Klient publikuje `join`/`offer`/`answer`/`ice`/`leave` zprávy
-- Každý účastník drží `RTCPeerConnection` s každým dalším (mesh, do ~8 lidí – dostačující)
-- Zvuk: `getUserMedia({audio: {echoCancellation, noiseSuppression, autoGainControl}})`
-- VU-metr přes `AudioContext` + `AnalyserNode`
-- Push-to-talk (klávesa v nastavení) + toggle mute/deafen
-- Reflex do `vox_voice_participants` pro seznam kdo v místnosti (i pro ostatní klienty které se právě dívají)
+Cross-build vlastního instaláteru pro Windows z Linuxu **je možný** přes `@electron/packager --platform=win32`, ale výsledné self-extracting `.exe` vyrobíme pomocí `7z` archivu + Node stub loaderu, ne přes SFX modul 7-Zipu (ten potřebuje Windows). To znamená: první spuštění stáhne Electron runtime (~80 MB) do temp a rozbalí payload — instalátor bude cca **90–100 MB** místo dnešních 85 MB.
 
-Fáze 2 (odloženo): sdílení obrazovky, video, TURN server (zatím jen public STUN `stun.l.google.com:19302` — funguje pro většinu sítí).
+## Technická sekce
 
-## 4. Presence
+- `installer/main.cjs`: `BrowserWindow({ frame: false, transparent: true, width: 720, height: 480 })`, custom drag region.
+- Rozbalení payloadu: `node-7z` + přiložený `7za` (Linux/Windows) v `resources/`.
+- Registry zápis: `winreg` npm balíček (čistý Node, žádný `reg.exe`).
+- Shortcuts: `windows-shortcuts` npm (LNK přes ffi, žádný `powershell.exe`).
+- Detached final launch: `spawn(exePath, [], { detached: true, windowsHide: true, stdio: 'ignore' }).unref()`.
+- Beta channel guard: fetch `https://studiovoxario.com/rest/v1/rpc/redeem_download_code` s anon key + zadaný kód, uložit token do `channel.json`.
+- Vite `DownloadDesktop.tsx` použije shadcn `Tabs` a stávající `winInstaller/winAsset/linuxAsset` pointery + přidá `betaInstaller` asset až po nahrání.
 
-- Klient posílá heartbeat každých 30s do `vox_presence`
-- Po 90s bez heartbeatu → automaticky offline (edge function / DB view s `now() - last_seen`)
-- Ruční přepínač Online/Idle/DND ve `SelfPanel`
+## Co udělám v této iteraci
 
-## 5. Electron integrace
+1. Vytvořím kompletní zdroj `installer/` (Electron app + UI + build skript).
+2. Rozšířím `electron/main.cjs`, `updater.cjs`, `launcher.html`, `preload.cjs` o volbu kanálu.
+3. Přepíšu `DownloadDesktop.tsx` s Tabs Stable/Beta.
+4. Připravím build skript `installer/build.cjs`, který zabalí payload z `electron-release/StudioVoxario-win32-x64` do `installer/resources/app.7z`.
 
-- `electron/main.cjs`: při produkčním buildu načte `#/app` (hash routing), tj. hlavní okno je rovnou v aplikaci, nikoli na `/`
-- Zachovat launcher, updater, tray tak jak jsou
-- Přidat globální zkratky: `CmdOrCtrl+Shift+M` mute, PTT klávesa (konfigurovatelná)
-- IPC pro nativní notifikace při zmínce / DM
+## Co **neudělám** (potřebuje tvůj krok)
 
-## 6. Web zůstává
+- Nemůžu v sandboxu spustit finální Windows build a nahrát nový `.exe` jako CDN asset (chybí Windows prostředí pro test SFX + registry). Pošlu ti přesný příkaz, který spustíš lokálně / v CI:
+  ```
+  cd installer && npm i && node build.cjs
+  ```
+  a výstup `StudioVoxarioSetup-0.0.9-alpha.exe` mi pak předáš / nahraješ. Potom updatnu `desktop-version.json`, `latest.yml`, `beta.yml` a stránku ke stažení.
 
-Web (`/`, `/desktop`, dashboard bota, formuláře atd.) se **nemění**. `/app` bude fungovat i v prohlížeči (pro testování), ale v navbaru se nepromuje — je to primárně desktop endpoint.
-
-## Rozsah implementace v tomto kroku
-
-Postavím kompletní MVP v jedné dodávce:
-1. Migrace tabulek + RLS + realtime publikace
-2. `AppShell` + `GuildRail` + `ChannelSidebar` + `MemberList` + `SelfPanel`
-3. `ChatView` s realtime zprávami a uploadem
-4. `VoiceView` s WebRTC mesh, mute/deafen, VU-metr
-5. Presence heartbeat
-6. CRUD guildy (vytvořit, invite code join) a kanálů (jen owner/mod)
-7. Electron: bootovat rovnou do `/app`
-
-**Není v tomto kroku:** screen share, video, TURN server, mobile parita, migrace existujících `servers`/`messages` do voxguild modelu, role-based permissions na kanály (jen owner/mod vs member), voice aktivita indikátor v seznamu členů (bude jen v místnosti).
-
-Odhadovaná velikost: cca 15–20 nových souborů, 1 migrace, úprava `electron/main.cjs`. Souhlasíš s tímto rozsahem, nebo mám něco přidat/ubrat před stavbou?
+Potvrdíš plán, nebo chceš něco upravit (jiné kroky instalátoru, jiné omezení SmartScreen, jiný design instalátoru)?

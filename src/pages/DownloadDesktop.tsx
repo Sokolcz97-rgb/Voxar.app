@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -89,9 +90,9 @@ export default function Download() {
       os: "Windows 10 / 11",
       file: winInstaller.url,
       filename: "StudioVoxarioSetup-0.0.9-alpha.exe",
-      note: "Instalátor – spusťte StudioVoxarioSetup.exe a projděte průvodcem.",
+      note: "Vlastní HUD instalátor – bez klasického Windows okna, bez UAC, bez cmd.",
       icon: "🪟",
-      size: "~82 MB · v0.0.9-alpha",
+      size: "~90 MB · v0.0.9-alpha",
       primary: true,
     },
     {
@@ -116,7 +117,7 @@ export default function Download() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 mb-6">
             <Monitor className="w-10 h-10 text-primary" />
           </div>
@@ -124,8 +125,8 @@ export default function Download() {
             StudioVoxario <span className="text-primary">pro počítač</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Nativní desktop klient s notifikacemi, tray ikonou a auto-startem.
-            Vždy synchronizován s webem – žádné manuální aktualizace obsahu.
+            Nativní desktop klient s vlastním HUD instalátorem, notifikacemi, tray ikonou a auto-startem.
+            Zvolte si kanál aktualizací – Stable pro stabilní verze, Beta pro nejnovější Alpha buildy.
           </p>
           <button
             className="mt-4 text-xs text-muted-foreground underline hover:text-foreground"
@@ -138,26 +139,65 @@ export default function Download() {
           </button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-10">
-          {downloads.map((d) => (
-            <Card key={d.os} className={`p-6 transition-colors ${d.primary ? "border-primary/60 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)]" : "hover:border-primary/50"}`}>
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">{d.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
-                  <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
-                  <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
-                  <Button asChild className="w-full" variant={d.primary ? "default" : "outline"}>
+        <Tabs defaultValue="stable" className="mb-10">
+          <TabsList className="grid grid-cols-2 w-full max-w-sm mx-auto mb-6">
+            <TabsTrigger value="stable" className="gap-2">
+              <Shield className="w-4 h-4" /> Stable
+            </TabsTrigger>
+            <TabsTrigger value="beta" className="gap-2">
+              <Sparkles className="w-4 h-4" /> Beta
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="stable">
+            <p className="text-center text-sm text-muted-foreground mb-6">
+              Ověřené vydané verze. Doporučeno pro každodenní použití.
+            </p>
+            <div className="grid md:grid-cols-3 gap-4">
+              {downloads.map((d) => (
+                <Card key={d.os} className={`p-6 transition-colors ${d.primary ? "border-primary/60 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)]" : "hover:border-primary/50"}`}>
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">{d.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
+                      <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
+                      <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
+                      <Button asChild className="w-full" variant={d.primary ? "default" : "outline"}>
+                        <a href={d.file} download={d.filename}>
+                          <DownloadIcon className="w-4 h-4 mr-2" />
+                          {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="beta">
+            <Card className="p-8 text-center max-w-xl mx-auto">
+              <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Beta kanál</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Beta buildy stahujte stejným instalátorem jako Stable – po instalaci
+                přepnete kanál přímo v launcheru (<b>Diagnostika → Kanál</b>) nebo
+                v aplikaci (<b>Nastavení → Aktualizace</b>). Přepnutí vyžaduje
+                beta přístupový kód, který získáte od administrátora.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-3 mt-2">
+                {downloads.map((d) => (
+                  <Button key={d.os} asChild variant="outline" size="sm">
                     <a href={d.file} download={d.filename}>
-                      <DownloadIcon className="w-4 h-4 mr-2" />
-                      {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
+                      <DownloadIcon className="w-3 h-3 mr-1" /> {d.icon}
                     </a>
                   </Button>
-                </div>
+                ))}
               </div>
             </Card>
-          ))}
-        </div>
+          </TabsContent>
+        </Tabs>
+
 
         <Card className="p-6 mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
