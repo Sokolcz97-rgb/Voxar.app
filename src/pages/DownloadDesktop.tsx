@@ -23,12 +23,16 @@ type AssetPointer = { url: string; original_filename?: string; size?: number };
 
 async function loadInstallerPointer(): Promise<AssetPointer | null> {
   try {
-    const mod: any = await import("@/assets/downloads/windows-installer.asset.json");
-    return mod?.default ?? mod;
+    // Vite glob – returns empty object until CI drops the pointer file.
+    const mods = import.meta.glob("@/assets/downloads/windows-installer.asset.json", { eager: true }) as Record<string, any>;
+    const first = Object.values(mods)[0];
+    const data = first?.default ?? first;
+    return data && data.url ? (data as AssetPointer) : null;
   } catch {
     return null;
   }
 }
+
 
 function AccessGate({ onUnlock }: { onUnlock: () => void }) {
   const { toast } = useToast();
