@@ -46,7 +46,7 @@ export function ChannelSidebar({
   };
 
   return (
-    <div className="w-60 h-full flex flex-col bg-[hsl(222_35%_5%)] border-r border-border/40">
+    <div className="w-60 h-full flex flex-col bg-transparent">
       <div className="h-12 px-4 flex items-center justify-between border-b border-border/50 shadow-sm gap-1">
         <span className="font-semibold text-sm truncate flex-1">{guildName}</span>
         {inviteCode && (
@@ -89,16 +89,17 @@ export function ChannelSidebar({
                     <button
                       onClick={() => onSelect(c)}
                       className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
+                        "sector-node w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors",
                         active
-                          ? "bg-primary/15 text-foreground"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                          ? "active text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {c.type === "text"
-                        ? <Hash className="w-4 h-4 shrink-0" />
-                        : <Volume2 className="w-4 h-4 shrink-0" />}
-                      <span className="truncate">{c.name}</span>
+                        ? <Hash className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
+                        : <Volume2 className={cn("w-4 h-4 shrink-0", active && "text-primary")} />}
+                      <span className="truncate tracking-wide">{c.name}</span>
+                      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />}
                     </button>
                     {c.type === "voice" && vp.length > 0 && (
                       <ul className="ml-6 mt-0.5 mb-1 space-y-0.5">

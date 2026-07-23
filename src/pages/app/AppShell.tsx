@@ -255,108 +255,110 @@ export default function AppShell() {
   );
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
-      <GuildRail
-        guilds={guilds}
-        activeId={activeGuildId}
-        onSelect={(id) => { setActiveGuildId(id); setView("main"); }}
-        onCreate={() => setCreateOpen(true)}
-        onJoin={() => setJoinOpen(true)}
-      />
+    <div className="hud-shell h-screen w-screen overflow-hidden text-foreground">
+      <div className="relative z-10 h-full w-full flex gap-3 p-3">
+        <div className="holo-pod shrink-0 h-full">
+          <GuildRail
+            guilds={guilds}
+            activeId={activeGuildId}
+            onSelect={(id) => { setActiveGuildId(id); setView("main"); }}
+            onCreate={() => setCreateOpen(true)}
+            onJoin={() => setJoinOpen(true)}
+          />
+        </div>
 
-      {activeGuild ? (
-        <>
-          <div className="flex flex-col">
-            <ChannelSidebar
-              guildName={activeGuild.name}
-              inviteCode={inviteCode}
-              channels={channels}
-              activeId={activeChannel?.id ?? null}
-              onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
-              onCreateChannel={openCreateChannel}
-              isAdmin={isAdmin}
-              voiceParticipants={voiceParticipants}
-              onOpenServerSettings={() => setView("server-settings")}
-            />
-            {selfPanel}
-          </div>
-
-          <div className="flex-1 flex min-w-0">
-            {view === "user-settings" ? (
-              <AppUserSettings onClose={() => setView("main")} />
-            ) : view === "server-settings" ? (
-              <AppServerSettings
-                guild={activeGuild}
-                channels={channels}
-                members={members}
+        {activeGuild ? (
+          <>
+            <div className="holo-pod flex flex-col h-full overflow-hidden">
+              <ChannelSidebar
+                guildName={activeGuild.name}
                 inviteCode={inviteCode}
-                isOwner={members.find(m => m.user_id === user.id)?.role === "owner"}
+                channels={channels}
+                activeId={activeChannel?.id ?? null}
+                onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
+                onCreateChannel={openCreateChannel}
                 isAdmin={isAdmin}
-                onClose={() => setView("main")}
-                onGuildUpdated={() => { void loadGuilds(); }}
-                onGuildDeleted={() => { setView("main"); void loadGuilds(); }}
+                voiceParticipants={voiceParticipants}
+                onOpenServerSettings={() => setView("server-settings")}
               />
-            ) : activeChannel ? (
-              <>
-                {activeChannel.type === "text"
-                  ? <ChatView channel={activeChannel} members={members} />
-                  : <VoiceView
-                      channel={activeChannel}
-                      onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
-                    />}
-                <MemberList
+              {selfPanel}
+            </div>
+
+            <div className="holo-pod flex-1 flex min-w-0 overflow-hidden">
+              {view === "user-settings" ? (
+                <AppUserSettings onClose={() => setView("main")} />
+              ) : view === "server-settings" ? (
+                <AppServerSettings
+                  guild={activeGuild}
+                  channels={channels}
                   members={members}
-                  guildId={activeGuildId}
-                  currentUserId={user.id}
-                  allRoles={allRoles}
-                  canModerate={isAdmin}
-                  voiceState={voiceStateByUser}
-                  onMessage={openDM}
+                  inviteCode={inviteCode}
+                  isOwner={members.find(m => m.user_id === user.id)?.role === "owner"}
+                  isAdmin={isAdmin}
+                  onClose={() => setView("main")}
+                  onGuildUpdated={() => { void loadGuilds(); }}
+                  onGuildDeleted={() => { setView("main"); void loadGuilds(); }}
                 />
-
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                Vyber kanál
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          {/* No active guild: still show a persistent sidebar with SelfPanel */}
-          <div className="w-60 flex flex-col bg-[hsl(222_35%_5%)] border-r border-border/40">
-            <div className="h-12 px-4 flex items-center border-b border-border/50 shadow-sm">
-              <span className="font-semibold text-sm truncate">StudioVoxario</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 text-sm text-muted-foreground">
-              Zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánku.
-            </div>
-            {selfPanel}
-          </div>
-
-          <div className="flex-1 flex min-w-0">
-            {view === "user-settings" ? (
-              <AppUserSettings onClose={() => setView("main")} />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
-                <div className="text-3xl font-bold">Vítej ve StudioVoxario</div>
-                <p className="text-muted-foreground max-w-md">
-                  Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
-                </p>
-                <div className="flex gap-3">
-                  <button className="px-5 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={() => setCreateOpen(true)}>
-                    Vytvořit server
-                  </button>
-                  <button className="px-5 py-2 rounded-md bg-secondary hover:bg-secondary/80" onClick={() => setJoinOpen(true)}>
-                    Připojit se
-                  </button>
+              ) : activeChannel ? (
+                <>
+                  {activeChannel.type === "text"
+                    ? <ChatView channel={activeChannel} members={members} />
+                    : <VoiceView
+                        channel={activeChannel}
+                        onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
+                      />}
+                  <MemberList
+                    members={members}
+                    guildId={activeGuildId}
+                    currentUserId={user.id}
+                    allRoles={allRoles}
+                    canModerate={isAdmin}
+                    voiceState={voiceStateByUser}
+                    onMessage={openDM}
+                  />
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                  Vyber kanál
                 </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="holo-pod w-60 flex flex-col h-full overflow-hidden">
+              <div className="h-12 px-4 flex items-center border-b border-primary/15">
+                <span className="font-display text-sm tracking-widest truncate text-primary text-glow">STUDIOVOXARIO</span>
               </div>
-            )}
-          </div>
-        </>
-      )}
+              <div className="flex-1 overflow-y-auto p-3 text-sm text-muted-foreground">
+                Zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánku.
+              </div>
+              {selfPanel}
+            </div>
+
+            <div className="holo-pod flex-1 flex min-w-0 overflow-hidden">
+              {view === "user-settings" ? (
+                <AppUserSettings onClose={() => setView("main")} />
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
+                  <div className="font-display text-4xl font-bold text-glow-intense tracking-widest">STUDIOVOXARIO</div>
+                  <p className="text-muted-foreground max-w-md">
+                    Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
+                  </p>
+                  <div className="flex gap-3">
+                    <button className="cyber-btn px-6 py-2.5 rounded-md text-primary font-medium" onClick={() => setCreateOpen(true)}>
+                      Vytvořit server
+                    </button>
+                    <button className="cyber-btn px-6 py-2.5 rounded-md" onClick={() => setJoinOpen(true)}>
+                      Připojit se
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
       <JoinGuildDialog open={joinOpen} onOpenChange={setJoinOpen} onJoined={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />

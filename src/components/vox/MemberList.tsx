@@ -205,7 +205,7 @@ export function MemberList({
 
   return (
     <>
-      <aside className="w-60 h-full bg-[hsl(222_35%_5%)] border-l border-border/40 overflow-y-auto p-3 space-y-4">
+      <aside className="w-60 h-full bg-transparent overflow-y-auto p-3 space-y-4">
         {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
         {orderedHoist.map((g) => renderGroup(g.role.name, g.list, `hoist-${g.role.id}`))}
         {renderGroup("Online", onlineNoHoist, "online", statusColor.online)}
