@@ -20,6 +20,7 @@ let downloadedVersion = null;
 let latestInfo = null;
 let cancellationToken = null;
 let uiBridge = null;
+let pendingAutoInstall = false;
 
 const diagnostics = {
   feedUrl: FEED_URL,
@@ -298,9 +299,10 @@ async function downloadAndInstall({ parentWindow = null, channel = "stable", sou
   if (installing) return { status: "busy" };
   installing = true;
   configureUpdater(channel);
+  autoUpdater.autoDownload = true;
   diagnostics.status = "downloading";
   diagnostics.lastError = null;
-  cancellationToken = new CancellationToken();
+  cancellationToken = null;
 
   updateProgress({
     phase: "download",
@@ -315,38 +317,27 @@ async function downloadAndInstall({ parentWindow = null, channel = "stable", sou
   });
 
   try {
-    const result = latestInfo && isNewer(latestInfo.version, app.getVersion())
-      ? null
-      : await autoUpdater.checkForUpdates();
+    pendingAutoInstall = true;
+    const result = await autoUpdater.checkForUpdatesAndNotify({
+      title: "StudioVoxario aktualizace připravena",
+      body: "Verze {version} byla stažena a po ukončení aplikace se nainstaluje.",
+    });
     if (result?.updateInfo) latestInfo = result.updateInfo;
     const remote = latestInfo?.version || diagnostics.remoteVersion;
     if (!remote || !isNewer(remote, app.getVersion())) {
       diagnostics.status = "up-to-date";
       installing = false;
+      pendingAutoInstall = false;
       return { status: "up-to-date" };
     }
 
     log(`${source}: stahuji verzi ${remote} přes electron-updater cache.`);
-    await autoUpdater.downloadUpdate(cancellationToken || undefined);
+    if (result?.downloadPromise) await result.downloadPromise;
     downloadedVersion = remote;
-    diagnostics.status = "downloaded";
-    updateProgress({ phase: "installing", label: `Instaluji StudioVoxario ${remote}`, pct: 1 });
-
-    if (uiBridge) {
-      uiBridge({
-        kind: "installing",
-        title: "Instaluji aktualizaci",
-        message: `StudioVoxario ${remote}`,
-        detail: "Aplikace se ukončí a standardní instalátor dokončí aktualizaci bez příkazového okna.",
-        version: remote,
-      }).catch(() => {});
-    }
-
-    isQuittingForUpdate();
-    setTimeout(() => autoUpdater.quitAndInstall(true, true), 600);
     return { status: "installing", version: remote };
   } catch (error) {
     installing = false;
+    pendingAutoInstall = false;
     const msg = String(error?.message || error);
     const canceled = /cancel/i.test(msg);
     diagnostics.status = canceled ? "canceled" : "error";
@@ -439,6 +430,20 @@ function setupEvents() {
     diagnostics.status = "downloaded";
     diagnostics.updateInfo = info;
     log(`Aktualizace stažena: ${downloadedVersion || "neznámá verze"}`);
+    if (!pendingAutoInstall) return;
+    pendingAutoInstall = false;
+    updateProgress({ phase: "installing", label: `Instaluji StudioVoxario ${downloadedVersion || ""}`.trim(), pct: 1 });
+    if (uiBridge) {
+      uiBridge({
+        kind: "installing",
+        title: "Instaluji aktualizaci",
+        message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
+        detail: "Aplikace se ukončí a standardní instalátor dokončí aktualizaci bez příkazového okna.",
+        version: downloadedVersion,
+      }).catch(() => {});
+    }
+    isQuittingForUpdate();
+    setTimeout(() => autoUpdater.quitAndInstall(true, true), 600);
   });
   autoUpdater.on("error", (error) => {
     diagnostics.status = "error";
