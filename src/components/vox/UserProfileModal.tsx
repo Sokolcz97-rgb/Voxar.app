@@ -58,7 +58,7 @@ export function UserProfileModal({ member, guildId, open, onOpenChange }: Props)
             className="rank-ring w-24 h-24"
             style={{ ["--rank-color" as any]: topColor }}
           >
-            <div className="rank-ring-inner overflow-hidden flex items-center justify-center text-2xl font-display font-bold">
+            <div className="rank-inner overflow-hidden flex items-center justify-center text-2xl font-display font-bold">
               {member.avatar_url
                 ? <img src={member.avatar_url} alt={name} className="w-full h-full object-cover" />
                 : name.slice(0, 2).toUpperCase()}

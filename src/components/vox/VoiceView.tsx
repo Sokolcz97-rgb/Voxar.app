@@ -59,7 +59,7 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 holo-scroll">
+      <div className="flex-1 overflow-y-auto p-6">
         {participants.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center gap-4">
             <div className="hex-frame w-24 h-24 flex items-center justify-center bg-primary/10">
@@ -89,7 +89,7 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
                     className={cn("rank-ring w-20 h-20", speaking && "speaking-ring")}
                     style={{ ["--rank-color" as any]: speaking ? "hsl(160 84% 50%)" : "hsl(var(--primary))" }}
                   >
-                    <div className="rank-ring-inner overflow-hidden flex items-center justify-center text-lg font-display font-bold">
+                    <div className="rank-inner overflow-hidden flex items-center justify-center text-lg font-display font-bold">
                       {p.avatar_url
                         ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
                         : name.slice(0, 2).toUpperCase()}
