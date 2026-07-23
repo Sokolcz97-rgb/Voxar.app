@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
@@ -118,16 +119,34 @@ export default function Download() {
       <Navbar />
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 mb-6 icon-cube-3d">
             <Monitor className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            StudioVoxario <span className="text-primary">pro počítač</span>
+            StudioVoxario <span className="text-primary text-glow">pro počítač</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             Nativní desktop klient s vlastním HUD instalátorem, notifikacemi, tray ikonou a auto-startem.
             Zvolte si kanál aktualizací – Stable pro stabilní verze, Beta pro nejnovější Alpha buildy.
           </p>
+
+          <Button
+            size="xl"
+            variant="hero"
+            className="btn-3d group relative overflow-hidden"
+            asChild
+          >
+            <a href={winInstaller.url} download={winInstaller.original_filename || "StudioVoxarioSetup.exe"}>
+              <DownloadIcon className="h-5 w-5 mr-2 group-hover:animate-bounce" />
+              <span className="bg-gradient-to-r from-foreground via-primary to-primary-glow bg-clip-text text-transparent">
+                Stáhnout pro Windows
+              </span>
+            </a>
+          </Button>
+          <p className="text-xs text-muted-foreground mt-3">
+            {winInstaller.original_filename || "StudioVoxarioSetup.exe"} · v0.0.9-alpha
+          </p>
+
           <button
             className="mt-4 text-xs text-muted-foreground underline hover:text-foreground"
             onClick={() => {
@@ -155,16 +174,36 @@ export default function Download() {
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               {downloads.map((d) => (
-                <Card key={d.os} className={`p-6 transition-colors ${d.primary ? "border-primary/60 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)]" : "hover:border-primary/50"}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{d.icon}</div>
+                <Card
+                  key={d.os}
+                  className={cn(
+                    "p-6 transition-all duration-300",
+                    d.primary
+                      ? "holo-pod border-primary/80 hover:border-primary hover:shadow-[0_0_50px_-12px_hsl(var(--primary)/0.6)]"
+                      : "hover:border-primary/50 hover:shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]"
+                  )}
+                >
+                  <div className="flex items-start gap-4 relative">
+                    <div className={cn(
+                      "text-4xl shrink-0",
+                      d.primary && "drop-shadow-[0_0_12px_hsl(var(--primary)/0.8)]"
+                    )}>
+                      {d.icon}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
                       <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
                       <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
-                      <Button asChild className="w-full" variant={d.primary ? "default" : "outline"}>
+                      <Button
+                        asChild
+                        className={cn(
+                          "w-full",
+                          d.primary && "btn-3d text-primary-foreground"
+                        )}
+                        variant={d.primary ? "hero" : "outline"}
+                      >
                         <a href={d.file} download={d.filename}>
-                          <DownloadIcon className="w-4 h-4 mr-2" />
+                          <DownloadIcon className={cn("w-4 h-4 mr-2", d.primary && "animate-bounce")} />
                           {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
                         </a>
                       </Button>
