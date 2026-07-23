@@ -3,38 +3,83 @@ name: Build StudioVoxario
 on:
   push:
     branches:
-      - main # Spustí se při každé změně v hlavní větvi
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    runs-on: windows-latest # Vyžaduje Windows pro vytvoření .exe
+    runs-on: windows-latest
 
     steps:
-      - name: Stáhnutí kódu
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
-      - name: Nastavení Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 1. Sestavení Windows buildu
-        run: |
-          cd dev-server
-          npm install
-          npx vite build
-          npx @electron/packager electron StudioVoxario --platform=win32 --arch=x64 --out=electron-release --overwrite
+      - name: Install root deps
+        run: npm install
 
-      - name: 2. Zabalení vlastního instalátoru
-        run: |
-          cd installer
-          npm install
-          node build.cjs
+      - name: Build frontend (Vite)
+        run: npx vite build
 
-      - name: 3. Nahrání na CDN (Lovable)
+      - name: Install electron deps
+        working-directory: electron
+        run: npm install
+
+      - name: Package Electron app (win32-x64)
+        run: npx --yes @electron/packager electron StudioVoxario --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=electron/assets/icon.ico
+
+      - name: Prepare installer icon
+        shell: pwsh
         run: |
-          # Nahradit cestu podle toho, kam build.cjs ukládá výsledek
-          npx lovable-assets create --file installer/StudioVoxarioInstaller.exe --filename StudioVoxarioSetup-0.0.9-alpha.exe > src/assets/downloads/windows-installer.asset.json
+          New-Item -ItemType Directory -Force -Path installer/assets | Out-Null
+          Copy-Item electron/assets/icon.ico installer/assets/icon.ico -Force
+
+      - name: Install installer deps
+        working-directory: installer
+        run: npm install
+
+      - name: Build HUD installer .exe
+        working-directory: installer
+        run: node build.cjs
+
+      - name: Locate installer artifact
+        id: locate
+        shell: pwsh
+        run: |
+          $exe = "installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe"
+          if (!(Test-Path $exe)) { throw "Installer .exe not found at $exe" }
+          $size = (Get-Item $exe).Length
+          Write-Host "Installer size: $size bytes"
+          echo "path=$exe" >> $env:GITHUB_OUTPUT
+
+      - name: Upload to Lovable CDN
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src/assets/downloads | Out-Null
+          $filename = "StudioVoxarioSetup-0.0.9-alpha.exe"
+          npx --yes lovable-assets create --file "${{ steps.locate.outputs.path }}" --filename $filename > src/assets/downloads/windows-installer.asset.json
+          Get-Content src/assets/downloads/windows-installer.asset.json
         env:
-          # Pokud Lovable vyžaduje pro upload API klíč, musíš ho přidat do GitHub Secrets
           LOVABLE_API_KEY: ${{ secrets.LOVABLE_API_KEY }}
+
+      - name: Commit updated pointer
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/assets/downloads/windows-installer.asset.json
+          if git diff --cached --quiet; then
+            echo "No pointer changes to commit."
+          else
+            git commit -m "ci: update Windows installer pointer [skip ci]"
+            git push
+          fi
