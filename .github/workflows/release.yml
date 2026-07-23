@@ -51,17 +51,52 @@ jobs:
         working-directory: installer
         run: node build.cjs
 
-      - name: Locate installer artifact
+      - name: Build self-extracting installer (.exe)
         id: locate
         shell: pwsh
         run: |
-          $exe = "installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe"
-          if (!(Test-Path $exe)) { throw "Installer .exe not found at $exe" }
-          $renamed = "installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioSetup-0.0.9-alpha.exe"
-          Copy-Item $exe $renamed -Force
+          $ErrorActionPreference = "Stop"
+          $payloadDir = "installer/dist/StudioVoxarioInstaller-win32-x64"
+          $exe = Join-Path $payloadDir "StudioVoxarioInstaller.exe"
+          if (!(Test-Path $exe)) { throw "Installer payload not found at $exe" }
+
+          # 1) Stáhni 7-Zip Extra (obsahuje SFX moduly 7zSD.sfx / 7zS.sfx)
+          $extraZip = "$env:RUNNER_TEMP\7zextra.7z"
+          $extraDir = "$env:RUNNER_TEMP\7zextra"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/7z2301-extra.7z" -OutFile $extraZip
+          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
+          & 'C:\Program Files\7-Zip\7z.exe' x $extraZip "-o$extraDir" -y | Out-Null
+          $sfx = Join-Path $extraDir "7zSD.sfx"
+          if (!(Test-Path $sfx)) { throw "7zSD.sfx not found after extract" }
+
+          # 2) Zabal CELOU složku instalátoru (ffmpeg.dll, *.pak, locales, resources...) do 7z
+          $archive = "$env:RUNNER_TEMP\payload.7z"
+          if (Test-Path $archive) { Remove-Item $archive -Force }
+          Push-Location $payloadDir
+          & 'C:\Program Files\7-Zip\7z.exe' a -t7z -mx=9 -ms=on $archive "*" | Out-Null
+          Pop-Location
+
+          # 3) SFX config — po rozbalení spustí HUD instalátor
+          $cfg = "$env:RUNNER_TEMP\config.txt"
+@"
+;!@Install@!UTF-8!
+Title="StudioVoxario"
+BeginPrompt="Instalovat StudioVoxario?"
+RunProgram="StudioVoxarioInstaller.exe"
+GUIMode="2"
+;!@InstallEnd@!
+"@ | Set-Content -Path $cfg -Encoding UTF8
+
+          # 4) Spoj SFX + config + payload → jeden .exe
+          $outDir = "installer/dist/final"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $renamed = Join-Path $outDir "StudioVoxarioSetup-0.0.9-alpha.exe"
+          cmd /c "copy /b `"$sfx`" + `"$cfg`" + `"$archive`" `"$renamed`"" | Out-Null
+          if (!(Test-Path $renamed)) { throw "SFX build failed" }
+
           $size = (Get-Item $renamed).Length
           $hash = (Get-FileHash $renamed -Algorithm SHA256).Hash.ToLower()
-          Write-Host "Installer size: $size bytes, sha256: $hash"
+          Write-Host "SFX installer size: $size bytes, sha256: $hash"
           echo "path=$renamed" >> $env:GITHUB_OUTPUT
           echo "size=$size" >> $env:GITHUB_OUTPUT
           echo "sha256=$hash" >> $env:GITHUB_OUTPUT
