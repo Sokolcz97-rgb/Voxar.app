@@ -206,13 +206,29 @@ export function MemberList({
     );
   };
 
+  const total = members.length;
   return (
     <>
-      <aside className="w-60 h-full bg-transparent overflow-y-auto p-3 space-y-4">
-        {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
-        {orderedHoist.map((g) => renderGroup(g.role.name, g.list, `hoist-${g.role.id}`))}
-        {renderGroup("Online", onlineNoHoist, "online", statusColor.online)}
-        {renderGroup(statusLabel.offline, offline, "offline", statusColor.offline)}
+      <aside className="w-60 h-full bg-transparent overflow-y-auto">
+        {/* Blueprint header: ENTITY POD */}
+        <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-gradient-to-b from-[hsl(220_35%_5%/0.9)] to-transparent backdrop-blur-sm border-b border-primary/15">
+          <div className="flex items-center justify-between">
+            <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
+              Entity pod
+            </div>
+            <span className="text-[10px] font-mono text-primary/60">{total} / ∞</span>
+          </div>
+          <div className="mt-1 text-[10px] font-display uppercase tracking-[0.22em] text-muted-foreground">
+            Členové sektoru
+          </div>
+        </div>
+
+        <div className="p-3 space-y-4">
+          {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
+          {orderedHoist.map((g) => renderGroup(g.role.name.toUpperCase(), g.list, `hoist-${g.role.id}`))}
+          {renderGroup("ONLINE", onlineNoHoist, "online", statusColor.online)}
+          {renderGroup(statusLabel.offline.toUpperCase(), offline, "offline", statusColor.offline)}
+        </div>
       </aside>
 
       <UserProfileModal

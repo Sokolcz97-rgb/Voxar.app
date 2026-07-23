@@ -3,6 +3,7 @@ import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check, Settings }
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { ChannelContextMenu } from "@/components/vox/ChannelContextMenu";
 
 export interface VoxChannel {
   id: string;
@@ -25,6 +26,13 @@ interface Props {
   onOpenServerSettings?: () => void;
 }
 
+const catLabel = (cat: string, type: "text" | "voice") => {
+  const c = (cat || "").toLowerCase();
+  if (type === "voice" || c.includes("hlas") || c.includes("voice")) return "HLASOVÁ SEKCE";
+  if (c.includes("text")) return "TEXTOVÁ SEKCE";
+  return (cat || "SEKCE").toUpperCase();
+};
+
 export function ChannelSidebar({
   guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants, onOpenServerSettings,
 }: Props) {
@@ -32,7 +40,7 @@ export function ChannelSidebar({
   const [copied, setCopied] = useState(false);
 
   const grouped = channels.reduce<Record<string, VoxChannel[]>>((acc, c) => {
-    const cat = c.category || "Kanály";
+    const cat = c.category || (c.type === "voice" ? "Hlasová sekce" : "Textová sekce");
     (acc[cat] ||= []).push(c);
     return acc;
   }, {});
@@ -47,35 +55,65 @@ export function ChannelSidebar({
 
   return (
     <div className="w-60 h-full flex flex-col bg-transparent">
-      <div className="h-12 px-4 flex items-center justify-between border-b border-border/50 shadow-sm gap-1">
-        <span className="font-semibold text-sm truncate flex-1">{guildName}</span>
-        {inviteCode && (
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={copyInvite} title="Kopírovat pozvánkový kód">
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          </Button>
-        )}
-        {onOpenServerSettings && (
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onOpenServerSettings} title="Nastavení serveru">
-            <Settings className="w-3.5 h-3.5" />
-          </Button>
-        )}
+      {/* Blueprint header: SEKTORY KOMUNITY */}
+      <div className="px-3 pt-3 pb-2 border-b border-primary/15">
+        <div className="flex items-center justify-between">
+          <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
+            Sektory komunity
+          </div>
+          {inviteCode && (
+            <button
+              onClick={copyInvite}
+              className="text-primary/70 hover:text-primary transition-colors"
+              title="Kopírovat pozvánku"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1.5">
+          <span className="truncate text-sm font-display font-semibold text-foreground text-glow">
+            {guildName}
+          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            {isAdmin && (
+              <button
+                onClick={() => onCreateChannel("text")}
+                className="w-6 h-6 rounded-md border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)] flex items-center justify-center transition-all"
+                title="Nový node"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onOpenServerSettings && (
+              <button
+                onClick={onOpenServerSettings}
+                className="w-6 h-6 rounded-md border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)] flex items-center justify-center transition-all"
+                title="Nastavení sektoru"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
+          const type = chans[0]?.type ?? "text";
           return (
             <div key={cat}>
-              <div className="flex items-center justify-between px-1 py-1 text-[11px] uppercase tracking-wider text-muted-foreground group">
-                <button className="flex items-center gap-1 hover:text-foreground" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
+              <div className="flex items-center justify-between px-1 py-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+                <button className="flex items-center gap-1 hover:text-primary" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
                   {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  {cat}
+                  {catLabel(cat, type)}
                 </button>
                 {isAdmin && (
                   <button
-                    className="opacity-0 group-hover:opacity-100 hover:text-foreground"
-                    onClick={() => onCreateChannel(chans[0]?.type ?? "text")}
-                    title="Přidat kanál"
+                    className="opacity-0 group-hover:opacity-100 hover:text-primary"
+                    onClick={() => onCreateChannel(type)}
+                    title="Přidat node"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -84,28 +122,41 @@ export function ChannelSidebar({
               {!collapsed && chans.map((c) => {
                 const active = c.id === activeId;
                 const vp = voiceParticipants[c.id] ?? [];
+                const hasSpeaker = vp.length > 0;
                 return (
                   <div key={c.id}>
-                    <button
-                      onClick={() => onSelect(c)}
-                      className={cn(
-                        "sector-node w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors",
-                        active
-                          ? "active text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
+                    <ChannelContextMenu
+                      channel={c}
+                      canManage={isAdmin}
+                      onCreateChannel={onCreateChannel}
+                      onOpenSettings={() => onOpenServerSettings?.()}
                     >
-                      {c.type === "text"
-                        ? <Hash className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
-                        : <Volume2 className={cn("w-4 h-4 shrink-0", active && "text-primary")} />}
-                      <span className="truncate tracking-wide">{c.name}</span>
-                      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />}
-                    </button>
+                      <button
+                        onClick={() => onSelect(c)}
+                        className={cn(
+                          "sector-node w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors font-display tracking-wide",
+                          active
+                            ? "active text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {c.type === "text"
+                          ? <Hash className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
+                          : <Volume2 className={cn("w-4 h-4 shrink-0", active && "text-primary")} />}
+                        <span className="truncate uppercase text-[13px]">{c.name}</span>
+                        {c.type === "voice" && hasSpeaker && (
+                          <span className="ml-auto holo-eq"><span/><span/><span/><span/></span>
+                        )}
+                        {active && !hasSpeaker && (
+                          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                        )}
+                      </button>
+                    </ChannelContextMenu>
                     {c.type === "voice" && vp.length > 0 && (
                       <ul className="ml-6 mt-0.5 mb-1 space-y-0.5">
                         {vp.map((p) => (
-                          <li key={p.user_id} className="text-xs text-muted-foreground flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-secondary/40">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <li key={p.user_id} className="text-xs text-muted-foreground flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-primary/5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_hsl(160_84%_45%)]" />
                             <span className="truncate">{p.nickname || p.user_id.slice(0,6)}</span>
                             {p.is_muted && <span className="ml-auto opacity-60">🎙️✕</span>}
                           </li>
