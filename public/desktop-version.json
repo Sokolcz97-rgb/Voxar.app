@@ -1,14 +1,14 @@
 {
-  "version": "0.0.8-alpha.1",
+  "version": "0.0.9-alpha",
   "channel": "stable",
   "publisher": "StudioVoxario",
   "allowUnsigned": true,
   "pinnedThumbprints": [],
   "pinMode": "add",
-  "notes": "Hotfix 0.0.8-alpha.1 — opravený restart po stažení aktualizace. Updater teď používá oddělený helper, který počká na ukončení aplikace, provede instalaci a aplikaci znovu spustí.",
+  "notes": "0.0.9-alpha — Holografický HUD redesign aplikace: plovoucí skleněné pody, mřížkové pozadí s částicemi, sektor/node zobrazení kanálů, cyan/violet neonové akcenty, hexagonální rámy avatarů a animované EQ vlny hlasové aktivity.",
   "channels": {
     "stable": {
-      "version": "0.0.8-alpha.1",
+      "version": "0.0.9-alpha",
       "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/67de8998-3fb4-4e6c-9688-e0876255ce95/StudioVoxarioSetup-0.0.8-alpha.1.exe",
       "sha256": "144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f",
       "size": 85833990,
@@ -31,7 +31,7 @@
       }
     },
     "beta": {
-      "version": "0.0.8-alpha.1",
+      "version": "0.0.9-alpha",
       "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/67de8998-3fb4-4e6c-9688-e0876255ce95/StudioVoxarioSetup-0.0.8-alpha.1.exe",
       "sha256": "144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f",
       "size": 85833990,
