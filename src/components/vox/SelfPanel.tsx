@@ -20,7 +20,7 @@ export function SelfPanel({
   connectedChannelName, onToggleMute, onToggleDeafen, onLeaveVoice, onOpenSettings,
 }: Props) {
   return (
-    <div className="border-t border-border/40 bg-[hsl(220_30%_2%)]">
+    <div className="border-t border-primary/15 bg-transparent">
       {connectedChannelName && (
         <div className="px-3 py-2 border-b border-border/40 flex items-center gap-2 bg-emerald-500/10">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
