@@ -45,7 +45,7 @@ async function main() {
 
   console.log("→ Balím installer.exe");
   execFileSync(
-    "npx",
+    process.platform === "win32" ? "npx.cmd" : "npx",
     [
       "@electron/packager", ".", "StudioVoxarioInstaller",
       "--platform=win32", "--arch=x64",
@@ -54,7 +54,7 @@ async function main() {
       "--extra-resource=resources/app.7z",
       "--asar",
     ],
-    { stdio: "inherit", cwd: ROOT },
+    { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );
   console.log("\n✓ Hotovo: dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe");
 }
