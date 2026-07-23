@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>StudioVoxario Installer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="frame">
+    <!-- Custom titlebar (drag region) -->
+    <div class="titlebar">
+      <div class="drag"></div>
+      <button class="tb-btn" id="btnMin" title="Minimalizovat">–</button>
+      <button class="tb-btn close" id="btnClose" title="Zavřít">×</button>
+    </div>
+
+    <!-- Sidebar / HUD brand -->
+    <aside class="side">
+      <div class="brand">
+        <div class="logo">SV</div>
+        <div class="brand-text">
+          <div class="brand-name">StudioVoxario</div>
+          <div class="brand-sub" id="brandSub">Instalátor</div>
+        </div>
+      </div>
+      <ol class="steps" id="steps">
+        <li data-step="welcome" class="active">Vítejte</li>
+        <li data-step="location">Umístění</li>
+        <li data-step="channel">Kanál</li>
+        <li data-step="install">Instalace</li>
+        <li data-step="done">Hotovo</li>
+      </ol>
+      <div class="foot">v<span id="verLbl">0.0.9</span></div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <!-- Welcome -->
+      <section class="panel active" data-step="welcome">
+        <h1>Vítejte v StudioVoxario</h1>
+        <p class="muted">Vlastní HUD instalátor — bez klasického Windows okna. Instalace neprobíhá pod administrátorem, aplikace se nainstaluje jen pro vás.</p>
+        <ul class="bullets">
+          <li>Bez potřeby administrátorských práv</li>
+          <li>Bez klasického příkazového řádku</li>
+          <li>Zvolíte si kanál aktualizací (Stable / Beta)</li>
+          <li>Snadná odinstalace přes Ovládací panely</li>
+        </ul>
+        <div class="actions">
+          <button class="btn primary" data-next="location">Pokračovat →</button>
+        </div>
+      </section>
+
+      <!-- Location -->
+      <section class="panel" data-step="location">
+        <h1>Kam nainstalovat?</h1>
+        <p class="muted">Doporučené umístění (žádná UAC výzva):</p>
+        <div class="pathbox">
+          <input id="pathInput" type="text" readonly />
+          <button class="btn" id="pickBtn">Vybrat…</button>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="chkDesktop" checked />
+          <span>Vytvořit zástupce na ploše</span>
+        </label>
+        <div class="actions">
+          <button class="btn ghost" data-next="welcome">← Zpět</button>
+          <button class="btn primary" data-next="channel">Pokračovat →</button>
+        </div>
+      </section>
+
+      <!-- Channel -->
+      <section class="panel" data-step="channel">
+        <h1>Kanál aktualizací</h1>
+        <p class="muted">Zvolte, jaké verze budete dostávat. Kanál lze později přepnout v launcheru.</p>
+        <div class="cards">
+          <label class="card selected">
+            <input type="radio" name="channel" value="stable" checked />
+            <div class="card-title">Stable <span class="tag">doporučeno</span></div>
+            <div class="card-desc">Ověřené vydané verze. Bez rizika experimentálních chyb.</div>
+          </label>
+          <label class="card">
+            <input type="radio" name="channel" value="beta" />
+            <div class="card-title">Beta <span class="tag warn">test</span></div>
+            <div class="card-desc">Nejnovější Alpha buildy. Vyžaduje beta přístupový kód (odemknete přímo v aplikaci).</div>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" data-next="location">← Zpět</button>
+          <button class="btn primary" id="startBtn">Nainstalovat</button>
+        </div>
+      </section>
+
+      <!-- Install -->
+      <section class="panel" data-step="install">
+        <h1>Instaluji…</h1>
+        <div class="progress"><div class="fill" id="progFill"></div></div>
+        <div class="progress-meta">
+          <span id="progLabel">Připravuji…</span>
+          <span id="progPct">0 %</span>
+        </div>
+        <pre class="log" id="logBox"></pre>
+      </section>
+
+      <!-- Done -->
+      <section class="panel" data-step="done">
+        <h1 id="doneTitle">Instalace dokončena</h1>
+        <p class="muted" id="doneMsg">StudioVoxario je připraveno k použití.</p>
+        <div class="actions">
+          <button class="btn ghost" id="closeBtn">Zavřít</button>
+          <button class="btn primary" id="launchBtn">Spustit aplikaci</button>
+        </div>
+      </section>
+
+      <!-- Uninstall -->
+      <section class="panel" data-step="uninstall">
+        <h1>Odinstalovat StudioVoxario?</h1>
+        <p class="muted">Odstraníme aplikaci ze <code id="uninPath"></code>, zkratky a registrační záznamy. Vaše přihlášení a lokální nastavení zůstanou v cloudu.</p>
+        <div class="actions">
+          <button class="btn ghost" id="uninCancel">Zrušit</button>
+          <button class="btn danger" id="uninGo">Odinstalovat</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="installer.js"></script>
+</body>
+</html>

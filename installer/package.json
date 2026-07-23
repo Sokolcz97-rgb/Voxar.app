@@ -1,0 +1,24 @@
+{
+  "name": "studiovoxario-installer",
+  "productName": "StudioVoxario Installer",
+  "version": "0.0.9-alpha",
+  "description": "Vlastní HUD instalátor StudioVoxario (bez klasického Windows okna)",
+  "author": "StudioVoxario",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pack:win": "@electron/packager . StudioVoxarioInstaller --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --asar",
+    "build": "node build.cjs"
+  },
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "node-7z": "^3.0.0",
+    "winreg": "^1.2.5",
+    "windows-shortcuts": "^0.1.6"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.3",
+    "electron": "^31.7.7"
+  }
+}
