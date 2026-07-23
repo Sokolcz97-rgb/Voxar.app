@@ -16,11 +16,10 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-helper`;
 const STORAGE_KEY = "neonhub_ai_chat";
 
 /**
- * Public marketing site AI helper — classic rounded chat bubble.
- * The holographic HUD variant used inside the /app shell lives in
- * `src/components/vox/AIHelperHolo.tsx`. Keep the two visually separate.
+ * Holographic HUD variant of the AI helper for the /app desktop shell.
+ * Web (marketing) uses the classic `AIHelper` — keep visuals separate.
  */
-export function AIHelper() {
+export function AIHelperHolo() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(() => {
@@ -100,51 +99,42 @@ export function AIHelper() {
   return (
     <>
       {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 group"
-          aria-label={t("ai.open")}
-        >
+        <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-40 group" aria-label={t("ai.open")}>
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
-            <div className="relative rounded-full w-14 h-14 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground flex items-center justify-center shadow-[var(--glow-primary)] group-hover:scale-110 transition-transform">
-              <Bot className="h-6 w-6" />
-              <Sparkles className="h-3 w-3 absolute top-2 right-2 text-accent" />
+            <div className="absolute inset-0 hex-frame bg-primary/40 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
+            <div className="absolute -inset-2 hex-ring opacity-70 group-hover:opacity-100 transition-opacity" />
+            <div className="relative hex-frame w-14 h-14 bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.6)] group-hover:scale-110 transition-transform">
+              <Bot className="h-6 w-6 text-glow" />
+            </div>
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-display tracking-widest uppercase text-primary/80 whitespace-nowrap">
+              NEON // AI
             </div>
           </div>
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-40 w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col glass border border-primary/30 rounded-2xl shadow-[var(--glow-primary)] animate-scale-in overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
+        <div className="fixed bottom-6 right-6 z-40 w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col holo-context-menu overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-transparent">
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Bot className="h-5 w-5 text-primary" />
                 <Sparkles className="h-2.5 w-2.5 text-accent absolute -top-1 -right-1" />
               </div>
               <div>
-                <div className="font-display font-bold text-sm tracking-wider">Neon AI</div>
+                <div className="font-display font-bold text-sm tracking-widest text-glow uppercase">NEON // AI</div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("ai.online")}</div>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={newChat}
-                title={t("ai.newChatTitle")}
-                className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary-glow px-3 py-1.5 rounded-md shadow-[var(--glow-soft)] hover:shadow-[var(--glow-primary)] hover:scale-105 transition-all border border-primary/50"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                {t("ai.newChat")}
+              <button onClick={newChat} title={t("ai.newChatTitle")}
+                className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary hover:bg-primary/30 px-2.5 py-1.5 rounded-md border border-primary/40 transition-all">
+                <Plus className="h-3 w-3" />{t("ai.newChat")}
               </button>
               {messages.length > 0 && (
-                <button
-                  onClick={clearChat}
-                  title={t("ai.clear") || "Smazat"}
-                  className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest bg-destructive/90 text-destructive-foreground hover:bg-destructive px-3 py-1.5 rounded-md hover:scale-105 transition-all border border-destructive/60"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  {t("ai.clear")}
+                <button onClick={clearChat} title={t("ai.clear") || "Smazat"}
+                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest bg-destructive/20 text-destructive hover:bg-destructive/30 px-2.5 py-1.5 rounded-md border border-destructive/40 transition-all">
+                  <X className="h-3 w-3" />{t("ai.clear")}
                 </button>
               )}
               <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label={t("ai.close")}>
@@ -156,20 +146,17 @@ export function AIHelper() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-10 px-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 border border-primary/30 mb-3">
+                <div className="inline-flex items-center justify-center w-12 h-12 hex-frame bg-primary/10 border border-primary/30 mb-3">
                   <Bot className="h-5 w-5 text-primary" />
                 </div>
-                <p className="font-display font-bold text-sm mb-1">{t("ai.greeting")}</p>
+                <p className="font-display font-bold text-sm mb-1 uppercase tracking-wider">{t("ai.greeting")}</p>
                 <p className="text-xs text-muted-foreground">{t("ai.intro")}</p>
                 <div className="mt-4 grid gap-2">
                   {[0, 1, 2].map((i) => {
                     const q = t(`ai.suggestions.${i}`);
                     return (
-                      <button
-                        key={i}
-                        onClick={() => { setInput(q); setTimeout(send, 0); }}
-                        className="text-xs text-left px-3 py-2 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
-                      >
+                      <button key={i} onClick={() => { setInput(q); setTimeout(send, 0); }}
+                        className="text-xs text-left px-3 py-2 rounded-md border border-primary/25 hover:border-primary/60 hover:bg-primary/5 transition-all">
                         {q}
                       </button>
                     );
@@ -180,22 +167,20 @@ export function AIHelper() {
 
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
+                <div className={`max-w-[85%] rounded-md px-3.5 py-2 text-sm ${
                   m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-secondary text-secondary-foreground rounded-bl-sm border border-border"
+                    ? "bg-primary/25 text-foreground border border-primary/40"
+                    : "bg-secondary/60 text-secondary-foreground border border-primary/15"
                 }`}>
-                  {m.role === "assistant" ? (
-                    <Markdown content={m.content || (loading && i === messages.length - 1 ? "…" : "")} />
-                  ) : (
-                    <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                  )}
+                  {m.role === "assistant"
+                    ? <Markdown content={m.content || (loading && i === messages.length - 1 ? "…" : "")} />
+                    : <p className="whitespace-pre-wrap break-words">{m.content}</p>}
                 </div>
               </div>
             ))}
             {loading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex justify-start">
-                <div className="bg-secondary border border-border rounded-2xl rounded-bl-sm px-3.5 py-2">
+                <div className="bg-secondary/60 border border-primary/20 rounded-md px-3.5 py-2">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 </div>
               </div>
@@ -203,32 +188,17 @@ export function AIHelper() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-border p-3 flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder={t("ai.askPlaceholder")}
-              disabled={loading}
-              className="text-sm"
-            />
+          <div className="border-t border-primary/20 p-3 flex gap-2">
+            <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
+              placeholder={`TX > ${t("ai.askPlaceholder")}`} disabled={loading}
+              className="text-sm font-mono bg-background/60 border-primary/25 focus-visible:ring-primary/40" />
             {loading ? (
-              <Button
-                onClick={stopGenerating}
-                size="icon"
-                variant="destructive"
-                className="shrink-0"
-                title={t("ai.stop") || "Zastavit"}
-              >
+              <Button onClick={stopGenerating} size="icon" variant="destructive" className="shrink-0" title={t("ai.stop") || "Zastavit"}>
                 <Square className="h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                onClick={send}
-                disabled={!input.trim()}
-                size="icon"
-                className="bg-primary text-primary-foreground hover:bg-primary-glow shrink-0"
-              >
+              <Button onClick={send} disabled={!input.trim()} size="icon"
+                className="bg-primary/25 border border-primary/50 text-primary hover:bg-primary/40 shrink-0">
                 <Send className="h-4 w-4" />
               </Button>
             )}

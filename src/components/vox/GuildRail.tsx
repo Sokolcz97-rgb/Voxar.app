@@ -19,10 +19,15 @@ interface Props {
 export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="w-[72px] h-full flex flex-col items-center gap-3 py-4 bg-transparent">
-        <div className="text-[9px] font-display tracking-[0.25em] text-primary/70 text-glow uppercase writing-vertical mb-1">
-          SECT
+      <div className="w-[72px] h-full flex flex-col items-center gap-3 py-3 bg-transparent">
+        {/* Blueprint: STUDIO // VOXARIO monogram badge */}
+        <div className="w-12 h-12 hex-frame bg-gradient-to-br from-primary/30 to-accent/10 border border-primary/40 flex items-center justify-center shadow-[0_0_18px_hsl(var(--primary)/0.45)]">
+          <span className="font-display font-black text-[13px] tracking-widest text-primary text-glow">SV</span>
         </div>
+        <div className="text-[8px] font-display tracking-[0.35em] text-primary/70 text-glow uppercase leading-none">
+          STUDIO<br/>VOXARIO
+        </div>
+        <div className="w-8 h-px bg-primary/40 shadow-[0_0_6px_hsl(var(--primary))]" />
 
         {guilds.map((g) => {
           const active = g.id === activeId;

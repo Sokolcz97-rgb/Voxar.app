@@ -170,6 +170,15 @@ export function ChannelSidebar({
           );
         })}
       </div>
+
+      {/* Blueprint: NET LINK status strip */}
+      <div className="px-3 py-1.5 border-t border-primary/15 flex items-center justify-between text-[9px] font-display tracking-[0.28em] uppercase text-primary/70">
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_hsl(160_84%_45%)] animate-pulse" />
+          Net link
+        </span>
+        <span className="text-muted-foreground">● Sync</span>
+      </div>
     </div>
   );
 }
