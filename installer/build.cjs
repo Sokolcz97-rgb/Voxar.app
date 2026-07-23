@@ -25,6 +25,7 @@ const ROOT = __dirname;
 const RESOURCES = path.join(ROOT, "resources");
 const PAYLOAD = path.join(ROOT, "..", "electron-release", "StudioVoxario-win32-x64");
 const OUT_ARCHIVE = path.join(RESOURCES, "app.7z");
+const OUT_7ZA = path.join(RESOURCES, "7za.exe");
 
 async function main() {
   if (!fs.existsSync(PAYLOAD)) {
@@ -34,6 +35,7 @@ async function main() {
   }
   fs.mkdirSync(RESOURCES, { recursive: true });
   if (fs.existsSync(OUT_ARCHIVE)) fs.rmSync(OUT_ARCHIVE);
+  fs.copyFileSync(sevenBin.path7za, OUT_7ZA);
 
   console.log("→ Balím payload:", PAYLOAD);
   await new Promise((resolve, reject) => {
@@ -52,6 +54,7 @@ async function main() {
       "--out=dist", "--overwrite",
       "--icon=assets/icon.ico",
       "--extra-resource=resources/app.7z",
+      "--extra-resource=resources/7za.exe",
     ],
     { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );

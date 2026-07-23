@@ -170,11 +170,13 @@ function extract(archive, dest, onProgress) {
 
 function getRunnableSevenZipBinary() {
   const candidates = [
-    sevenBin.path7za,
-    sevenBin.path7za.replace("app.asar", "app.asar.unpacked"),
+    path.join(process.resourcesPath || __dirname, "7za.exe"),
+    path.join(__dirname, "resources", "7za.exe"),
     path.join(process.resourcesPath || __dirname, "app", "node_modules", "7zip-bin", "win", "x64", "7za.exe"),
+    sevenBin.path7za.replace("app.asar", "app.asar.unpacked"),
+    sevenBin.path7za,
   ];
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  const found = candidates.find((candidate) => !candidate.includes("app.asar" + path.sep) && fs.existsSync(candidate));
   if (!found) throw new Error(`7-Zip binárka nebyla nalezena: ${candidates.join(" | ")}`);
   return found;
 }

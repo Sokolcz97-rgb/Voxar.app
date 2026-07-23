@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "pack:win": "@electron/packager . StudioVoxarioInstaller --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --extra-resource=resources/app.7z",
+    "pack:win": "@electron/packager . StudioVoxarioInstaller --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico --extra-resource=resources/app.7z --extra-resource=resources/7za.exe",
     "build": "node build.cjs"
   },
   "dependencies": {
