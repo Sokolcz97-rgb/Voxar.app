@@ -8,4 +8,4 @@ sha2: 144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f
 releaseDate: '2026-07-23T00:00:00.000Z'
 releaseNotes: >-
   0.0.9-alpha — beta kanál používá stejnou standardní electron-updater pipeline
-  bez viditelného příkazového řádku a bez custom batch instalátoru.
+  bez viditelného příkazového řádku a bez vlastního instalačního helperu.

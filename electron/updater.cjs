@@ -1,5 +1,5 @@
 // StudioVoxario desktop updater — standard electron-updater integration.
-// No cmd.exe, no batch files, no custom file replacement. electron-updater
+// No shell helpers and no custom file replacement. electron-updater
 // downloads into its cache, validates checksums from latest.yml/beta.yml, then
 // starts the NSIS installer and quits the app via quitAndInstall().
 const { app, BrowserWindow, ipcMain, Notification } = require("electron");
