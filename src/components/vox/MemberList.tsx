@@ -98,19 +98,22 @@ function UserListItem({
           "group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer",
           "transition-all duration-150",
           "hover:bg-secondary/60 focus-within:bg-secondary/60",
-          speaking && "bg-emerald-500/5 ring-1 ring-emerald-400/60 shadow-[0_0_12px_hsl(160_84%_45%/0.35)]",
+          speaking && "bg-emerald-500/5",
           (m.status || "offline") === "offline" && !inVoice && "opacity-50",
         )}
       >
         <div className="relative shrink-0">
-          <div className={cn(
-            "w-8 h-8 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-semibold",
-            speaking && "ring-2 ring-emerald-400 ring-offset-1 ring-offset-[hsl(222_35%_5%)]",
-          )}>
-            {m.avatar_url
-              ? <img src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
-              : name.slice(0, 2).toUpperCase()}
+          <div
+            className={cn("rank-ring", speaking && "speaking-ring")}
+            style={{ ["--rank-color" as any]: top?.color || "hsl(184 100% 54% / 0.55)" }}
+          >
+            <div className="rank-inner w-8 h-8 flex items-center justify-center text-xs font-semibold">
+              {m.avatar_url
+                ? <img src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
+                : name.slice(0, 2).toUpperCase()}
+            </div>
           </div>
+
           <span
             className={cn(
               "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[hsl(222_35%_5%)]",
