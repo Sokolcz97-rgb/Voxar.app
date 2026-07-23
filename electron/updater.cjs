@@ -49,24 +49,86 @@ function fetchJson(url, { bustCache = false } = {}) {
 // Držíme referenci na běžící download request, ať ho lze zvenčí zrušit.
 let activeDownload = null;
 
+// Idle-timeout mezi chunky — když socket zamrzne, celý pokus spadne rychle.
+const DOWNLOAD_IDLE_TIMEOUT_MS = 30_000;
+// Tvrdý strop na celkovou dobu stahování jednoho pokusu.
+const DOWNLOAD_HARD_TIMEOUT_MS = 15 * 60_000;
+
+/**
+ * Smaže všechny staré/dočasné soubory StudioVoxario v tmpdir.
+ * Volá se před každým novým pokusem, aby se předešlo loopu s poškozenými
+ * částečnými soubory a aby se disk nezaplňoval.
+ */
+function purgeStaleTempFiles(keepPath = null) {
+  try {
+    const tmp = os.tmpdir();
+    for (const name of fs.readdirSync(tmp)) {
+      if (!/^StudioVoxario-/.test(name)) continue;
+      // Nemažeme běžící watchdog script (StudioVoxario-update-*.cmd) —
+      // ten se stará o instalaci a musí přežít.
+      if (/^StudioVoxario-update-.*\.cmd$/i.test(name)) continue;
+      const full = path.join(tmp, name);
+      if (keepPath && path.resolve(full) === path.resolve(keepPath)) continue;
+      try { fs.unlinkSync(full); } catch {}
+    }
+  } catch {}
+}
+
 function downloadFile(url, dest, onProgress) {
   return new Promise((resolve, reject) => {
+    // Stagujeme do .part souboru, na finální cestu přejmenujeme až po dokončení.
+    // Tím zajistíme, že installer/watchdog nikdy nedostane nekompletní binárku.
+    const partPath = dest + ".part";
+    try { fs.unlinkSync(partPath); } catch {}
+
     const lib = url.startsWith("https") ? https : http;
-    const req = lib.get(url, { headers: { "User-Agent": "StudioVoxario-Launcher" } }, (res) => {
+    let settled = false;
+    let idleTimer = null;
+    let hardTimer = null;
+
+    const cleanupTimers = () => {
+      if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+      if (hardTimer) { clearTimeout(hardTimer); hardTimer = null; }
+    };
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      cleanupTimers();
+      activeDownload = null;
+      try { req.destroy(); } catch {}
+      try { fs.unlinkSync(partPath); } catch {}
+      reject(err);
+    };
+
+    const req = lib.get(url, {
+      headers: { "User-Agent": "StudioVoxario-Launcher" },
+      timeout: DOWNLOAD_IDLE_TIMEOUT_MS,
+    }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        cleanupTimers();
+        settled = true; // předáváme rekurzi
         return resolve(downloadFile(res.headers.location, dest, onProgress));
       }
-      if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
+      if (res.statusCode !== 200) return fail(new Error("HTTP " + res.statusCode));
       const total = parseInt(res.headers["content-length"] || "0", 10);
       let received = 0;
       const startTs = Date.now();
       let lastEmit = 0;
       const hash = crypto.createHash("sha256");
-      const file = fs.createWriteStream(dest);
-      activeDownload = { req, dest };
+      const file = fs.createWriteStream(partPath);
+      activeDownload = { req, dest: partPath };
+
+      const bumpIdle = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => fail(new Error(`timeout: no data for ${DOWNLOAD_IDLE_TIMEOUT_MS} ms`)), DOWNLOAD_IDLE_TIMEOUT_MS);
+      };
+      hardTimer = setTimeout(() => fail(new Error("timeout: hard limit reached")), DOWNLOAD_HARD_TIMEOUT_MS);
+      bumpIdle();
+
       res.on("data", (chunk) => {
         received += chunk.length;
         hash.update(chunk);
+        bumpIdle();
         const now = Date.now();
         if (onProgress && (now - lastEmit > 200 || (total && received === total))) {
           lastEmit = now;
@@ -75,26 +137,37 @@ function downloadFile(url, dest, onProgress) {
           const etaSec = total && speedBps > 0 ? (total - received) / speedBps : null;
           try {
             onProgress({
-              received,
-              total,
+              received, total,
               pct: total ? received / total : 0,
-              speedBps,
-              etaSec,
+              speedBps, etaSec,
             });
           } catch {}
         }
       });
       res.pipe(file);
       file.on("finish", () =>
-        file.close(() => {
+        file.close((closeErr) => {
+          if (settled) return;
+          if (closeErr) return fail(closeErr);
+          if (total && received !== total) {
+            return fail(new Error(`incomplete download: ${received}/${total} B`));
+          }
+          try {
+            try { fs.unlinkSync(dest); } catch {}
+            fs.renameSync(partPath, dest);
+          } catch (e) { return fail(e); }
+          settled = true;
+          cleanupTimers();
           if (activeDownload && activeDownload.req === req) activeDownload = null;
           resolve({ path: dest, sha256: hash.digest("hex"), size: received });
         })
       );
-      file.on("error", (e) => { activeDownload = null; reject(e); });
-      res.on("error", (e) => { activeDownload = null; reject(e); });
+      file.on("error", fail);
+      res.on("error", fail);
+      res.on("aborted", () => fail(new Error("stream aborted")));
     });
-    req.on("error", (e) => { activeDownload = null; reject(e); });
+    req.on("error", fail);
+    req.on("timeout", () => fail(new Error("timeout: socket idle")));
   });
 }
 
@@ -104,7 +177,10 @@ function cancelActiveDownload() {
   const { req, dest } = activeDownload;
   activeDownload = null;
   try { req.destroy(new Error("canceled")); } catch {}
-  setTimeout(() => { try { fs.unlinkSync(dest); } catch {} }, 50);
+  setTimeout(() => {
+    try { fs.unlinkSync(dest); } catch {}
+    try { fs.unlinkSync(String(dest).replace(/\.part$/, "")); } catch {}
+  }, 50);
   return true;
 }
 
@@ -187,6 +263,11 @@ function isNewer(remote, current) {
 }
 
 let checking = false;
+// Globální zámek proti smyčce: když už jednou spustíme instalační pipeline
+// (stahování/ověření/instalace), další volání (např. z FAB nebo intervalu)
+// hned vrátí busy, dokud pipeline neskončí nebo se aplikace nerestartuje.
+let installing = false;
+
 
 // Persistent diagnostics — snapshot of the last update check for the launcher UI.
 const diagnostics = {
@@ -537,7 +618,9 @@ function pickChannel(manifest, channel = "stable") {
 
 async function checkForUpdates({ silent = true, parentWindow = null, channel = "stable" } = {}) {
   if (checking) return { status: "busy" };
+  if (installing) return { status: "busy" };
   checking = true;
+
   diagnostics.status = "checking";
   diagnostics.lastError = null;
   diagnostics.currentVersion = app.getVersion();
@@ -603,6 +686,12 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
       return { status: "postponed" };
     }
 
+    if (installing) {
+      log("Instalace už běží — druhý pokus zamítnut, aby nedošlo ke smyčce.");
+      return { status: "busy" };
+    }
+    installing = true;
+
     // Progress window
     const progressWin = new BrowserWindow({
       width: 420,
@@ -632,6 +721,11 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
 
     const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
+    // Vyčisti staré/částečné soubory — bez toho se pipeline zacyklila,
+    // když předchozí pokus nechal `.part` nebo poškozený `.exe` v tmpdir.
+    purgeStaleTempFiles(dest);
+    try { fs.unlinkSync(dest); } catch {}
+    try { fs.unlinkSync(dest + ".part"); } catch {}
     log(`Stahování zahájeno → ${dest}`);
     diagnostics.status = "downloading";
     updateProgress({
@@ -640,6 +734,7 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
       canceled: false, startedAt: new Date().toISOString(),
     });
 
+    // Bez retry — jeden pokus, aby fail nezpůsobil smyčku.
     const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
       updateProgress({
         phase: "download", label: `Stahuji StudioVoxario ${remote}`,
@@ -652,7 +747,8 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
           `document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`
         )
         .catch(() => {});
-    }), { phase: "download", label: "Stažení instalátoru" });
+    }), { phase: "download", label: "Stažení instalátoru", maxAttempts: 1 });
+
 
     progressWin.close();
     diagnostics.downloadedSha256 = download.sha256;
@@ -835,11 +931,14 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
     updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
     try { progressWin && !progressWin.isDestroyed() && progressWin.close(); } catch {}
     log(canceled ? "Stahování zrušeno uživatelem." : `CHYBA: ${diagnostics.lastError}`);
+    // Uklidíme jakékoli částečné/dočasné soubory, ať další pokus začíná čistě.
+    purgeStaleTempFiles();
+    installing = false;
     if (!silent && !canceled) {
       await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace selhala",
-        message: "Nepodařilo se zkontrolovat aktualizace",
-        detail: msg });
+        message: "Nepodařilo se stáhnout aktualizaci",
+        detail: msg + "\n\nDočasné soubory byly smazány. Zkuste to prosím znovu ručně." });
     }
     return { status: "error", error: String(err.message || err) };
   } finally {
@@ -853,9 +952,19 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
  */
 async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
   if (!asset || !asset.installerUrl) return { status: "no-asset" };
+  if (installing) {
+    log(`${label}: pipeline už běží (busy), druhý pokus zamítnut.`);
+    return { status: "busy" };
+  }
+  installing = true;
   const platform = process.platform;
   const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
   const dest = path.join(os.tmpdir(), `StudioVoxario-${version || "asset"}${ext}`);
+  // Před každým pokusem uklidíme staré .exe / .part v tmpdir — jinak by mohl
+  // watchdog spustit korupt exe z předchozího neúspěšného pokusu.
+  purgeStaleTempFiles(dest);
+  try { fs.unlinkSync(dest); } catch {}
+  try { fs.unlinkSync(dest + ".part"); } catch {}
   log(`${label}: stahuji ${asset.installerUrl} → ${dest}`);
 
   const progressWin = new BrowserWindow({
@@ -877,12 +986,14 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
   </body></html>`;
   progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
+  let launching = false;
   try {
     updateProgress({
       phase: "download", label: `${label} — stahuji ${version || ""}`,
       received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
       canceled: false, startedAt: new Date().toISOString(),
     });
+    // maxAttempts: 1 — žádné auto-retry (uživatel může kliknout znovu).
     const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
       updateProgress({
         phase: "download", label: `${label} — stahuji ${version || ""}`,
@@ -893,8 +1004,8 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       progressWin.webContents
         .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
         .catch(() => {});
-    }), { phase: "download", label: `${label}: stažení` });
-    progressWin.close();
+    }), { phase: "download", label: `${label}: stažení`, maxAttempts: 1 });
+    try { progressWin.close(); } catch {}
     log(`${label}: staženo ${download.size} B, SHA-256=${download.sha256}`);
 
     const expectedHash = String(asset.sha256 || "").toLowerCase().trim();
@@ -918,7 +1029,6 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
         log(`${label}: pin-mismatch (${pinCheck.reason}), instalátor zamítnut.`);
         return { status: "pin-mismatch", sig, pinCheck };
       }
-      // Rollback NEROTUJE piny — jen ověří.
     }
     log(`${label}: ověřeno (podpis + pin), spouštím instalátor.`);
     updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
@@ -932,6 +1042,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
         const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore", windowsHide: true });
         child.unref();
       }
+      launching = true;
       new Notification({ title: "StudioVoxario", body: `${label}: tichá instalace probíhá, aplikace se restartuje.` }).show();
       showInstallingModal(parentWindow, version).catch(() => {});
       setTimeout(() => app.quit(), 2500);
@@ -945,7 +1056,11 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     const canceled = /canceled/i.test(msg);
     updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
     log(`${label}: ${canceled ? "zrušeno uživatelem" : "chyba — " + msg}`);
+    purgeStaleTempFiles();
     return { status: canceled ? "canceled" : "error", error: msg };
+  } finally {
+    // Pokud instalace nevyskočila do watchdogu, uvolni zámek pro další pokus.
+    if (!launching) installing = false;
   }
 }
 
