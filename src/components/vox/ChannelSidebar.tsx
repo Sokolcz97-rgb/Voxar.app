@@ -46,7 +46,7 @@ export function ChannelSidebar({
   };
 
   return (
-    <div className="w-60 h-full flex flex-col bg-[hsl(222_35%_5%)] border-r border-border/40">
+    <div className="w-60 h-full flex flex-col bg-transparent">
       <div className="h-12 px-4 flex items-center justify-between border-b border-border/50 shadow-sm gap-1">
         <span className="font-semibold text-sm truncate flex-1">{guildName}</span>
         {inviteCode && (
