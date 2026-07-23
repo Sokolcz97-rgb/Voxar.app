@@ -18,6 +18,7 @@ import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { DevConsole } from "@/components/vox/DevConsole";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
+import { AIHelper } from "@/components/AIHelper";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
@@ -239,6 +240,7 @@ export default function AppShell() {
   };
 
 
+  const selfSpeaking = !!(voiceConn?.api && (voiceConn.api.selfLevel ?? 0) > 0.08 && !voiceConn.api.muted);
   const selfPanel = (
     <SelfPanel
       displayName={displayName}
@@ -246,6 +248,7 @@ export default function AppShell() {
       status="Online"
       muted={voiceConn?.api?.muted ?? false}
       deafened={voiceConn?.api?.deafened ?? false}
+      speaking={selfSpeaking}
       connectedChannelName={voiceConn?.channel?.name ?? null}
       onToggleMute={() => voiceConn?.api?.toggleMute?.()}
       onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
@@ -370,6 +373,8 @@ export default function AppShell() {
       />
       <DesktopUpdateFab />
       <DevConsole />
+      {/* Blueprint: floating AI bot orb, bottom-right */}
+      <AIHelper />
     </div>
   );
 }
