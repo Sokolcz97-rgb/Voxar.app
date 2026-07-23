@@ -173,16 +173,36 @@ export default function Download() {
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               {downloads.map((d) => (
-                <Card key={d.os} className={`p-6 transition-colors ${d.primary ? "border-primary/60 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)]" : "hover:border-primary/50"}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{d.icon}</div>
+                <Card
+                  key={d.os}
+                  className={cn(
+                    "p-6 transition-all duration-300",
+                    d.primary
+                      ? "holo-pod border-primary/80 hover:border-primary hover:shadow-[0_0_50px_-12px_hsl(var(--primary)/0.6)]"
+                      : "hover:border-primary/50 hover:shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]"
+                  )}
+                >
+                  <div className="flex items-start gap-4 relative">
+                    <div className={cn(
+                      "text-4xl shrink-0",
+                      d.primary && "drop-shadow-[0_0_12px_hsl(var(--primary)/0.8)]"
+                    )}>
+                      {d.icon}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
                       <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
                       <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
-                      <Button asChild className="w-full" variant={d.primary ? "default" : "outline"}>
+                      <Button
+                        asChild
+                        className={cn(
+                          "w-full",
+                          d.primary && "btn-3d text-primary-foreground"
+                        )}
+                        variant={d.primary ? "hero" : "outline"}
+                      >
                         <a href={d.file} download={d.filename}>
-                          <DownloadIcon className="w-4 h-4 mr-2" />
+                          <DownloadIcon className={cn("w-4 h-4 mr-2", d.primary && "animate-bounce")} />
                           {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
                         </a>
                       </Button>
