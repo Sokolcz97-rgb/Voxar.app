@@ -57,19 +57,51 @@ jobs:
         run: |
           $exe = "installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe"
           if (!(Test-Path $exe)) { throw "Installer .exe not found at $exe" }
-          $size = (Get-Item $exe).Length
-          Write-Host "Installer size: $size bytes"
-          echo "path=$exe" >> $env:GITHUB_OUTPUT
+          $renamed = "installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioSetup-0.0.9-alpha.exe"
+          Copy-Item $exe $renamed -Force
+          $size = (Get-Item $renamed).Length
+          $hash = (Get-FileHash $renamed -Algorithm SHA256).Hash.ToLower()
+          Write-Host "Installer size: $size bytes, sha256: $hash"
+          echo "path=$renamed" >> $env:GITHUB_OUTPUT
+          echo "size=$size" >> $env:GITHUB_OUTPUT
+          echo "sha256=$hash" >> $env:GITHUB_OUTPUT
+          echo "filename=StudioVoxarioSetup-0.0.9-alpha.exe" >> $env:GITHUB_OUTPUT
 
-      - name: Upload to Lovable CDN
+      - name: Create / update GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-latest
+          name: StudioVoxario Desktop (latest)
+          body: |
+            Automatický build z commitu ${{ github.sha }}.
+            Verze: 0.0.9-alpha
+          files: ${{ steps.locate.outputs.path }}
+          prerelease: true
+          make_latest: 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write installer pointer JSON
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path src/assets/downloads | Out-Null
-          $filename = "StudioVoxarioSetup-0.0.9-alpha.exe"
-          npx --yes lovable-assets create --file "${{ steps.locate.outputs.path }}" --filename $filename > src/assets/downloads/windows-installer.asset.json
+          $url = "https://github.com/${{ github.repository }}/releases/download/desktop-latest/${{ steps.locate.outputs.filename }}"
+          $obj = [ordered]@{
+            version           = 1
+            url               = $url
+            original_filename = "${{ steps.locate.outputs.filename }}"
+            size              = [int64]"${{ steps.locate.outputs.size }}"
+            sha256            = "${{ steps.locate.outputs.sha256 }}"
+            content_type      = "application/x-msdownload"
+            source            = "github-release"
+            tag               = "desktop-latest"
+            commit            = "${{ github.sha }}"
+            updated_at        = (Get-Date).ToUniversalTime().ToString("o")
+          }
+          $json = $obj | ConvertTo-Json -Depth 5
+          Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value $json -Encoding UTF8
           Get-Content src/assets/downloads/windows-installer.asset.json
-        env:
-          LOVABLE_API_KEY: ${{ secrets.LOVABLE_API_KEY }}
 
       - name: Commit updated pointer
         shell: bash
