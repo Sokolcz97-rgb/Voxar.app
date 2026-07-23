@@ -8,6 +8,7 @@
   "private": true,
   "dependencies": {
     "@electron/packager": "^20.0.3",
-    "electron": "^31.7.7"
+    "electron": "^31.7.7",
+    "electron-updater": "^6.8.9"
   }
 }
