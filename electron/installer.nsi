@@ -4,7 +4,7 @@ Unicode true
 !include "LogicLib.nsh"
 
 Name "StudioVoxario"
-OutFile "StudioVoxarioSetup-0.0.8-alpha.1.exe"
+OutFile "StudioVoxarioSetup-0.0.9-alpha.exe"
 InstallDir "$LOCALAPPDATA\StudioVoxario"
 InstallDirRegKey HKCU "Software\StudioVoxario" "InstallDir"
 RequestExecutionLevel user
@@ -27,15 +27,7 @@ BrandingText "StudioVoxario"
 !insertmacro MUI_LANGUAGE "Czech"
 !insertmacro MUI_LANGUAGE "English"
 
-; Kill running instance before install so exe/DLLs aren't locked.
-!macro KillRunning
-  DetailPrint "Ukončuji běžící StudioVoxario…"
-  nsExec::Exec 'taskkill /F /IM StudioVoxario.exe /T'
-  Sleep 800
-!macroend
-
 Section "StudioVoxario" SecMain
-  !insertmacro KillRunning
   SetOutPath "$INSTDIR"
   File /r "release\StudioVoxario-win32-x64\*.*"
 
@@ -55,7 +47,7 @@ Section "StudioVoxario" SecMain
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "Publisher" "StudioVoxario"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
-    "DisplayVersion" "0.0.8-alpha.1"
+    "DisplayVersion" "0.0.9-alpha"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
@@ -72,8 +64,6 @@ Function .onInstSuccess
 FunctionEnd
 
 Section "Uninstall"
-  nsExec::Exec 'taskkill /F /IM StudioVoxario.exe /T'
-  Sleep 500
   Delete "$SMPROGRAMS\StudioVoxario\StudioVoxario.lnk"
   Delete "$SMPROGRAMS\StudioVoxario\Odinstalovat.lnk"
   RMDir  "$SMPROGRAMS\StudioVoxario"
