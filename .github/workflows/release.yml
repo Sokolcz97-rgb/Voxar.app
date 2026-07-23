@@ -66,21 +66,24 @@ jobs:
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
           if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
 
-          Write-Host "== Download 7-Zip Extra (SFX modules) =="
-          $extraArchive = Join-Path $env:RUNNER_TEMP "7zextra.7z"
-          $extraDir     = Join-Path $env:RUNNER_TEMP "7zextra"
-          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/7z2301-extra.7z" -OutFile $extraArchive
+          Write-Host "== Download LZMA SDK (SFX modules) =="
+          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $extraDir     = Join-Path $env:RUNNER_TEMP "lzma-sdk"
+          # 7-Zip Extra no longer contains 7zSD.sfx. The official LZMA SDK does.
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
           Write-Host ("Downloaded: {0} bytes" -f (Get-Item $extraArchive).Length)
           if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
           New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
           & $sevenZip x $extraArchive "-o$extraDir" -y
           if ($LASTEXITCODE -ne 0) { throw "7z extract of $extraArchive failed with code $LASTEXITCODE" }
-          $sfx = Join-Path $extraDir "7zSD.sfx"
-          if (!(Test-Path $sfx)) {
-            Write-Host "7zSD.sfx missing. Extra dir contents:"
+          $sfxCandidates = Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File
+          $sfx = $sfxCandidates | Select-Object -First 1
+          if ($null -eq $sfx) {
+            Write-Host "7zSD.sfx missing. SDK dir contents:"
             Get-ChildItem -Recurse $extraDir | Select-Object FullName | Format-Table | Out-String | Write-Host
-            throw "7zSD.sfx not found after extract"
+            throw "7zSD.sfx not found after extracting LZMA SDK"
           }
+          $sfx = $sfx.FullName
           Write-Host ("SFX module: {0} ({1} bytes)" -f $sfx, (Get-Item $sfx).Length)
 
           Write-Host "== Pack payload into 7z =="
