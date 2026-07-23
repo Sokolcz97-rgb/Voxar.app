@@ -75,6 +75,22 @@
     }
   },
   "history": {
+    "0.0.9-alpha": {
+      "notes": "Holografický HUD redesign aplikace: plovoucí skleněné pody, mřížkové pozadí, sektor/node kanály, cyan/violet neon, hexagonální rámy avatarů, animované EQ vlny hlasu.",
+      "platforms": {
+        "win32": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/67de8998-3fb4-4e6c-9688-e0876255ce95/StudioVoxarioSetup-0.0.8-alpha.1.exe",
+          "sha256": "144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f",
+          "size": 85833990
+        },
+        "linux": {
+          "installerUrl": "https://studiovoxario.com/__l5e/assets-v1/649a9c0b-9cf5-49ad-8ad6-cad66a719fda/StudioVoxario-linux-x64-0.0.8-alpha.1.tar.gz",
+          "sha256": "b0320dffe1e436f7e9ac363152fc1761baa5539ef2ba3014fb342541143978fb",
+          "size": 114746404,
+          "format": "tar.gz"
+        }
+      }
+    },
     "0.0.8-alpha.1": {
       "notes": "Hotfix updateru — oddělený restartovací helper po stažení aktualizace spolehlivě provede instalaci a znovu spustí aplikaci.",
       "platforms": {
