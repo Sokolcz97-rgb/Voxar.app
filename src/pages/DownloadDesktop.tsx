@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
