@@ -118,16 +118,34 @@ export default function Download() {
       <Navbar />
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/30 mb-6 icon-cube-3d">
             <Monitor className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            StudioVoxario <span className="text-primary">pro počítač</span>
+            StudioVoxario <span className="text-primary text-glow">pro počítač</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             Nativní desktop klient s vlastním HUD instalátorem, notifikacemi, tray ikonou a auto-startem.
             Zvolte si kanál aktualizací – Stable pro stabilní verze, Beta pro nejnovější Alpha buildy.
           </p>
+
+          <Button
+            size="xl"
+            variant="hero"
+            className="btn-3d group relative overflow-hidden"
+            asChild
+          >
+            <a href={winInstaller.url} download={winInstaller.original_filename || "StudioVoxarioSetup.exe"}>
+              <DownloadIcon className="h-5 w-5 mr-2 group-hover:animate-bounce" />
+              <span className="bg-gradient-to-r from-foreground via-primary to-primary-glow bg-clip-text text-transparent">
+                Stáhnout pro Windows
+              </span>
+            </a>
+          </Button>
+          <p className="text-xs text-muted-foreground mt-3">
+            {winInstaller.original_filename || "StudioVoxarioSetup.exe"} · v0.0.9-alpha
+          </p>
+
           <button
             className="mt-4 text-xs text-muted-foreground underline hover:text-foreground"
             onClick={() => {
