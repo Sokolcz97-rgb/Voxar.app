@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import winInstaller from "@/assets/downloads/windows-installer.asset.json";
 import winAsset from "@/assets/downloads/windows.asset.json";
 import linuxAsset from "@/assets/downloads/linux.asset.json";
