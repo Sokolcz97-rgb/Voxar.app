@@ -80,16 +80,20 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[hsl(222_35%_4%)] min-h-0">
-      <div className="h-12 px-4 flex items-center gap-2 border-b border-border/50 shadow-sm">
-        <Hash className="w-5 h-5 text-muted-foreground" />
-        <span className="font-semibold">{channel.name}</span>
+    <div className="flex-1 flex flex-col min-h-0 relative">
+      <div className="h-12 px-4 flex items-center gap-2.5 border-b border-primary/20 bg-primary/5">
+        <Hash className="w-4 h-4 text-primary text-glow" />
+        <span className="font-display tracking-widest uppercase text-sm text-primary text-glow">{channel.name}</span>
+        <span className="ml-auto text-[10px] font-display tracking-widest uppercase text-muted-foreground">
+          NODE // {messages.length} PKT
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-muted-foreground text-sm py-12">
-            Vítej v <span className="text-foreground font-semibold">#{channel.name}</span>. Buď první, kdo napíše zprávu.
+          <div className="text-center text-muted-foreground text-sm py-16">
+            <div className="font-display tracking-widest uppercase text-xs text-primary/70 mb-2">// STREAM PRÁZDNÝ</div>
+            Vítej v <span className="text-primary font-display tracking-wider">#{channel.name}</span>. Buď první entita, která odešle paket.
           </div>
         )}
         {messages.map((m, i) => {
@@ -101,37 +105,43 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
           const topRole = member?.roles?.[0] ?? null;
           const name = member?.nickname || p?.display_name || m.author_id.slice(0, 8);
           const mine = m.author_id === user?.id;
+          const ringColor = topRole?.color || "hsl(var(--primary))";
           return (
-            <div key={m.id} className={cn("group flex gap-3", compact ? "pl-11" : "")}>
+            <div key={m.id} className={cn("group flex gap-3", compact ? "pl-12" : "")}>
               {!compact && (
-                <div className="w-8 h-8 rounded-full bg-secondary shrink-0 overflow-hidden flex items-center justify-center text-xs font-semibold">
-                  {p?.avatar_url
-                    ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
-                    : name.slice(0, 2).toUpperCase()}
+                <div
+                  className="rank-ring w-9 h-9 shrink-0"
+                  style={{ ["--rank-color" as any]: ringColor }}
+                >
+                  <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
+                    {p?.avatar_url
+                      ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
+                      : name.slice(0, 2).toUpperCase()}
+                  </div>
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 {!compact && (
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span
-                      className="font-semibold text-sm"
-                      style={topRole ? { color: topRole.color } : undefined}
+                      className="font-display font-bold text-sm tracking-wider"
+                      style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}
                     >
                       {name}
                     </span>
                     {topRole && <RoleBadge role={topRole} />}
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
                       {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
                 )}
-                <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+                <div className="text-sm whitespace-pre-wrap break-words text-foreground/95">{m.content}</div>
               </div>
               {mine && (
                 <button
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start"
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
                   onClick={() => deleteMsg(m.id)}
-                  title="Smazat"
+                  title="Smazat paket"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -142,19 +152,25 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-4 pt-0">
-        <div className="flex items-end gap-2 bg-secondary rounded-lg px-3 py-2 border border-border/40 focus-within:border-primary/60 transition-colors">
+      <div className="p-3 pt-2 border-t border-primary/15">
+        <div className="cyber-btn flex items-end gap-2 rounded-md px-3 py-2 focus-within:shadow-[0_0_18px_hsl(var(--primary)/0.35)] transition-shadow">
+          <span className="font-display text-[10px] tracking-widest uppercase text-primary/70 pb-2">TX &gt;</span>
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
             }}
-            placeholder={`Napsat do #${channel.name}`}
-            className="min-h-[40px] max-h-40 resize-none bg-transparent border-0 focus-visible:ring-0 p-0"
+            placeholder={`Vyslat paket do #${channel.name}`}
+            className="min-h-[36px] max-h-40 resize-none bg-transparent border-0 focus-visible:ring-0 p-0 text-sm"
             rows={1}
           />
-          <Button size="icon" onClick={send} disabled={!input.trim()} className="h-8 w-8 shrink-0">
+          <Button
+            size="icon"
+            onClick={send}
+            disabled={!input.trim()}
+            className="h-8 w-8 shrink-0 bg-primary/20 hover:bg-primary/40 border border-primary/50 text-primary shadow-[0_0_10px_hsl(var(--primary)/0.4)]"
+          >
             <Send className="w-4 h-4" />
           </Button>
         </div>
