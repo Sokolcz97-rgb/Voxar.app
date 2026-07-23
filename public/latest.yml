@@ -1,0 +1,12 @@
+version: 0.0.9-alpha
+files:
+  - url: https://studiovoxario.com/__l5e/assets-v1/67de8998-3fb4-4e6c-9688-e0876255ce95/StudioVoxarioSetup-0.0.8-alpha.1.exe
+    sha2: 144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f
+    size: 85833990
+path: https://studiovoxario.com/__l5e/assets-v1/67de8998-3fb4-4e6c-9688-e0876255ce95/StudioVoxarioSetup-0.0.8-alpha.1.exe
+sha2: 144f9d5f42314c65cbb97870dfd3eea48c356a8dd67c060b7b546b5919e2e56f
+releaseDate: '2026-07-23T00:00:00.000Z'
+releaseNotes: >-
+  0.0.9-alpha — standardní electron-updater pipeline bez cmd.exe, batch souborů
+  a vlastního přepisování souborů. Aktualizace se stahují do cache updateru,
+  ověřují kontrolním součtem a instalují přes quitAndInstall().
