@@ -52,7 +52,6 @@ async function main() {
       "--out=dist", "--overwrite",
       "--icon=assets/icon.ico",
       "--extra-resource=resources/app.7z",
-      "--asar",
     ],
     { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );

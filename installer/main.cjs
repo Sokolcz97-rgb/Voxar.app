@@ -10,7 +10,7 @@
  *  - Finální launch aplikace: spawn(exe, [], { detached, windowsHide, stdio: 'ignore' }).unref().
  *  - Uninstall: stejný binary s `--uninstall`, rovněž bez shellu.
  */
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -153,8 +153,9 @@ function send(event, payload) {
 
 function extract(archive, dest, onProgress) {
   return new Promise((resolve, reject) => {
+    const sevenZipBinary = getRunnableSevenZipBinary();
     const stream = Seven.extractFull(archive, dest, {
-      $bin: sevenBin.path7za,
+      $bin: sevenZipBinary,
       $progress: true,
       overwrite: "a",
     });
@@ -165,6 +166,17 @@ function extract(archive, dest, onProgress) {
     stream.on("end", () => resolve());
     stream.on("error", (err) => reject(err));
   });
+}
+
+function getRunnableSevenZipBinary() {
+  const candidates = [
+    sevenBin.path7za,
+    sevenBin.path7za.replace("app.asar", "app.asar.unpacked"),
+    path.join(process.resourcesPath || __dirname, "app", "node_modules", "7zip-bin", "win", "x64", "7za.exe"),
+  ];
+  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!found) throw new Error(`7-Zip binárka nebyla nalezena: ${candidates.join(" | ")}`);
+  return found;
 }
 
 function createShortcuts(dir, desktop) {
