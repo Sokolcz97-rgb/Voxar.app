@@ -929,11 +929,14 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
     updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
     try { progressWin && !progressWin.isDestroyed() && progressWin.close(); } catch {}
     log(canceled ? "Stahování zrušeno uživatelem." : `CHYBA: ${diagnostics.lastError}`);
+    // Uklidíme jakékoli částečné/dočasné soubory, ať další pokus začíná čistě.
+    purgeStaleTempFiles();
+    installing = false;
     if (!silent && !canceled) {
       await notifyUser({ parentWindow, type: "error",
         title: "Aktualizace selhala",
-        message: "Nepodařilo se zkontrolovat aktualizace",
-        detail: msg });
+        message: "Nepodařilo se stáhnout aktualizaci",
+        detail: msg + "\n\nDočasné soubory byly smazány. Zkuste to prosím znovu ručně." });
     }
     return { status: "error", error: String(err.message || err) };
   } finally {
