@@ -950,9 +950,19 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
  */
 async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
   if (!asset || !asset.installerUrl) return { status: "no-asset" };
+  if (installing) {
+    log(`${label}: pipeline už běží (busy), druhý pokus zamítnut.`);
+    return { status: "busy" };
+  }
+  installing = true;
   const platform = process.platform;
   const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
   const dest = path.join(os.tmpdir(), `StudioVoxario-${version || "asset"}${ext}`);
+  // Před každým pokusem uklidíme staré .exe / .part v tmpdir — jinak by mohl
+  // watchdog spustit korupt exe z předchozího neúspěšného pokusu.
+  purgeStaleTempFiles(dest);
+  try { fs.unlinkSync(dest); } catch {}
+  try { fs.unlinkSync(dest + ".part"); } catch {}
   log(`${label}: stahuji ${asset.installerUrl} → ${dest}`);
 
   const progressWin = new BrowserWindow({
@@ -974,12 +984,14 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
   </body></html>`;
   progressWin.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
 
+  let launching = false;
   try {
     updateProgress({
       phase: "download", label: `${label} — stahuji ${version || ""}`,
       received: 0, total: 0, pct: 0, speedBps: 0, etaSec: null,
       canceled: false, startedAt: new Date().toISOString(),
     });
+    // maxAttempts: 1 — žádné auto-retry (uživatel může kliknout znovu).
     const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
       updateProgress({
         phase: "download", label: `${label} — stahuji ${version || ""}`,
@@ -990,8 +1002,8 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
       progressWin.webContents
         .executeJavaScript(`document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`)
         .catch(() => {});
-    }), { phase: "download", label: `${label}: stažení` });
-    progressWin.close();
+    }), { phase: "download", label: `${label}: stažení`, maxAttempts: 1 });
+    try { progressWin.close(); } catch {}
     log(`${label}: staženo ${download.size} B, SHA-256=${download.sha256}`);
 
     const expectedHash = String(asset.sha256 || "").toLowerCase().trim();
@@ -1015,7 +1027,6 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
         log(`${label}: pin-mismatch (${pinCheck.reason}), instalátor zamítnut.`);
         return { status: "pin-mismatch", sig, pinCheck };
       }
-      // Rollback NEROTUJE piny — jen ověří.
     }
     log(`${label}: ověřeno (podpis + pin), spouštím instalátor.`);
     updateProgress({ phase: "installing", label: `${label} — instalace`, pct: 1 });
@@ -1029,6 +1040,7 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
         const child = spawn(dest, ["/S"], { detached: true, stdio: "ignore", windowsHide: true });
         child.unref();
       }
+      launching = true;
       new Notification({ title: "StudioVoxario", body: `${label}: tichá instalace probíhá, aplikace se restartuje.` }).show();
       showInstallingModal(parentWindow, version).catch(() => {});
       setTimeout(() => app.quit(), 2500);
@@ -1042,7 +1054,11 @@ async function installVerified({ asset, version, parentWindow = null, label = "i
     const canceled = /canceled/i.test(msg);
     updateProgress({ phase: canceled ? "canceled" : "error", canceled, label: canceled ? "Zrušeno" : "Chyba" });
     log(`${label}: ${canceled ? "zrušeno uživatelem" : "chyba — " + msg}`);
+    purgeStaleTempFiles();
     return { status: canceled ? "canceled" : "error", error: msg };
+  } finally {
+    // Pokud instalace nevyskočila do watchdogu, uvolni zámek pro další pokus.
+    if (!launching) installing = false;
   }
 }
 
