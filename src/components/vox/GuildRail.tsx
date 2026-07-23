@@ -20,7 +20,7 @@ interface Props {
 export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="w-[72px] h-full flex flex-col items-center gap-2 py-3 bg-[hsl(220_30%_2%)] border-r border-border/40">
+      <div className="w-[72px] h-full flex flex-col items-center gap-2 py-3 bg-transparent">
         {guilds.map((g) => {
           const active = g.id === activeId;
           const initials = g.name.slice(0, 2).toUpperCase();
