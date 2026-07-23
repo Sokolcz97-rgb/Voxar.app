@@ -618,7 +618,9 @@ function pickChannel(manifest, channel = "stable") {
 
 async function checkForUpdates({ silent = true, parentWindow = null, channel = "stable" } = {}) {
   if (checking) return { status: "busy" };
+  if (installing) return { status: "busy" };
   checking = true;
+
   diagnostics.status = "checking";
   diagnostics.lastError = null;
   diagnostics.currentVersion = app.getVersion();
