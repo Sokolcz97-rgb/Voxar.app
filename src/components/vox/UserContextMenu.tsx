@@ -96,7 +96,7 @@ export function UserContextMenu({
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="w-64 bg-[hsl(222_35%_7%)] border-border/60">
+        <ContextMenuContent className="holo-context-menu w-64 text-foreground">
           <ContextMenuLabel className="truncate">
             {member.nickname || member.display_name || member.user_id.slice(0, 8)}
           </ContextMenuLabel>

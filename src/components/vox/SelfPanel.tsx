@@ -35,11 +35,17 @@ export function SelfPanel({
       )}
       <div className="h-14 px-2 flex items-center gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0 px-1">
-          <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center text-xs font-semibold">
-            {avatarUrl
-              ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-              : displayName.slice(0, 2).toUpperCase()}
+          <div
+            className="rank-ring shrink-0"
+            style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
+          >
+            <div className="rank-inner w-8 h-8 flex items-center justify-center text-xs font-semibold">
+              {avatarUrl
+                ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                : displayName.slice(0, 2).toUpperCase()}
+            </div>
           </div>
+
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">{displayName}</div>
             <div className="text-[11px] text-muted-foreground truncate">{status}</div>
