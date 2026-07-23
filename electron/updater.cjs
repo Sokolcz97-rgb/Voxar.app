@@ -684,6 +684,12 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
       return { status: "postponed" };
     }
 
+    if (installing) {
+      log("Instalace už běží — druhý pokus zamítnut, aby nedošlo ke smyčce.");
+      return { status: "busy" };
+    }
+    installing = true;
+
     // Progress window
     const progressWin = new BrowserWindow({
       width: 420,
@@ -713,6 +719,11 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
 
     const ext = platform === "win32" ? ".exe" : platform === "darwin" ? ".dmg" : ".AppImage";
     const dest = path.join(os.tmpdir(), `StudioVoxario-${remote}${ext}`);
+    // Vyčisti staré/částečné soubory — bez toho se pipeline zacyklila,
+    // když předchozí pokus nechal `.part` nebo poškozený `.exe` v tmpdir.
+    purgeStaleTempFiles(dest);
+    try { fs.unlinkSync(dest); } catch {}
+    try { fs.unlinkSync(dest + ".part"); } catch {}
     log(`Stahování zahájeno → ${dest}`);
     diagnostics.status = "downloading";
     updateProgress({
@@ -721,6 +732,7 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
       canceled: false, startedAt: new Date().toISOString(),
     });
 
+    // Bez retry — jeden pokus, aby fail nezpůsobil smyčku.
     const download = await withRetry(() => downloadFile(asset.installerUrl, dest, (s) => {
       updateProgress({
         phase: "download", label: `Stahuji StudioVoxario ${remote}`,
@@ -733,7 +745,8 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
           `document.getElementById('f').style.width='${pct}%';document.getElementById('p').textContent='${pct} %';`
         )
         .catch(() => {});
-    }), { phase: "download", label: "Stažení instalátoru" });
+    }), { phase: "download", label: "Stažení instalátoru", maxAttempts: 1 });
+
 
     progressWin.close();
     diagnostics.downloadedSha256 = download.sha256;
