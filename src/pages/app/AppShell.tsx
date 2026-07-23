@@ -257,7 +257,7 @@ export default function AppShell() {
   return (
     <div className="hud-shell h-screen w-screen overflow-hidden text-foreground">
       <div className="relative z-10 h-full w-full flex gap-3 p-3">
-        <div className="holo-pod shrink-0 h-full">
+        <div className="holo-pod holo-float holo-float-slow shrink-0 h-full">
           <GuildRail
             guilds={guilds}
             activeId={activeGuildId}
@@ -269,7 +269,7 @@ export default function AppShell() {
 
         {activeGuild ? (
           <>
-            <div className="holo-pod flex flex-col h-full overflow-hidden">
+            <div className="holo-pod holo-float flex flex-col h-full overflow-hidden">
               <ChannelSidebar
                 guildName={activeGuild.name}
                 inviteCode={inviteCode}
@@ -284,7 +284,7 @@ export default function AppShell() {
               {selfPanel}
             </div>
 
-            <div className="holo-pod flex-1 flex min-w-0 overflow-hidden">
+            <div className="holo-pod holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden">
               {view === "user-settings" ? (
                 <AppUserSettings onClose={() => setView("main")} />
               ) : view === "server-settings" ? (
@@ -326,7 +326,7 @@ export default function AppShell() {
           </>
         ) : (
           <>
-            <div className="holo-pod w-60 flex flex-col h-full overflow-hidden">
+            <div className="holo-pod holo-float w-60 flex flex-col h-full overflow-hidden">
               <div className="h-12 px-4 flex items-center border-b border-primary/15">
                 <span className="font-display text-sm tracking-widest truncate text-primary text-glow">STUDIOVOXARIO</span>
               </div>
@@ -336,7 +336,7 @@ export default function AppShell() {
               {selfPanel}
             </div>
 
-            <div className="holo-pod flex-1 flex min-w-0 overflow-hidden">
+            <div className="holo-pod holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden">
               {view === "user-settings" ? (
                 <AppUserSettings onClose={() => setView("main")} />
               ) : (
