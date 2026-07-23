@@ -143,9 +143,13 @@ export function AIHelper() {
           aria-label={t("ai.open")}
         >
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/40 blur-xl group-hover:bg-primary/60 transition-all animate-pulse-glow" />
-            <div className="relative w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[var(--glow-soft)] hover:scale-110 transition-transform">
-              <Bot className="h-6 w-6" />
+            <div className="absolute inset-0 hex-frame bg-primary/40 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
+            <div className="absolute -inset-2 hex-ring opacity-70 group-hover:opacity-100 transition-opacity" />
+            <div className="relative hex-frame w-14 h-14 bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.6)] group-hover:scale-110 transition-transform">
+              <Bot className="h-6 w-6 text-glow" />
+            </div>
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-display tracking-widest uppercase text-primary/80 whitespace-nowrap">
+              NEON // AI
             </div>
           </div>
         </button>
