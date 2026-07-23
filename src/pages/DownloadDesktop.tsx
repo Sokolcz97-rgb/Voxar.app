@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import winInstaller from "@/assets/downloads/windows-installer.asset.json";
-import winAsset from "@/assets/downloads/windows.asset.json";
-import linuxAsset from "@/assets/downloads/linux.asset.json";
 
 const ACCESS_KEY = "sv_download_access_v1";
 
@@ -20,6 +15,24 @@ const features = [
   { icon: RefreshCw, title: "Auto-start s OS", desc: "Volitelně startuje s Windows/Linuxem." },
   { icon: Shield, title: "Vlastní okno", desc: "Bez URL řádku – vypadá a chová se jako Discord." },
 ];
+
+// CI (GitHub Actions) po každém buildu nahraje čerstvý installer a přepíše
+// `src/assets/downloads/windows-installer.asset.json`. Načítáme ho dynamicky,
+// aby stránka nespadla, když pointer zatím neexistuje (build ještě neproběhl).
+type AssetPointer = { url: string; original_filename?: string; size?: number };
+
+async function loadInstallerPointer(): Promise<AssetPointer | null> {
+  try {
+    // Vite glob – returns empty object until CI drops the pointer file.
+    const mods = import.meta.glob("@/assets/downloads/windows-installer.asset.json", { eager: true }) as Record<string, any>;
+    const first = Object.values(mods)[0];
+    const data = first?.default ?? first;
+    return data && data.url ? (data as AssetPointer) : null;
+  } catch {
+    return null;
+  }
+}
+
 
 function AccessGate({ onUnlock }: { onUnlock: () => void }) {
   const { toast } = useToast();
@@ -79,40 +92,30 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
 
 export default function Download() {
   const [unlocked, setUnlocked] = useState<boolean>(() => localStorage.getItem(ACCESS_KEY) === "1");
+  const [pointer, setPointer] = useState<AssetPointer | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (unlocked) localStorage.setItem(ACCESS_KEY, "1");
   }, [unlocked]);
 
+  useEffect(() => {
+    if (!unlocked) return;
+    let alive = true;
+    loadInstallerPointer().then((p) => {
+      if (!alive) return;
+      setPointer(p);
+      setLoading(false);
+    });
+    return () => { alive = false; };
+  }, [unlocked]);
+
   if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
 
-  const downloads = [
-    {
-      os: "Windows 10 / 11",
-      file: winInstaller.url,
-      filename: "StudioVoxarioSetup-0.0.9-alpha.exe",
-      note: "Vlastní HUD instalátor – bez klasického Windows okna, bez UAC, bez cmd.",
-      icon: "🪟",
-      size: "~90 MB · v0.0.9-alpha",
-      primary: true,
-    },
-    {
-      os: "Windows (přenosná ZIP)",
-      file: winAsset.url,
-      filename: "StudioVoxario-win32-x64.zip",
-      note: "Bez instalace – rozbalte a spusťte StudioVoxario.exe.",
-      icon: "📦",
-      size: "~106 MB · v0.0.9-alpha",
-    },
-    {
-      os: "Linux (x64)",
-      file: linuxAsset.url,
-      filename: "StudioVoxario-linux-x64-0.0.9-alpha.tar.gz",
-      note: "tar xzf StudioVoxario-linux-x64-0.0.9-alpha.tar.gz && ./StudioVoxario-linux-x64/StudioVoxario",
-      icon: "🐧",
-      size: "~109 MB · v0.0.9-alpha",
-    },
-  ];
+  const sizeMb = pointer?.size ? `${(pointer.size / 1_000_000).toFixed(1)} MB` : "";
+  const filename = pointer?.original_filename || "StudioVoxarioSetup.exe";
+  // Cache-bust: forces browser + CDN edge to bypass any stale link users had cached.
+  const href = pointer ? `${pointer.url}?v=${Date.now()}` : "#";
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,28 +130,47 @@ export default function Download() {
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             Nativní desktop klient s vlastním HUD instalátorem, notifikacemi, tray ikonou a auto-startem.
-            Zvolte si kanál aktualizací – Stable pro stabilní verze, Beta pro nejnovější Alpha buildy.
+            Instalátor sestavuje GitHub Actions CI – tlačítko níže vždy odkazuje na poslední čerstvý build.
           </p>
 
-          <Button
-            size="xl"
-            variant="hero"
-            className="btn-3d group relative overflow-hidden"
-            asChild
-          >
-            <a href={winInstaller.url} download={winInstaller.original_filename || "StudioVoxarioSetup.exe"}>
-              <DownloadIcon className="h-5 w-5 mr-2 group-hover:animate-bounce" />
-              <span className="bg-gradient-to-r from-foreground via-primary to-primary-glow bg-clip-text text-transparent">
-                Stáhnout pro Windows
-              </span>
-            </a>
-          </Button>
-          <p className="text-xs text-muted-foreground mt-3">
-            {winInstaller.original_filename || "StudioVoxarioSetup.exe"} · v0.0.9-alpha
-          </p>
+          {loading ? (
+            <Button size="xl" variant="hero" disabled className="btn-3d">
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Načítám instalátor…
+            </Button>
+          ) : pointer ? (
+            <>
+              <Button
+                size="xl"
+                variant="hero"
+                className="btn-3d group relative overflow-hidden"
+                asChild
+              >
+                <a href={href} download={filename}>
+                  <DownloadIcon className="h-5 w-5 mr-2 group-hover:animate-bounce" />
+                  <span className="bg-gradient-to-r from-foreground via-primary to-primary-glow bg-clip-text text-transparent">
+                    Stáhnout pro Windows
+                  </span>
+                </a>
+              </Button>
+              <p className="text-xs text-muted-foreground mt-3">
+                {filename}{sizeMb ? ` · ${sizeMb}` : ""}
+              </p>
+            </>
+          ) : (
+            <Card className="max-w-lg mx-auto p-6 border-primary/40">
+              <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
+              <h3 className="font-semibold mb-2">Instalátor se právě sestavuje</h3>
+              <p className="text-sm text-muted-foreground">
+                GitHub Actions CI aktuálně buildí čerstvou verzi. Zkuste stránku
+                znovu načíst za pár minut – jakmile CI dokončí upload, tlačítko
+                se automaticky objeví.
+              </p>
+            </Card>
+          )}
 
           <button
-            className="mt-4 text-xs text-muted-foreground underline hover:text-foreground"
+            className="mt-4 text-xs text-muted-foreground underline hover:text-foreground block mx-auto"
             onClick={() => {
               localStorage.removeItem(ACCESS_KEY);
               setUnlocked(false);
@@ -157,86 +179,6 @@ export default function Download() {
             Odhlásit přístupový kód
           </button>
         </div>
-
-        <Tabs defaultValue="stable" className="mb-10">
-          <TabsList className="grid grid-cols-2 w-full max-w-sm mx-auto mb-6">
-            <TabsTrigger value="stable" className="gap-2">
-              <Shield className="w-4 h-4" /> Stable
-            </TabsTrigger>
-            <TabsTrigger value="beta" className="gap-2">
-              <Sparkles className="w-4 h-4" /> Beta
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="stable">
-            <p className="text-center text-sm text-muted-foreground mb-6">
-              Ověřené vydané verze. Doporučeno pro každodenní použití.
-            </p>
-            <div className="grid md:grid-cols-3 gap-4">
-              {downloads.map((d) => (
-                <Card
-                  key={d.os}
-                  className={cn(
-                    "p-6 transition-all duration-300",
-                    d.primary
-                      ? "holo-pod border-primary/80 hover:border-primary hover:shadow-[0_0_50px_-12px_hsl(var(--primary)/0.6)]"
-                      : "hover:border-primary/50 hover:shadow-[0_0_30px_-10px_hsl(var(--primary)/0.3)]"
-                  )}
-                >
-                  <div className="flex items-start gap-4 relative">
-                    <div className={cn(
-                      "text-4xl shrink-0",
-                      d.primary && "drop-shadow-[0_0_12px_hsl(var(--primary)/0.8)]"
-                    )}>
-                      {d.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg mb-1">{d.os}</h3>
-                      <p className="text-sm text-muted-foreground mb-1">{d.note}</p>
-                      <p className="text-xs text-muted-foreground mb-4">{d.size}</p>
-                      <Button
-                        asChild
-                        className={cn(
-                          "w-full",
-                          d.primary && "btn-3d text-primary-foreground"
-                        )}
-                        variant={d.primary ? "hero" : "outline"}
-                      >
-                        <a href={d.file} download={d.filename}>
-                          <DownloadIcon className={cn("w-4 h-4 mr-2", d.primary && "animate-bounce")} />
-                          {d.primary ? "Stáhnout instalátor" : "Stáhnout"}
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="beta">
-            <Card className="p-8 text-center max-w-xl mx-auto">
-              <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Beta kanál</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Beta buildy stahujte stejným instalátorem jako Stable – po instalaci
-                přepnete kanál přímo v launcheru (<b>Diagnostika → Kanál</b>) nebo
-                v aplikaci (<b>Nastavení → Aktualizace</b>). Přepnutí vyžaduje
-                beta přístupový kód, který získáte od administrátora.
-              </p>
-              <div className="grid sm:grid-cols-3 gap-3 mt-2">
-                {downloads.map((d) => (
-                  <Button key={d.os} asChild variant="outline" size="sm">
-                    <a href={d.file} download={d.filename}>
-                      <DownloadIcon className="w-3 h-3 mr-1" /> {d.icon}
-                    </a>
-                  </Button>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
 
         <Card className="p-6 mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -261,11 +203,10 @@ export default function Download() {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-3">Instalace</h2>
           <ol className="space-y-2 text-sm text-muted-foreground list-decimal pl-5">
-            <li>Stáhněte archiv pro váš systém.</li>
-            <li>Rozbalte ho na libovolné místo (např. do <code className="bg-muted px-1 rounded">C:\Programy\StudioVoxario</code>).</li>
-            <li>Spusťte <code className="bg-muted px-1 rounded">StudioVoxario.exe</code> (Windows) nebo <code className="bg-muted px-1 rounded">./StudioVoxario</code> (Linux).</li>
-            <li>V okně aplikace se přihlaste stejně jako na webu.</li>
-            <li>Vše ostatní (tray, auto-start, notifikace) nastavíte v aplikaci přes tray → <b>Nastavení</b>.</li>
+            <li>Stáhněte instalátor tlačítkem výše.</li>
+            <li>Spusťte <code className="bg-muted px-1 rounded">StudioVoxarioSetup.exe</code> – projde vlastním HUD instalátorem bez klasického Windows okna.</li>
+            <li>Po instalaci se aplikace spustí sama a přihlásíte se stejně jako na webu.</li>
+            <li>Tray, auto-start a notifikace nastavíte v aplikaci přes tray → <b>Nastavení</b>.</li>
           </ol>
           <p className="mt-4 text-xs text-muted-foreground">
             Aplikace není podepsaná – při prvním spuštění může Windows zobrazit varování „Windows chránil váš počítač".
