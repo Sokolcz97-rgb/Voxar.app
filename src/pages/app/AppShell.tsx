@@ -258,7 +258,7 @@ export default function AppShell() {
   );
 
   return (
-    <div className="hud-shell h-screen w-screen overflow-hidden text-foreground">
+    <div className="hud-shell holo-scanline h-screen w-screen overflow-hidden text-foreground">
       <div className="relative z-10 h-full w-full flex gap-3 p-3">
         <div className="holo-pod holo-float holo-float-slow shrink-0 h-full">
           <GuildRail

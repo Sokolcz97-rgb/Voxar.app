@@ -493,6 +493,55 @@
     mix-blend-mode: overlay;
   }
 
+  /* Blueprint-wide scanline breathing overlay */
+  .holo-scanline { position: relative; }
+  .holo-scanline::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 3px,
+        hsl(184 100% 70% / 0.035) 3px 4px
+      );
+    mix-blend-mode: screen;
+    z-index: 60;
+  }
+  .holo-scanline::before {
+    content: "";
+    position: absolute; left: 0; right: 0; top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(184 100% 70% / 0.55), transparent);
+    box-shadow: 0 0 12px hsl(184 100% 60% / 0.7);
+    animation: holo-scan 6s linear infinite;
+    pointer-events: none;
+    z-index: 61;
+  }
+
+  /* Filter chip bar (MemberList) */
+  .holo-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    font-family: var(--font-display, inherit);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: hsl(184 100% 80% / 0.65);
+    border: 1px solid hsl(184 100% 54% / 0.25);
+    background: linear-gradient(180deg, hsl(184 100% 54% / 0.06), transparent);
+    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+  .holo-chip:hover { color: hsl(184 100% 85%); border-color: hsl(184 100% 54% / 0.55); }
+  .holo-chip.active {
+    color: hsl(184 100% 90%);
+    border-color: hsl(184 100% 54% / 0.8);
+    background: linear-gradient(180deg, hsl(184 100% 54% / 0.2), hsl(280 90% 60% / 0.08));
+    box-shadow: 0 0 12px hsl(184 100% 54% / 0.4), inset 0 0 8px hsl(184 100% 54% / 0.2);
+  }
+
   /* Animated cyan border sweep */
   .border-sweep {
     position: relative;

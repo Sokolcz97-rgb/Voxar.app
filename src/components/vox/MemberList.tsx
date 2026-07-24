@@ -156,10 +156,17 @@ export function MemberList({
   onMessage,
 }: MemberListProps) {
   const [profileMember, setProfileMember] = useState<VoxMember | null>(null);
+  const [filter, setFilter] = useState<"all" | "voice" | "admin">("all");
 
-  const inVoiceList = members.filter((m) => voiceState[m.user_id]);
+  const filtered = members.filter((m) => {
+    if (filter === "voice") return !!voiceState[m.user_id];
+    if (filter === "admin") return m.role === "owner" || m.role === "mod";
+    return true;
+  });
+
+  const inVoiceList = filtered.filter((m) => voiceState[m.user_id]);
   const voiceIds = new Set(inVoiceList.map((m) => m.user_id));
-  const rest = members.filter((m) => !voiceIds.has(m.user_id));
+  const rest = filtered.filter((m) => !voiceIds.has(m.user_id));
 
   const offline = rest.filter((m) => (m.status || "offline") === "offline");
   const online = rest.filter((m) => (m.status || "offline") !== "offline");
@@ -207,6 +214,12 @@ export function MemberList({
   };
 
   const total = members.length;
+  const filters: Array<{ id: "all" | "voice" | "admin"; label: string }> = [
+    { id: "all", label: "All" },
+    { id: "voice", label: "Voice" },
+    { id: "admin", label: "Admin" },
+  ];
+
   return (
     <>
       <aside className="w-60 h-full bg-transparent overflow-y-auto">
@@ -220,6 +233,18 @@ export function MemberList({
           </div>
           <div className="mt-1 text-[10px] font-display uppercase tracking-[0.22em] text-muted-foreground">
             Členové sektoru
+          </div>
+          {/* Filter chip bar */}
+          <div className="mt-2 flex items-center gap-1.5">
+            {filters.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={cn("holo-chip", filter === f.id && "active")}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
