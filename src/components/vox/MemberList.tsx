@@ -234,6 +234,21 @@ export function MemberList({
           <div className="mt-1 text-[10px] font-display uppercase tracking-[0.22em] text-muted-foreground">
             Členové sektoru
           </div>
+          {/* Rank ring legend */}
+          {orderedHoist.length > 0 && (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] font-display uppercase tracking-[0.28em] text-primary/50">// RANK</span>
+              {orderedHoist.slice(0, 6).map((g) => (
+                <span key={g.role.id} className="flex items-center gap-1" title={g.role.name}>
+                  <span
+                    className="w-2 h-2 rounded-full shadow-[0_0_6px_currentColor]"
+                    style={{ background: g.role.color || "hsl(var(--primary))", color: g.role.color || "hsl(var(--primary))" }}
+                  />
+                  <span className="text-[9px] font-display uppercase tracking-[0.18em] text-muted-foreground">{g.role.name}</span>
+                </span>
+              ))}
+            </div>
+          )}
           {/* Filter chip bar */}
           <div className="mt-2 flex items-center gap-1.5">
             {filters.map((f) => (
