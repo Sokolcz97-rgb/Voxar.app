@@ -182,27 +182,37 @@ export function AppUserSettings({ onClose }: Props) {
   ];
 
   return (
-    <div className="flex-1 flex bg-[hsl(220_30%_4%)] overflow-hidden">
-      <aside className="w-64 shrink-0 border-r border-border/40 bg-[hsl(222_35%_5%)] p-4 overflow-y-auto">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 mb-2">Uživatelská nastavení</div>
+    <div className="flex-1 flex bg-[hsl(220_30%_4%)] overflow-hidden holo-scanline">
+      <aside className="w-64 shrink-0 border-r border-primary/15 bg-[hsl(222_35%_5%/0.85)] p-4 overflow-y-auto backdrop-blur-sm">
+        <div className="px-2 mb-3">
+          <div className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 text-glow">
+            // Entity
+          </div>
+          <div className="mt-1 text-sm font-display uppercase tracking-[0.14em] text-foreground truncate">
+            Uživatelská nastavení
+          </div>
+          <div className="mt-2 h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent" />
+        </div>
         <nav className="space-y-0.5">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
-                tab === t.key ? "bg-primary/15 text-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                "w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] font-display uppercase tracking-[0.16em] transition-colors",
+                tab === t.key
+                  ? "bg-primary/15 text-foreground border-l-2 border-primary shadow-[inset_0_0_16px_hsl(var(--primary)/0.2)]"
+                  : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border-l-2 border-transparent"
               )}
             >
               <t.icon className="w-4 h-4" />
               {t.label}
             </button>
           ))}
-          <div className="h-px bg-border/40 my-2" />
+          <div className="h-px bg-primary/15 my-2" />
           <button
             onClick={() => signOut()}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-destructive hover:bg-destructive/10"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] font-display uppercase tracking-[0.16em] text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4" />
             Odhlásit se
@@ -212,9 +222,16 @@ export function AppUserSettings({ onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">{tabs.find(t => t.key === tab)?.label}</h1>
-            <Button variant="ghost" size="icon" onClick={onClose} title="Zavřít">
+          <div className="flex items-center justify-between mb-6 pb-3 border-b border-primary/15">
+            <div>
+              <div className="text-[10px] font-display uppercase tracking-[0.32em] text-primary/60">
+                // Sekce
+              </div>
+              <h1 className="mt-0.5 text-2xl font-display font-bold uppercase tracking-[0.14em] text-glow">
+                {tabs.find(t => t.key === tab)?.label}
+              </h1>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} title="Zavřít" className="text-primary/70 hover:text-primary hover:bg-primary/10">
               <X className="w-5 h-5" />
             </Button>
           </div>
