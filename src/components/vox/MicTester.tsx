@@ -98,47 +98,56 @@ export function MicTester({ deviceId, noiseSuppression = true, echoCancellation 
   const bars = Array.from({ length: 20 });
 
   return (
-    <div className="rounded-lg border border-border/40 bg-secondary/30 p-4 space-y-3">
+    <div className="holo-context-menu relative p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium">Test mikrofonu</div>
+        <div className="font-display text-[11px] tracking-[0.32em] uppercase text-primary/80">
+          // MIC · CALIBRATION
+        </div>
         <div className="flex gap-2">
           {active && (
-            <Button size="sm" variant="secondary" onClick={togglePlayback} className="gap-1.5">
+            <Button size="sm" variant="secondary" onClick={togglePlayback} className="gap-1.5 font-display uppercase tracking-widest text-[10px]">
               {playback ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-              {playback ? "Ztlumit poslech" : "Poslech"}
+              {playback ? "MUTE MONITOR" : "MONITOR"}
             </Button>
           )}
-          <Button size="sm" onClick={active ? stop : start} variant={active ? "destructive" : "default"} className="gap-1.5">
+          <Button size="sm" onClick={active ? stop : start} variant={active ? "destructive" : "default"} className="gap-1.5 font-display uppercase tracking-widest text-[10px]">
             {active ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-            {active ? "Zastavit" : "Spustit test"}
+            {active ? "HALT" : "ENGAGE"}
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 h-6">
+      <div className="flex items-center gap-[3px] h-7 px-2 py-1 rounded-sm border border-primary/20 bg-background/40">
         {bars.map((_, i) => {
           const on = active && pct >= (i + 1) * 5;
           return (
             <div
               key={i}
               className={cn(
-                "flex-1 h-full rounded-sm transition-colors",
+                "flex-1 h-full rounded-[1px] transition-all duration-75",
                 on
-                  ? i < 12 ? "bg-emerald-400" : i < 16 ? "bg-yellow-400" : "bg-destructive"
-                  : "bg-background/60"
+                  ? i < 12
+                    ? "bg-emerald-400 shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
+                    : i < 16
+                      ? "bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.7)]"
+                      : "bg-destructive shadow-[0_0_6px_hsl(var(--destructive)/0.8)]"
+                  : "bg-primary/5"
               )}
             />
           );
         })}
+        <span className="ml-2 font-mono text-[10px] text-primary/70 tabular-nums w-10 text-right">
+          {String(pct).padStart(3, "0")}%
+        </span>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[11px] text-muted-foreground font-mono">
         {active
-          ? "Mluvte do mikrofonu – měl by se rozsvítit ukazatel. Pomocí tlačítka Poslech si přehrajete vlastní hlas."
-          : "Klikněte na Spustit test a povolte přístup k mikrofonu."}
+          ? "> SIGNAL LIVE // mluvte do mikrofonu, MONITOR zapne lokální odposlech."
+          : "> STANDBY // stiskněte ENGAGE pro test vstupu."}
       </p>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-[11px] text-destructive font-mono">! ERR // {error}</p>}
       <audio ref={audioElRef} hidden />
     </div>
   );
