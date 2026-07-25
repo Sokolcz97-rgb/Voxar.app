@@ -47,22 +47,26 @@ export function DesktopUpdateFab() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[70] flex items-center gap-2 rounded-full border border-primary/40 bg-background/95 backdrop-blur px-3 py-2 shadow-lg">
+    <div className="fixed bottom-4 right-4 z-[70] holo-context-menu px-4 py-2.5 flex items-center gap-3 shadow-[0_0_24px_hsl(var(--primary)/0.35)] group">
+      <span className="relative flex w-2 h-2">
+        <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" />
+        <span className="relative w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+      </span>
       <button
         onClick={install}
         disabled={busy}
-        className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 disabled:opacity-60"
+        className="flex items-center gap-2 font-display uppercase tracking-[0.28em] text-[10px] text-primary hover:text-primary/80 disabled:opacity-60"
         title={info.notes || `Nová verze ${info.remote}`}
       >
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 animate-bounce" />}
-        <span>Aktualizace {info.remote}</span>
+        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+        <span>// PATCH · v{info.remote}</span>
       </button>
       <button
         onClick={() => setDismissed(true)}
-        className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary"
+        className="p-1 rounded-sm text-primary/50 hover:text-primary hover:bg-primary/10 border border-primary/20"
         title="Zavřít"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-3 h-3" />
       </button>
     </div>
   );
