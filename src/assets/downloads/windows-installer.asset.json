@@ -2,11 +2,11 @@
   "version": 1,
   "url": "https://github.com/Sokolcz97-rgb/apex-zone-central/releases/download/desktop-latest/StudioVoxarioSetup-0.0.9-alpha.exe",
   "original_filename": "StudioVoxarioSetup-0.0.9-alpha.exe",
-  "size": 234606220,
-  "sha256": "720495cefc32721423c050f4e91a72a062663bbc6a0a4585ef9fc3e89b4a5534",
+  "size": 234605117,
+  "sha256": "e549afd78002e36faa215c6d22f60e466c84f2d30721e514507a69d0a19e8d3c",
   "content_type": "application/x-msdownload",
   "source": "github-release",
   "tag": "desktop-latest",
-  "commit": "e129fa51322846ce2be97e490a8c916764033191",
-  "updated_at": "2026-07-24T09:13:38.8252002Z"
+  "commit": "a8ee46a6de6d46770524a781342dec9693161b2a",
+  "updated_at": "2026-07-25T01:39:49.4440842Z"
 }
