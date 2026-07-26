@@ -241,10 +241,10 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4">
       {/* Seznam rolí */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">Role serveru</span>
+        <div className="flex items-center justify-between mb-1.5 border-b border-primary/20 pb-1.5">
+          <span className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 text-glow">// RANK · POOL</span>
           {canManage && (
-            <Button size="sm" variant="ghost" onClick={createRole} disabled={creating} className="h-7 px-2">
+            <Button size="sm" variant="ghost" onClick={createRole} disabled={creating} className="h-7 px-2 hover:text-primary hover:bg-primary/10">
               <Plus className="w-4 h-4" />
             </Button>
           )}
