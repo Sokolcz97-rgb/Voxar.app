@@ -1,7 +1,6 @@
 import { useState, ReactNode } from "react";
-import { Lock } from "lucide-react";
+import { Lock, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,10 +23,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     setBusy(true);
     const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
     setBusy(false);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
-    }
+    if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
     if (data === true) {
       localStorage.setItem(ACCESS_KEY, "1");
       toast({ title: "Přístup povolen" });
@@ -38,30 +34,48 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="p-8 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 mb-4">
-            <Lock className="w-8 h-8 text-primary" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[hsl(220_35%_4%)] holo-scanline relative overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.06)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.06)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+      <div className="relative w-full max-w-md">
+        <div className="holo-context-menu p-8">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 relative">
+              <div
+                className="absolute inset-0 border border-primary/60 shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
+                style={{ clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)" }}
+              />
+              <Lock className="w-7 h-7 text-primary relative" />
+            </div>
+            <div className="text-[10px] font-display uppercase tracking-[0.32em] text-primary/70 mb-1">// SECURED · NODE</div>
+            <h1 className="text-2xl font-display uppercase tracking-[0.16em] text-glow mb-2">Chráněná aplikace</h1>
+            <p className="text-xs text-muted-foreground">
+              Pro přístup do StudioVoxario aplikace zadejte přístupový nebo promo kód.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Chráněná aplikace</h1>
-          <p className="text-sm text-muted-foreground">
-            Pro přístup do StudioVoxario aplikace zadejte přístupový nebo promo kód.
-          </p>
+          <form onSubmit={submit} className="space-y-3">
+            <div className="relative">
+              <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/60" />
+              <Input
+                placeholder="XXXX-XXXX-XXXX"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                autoFocus
+                className="text-center font-mono tracking-[0.28em] uppercase pl-9 bg-background/40 border-primary/30 focus-visible:ring-primary/40"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full font-display uppercase tracking-[0.22em] bg-primary/15 text-primary border border-primary/50 hover:bg-primary/25 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
+              disabled={busy}
+            >
+              {busy ? "// OVĚŘUJI…" : "// ODEMKNOUT"}
+            </Button>
+          </form>
+          <div className="mt-5 text-center text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+            AUTH · CHANNEL · STUDIOVOXARIO
+          </div>
         </div>
-        <form onSubmit={submit} className="space-y-3">
-          <Input
-            placeholder="Zadejte kód"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            autoFocus
-            className="text-center font-mono tracking-wider"
-          />
-          <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? "Ověřuji…" : "Odemknout"}
-          </Button>
-        </form>
-      </Card>
+      </div>
     </div>
   );
 }
