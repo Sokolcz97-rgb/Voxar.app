@@ -206,23 +206,44 @@ export function UserContextMenu({
       </ContextMenu>
 
       <Dialog open={banOpen} onOpenChange={setBanOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Zabanovat {member.nickname || member.display_name}?</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-xs text-muted-foreground">Důvod (volitelné)</label>
+        <DialogContent className="max-w-md holo-context-menu border-0 p-0 overflow-hidden">
+          <div className="px-5 pt-5 pb-3 border-b border-destructive/30 bg-gradient-to-r from-destructive/15 to-transparent">
+            <div className="text-[10px] font-display uppercase tracking-widest text-destructive/80 mb-1">
+              // PURGE · ENTITY
+            </div>
+            <DialogHeader className="space-y-0">
+              <DialogTitle className="font-display uppercase tracking-wider text-base text-destructive text-glow">
+                Ban {member.nickname || member.display_name}?
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <div className="px-5 py-4 space-y-2">
+            <label className="text-[10px] font-display uppercase tracking-widest text-primary/70">
+              // REASON · LOG
+            </label>
             <Textarea
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
               placeholder="Např. porušování pravidel…"
               rows={3}
+              className="bg-background/60 border-primary/25 font-mono text-sm focus-visible:ring-destructive/40"
             />
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setBanOpen(false)}>Zrušit</Button>
-            <Button variant="destructive" onClick={doBan} disabled={busy}>
-              <Ban className="w-4 h-4 mr-1.5" /> Zabanovat
+          <DialogFooter className="px-5 pb-5">
+            <Button
+              variant="ghost"
+              onClick={() => setBanOpen(false)}
+              className="font-display uppercase tracking-widest text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={doBan}
+              disabled={busy}
+              className="font-display uppercase tracking-widest text-xs"
+            >
+              <Ban className="w-4 h-4 mr-1.5" /> Execute ban
             </Button>
           </DialogFooter>
         </DialogContent>
