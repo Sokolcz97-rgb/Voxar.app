@@ -82,17 +82,26 @@ export function ChannelContextMenu({ channel, canManage, onCreateChannel, onOpen
       </ContextMenu>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-sm holo-context-menu">
-          <DialogHeader>
-            <DialogTitle>Smazat node „{channel.name}"?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+        <DialogContent className="max-w-sm holo-context-menu border-0 p-0 overflow-hidden">
+          <div className="px-5 pt-5 pb-3 border-b border-destructive/30 bg-gradient-to-r from-destructive/15 to-transparent">
+            <div className="text-[10px] font-display uppercase tracking-widest text-destructive/80 mb-1">
+              // PURGE · NODE
+            </div>
+            <DialogHeader className="space-y-0">
+              <DialogTitle className="font-display uppercase tracking-wider text-base text-destructive text-glow">
+                Delete „{channel.name}"
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <p className="px-5 py-4 text-sm text-muted-foreground">
             Tato akce je nevratná. Všechny zprávy v kanálu zůstanou v archivu, ale kanál zmizí ze sektoru.
           </p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Zrušit</Button>
-            <Button variant="destructive" onClick={remove} disabled={busy}>
-              <Trash2 className="w-4 h-4 mr-1.5" /> Smazat
+          <DialogFooter className="px-5 pb-5">
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)} className="font-display uppercase tracking-widest text-xs">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={remove} disabled={busy} className="font-display uppercase tracking-widest text-xs">
+              <Trash2 className="w-4 h-4 mr-1.5" /> Execute purge
             </Button>
           </DialogFooter>
         </DialogContent>
