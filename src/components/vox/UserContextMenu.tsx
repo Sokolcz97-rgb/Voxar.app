@@ -96,33 +96,34 @@ export function UserContextMenu({
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="holo-context-menu w-64 text-foreground">
-          <ContextMenuLabel className="truncate">
+        <ContextMenuContent className="holo-context-menu w-64 text-foreground font-display tracking-wider uppercase text-xs">
+          <ContextMenuLabel className="truncate text-primary text-glow flex items-center gap-2">
+            <User className="w-3.5 h-3.5" />
             {member.nickname || member.display_name || member.user_id.slice(0, 8)}
           </ContextMenuLabel>
           <ContextMenuSeparator />
 
           {!isSelf && (
             <ContextMenuItem onSelect={() => onMessage?.(member)}>
-              <MessageCircle className="w-4 h-4 mr-2" /> Poslat zprávu
+              <MessageCircle className="w-4 h-4 mr-2 text-primary" /> Send packet
             </ContextMenuItem>
           )}
           <ContextMenuItem onSelect={() => onViewProfile(member)}>
-            <User className="w-4 h-4 mr-2" /> Zobrazit profil
+            <User className="w-4 h-4 mr-2 text-primary" /> View entity
           </ContextMenuItem>
 
           {!isSelf && (
             <>
               <ContextMenuSeparator />
-              <ContextMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Lokální zvuk
+              <ContextMenuLabel className="text-[10px] uppercase tracking-widest text-primary/70 font-display">
+                // AUDIO · LOCAL
               </ContextMenuLabel>
-              <div className="px-2 py-1.5">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Volume2 className="w-3.5 h-3.5" /> Hlasitost
+              <div className="px-2 py-1.5 normal-case tracking-normal">
+                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                  <span className="flex items-center gap-1.5 text-muted-foreground font-display uppercase tracking-widest">
+                    <Volume2 className="w-3.5 h-3.5" /> Gain
                   </span>
-                  <span className="font-mono">{vol}%</span>
+                  <span className="font-mono text-primary">{vol}%</span>
                 </div>
                 <Slider
                   min={0} max={200} step={5}
@@ -134,7 +135,7 @@ export function UserContextMenu({
                 checked={locallyMuted}
                 onCheckedChange={(c) => localAudio.setMuted(member.user_id, !!c)}
               >
-                <VolumeX className="w-4 h-4 mr-2" /> Ztlumit lokálně
+                <VolumeX className="w-4 h-4 mr-2 text-primary" /> Mute local
               </ContextMenuCheckboxItem>
             </>
           )}
@@ -142,21 +143,21 @@ export function UserContextMenu({
           {canModerate && !isSelf && (
             <>
               <ContextMenuSeparator />
-              <ContextMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal flex items-center gap-1">
-                <Shield className="w-3 h-3" /> Moderace
+              <ContextMenuLabel className="text-[10px] uppercase tracking-widest text-primary/70 font-display flex items-center gap-1">
+                <Shield className="w-3 h-3" /> // MOD · TOOLS
               </ContextMenuLabel>
 
               <ContextMenuSub>
                 <ContextMenuSubTrigger>
-                  <MicOff className="w-4 h-4 mr-2" /> Umlčet na serveru
+                  <MicOff className="w-4 h-4 mr-2 text-primary" /> Server mute
                 </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                  <ContextMenuItem onSelect={() => doServerMute(5)}>5 minut</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => doServerMute(30)}>30 minut</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => doServerMute(60)}>1 hodina</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => doServerMute(60 * 24)}>1 den</ContextMenuItem>
+                <ContextMenuSubContent className="holo-context-menu font-display uppercase tracking-wider text-xs">
+                  <ContextMenuItem onSelect={() => doServerMute(5)}>5 min</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => doServerMute(30)}>30 min</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => doServerMute(60)}>1 hr</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => doServerMute(60 * 24)}>1 day</ContextMenuItem>
                   <ContextMenuItem onSelect={() => doServerMute(0)}>
-                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Zrušit umlčení
+                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Purge mute
                   </ContextMenuItem>
                 </ContextMenuSubContent>
               </ContextMenuSub>
@@ -164,16 +165,19 @@ export function UserContextMenu({
               {assignableRoles.length > 0 && (
                 <ContextMenuSub>
                   <ContextMenuSubTrigger>
-                    <Tag className="w-4 h-4 mr-2" /> Přiřadit role
+                    <Tag className="w-4 h-4 mr-2 text-primary" /> Assign rank
                   </ContextMenuSubTrigger>
-                  <ContextMenuSubContent className="max-h-80 overflow-y-auto">
+                  <ContextMenuSubContent className="holo-context-menu max-h-80 overflow-y-auto font-display uppercase tracking-wider text-xs">
                     {assignableRoles.map((r) => (
                       <ContextMenuCheckboxItem
                         key={r.id}
                         checked={assignedIds.has(r.id)}
                         onCheckedChange={(c) => toggleRole(r, !!c)}
                       >
-                        <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ background: r.color }} />
+                        <span
+                          className="w-2.5 h-2.5 rounded-full mr-2"
+                          style={{ background: r.color, boxShadow: `0 0 8px ${r.color}` }}
+                        />
                         {r.name}
                       </ContextMenuCheckboxItem>
                     ))}
@@ -181,19 +185,20 @@ export function UserContextMenu({
                 </ContextMenuSub>
               )}
 
+              <ContextMenuSeparator />
               <ContextMenuItem
                 className="text-destructive focus:text-destructive"
                 onSelect={doKick}
                 disabled={busy || member.role === "owner"}
               >
-                <UserX className="w-4 h-4 mr-2" /> Vyhodit ze serveru
+                <UserX className="w-4 h-4 mr-2" /> Eject entity
               </ContextMenuItem>
               <ContextMenuItem
                 className="text-destructive focus:text-destructive"
                 onSelect={() => setBanOpen(true)}
                 disabled={busy || member.role === "owner"}
               >
-                <Ban className="w-4 h-4 mr-2" /> Zabanovat…
+                <Ban className="w-4 h-4 mr-2" /> Purge // ban…
               </ContextMenuItem>
             </>
           )}
