@@ -380,6 +380,9 @@ export default function AppShell() {
             </>
           )}
         </div>
+      </div>
+
+
 
 
       <CreateGuildDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }} />
