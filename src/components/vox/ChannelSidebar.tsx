@@ -153,16 +153,26 @@ export function ChannelSidebar({
                       </button>
                     </ChannelContextMenu>
                     {c.type === "voice" && vp.length > 0 && (
-                      <ul className="ml-6 mt-0.5 mb-1 space-y-0.5">
+                      <ul className="ml-4 mt-1 mb-1.5 space-y-0.5 border-l border-primary/25 pl-3">
                         {vp.map((p) => (
-                          <li key={p.user_id} className="text-xs text-muted-foreground flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-primary/5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_hsl(160_84%_45%)]" />
+                          <li
+                            key={p.user_id}
+                            className="relative text-[11px] font-display tracking-wide text-muted-foreground flex items-center gap-2 px-1.5 py-0.5 hover:text-foreground hover:bg-primary/5 transition-colors"
+                          >
+                            <span className="absolute -left-3 top-1/2 w-2.5 h-px bg-primary/25" />
+                            <span className={cn(
+                              "w-1.5 h-1.5 rotate-45 shrink-0",
+                              p.is_muted
+                                ? "bg-destructive shadow-[0_0_6px_hsl(var(--destructive))]"
+                                : "bg-emerald-400 shadow-[0_0_6px_hsl(160_84%_45%)]"
+                            )} />
                             <span className="truncate">{p.nickname || p.user_id.slice(0,6)}</span>
-                            {p.is_muted && <span className="ml-auto opacity-60">🎙️✕</span>}
+                            {p.is_muted && <span className="ml-auto text-[9px] tracking-[0.2em] text-destructive/80">MUTE</span>}
                           </li>
                         ))}
                       </ul>
                     )}
+
                   </div>
                 );
               })}
