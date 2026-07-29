@@ -95,13 +95,14 @@ function UserListItem({
       <li
         onClick={handleLeftClick}
         className={cn(
-          "group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer",
-          "transition-all duration-150",
-          "hover:bg-secondary/60 focus-within:bg-secondary/60",
-          speaking && "bg-emerald-500/5",
-          (m.status || "offline") === "offline" && !inVoice && "opacity-50",
+          "group relative flex items-center gap-2.5 pl-3 pr-2 py-1.5 cursor-pointer",
+          "border-l-2 border-transparent transition-all duration-150",
+          "hover:border-primary/70 hover:bg-primary/[0.07] hover:shadow-[inset_0_0_18px_hsl(var(--primary)/0.12)]",
+          speaking && "border-emerald-400/80 bg-emerald-500/[0.07]",
+          (m.status || "offline") === "offline" && !inVoice && "opacity-45",
         )}
       >
+
         <div className="relative shrink-0">
           <div
             className={cn("rank-ring", speaking && "speaking-ring")}
@@ -124,13 +125,14 @@ function UserListItem({
 
         <div className="flex-1 min-w-0 flex items-center gap-1.5">
           <span
-            className="truncate text-sm font-medium"
+            className="truncate text-[13px] font-display tracking-wide"
             style={top ? { color: top.color } : undefined}
           >
             {name}
           </span>
           {top && <RoleBadge role={top} />}
         </div>
+
 
         {/* Voice indicators */}
         {inVoice && voice?.is_deafened && <HeadphoneOff className="w-3.5 h-3.5 text-destructive shrink-0" />}
@@ -202,9 +204,13 @@ export function MemberList({
     if (!list.length) return null;
     return (
       <div key={key}>
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-1 mb-1.5 flex items-center gap-1.5">
-          {dotClass && <span className={cn("w-2 h-2 rounded-full", dotClass)} />}
-          {title} — {list.length}
+        <div className="mb-2 flex items-center gap-2">
+          {dotClass && <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_6px_currentColor]", dotClass)} />}
+          <span className="text-[9px] font-display uppercase tracking-[0.28em] text-primary/70 text-glow whitespace-nowrap">
+            // {title}
+          </span>
+          <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
+          <span className="text-[9px] font-mono text-primary/50">{String(list.length).padStart(2, "0")}</span>
         </div>
         <ul className="space-y-0.5">
           {list.map((m) => <UserListItem key={m.user_id} {...itemProps(m)} />)}
@@ -212,6 +218,7 @@ export function MemberList({
       </div>
     );
   };
+
 
   const total = members.length;
   const filters: Array<{ id: "all" | "voice" | "admin"; label: string }> = [
