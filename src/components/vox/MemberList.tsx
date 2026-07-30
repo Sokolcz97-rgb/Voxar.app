@@ -236,8 +236,18 @@ export function MemberList({
             <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
               Entity pod
             </div>
-            <span className="text-[10px] font-mono text-primary/60">{total} / ∞</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-primary/60">{total} / ∞</span>
+              <button
+                onClick={() => setListOpen((v) => !v)}
+                className="text-primary/70 hover:text-primary transition-colors"
+                title={listOpen ? "Sbalit" : "Rozbalit"}
+              >
+                <ChevronDown className={cn("w-4 h-4 transition-transform", !listOpen && "-rotate-90")} />
+              </button>
+            </div>
           </div>
+
           <div className="mt-1 text-[10px] font-display uppercase tracking-[0.22em] text-muted-foreground">
             Členové sektoru
           </div>
