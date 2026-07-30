@@ -22,9 +22,9 @@ interface Props {
 export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="w-full h-full flex items-center gap-4 px-5 py-2.5">
-        {/* STUDIO // VOXARIO monogram badge */}
-        <div className="flex items-center gap-2.5 shrink-0">
+      <div className="w-full flex flex-wrap items-center gap-4 px-2 py-1.5">
+        {/* STUDIO // VOXARIO monogram badge — jediná část s podkladem */}
+        <div className="holo-pod flex items-center gap-2.5 shrink-0 px-3 py-1.5">
           <div className="w-11 h-11 hex-frame bg-gradient-to-br from-primary/30 to-accent/10 border border-primary/40 flex items-center justify-center shadow-[0_0_18px_hsl(var(--primary)/0.45)]">
             <span className="font-display font-black text-[13px] tracking-widest text-primary text-glow">SV</span>
           </div>
@@ -33,9 +33,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
           </div>
         </div>
 
-        <div className="h-8 w-px bg-primary/40 shadow-[0_0_6px_hsl(var(--primary))] shrink-0" />
-
-        <div className="flex-1 min-w-0 flex items-center justify-center gap-3 overflow-x-auto">
+        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2.5">
           {guilds.map((g) => {
             const active = g.id === activeId;
             const initials = g.name.slice(0, 2).toUpperCase();
@@ -44,15 +42,14 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onSelect(g.id)}
-                    className="relative group shrink-0"
+                    className={cn(
+                      "relative group shrink-0 flex items-center gap-2.5 pr-3 rounded-md transition-all",
+                      active ? "bg-primary/10" : "hover:bg-primary/5"
+                    )}
                     aria-label={g.name}
                     style={{ ["--rank-color" as any]: active ? "hsl(184 100% 54%)" : "hsl(184 100% 54% / 0.35)" }}
                   >
-                    <span className={cn(
-                      "absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 rounded-full bg-primary transition-all shadow-[0_0_10px_hsl(var(--primary))]",
-                      active ? "w-9" : "w-0 group-hover:w-4"
-                    )} />
-                    <div className={cn("hex-ring w-12 h-12 transition-all", active && "speaking-ring")}>
+                    <div className={cn("hex-ring w-12 h-12 transition-all shrink-0", active && "speaking-ring")}>
                       <div className={cn(
                         "hex-frame w-full h-full flex items-center justify-center text-sm font-display font-bold overflow-hidden",
                         active
@@ -64,6 +61,12 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                           : initials}
                       </div>
                     </div>
+                    <span className={cn(
+                      "hidden md:block max-w-[10rem] xl:max-w-[16rem] truncate text-left font-display text-[11px] tracking-[0.18em] uppercase transition-colors",
+                      active ? "text-primary text-glow" : "text-primary/60 group-hover:text-primary/90"
+                    )}>
+                      {g.name}
+                    </span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="holo-context-menu font-display tracking-wider text-xs uppercase">
@@ -74,7 +77,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
           })}
         </div>
 
-        <div className="h-8 w-px bg-primary/40 shadow-[0_0_6px_hsl(var(--primary))] shrink-0" />
+
 
         <div className="flex items-center gap-3 shrink-0">
           <Tooltip>
