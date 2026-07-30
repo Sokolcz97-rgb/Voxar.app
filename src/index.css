@@ -1041,3 +1041,28 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 }
 /* Disable text selection callout on tap for nav items */
 nav a, nav button { -webkit-tap-highlight-color: transparent; }
+
+@layer utilities {
+  /* HUD composer: detached angled transmit bar + separate send pod */
+  .tx-bar {
+    clip-path: polygon(
+      18px 0, 100% 0, 100% calc(100% - 18px),
+      calc(100% - 18px) 100%, 0 100%, 0 18px
+    );
+    background: linear-gradient(120deg, hsl(220 60% 8% / 0.85), hsl(230 70% 5% / 0.9));
+    border: 1px solid hsl(184 100% 54% / 0.35);
+    transition: box-shadow .25s ease, border-color .25s ease;
+  }
+  .tx-bar:focus-within {
+    border-color: hsl(184 100% 54% / 0.75);
+    box-shadow: 0 0 26px -4px hsl(184 100% 54% / 0.45), inset 0 1px 0 hsl(184 100% 70% / 0.18);
+  }
+  .tx-send {
+    clip-path: polygon(0 0, 100% 22%, 100% 78%, 0 100%);
+    background: linear-gradient(120deg, hsl(184 100% 54% / 0.22), hsl(280 90% 60% / 0.16));
+    border: 0;
+    transition: filter .2s ease, transform .2s ease;
+  }
+  .tx-send:hover:not(:disabled) { filter: brightness(1.35); transform: translateX(2px); }
+  .tx-send:disabled { opacity: .35; }
+}
