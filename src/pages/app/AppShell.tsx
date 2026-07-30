@@ -260,9 +260,9 @@ export default function AppShell() {
   return (
     <div className="hud-shell holo-scanline h-screen w-screen overflow-hidden text-foreground">
       <div className="relative z-10 h-full w-full flex flex-col gap-3 p-3">
-        {/* Blueprint: horizontal sector dock, centered at the top */}
+        {/* Blueprint: horizontal sector dock — bez pozadí, roztahuje se přes celou šířku */}
         <div className="shrink-0 flex justify-center">
-          <div className="holo-pod holo-float holo-float-slow w-full max-w-3xl">
+          <div className="holo-float holo-float-slow w-full">
             <GuildRail
               guilds={guilds}
               activeId={activeGuildId}
@@ -273,11 +273,13 @@ export default function AppShell() {
           </div>
         </div>
 
+
         <div className="flex-1 min-h-0 flex gap-4 items-stretch">
           {activeGuild ? (
             <>
               {/* Left column: sectors pod + separate self pod */}
-              <div className="shrink-0 flex flex-col gap-4 h-full w-56 pt-2">
+              <div className="shrink-0 flex flex-col gap-4 h-full w-56 xl:w-64 2xl:w-72 pt-2">
+
                 <div className="holo-pod holo-float flex-1 min-h-0 flex flex-col overflow-hidden">
                   <ChannelSidebar
                     guildName={activeGuild.name}
@@ -343,7 +345,7 @@ export default function AppShell() {
             </>
           ) : (
             <>
-              <div className="shrink-0 flex flex-col gap-4 h-full w-56 pt-2">
+              <div className="shrink-0 flex flex-col gap-4 h-full w-56 xl:w-64 2xl:w-72 pt-2">
                 <div className="holo-pod holo-float flex-1 min-h-0 flex flex-col overflow-hidden">
                   <div className="h-12 px-4 flex items-center border-b border-primary/15">
                     <span className="font-display text-sm tracking-widest truncate text-primary text-glow">STUDIOVOXARIO</span>
