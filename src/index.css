@@ -317,6 +317,14 @@
      ============================================================ */
   .holo-context-menu {
     position: relative;
+  }
+  /* Radix dialogs must stay viewport-centered — never let the pod styling
+     downgrade them to static/relative flow (that dropped them to the edge). */
+  .holo-context-menu[role="dialog"],
+  .holo-context-menu[role="alertdialog"] {
+    position: fixed;
+  }
+  .holo-context-menu {
     clip-path: polygon(
       0 8px, 8px 0,
       calc(100% - 14px) 0, 100% 14px,
