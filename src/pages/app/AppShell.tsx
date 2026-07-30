@@ -260,9 +260,9 @@ export default function AppShell() {
   return (
     <div className="hud-shell holo-scanline h-screen w-screen overflow-hidden text-foreground">
       <div className="relative z-10 h-full w-full flex flex-col gap-3 p-3">
-        {/* Blueprint: horizontal sector dock, centered at the top */}
+        {/* Blueprint: horizontal sector dock — bez pozadí, roztahuje se přes celou šířku */}
         <div className="shrink-0 flex justify-center">
-          <div className="holo-pod holo-float holo-float-slow w-full max-w-3xl">
+          <div className="holo-float holo-float-slow w-full">
             <GuildRail
               guilds={guilds}
               activeId={activeGuildId}
@@ -272,6 +272,7 @@ export default function AppShell() {
             />
           </div>
         </div>
+
 
         <div className="flex-1 min-h-0 flex gap-4 items-stretch">
           {activeGuild ? (
