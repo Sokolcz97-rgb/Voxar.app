@@ -278,7 +278,8 @@ export default function AppShell() {
           {activeGuild ? (
             <>
               {/* Left column: sectors pod + separate self pod */}
-              <div className="shrink-0 flex flex-col gap-4 h-full w-56 pt-2">
+              <div className="shrink-0 flex flex-col gap-4 h-full w-56 xl:w-64 2xl:w-72 pt-2">
+
                 <div className="holo-pod holo-float flex-1 min-h-0 flex flex-col overflow-hidden">
                   <ChannelSidebar
                     guildName={activeGuild.name}
