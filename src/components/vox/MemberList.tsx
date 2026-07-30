@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, Shield, Mic, MicOff, HeadphoneOff, Volume2 } from "lucide-react";
+import { Crown, Shield, Mic, MicOff, HeadphoneOff, Volume2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoleBadge, type VoxRole } from "@/components/vox/VoxRolesPanel";
 import { UserContextMenu } from "@/components/vox/UserContextMenu";
@@ -159,6 +159,7 @@ export function MemberList({
 }: MemberListProps) {
   const [profileMember, setProfileMember] = useState<VoxMember | null>(null);
   const [filter, setFilter] = useState<"all" | "voice" | "admin">("all");
+  const [listOpen, setListOpen] = useState(true);
 
   const filtered = members.filter((m) => {
     if (filter === "voice") return !!voiceState[m.user_id];
@@ -280,12 +281,14 @@ export function MemberList({
           </div>
         </div>
 
+        {listOpen && (
         <div className="p-3 space-y-4">
           {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
           {orderedHoist.map((g) => renderGroup(g.role.name.toUpperCase(), g.list, `hoist-${g.role.id}`))}
           {renderGroup("ONLINE", onlineNoHoist, "online", statusColor.online)}
           {renderGroup(statusLabel.offline.toUpperCase(), offline, "offline", statusColor.offline)}
         </div>
+        )}
       </aside>
 
       <UserProfileModal
