@@ -152,29 +152,35 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-3 pt-2 border-t border-primary/15">
-        <div className="cyber-btn flex items-end gap-2 rounded-md px-3 py-2 focus-within:shadow-[0_0_18px_hsl(var(--primary)/0.35)] transition-shadow">
-          <span className="font-display text-[10px] tracking-widest uppercase text-primary/70 pb-2">TX &gt;</span>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-            }}
-            placeholder={`Vyslat paket do #${channel.name}`}
-            className="min-h-[36px] max-h-40 resize-none bg-transparent border-0 focus-visible:ring-0 p-0 text-sm"
-            rows={1}
-          />
-          <Button
-            size="icon"
+      <div className="px-3 pb-3 pt-2">
+        <div className="flex items-end gap-2">
+          <div className="tx-bar flex-1 flex items-end gap-2 px-4 py-2.5">
+            <span className="font-display text-[10px] tracking-[0.28em] uppercase text-primary/70 pb-2 shrink-0">TX &gt;</span>
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+              }}
+              placeholder={`Vyslat paket do #${channel.name}`}
+              className="min-h-[36px] max-h-40 resize-none bg-transparent border-0 focus-visible:ring-0 p-0 text-sm"
+              rows={1}
+            />
+            <span className="hidden sm:block pb-2 text-[9px] font-display tracking-[0.28em] uppercase text-muted-foreground/60 shrink-0">
+              ENTER · SEND
+            </span>
+          </div>
+          <button
             onClick={send}
             disabled={!input.trim()}
-            className="h-8 w-8 shrink-0 bg-primary/20 hover:bg-primary/40 border border-primary/50 text-primary shadow-[0_0_10px_hsl(var(--primary)/0.4)]"
+            title="Odeslat paket"
+            className="tx-send h-[52px] w-16 shrink-0 flex items-center justify-center text-primary"
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            <Send className="w-5 h-5 drop-shadow-[0_0_6px_hsl(var(--primary))]" />
+          </button>
         </div>
       </div>
+
     </div>
   );
 }
