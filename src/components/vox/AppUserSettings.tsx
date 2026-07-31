@@ -9,13 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
   User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw, MonitorCog,
+ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import { MicTester } from "@/components/vox/MicTester";
+import { GdprPanel } from "@/components/vox/GdprPanel";
 
-type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "about";
+type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "privacy" | "about";
 
 interface Props {
   onClose: () => void;
@@ -178,6 +180,7 @@ export function AppUserSettings({ onClose }: Props) {
     { key: "notifications", label: "Notifikace", icon: Bell },
     { key: "appearance", label: "Vzhled", icon: Palette },
     { key: "app", label: "Aplikace", icon: MonitorCog },
+    { key: "privacy", label: "Soukromí a GDPR", icon: ShieldCheck },
     { key: "about", label: "O aplikaci", icon: Info },
   ];
 
@@ -390,6 +393,8 @@ export function AppUserSettings({ onClose }: Props) {
           )}
 
           {tab === "app" && <AppSettingsPanel />}
+
+          {tab === "privacy" && <GdprPanel />}
 
           {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
