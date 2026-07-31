@@ -124,7 +124,7 @@ export function AIHelper() {
                 <Sparkles className="h-2.5 w-2.5 text-accent absolute -top-1 -right-1" />
               </div>
               <div>
-                <div className="font-display font-bold text-sm tracking-wider">Neon AI</div>
+                <div className="font-display font-bold text-sm tracking-wider">StudioVoxario AI</div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("ai.online")}</div>
               </div>
             </div>
