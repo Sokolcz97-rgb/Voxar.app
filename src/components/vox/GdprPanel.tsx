@@ -38,7 +38,7 @@ export function GdprPanel() {
       const [profile, messages, memberships] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("vox_messages").select("*").eq("author_id", user.id).limit(5000),
-        supabase.from("vox_members").select("*").eq("user_id", user.id),
+        supabase.from("vox_guild_members").select("*").eq("user_id", user.id),
       ]);
       const payload = {
         exported_at: new Date().toISOString(),
