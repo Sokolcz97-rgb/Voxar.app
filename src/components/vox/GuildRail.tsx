@@ -1,6 +1,7 @@
 import { Plus, Compass } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import voxLogo from "@/assets/vox-logo.png.asset.json";
 
 export interface VoxGuild {
   id: string;
