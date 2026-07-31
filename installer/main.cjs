@@ -1,5 +1,5 @@
 /*
- * StudioVoxario custom installer — Electron main process.
+ * Vox.app custom installer — Electron main process.
  *
  * Cíle:
  *  - Žádné volání cmd.exe / .bat / .cmd / powershell.exe.
@@ -20,8 +20,8 @@ const sevenBin = require("7zip-bin");
 const Winreg = require("winreg");
 const ws = require("windows-shortcuts");
 
-const APP_NAME = "StudioVoxario";
-const APP_EXE = "StudioVoxario.exe";
+const APP_NAME = "Vox.app";
+const APP_EXE = "Vox.app.exe";
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), APP_NAME);
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${APP_NAME}`;
 
@@ -187,11 +187,11 @@ function createShortcuts(dir, desktop) {
   fs.mkdirSync(startMenu, { recursive: true });
 
   const tasks = [
-    { path: path.join(startMenu, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít StudioVoxario" },
+    { path: path.join(startMenu, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít Vox.app" },
   ];
   if (desktop) {
     const desktopDir = path.join(os.homedir(), "Desktop");
-    tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít StudioVoxario" });
+    tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít Vox.app" });
   }
   return Promise.all(
     tasks.map(
