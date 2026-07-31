@@ -6,6 +6,7 @@ import { Bot, Send, X, Loader2, Sparkles, Square, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Markdown } from "@/components/Markdown";
 import { supabase } from "@/integrations/supabase/client";
+import voxLogo from "@/assets/vox-logo.png.asset.json";
 
 interface Msg {
   role: "user" | "assistant";
@@ -13,7 +14,7 @@ interface Msg {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-helper`;
-const STORAGE_KEY = "neonhub_ai_chat";
+const STORAGE_KEY = "voxapp_ai_chat";
 
 /**
  * Holographic HUD variant of the AI helper for the /app desktop shell.
@@ -101,13 +102,13 @@ export function AIHelperHolo() {
       {!open && (
         <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-40 group" aria-label={t("ai.open")}>
           <div className="relative">
-            <div className="absolute inset-0 hex-frame bg-primary/40 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
-            <div className="absolute -inset-2 hex-ring opacity-70 group-hover:opacity-100 transition-opacity" />
-            <div className="relative hex-frame w-14 h-14 bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.6)] group-hover:scale-110 transition-transform">
-              <Bot className="h-6 w-6 text-glow" />
+            <div className="absolute inset-0 hex-frame bg-primary/35 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
+            <div className="absolute -inset-3 hex-ring opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="relative hex-frame w-16 h-16 bg-[hsl(222_40%_7%)] border border-primary/50 flex items-center justify-center shadow-[0_0_28px_hsl(var(--primary)/0.55)] group-hover:scale-110 transition-transform">
+              <img src={voxLogo.url} alt="" className="w-9 h-9 object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" />
             </div>
-            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-display tracking-widest uppercase text-primary/80 whitespace-nowrap">
-              NEON // AI
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-display tracking-[0.3em] uppercase text-primary/80 whitespace-nowrap">
+              STUDIOVOXARIO // AI
             </div>
           </div>
         </button>
@@ -115,29 +116,33 @@ export function AIHelperHolo() {
 
       {open && (
         <div className="fixed bottom-6 right-6 z-40 w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col holo-context-menu overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-transparent">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Bot className="h-5 w-5 text-primary" />
-                <Sparkles className="h-2.5 w-2.5 text-accent absolute -top-1 -right-1" />
+          <div className="relative flex items-center justify-between p-4 border-b border-primary/25 bg-gradient-to-r from-primary/12 via-primary/5 to-transparent">
+            <div className="absolute top-0 left-0 w-10 h-px bg-primary/70" />
+            <div className="absolute top-0 left-0 w-px h-10 bg-primary/70" />
+            <div className="flex items-center gap-2.5">
+              <div className="hex-frame w-9 h-9 bg-[hsl(222_40%_8%)] border border-primary/45 flex items-center justify-center shadow-[0_0_14px_hsl(var(--primary)/0.5)]">
+                <img src={voxLogo.url} alt="" className="w-6 h-6 object-contain" />
               </div>
               <div>
-                <div className="font-display font-bold text-sm tracking-widest text-glow uppercase">NEON // AI</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("ai.online")}</div>
+                <div className="font-display font-bold text-[13px] tracking-[0.2em] text-glow uppercase">StudioVoxario AI</div>
+                <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.28em] text-primary/70">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_hsl(160_84%_45%)] animate-pulse" />
+                  {t("ai.online")}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <button onClick={newChat} title={t("ai.newChatTitle")}
-                className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary hover:bg-primary/30 px-2.5 py-1.5 rounded-md border border-primary/40 transition-all">
+                className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] bg-primary/15 text-primary hover:bg-primary/30 px-2.5 py-1.5 border border-primary/40 transition-all">
                 <Plus className="h-3 w-3" />{t("ai.newChat")}
               </button>
               {messages.length > 0 && (
                 <button onClick={clearChat} title={t("ai.clear") || "Smazat"}
-                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest bg-destructive/20 text-destructive hover:bg-destructive/30 px-2.5 py-1.5 rounded-md border border-destructive/40 transition-all">
+                  className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] bg-destructive/15 text-destructive hover:bg-destructive/30 px-2.5 py-1.5 border border-destructive/40 transition-all">
                   <X className="h-3 w-3" />{t("ai.clear")}
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label={t("ai.close")}>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-primary p-1" aria-label={t("ai.close")}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -146,8 +151,8 @@ export function AIHelperHolo() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-10 px-4">
-                <div className="inline-flex items-center justify-center w-12 h-12 hex-frame bg-primary/10 border border-primary/30 mb-3">
-                  <Bot className="h-5 w-5 text-primary" />
+                <div className="inline-flex items-center justify-center w-14 h-14 hex-frame bg-primary/10 border border-primary/35 mb-3 shadow-[0_0_18px_hsl(var(--primary)/0.35)]">
+                  <img src={voxLogo.url} alt="" className="w-8 h-8 object-contain" />
                 </div>
                 <p className="font-display font-bold text-sm mb-1 uppercase tracking-wider">{t("ai.greeting")}</p>
                 <p className="text-xs text-muted-foreground">{t("ai.intro")}</p>
@@ -167,10 +172,10 @@ export function AIHelperHolo() {
 
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}>
-                <div className={`max-w-[85%] rounded-md px-3.5 py-2 text-sm ${
+                <div className={`max-w-[85%] px-3.5 py-2 text-sm border backdrop-blur-sm ${
                   m.role === "user"
-                    ? "bg-primary/25 text-foreground border border-primary/40"
-                    : "bg-secondary/60 text-secondary-foreground border border-primary/15"
+                    ? "bg-primary/18 text-foreground border-primary/45 shadow-[0_0_14px_hsl(var(--primary)/0.2)] [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+                    : "bg-[hsl(222_35%_8%/0.8)] text-secondary-foreground border-primary/20 [clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,10px_100%,0_calc(100%-10px))]"
                 }`}>
                   {m.role === "assistant"
                     ? <Markdown content={m.content || (loading && i === messages.length - 1 ? "…" : "")} />
@@ -188,9 +193,10 @@ export function AIHelperHolo() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-primary/20 p-3 flex gap-2">
+          <div className="border-t border-primary/25 p-3 flex gap-2 items-center bg-[hsl(222_35%_6%/0.6)]">
+            <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/70 shrink-0">TX &gt;</span>
             <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
-              placeholder={`TX > ${t("ai.askPlaceholder")}`} disabled={loading}
+              placeholder={t("ai.askPlaceholder")} disabled={loading}
               className="text-sm font-mono bg-background/60 border-primary/25 focus-visible:ring-primary/40" />
             {loading ? (
               <Button onClick={stopGenerating} size="icon" variant="destructive" className="shrink-0" title={t("ai.stop") || "Zastavit"}>

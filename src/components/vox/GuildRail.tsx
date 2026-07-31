@@ -1,6 +1,7 @@
 import { Plus, Compass } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import voxLogo from "@/assets/vox-logo.png.asset.json";
 
 export interface VoxGuild {
   id: string;
@@ -23,13 +24,15 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
   return (
     <TooltipProvider delayDuration={200}>
       <div className="w-full flex flex-wrap items-center gap-4 px-2 py-1.5">
-        {/* STUDIO // VOXARIO monogram badge — jediná část s podkladem */}
+        {/* Vox.app logo — jediná část s podkladem */}
         <div className="holo-pod flex items-center gap-2.5 shrink-0 px-3 py-1.5">
-          <div className="w-11 h-11 hex-frame bg-gradient-to-br from-primary/30 to-accent/10 border border-primary/40 flex items-center justify-center shadow-[0_0_18px_hsl(var(--primary)/0.45)]">
-            <span className="font-display font-black text-[13px] tracking-widest text-primary text-glow">SV</span>
-          </div>
-          <div className="text-[8px] font-display tracking-[0.35em] text-primary/70 text-glow uppercase leading-[1.4] hidden sm:block">
-            STUDIO<br />VOXARIO
+          <img
+            src={voxLogo.url}
+            alt="Vox.app logo"
+            className="w-11 h-11 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
+          />
+          <div className="text-[9px] font-display tracking-[0.35em] text-primary/75 text-glow uppercase leading-[1.4] hidden sm:block">
+            VOX<br />.APP
           </div>
         </div>
 

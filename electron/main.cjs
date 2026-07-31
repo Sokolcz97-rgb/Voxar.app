@@ -1,4 +1,4 @@
-// StudioVoxario Desktop - Electron main process
+// Vox.app Desktop - Electron main process
 const {
   app,
   BrowserWindow,
@@ -85,9 +85,9 @@ function createTray() {
   const iconPath = path.join(__dirname, "assets", "tray.png");
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 20, height: 20 });
   tray = new Tray(icon);
-  tray.setToolTip("StudioVoxario");
+  tray.setToolTip("Vox.app");
   const contextMenu = Menu.buildFromTemplate([
-    { label: "Otevřít StudioVoxario", click: () => showMain() },
+    { label: "Otevřít Vox.app", click: () => showMain() },
     { label: "Nastavení aplikace", click: () => openSettings() },
     { type: "separator" },
     {
@@ -206,7 +206,7 @@ function createMainWindow() {
   ipcMain.on("show-notification", (_e, { title, body, url }) => {
     if (!settings.notifications || !Notification.isSupported()) return;
     const n = new Notification({
-      title: title || "StudioVoxario",
+      title: title || "Vox.app",
       body: body || "",
       icon: path.join(__dirname, "assets", "icon.png"),
       silent: false,
@@ -232,7 +232,7 @@ function openSettings() {
     maximizable: false,
     autoHideMenuBar: true,
     backgroundColor: "#0a0a0f",
-    title: "Nastavení – StudioVoxario",
+    title: "Nastavení – Vox.app",
     parent: mainWindow || undefined,
     webPreferences: {
       preload: path.join(__dirname, "settings-preload.cjs"),

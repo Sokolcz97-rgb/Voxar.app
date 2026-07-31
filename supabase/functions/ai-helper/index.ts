@@ -8,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Jsi NEON — přátelský AI asistent StudioVoxario.
+const SYSTEM_PROMPT = `Jsi StudioVoxario AI — přátelský AI asistent StudioVoxario.
 Pomáháš uživatelům jak na webu, tak v desktopové aplikaci (Discord-like klient
 s hlasovými/textovými kanály, servery, DM, tickety, formuláři, zakázkami,
 bodovým systémem atd.). Odpovídáš stručně, česky, přátelsky, ale profesionálně.
@@ -289,7 +289,7 @@ async function executeTool(
           .insert({
             user_id: userId,
             subject: `[AI eskalace] ${subject}`,
-            description: `🤖 Tento ticket byl založen automaticky AI asistentem NEON.\n\n${description}`,
+            description: `🤖 Tento ticket byl založen automaticky AI asistentem StudioVoxario AI.\n\n${description}`,
             priority,
             category: "technical",
             assigned_to: adminId,
@@ -322,7 +322,7 @@ async function executeTool(
             }
             if (convId) {
               const body =
-                `🤖 **NEON AI eskalace**\n\n` +
+                `🤖 **StudioVoxario AI eskalace**\n\n` +
                 `Uživatel žádá o pomoc skutečného pracovníka.\n\n` +
                 `**Předmět:** ${subject}\n` +
                 `**Priorita:** ${priority}\n` +
