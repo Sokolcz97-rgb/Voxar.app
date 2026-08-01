@@ -23,7 +23,7 @@ const sevenBin = require("7zip-bin");
 
 const ROOT = __dirname;
 const RESOURCES = path.join(ROOT, "resources");
-const PAYLOAD = path.join(ROOT, "..", "electron-release", "Vox.app-win32-x64");
+const PAYLOAD = path.join(ROOT, "..", "electron-release", "Voxar.app-win32-x64");
 const OUT_ARCHIVE = path.join(RESOURCES, "app.7z");
 const OUT_7ZA = path.join(RESOURCES, "7za.exe");
 

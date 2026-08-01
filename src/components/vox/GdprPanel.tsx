@@ -18,7 +18,7 @@ function loadConsent(): Consent {
   return { analytics: false, presence: true, acceptedAt: null };
 }
 
-/** GDPR panel pro Vox.app — souhlasy, export dat a výmaz účtu. */
+/** GDPR panel pro Voxar.app — souhlasy, export dat a výmaz účtu. */
 export function GdprPanel() {
   const { user } = useAuth();
   const [consent, setConsent] = useState<Consent>(loadConsent);
@@ -42,7 +42,7 @@ export function GdprPanel() {
       ]);
       const payload = {
         exported_at: new Date().toISOString(),
-        application: "Vox.app",
+        application: "Voxar.app",
         account: { id: user.id, email: user.email, created_at: user.created_at },
         profile: profile.data ?? null,
         messages: messages.data ?? [],
@@ -53,7 +53,7 @@ export function GdprPanel() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `vox-app-osobni-udaje-${user.id.slice(0, 8)}.json`;
+      a.download = `voxar-app-osobni-udaje-${user.id.slice(0, 8)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast({ title: "Export hotov", description: "Soubor s tvými daty byl stažen." });
@@ -81,7 +81,7 @@ export function GdprPanel() {
     <div className="space-y-5">
       <Section title="// GDPR · PŘEHLED" icon={ShieldCheck}>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Vox.app zpracovává pouze údaje nutné k provozu: přihlašovací e-mail, profil (jméno, avatar),
+          Voxar.app zpracovává pouze údaje nutné k provozu: přihlašovací e-mail, profil (jméno, avatar),
           členství v sektorech, zprávy a stav přítomnosti. Data jsou uložena v EU u našeho poskytovatele
           databáze, nepředáváme je třetím stranám pro marketing a neprodáváme je.
           Právní základ: plnění smlouvy (čl. 6 odst. 1 písm. b GDPR) a oprávněný zájem na bezpečnosti provozu.

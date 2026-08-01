@@ -1,8 +1,8 @@
 {
-  "name": "vox-app-desktop",
-  "productName": "Vox.app",
+  "name": "voxar-app-desktop",
+  "productName": "Voxar.app",
   "version": "0.0.9-alpha",
-  "description": "Vox.app — desktop klient StudioVoxario",
+  "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
   "main": "main.cjs",
   "private": true,
