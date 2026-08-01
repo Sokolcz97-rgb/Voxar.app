@@ -2,11 +2,11 @@
   "version": 1,
   "url": "https://github.com/Sokolcz97-rgb/apex-zone-central/releases/download/desktop-latest/VoxarAppSetup-0.0.9-alpha.exe",
   "original_filename": "VoxarAppSetup-0.0.9-alpha.exe",
-  "size": 234645254,
-  "sha256": "0a852d8414077f3bee0d5241e28f7dc88bfd7f4a3746a4aac434b4e680882662",
+  "size": 234642141,
+  "sha256": "a972a38f019a6652733ec013c8123ef4f1790ba3173ad896c9a31cf3e327cabc",
   "content_type": "application/x-msdownload",
   "source": "github-release",
   "tag": "desktop-latest",
-  "commit": "b6250cead50ac4a2e3ce644c24fc2038869f60de",
-  "updated_at": "2026-07-31T09:32:29.2075097Z"
+  "commit": "0f6b1f38d33355828cb3d660db514cf76e9842b5",
+  "updated_at": "2026-08-01T00:43:00.2681841Z"
 }
