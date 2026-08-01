@@ -31,8 +31,8 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
             alt="Voxar.app logo"
             className="w-11 h-11 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
           />
-          <div className="text-[9px] font-display tracking-[0.35em] text-primary/75 text-glow uppercase leading-[1.4] hidden sm:block">
-            VOX<br />.APP
+          <div className="text-[9px] font-display tracking-[0.3em] text-primary/75 text-glow uppercase leading-[1.4] hidden sm:block">
+            VOXAR<br />.APP
           </div>
         </div>
 
