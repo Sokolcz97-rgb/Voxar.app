@@ -113,9 +113,11 @@ export default function Download() {
   if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
 
   const sizeMb = pointer?.size ? `${(pointer.size / 1_000_000).toFixed(1)} MB` : "";
-  const filename = pointer?.original_filename || "StudioVoxarioSetup.exe";
-  // Cache-bust: forces browser + CDN edge to bypass any stale link users had cached.
-  const href = pointer ? `${pointer.url}?v=${Date.now()}` : "#";
+  const filename = pointer?.original_filename || "VoxarAppSetup.exe";
+  // GitHub Release URL už samo redirectuje na podepsaný objekt – žádný cache-buster,
+  // ten by redirect rozbil.
+  const href = pointer?.url ?? "#";
+
 
   return (
     <div className="min-h-screen bg-background">
