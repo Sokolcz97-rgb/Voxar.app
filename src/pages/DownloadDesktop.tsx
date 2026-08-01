@@ -189,12 +189,13 @@ export default function Download() {
           ) : (
             <Card className="max-w-lg mx-auto p-6 border-primary/40">
               <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Instalátor se právě sestavuje</h3>
+              <h3 className="font-semibold mb-2">Instalátor zatím není dostupný</h3>
               <p className="text-sm text-muted-foreground">
-                GitHub Actions CI aktuálně buildí čerstvou verzi. Zkuste stránku
-                znovu načíst za pár minut – jakmile CI dokončí upload, tlačítko
-                se automaticky objeví.
+                Poslední build ještě není publikovaný jako veřejný GitHub Release
+                (release/repozitář je nedostupný nebo privátní). Jakmile CI nahraje
+                asset do veřejného releasu, tlačítko se tu objeví samo.
               </p>
+
             </Card>
           )}
 
