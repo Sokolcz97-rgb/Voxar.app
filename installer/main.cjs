@@ -96,25 +96,47 @@ ipcMain.handle("installer:install", async (_e, opts) => {
 
   fs.mkdirSync(dir, { recursive: true });
 
-  // 1) Rozbalit payload.
+  // 1) Rozbalit payload. (jediný krok, který smí instalaci zabít)
   const payload = path.join(process.resourcesPath || __dirname, "app.7z");
   if (!fs.existsSync(payload)) throw new Error(`Payload nenalezen: ${payload}`);
 
-  await extract(payload, dir, (p) => send("progress", { phase: "extract", pct: p }));
+  try {
+    await extract(payload, dir, (p) => send("progress", { phase: "extract", pct: p }));
+  } catch (err) {
+    throw new Error(`Rozbalení selhalo: ${err?.message || err}`);
+  }
+
+  const exePath = path.join(dir, APP_EXE);
+  if (!fs.existsSync(exePath)) {
+    throw new Error(`Po rozbalení chybí ${APP_EXE} v ${dir}. Archiv je poškozený nebo neúplný.`);
+  }
 
   // 2) Zapsat channel.json.
-  fs.writeFileSync(
-    path.join(dir, "channel.json"),
-    JSON.stringify({ channel, chosenAt: new Date().toISOString() }, null, 2),
-  );
+  try {
+    fs.writeFileSync(
+      path.join(dir, "channel.json"),
+      JSON.stringify({ channel, chosenAt: new Date().toISOString() }, null, 2),
+    );
+  } catch (err) {
+    send("log", `! channel.json se nepodařilo zapsat: ${err?.message || err}`);
+  }
 
-  // 3) Zkratky.
+  // 3) Zkratky — selhání nesmí shodit instalaci.
   send("progress", { phase: "shortcuts", pct: 0.9 });
-  await createShortcuts(dir, createDesktopShortcut);
+  try {
+    await createShortcuts(dir, createDesktopShortcut);
+  } catch (err) {
+    send("log", `! Zkratky se nepodařilo vytvořit: ${err?.message || err}`);
+  }
 
-  // 4) Registry Uninstall.
+  // 4) Registry Uninstall — rovněž nefatální.
   send("progress", { phase: "registry", pct: 0.95 });
-  await writeUninstallRegistry(dir);
+  try {
+    await writeUninstallRegistry(dir);
+  } catch (err) {
+    send("log", `! Zápis do registru selhal: ${err?.message || err}`);
+  }
+
 
   // 5) Uložit instalační meta pro uninstaller.
   fs.writeFileSync(
