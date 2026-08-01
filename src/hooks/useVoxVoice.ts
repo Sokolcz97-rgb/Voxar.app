@@ -191,6 +191,12 @@ export function useVoxVoice(channelId: string | null) {
       const stream = ev.streams[0] ?? new MediaStream([ev.track]);
       // Safety: never play back our own stream (would cause echo).
       if (remoteUserId === user?.id) return;
+      // Druhá pojistka: kdyby přišel zpět náš vlastní lokální stream/track.
+      const localStream = localStreamRef.current;
+      const isLocalStream =
+        !!localStream &&
+        (stream.id === localStream.id || localStream.getTracks().some((t) => t.id === ev.track.id));
+      if (isLocalStream) return;
       updateRemote(remoteUserId, { stream });
       let audio = document.getElementById(`vox-audio-${remoteUserId}`) as HTMLAudioElement | null;
       if (!audio) {
@@ -205,6 +211,7 @@ export function useVoxVoice(channelId: string | null) {
       audio.muted = deafenedRef.current || userMuted;
       audio.volume = Math.max(0, Math.min(1, localAudio.getVolume(remoteUserId)));
       playRemoteAudio(audio);
+
 
       ev.track.onunmute = () => playRemoteAudio(audio!);
       remoteMetersRef.current[remoteUserId]?.();
