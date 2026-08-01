@@ -148,7 +148,9 @@ export function MicTester({ deviceId, noiseSuppression = true, echoCancellation 
       </p>
 
       {error && <p className="text-[11px] text-destructive font-mono">! ERR // {error}</p>}
-      <audio ref={audioElRef} hidden />
+      {/* Lokální stream — ztlumený, dokud uživatel výslovně nezapne MONITOR (jinak ozvěna). */}
+      <audio ref={audioElRef} hidden muted={!playback} />
+
     </div>
   );
 }

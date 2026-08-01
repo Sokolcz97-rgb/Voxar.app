@@ -322,10 +322,22 @@ export default function AppShell() {
                         onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
                       />
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    Vyber kanál
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
+                    <div className="hex-frame w-24 h-24 flex items-center justify-center bg-primary/10 animate-pulse">
+                      <span className="font-display text-[10px] tracking-[0.3em] uppercase text-primary text-glow">
+                        IDLE
+                      </span>
+                    </div>
+                    <div className="font-display text-[11px] tracking-[0.32em] uppercase text-primary/80 text-glow">
+                      // NODE · NENÍ VYBRÁN
+                    </div>
+                    <p className="text-[11px] font-mono text-muted-foreground max-w-xs">
+                      &gt; STANDBY // vyber kanál v panelu SEKTORY KOMUNITY pro navázání spojení.
+                    </p>
+                    <div className="h-px w-40 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
                   </div>
                 )}
+
               </div>
 
               {/* Right: ENTITY POD as its own column */}

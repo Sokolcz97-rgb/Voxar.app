@@ -35,7 +35,7 @@ jobs:
         run: npm install
 
       - name: Package Electron app (win32-x64)
-        run: npx --yes @electron/packager electron Vox.app --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=electron/assets/icon.ico
+        run: npx --yes @electron/packager electron Voxar.app --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=electron/assets/icon.ico
 
       - name: Prepare installer icon
         shell: pwsh
@@ -100,8 +100,8 @@ jobs:
           $cfg = Join-Path $env:RUNNER_TEMP "config.txt"
           $configLines = @(
             ';!@Install@!UTF-8!',
-            'Title="Vox.app"',
-            'BeginPrompt="Instalovat Vox.app?"',
+            'Title="Voxar.app"',
+            'BeginPrompt="Instalovat Voxar.app?"',
             'RunProgram="StudioVoxarioInstaller.exe"',
             'GUIMode="2"',
             ';!@InstallEnd@!'
@@ -114,7 +114,7 @@ jobs:
           Write-Host "== Concatenate SFX + config + payload =="
           $outDir = "installer/dist/final"
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $renamed = Join-Path $outDir "VoxAppSetup-0.0.9-alpha.exe"
+          $renamed = Join-Path $outDir "VoxarAppSetup-0.0.9-alpha.exe"
           if (Test-Path $renamed) { Remove-Item $renamed -Force }
           $out = [System.IO.File]::Open($renamed, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
           try {
@@ -131,7 +131,7 @@ jobs:
           "path=$renamed"       | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "size=$size"          | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "sha256=$hash"        | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "filename=VoxAppSetup-0.0.9-alpha.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "filename=VoxarAppSetup-0.0.9-alpha.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Create / update GitHub Release
         id: release

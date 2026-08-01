@@ -27,11 +27,38 @@ async function loadInstallerPointer(): Promise<AssetPointer | null> {
     const mods = import.meta.glob("@/assets/downloads/windows-installer.asset.json", { eager: true }) as Record<string, any>;
     const first = Object.values(mods)[0];
     const data = first?.default ?? first;
-    return data && data.url ? (data as AssetPointer) : null;
+    if (!data?.url) return null;
+    return await resolveLiveAsset(data as AssetPointer);
   } catch {
     return null;
   }
 }
+
+/**
+ * Pointer může ukazovat na release, který ještě neexistuje (nebo je repo privátní) —
+ * pak by tlačítko vedlo na GitHub 404. Ověříme asset přes GitHub API a vrátíme
+ * skutečnou download URL; když asset není dostupný, vrátíme null.
+ */
+async function resolveLiveAsset(p: AssetPointer): Promise<AssetPointer | null> {
+  const m = p.url.match(/github\.com\/([^/]+)\/([^/]+)\/releases\/download\/([^/]+)\/(.+)$/);
+  if (!m) return p; // non-GitHub host (CDN) – důvěřujeme pointeru
+  const [, owner, repo, tag] = m;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!res.ok) return null;
+    const rel = await res.json();
+    const asset =
+      (rel.assets ?? []).find((a: any) => a.name === p.original_filename) ??
+      (rel.assets ?? []).find((a: any) => String(a.name).toLowerCase().endsWith(".exe"));
+    if (!asset) return null;
+    return { url: asset.browser_download_url, original_filename: asset.name, size: asset.size };
+  } catch {
+    return null;
+  }
+}
+
 
 
 function AccessGate({ onUnlock }: { onUnlock: () => void }) {
@@ -113,9 +140,11 @@ export default function Download() {
   if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
 
   const sizeMb = pointer?.size ? `${(pointer.size / 1_000_000).toFixed(1)} MB` : "";
-  const filename = pointer?.original_filename || "StudioVoxarioSetup.exe";
-  // Cache-bust: forces browser + CDN edge to bypass any stale link users had cached.
-  const href = pointer ? `${pointer.url}?v=${Date.now()}` : "#";
+  const filename = pointer?.original_filename || "VoxarAppSetup.exe";
+  // GitHub Release URL už samo redirectuje na podepsaný objekt – žádný cache-buster,
+  // ten by redirect rozbil.
+  const href = pointer?.url ?? "#";
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,12 +189,13 @@ export default function Download() {
           ) : (
             <Card className="max-w-lg mx-auto p-6 border-primary/40">
               <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">Instalátor se právě sestavuje</h3>
+              <h3 className="font-semibold mb-2">Instalátor zatím není dostupný</h3>
               <p className="text-sm text-muted-foreground">
-                GitHub Actions CI aktuálně buildí čerstvou verzi. Zkuste stránku
-                znovu načíst za pár minut – jakmile CI dokončí upload, tlačítko
-                se automaticky objeví.
+                Poslední build ještě není publikovaný jako veřejný GitHub Release
+                (release/repozitář je nedostupný nebo privátní). Jakmile CI nahraje
+                asset do veřejného releasu, tlačítko se tu objeví samo.
               </p>
+
             </Card>
           )}
 

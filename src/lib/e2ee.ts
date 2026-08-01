@@ -1,5 +1,5 @@
 /**
- * Vox.app — end-to-end šifrování zpráv (AES-256-GCM / PBKDF2).
+ * Voxar.app — end-to-end šifrování zpráv (AES-256-GCM / PBKDF2).
  *
  * Klíč se odvozuje z tajné fráze, kterou zadá uživatel v daném sektoru.
  * Fráze ani klíč nikdy neopouští zařízení — server vidí pouze šifrovaný
