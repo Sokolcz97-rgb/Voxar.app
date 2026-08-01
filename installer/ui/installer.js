@@ -75,7 +75,9 @@ async function startInstall() {
     activate("done");
   } catch (err) {
     $("doneTitle").textContent = "Instalace se nezdařila";
-    $("doneMsg").textContent = String(err?.message || err);
+    // Electron IPC obaluje chybu prefixem "Error invoking remote method ... :" — uklidíme ho.
+    $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
+
     $("launchBtn").style.display = "none";
     activate("done");
   }
