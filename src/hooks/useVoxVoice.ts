@@ -48,9 +48,15 @@ export function useVoxVoice(channelId: string | null) {
   const [deafened, setDeafened] = useState(false);
   const [remotes, setRemotes] = useState<Record<string, RemotePeer>>({});
   const [selfLevel, setSelfLevel] = useState(0);
+  const [videoOn, setVideoOn] = useState(false);
+  const [screenOn, setScreenOn] = useState(false);
+  const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null);
 
   const rawStreamRef = useRef<MediaStream | null>(null);        // raw mic (for metering)
   const localStreamRef = useRef<MediaStream | null>(null);      // processed (published to peers)
+  const camStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const extraTracksRef = useRef<MediaStreamTrack[]>([]);        // camera / screen video published to peers
   const gainNodeRef = useRef<GainNode | null>(null);
   const vadGainRef = useRef<GainNode | null>(null);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
