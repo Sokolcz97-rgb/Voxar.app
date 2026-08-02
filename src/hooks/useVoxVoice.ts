@@ -455,6 +455,14 @@ export function useVoxVoice(channelId: string | null) {
     remoteMetersRef.current = {};
     rawStreamRef.current?.getTracks().forEach((t) => t.stop());
     if (localStreamRef.current !== rawStreamRef.current) localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    camStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    camStreamRef.current = null;
+    screenStreamRef.current = null;
+    extraTracksRef.current = [];
+    setLocalVideoStream(null);
+    setVideoOn(false);
+    setScreenOn(false);
     rawStreamRef.current = null;
     localStreamRef.current = null;
     gainNodeRef.current = null;
