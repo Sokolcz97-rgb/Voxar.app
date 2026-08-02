@@ -517,6 +517,87 @@ export function useVoxVoice(channelId: string | null) {
     });
   }, [muted, toggleMute, user, channelId]);
 
+  /** Force a fresh offer/answer round on every peer so new tracks get published. */
+  const renegotiateAll = useCallback(() => {
+    if (!user) return;
+    Object.keys(peersRef.current).forEach((rid) => {
+      if (user.id < rid) {
+        stopRemotePeer(rid, false);
+        createPeer(rid, true);
+      } else {
+        channelRef.current?.send({ type: "broadcast", event: "renegotiate", payload: { from: user.id, to: rid } });
+      }
+    });
+  }, [user, createPeer]);
+
+  const syncLocalVideo = () => {
+    const tracks = extraTracksRef.current;
+    setLocalVideoStream(tracks.length ? new MediaStream(tracks) : null);
+  };
+
+  const addVideoTracks = (tracks: MediaStreamTrack[]) => {
+    extraTracksRef.current = [...extraTracksRef.current, ...tracks];
+    syncLocalVideo();
+    renegotiateAll();
+  };
+
+  const removeVideoTracks = (tracks: MediaStreamTrack[]) => {
+    const ids = new Set(tracks.map((t) => t.id));
+    extraTracksRef.current = extraTracksRef.current.filter((t) => !ids.has(t.id));
+    tracks.forEach((t) => { try { t.stop(); } catch { /* noop */ } });
+    syncLocalVideo();
+    renegotiateAll();
+  };
+
+  const stopVideo = useCallback(() => {
+    const s = camStreamRef.current;
+    camStreamRef.current = null;
+    setVideoOn(false);
+    if (s) removeVideoTracks(s.getVideoTracks());
+  }, [renegotiateAll]);
+
+  const startVideo = useCallback(async () => {
+    if (camStreamRef.current || !connectedRef.current) return;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      camStreamRef.current = s;
+      s.getVideoTracks().forEach((t) => { t.onended = () => stopVideo(); });
+      setVideoOn(true);
+      addVideoTracks(s.getVideoTracks());
+    } catch (e) {
+      console.error("Kamera nedostupná", e);
+    }
+  }, [renegotiateAll, stopVideo]);
+
+  const toggleVideo = useCallback(() => {
+    if (camStreamRef.current) stopVideo(); else void startVideo();
+  }, [startVideo, stopVideo]);
+
+  const stopScreen = useCallback(() => {
+    const s = screenStreamRef.current;
+    screenStreamRef.current = null;
+    setScreenOn(false);
+    if (s) removeVideoTracks(s.getTracks());
+  }, [renegotiateAll]);
+
+  const startScreen = useCallback(async () => {
+    if (screenStreamRef.current || !connectedRef.current) return;
+    try {
+      const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      screenStreamRef.current = s;
+      s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
+      setScreenOn(true);
+      addVideoTracks(s.getVideoTracks());
+    } catch (e) {
+      console.error("Sdílení obrazovky selhalo", e);
+    }
+  }, [renegotiateAll, stopScreen]);
+
+  const toggleScreen = useCallback(() => {
+    if (screenStreamRef.current) stopScreen(); else void startScreen();
+  }, [startScreen, stopScreen]);
+
+
   // Re-apply per-user local audio prefs (volume/mute) when they change.
   useEffect(() => {
     const apply = () => {
