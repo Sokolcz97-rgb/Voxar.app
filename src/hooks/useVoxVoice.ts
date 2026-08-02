@@ -192,6 +192,10 @@ export function useVoxVoice(channelId: string | null) {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
     }
+    // Publish camera / screen video tracks (if any) on the same stream id.
+    extraTracksRef.current.forEach((t) => {
+      try { pc.addTrack(t, localStreamRef.current ?? new MediaStream([t])); } catch { /* noop */ }
+    });
 
     pc.ontrack = (ev) => {
       const stream = ev.streams[0] ?? new MediaStream([ev.track]);
