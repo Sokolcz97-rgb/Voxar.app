@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Volume2, Mic, MicOff, PhoneOff, Phone } from "lucide-react";
+import { Volume2, MicOff, PhoneOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import type { VoxChannel } from "./ChannelSidebar";
-import { useVoxVoice } from "@/hooks/useVoxVoice";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVoiceCall } from "@/contexts/VoiceCallContext";
 
 interface Participant {
   user_id: string;
@@ -15,19 +15,11 @@ interface Participant {
   avatar_url?: string | null;
 }
 
-interface Props {
-  channel: VoxChannel;
-  onConnectionChange?: (connectedChannel: VoxChannel | null, api: ReturnType<typeof useVoxVoice>) => void;
-}
-
-export function VoiceView({ channel, onConnectionChange }: Props) {
+export function VoiceView({ channel }: { channel: VoxChannel }) {
   const { user } = useAuth();
-  const voice = useVoxVoice(channel.id);
+  const { channel: activeChannel, api, joinChannel, leaveChannel } = useVoiceCall();
   const [participants, setParticipants] = useState<Participant[]>([]);
-
-  useEffect(() => {
-    onConnectionChange?.(voice.connected ? channel : null, voice);
-  }, [voice.connected]);
+  const joinedHere = api.connected && activeChannel?.id === channel.id;
 
   useEffect(() => {
     let mounted = true;
@@ -76,8 +68,8 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {participants.map((p) => {
               const isMe = p.user_id === user?.id;
-              const level = isMe ? voice.selfLevel : (voice.remotes[p.user_id]?.level ?? 0);
-              const speaking = level > 0.08 && !p.is_muted;
+              const level = isMe ? api.selfLevel : (api.remotes[p.user_id]?.level ?? 0);
+              const speaking = joinedHere && level > 0.08 && !p.is_muted;
               const name = p.display_name || p.user_id.slice(0, 8);
               const pct = Math.min(100, Math.round(level * 180));
               return (
@@ -100,7 +92,7 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
                   </div>
                   <div className="w-full h-1 rounded-full bg-background/60 overflow-hidden border border-primary/20">
                     <div
-                      className={cn("h-full transition-[width] duration-75", p.is_muted ? "bg-destructive/70" : "bg-emerald-400 shadow-[0_0_8px_hsl(160_84%_50%/0.8)]")}
+                      className={cn("h-full transition-[width] duration-75", p.is_muted ? "bg-destructive/70" : "bg-emerald-400")}
                       style={{ width: `${p.is_muted ? 0 : pct}%` }}
                     />
                   </div>
@@ -117,33 +109,22 @@ export function VoiceView({ channel, onConnectionChange }: Props) {
       </div>
 
       <div className="p-4 border-t border-primary/15 flex items-center justify-center gap-3">
-        {!voice.connected ? (
+        {!joinedHere ? (
           <Button
-            onClick={voice.join}
+            onClick={() => void joinChannel(channel)}
             size="lg"
-            className="gap-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-400/50 shadow-[0_0_18px_hsl(160_84%_50%/0.5)] font-display tracking-widest uppercase text-xs"
+            className="gap-2 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 font-display tracking-widest uppercase text-xs"
           >
             <Phone className="w-4 h-4" /> PŘIPOJIT LINK
           </Button>
         ) : (
-          <>
-            <Button
-              onClick={voice.toggleMute}
-              size="lg"
-              variant={voice.muted ? "destructive" : "secondary"}
-              className="gap-2 font-display tracking-widest uppercase text-xs cyber-btn"
-            >
-              {voice.muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              {voice.muted ? "MIC OFF" : "MIC ON"}
-            </Button>
-            <Button
-              onClick={voice.leave}
-              size="lg"
-              className="gap-2 bg-destructive/20 hover:bg-destructive/40 text-destructive border border-destructive/50 shadow-[0_0_14px_hsl(var(--destructive)/0.5)] font-display tracking-widest uppercase text-xs"
-            >
-              <PhoneOff className="w-4 h-4" /> ODPOJIT
-            </Button>
-          </>
+          <Button
+            onClick={() => void leaveChannel()}
+            size="lg"
+            className="gap-2 bg-destructive/15 hover:bg-destructive/30 text-destructive border border-destructive/50 font-display tracking-widest uppercase text-xs"
+          >
+            <PhoneOff className="w-4 h-4" /> ODPOJIT
+          </Button>
         )}
       </div>
     </div>
