@@ -19,6 +19,7 @@ import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { DevConsole } from "@/components/vox/DevConsole";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
+import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
 
@@ -41,8 +42,9 @@ export default function AppShell() {
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
 
-  // Voice connection tracking across channels
-  const [voiceConn, setVoiceConn] = useState<{ channel: VoxChannel | null; api: any } | null>(null);
+  // Global (route-persistent) voice session
+  const { channel: voiceChannel, api: voiceApi, leaveChannel } = useVoiceCall();
+  const voiceConn = voiceApi.connected ? { channel: voiceChannel, api: voiceApi as any } : null;
 
   // In-app view: main content, user settings, or server settings
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
@@ -252,7 +254,7 @@ export default function AppShell() {
       connectedChannelName={voiceConn?.channel?.name ?? null}
       onToggleMute={() => voiceConn?.api?.toggleMute?.()}
       onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
-      onLeaveVoice={() => voiceConn?.api?.leave?.()}
+      onLeaveVoice={() => void leaveChannel()}
       onOpenSettings={() => setView("user-settings")}
     />
   );
@@ -317,10 +319,7 @@ export default function AppShell() {
                 ) : activeChannel ? (
                   activeChannel.type === "text"
                     ? <ChatView channel={activeChannel} members={members} />
-                    : <VoiceView
-                        channel={activeChannel}
-                        onConnectionChange={(ch, api) => setVoiceConn({ channel: ch, api })}
-                      />
+                    : <VoiceView channel={activeChannel} />
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
                     <div className="hex-frame w-24 h-24 flex items-center justify-center bg-primary/10 animate-pulse">
