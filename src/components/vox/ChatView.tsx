@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Hash, Send, Trash2, Lock, LockOpen } from "lucide-react";
+import { Hash, Send, Trash2, Lock, LockOpen, Paperclip, X, FileDown, Loader2 } from "lucide-react";
+import { uploadAttachment, type UploadedAttachment } from "@/lib/uploadAttachment";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -13,6 +14,14 @@ import { encryptMessage, decryptMessage, isEncrypted, getPassphrase, setPassphra
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
+interface Attachment {
+  url: string;
+  name: string;
+  mime: string;
+  size: number;
+  kind: "image" | "video" | "file";
+}
+
 interface Msg {
   id: string;
   channel_id: string;
@@ -20,6 +29,47 @@ interface Msg {
   content: string;
   created_at: string;
   edited_at: string | null;
+  attachments?: Attachment[] | null;
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function AttachmentList({ items }: { items: Attachment[] }) {
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-2">
+      {items.map((a, i) =>
+        a.kind === "image" ? (
+          <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block">
+            <img
+              src={a.url}
+              alt={a.name}
+              loading="lazy"
+              className="max-h-64 max-w-[min(420px,100%)] object-contain border border-primary/25 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+            />
+          </a>
+        ) : a.kind === "video" ? (
+          <video key={i} src={a.url} controls className="max-h-64 max-w-[min(420px,100%)] border border-primary/25" />
+        ) : (
+          <a
+            key={i}
+            href={a.url}
+            target="_blank"
+            rel="noreferrer"
+            download={a.name}
+            className="flex items-center gap-2 px-3 py-2 bg-[hsl(222_42%_9%)] border border-primary/30 hover:border-primary/70 text-primary transition-colors [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+          >
+            <FileDown className="w-4 h-4 shrink-0" />
+            <span className="text-xs font-mono truncate max-w-[220px]">{a.name}</span>
+            <span className="text-[10px] font-display tracking-widest uppercase text-muted-foreground">{formatSize(a.size)}</span>
+          </a>
+        ),
+      )}
+    </div>
+  );
 }
 
 interface ProfileLite { user_id: string; display_name: string | null; avatar_url: string | null; }
@@ -33,6 +83,9 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
   const [e2eeOpen, setE2eeOpen] = useState(false);
   const [passInput, setPassInput] = useState("");
   const [hasKey, setHasKey] = useState<boolean>(() => !!getPassphrase(channel.guild_id));
+  const [pending, setPending] = useState<UploadedAttachment[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,11 +149,35 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
   };
 
   const send = async () => {
-    if (!input.trim() || !user) return;
-    const content = hasKey ? await encryptMessage(channel.guild_id, input.trim()) : input.trim();
+    if ((!input.trim() && pending.length === 0) || !user) return;
+    const raw = input.trim();
+    const content = raw && hasKey ? await encryptMessage(channel.guild_id, raw) : raw;
+    const attachments = pending;
     setInput("");
-    const { error } = await supabase.from("vox_messages").insert({ channel_id: channel.id, author_id: user.id, content });
+    setPending([]);
+    const { error } = await supabase.from("vox_messages").insert({
+      channel_id: channel.id,
+      author_id: user.id,
+      content,
+      attachments: attachments as any,
+    });
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+  };
+
+  const pickFiles = async (files: FileList | null) => {
+    if (!files?.length || !user) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const up = await uploadAttachment(file, user.id);
+        setPending((p) => [...p, up]);
+      }
+    } catch (e) {
+      toast({ title: "Nahrání selhalo", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   const deleteMsg = async (id: string) => {
@@ -190,7 +267,10 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                     </button>
                   )
                 ) : (
-                  <div className="text-sm whitespace-pre-wrap break-words text-foreground/95">{m.content}</div>
+                  m.content && <div className="text-sm whitespace-pre-wrap break-words text-foreground/95">{m.content}</div>
+                )}
+                {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+                  <AttachmentList items={m.attachments as Attachment[]} />
                 )}
               </div>
               {mine && (
@@ -209,7 +289,29 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
       </div>
 
       <div className="px-3 pb-3 pt-2">
+        {pending.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {pending.map((a, i) => (
+              <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[hsl(222_42%_9%)] border border-primary/30 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]">
+                {a.kind === "image" && <img src={a.url} alt="" className="w-8 h-8 object-cover" />}
+                <span className="text-[11px] font-mono truncate max-w-[160px] text-primary/90">{a.name}</span>
+                <button onClick={() => setPending((p) => p.filter((_, x) => x !== i))} className="text-muted-foreground hover:text-destructive">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input ref={fileRef} type="file" multiple hidden onChange={(e) => void pickFiles(e.target.files)} />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title="Přiložit soubor"
+            className="h-[52px] w-12 shrink-0 flex items-center justify-center bg-[hsl(222_42%_9%)] border border-primary/30 text-primary hover:border-primary/70 hover:bg-primary/10 transition-colors disabled:opacity-50 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+          </button>
           <div className="tx-bar flex-1 flex items-end gap-2 px-4 py-2.5">
             <span className="font-display text-[10px] tracking-[0.28em] uppercase text-primary/70 pb-2 shrink-0">TX &gt;</span>
             <Textarea
@@ -228,7 +330,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
           </div>
           <button
             onClick={send}
-            disabled={!input.trim()}
+            disabled={!input.trim() && pending.length === 0}
             title="Odeslat paket"
             className="tx-send h-[52px] w-16 shrink-0 flex items-center justify-center text-primary"
           >
