@@ -95,7 +95,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
       const { data } = await supabase.from("vox_messages")
         .select("*").eq("channel_id", channel.id).order("created_at", { ascending: true }).limit(200);
       if (mounted && data) {
-        setMessages(data as Msg[]);
+        setMessages(data as unknown as Msg[]);
         loadProfiles(data.map((m: any) => m.author_id));
       }
     })();
