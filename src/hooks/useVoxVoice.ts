@@ -48,9 +48,15 @@ export function useVoxVoice(channelId: string | null) {
   const [deafened, setDeafened] = useState(false);
   const [remotes, setRemotes] = useState<Record<string, RemotePeer>>({});
   const [selfLevel, setSelfLevel] = useState(0);
+  const [videoOn, setVideoOn] = useState(false);
+  const [screenOn, setScreenOn] = useState(false);
+  const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null);
 
   const rawStreamRef = useRef<MediaStream | null>(null);        // raw mic (for metering)
   const localStreamRef = useRef<MediaStream | null>(null);      // processed (published to peers)
+  const camStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const extraTracksRef = useRef<MediaStreamTrack[]>([]);        // camera / screen video published to peers
   const gainNodeRef = useRef<GainNode | null>(null);
   const vadGainRef = useRef<GainNode | null>(null);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
@@ -186,6 +192,10 @@ export function useVoxVoice(channelId: string | null) {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => pc.addTrack(t, localStreamRef.current!));
     }
+    // Publish camera / screen video tracks (if any) on the same stream id.
+    extraTracksRef.current.forEach((t) => {
+      try { pc.addTrack(t, localStreamRef.current ?? new MediaStream([t])); } catch { /* noop */ }
+    });
 
     pc.ontrack = (ev) => {
       const stream = ev.streams[0] ?? new MediaStream([ev.track]);
@@ -445,6 +455,14 @@ export function useVoxVoice(channelId: string | null) {
     remoteMetersRef.current = {};
     rawStreamRef.current?.getTracks().forEach((t) => t.stop());
     if (localStreamRef.current !== rawStreamRef.current) localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    camStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    camStreamRef.current = null;
+    screenStreamRef.current = null;
+    extraTracksRef.current = [];
+    setLocalVideoStream(null);
+    setVideoOn(false);
+    setScreenOn(false);
     rawStreamRef.current = null;
     localStreamRef.current = null;
     gainNodeRef.current = null;
@@ -499,6 +517,87 @@ export function useVoxVoice(channelId: string | null) {
     });
   }, [muted, toggleMute, user, channelId]);
 
+  /** Force a fresh offer/answer round on every peer so new tracks get published. */
+  const renegotiateAll = useCallback(() => {
+    if (!user) return;
+    Object.keys(peersRef.current).forEach((rid) => {
+      if (user.id < rid) {
+        stopRemotePeer(rid, false);
+        createPeer(rid, true);
+      } else {
+        channelRef.current?.send({ type: "broadcast", event: "renegotiate", payload: { from: user.id, to: rid } });
+      }
+    });
+  }, [user, createPeer]);
+
+  const syncLocalVideo = () => {
+    const tracks = extraTracksRef.current;
+    setLocalVideoStream(tracks.length ? new MediaStream(tracks) : null);
+  };
+
+  const addVideoTracks = (tracks: MediaStreamTrack[]) => {
+    extraTracksRef.current = [...extraTracksRef.current, ...tracks];
+    syncLocalVideo();
+    renegotiateAll();
+  };
+
+  const removeVideoTracks = (tracks: MediaStreamTrack[]) => {
+    const ids = new Set(tracks.map((t) => t.id));
+    extraTracksRef.current = extraTracksRef.current.filter((t) => !ids.has(t.id));
+    tracks.forEach((t) => { try { t.stop(); } catch { /* noop */ } });
+    syncLocalVideo();
+    renegotiateAll();
+  };
+
+  const stopVideo = useCallback(() => {
+    const s = camStreamRef.current;
+    camStreamRef.current = null;
+    setVideoOn(false);
+    if (s) removeVideoTracks(s.getVideoTracks());
+  }, [renegotiateAll]);
+
+  const startVideo = useCallback(async () => {
+    if (camStreamRef.current || !connectedRef.current) return;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      camStreamRef.current = s;
+      s.getVideoTracks().forEach((t) => { t.onended = () => stopVideo(); });
+      setVideoOn(true);
+      addVideoTracks(s.getVideoTracks());
+    } catch (e) {
+      console.error("Kamera nedostupná", e);
+    }
+  }, [renegotiateAll, stopVideo]);
+
+  const toggleVideo = useCallback(() => {
+    if (camStreamRef.current) stopVideo(); else void startVideo();
+  }, [startVideo, stopVideo]);
+
+  const stopScreen = useCallback(() => {
+    const s = screenStreamRef.current;
+    screenStreamRef.current = null;
+    setScreenOn(false);
+    if (s) removeVideoTracks(s.getTracks());
+  }, [renegotiateAll]);
+
+  const startScreen = useCallback(async () => {
+    if (screenStreamRef.current || !connectedRef.current) return;
+    try {
+      const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      screenStreamRef.current = s;
+      s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
+      setScreenOn(true);
+      addVideoTracks(s.getVideoTracks());
+    } catch (e) {
+      console.error("Sdílení obrazovky selhalo", e);
+    }
+  }, [renegotiateAll, stopScreen]);
+
+  const toggleScreen = useCallback(() => {
+    if (screenStreamRef.current) stopScreen(); else void startScreen();
+  }, [startScreen, stopScreen]);
+
+
   // Re-apply per-user local audio prefs (volume/mute) when they change.
   useEffect(() => {
     const apply = () => {
@@ -515,5 +614,8 @@ export function useVoxVoice(channelId: string | null) {
   useEffect(() => () => { void leave(); }, [leave]);
 
 
-  return { connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen };
+  return {
+    connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen,
+    videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
+  };
 }

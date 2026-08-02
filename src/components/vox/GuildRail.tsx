@@ -82,33 +82,33 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
 
 
 
-        <div className="flex items-center gap-3 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onCreate}
-                className="w-11 h-11 hex-frame flex items-center justify-center bg-secondary/50 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-400/40 transition-all hover:shadow-[0_0_16px_hsl(160_84%_45%/0.5)]"
-                aria-label="Vytvořit sektor"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="holo-context-menu text-xs uppercase tracking-wider">Vytvořit sektor</TooltipContent>
-          </Tooltip>
+        {/* Unikátní Voxar akční tlačítka — ostré zkosené hrany, bez vnějšího glow */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={onCreate}
+            aria-label="Vytvořit sektor"
+            className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-emerald-400/45 text-emerald-300 hover:bg-emerald-500/12 hover:border-emerald-400/80 transition-colors [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+          >
+            <span className="w-4 h-4 border border-emerald-400/70 rotate-45 flex items-center justify-center">
+              <Plus className="w-3 h-3 -rotate-45" />
+            </span>
+            <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
+              Nový<br />sektor
+            </span>
+          </button>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onJoin}
-                className="w-11 h-11 hex-frame flex items-center justify-center bg-secondary/50 hover:bg-primary/25 text-primary border border-primary/40 transition-all hover:shadow-[0_0_16px_hsl(var(--primary)/0.5)]"
-                aria-label="Připojit přes kód"
-              >
-                <Compass className="w-5 h-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="holo-context-menu text-xs uppercase tracking-wider">Připojit přes pozvánku</TooltipContent>
-          </Tooltip>
+          <button
+            onClick={onJoin}
+            aria-label="Připojit přes kód"
+            className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-primary/45 text-primary hover:bg-primary/12 hover:border-primary/80 transition-colors [clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,10px_100%,0_calc(100%-10px))]"
+          >
+            <Compass className="w-4 h-4" />
+            <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
+              Vstup<br />kódem
+            </span>
+          </button>
         </div>
+
       </div>
     </TooltipProvider>
   );
