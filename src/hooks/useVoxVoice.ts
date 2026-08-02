@@ -614,5 +614,8 @@ export function useVoxVoice(channelId: string | null) {
   useEffect(() => () => { void leave(); }, [leave]);
 
 
-  return { connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen };
+  return {
+    connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen,
+    videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
+  };
 }
