@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { localAudio } from "@/lib/localAudio";
+import { toast } from "@/hooks/use-toast";
 
 
 interface RemotePeer {
