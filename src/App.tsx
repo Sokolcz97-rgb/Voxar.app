@@ -59,7 +59,6 @@ import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { VoiceCallProvider } from "@/contexts/VoiceCallContext";
-import { VoiceOverlay } from "@/components/vox/VoiceOverlay";
 import { useLocation } from "react-router-dom";
 import { DesktopRouteGuard } from "@/components/DesktopRouteGuard";
 import { AppAccessGate } from "@/components/vox/AppAccessGate";
@@ -147,7 +146,6 @@ const App = () => (
                 <AppRoutes />
                 <InlineEditorChrome />
                 <WebAIHelper />
-                <VoiceOverlay />
                 <ShortcutsHelp />
               </InlineEditorProvider>
               </VoiceCallProvider>

@@ -19,6 +19,7 @@ import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { DevConsole } from "@/components/vox/DevConsole";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
+import { CallDock } from "@/components/vox/CallDock";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { Loader2 } from "lucide-react";
@@ -295,6 +296,11 @@ export default function AppShell() {
                     onOpenServerSettings={() => setView("server-settings")}
                   />
                 </div>
+                {voiceConn && (
+                  <div className="holo-pod shrink-0 overflow-hidden">
+                    <CallDock compact />
+                  </div>
+                )}
                 <div className="holo-pod holo-float holo-float-delayed shrink-0 overflow-hidden">
                   {selfPanel}
                 </div>

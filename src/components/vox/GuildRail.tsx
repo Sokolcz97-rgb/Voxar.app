@@ -1,4 +1,4 @@
-import { Plus, Compass } from "lucide-react";
+import { Hexagon, Network } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import voxLogo from "@/assets/vox-logo.png.asset.json";
@@ -89,9 +89,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
             aria-label="Vytvořit sektor"
             className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-emerald-400/45 text-emerald-300 hover:bg-emerald-500/12 hover:border-emerald-400/80 transition-colors [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
           >
-            <span className="w-4 h-4 border border-emerald-400/70 rotate-45 flex items-center justify-center">
-              <Plus className="w-3 h-3 -rotate-45" />
-            </span>
+            <Hexagon className="w-4 h-4" strokeWidth={1.5} />
             <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
               Nový<br />sektor
             </span>
@@ -102,7 +100,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
             aria-label="Připojit přes kód"
             className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-primary/45 text-primary hover:bg-primary/12 hover:border-primary/80 transition-colors [clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,10px_100%,0_calc(100%-10px))]"
           >
-            <Compass className="w-4 h-4" />
+            <Network className="w-4 h-4" strokeWidth={1.5} />
             <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
               Vstup<br />kódem
             </span>
