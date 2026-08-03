@@ -611,7 +611,12 @@ export function useVoxVoice(channelId: string | null) {
     return localAudio.subscribe(apply);
   }, [remotes]);
 
-  useEffect(() => () => { void leave(); }, [leave]);
+  // Unmount-only cleanup. Must NOT depend on `leave` — its identity changes on
+  // every channel/state change, which previously tore down the live call while
+  // the user was simply navigating between channels.
+  const leaveRef = useRef(leave);
+  leaveRef.current = leave;
+  useEffect(() => () => { void leaveRef.current(); }, []);
 
 
   return {
