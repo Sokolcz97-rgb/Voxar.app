@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2, MicOff, PhoneOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { VoxChannel } from "./ChannelSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
+import { CallDock } from "./CallDock";
 
 interface Participant {
   user_id: string;
@@ -13,6 +14,37 @@ interface Participant {
   is_deafened: boolean;
   display_name?: string | null;
   avatar_url?: string | null;
+}
+
+/** Grid column count based on participant tiles (1x1, 2x2, 3x3 …). */
+function gridCols(n: number) {
+  if (n <= 1) return "grid-cols-1";
+  if (n <= 4) return "grid-cols-1 sm:grid-cols-2";
+  if (n <= 9) return "grid-cols-2 lg:grid-cols-3";
+  return "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+}
+
+function VideoTile({ stream, label, mirrored }: { stream: MediaStream; label: string; mirrored?: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (ref.current && ref.current.srcObject !== stream) ref.current.srcObject = stream;
+  }, [stream]);
+  return (
+    <div className="relative aspect-video bg-[hsl(222_40%_5%)] border border-primary/30 overflow-hidden [clip-path:polygon(14px_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%,0_14px)]">
+      {/* Local element is always muted — prevents microphone echo. */}
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        muted
+        className={cn("w-full h-full object-cover", mirrored && "scale-x-[-1]")}
+      />
+      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-[hsl(222_42%_5%/0.8)] flex items-center gap-1.5">
+        <span className="w-1 h-1 bg-emerald-400" />
+        <span className="text-[9px] font-display tracking-[0.24em] uppercase text-primary/90 truncate">{label}</span>
+      </div>
+    </div>
+  );
 }
 
 export function VoiceView({ channel }: { channel: VoxChannel }) {
@@ -41,6 +73,23 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [channel.id]);
 
+  const nameOf = (uid: string) => {
+    const p = participants.find((x) => x.user_id === uid);
+    return p?.display_name || uid.slice(0, 8);
+  };
+
+  const remoteVideos = joinedHere
+    ? Object.values(api.remotes)
+        .filter((r: any) => r.stream && r.stream.getVideoTracks().length > 0)
+        .map((r: any) => ({ id: r.userId as string, stream: r.stream as MediaStream }))
+    : [];
+  const videoTiles = [
+    ...(joinedHere && api.localVideoStream
+      ? [{ id: "self", stream: api.localVideoStream, label: "TY", mirrored: api.videoOn && !api.screenOn }]
+      : []),
+    ...remoteVideos.map((r) => ({ id: r.id, stream: r.stream, label: nameOf(r.id), mirrored: false })),
+  ];
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       <div className="h-12 px-4 flex items-center gap-2.5 border-b border-primary/20 bg-primary/5">
@@ -52,6 +101,14 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
+        {videoTiles.length > 0 && (
+          <div className={cn("grid gap-3 mb-6", gridCols(videoTiles.length))}>
+            {videoTiles.map((t) => (
+              <VideoTile key={t.id} stream={t.stream} label={t.label} mirrored={t.mirrored} />
+            ))}
+          </div>
+        )}
+
         {participants.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center gap-4">
             <div className="hex-frame w-24 h-24 flex items-center justify-center bg-primary/10">
@@ -65,7 +122,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+          <div className={cn("grid gap-4 max-w-5xl mx-auto", gridCols(participants.length))}>
             {participants.map((p) => {
               const isMe = p.user_id === user?.id;
               const level = isMe ? api.selfLevel : (api.remotes[p.user_id]?.level ?? 0);
@@ -108,23 +165,28 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
         )}
       </div>
 
-      <div className="p-4 border-t border-primary/15 flex items-center justify-center gap-3">
-        {!joinedHere ? (
-          <Button
-            onClick={() => void joinChannel(channel)}
-            size="lg"
-            className="gap-2 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 font-display tracking-widest uppercase text-xs"
-          >
-            <Phone className="w-4 h-4" /> PŘIPOJIT LINK
-          </Button>
+      <div className="border-t border-primary/15">
+        {joinedHere ? (
+          <CallDock />
         ) : (
-          <Button
-            onClick={() => void leaveChannel()}
-            size="lg"
-            className="gap-2 bg-destructive/15 hover:bg-destructive/30 text-destructive border border-destructive/50 font-display tracking-widest uppercase text-xs"
-          >
-            <PhoneOff className="w-4 h-4" /> ODPOJIT
-          </Button>
+          <div className="p-4 flex items-center justify-center gap-3">
+            <Button
+              onClick={() => void joinChannel(channel)}
+              size="lg"
+              className="gap-2 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 font-display tracking-widest uppercase text-xs"
+            >
+              <Phone className="w-4 h-4" /> PŘIPOJIT LINK
+            </Button>
+            {api.connected && (
+              <Button
+                onClick={() => void leaveChannel()}
+                size="lg"
+                className="gap-2 bg-destructive/15 hover:bg-destructive/30 text-destructive border border-destructive/50 font-display tracking-widest uppercase text-xs"
+              >
+                <PhoneOff className="w-4 h-4" /> ODPOJIT
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>
