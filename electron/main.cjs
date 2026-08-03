@@ -9,6 +9,7 @@ const {
   Notification,
   shell,
   session,
+  desktopCapturer,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -496,9 +497,24 @@ async function runLauncherSequence() {
 
 app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
-    const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen"];
+    const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen", "display-capture"];
     cb(allowed.includes(permission));
   });
+
+  // Screen sharing (getDisplayMedia) — Electron vyžaduje vlastní handler,
+  // jinak volání v rendereru tiše selže.
+  if (typeof session.defaultSession.setDisplayMediaRequestHandler === "function") {
+    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+      try {
+        const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
+        if (!sources.length) return callback(null);
+        callback({ video: sources[0], audio: "loopback" });
+      } catch (e) {
+        console.error("[display-capture] failed", e);
+        callback(null);
+      }
+    }, { useSystemPicker: true });
+  }
 
   // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
   const { suspicious, prev } = rollback.recordStartAttempt();

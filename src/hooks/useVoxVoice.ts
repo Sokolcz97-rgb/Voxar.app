@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { localAudio } from "@/lib/localAudio";
+import { toast } from "@/hooks/use-toast";
 
 
 interface RemotePeer {
@@ -583,13 +584,27 @@ export function useVoxVoice(channelId: string | null) {
   const startScreen = useCallback(async () => {
     if (screenStreamRef.current || !connectedRef.current) return;
     try {
-      const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error("getDisplayMedia není v tomto prostředí dostupné");
+      }
+      const s = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 30 } },
+        audio: false,
+      });
       screenStreamRef.current = s;
       s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
       setScreenOn(true);
       addVideoTracks(s.getVideoTracks());
     } catch (e) {
-      console.error("Sdílení obrazovky selhalo", e);
+      const err = e as Error;
+      console.error("Sdílení obrazovky selhalo", err);
+      if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
+        toast({
+          title: "Sdílení obrazovky selhalo",
+          description: err?.message || "Zdroj obrazovky se nepodařilo získat.",
+          variant: "destructive",
+        });
+      }
     }
   }, [renegotiateAll, stopScreen]);
 
@@ -611,7 +626,12 @@ export function useVoxVoice(channelId: string | null) {
     return localAudio.subscribe(apply);
   }, [remotes]);
 
-  useEffect(() => () => { void leave(); }, [leave]);
+  // Unmount-only cleanup. Must NOT depend on `leave` — its identity changes on
+  // every channel/state change, which previously tore down the live call while
+  // the user was simply navigating between channels.
+  const leaveRef = useRef(leave);
+  leaveRef.current = leave;
+  useEffect(() => () => { void leaveRef.current(); }, []);
 
 
   return {

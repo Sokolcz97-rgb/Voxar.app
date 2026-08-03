@@ -100,7 +100,7 @@ export function AIHelperHolo() {
   return (
     <>
       {!open && (
-        <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-40 group" aria-label={t("ai.open")}>
+        <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-[9999] group" aria-label={t("ai.open")}>
           <div className="relative">
             <div className="absolute inset-0 hex-frame bg-primary/35 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
             <div className="absolute -inset-3 hex-ring opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -115,7 +115,7 @@ export function AIHelperHolo() {
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-40 w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col holo-context-menu overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-[9999] w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col holo-context-menu overflow-hidden">
           <div className="relative flex items-center justify-between p-4 border-b border-primary/25 bg-gradient-to-r from-primary/12 via-primary/5 to-transparent">
             <div className="absolute top-0 left-0 w-10 h-px bg-primary/70" />
             <div className="absolute top-0 left-0 w-px h-10 bg-primary/70" />
