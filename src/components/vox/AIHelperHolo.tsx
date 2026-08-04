@@ -242,6 +242,6 @@ export function AIHelperHolo() {
         </div>
       )}
     </>,
-    document.body
+    host
   );
 }
