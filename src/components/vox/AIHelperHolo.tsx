@@ -98,26 +98,27 @@ export function AIHelperHolo() {
   };
   const clearChat = () => { setMessages([]); sessionStorage.removeItem(STORAGE_KEY); };
 
-  return (
+  return createPortal(
     <>
       {!open && (
-        <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-[9999] group" aria-label={t("ai.open")}>
-          <div className="relative">
-            <div className="absolute inset-0 hex-frame bg-primary/35 blur-2xl group-hover:bg-primary/60 transition-all animate-pulse" />
-            <div className="absolute -inset-3 hex-ring opacity-60 group-hover:opacity-100 transition-opacity" />
-            <div className="relative hex-frame w-16 h-16 bg-[hsl(222_40%_7%)] border border-primary/50 flex items-center justify-center shadow-[0_0_28px_hsl(var(--primary)/0.55)] group-hover:scale-110 transition-transform">
-              <img src={voxLogo.url} alt="" className="w-9 h-9 object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.8)]" />
-            </div>
-            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-display tracking-[0.3em] uppercase text-primary/80 whitespace-nowrap">
-              STUDIOVOXARIO // AI
-            </div>
-          </div>
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-5 right-5 z-[9999] group flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-[hsl(222_40%_7%/0.92)] border border-primary/45 backdrop-blur-md shadow-[0_0_22px_hsl(var(--primary)/0.35)] hover:border-primary/80 hover:shadow-[0_0_32px_hsl(var(--primary)/0.55)] transition-all [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)]"
+          aria-label={t("ai.open")}
+        >
+          <span className="hex-frame w-8 h-8 bg-primary/12 border border-primary/50 flex items-center justify-center shrink-0">
+            <img src={voxLogo.url} alt="" className="w-5 h-5 object-contain" />
+          </span>
+          <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/90 whitespace-nowrap">
+            Studiovoxario AI
+          </span>
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-[9999] w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col holo-context-menu overflow-hidden">
+        <div className="fixed bottom-5 right-5 z-[9999] w-[min(420px,calc(100vw-2.5rem))] max-h-[calc(100vh-2.5rem)] h-[min(560px,calc(100vh-2.5rem))] flex flex-col holo-context-menu overflow-hidden">
           <div className="relative flex items-center justify-between p-4 border-b border-primary/25 bg-gradient-to-r from-primary/12 via-primary/5 to-transparent">
+
             <div className="absolute top-0 left-0 w-10 h-px bg-primary/70" />
             <div className="absolute top-0 left-0 w-px h-10 bg-primary/70" />
             <div className="flex items-center gap-2.5">
