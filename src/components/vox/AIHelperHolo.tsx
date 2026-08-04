@@ -21,8 +21,29 @@ const STORAGE_KEY = "voxapp_ai_chat";
  * Holographic HUD variant of the AI helper for the /app desktop shell.
  * Web (marketing) uses the classic `AIHelper` — keep visuals separate.
  */
+/** `body` has `overflow-x: clip`, which makes it a containing block for
+ *  fixed children — that pushed the widget to the document bottom. Mounting
+ *  the portal host on <html> restores true viewport-fixed positioning. */
+function useOverlayHost() {
+  const [host] = useState(() => {
+    const el = document.createElement("div");
+    el.setAttribute("data-ai-overlay-host", "");
+    el.style.position = "fixed";
+    el.style.inset = "0";
+    el.style.zIndex = "2147483647";
+    el.style.pointerEvents = "none";
+    return el;
+  });
+  useEffect(() => {
+    document.documentElement.appendChild(host);
+    return () => { host.remove(); };
+  }, [host]);
+  return host;
+}
+
 export function AIHelperHolo() {
   const { t } = useTranslation();
+  const host = useOverlayHost();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
@@ -103,7 +124,7 @@ export function AIHelperHolo() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-[9999] group flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-[hsl(222_40%_7%/0.92)] border border-primary/45 backdrop-blur-md shadow-[0_0_22px_hsl(var(--primary)/0.35)] hover:border-primary/80 hover:shadow-[0_0_32px_hsl(var(--primary)/0.55)] transition-all [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)]"
+          className="pointer-events-auto fixed bottom-5 right-5 group flex items-center gap-2 pl-2.5 pr-3.5 py-2 bg-[hsl(222_40%_7%/0.72)] border border-primary/45 backdrop-blur-xl shadow-[0_0_22px_hsl(var(--primary)/0.35)] hover:border-primary/80 hover:shadow-[0_0_32px_hsl(var(--primary)/0.55)] transition-all [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)]"
           aria-label={t("ai.open")}
         >
           <span className="hex-frame w-8 h-8 bg-primary/12 border border-primary/50 flex items-center justify-center shrink-0">
@@ -116,7 +137,14 @@ export function AIHelperHolo() {
       )}
 
       {open && (
-        <div className="fixed bottom-5 right-5 z-[9999] w-[min(420px,calc(100vw-2.5rem))] max-h-[calc(100vh-2.5rem)] h-[min(560px,calc(100vh-2.5rem))] flex flex-col holo-context-menu overflow-hidden">
+        <div
+          style={{
+            background: "linear-gradient(160deg, hsl(220 55% 7% / 0.62), hsl(230 65% 4% / 0.7))",
+            backdropFilter: "blur(26px) saturate(170%)",
+            WebkitBackdropFilter: "blur(26px) saturate(170%)",
+          }}
+          className="pointer-events-auto fixed bottom-5 right-5 w-[min(420px,calc(100vw-2.5rem))] max-h-[calc(100vh-2.5rem)] h-[min(560px,calc(100vh-2.5rem))] flex flex-col holo-context-menu overflow-hidden"
+        >
           <div className="relative flex items-center justify-between p-4 border-b border-primary/25 bg-gradient-to-r from-primary/12 via-primary/5 to-transparent">
 
             <div className="absolute top-0 left-0 w-10 h-px bg-primary/70" />
@@ -214,6 +242,6 @@ export function AIHelperHolo() {
         </div>
       )}
     </>,
-    document.body
+    host
   );
 }
