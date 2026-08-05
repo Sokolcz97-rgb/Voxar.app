@@ -4,6 +4,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   isDesktop: true,
   platform: process.platform,
+  // Screen sharing: vlastní HUD picker v aplikaci.
+  getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
+  selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),
+
   arch: process.arch,
   electronVersion: process.versions.electron,
   chromeVersion: process.versions.chrome,

@@ -270,7 +270,36 @@ ipcMain.handle("settings:unlock-beta", (_e, ok) => {
   }
   return { betaUnlocked: !!settings.betaUnlocked };
 });
+// ---- Screen / window capture -------------------------------------------
+// Renderer si zobrazí vlastní HUD picker; main proces jen dodá seznam zdrojů
+// (celé obrazovky + jednotlivá okna/hry) s náhledy.
+let pendingCaptureSourceId = null;
+ipcMain.handle("capture:sources", async () => {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ["screen", "window"],
+      thumbnailSize: { width: 320, height: 180 },
+      fetchWindowIcons: true,
+    });
+    return sources.map((s) => ({
+      id: s.id,
+      name: s.name,
+      type: s.id.startsWith("screen:") ? "screen" : "window",
+      thumbnail: s.thumbnail?.toDataURL?.() || null,
+      appIcon: s.appIcon && !s.appIcon.isEmpty?.() ? s.appIcon.toDataURL() : null,
+    }));
+  } catch (e) {
+    console.error("[capture:sources] failed", e);
+    return [];
+  }
+});
+ipcMain.handle("capture:select", (_e, id) => {
+  pendingCaptureSourceId = typeof id === "string" ? id : null;
+  return true;
+});
+
 ipcMain.handle("app:version", () => app.getVersion());
+
 ipcMain.handle("app:quit", () => {
   isQuitting = true;
   app.quit();
@@ -508,12 +537,18 @@ app.whenReady().then(async () => {
       try {
         const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
         if (!sources.length) return callback(null);
-        callback({ video: sources[0], audio: "loopback" });
+        const picked =
+          sources.find((s) => s.id === pendingCaptureSourceId) ||
+          sources.find((s) => s.id.startsWith("screen:")) ||
+          sources[0];
+        pendingCaptureSourceId = null;
+        callback({ video: picked, audio: "loopback" });
       } catch (e) {
         console.error("[display-capture] failed", e);
         callback(null);
       }
-    }, { useSystemPicker: true });
+    });
+
   }
 
   // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.

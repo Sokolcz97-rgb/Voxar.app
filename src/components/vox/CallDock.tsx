@@ -1,6 +1,9 @@
-import { Mic, MicOff, Headphones, HeadphoneOff, PhoneOff, Video, VideoOff, MonitorUp, MonitorX } from "lucide-react";
+import { useState } from "react";
+import { Mic, MicOff, Headphones, HeadphoneOff, PhoneOff, Video, VideoOff, MonitorUp, MonitorX, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
+import { ScreenSharePicker } from "./ScreenSharePicker";
+import { QUALITY_PRESETS, readVideoPrefs, isDesktopCapture, type QualityKey } from "@/lib/videoQuality";
 
 /**
  * Static, docked call controls. Never floats over the UI — it lives at the
@@ -8,7 +11,23 @@ import { useVoiceCall } from "@/contexts/VoiceCallContext";
  */
 export function CallDock({ compact = false }: { compact?: boolean }) {
   const { channel, api, leaveChannel } = useVoiceCall();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [quality, setQuality] = useState<QualityKey>(() => readVideoPrefs().camQuality);
+  const [qualityOpen, setQualityOpen] = useState(false);
   if (!api.connected || !channel) return null;
+
+  const onScreenClick = () => {
+    if (api.screenOn) { api.stopScreen(); return; }
+    if (isDesktopCapture()) setPickerOpen(true);
+    else void api.startScreen();
+  };
+
+  const pickQuality = (k: QualityKey) => {
+    setQuality(k);
+    setQualityOpen(false);
+    void api.applyCamQuality(k);
+  };
+
 
   const btn =
     "h-8 px-2.5 flex items-center justify-center gap-1.5 text-[9px] font-display tracking-[0.18em] uppercase border transition-colors [clip-path:polygon(7px_0,100%_0,100%_calc(100%-7px),calc(100%-7px)_100%,0_100%,0_7px)]";
@@ -50,7 +69,7 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           KAMERA
         </button>
         <button
-          onClick={api.toggleScreen}
+          onClick={onScreenClick}
           className={cn(btn, api.screenOn
             ? "border-emerald-400/50 text-emerald-300 bg-emerald-500/10"
             : "border-primary/35 text-primary hover:bg-primary/10")}
@@ -58,6 +77,30 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           {api.screenOn ? <MonitorX className="w-3.5 h-3.5" /> : <MonitorUp className="w-3.5 h-3.5" />}
           SDÍLET
         </button>
+        <div className="relative">
+          <button
+            onClick={() => setQualityOpen((o) => !o)}
+            className={cn(btn, "w-full border-primary/35 text-primary hover:bg-primary/10")}
+          >
+            <Gauge className="w-3.5 h-3.5" /> {quality.toUpperCase()}
+          </button>
+          {qualityOpen && (
+            <div className="absolute bottom-full mb-1 left-0 right-0 z-50 border border-primary/35 bg-[hsl(222_42%_6%/0.98)] backdrop-blur-md">
+              {QUALITY_PRESETS.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => pickQuality(p.key)}
+                  className={cn(
+                    "w-full px-2 py-1.5 text-left font-display text-[9px] tracking-[0.18em] uppercase transition-colors",
+                    quality === p.key ? "text-emerald-300 bg-emerald-500/10" : "text-primary/80 hover:bg-primary/10",
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           onClick={() => void leaveChannel()}
           className={cn(btn, "col-span-2 sm:col-span-1 border-destructive/50 text-destructive hover:bg-destructive/15")}
@@ -65,6 +108,13 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           <PhoneOff className="w-3.5 h-3.5" /> ODPOJIT
         </button>
       </div>
+
+      <ScreenSharePicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={(id, q) => void api.startScreen(id, q)}
+      />
     </div>
   );
+
 }
