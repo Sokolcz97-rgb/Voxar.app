@@ -1408,45 +1408,37 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
    HUD APP — NEON OVERHAUL (app shell only, never public web)
    ============================================================ */
 @layer utilities {
-  /* --- Floating glass pods: brighter frame + real neon glow --- */
+  /* --- Floating glass pods: dark tinted glass + crisp neon edge --- */
   .hud-root .holo-pod {
     filter:
-      drop-shadow(0 0 8px hsl(184 100% 54% / 0.5))
-      drop-shadow(0 0 22px hsl(184 100% 54% / 0.18));
+      drop-shadow(0 0 6px hsl(184 100% 54% / 0.35))
+      drop-shadow(0 0 18px hsl(184 100% 54% / 0.12));
   }
   .hud-root .holo-pod::before {
-    background: linear-gradient(
-      135deg,
-      hsl(184 100% 60% / 0.95),
-      hsl(184 100% 54% / 0.55) 45%,
-      hsl(280 90% 65% / 0.85)
-    );
+    background: hsl(184 100% 58% / 0.5);
   }
   .hud-root .holo-pod::after {
-    inset: 1.5px;
-    background: linear-gradient(160deg, hsl(224 60% 6% / 0.42) 0%, hsl(240 60% 4% / 0.5) 100%);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    inset: 1px;
+    background: rgba(10, 15, 24, 0.82);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
   }
-  /* Right entity pod + center stream lean violet */
-  .hud-root .pod-right { filter: drop-shadow(0 0 8px hsl(280 90% 62% / 0.5)) drop-shadow(0 0 24px hsl(280 90% 62% / 0.18)); }
-  .hud-root .pod-right::before {
-    background: linear-gradient(200deg, hsl(280 92% 68% / 0.95), hsl(280 90% 60% / 0.5) 55%, hsl(184 100% 58% / 0.8));
-  }
+  /* Right entity pod leans violet */
+  .hud-root .pod-right { filter: drop-shadow(0 0 6px hsl(280 90% 62% / 0.35)) drop-shadow(0 0 18px hsl(280 90% 62% / 0.12)); }
+  .hud-root .pod-right::before { background: hsl(280 92% 66% / 0.5); }
   .hud-root .pod-center {
-    filter: drop-shadow(0 0 10px hsl(266 90% 62% / 0.4)) drop-shadow(0 0 26px hsl(184 100% 54% / 0.16));
+    filter: drop-shadow(0 0 6px hsl(184 100% 54% / 0.32)) drop-shadow(0 0 20px hsl(184 100% 54% / 0.1));
   }
-  .hud-root .pod-center::before {
-    background: linear-gradient(135deg, hsl(184 100% 60% / 0.85), hsl(266 90% 66% / 0.9));
-  }
+  .hud-root .pod-center::before { background: hsl(184 100% 58% / 0.5); }
   .hud-root .pod-center::after {
-    inset: 1.5px;
+    inset: 1px;
     background:
-      radial-gradient(ellipse 70% 55% at 22% 0%, hsl(200 95% 45% / 0.16), transparent 65%),
-      radial-gradient(ellipse 65% 60% at 92% 100%, hsl(275 90% 50% / 0.2), transparent 65%),
-      linear-gradient(165deg, hsl(224 60% 7% / 0.55) 0%, hsl(248 55% 5% / 0.6) 55%, hsl(268 55% 6% / 0.62) 100%);
+      radial-gradient(ellipse 60% 45% at 20% 0%, hsl(200 95% 45% / 0.07), transparent 70%),
+      radial-gradient(ellipse 55% 50% at 92% 100%, hsl(275 90% 50% / 0.08), transparent 70%),
+      rgba(10, 15, 24, 0.85);
   }
-  .hud-root .pod-self { filter: drop-shadow(0 0 7px hsl(184 100% 54% / 0.5)); }
+  .hud-root .pod-self { filter: drop-shadow(0 0 6px hsl(184 100% 54% / 0.35)); }
+
 
   /* --- Chat transmit bar: angled, translucent, glowing --- */
   .hud-root .tx-bar {
