@@ -351,7 +351,7 @@
   .hud-root .badge {
     border-radius: 0 !important;
   }
-  .hud-root button:not(.no-cut):not(.hud-hex):not([role="tab"]) {
+  .hud-root button:not(.no-cut):not(.hud-hex):not(.hud-btn-hex):not([role="tab"]) {
     --ch: 7px;
     clip-path: polygon(
       var(--ch) 0, 100% 0,
