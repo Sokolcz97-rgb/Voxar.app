@@ -332,7 +332,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
             onClick={send}
             disabled={!input.trim() && pending.length === 0}
             title="Odeslat paket"
-            className="tx-send h-[52px] w-16 shrink-0 flex items-center justify-center text-primary"
+            className="tx-send h-[62px] w-16 shrink-0 flex items-center justify-center text-primary"
           >
             <Send className="w-5 h-5 drop-shadow-[0_0_6px_hsl(var(--primary))]" />
           </button>
