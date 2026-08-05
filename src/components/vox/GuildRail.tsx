@@ -87,7 +87,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
           <button
             onClick={onCreate}
             aria-label="Vytvořit sektor"
-            className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-emerald-400/45 text-emerald-300 hover:bg-emerald-500/12 hover:border-emerald-400/80 transition-colors [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+            className="group relative h-11 pl-5 pr-5 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-emerald-400/45 text-emerald-300 hover:bg-emerald-500/12 hover:border-emerald-400/80 transition-colors hud-btn-hex"
           >
             <Hexagon className="w-4 h-4" strokeWidth={1.5} />
             <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
@@ -98,7 +98,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
           <button
             onClick={onJoin}
             aria-label="Připojit přes kód"
-            className="group relative h-11 pl-3 pr-4 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-primary/45 text-primary hover:bg-primary/12 hover:border-primary/80 transition-colors [clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,10px_100%,0_calc(100%-10px))]"
+            className="group relative h-11 pl-5 pr-5 flex items-center gap-2 bg-[hsl(222_42%_9%)] border border-primary/45 text-primary hover:bg-primary/12 hover:border-primary/80 transition-colors hud-btn-hex"
           >
             <Network className="w-4 h-4" strokeWidth={1.5} />
             <span className="hidden md:block font-display text-[10px] tracking-[0.26em] uppercase leading-none">
