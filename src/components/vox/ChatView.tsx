@@ -312,7 +312,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
           </button>
-          <div className="tx-bar flex-1 flex items-end gap-2 px-4 py-2.5">
+          <div className="tx-bar flex-1 flex items-end gap-3 px-5 py-3.5">
             <span className="font-display text-[10px] tracking-[0.28em] uppercase text-primary/70 pb-2 shrink-0">TX &gt;</span>
             <Textarea
               value={input}
@@ -321,7 +321,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
               placeholder={hasKey ? `Zašifrovaný paket do #${channel.name}` : `Vyslat paket do #${channel.name}`}
-              className="min-h-[36px] max-h-40 resize-none bg-transparent border-0 focus-visible:ring-0 p-0 text-sm"
+              className="min-h-[40px] max-h-40 resize-none bg-transparent border-0 hover:border-0 focus-visible:ring-0 focus-visible:border-0 p-0 font-sans text-sm leading-relaxed"
               rows={1}
             />
             <span className="hidden sm:block pb-2 text-[9px] font-display tracking-[0.28em] uppercase text-muted-foreground/60 shrink-0">
