@@ -1240,11 +1240,12 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
 @layer utilities {
   /* HUD composer: detached angled transmit bar + separate send pod */
   .tx-bar {
+    /* angled cut on the right side only */
     clip-path: polygon(
-      18px 0, 100% 0, 100% calc(100% - 18px),
-      calc(100% - 18px) 100%, 0 100%, 0 18px
+      0 0, calc(100% - 20px) 0, 100% 50%,
+      calc(100% - 20px) 100%, 0 100%
     );
-    background: linear-gradient(120deg, hsl(220 60% 8% / 0.85), hsl(230 70% 5% / 0.9));
+    background: linear-gradient(120deg, hsl(224 55% 8% / 0.88), hsl(248 55% 5% / 0.92));
     border: 1px solid hsl(184 100% 54% / 0.35);
     transition: box-shadow .25s ease, border-color .25s ease;
   }
