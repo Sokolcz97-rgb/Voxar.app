@@ -348,7 +348,7 @@ export default function AppShell() {
 
               {/* Right: ENTITY POD as its own column */}
               {view === "main" && (
-                <div className="holo-pod pod-right holo-float shrink-0 overflow-hidden hidden lg:flex mb-10">
+                <div className="holo-pod pod-right holo-float shrink-0 overflow-hidden hidden lg:flex">
                   <MemberList
                     members={members}
                     guildId={activeGuildId}
