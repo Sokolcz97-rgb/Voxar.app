@@ -282,7 +282,7 @@ export function MemberList({
         </div>
 
         {listOpen && (
-        <div className="p-3 space-y-4">
+        <div className="p-4 space-y-6">
           {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
           {orderedHoist.map((g) => renderGroup(g.role.name.toUpperCase(), g.list, `hoist-${g.role.id}`))}
           {renderGroup("ONLINE", onlineNoHoist, "online", statusColor.online)}
