@@ -242,6 +242,9 @@
       0 100%, 0 var(--ch)
     );
   }
+  /* zero-specificity so Tailwind's .fixed/.absolute on dialogs still wins */
+  :where(.hud-menu) { position: relative; }
+
   .hud-menu::before,
   .hud-menu::after {
     content: "";
