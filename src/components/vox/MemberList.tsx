@@ -95,7 +95,7 @@ function UserListItem({
       <li
         onClick={handleLeftClick}
         className={cn(
-          "group relative flex items-center gap-2.5 pl-3 pr-2 py-1.5 cursor-pointer",
+          "group relative flex items-center gap-3 pl-3.5 pr-2.5 py-2 cursor-pointer",
           "border-l-2 border-transparent transition-all duration-150",
           "hover:border-primary/70 hover:bg-primary/[0.07] hover:shadow-[inset_0_0_18px_hsl(var(--primary)/0.12)]",
           speaking && "border-emerald-400/80 bg-emerald-500/[0.07]",
