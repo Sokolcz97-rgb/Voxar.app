@@ -1403,3 +1403,135 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     text-transform: none;
   }
 }
+
+/* ============================================================
+   HUD APP — NEON OVERHAUL (app shell only, never public web)
+   ============================================================ */
+@layer utilities {
+  /* --- Floating glass pods: brighter frame + real neon glow --- */
+  .hud-root .holo-pod {
+    filter:
+      drop-shadow(0 0 8px hsl(184 100% 54% / 0.5))
+      drop-shadow(0 0 22px hsl(184 100% 54% / 0.18));
+  }
+  .hud-root .holo-pod::before {
+    background: linear-gradient(
+      135deg,
+      hsl(184 100% 60% / 0.95),
+      hsl(184 100% 54% / 0.55) 45%,
+      hsl(280 90% 65% / 0.85)
+    );
+  }
+  .hud-root .holo-pod::after {
+    inset: 1.5px;
+    background: linear-gradient(160deg, hsl(224 60% 6% / 0.42) 0%, hsl(240 60% 4% / 0.5) 100%);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+  /* Right entity pod + center stream lean violet */
+  .hud-root .pod-right { filter: drop-shadow(0 0 8px hsl(280 90% 62% / 0.5)) drop-shadow(0 0 24px hsl(280 90% 62% / 0.18)); }
+  .hud-root .pod-right::before {
+    background: linear-gradient(200deg, hsl(280 92% 68% / 0.95), hsl(280 90% 60% / 0.5) 55%, hsl(184 100% 58% / 0.8));
+  }
+  .hud-root .pod-center {
+    filter: drop-shadow(0 0 10px hsl(266 90% 62% / 0.4)) drop-shadow(0 0 26px hsl(184 100% 54% / 0.16));
+  }
+  .hud-root .pod-center::before {
+    background: linear-gradient(135deg, hsl(184 100% 60% / 0.85), hsl(266 90% 66% / 0.9));
+  }
+  .hud-root .pod-center::after {
+    inset: 1.5px;
+    background:
+      radial-gradient(ellipse 70% 55% at 22% 0%, hsl(200 95% 45% / 0.16), transparent 65%),
+      radial-gradient(ellipse 65% 60% at 92% 100%, hsl(275 90% 50% / 0.2), transparent 65%),
+      linear-gradient(165deg, hsl(224 60% 7% / 0.55) 0%, hsl(248 55% 5% / 0.6) 55%, hsl(268 55% 6% / 0.62) 100%);
+  }
+  .hud-root .pod-self { filter: drop-shadow(0 0 7px hsl(184 100% 54% / 0.5)); }
+
+  /* --- Chat transmit bar: angled, translucent, glowing --- */
+  .hud-root .tx-bar {
+    --ch: 14px;
+    clip-path: polygon(
+      var(--ch) 0, calc(100% - 20px) 0, 100% 50%,
+      calc(100% - 20px) 100%, var(--ch) 100%, 0 calc(100% - var(--ch)), 0 var(--ch)
+    );
+    background: linear-gradient(120deg, hsl(224 60% 8% / 0.5), hsl(248 60% 5% / 0.55));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsl(184 100% 58% / 0.55) !important;
+    box-shadow:
+      inset 0 0 18px hsl(184 100% 54% / 0.12),
+      0 0 10px hsl(184 100% 54% / 0.28) !important;
+  }
+  .hud-root .tx-bar:focus-within {
+    border-color: hsl(184 100% 65%) !important;
+    box-shadow:
+      inset 0 0 22px hsl(184 100% 54% / 0.2),
+      0 0 16px hsl(184 100% 54% / 0.55) !important;
+  }
+  .hud-root .tx-bar input,
+  .hud-root .tx-bar textarea {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    clip-path: none;
+  }
+  .hud-root .tx-send { filter: drop-shadow(0 0 8px hsl(184 100% 54% / 0.55)); }
+
+  /* --- Primary action buttons: chamfered + neon --- */
+  .hud-root .cyber-btn,
+  .hud-root .hud-btn-hex,
+  .hud-root button[type="submit"],
+  .hud-settings button[type="submit"] {
+    border: 1px solid hsl(184 100% 58% / 0.55);
+    box-shadow: inset 0 0 14px hsl(184 100% 54% / 0.12);
+    filter: drop-shadow(0 0 6px hsl(184 100% 54% / 0.45));
+  }
+  .hud-root .cyber-btn:hover,
+  .hud-root .hud-btn-hex:hover {
+    filter: drop-shadow(0 0 12px hsl(184 100% 54% / 0.75));
+    border-color: hsl(184 100% 68%);
+  }
+
+  /* --- Settings form (PŘEHLED): underline tactical fields --- */
+  .hud-settings input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  .hud-settings textarea {
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 2px solid hsl(184 100% 54% / 0.5) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    clip-path: none !important;
+    padding-left: 2px;
+    transition: border-color .16s ease, filter .16s ease;
+  }
+  .hud-settings input:focus,
+  .hud-settings input:focus-visible,
+  .hud-settings textarea:focus,
+  .hud-settings textarea:focus-visible {
+    outline: none !important;
+    background: transparent !important;
+    border-bottom-color: hsl(184 100% 65%) !important;
+    box-shadow: none !important;
+    filter: drop-shadow(0 0 5px hsl(184 100% 54% / 0.8));
+  }
+  .hud-settings input:hover,
+  .hud-settings textarea:hover { border-bottom-color: hsl(184 100% 60% / 0.8) !important; }
+  /* "Uložit" and other actions inside settings get the angled cut + glow */
+  .hud-settings button:not(.no-cut):not(.hud-hex):not(.hud-btn-hex):not([role="tab"]) {
+    --ch: 9px;
+    clip-path: polygon(
+      var(--ch) 0, 100% 0,
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
+      0 100%, 0 var(--ch)
+    );
+  }
+  .hud-settings aside { background: hsl(232 60% 5% / 0.45) !important; backdrop-filter: blur(12px); }
+  .hud-settings > div { background: transparent !important; }
+  .hud-settings { background: transparent !important; }
+
+  /* No stray web rounding anywhere structural in the HUD */
+  .hud-root [class*="rounded"]:is(.holo-pod, .tx-bar, .sector-node, aside, header, nav) {
+    border-radius: 0 !important;
+  }
+}
