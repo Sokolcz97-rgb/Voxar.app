@@ -85,94 +85,86 @@ const Index = () => {
       }}
     />
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated background layers */}
+      {/* Background layers (subtle) */}
       <div className="fixed inset-0 -z-10 gradient-hero" />
-      <div className="fixed inset-0 -z-10 neon-grid opacity-40" />
-      <div className="fixed top-1/4 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-[120px] animate-float-slow" />
-      <div className="fixed bottom-1/4 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-[120px] animate-float-slow" style={{ animationDelay: "2s" }} />
+      <div className="fixed inset-0 -z-10 neon-grid opacity-20" />
 
       <Navbar />
 
       <main>
         <AnnouncementBar />
         {/* HERO */}
-        <section className="container relative pt-24 pb-32">
+        <section className="container relative pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 web-panel">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 {settings.hero_badge || t("home.badge")}
               </span>
             </div>
 
-            <h1 className="font-display font-black text-5xl md:text-7xl lg:text-8xl mb-6 leading-[0.95]">
+            <h1 className="font-display font-black text-4xl md:text-5xl lg:text-7xl mb-5 leading-tight break-words">
               <span className="text-foreground">{settings.hero_title_1 || t("home.title1")}</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent text-glow">
+              <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
                 {settings.hero_title_2 || t("home.title2")}
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
+            <p className="web-copy text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
               {settings.hero_subtitle || t("home.subtitle")}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center flex-wrap">
               {user ? (
-                <Button size="xl" variant="hero" className="btn-3d" asChild>
+                <Button size="lg" variant="hero" className="web-cut w-full sm:w-auto" asChild>
                   <Link to="/dashboard">
                     {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
                 <>
-                  <Button size="xl" variant="hero" className="btn-3d" asChild>
+                  <Button size="lg" variant="hero" className="web-cut w-full sm:w-auto" asChild>
                     <Link to="/auth">
                       {t("home.signUp")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button size="xl" variant="outline" className="btn-3d" asChild>
+                  <Button size="lg" variant="outline" className="web-cut w-full sm:w-auto" asChild>
                     <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
               )}
               {discord && (
-                <Button
-                  size="xl"
-                  asChild
-                  className="btn-3d btn-3d-discord text-white"
-                >
+                <Button size="lg" variant="outline" className="web-cut w-full sm:w-auto" asChild>
                   <a href={discord.invite_url} target="_blank" rel="noreferrer">
                     <MessageCircle className="mr-1 h-4 w-4" />
                     {discord.name}
                   </a>
                 </Button>
               )}
-              <InviteBotButton size="xl" variant="outline" className="btn-3d" />
-
+              <InviteBotButton size="lg" variant="outline" className="web-cut w-full sm:w-auto" />
             </div>
 
             {/* Stats strip */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-16 sm:mt-20 max-w-3xl mx-auto">
-            {[
-              { value: String(stats.players), label: t("home.stats.players") },
-              { value: String(stats.streams), label: t("home.stats.streams") },
-              { value: String(registeredCount), label: t("home.stats.online") },
-              { value: String(visitorCount), label: t("home.stats.visitors") },
-            ].map((s) => (
-                <div key={s.label} className="premium-card rounded-xl p-4 sm:p-5">
-                  <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow relative">{s.value}</div>
-                  <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-1 relative leading-tight">{s.label}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-12 sm:mt-16 max-w-3xl mx-auto">
+              {[
+                { value: String(stats.players), label: t("home.stats.players") },
+                { value: String(stats.streams), label: t("home.stats.streams") },
+                { value: String(registeredCount), label: t("home.stats.online") },
+                { value: String(visitorCount), label: t("home.stats.visitors") },
+              ].map((s) => (
+                <div key={s.label} className="web-panel p-4 sm:p-5">
+                  <div className="font-display text-2xl md:text-3xl font-bold text-primary">{s.value}</div>
+                  <div className="web-copy text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
                 </div>
               ))}
             </div>
-
           </div>
         </section>
 
         {/* FEATURES */}
-        <section className="container pb-32">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <section className="container pb-16 sm:pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: Users, title: t("home.features.community.title"), desc: t("home.features.community.desc") },
               { icon: MessageSquare, title: t("home.features.dms.title"), desc: t("home.features.dms.desc") },
@@ -181,18 +173,19 @@ const Index = () => {
             ].map((f, i) => (
               <div
                 key={f.title}
-                className="group glass rounded-xl p-6 hover:border-primary/60 transition-all duration-300 hover:translate-y-[-4px] animate-fade-in"
-                style={{ animationDelay: `${i * 100}ms` }}
+                className={`group web-panel p-6 animate-fade-in ${i === 0 ? "web-cut web-panel-accent" : ""}`}
+                style={{ animationDelay: `${i * 80}ms` }}
               >
-                <div className="w-12 h-12 icon-cube-3d flex items-center justify-center mb-5">
+                <div className="w-10 h-10 flex items-center justify-center mb-4 border border-primary/25 text-primary">
                   <f.icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-display font-bold text-lg mb-1">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.desc}</p>
+                <h3 className="font-display font-bold text-lg mb-2">{f.title}</h3>
+                <p className="web-copy text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </section>
+
 
         {/* CAPABILITIES */}
         <CapabilitiesShowcase />
