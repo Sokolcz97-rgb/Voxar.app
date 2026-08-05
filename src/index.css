@@ -1215,3 +1215,60 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
   .tx-send:hover:not(:disabled) { filter: brightness(1.35); transform: translateX(2px); }
   .tx-send:disabled { opacity: .35; }
 }
+
+/* ============================================================
+   SCI-FI LITE — public website layer
+   Clean, readable, mobile-first. Low noise, sharp edges.
+   ============================================================ */
+@layer utilities {
+  /* Solid dark glass panel with a single 1px cyan hairline */
+  .web-panel {
+    background: hsl(0 0% 0% / 0.5);
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    border: 1px solid hsl(var(--primary) / 0.18);
+    border-radius: 0;
+    box-shadow: none;
+    transition: border-color .25s ease, transform .25s ease;
+  }
+  .web-panel:hover { border-color: hsl(var(--primary) / 0.45); }
+  .web-panel-accent { border-color: hsl(var(--accent) / 0.30); }
+  .web-panel-accent:hover { border-color: hsl(var(--accent) / 0.55); }
+
+  /* Chamfered corners — CTA buttons & highlighted cards only */
+  .web-cut {
+    --wc: 12px;
+    clip-path: polygon(
+      var(--wc) 0, 100% 0,
+      100% calc(100% - var(--wc)), calc(100% - var(--wc)) 100%,
+      0 100%, 0 var(--wc)
+    );
+    border-radius: 0 !important;
+  }
+
+  /* Top navigation surface */
+  .web-nav {
+    background: hsl(0 0% 0% / 0.62);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid hsl(var(--primary) / 0.20);
+  }
+  .web-navlink {
+    font-family: Inter, system-ui, sans-serif;
+    letter-spacing: 0;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .web-navlink:hover { color: hsl(var(--primary)); }
+  .web-navlink[data-active="true"] {
+    color: hsl(var(--primary));
+    border-bottom-color: hsl(var(--primary) / 0.8);
+  }
+
+  /* Body copy defaults for the public site */
+  .web-copy {
+    font-family: Inter, system-ui, sans-serif;
+    line-height: 1.75;
+  }
+}
