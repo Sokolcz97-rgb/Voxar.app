@@ -95,7 +95,7 @@ function UserListItem({
       <li
         onClick={handleLeftClick}
         className={cn(
-          "group relative flex items-center gap-2.5 pl-3 pr-2 py-1.5 cursor-pointer",
+          "group relative flex items-center gap-3 pl-3.5 pr-2.5 py-2 cursor-pointer",
           "border-l-2 border-transparent transition-all duration-150",
           "hover:border-primary/70 hover:bg-primary/[0.07] hover:shadow-[inset_0_0_18px_hsl(var(--primary)/0.12)]",
           speaking && "border-emerald-400/80 bg-emerald-500/[0.07]",
@@ -213,7 +213,7 @@ export function MemberList({
           <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
           <span className="text-[9px] font-mono text-primary/50">{String(list.length).padStart(2, "0")}</span>
         </div>
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {list.map((m) => <UserListItem key={m.user_id} {...itemProps(m)} />)}
         </ul>
       </div>
@@ -232,7 +232,7 @@ export function MemberList({
     <>
       <aside className="w-60 h-full bg-transparent overflow-y-auto">
         {/* Blueprint header: ENTITY POD */}
-        <div className="sticky top-0 z-10 px-3 pt-3 pb-2 bg-gradient-to-b from-[hsl(220_35%_5%/0.9)] to-transparent backdrop-blur-sm border-b border-primary/15">
+        <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-gradient-to-b from-[hsl(220_35%_5%/0.9)] to-transparent backdrop-blur-sm border-b border-primary/15">
           <div className="flex items-center justify-between">
             <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
               Entity pod
@@ -282,7 +282,7 @@ export function MemberList({
         </div>
 
         {listOpen && (
-        <div className="p-3 space-y-4">
+        <div className="p-4 space-y-6">
           {renderGroup("V hlasovém kanále", inVoiceList, "voice", "bg-emerald-400")}
           {orderedHoist.map((g) => renderGroup(g.role.name.toUpperCase(), g.list, `hoist-${g.role.id}`))}
           {renderGroup("ONLINE", onlineNoHoist, "online", statusColor.online)}

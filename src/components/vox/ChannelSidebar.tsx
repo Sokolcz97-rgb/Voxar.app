@@ -54,9 +54,10 @@ export function ChannelSidebar({
   };
 
   return (
-    <div className="w-60 h-full flex flex-col bg-transparent">
+    <div className="w-64 h-full flex flex-col bg-transparent">
       {/* Blueprint header: SEKTORY KOMUNITY */}
-      <div className="px-3 pt-3 pb-2 border-b border-primary/15">
+      <div className="px-4 pt-4 pb-3 border-b border-primary/15">
+
         <div className="flex items-center justify-between">
           <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
             Sektory komunity
@@ -71,7 +72,7 @@ export function ChannelSidebar({
             </button>
           )}
         </div>
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1.5">
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-primary/20 bg-black/30 px-3 py-2.5">
           <span className="truncate text-sm font-display font-semibold text-foreground text-glow">
             {guildName}
           </span>
@@ -98,13 +99,14 @@ export function ChannelSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 space-y-5">
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";
           return (
-            <div key={cat}>
-              <div className="flex items-center justify-between px-1 py-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+            <div key={cat} className="space-y-1">
+              <div className="flex items-center justify-between px-1.5 py-1.5 mb-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+
                 <button className="flex items-center gap-1 hover:text-primary" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
                   {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   {catLabel(cat, type)}
@@ -134,7 +136,7 @@ export function ChannelSidebar({
                       <button
                         onClick={() => onSelect(c)}
                         className={cn(
-                          "sector-node w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors font-display tracking-wide",
+                          "sector-node w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors font-display tracking-wide",
                           active
                             ? "active text-foreground"
                             : "text-muted-foreground hover:text-foreground"
