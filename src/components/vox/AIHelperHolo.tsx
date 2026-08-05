@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,29 +20,8 @@ const STORAGE_KEY = "voxapp_ai_chat";
  * Holographic HUD variant of the AI helper for the /app desktop shell.
  * Web (marketing) uses the classic `AIHelper` — keep visuals separate.
  */
-/** `body` has `overflow-x: clip`, which makes it a containing block for
- *  fixed children — that pushed the widget to the document bottom. Mounting
- *  the portal host on <html> restores true viewport-fixed positioning. */
-function useOverlayHost() {
-  const [host] = useState(() => {
-    const el = document.createElement("div");
-    el.setAttribute("data-ai-overlay-host", "");
-    el.style.position = "fixed";
-    el.style.inset = "0";
-    el.style.zIndex = "2147483647";
-    el.style.pointerEvents = "none";
-    return el;
-  });
-  useEffect(() => {
-    document.documentElement.appendChild(host);
-    return () => { host.remove(); };
-  }, [host]);
-  return host;
-}
-
 export function AIHelperHolo() {
   const { t } = useTranslation();
-  const host = useOverlayHost();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
@@ -119,8 +97,8 @@ export function AIHelperHolo() {
   };
   const clearChat = () => { setMessages([]); sessionStorage.removeItem(STORAGE_KEY); };
 
-  return createPortal(
-    <>
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[9999]">
       {!open && (
         <button
           onClick={() => setOpen(true)}
@@ -241,7 +219,6 @@ export function AIHelperHolo() {
           </div>
         </div>
       )}
-    </>,
-    host
+    </div>
   );
 }

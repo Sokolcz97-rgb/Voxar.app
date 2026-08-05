@@ -18,7 +18,6 @@ import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { DevConsole } from "@/components/vox/DevConsole";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
-import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 import { CallDock } from "@/components/vox/CallDock";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
@@ -414,8 +413,6 @@ export default function AppShell() {
       />
       <DesktopUpdateFab />
       <DevConsole />
-      {/* Blueprint: floating AI bot orb, bottom-right (HUD variant, /app only) */}
-      <AIHelperHolo />
     </div>
   );
 }
