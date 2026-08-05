@@ -1,6 +1,9 @@
-import { Mic, MicOff, Headphones, HeadphoneOff, PhoneOff, Video, VideoOff, MonitorUp, MonitorX } from "lucide-react";
+import { useState } from "react";
+import { Mic, MicOff, Headphones, HeadphoneOff, PhoneOff, Video, VideoOff, MonitorUp, MonitorX, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
+import { ScreenSharePicker } from "./ScreenSharePicker";
+import { QUALITY_PRESETS, readVideoPrefs, isDesktopCapture, type QualityKey } from "@/lib/videoQuality";
 
 /**
  * Static, docked call controls. Never floats over the UI — it lives at the
@@ -8,7 +11,23 @@ import { useVoiceCall } from "@/contexts/VoiceCallContext";
  */
 export function CallDock({ compact = false }: { compact?: boolean }) {
   const { channel, api, leaveChannel } = useVoiceCall();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [quality, setQuality] = useState<QualityKey>(() => readVideoPrefs().camQuality);
+  const [qualityOpen, setQualityOpen] = useState(false);
   if (!api.connected || !channel) return null;
+
+  const onScreenClick = () => {
+    if (api.screenOn) { api.stopScreen(); return; }
+    if (isDesktopCapture()) setPickerOpen(true);
+    else void api.startScreen();
+  };
+
+  const pickQuality = (k: QualityKey) => {
+    setQuality(k);
+    setQualityOpen(false);
+    void api.applyCamQuality(k);
+  };
+
 
   const btn =
     "h-8 px-2.5 flex items-center justify-center gap-1.5 text-[9px] font-display tracking-[0.18em] uppercase border transition-colors [clip-path:polygon(7px_0,100%_0,100%_calc(100%-7px),calc(100%-7px)_100%,0_100%,0_7px)]";
