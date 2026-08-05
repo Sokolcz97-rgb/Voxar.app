@@ -272,6 +272,65 @@
     text-shadow: 0 0 6px hsl(184 100% 54% / 0.45);
   }
 
+  /* Tactical menu items inside any HUD surface */
+  .hud-menu [role="menuitem"],
+  .hud-menu [role="menuitemcheckbox"],
+  .hud-menu [role="menuitemradio"],
+  .hud-menu [role="option"] {
+    border-radius: 0 !important;
+    font-family: "Rajdhani", system-ui, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 12px;
+    border-left: 2px solid transparent;
+    transition: all 0.14s ease;
+  }
+  .hud-menu [role="menuitem"]:hover,
+  .hud-menu [role="menuitem"][data-highlighted],
+  .hud-menu [role="option"][data-highlighted] {
+    background: linear-gradient(90deg, hsl(184 100% 54% / 0.16), transparent) !important;
+    border-left-color: hsl(184 100% 54%);
+    box-shadow: inset 0 0 14px hsl(184 100% 54% / 0.12);
+  }
+  .hud-menu [role="separator"] {
+    background: linear-gradient(90deg, hsl(184 100% 54% / 0.4), transparent);
+    height: 1px;
+  }
+
+  /* No pills anywhere in the HUD app shell */
+  .hud-root button,
+  .hud-root input,
+  .hud-root textarea,
+  .hud-root select,
+  .hud-root .badge {
+    border-radius: 0 !important;
+  }
+  .hud-root button:not(.no-cut):not(.hud-hex):not([role="tab"]) {
+    --ch: 7px;
+    clip-path: polygon(
+      var(--ch) 0, 100% 0,
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
+      0 100%, 0 var(--ch)
+    );
+  }
+  .hud-root input,
+  .hud-root textarea {
+    --ch: 8px;
+    clip-path: polygon(
+      var(--ch) 0, 100% 0,
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
+      0 100%, 0 var(--ch)
+    );
+  }
+  .hud-root .rounded-full:not(.keep-round) { border-radius: 0 !important; }
+  .hud-root h1, .hud-root h2, .hud-root h3,
+  .hud-root .hud-heading {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px hsl(184 100% 54% / 0.35);
+  }
+
+
 
   /* Hexagonal HUD avatar frame */
   .hex-frame {
