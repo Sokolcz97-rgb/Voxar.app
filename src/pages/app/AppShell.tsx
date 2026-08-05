@@ -377,7 +377,7 @@ export default function AppShell() {
                 </div>
               </div>
 
-              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden -mt-1 mb-4">
+              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden">
                 {view === "user-settings" ? (
                   <AppUserSettings onClose={() => setView("main")} />
                 ) : (
