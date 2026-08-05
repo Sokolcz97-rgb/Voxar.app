@@ -213,7 +213,7 @@ export function MemberList({
           <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
           <span className="text-[9px] font-mono text-primary/50">{String(list.length).padStart(2, "0")}</span>
         </div>
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {list.map((m) => <UserListItem key={m.user_id} {...itemProps(m)} />)}
         </ul>
       </div>
