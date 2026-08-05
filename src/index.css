@@ -322,7 +322,6 @@
       0 100%, 0 var(--ch)
     );
   }
-  .hud-root .rounded-full:not(.keep-round) { border-radius: 0 !important; }
   .hud-root h1, .hud-root h2, .hud-root h3,
   .hud-root .hud-heading {
     letter-spacing: 0.18em;
