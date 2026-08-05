@@ -288,7 +288,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-3 pb-3 pt-2">
+      <div className="px-5 pb-5 pt-3">
         {pending.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((a, i) => (
