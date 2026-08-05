@@ -611,36 +611,48 @@ export function useVoxVoice(channelId: string | null) {
     const prefs = readVideoPrefs();
     const p = presetOf(quality ?? prefs.screenQuality);
     const fps = prefs.screenFps;
-    try {
-      let s: MediaStream;
-      if (sourceId && isDesktopCapture()) {
-        await selectCaptureSource(sourceId);
-        s = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            // Electron desktop capture constraints
-            mandatory: {
-              chromeMediaSource: "desktop",
-              chromeMediaSourceId: sourceId,
-              maxWidth: p.width,
-              maxHeight: p.height,
-              maxFrameRate: fps,
-            },
+    const legacyDesktop = async (id: string) =>
+      navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          mandatory: {
+            chromeMediaSource: "desktop",
+            chromeMediaSourceId: id,
+            maxWidth: p.width,
+            maxHeight: p.height,
+            maxFrameRate: fps,
           },
-        } as unknown as MediaStreamConstraints);
+        },
+      } as unknown as MediaStreamConstraints);
+
+    try {
+      let s: MediaStream | null = null;
+      const video = {
+        width: { ideal: p.width, max: p.width },
+        height: { ideal: p.height, max: p.height },
+        frameRate: { ideal: fps, max: fps },
+      };
+
+      if (sourceId && isDesktopCapture()) {
+        // Tell the main process which source the HUD picker selected, then use
+        // the standard getDisplayMedia API (Electron resolves it to that source).
+        await selectCaptureSource(sourceId);
+        try {
+          if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("no getDisplayMedia");
+          s = await navigator.mediaDevices.getDisplayMedia({ video, audio: false });
+        } catch (inner) {
+          const n = (inner as Error)?.name;
+          if (n === "NotAllowedError" || n === "AbortError") throw inner;
+          // Older Electron / fallback path.
+          s = await legacyDesktop(sourceId);
+        }
       } else {
         if (!navigator.mediaDevices?.getDisplayMedia) {
           throw new Error("Sdílení obrazovky není v tomto prostředí dostupné.");
         }
-        s = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            width: { ideal: p.width, max: p.width },
-            height: { ideal: p.height, max: p.height },
-            frameRate: { ideal: fps, max: fps },
-          },
-          audio: false,
-        });
+        s = await navigator.mediaDevices.getDisplayMedia({ video, audio: false });
       }
+
       screenStreamRef.current = s;
       s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
       setScreenOn(true);
