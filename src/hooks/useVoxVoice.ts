@@ -3,6 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { localAudio } from "@/lib/localAudio";
 import { toast } from "@/hooks/use-toast";
+import {
+  readVideoPrefs, writeVideoPrefs, presetOf, isDesktopCapture, selectCaptureSource,
+  type QualityKey,
+} from "@/lib/videoQuality";
+
 
 
 interface RemotePeer {
