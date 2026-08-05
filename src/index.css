@@ -230,8 +230,8 @@
   /* Geometric context menu / popover surface */
   .hud-menu {
     --ch: 12px;
-    position: relative;
     border: 0 !important;
+
     border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
@@ -242,6 +242,9 @@
       0 100%, 0 var(--ch)
     );
   }
+  /* zero-specificity so Tailwind's .fixed/.absolute on dialogs still wins */
+  :where(.hud-menu) { position: relative; }
+
   .hud-menu::before,
   .hud-menu::after {
     content: "";
