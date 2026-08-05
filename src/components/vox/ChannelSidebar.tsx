@@ -104,8 +104,9 @@ export function ChannelSidebar({
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";
           return (
-            <div key={cat}>
-              <div className="flex items-center justify-between px-1 py-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+            <div key={cat} className="space-y-1">
+              <div className="flex items-center justify-between px-1.5 py-1.5 mb-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+
                 <button className="flex items-center gap-1 hover:text-primary" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
                   {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   {catLabel(cat, type)}
