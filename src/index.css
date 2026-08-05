@@ -314,30 +314,36 @@
     50% { height: 12px; }
   }
 
-  /* Sector node channel row */
+  /* Sector node channel row — chamfered tactical slab */
   .sector-node {
+    --ch: 9px;
     position: relative;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    transition: all 0.2s ease;
+    border: 1px solid hsl(184 100% 54% / 0.1);
+    border-radius: 0;
+    transition: all 0.18s ease;
+    clip-path: polygon(
+      var(--ch) 0, 100% 0,
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
+      0 100%, 0 var(--ch)
+    );
   }
   .sector-node:hover {
-    border-color: hsl(184 100% 54% / 0.22);
-    background: hsl(184 100% 54% / 0.06);
+    border-color: hsl(184 100% 54% / 0.35);
+    background: hsl(184 100% 54% / 0.07);
     box-shadow: none;
   }
   .sector-node.active {
-    border-color: hsl(184 100% 54% / 0.55);
-    background: linear-gradient(90deg, hsl(184 100% 54% / 0.18), hsl(280 90% 60% / 0.08) 60%, transparent);
+    border-color: hsl(184 100% 54% / 0.7);
+    background: linear-gradient(90deg, hsl(184 100% 54% / 0.2), hsl(280 90% 60% / 0.08) 60%, transparent);
     box-shadow: inset 0 0 18px hsl(184 100% 54% / 0.18), 0 0 14px -2px hsl(184 100% 54% / 0.35);
   }
   .sector-node.active::before {
     content: "";
-    position: absolute; left: -1px; top: 20%; bottom: 20%; width: 3px;
+    position: absolute; left: 0; top: 22%; bottom: 22%; width: 3px;
     background: linear-gradient(180deg, hsl(184 100% 54%), hsl(280 90% 60%));
-    border-radius: 2px;
     box-shadow: 0 0 10px hsl(184 100% 54% / 0.9);
   }
+
 
   /* ============================================================
      HUD Blueprint — Detail 2: Rank ring + speaking ring
