@@ -99,7 +99,7 @@ export function ChannelSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 space-y-5">
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";
