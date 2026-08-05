@@ -210,7 +210,7 @@ export function AppServerSettings({
   ];
 
   return (
-    <div className="flex-1 flex bg-[hsl(220_30%_4%)] overflow-hidden holo-scanline">
+    <div className="hud-settings flex-1 flex bg-[hsl(220_30%_4%)] overflow-hidden holo-scanline">
       <aside className="w-64 shrink-0 border-r border-primary/15 bg-[hsl(222_35%_5%/0.85)] p-4 overflow-y-auto backdrop-blur-sm">
         <div className="px-2 mb-3">
           <div className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 text-glow">
