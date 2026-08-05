@@ -72,7 +72,7 @@ export function ChannelSidebar({
             </button>
           )}
         </div>
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1.5">
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-primary/20 bg-black/30 px-3 py-2.5">
           <span className="truncate text-sm font-display font-semibold text-foreground text-glow">
             {guildName}
           </span>
