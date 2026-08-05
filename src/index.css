@@ -308,7 +308,9 @@
     box-shadow: inset 0 0 16px hsl(184 100% 54% / 0.12);
     z-index: 0;
   }
-  .hud-menu > * { position: relative; z-index: 1; }
+  /* keep absolutely-positioned children (e.g. dialog close button) out of the flow */
+  .hud-menu > *:not(.absolute):not(.fixed) { position: relative; z-index: 1; }
+  .hud-menu > .absolute, .hud-menu > .fixed { z-index: 2; }
 
   /* Tactical label */
   .hud-label {
