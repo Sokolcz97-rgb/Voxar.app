@@ -537,12 +537,18 @@ app.whenReady().then(async () => {
       try {
         const sources = await desktopCapturer.getSources({ types: ["screen", "window"] });
         if (!sources.length) return callback(null);
-        callback({ video: sources[0], audio: "loopback" });
+        const picked =
+          sources.find((s) => s.id === pendingCaptureSourceId) ||
+          sources.find((s) => s.id.startsWith("screen:")) ||
+          sources[0];
+        pendingCaptureSourceId = null;
+        callback({ video: picked, audio: "loopback" });
       } catch (e) {
         console.error("[display-capture] failed", e);
         callback(null);
       }
-    }, { useSystemPicker: true });
+    });
+
   }
 
   // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
