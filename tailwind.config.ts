@@ -10,6 +10,7 @@ export default {
       fontFamily: {
         display: ["Orbitron", "system-ui", "sans-serif"],
         body: ["Rajdhani", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
