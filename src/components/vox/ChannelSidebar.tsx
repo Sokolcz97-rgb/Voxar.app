@@ -136,7 +136,7 @@ export function ChannelSidebar({
                       <button
                         onClick={() => onSelect(c)}
                         className={cn(
-                          "sector-node w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors font-display tracking-wide",
+                          "sector-node w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors font-display tracking-wide",
                           active
                             ? "active text-foreground"
                             : "text-muted-foreground hover:text-foreground"
