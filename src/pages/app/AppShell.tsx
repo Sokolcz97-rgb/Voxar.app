@@ -261,7 +261,7 @@ export default function AppShell() {
 
   return (
     <div className="hud-root hud-shell holo-scanline h-screen w-screen overflow-hidden text-foreground">
-      <div className="relative z-10 h-full w-full flex flex-col gap-3 p-3">
+      <div className="relative z-10 h-full w-full flex flex-col gap-6 p-6">
         {/* Blueprint: horizontal sector dock — bez pozadí, roztahuje se přes celou šířku */}
         <div className="shrink-0 flex justify-center">
           <div className="holo-float holo-float-slow w-full">
