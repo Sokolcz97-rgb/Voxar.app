@@ -557,16 +557,31 @@ export function useVoxVoice(channelId: string | null) {
     if (s) removeVideoTracks(s.getVideoTracks());
   }, [renegotiateAll]);
 
-  const startVideo = useCallback(async () => {
+  const startVideo = useCallback(async (quality?: QualityKey) => {
     if (camStreamRef.current || !connectedRef.current) return;
+    const prefs = readVideoPrefs();
+    const p = presetOf(quality ?? prefs.camQuality);
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: p.width, max: p.width },
+          height: { ideal: p.height, max: p.height },
+          frameRate: { ideal: prefs.camFps, max: prefs.camFps },
+        },
+        audio: false,
+      });
       camStreamRef.current = s;
       s.getVideoTracks().forEach((t) => { t.onended = () => stopVideo(); });
       setVideoOn(true);
       addVideoTracks(s.getVideoTracks());
     } catch (e) {
-      console.error("Kamera nedostupná", e);
+      const err = e as Error;
+      console.error("Kamera nedostupná", err);
+      toast({
+        title: "Kamera nedostupná",
+        description: err?.message || "Zařízení se nepodařilo otevřít.",
+        variant: "destructive",
+      });
     }
   }, [renegotiateAll, stopVideo]);
 
@@ -581,16 +596,46 @@ export function useVoxVoice(channelId: string | null) {
     if (s) removeVideoTracks(s.getTracks());
   }, [renegotiateAll]);
 
-  const startScreen = useCallback(async () => {
+  /**
+   * Screen share. In Electron we capture a concrete source (whole desktop or a
+   * single window / game) picked in the in-app HUD picker; on the web we fall
+   * back to the browser's own getDisplayMedia chooser.
+   */
+  const startScreen = useCallback(async (sourceId?: string, quality?: QualityKey) => {
     if (screenStreamRef.current || !connectedRef.current) return;
+    const prefs = readVideoPrefs();
+    const p = presetOf(quality ?? prefs.screenQuality);
+    const fps = prefs.screenFps;
     try {
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        throw new Error("getDisplayMedia není v tomto prostředí dostupné");
+      let s: MediaStream;
+      if (sourceId && isDesktopCapture()) {
+        await selectCaptureSource(sourceId);
+        s = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            // Electron desktop capture constraints
+            mandatory: {
+              chromeMediaSource: "desktop",
+              chromeMediaSourceId: sourceId,
+              maxWidth: p.width,
+              maxHeight: p.height,
+              maxFrameRate: fps,
+            },
+          },
+        } as unknown as MediaStreamConstraints);
+      } else {
+        if (!navigator.mediaDevices?.getDisplayMedia) {
+          throw new Error("Sdílení obrazovky není v tomto prostředí dostupné.");
+        }
+        s = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            width: { ideal: p.width, max: p.width },
+            height: { ideal: p.height, max: p.height },
+            frameRate: { ideal: fps, max: fps },
+          },
+          audio: false,
+        });
       }
-      const s = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: 30 } },
-        audio: false,
-      });
       screenStreamRef.current = s;
       s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
       setScreenOn(true);
@@ -611,6 +656,26 @@ export function useVoxVoice(channelId: string | null) {
   const toggleScreen = useCallback(() => {
     if (screenStreamRef.current) stopScreen(); else void startScreen();
   }, [startScreen, stopScreen]);
+
+  /** Live-switch camera resolution without dropping the call. */
+  const applyCamQuality = useCallback(async (key: QualityKey) => {
+    writeVideoPrefs({ camQuality: key });
+    const track = camStreamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const p = presetOf(key);
+    const prefs = readVideoPrefs();
+    try {
+      await track.applyConstraints({
+        width: { ideal: p.width, max: p.width },
+        height: { ideal: p.height, max: p.height },
+        frameRate: { ideal: prefs.camFps, max: prefs.camFps },
+      });
+    } catch {
+      stopVideo();
+      void startVideo(key);
+    }
+  }, [startVideo, stopVideo]);
+
 
 
   // Re-apply per-user local audio prefs (volume/mute) when they change.
