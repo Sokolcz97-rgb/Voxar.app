@@ -308,7 +308,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             title="Přiložit soubor"
-            className="h-[52px] w-12 shrink-0 flex items-center justify-center bg-[hsl(222_42%_9%)] border border-primary/30 text-primary hover:border-primary/70 hover:bg-primary/10 transition-colors disabled:opacity-50 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+            className="h-[62px] w-12 shrink-0 flex items-center justify-center bg-black/40 border border-primary/20 text-primary/80 hover:border-primary/60 hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
           </button>
