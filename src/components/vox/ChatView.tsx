@@ -186,7 +186,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
-      <div className="h-12 px-4 flex items-center gap-2.5 border-b border-primary/20 bg-primary/5">
+      <div className="h-14 px-5 flex items-center gap-3 border-b border-primary/15">
         <Hash className="w-4 h-4 text-primary text-glow" />
         <span className="font-display tracking-widest uppercase text-sm text-primary text-glow">{channel.name}</span>
         <span className="ml-auto text-[10px] font-display tracking-widest uppercase text-muted-foreground">
