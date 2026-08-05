@@ -235,6 +235,6 @@ export function AIHelper() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
