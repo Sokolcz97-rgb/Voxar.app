@@ -254,7 +254,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                 )}
                 {isEncrypted(m.content) ? (
                   plain[m.id] ? (
-                    <div className="text-sm whitespace-pre-wrap break-words text-foreground/95 flex gap-1.5">
+                    <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 flex gap-1.5">
                       <Lock className="w-3 h-3 mt-1 shrink-0 text-emerald-400/80" />
                       <span>{plain[m.id]}</span>
                     </div>
