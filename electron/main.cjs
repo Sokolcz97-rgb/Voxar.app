@@ -542,7 +542,9 @@ app.whenReady().then(async () => {
           sources.find((s) => s.id.startsWith("screen:")) ||
           sources[0];
         pendingCaptureSourceId = null;
-        callback({ video: picked, audio: "loopback" });
+        // Loopback audio je podporovaný jen na Windows; jinde by celý požadavek selhal.
+        callback({ video: picked, audio: process.platform === "win32" ? "loopback" : undefined });
+
       } catch (e) {
         console.error("[display-capture] failed", e);
         callback(null);
