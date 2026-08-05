@@ -98,11 +98,11 @@ export function AIHelper() {
   const clearChat = () => { setMessages([]); sessionStorage.removeItem(STORAGE_KEY); };
 
   return (
-    <>
+    <div className="fixed bottom-6 right-6 z-[9999] origin-bottom-right pointer-events-none">
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 group"
+          className="pointer-events-auto group"
           aria-label={t("ai.open")}
         >
           <div className="relative">
@@ -116,7 +116,7 @@ export function AIHelper() {
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-40 w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col glass border border-primary/30 rounded-2xl shadow-[var(--glow-primary)] animate-scale-in overflow-hidden">
+        <div className="absolute bottom-0 right-0 z-[9999] w-[min(420px,calc(100vw-3rem))] h-[min(560px,calc(100vh-3rem))] flex flex-col glass border border-primary/30 rounded-2xl shadow-[var(--glow-primary)] animate-scale-in overflow-hidden origin-bottom-right">
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
             <div className="flex items-center gap-2">
               <div className="relative">
