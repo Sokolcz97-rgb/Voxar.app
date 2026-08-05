@@ -54,9 +54,10 @@ export function ChannelSidebar({
   };
 
   return (
-    <div className="w-60 h-full flex flex-col bg-transparent">
+    <div className="w-64 h-full flex flex-col bg-transparent">
       {/* Blueprint header: SEKTORY KOMUNITY */}
-      <div className="px-3 pt-3 pb-2 border-b border-primary/15">
+      <div className="px-4 pt-4 pb-3 border-b border-primary/15">
+
         <div className="flex items-center justify-between">
           <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
             Sektory komunity
