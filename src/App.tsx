@@ -62,6 +62,7 @@ import { VoiceCallProvider } from "@/contexts/VoiceCallContext";
 import { useLocation } from "react-router-dom";
 import { DesktopRouteGuard } from "@/components/DesktopRouteGuard";
 import { AppAccessGate } from "@/components/vox/AppAccessGate";
+import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 
 const queryClient = new QueryClient();
 
@@ -125,10 +126,10 @@ const AppRoutes = () => {
 };
 
 
-/** The /app desktop shell renders its own native AI widget — avoid a duplicate. */
-const WebAIHelper = () => {
+/** Root-level AI layer: a sibling of the router layout, never nested in app grids. */
+const RootAIHelper = () => {
   const { pathname } = useLocation();
-  if (pathname === "/app" || pathname.startsWith("/app/")) return null;
+  if (pathname === "/app" || pathname.startsWith("/app/")) return <AIHelperHolo />;
   return <AIHelper />;
 };
 
@@ -145,7 +146,7 @@ const App = () => (
               <InlineEditorProvider>
                 <AppRoutes />
                 <InlineEditorChrome />
-                <WebAIHelper />
+                 <RootAIHelper />
                 <ShortcutsHelp />
               </InlineEditorProvider>
               </VoiceCallProvider>
