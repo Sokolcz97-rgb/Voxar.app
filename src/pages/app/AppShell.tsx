@@ -385,10 +385,10 @@ export default function AppShell() {
                       Nemáš zatím žádný server. Vytvoř si vlastní nebo se připoj přes pozvánkový kód.
                     </p>
                     <div className="flex gap-3">
-                      <button className="cyber-btn px-6 py-2.5 rounded-md text-primary font-medium" onClick={() => setCreateOpen(true)}>
+                      <button className="cyber-btn hud-btn-hex px-7 py-2.5 text-primary font-medium" onClick={() => setCreateOpen(true)}>
                         Vytvořit server
                       </button>
-                      <button className="cyber-btn px-6 py-2.5 rounded-md" onClick={() => setJoinOpen(true)}>
+                      <button className="cyber-btn hud-btn-hex px-7 py-2.5" onClick={() => setJoinOpen(true)}>
                         Připojit se
                       </button>
                     </div>

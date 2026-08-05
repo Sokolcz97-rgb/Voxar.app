@@ -72,7 +72,7 @@ export function ChannelSidebar({
             </button>
           )}
         </div>
-        <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-primary/20 bg-black/30 px-3 py-2.5">
+        <div className="mt-3 flex items-center justify-between gap-2 sector-node border-primary/25 bg-black/40 px-3 py-2.5">
           <span className="truncate text-sm font-display font-semibold text-foreground text-glow">
             {guildName}
           </span>
@@ -80,7 +80,7 @@ export function ChannelSidebar({
             {isAdmin && (
               <button
                 onClick={() => onCreateChannel("text")}
-                className="w-6 h-6 rounded-md border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)] flex items-center justify-center transition-all"
+                className="w-6 h-6 border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
                 title="Nový node"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -89,7 +89,7 @@ export function ChannelSidebar({
             {onOpenServerSettings && (
               <button
                 onClick={onOpenServerSettings}
-                className="w-6 h-6 rounded-md border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)] flex items-center justify-center transition-all"
+                className="w-6 h-6 border border-primary/30 text-primary/80 hover:text-primary hover:border-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
                 title="Nastavení sektoru"
               >
                 <Settings className="w-3.5 h-3.5" />
