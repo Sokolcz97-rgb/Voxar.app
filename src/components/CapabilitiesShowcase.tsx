@@ -64,10 +64,10 @@ const botFeatures: Feature[] = [
 function FeatureCard({ f, i }: { f: Feature; i: number }) {
   return (
     <div
-      className="group glass rounded-xl p-5 hover:border-primary/60 transition-all duration-300 hover:translate-y-[-4px] animate-fade-in"
+      className="group web-panel web-cut p-5 transition-all duration-300 hover:translate-y-[-4px] animate-fade-in"
       style={{ animationDelay: `${i * 40}ms` }}
     >
-      <div className="w-10 h-10 icon-cube-3d flex items-center justify-center mb-4">
+      <div className="w-10 h-10 flex items-center justify-center mb-4 border border-primary/25 text-primary">
         <f.icon className="h-4 w-4" />
       </div>
       <h3 className="font-display font-bold text-base mb-1">{f.title}</h3>
@@ -80,7 +80,7 @@ export function CapabilitiesShowcase() {
   return (
     <section id="capabilities" className="container pb-32">
       <div className="max-w-3xl mx-auto text-center mb-14">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 web-panel mb-6">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Co všechno umíme
@@ -98,7 +98,7 @@ export function CapabilitiesShowcase() {
 
       <div className="mb-14">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 icon-cube-3d flex items-center justify-center">
+          <div className="w-9 h-9 flex items-center justify-center border border-primary/25 text-primary">
             <Globe className="h-4 w-4" />
           </div>
           <h3 className="font-display font-bold text-2xl">Webová platforma</h3>
@@ -113,7 +113,7 @@ export function CapabilitiesShowcase() {
 
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 icon-cube-3d flex items-center justify-center">
+          <div className="w-9 h-9 flex items-center justify-center border border-primary/25 text-primary">
             <Bot className="h-4 w-4" />
           </div>
           <h3 className="font-display font-bold text-2xl">Discord Bot</h3>
