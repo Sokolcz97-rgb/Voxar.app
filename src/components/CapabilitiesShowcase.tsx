@@ -104,7 +104,7 @@ export function CapabilitiesShowcase() {
           <h3 className="font-display font-bold text-2xl">Webová platforma</h3>
           <div className="flex-1 h-px bg-border/60" />
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {webFeatures.map((f, i) => (
             <FeatureCard key={f.title} f={f} i={i} />
           ))}
@@ -119,7 +119,7 @@ export function CapabilitiesShowcase() {
           <h3 className="font-display font-bold text-2xl">Discord Bot</h3>
           <div className="flex-1 h-px bg-border/60" />
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {botFeatures.map((f, i) => (
             <FeatureCard key={f.title} f={f} i={i} />
           ))}

@@ -343,7 +343,7 @@ export function AnnouncementBar() {
                     placeholder="Obsah oznámení…"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Typ</Label>
                     <Select
@@ -374,7 +374,7 @@ export function AnnouncementBar() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Text odkazu</Label>
                     <Input
@@ -396,7 +396,7 @@ export function AnnouncementBar() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Zobrazovat od</Label>
                     <Input
