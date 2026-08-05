@@ -241,13 +241,13 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                 {!compact && (
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span
-                      className="font-display font-bold text-sm tracking-wider"
+                      className="font-sans font-semibold text-sm"
                       style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}
                     >
                       {name}
                     </span>
                     {topRole && <RoleBadge role={topRole} />}
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+                    <span className="text-[10px] font-sans tracking-wide text-muted-foreground/70">
                       {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>

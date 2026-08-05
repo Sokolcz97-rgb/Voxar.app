@@ -186,20 +186,48 @@
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   }
 
-  /* Floating glass pod — chamfered, 1px crisp frame, dual glow */
+  /* Floating glass pod — chamfered, crisp 1px frame, no blurry shadows */
   .holo-pod {
     --ch: 16px;
-    --hud-line: hsl(184 100% 54% / 0.6);
+    --hud-line: hsl(184 100% 54% / 0.45);
     position: relative;
     background: transparent;
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    filter: drop-shadow(0 0 10px hsl(184 100% 54% / 0.22));
+    filter: none;
     clip-path: polygon(
       var(--ch) 0, 100% 0,
       100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
       0 100%, 0 var(--ch)
+    );
+  }
+  /* Corner recipes matching the HUD blueprint */
+  .pod-left {
+    clip-path: polygon(
+      var(--ch) 0, 100% 0, 100% 100%,
+      var(--ch) 100%, 0 calc(100% - var(--ch)), 0 var(--ch)
+    );
+  }
+  .pod-right {
+    clip-path: polygon(
+      0 0, calc(100% - var(--ch)) 0, 100% var(--ch),
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%, 0 100%
+    );
+  }
+  .pod-self {
+    --ch: 14px;
+    clip-path: polygon(
+      var(--ch) 0, calc(100% - var(--ch)) 0, 100% var(--ch),
+      100% 100%, 0 100%, 0 var(--ch)
+    );
+  }
+  .pod-center {
+    --ch: 18px;
+    clip-path: polygon(
+      var(--ch) 0, calc(100% - var(--ch)) 0, 100% var(--ch),
+      100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%,
+      var(--ch) 100%, 0 calc(100% - var(--ch)), 0 var(--ch)
     );
   }
   .holo-pod::before,
@@ -209,23 +237,38 @@
     pointer-events: none;
     clip-path: inherit;
   }
-  /* frame layer */
+  /* frame layer — ultra thin cyan hairline */
   .holo-pod::before {
     inset: 0;
-    background: linear-gradient(135deg, var(--hud-line), hsl(280 90% 62% / 0.5) 60%, var(--hud-line));
+    background: linear-gradient(135deg, var(--hud-line), hsl(184 100% 54% / 0.28) 55%, hsl(280 90% 62% / 0.35));
     z-index: 0;
   }
   /* glass layer */
   .holo-pod::after {
     inset: 1px;
-    background: linear-gradient(160deg, hsl(220 45% 7% / 0.55) 0%, hsl(230 55% 4% / 0.72) 100%);
+    background: linear-gradient(160deg, hsl(224 55% 7% / 0.72) 0%, hsl(232 60% 4% / 0.86) 100%);
     backdrop-filter: blur(14px) saturate(140%);
     -webkit-backdrop-filter: blur(14px) saturate(140%);
-    box-shadow: inset 0 0 18px hsl(184 100% 54% / 0.1);
+    box-shadow: none;
     z-index: 0;
   }
   .holo-pod > * { position: relative; z-index: 1; }
-  .holo-pod-violet { --hud-line: hsl(280 90% 62% / 0.6); filter: drop-shadow(0 0 10px hsl(280 90% 62% / 0.25)); }
+  .holo-pod-violet { --hud-line: hsl(280 90% 62% / 0.45); filter: none; }
+
+  /* Center stream atmosphere — deep space blue into violet */
+  .pod-center::after {
+    background:
+      radial-gradient(ellipse 70% 55% at 22% 0%, hsl(200 90% 40% / 0.14), transparent 65%),
+      radial-gradient(ellipse 65% 60% at 92% 100%, hsl(275 85% 45% / 0.16), transparent 65%),
+      linear-gradient(165deg, hsl(224 60% 8% / 0.9) 0%, hsl(248 55% 6% / 0.94) 55%, hsl(268 50% 6% / 0.94) 100%);
+  }
+
+  /* Hexagonal action button (top dock) */
+  .hud-btn-hex {
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+    border-radius: 0 !important;
+  }
+
 
   /* Geometric context menu / popover surface */
   .hud-menu {
@@ -308,7 +351,7 @@
   .hud-root .badge {
     border-radius: 0 !important;
   }
-  .hud-root button:not(.no-cut):not(.hud-hex):not([role="tab"]) {
+  .hud-root button:not(.no-cut):not(.hud-hex):not(.hud-btn-hex):not([role="tab"]) {
     --ch: 7px;
     clip-path: polygon(
       var(--ch) 0, 100% 0,
@@ -396,7 +439,7 @@
   .sector-node.active {
     border-color: hsl(184 100% 54% / 0.7);
     background: linear-gradient(90deg, hsl(184 100% 54% / 0.2), hsl(280 90% 60% / 0.08) 60%, transparent);
-    box-shadow: inset 0 0 18px hsl(184 100% 54% / 0.18), 0 0 14px -2px hsl(184 100% 54% / 0.35);
+    box-shadow: inset 0 0 0 1px hsl(184 100% 54% / 0.25);
   }
   .sector-node.active::before {
     content: "";
@@ -1197,17 +1240,18 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
 @layer utilities {
   /* HUD composer: detached angled transmit bar + separate send pod */
   .tx-bar {
+    /* angled cut on the right side only */
     clip-path: polygon(
-      18px 0, 100% 0, 100% calc(100% - 18px),
-      calc(100% - 18px) 100%, 0 100%, 0 18px
+      0 0, calc(100% - 20px) 0, 100% 50%,
+      calc(100% - 20px) 100%, 0 100%
     );
-    background: linear-gradient(120deg, hsl(220 60% 8% / 0.85), hsl(230 70% 5% / 0.9));
+    background: linear-gradient(120deg, hsl(224 55% 8% / 0.88), hsl(248 55% 5% / 0.92));
     border: 1px solid hsl(184 100% 54% / 0.35);
     transition: box-shadow .25s ease, border-color .25s ease;
   }
   .tx-bar:focus-within {
-    border-color: hsl(184 100% 54% / 0.75);
-    box-shadow: 0 0 26px -4px hsl(184 100% 54% / 0.45), inset 0 1px 0 hsl(184 100% 70% / 0.18);
+    border-color: hsl(184 100% 54% / 0.8);
+    box-shadow: inset 0 0 0 1px hsl(184 100% 54% / 0.25);
   }
   .tx-send {
     clip-path: polygon(0 0, 100% 22%, 100% 78%, 0 100%);
