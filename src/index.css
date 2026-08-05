@@ -230,8 +230,8 @@
   /* Geometric context menu / popover surface */
   .hud-menu {
     --ch: 12px;
-    position: relative;
     border: 0 !important;
+
     border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
