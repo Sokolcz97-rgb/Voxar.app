@@ -1240,8 +1240,25 @@ img, video, canvas, svg { max-width: 100%; height: auto; }
 nav a, nav button { -webkit-tap-highlight-color: transparent; }
 
 @layer utilities {
+  /* Detached composer pod — floats separately under the chat history */
+  .composer-pod {
+    position: relative;
+    background: linear-gradient(160deg, hsl(224 55% 8% / 0.82), hsl(248 55% 5% / 0.9));
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(184 100% 54% / 0.38);
+    border-radius: 0 !important;
+    clip-path: polygon(
+      14px 0, calc(100% - 14px) 0, 100% 14px,
+      100% calc(100% - 14px), calc(100% - 14px) 100%,
+      14px 100%, 0 calc(100% - 14px), 0 14px
+    );
+  }
+  .composer-pod:focus-within { border-color: hsl(184 100% 54% / 0.75); }
+
   /* HUD composer: detached angled transmit bar + separate send pod */
   .tx-bar {
+
     /* angled cut on the right side only */
     clip-path: polygon(
       0 0, calc(100% - 20px) 0, 100% 50%,
