@@ -267,7 +267,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                     </button>
                   )
                 ) : (
-                  m.content && <div className="text-sm whitespace-pre-wrap break-words text-foreground/95">{m.content}</div>
+                  m.content && <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90">{m.content}</div>
                 )}
                 {Array.isArray(m.attachments) && m.attachments.length > 0 && (
                   <AttachmentList items={m.attachments as Attachment[]} />
