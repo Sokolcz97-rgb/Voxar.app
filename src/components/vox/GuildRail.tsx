@@ -45,16 +45,12 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onSelect(g.id)}
-                    className={cn(
-                      "guild-hex-btn relative group shrink-0 flex items-center gap-2.5 pl-3 pr-4 transition-all",
-                      active ? "bg-primary/10" : "hover:bg-primary/5"
-                    )}
+                    className="group relative shrink-0 flex items-center gap-4 bg-transparent border-0 p-0 transition-all"
                     aria-label={g.name}
-                    style={{ ["--rank-color" as any]: active ? "hsl(184 100% 54%)" : "hsl(184 100% 54% / 0.35)" }}
                   >
-                    <div className={cn("hex-ring w-12 h-12 transition-all shrink-0", active && "speaking-ring")}>
+                    <div className={cn("hex-ring w-14 h-14 transition-all shrink-0", active && "speaking-ring")}>
                       <div className={cn(
-                        "hex-frame w-full h-full flex items-center justify-center text-sm font-display font-bold overflow-hidden",
+                        "hex-frame w-full h-full flex items-center justify-center text-sm font-display font-bold overflow-hidden border border-primary/40",
                         active
                           ? "bg-gradient-to-br from-primary/40 to-accent/20 text-primary-foreground text-glow"
                           : "bg-secondary/80 text-primary/80 group-hover:bg-primary/25 group-hover:text-primary"
@@ -65,8 +61,8 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                       </div>
                     </div>
                     <span className={cn(
-                      "hidden md:block max-w-[10rem] xl:max-w-[16rem] truncate text-left font-display text-[11px] tracking-[0.18em] uppercase transition-colors",
-                      active ? "text-primary text-glow" : "text-primary/60 group-hover:text-primary/90"
+                      "hidden md:block max-w-[10rem] xl:max-w-[16rem] truncate text-left font-display text-[12px] tracking-[0.22em] uppercase transition-colors",
+                      active ? "text-primary text-glow" : "text-primary/55 group-hover:text-primary/90"
                     )}>
                       {g.name}
                     </span>
