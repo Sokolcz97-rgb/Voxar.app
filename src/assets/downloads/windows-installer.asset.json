@@ -2,11 +2,11 @@
   "version": 1,
   "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.9-alpha.exe",
   "original_filename": "VoxarAppSetup-0.0.9-alpha.exe",
-  "size": 234868453,
-  "sha256": "ff9facb5f212cdf98465ab1783d0d3afb5e0ae8795f0ac6dbc1d53dd8fa2b618",
+  "size": 234868219,
+  "sha256": "f4ddfa064ee54b42bca2ee80452e4713dbcc66ff35297c5847f1954f76ed017b",
   "content_type": "application/x-msdownload",
   "source": "github-release",
   "tag": "desktop-latest",
-  "commit": "3ca6d25d75c288b4535bfdbd68aa34398e82f88e",
-  "updated_at": "2026-08-06T08:40:14.5315606Z"
+  "commit": "0727416e10a4ccad1ea90a3b8bdf3355d86c1ca3",
+  "updated_at": "2026-08-06T08:55:58.9071372Z"
 }
