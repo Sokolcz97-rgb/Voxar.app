@@ -46,7 +46,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                   <button
                     onClick={() => onSelect(g.id)}
                     className={cn(
-                      "relative group shrink-0 flex items-center gap-2.5 pr-3 rounded-md transition-all",
+                      "guild-hex-btn relative group shrink-0 flex items-center gap-2.5 pl-3 pr-4 transition-all",
                       active ? "bg-primary/10" : "hover:bg-primary/5"
                     )}
                     aria-label={g.name}
