@@ -1565,3 +1565,43 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
   .hud-root *::-webkit-scrollbar-corner { background: transparent; }
 }
 
+
+/* ============================================================
+   HUD APP — GEOMETRY PASS (clip-paths only, app shell only)
+   ============================================================ */
+@layer utilities {
+  /* 1. Destroy all standard rounding in the HUD (keep circular avatars/dots) */
+  .hud-root [class*="rounded"]:not([class*="rounded-full"]),
+  .hud-menu [class*="rounded"]:not([class*="rounded-full"]) {
+    border-radius: 0 !important;
+  }
+
+  /* 2. Chamfered main wrappers */
+  .hud-root .holo-pod,
+  .hud-root .pod-left,
+  .hud-root .pod-right,
+  .hud-root .pod-center,
+  .hud-root .pod-self,
+  .hud-root .composer-pod {
+    clip-path: polygon(
+      15px 0, 100% 0,
+      100% calc(100% - 15px), calc(100% - 15px) 100%,
+      0 100%, 0 15px
+    ) !important;
+    border-radius: 0 !important;
+  }
+  /* 4. Thin visible neon edge on the clipped panels */
+  .hud-root .holo-pod::before { background: hsl(184 100% 58% / 0.6); }
+  .hud-root .pod-right::before { background: hsl(280 92% 66% / 0.6); }
+  .hud-root .composer-pod { border: 1px solid hsl(184 100% 58% / 0.6) !important; }
+
+  /* 3. Hexagon action + logo buttons */
+  .hud-root .hud-btn-hex,
+  .hud-root .guild-hex-btn {
+    clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%) !important;
+    border-radius: 0 !important;
+  }
+  .hud-root .guild-hex-btn {
+    border: 1px solid hsl(184 100% 58% / 0.45);
+  }
+}
