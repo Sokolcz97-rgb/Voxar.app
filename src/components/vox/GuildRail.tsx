@@ -25,16 +25,19 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
     <TooltipProvider delayDuration={200}>
       <div className="w-full flex flex-wrap items-center gap-4 px-2 py-1.5">
         {/* Voxar.app logo — jediná část s podkladem */}
-        <div className="holo-pod flex items-center gap-2.5 shrink-0 px-3 py-1.5">
-          <img
-            src={voxLogo.url}
-            alt="Voxar.app logo"
-            className="w-11 h-11 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
-          />
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hud-logo-hex w-14 h-14 flex items-center justify-center bg-[hsl(222_42%_9%)] border border-primary/45">
+            <img
+              src={voxLogo.url}
+              alt="Voxar.app logo"
+              className="w-9 h-9 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
+            />
+          </div>
           <div className="text-[9px] font-display tracking-[0.3em] text-primary/75 text-glow uppercase leading-[1.4] hidden sm:block">
             VOXAR<br />.APP
           </div>
         </div>
+
 
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2.5">
           {guilds.map((g) => {
