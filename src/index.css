@@ -1655,3 +1655,38 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
   }
   .hud-root > * { position: relative; z-index: 1; }
 }
+
+/* ============================================================
+   HUD APP — CUSTOM SCI-FI SCROLLBARS
+   ============================================================ */
+@layer utilities {
+  .hud-root *,
+  .hud-menu * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(184 100% 54% / 0.5) transparent;
+  }
+  .hud-root *::-webkit-scrollbar,
+  .hud-menu *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .hud-root *::-webkit-scrollbar-track,
+  .hud-menu *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .hud-root *::-webkit-scrollbar-thumb,
+  .hud-menu *::-webkit-scrollbar-thumb {
+    background: hsl(184 100% 54% / 0.5);
+    border-radius: 0;
+    box-shadow: 0 0 6px hsl(184 100% 54% / 0.35);
+  }
+  .hud-root *::-webkit-scrollbar-thumb:hover,
+  .hud-menu *::-webkit-scrollbar-thumb:hover {
+    background: hsl(184 100% 60% / 0.85);
+  }
+  .hud-root *::-webkit-scrollbar-corner { background: transparent; }
+
+  /* z-stacking: floating pods + AI never slip under panels */
+  .hud-root .holo-pod { z-index: 10; }
+  .hud-root .composer-pod { z-index: 12; }
+}
