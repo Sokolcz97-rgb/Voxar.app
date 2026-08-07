@@ -23,14 +23,14 @@ interface Props {
 export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="w-full flex flex-wrap items-center gap-4 px-2 py-1.5">
+      <div className="w-full flex flex-wrap items-center gap-4 px-2 py-3 overflow-visible">
         {/* Voxar.app logo — jediná část s podkladem */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hud-logo-hex w-14 h-14 flex items-center justify-center bg-[hsl(222_42%_9%)] border border-primary/45">
+        <div className="flex items-center gap-4 shrink-0 overflow-visible">
+          <div className="hud-logo-hex w-14 h-14 shrink-0 my-1 flex items-center justify-center bg-[hsl(222_42%_9%)] border border-primary/45">
             <img
               src={voxLogo.url}
               alt="Voxar.app logo"
-              className="w-9 h-9 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
+              className="w-8 h-8 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.55)]"
             />
           </div>
           <div className="text-[9px] font-display tracking-[0.3em] text-primary/75 text-glow uppercase leading-[1.4] hidden sm:block">
