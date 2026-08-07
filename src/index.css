@@ -1605,3 +1605,53 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     border: 1px solid hsl(184 100% 58% / 0.45);
   }
 }
+
+/* ============================================================
+   HUD APP — FINAL AESTHETIC PASS (glow, grid, active channel)
+   ============================================================ */
+@layer utilities {
+  /* 3. Neon outer glow — drop-shadow survives clip-path (box-shadow does not) */
+  .hud-root .holo-pod,
+  .hud-root .composer-pod {
+    filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.30));
+  }
+  .hud-root .pod-right,
+  .hud-root .holo-pod-violet {
+    filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.30));
+  }
+
+  /* 2. Hexagon top dock buttons + logo frame */
+  .hud-root .hud-logo-hex {
+    clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%) !important;
+    border-radius: 0 !important;
+  }
+
+  /* 4. Active channel = selected tactical button */
+  .hud-root .sector-node.active {
+    background: hsl(184 100% 54% / 0.20) !important;
+    border: 1px solid hsl(184 100% 60% / 0.95) !important;
+    box-shadow: 0 0 12px hsl(184 100% 54% / 0.35) !important;
+    clip-path: polygon(
+      8px 0, 100% 0,
+      100% calc(100% - 8px), calc(100% - 8px) 100%,
+      0 100%, 0 8px
+    );
+  }
+
+  /* 5. Wireframe grid floor behind the floating pods */
+  .hud-root::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      repeating-linear-gradient(0deg, hsl(184 100% 54% / 0.055) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(90deg, hsl(184 100% 54% / 0.055) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(0deg, hsl(280 90% 62% / 0.05) 0 1px, transparent 1px 192px),
+      repeating-linear-gradient(90deg, hsl(280 90% 62% / 0.05) 0 1px, transparent 1px 192px);
+    -webkit-mask: radial-gradient(ellipse 90% 80% at 50% 55%, #000 10%, transparent 92%);
+            mask: radial-gradient(ellipse 90% 80% at 50% 55%, #000 10%, transparent 92%);
+  }
+  .hud-root > * { position: relative; z-index: 1; }
+}
