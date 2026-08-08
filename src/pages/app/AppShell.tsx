@@ -282,7 +282,7 @@ export default function AppShell() {
               {/* Left column: sectors pod + separate self pod */}
               <div className="shrink-0 flex flex-col gap-5 h-full w-56 xl:w-64 2xl:w-72">
 
-                <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden">
+                <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
 
                   <ChannelSidebar
                     guildName={activeGuild.name}
@@ -307,7 +307,7 @@ export default function AppShell() {
               </div>
 
               {/* Center: main stream pod */}
-              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden">
+              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
 
                 {view === "user-settings" ? (
                   <AppUserSettings onClose={() => setView("main")} />
@@ -348,7 +348,7 @@ export default function AppShell() {
 
               {/* Right: ENTITY POD as its own column */}
               {view === "main" && (
-                <div className="holo-pod pod-right holo-float shrink-0 overflow-hidden hidden lg:flex">
+                <div className="holo-pod pod-right holo-float shrink-0 overflow-hidden hidden lg:flex drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]">
                   <MemberList
                     members={members}
                     guildId={activeGuildId}
@@ -364,7 +364,7 @@ export default function AppShell() {
           ) : (
             <>
               <div className="shrink-0 flex flex-col gap-5 h-full w-56 xl:w-64 2xl:w-72">
-                <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden">
+                <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
                   <div className="h-12 px-4 flex items-center border-b border-primary/15">
                     <span className="font-display text-sm tracking-widest truncate text-primary text-glow">STUDIOVOXARIO</span>
                   </div>
@@ -377,7 +377,7 @@ export default function AppShell() {
                 </div>
               </div>
 
-              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden">
+              <div className="holo-pod pod-center holo-float holo-float-delayed flex-1 flex min-w-0 overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
                 {view === "user-settings" ? (
                   <AppUserSettings onClose={() => setView("main")} />
                 ) : (
