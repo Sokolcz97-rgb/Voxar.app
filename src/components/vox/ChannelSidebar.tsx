@@ -99,7 +99,7 @@ export function ChannelSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-5">
+      <div className="hud-scrollbar flex-1 overflow-y-auto p-3 space-y-5">
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";
@@ -138,7 +138,7 @@ export function ChannelSidebar({
                         className={cn(
                           "sector-node w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors font-display tracking-wide",
                           active
-                            ? "active text-foreground"
+                            ? "active text-foreground bg-primary/20 border border-primary [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]"
                             : "text-muted-foreground hover:text-foreground"
                         )}
                       >

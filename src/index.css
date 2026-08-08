@@ -1638,6 +1638,16 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     );
   }
 
+  /* The server badge gets its own transparent stage so its clipped glow is never cropped. */
+  .hud-root .guild-logo-stage {
+    position: relative;
+    overflow: visible !important;
+    background: transparent;
+    border: 0;
+    isolation: isolate;
+  }
+  .hud-root .guild-logo-stage .hex-ring { z-index: 1; }
+
   /* 5. Wireframe grid floor behind the floating pods */
   .hud-root::before {
     content: "";
@@ -1685,6 +1695,18 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     background: hsl(184 100% 60% / 0.85);
   }
   .hud-root *::-webkit-scrollbar-corner { background: transparent; }
+
+  .hud-root .hud-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(184 100% 54% / 0.5) transparent;
+  }
+  .hud-root .hud-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .hud-root .hud-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .hud-root .hud-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(184 100% 54% / 0.5);
+    border: 0;
+    border-radius: 0;
+  }
 
   /* z-stacking: floating pods + AI never slip under panels */
   .hud-root .holo-pod { z-index: 10; }
