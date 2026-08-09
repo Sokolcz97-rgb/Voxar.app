@@ -26,6 +26,7 @@ import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { MinecraftPanel } from "@/components/MinecraftPanel";
 import { PointsPanel } from "@/components/PointsPanel";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { GuildAvatar } from "@/components/GuildAvatar";
 import {
   Select,
   SelectContent,
