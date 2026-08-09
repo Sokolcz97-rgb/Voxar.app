@@ -168,7 +168,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
                   >
                     <div className="rank-inner overflow-hidden flex items-center justify-center text-lg font-display font-bold">
                       {p.avatar_url
-                        ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
+                        ? <img loading="lazy" decoding="async" src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
                         : name.slice(0, 2).toUpperCase()}
                     </div>
                   </div>

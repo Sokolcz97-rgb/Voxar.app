@@ -346,7 +346,7 @@ const Messages = () => {
                   <Input value={search} onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("messages.searchPlaceholder")} className="pl-9" autoFocus />
                 </div>
-                <div className="max-h-72 overflow-y-auto space-y-1">
+                <div className="perf-scroll transform-gpu will-change-transform max-h-72 overflow-y-auto space-y-1">
                   {searchResults.map((r) => (
                     <button key={r.user_id} onClick={() => startConversation(r.user_id)}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
@@ -383,7 +383,7 @@ const Messages = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-2">
+              <div className="perf-scroll transform-gpu will-change-transform flex-1 overflow-y-auto p-2">
                 {loadingConvs ? (
                   <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
                 ) : filteredConvs.length === 0 ? (
@@ -560,7 +560,7 @@ const Messages = () => {
                   {/* Messages */}
                   <div
                     ref={scrollerRef}
-                    className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 scroll-smooth"
+                    className="perf-scroll transform-gpu will-change-transform flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 scroll-smooth"
                     style={{
                       backgroundImage:
                         "radial-gradient(circle at 20% 10%, hsl(var(--primary)/0.08), transparent 50%), radial-gradient(circle at 80% 90%, hsl(var(--accent)/0.06), transparent 50%)",
@@ -614,7 +614,7 @@ const Messages = () => {
                                           "px-4 py-2 text-sm shadow-sm transition-all break-words relative",
                                           mine
                                             ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.6)] border border-primary-glow/40"
-                                            : "bg-secondary/80 backdrop-blur-sm text-secondary-foreground border border-primary/15",
+                                            : "bg-secondary/80 text-secondary-foreground border border-primary/15",
                                           mine
                                             ? cn("rounded-2xl", !isFirst && "rounded-tr-md", !isLast && "rounded-br-md")
                                             : cn("rounded-2xl", !isFirst && "rounded-tl-md", !isLast && "rounded-bl-md")

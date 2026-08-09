@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Hash, Send, Trash2, Lock, LockOpen, Paperclip, X, FileDown, Loader2 } from "lucide-react";
@@ -44,7 +44,7 @@ function AttachmentList({ items }: { items: Attachment[] }) {
       {items.map((a, i) =>
         a.kind === "image" ? (
           <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block">
-            <img
+            <img decoding="async"
               src={a.url}
               alt={a.name}
               loading="lazy"
@@ -74,7 +74,79 @@ function AttachmentList({ items }: { items: Attachment[] }) {
 
 interface ProfileLite { user_id: string; display_name: string | null; avatar_url: string | null; }
 
+interface RowProps {
+  m: Msg;
+  compact: boolean;
+  name: string;
+  ringColor: string;
+  topRole: any;
+  avatarUrl: string | null;
+  mine: boolean;
+  decrypted: string | null | undefined;
+  onDelete: (id: string) => void;
+  onNeedKey: () => void;
+}
+
+/** Memoized message row — re-renders only when its own props change. */
+const MessageRow = memo(function MessageRow({
+  m, compact, name, ringColor, topRole, avatarUrl, mine, decrypted, onDelete, onNeedKey,
+}: RowProps) {
+  return (
+    <div className={cn("perf-row group flex gap-3", compact ? "pl-12" : "")}>
+      {!compact && (
+        <div className="rank-ring w-9 h-9 shrink-0" style={{ ["--rank-color" as any]: ringColor }}>
+          <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
+            {avatarUrl
+              ? <img loading="lazy" decoding="async" src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              : name.slice(0, 2).toUpperCase()}
+          </div>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        {!compact && (
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-sans font-semibold text-sm" style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}>
+              {name}
+            </span>
+            {topRole && <RoleBadge role={topRole} />}
+            <span className="text-[10px] font-sans tracking-wide text-muted-foreground/70">
+              {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+        )}
+        {isEncrypted(m.content) ? (
+          decrypted ? (
+            <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 flex gap-1.5">
+              <Lock className="w-3 h-3 mt-1 shrink-0 text-emerald-400/80" />
+              <span>{decrypted}</span>
+            </div>
+          ) : (
+            <button onClick={onNeedKey} className="text-sm text-muted-foreground/70 italic flex items-center gap-1.5 hover:text-primary">
+              <Lock className="w-3 h-3" /> Zašifrovaný paket — zadej klíč sektoru
+            </button>
+          )
+        ) : (
+          m.content && <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90">{m.content}</div>
+        )}
+        {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+          <AttachmentList items={m.attachments as Attachment[]} />
+        )}
+      </div>
+      {mine && (
+        <button
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
+          onClick={() => onDelete(m.id)}
+          title="Smazat paket"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+});
+
 export function ChatView({ channel, members = [] }: { channel: VoxChannel; members?: VoxMember[] }) {
+
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -180,9 +252,12 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
     }
   };
 
-  const deleteMsg = async (id: string) => {
+  const deleteMsg = useCallback(async (id: string) => {
     await supabase.from("vox_messages").delete().eq("id", id);
-  };
+  }, []);
+
+  const openKeyDialog = useCallback(() => setE2eeOpen(true), []);
+
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
@@ -206,7 +281,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         </button>
       </div>
 
-      <div className="hud-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
+      <div className="hud-scrollbar transform-gpu will-change-transform flex-1 overflow-y-auto px-5 py-5 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground text-sm py-16">
             <div className="font-display tracking-widest uppercase text-xs text-primary/70 mb-2">// STREAM PRÁZDNÝ</div>
@@ -216,75 +291,28 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         {messages.map((m, i) => {
           const p = profiles[m.author_id];
           const prev = messages[i - 1];
-          const compact = prev && prev.author_id === m.author_id &&
+          const compact = !!prev && prev.author_id === m.author_id &&
             (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime()) < 5 * 60_000;
           const member = members.find((mm) => mm.user_id === m.author_id);
           const topRole = member?.roles?.[0] ?? null;
           const name = member?.nickname || p?.display_name || m.author_id.slice(0, 8);
-          const mine = m.author_id === user?.id;
-          const ringColor = topRole?.color || "hsl(var(--primary))";
           return (
-            <div key={m.id} className={cn("group flex gap-3", compact ? "pl-12" : "")}>
-              {!compact && (
-                <div
-                  className="rank-ring w-9 h-9 shrink-0"
-                  style={{ ["--rank-color" as any]: ringColor }}
-                >
-                  <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
-                    {p?.avatar_url
-                      ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
-                      : name.slice(0, 2).toUpperCase()}
-                  </div>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                {!compact && (
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <span
-                      className="font-sans font-semibold text-sm"
-                      style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}
-                    >
-                      {name}
-                    </span>
-                    {topRole && <RoleBadge role={topRole} />}
-                    <span className="text-[10px] font-sans tracking-wide text-muted-foreground/70">
-                      {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                )}
-                {isEncrypted(m.content) ? (
-                  plain[m.id] ? (
-                    <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 flex gap-1.5">
-                      <Lock className="w-3 h-3 mt-1 shrink-0 text-emerald-400/80" />
-                      <span>{plain[m.id]}</span>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setE2eeOpen(true)}
-                      className="text-sm text-muted-foreground/70 italic flex items-center gap-1.5 hover:text-primary"
-                    >
-                      <Lock className="w-3 h-3" /> Zašifrovaný paket — zadej klíč sektoru
-                    </button>
-                  )
-                ) : (
-                  m.content && <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90">{m.content}</div>
-                )}
-                {Array.isArray(m.attachments) && m.attachments.length > 0 && (
-                  <AttachmentList items={m.attachments as Attachment[]} />
-                )}
-              </div>
-              {mine && (
-                <button
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
-                  onClick={() => deleteMsg(m.id)}
-                  title="Smazat paket"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <MessageRow
+              key={m.id}
+              m={m}
+              compact={compact}
+              name={name}
+              ringColor={topRole?.color || "hsl(var(--primary))"}
+              topRole={topRole}
+              avatarUrl={p?.avatar_url ?? null}
+              mine={m.author_id === user?.id}
+              decrypted={plain[m.id]}
+              onDelete={deleteMsg}
+              onNeedKey={openKeyDialog}
+            />
           );
         })}
+
         <div ref={bottomRef} />
       </div>
 
@@ -293,7 +321,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((a, i) => (
               <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[hsl(222_42%_9%)] border border-primary/30 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]">
-                {a.kind === "image" && <img src={a.url} alt="" className="w-8 h-8 object-cover" />}
+                {a.kind === "image" && <img loading="lazy" decoding="async" src={a.url} alt="" className="w-8 h-8 object-cover" />}
                 <span className="text-[11px] font-mono truncate max-w-[160px] text-primary/90">{a.name}</span>
                 <button onClick={() => setPending((p) => p.filter((_, x) => x !== i))} className="text-muted-foreground hover:text-destructive">
                   <X className="w-3.5 h-3.5" />

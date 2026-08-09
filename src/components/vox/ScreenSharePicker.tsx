@@ -110,14 +110,14 @@ export function ScreenSharePicker({ open, onOpenChange, onPick }: Props) {
                   )}
                 >
                   {s.thumbnail ? (
-                    <img src={s.thumbnail} alt={s.name} className="w-full aspect-video object-cover" />
+                    <img loading="lazy" decoding="async" src={s.thumbnail} alt={s.name} className="w-full aspect-video object-cover" />
                   ) : (
                     <div className="w-full aspect-video flex items-center justify-center bg-primary/5">
                       <Monitor className="w-6 h-6 text-primary/60" />
                     </div>
                   )}
                   <div className="px-2 py-1.5 flex items-center gap-1.5">
-                    {s.appIcon && <img src={s.appIcon} alt="" className="w-3.5 h-3.5" />}
+                    {s.appIcon && <img loading="lazy" decoding="async" src={s.appIcon} alt="" className="w-3.5 h-3.5" />}
                     <span className="text-[10px] font-display tracking-wide truncate text-foreground/90">{s.name}</span>
                   </div>
                 </button>

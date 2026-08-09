@@ -495,7 +495,7 @@ export default function DashboardBotGuilds() {
                     className="flex items-center gap-3 p-3 border rounded-lg"
                   >
                     {g.icon_url ? (
-                      <img src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
+                      <img loading="lazy" decoding="async" src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
                         {g.name.slice(0, 2).toUpperCase()}
@@ -571,7 +571,7 @@ function GuildRow({
     <div className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {guild.icon_url ? (
-          <img src={guild.icon_url} alt="" className="w-10 h-10 rounded-full" />
+          <img loading="lazy" decoding="async" src={guild.icon_url} alt="" className="w-10 h-10 rounded-full" />
         ) : (
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
             {guild.name.slice(0, 2).toUpperCase()}

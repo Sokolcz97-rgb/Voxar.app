@@ -93,7 +93,7 @@ export function DiscordMessagePreview({
       <div className="flex gap-3">
         <div className="shrink-0">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+            <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
           ) : (
             <div className="h-10 w-10 rounded-full bg-[#5865F2] grid place-items-center text-white font-bold">
               {authorInitial}
@@ -125,7 +125,7 @@ export function DiscordMessagePreview({
                 {embed.author?.name && (
                   <div className="flex items-center gap-2 text-sm">
                     {embed.author.icon_url && (
-                      <img src={embed.author.icon_url} alt="" className="h-5 w-5 rounded-full" />
+                      <img loading="lazy" decoding="async" src={embed.author.icon_url} alt="" className="h-5 w-5 rounded-full" />
                     )}
                     <span className="font-semibold text-white">{embed.author.name}</span>
                   </div>
@@ -159,12 +159,12 @@ export function DiscordMessagePreview({
                   </div>
                 )}
                 {embed.image?.url && (
-                  <img src={embed.image.url} alt="" className="rounded max-h-72 mt-1" />
+                  <img loading="lazy" decoding="async" src={embed.image.url} alt="" className="rounded max-h-72 mt-1" />
                 )}
                 {(embed.footer?.text || embed.timestamp) && (
                   <div className="flex items-center gap-2 text-[12px] text-[#949ba4] pt-1">
                     {embed.footer?.icon_url && (
-                      <img src={embed.footer.icon_url} alt="" className="h-4 w-4 rounded-full" />
+                      <img loading="lazy" decoding="async" src={embed.footer.icon_url} alt="" className="h-4 w-4 rounded-full" />
                     )}
                     <span>
                       {embed.footer?.text}

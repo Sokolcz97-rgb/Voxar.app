@@ -72,7 +72,7 @@ export function BlockRenderer({ block }: { block: Block }) {
     case "text":
       return <p className={`text-base text-foreground/90 leading-relaxed whitespace-pre-wrap ${alignClass(block.align)}`}>{block.text}</p>;
     case "image":
-      return <img src={block.src} alt={block.alt} loading="lazy" className={`max-w-full h-auto mx-auto ${block.rounded ? "rounded-xl" : ""}`} />;
+      return <img decoding="async" src={block.src} alt={block.alt} loading="lazy" className={`max-w-full h-auto mx-auto ${block.rounded ? "rounded-xl" : ""}`} />;
     case "button": {
       const isExternal = /^https?:\/\//.test(block.href);
       return (

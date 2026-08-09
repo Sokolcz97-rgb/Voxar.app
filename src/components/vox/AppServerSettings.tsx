@@ -261,7 +261,7 @@ export function AppServerSettings({
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-primary/20 overflow-hidden flex items-center justify-center text-2xl font-bold">
                   {iconUrl
-                    ? <img src={iconUrl} alt="" className="w-full h-full object-cover" />
+                    ? <img loading="lazy" decoding="async" src={iconUrl} alt="" className="w-full h-full object-cover" />
                     : name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 space-y-2">
@@ -339,7 +339,7 @@ export function AppServerSettings({
               {members.map((m) => (
                 <div key={m.user_id} className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/40">
                   <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-xs font-semibold">
-                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : (m.display_name || m.nickname || "?").slice(0,2).toUpperCase()}
+                    {m.avatar_url ? <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : (m.display_name || m.nickname || "?").slice(0,2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm truncate">{m.display_name || m.nickname || m.user_id.slice(0,8)}</div>
@@ -371,7 +371,7 @@ export function AppServerSettings({
               {bans.map((b) => (
                 <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/40">
                   <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-xs font-semibold">
-                    {b.avatar_url ? <img src={b.avatar_url} alt="" className="w-full h-full object-cover" /> : (b.display_name || "?").slice(0,2).toUpperCase()}
+                    {b.avatar_url ? <img loading="lazy" decoding="async" src={b.avatar_url} alt="" className="w-full h-full object-cover" /> : (b.display_name || "?").slice(0,2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm truncate">{b.display_name || b.user_id.slice(0,8)}</div>

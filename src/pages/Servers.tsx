@@ -182,7 +182,7 @@ const Servers = () => {
                   >
                     <div className="flex items-start gap-3 mb-2">
                       {d.icon_url ? (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={d.icon_url}
                           alt=""
                           className="h-10 w-10 rounded-lg object-cover"
@@ -249,7 +249,7 @@ const Servers = () => {
                 size="sm"
                 onClick={() => setActiveGame(g.id)}
               >
-                {g.icon_url && <img src={g.icon_url} alt="" className="h-4 w-4 mr-1 rounded" />}
+                {g.icon_url && <img loading="lazy" decoding="async" src={g.icon_url} alt="" className="h-4 w-4 mr-1 rounded" />}
                 {g.name} ({count})
               </Button>
             );
@@ -287,7 +287,7 @@ const Servers = () => {
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
                       {game?.icon_url ? (
-                        <img src={game.icon_url} alt="" className="h-8 w-8 rounded" />
+                        <img loading="lazy" decoding="async" src={game.icon_url} alt="" className="h-8 w-8 rounded" />
                       ) : (
                         <div className="h-8 w-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
                           <ServerIcon className="h-4 w-4 text-primary" />

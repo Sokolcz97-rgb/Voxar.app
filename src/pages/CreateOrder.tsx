@@ -178,7 +178,7 @@ export default function CreateOrder() {
                     }`}
                   >
                     {m.image_url ? (
-                      <img src={m.image_url} alt={m.name} className="w-16 h-16 object-cover rounded-md flex-shrink-0" />
+                      <img loading="lazy" decoding="async" src={m.image_url} alt={m.name} className="w-16 h-16 object-cover rounded-md flex-shrink-0" />
                     ) : (
                       <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
                         <Package className="w-6 h-6 text-muted-foreground" />

@@ -99,7 +99,7 @@ export function ChannelSidebar({
         </div>
       </div>
 
-      <div className="hud-scrollbar flex-1 overflow-y-auto p-3 space-y-5">
+      <div className="hud-scrollbar transform-gpu will-change-transform flex-1 overflow-y-auto p-3 space-y-5">
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";

@@ -47,7 +47,7 @@ export function SelfPanel({
           >
             <div className="rank-inner w-9 h-9 flex items-center justify-center text-xs font-display font-bold">
               {avatarUrl
-                ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                 : displayName.slice(0, 2).toUpperCase()}
             </div>
           </div>

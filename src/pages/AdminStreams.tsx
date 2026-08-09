@@ -201,7 +201,7 @@ const AdminStreams = () => {
                 <Card key={p.user_id} className="glass border-border p-5">
                   <div className="flex items-start gap-3 mb-3">
                     {p.avatar_url ? (
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={p.avatar_url}
                         alt=""
                         className="h-10 w-10 rounded-full object-cover"
