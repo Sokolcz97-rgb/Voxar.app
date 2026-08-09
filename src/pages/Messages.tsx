@@ -614,7 +614,7 @@ const Messages = () => {
                                           "px-4 py-2 text-sm shadow-sm transition-all break-words relative",
                                           mine
                                             ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.6)] border border-primary-glow/40"
-                                            : "bg-secondary/80 backdrop-blur-sm text-secondary-foreground border border-primary/15",
+                                            : "bg-secondary/80 text-secondary-foreground border border-primary/15",
                                           mine
                                             ? cn("rounded-2xl", !isFirst && "rounded-tr-md", !isLast && "rounded-br-md")
                                             : cn("rounded-2xl", !isFirst && "rounded-tl-md", !isLast && "rounded-bl-md")
