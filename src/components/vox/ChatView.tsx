@@ -74,7 +74,79 @@ function AttachmentList({ items }: { items: Attachment[] }) {
 
 interface ProfileLite { user_id: string; display_name: string | null; avatar_url: string | null; }
 
+interface RowProps {
+  m: Msg;
+  compact: boolean;
+  name: string;
+  ringColor: string;
+  topRole: any;
+  avatarUrl: string | null;
+  mine: boolean;
+  decrypted: string | null | undefined;
+  onDelete: (id: string) => void;
+  onNeedKey: () => void;
+}
+
+/** Memoized message row — re-renders only when its own props change. */
+const MessageRow = memo(function MessageRow({
+  m, compact, name, ringColor, topRole, avatarUrl, mine, decrypted, onDelete, onNeedKey,
+}: RowProps) {
+  return (
+    <div className={cn("perf-row group flex gap-3", compact ? "pl-12" : "")}>
+      {!compact && (
+        <div className="rank-ring w-9 h-9 shrink-0" style={{ ["--rank-color" as any]: ringColor }}>
+          <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
+            {avatarUrl
+              ? <img loading="lazy" decoding="async" src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              : name.slice(0, 2).toUpperCase()}
+          </div>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        {!compact && (
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-sans font-semibold text-sm" style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}>
+              {name}
+            </span>
+            {topRole && <RoleBadge role={topRole} />}
+            <span className="text-[10px] font-sans tracking-wide text-muted-foreground/70">
+              {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+        )}
+        {isEncrypted(m.content) ? (
+          decrypted ? (
+            <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 flex gap-1.5">
+              <Lock className="w-3 h-3 mt-1 shrink-0 text-emerald-400/80" />
+              <span>{decrypted}</span>
+            </div>
+          ) : (
+            <button onClick={onNeedKey} className="text-sm text-muted-foreground/70 italic flex items-center gap-1.5 hover:text-primary">
+              <Lock className="w-3 h-3" /> Zašifrovaný paket — zadej klíč sektoru
+            </button>
+          )
+        ) : (
+          m.content && <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90">{m.content}</div>
+        )}
+        {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+          <AttachmentList items={m.attachments as Attachment[]} />
+        )}
+      </div>
+      {mine && (
+        <button
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
+          onClick={() => onDelete(m.id)}
+          title="Smazat paket"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+});
+
 export function ChatView({ channel, members = [] }: { channel: VoxChannel; members?: VoxMember[] }) {
+
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
