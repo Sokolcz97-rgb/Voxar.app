@@ -1712,3 +1712,55 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
   .hud-root .holo-pod { z-index: 10; }
   .hud-root .composer-pod { z-index: 12; }
 }
+
+/* =====================================================================
+   GLOBAL PERFORMANCE LAYER — low-end GPU / 60FPS pass
+   ===================================================================== */
+@layer utilities {
+  /* GPU-promote every major scroll surface so scrolling never repaints
+     the composited HUD layers underneath. */
+  .hud-scrollbar,
+  .perf-scroll,
+  .hud-root [class*="overflow-y-auto"],
+  .hud-root [class*="overflow-auto"] {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    contain: paint;
+  }
+
+  /* "Filter hell" mitigation: blur belongs on outermost static panels only.
+     Nested/moving surfaces fall back to a cheap semi-transparent solid. */
+  .hud-scrollbar [class*="backdrop-blur"],
+  .perf-scroll [class*="backdrop-blur"],
+  li[class*="backdrop-blur"],
+  [role="listitem"][class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: hsl(222 42% 6% / 0.62);
+  }
+
+  /* Repetitive list rows: isolate layout/paint so one row can't invalidate
+     the whole list. */
+  .perf-row {
+    contain: layout paint style;
+  }
+
+  /* Only transform/opacity may animate — box-shadow/size animations are
+     main-thread killers on weak GPUs. */
+  .hud-root *,
+  .hud-root *::before,
+  .hud-root *::after {
+    transition-property: transform, opacity, color, background-color, border-color;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
