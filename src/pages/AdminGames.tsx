@@ -136,7 +136,7 @@ const AdminGames = () => {
             <Card key={g.id} className="glass border-border p-4">
               <div className="flex items-start gap-3">
                 {g.icon_url ? (
-                  <img src={g.icon_url} alt="" className="h-12 w-12 rounded" />
+                  <img loading="lazy" decoding="async" src={g.icon_url} alt="" className="h-12 w-12 rounded" />
                 ) : (
                   <div className="h-12 w-12 rounded bg-primary/10 border border-primary/30" />
                 )}
@@ -192,7 +192,7 @@ const AdminGames = () => {
                       onClick={() => pickSteam(r)}
                       className="w-full flex items-center gap-2 p-2 rounded hover:bg-primary/10 text-left text-sm"
                     >
-                      {r.icon_url && <img src={r.icon_url} alt="" className="h-6 w-12 object-cover rounded" />}
+                      {r.icon_url && <img loading="lazy" decoding="async" src={r.icon_url} alt="" className="h-6 w-12 object-cover rounded" />}
                       <span className="truncate">{r.name}</span>
                       <span className="ml-auto text-xs text-muted-foreground">#{r.appid}</span>
                     </button>

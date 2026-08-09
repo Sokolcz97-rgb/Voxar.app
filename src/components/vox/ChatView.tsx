@@ -44,7 +44,7 @@ function AttachmentList({ items }: { items: Attachment[] }) {
       {items.map((a, i) =>
         a.kind === "image" ? (
           <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block">
-            <img
+            <img decoding="async"
               src={a.url}
               alt={a.name}
               loading="lazy"
@@ -232,7 +232,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
                 >
                   <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
                     {p?.avatar_url
-                      ? <img src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
+                      ? <img loading="lazy" decoding="async" src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
                       : name.slice(0, 2).toUpperCase()}
                   </div>
                 </div>
@@ -293,7 +293,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((a, i) => (
               <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[hsl(222_42%_9%)] border border-primary/30 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]">
-                {a.kind === "image" && <img src={a.url} alt="" className="w-8 h-8 object-cover" />}
+                {a.kind === "image" && <img loading="lazy" decoding="async" src={a.url} alt="" className="w-8 h-8 object-cover" />}
                 <span className="text-[11px] font-mono truncate max-w-[160px] text-primary/90">{a.name}</span>
                 <button onClick={() => setPending((p) => p.filter((_, x) => x !== i))} className="text-muted-foreground hover:text-destructive">
                   <X className="w-3.5 h-3.5" />

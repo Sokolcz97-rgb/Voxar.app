@@ -54,7 +54,7 @@ export function RoleBadge({ role, size = "sm" }: { role: Pick<VoxRole, "name" | 
       style={{ color: role.color, borderColor: `${role.color}55`, background: `${role.color}12` }}
     >
       {role.badge_url ? (
-        <img src={role.badge_url} alt="" className="w-3 h-3 rounded-sm object-cover" />
+        <img loading="lazy" decoding="async" src={role.badge_url} alt="" className="w-3 h-3 rounded-sm object-cover" />
       ) : Icon ? (
         <Icon className="w-3 h-3" />
       ) : null}
@@ -408,7 +408,7 @@ export function VoxRolesPanel({ guildId, canManage, members }: Props) {
                         onChange={(e) => toggleAssignment(m.user_id, selected.id, e.target.checked)}
                       />
                       <div className="w-6 h-6 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-[10px] font-semibold">
-                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : (m.display_name || "?").slice(0,2).toUpperCase()}
+                        {m.avatar_url ? <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : (m.display_name || "?").slice(0,2).toUpperCase()}
                       </div>
                       <span className="text-sm truncate">{m.display_name || m.nickname || m.user_id.slice(0,8)}</span>
                     </label>

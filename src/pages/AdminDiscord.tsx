@@ -158,7 +158,7 @@ const AdminDiscord = () => {
               >
                 <div className="flex items-start gap-3 mb-3">
                   {s.icon_url ? (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={s.icon_url}
                       alt=""
                       className="h-10 w-10 rounded-lg object-cover"

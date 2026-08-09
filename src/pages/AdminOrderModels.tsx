@@ -116,7 +116,7 @@ export default function AdminOrderModels() {
             : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rows.map((m) => (
                 <div key={m.id} className="border rounded-lg p-3 flex flex-col gap-2">
-                  {m.image_url && <img src={m.image_url} alt={m.name} className="w-full h-32 object-cover rounded" />}
+                  {m.image_url && <img loading="lazy" decoding="async" src={m.image_url} alt={m.name} className="w-full h-32 object-cover rounded" />}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-semibold truncate">{m.name}</div>

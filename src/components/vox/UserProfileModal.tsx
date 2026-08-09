@@ -60,7 +60,7 @@ export function UserProfileModal({ member, guildId, open, onOpenChange }: Props)
           >
             <div className="rank-inner overflow-hidden flex items-center justify-center text-2xl font-display font-bold">
               {member.avatar_url
-                ? <img src={member.avatar_url} alt={name} className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={member.avatar_url} alt={name} className="w-full h-full object-cover" />
                 : name.slice(0, 2).toUpperCase()}
             </div>
           </div>

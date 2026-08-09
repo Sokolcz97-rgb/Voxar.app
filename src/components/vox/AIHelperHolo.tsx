@@ -106,7 +106,7 @@ export function AIHelperHolo() {
           aria-label={t("ai.open")}
         >
           <span className="hex-frame w-8 h-8 bg-primary/12 border border-primary/50 flex items-center justify-center shrink-0">
-            <img src={voxLogo.url} alt="" className="w-5 h-5 object-contain" />
+            <img loading="lazy" decoding="async" src={voxLogo.url} alt="" className="w-5 h-5 object-contain" />
           </span>
           <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/90 whitespace-nowrap">
             Studiovoxario AI
@@ -129,7 +129,7 @@ export function AIHelperHolo() {
             <div className="absolute top-0 left-0 w-px h-10 bg-primary/70" />
             <div className="flex items-center gap-2.5">
               <div className="hex-frame w-9 h-9 bg-[hsl(222_40%_8%)] border border-primary/45 flex items-center justify-center shadow-[0_0_14px_hsl(var(--primary)/0.5)]">
-                <img src={voxLogo.url} alt="" className="w-6 h-6 object-contain" />
+                <img loading="lazy" decoding="async" src={voxLogo.url} alt="" className="w-6 h-6 object-contain" />
               </div>
               <div>
                 <div className="font-display font-bold text-[13px] tracking-[0.2em] text-glow uppercase">StudioVoxario AI</div>
@@ -160,7 +160,7 @@ export function AIHelperHolo() {
             {messages.length === 0 && (
               <div className="text-center py-10 px-4">
                 <div className="inline-flex items-center justify-center w-14 h-14 hex-frame bg-primary/10 border border-primary/35 mb-3 shadow-[0_0_18px_hsl(var(--primary)/0.35)]">
-                  <img src={voxLogo.url} alt="" className="w-8 h-8 object-contain" />
+                  <img loading="lazy" decoding="async" src={voxLogo.url} alt="" className="w-8 h-8 object-contain" />
                 </div>
                 <p className="font-display font-bold text-sm mb-1 uppercase tracking-wider">{t("ai.greeting")}</p>
                 <p className="text-xs text-muted-foreground">{t("ai.intro")}</p>

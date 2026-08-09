@@ -382,7 +382,7 @@ export function PointsPanel({ guildId, isManager }: { guildId: string | null; is
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-8 text-center font-bold ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{["🥇", "🥈", "🥉"][i] || `${i + 1}.`}</div>
                     {m?.avatar_url ? (
-                      <img src={m.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" loading="lazy" />
+                      <img decoding="async" src={m.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" loading="lazy" />
                     ) : (
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold shrink-0">{initials}</div>
                     )}

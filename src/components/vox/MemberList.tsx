@@ -110,7 +110,7 @@ function UserListItem({
           >
             <div className="rank-inner w-8 h-8 flex items-center justify-center text-xs font-semibold">
               {m.avatar_url
-                ? <img src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={m.avatar_url} alt={name} className="w-full h-full object-cover" />
                 : name.slice(0, 2).toUpperCase()}
             </div>
           </div>

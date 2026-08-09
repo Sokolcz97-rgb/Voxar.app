@@ -242,7 +242,7 @@ export function SocialHandleField({
                 className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-muted transition-colors"
               >
                 {s.avatar_url ? (
-                  <img src={s.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+                  <img loading="lazy" decoding="async" src={s.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
                 ) : (
                   <div className="h-6 w-6 rounded-full bg-muted" />
                 )}

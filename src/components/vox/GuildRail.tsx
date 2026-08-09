@@ -27,7 +27,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
         {/* Samostatná značka aplikace — bez rámu, výplně nebo tlačítkového podkladu. */}
         <div className="flex items-center gap-4 shrink-0 overflow-visible">
           <div className="w-16 h-16 shrink-0 my-1 flex items-center justify-center overflow-visible bg-transparent border-0">
-            <img
+            <img loading="lazy" decoding="async"
               src={voxLogo.url}
               alt="Voxar.app logo"
               className="w-12 h-12 object-contain drop-shadow-[0_0_14px_hsl(var(--primary)/0.65)]"
@@ -60,7 +60,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
                             : "bg-secondary/80 text-primary/80 group-hover:bg-primary/25 group-hover:text-primary"
                         )}>
                           {g.icon_url
-                            ? <img src={g.icon_url} alt={g.name} className="w-full h-full object-cover" />
+                            ? <img loading="lazy" decoding="async" src={g.icon_url} alt={g.name} className="w-full h-full object-cover" />
                             : initials}
                         </div>
                       </div>
