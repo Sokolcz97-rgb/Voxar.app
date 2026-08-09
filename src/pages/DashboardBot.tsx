@@ -531,7 +531,7 @@ const DashboardBot = () => {
               style={{ transform: "translateZ(0)", willChange: "transform" }}
             >
               {canManageBot && (
-                <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
+                <div className="flex gap-2 sticky top-0 bg-background py-2 z-10">
                   <Button
                     type="button"
                     size="sm"
