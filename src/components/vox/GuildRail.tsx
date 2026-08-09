@@ -86,45 +86,10 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
 
 
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2.5">
-          {guilds.map((g) => {
-            const active = g.id === activeId;
-            const initials = g.name.slice(0, 2).toUpperCase();
-            return (
-              <Tooltip key={g.id}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onSelect(g.id)}
-                    className="group relative shrink-0 flex items-center gap-4 bg-transparent border-0 p-0 overflow-visible transition-all"
-                    aria-label={g.name}
-                  >
-                    <div className="guild-logo-stage w-[72px] h-[72px] p-2 shrink-0 flex items-center justify-center overflow-visible">
-                      <div className={cn("hex-ring w-14 h-14 transition-all shrink-0 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]", active && "speaking-ring")}>
-                        <div className={cn(
-                          "hex-frame w-full h-full flex items-center justify-center text-sm font-display font-bold overflow-hidden border border-primary/40",
-                          active
-                            ? "bg-gradient-to-br from-primary/40 to-accent/20 text-primary-foreground text-glow"
-                            : "bg-secondary/80 text-primary/80 group-hover:bg-primary/25 group-hover:text-primary"
-                        )}>
-                          {g.icon_url
-                            ? <img loading="lazy" decoding="async" src={g.icon_url} alt={g.name} className="w-full h-full object-cover" />
-                            : initials}
-                        </div>
-                      </div>
-                    </div>
-                    <span className={cn(
-                      "hidden md:block max-w-[10rem] xl:max-w-[16rem] truncate text-left font-display text-[12px] tracking-[0.22em] uppercase transition-colors",
-                      active ? "text-primary text-glow" : "text-primary/55 group-hover:text-primary/90"
-                    )}>
-                      {g.name}
-                    </span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="holo-context-menu font-display tracking-wider text-xs uppercase">
-                  {g.name}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {guilds.map((g) => (
+            <GuildButton key={g.id} guild={g} active={g.id === activeId} onSelect={handleSelect} />
+          ))}
+
         </div>
 
 
