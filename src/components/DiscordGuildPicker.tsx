@@ -13,6 +13,7 @@ import {
 import { Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { GuildAvatar } from "@/components/GuildAvatar";
 
 interface DiscordGuildOption {
   id: string;
