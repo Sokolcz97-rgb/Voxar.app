@@ -607,7 +607,30 @@ export function useVoxVoice(channelId: string | null) {
    * back to the browser's own getDisplayMedia chooser.
    */
   const startScreen = useCallback(async (sourceId?: string, quality?: QualityKey) => {
-    if (screenStreamRef.current || !connectedRef.current) return;
+    if (screenStreamRef.current || !connectedRef.current) return null;
+
+    // 1. Secure context (HTTPS / localhost) is mandatory for capture APIs.
+    if (!window.isSecureContext) {
+      console.error("Screen sharing blocked: Not a secure context (HTTPS required).");
+      toast({
+        title: "Sdílení obrazovky selhalo",
+        description: "Sdílení obrazovky vyžaduje zabezpečené připojení (HTTPS nebo localhost).",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    // 2. Browser / device support.
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      console.error("Screen sharing blocked: getDisplayMedia is not supported.");
+      toast({
+        title: "Sdílení obrazovky selhalo",
+        description: "Váš prohlížeč nepodporuje sdílení obrazovky (nepodporováno na mobilních zařízeních).",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     const prefs = readVideoPrefs();
     const p = presetOf(quality ?? prefs.screenQuality);
     const fps = prefs.screenFps;
@@ -628,47 +651,64 @@ export function useVoxVoice(channelId: string | null) {
     try {
       let s: MediaStream | null = null;
       const video = {
+        cursor: "always",
         width: { ideal: p.width, max: p.width },
         height: { ideal: p.height, max: p.height },
         frameRate: { ideal: fps, max: fps },
-      };
+      } as MediaTrackConstraints;
 
+      // 3. Request the screen stream (Electron: resolve the picked source first).
       if (sourceId && isDesktopCapture()) {
-        // Tell the main process which source the HUD picker selected, then use
-        // the standard getDisplayMedia API (Electron resolves it to that source).
         await selectCaptureSource(sourceId);
         try {
-          if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("no getDisplayMedia");
           s = await navigator.mediaDevices.getDisplayMedia({ video, audio: false });
         } catch (inner) {
           const n = (inner as Error)?.name;
           if (n === "NotAllowedError" || n === "AbortError") throw inner;
-          // Older Electron / fallback path.
           s = await legacyDesktop(sourceId);
         }
       } else {
-        if (!navigator.mediaDevices?.getDisplayMedia) {
-          throw new Error("Sdílení obrazovky není v tomto prostředí dostupné.");
-        }
         s = await navigator.mediaDevices.getDisplayMedia({ video, audio: false });
       }
 
+      console.log("Screen share started successfully.");
       screenStreamRef.current = s;
-      s.getVideoTracks().forEach((t) => { t.onended = () => stopScreen(); });
+
+      // 4. Native "Stop sharing" button.
+      s.getVideoTracks().forEach((t) => {
+        t.onended = () => {
+          console.log("Screen sharing stopped by user via browser UI.");
+          stopScreen();
+        };
+      });
+
       setScreenOn(true);
       addVideoTracks(s.getVideoTracks());
+      return s;
     } catch (e) {
+      // 5. Granular error handling.
       const err = e as Error;
-      console.error("Sdílení obrazovky selhalo", err);
-      if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
+      if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
+        console.warn("User denied / cancelled screen sharing permission.");
+      } else if (err?.name === "NotFoundError") {
+        console.error("No screen track found to share.");
         toast({
           title: "Sdílení obrazovky selhalo",
-          description: err?.message || "Zdroj obrazovky se nepodařilo získat.",
+          description: "Nebyla nalezena žádná obrazovka ke sdílení.",
+          variant: "destructive",
+        });
+      } else {
+        console.error("Unknown screen share error:", err);
+        toast({
+          title: "Sdílení obrazovky selhalo",
+          description: err?.message || "Neznámý problém",
           variant: "destructive",
         });
       }
+      return null;
     }
   }, [renegotiateAll, stopScreen]);
+
 
   const toggleScreen = useCallback(() => {
     if (screenStreamRef.current) stopScreen(); else void startScreen();
