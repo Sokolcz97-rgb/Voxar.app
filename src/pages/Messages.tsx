@@ -346,7 +346,7 @@ const Messages = () => {
                   <Input value={search} onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("messages.searchPlaceholder")} className="pl-9" autoFocus />
                 </div>
-                <div className="max-h-72 overflow-y-auto space-y-1">
+                <div className="perf-scroll transform-gpu will-change-transform max-h-72 overflow-y-auto space-y-1">
                   {searchResults.map((r) => (
                     <button key={r.user_id} onClick={() => startConversation(r.user_id)}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
@@ -383,7 +383,7 @@ const Messages = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-2">
+              <div className="perf-scroll transform-gpu will-change-transform flex-1 overflow-y-auto p-2">
                 {loadingConvs ? (
                   <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
                 ) : filteredConvs.length === 0 ? (
@@ -560,7 +560,7 @@ const Messages = () => {
                   {/* Messages */}
                   <div
                     ref={scrollerRef}
-                    className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 scroll-smooth"
+                    className="perf-scroll transform-gpu will-change-transform flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-6 scroll-smooth"
                     style={{
                       backgroundImage:
                         "radial-gradient(circle at 20% 10%, hsl(var(--primary)/0.08), transparent 50%), radial-gradient(circle at 80% 90%, hsl(var(--accent)/0.06), transparent 50%)",

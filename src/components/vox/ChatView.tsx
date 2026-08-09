@@ -281,7 +281,7 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         </button>
       </div>
 
-      <div className="hud-scrollbar flex-1 overflow-y-auto px-5 py-5 space-y-4">
+      <div className="hud-scrollbar transform-gpu will-change-transform flex-1 overflow-y-auto px-5 py-5 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground text-sm py-16">
             <div className="font-display tracking-widest uppercase text-xs text-primary/70 mb-2">// STREAM PRÁZDNÝ</div>
