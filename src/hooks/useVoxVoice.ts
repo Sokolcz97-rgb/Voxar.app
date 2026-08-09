@@ -79,6 +79,17 @@ export function useVoxVoice(channelId: string | null) {
   const joiningRef = useRef(false);
   const mutedRef = useRef(false);
   const deafenedRef = useRef(false);
+  const accessTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      accessTokenRef.current = data.session?.access_token ?? null;
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      accessTokenRef.current = session?.access_token ?? null;
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const updateRemote = (userId: string, patch: Partial<RemotePeer>) => {
     setRemotes((prev) => ({ ...prev, [userId]: { userId, stream: null, level: 0, ...prev[userId], ...patch } }));
