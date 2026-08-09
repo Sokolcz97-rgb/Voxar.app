@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { Crown, Shield, Mic, MicOff, HeadphoneOff, Volume2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoleBadge, type VoxRole } from "@/components/vox/VoxRolesPanel";
@@ -67,7 +67,7 @@ interface ItemProps {
   onOpenProfile: (m: VoxMember) => void;
 }
 
-function UserListItem({
+const UserListItem = memo(function UserListItem({
   member, guildId, currentUserId, allRoles, canModerate, voice, onMessage, onOpenProfile,
 }: ItemProps) {
   const m = member;
@@ -95,7 +95,7 @@ function UserListItem({
       <li
         onClick={handleLeftClick}
         className={cn(
-          "group relative flex items-center gap-3 pl-3.5 pr-2.5 py-2 cursor-pointer",
+          "perf-row group relative flex items-center gap-3 pl-3.5 pr-2.5 py-2 cursor-pointer",
           "border-l-2 border-transparent transition-all duration-150",
           "hover:border-primary/70 hover:bg-primary/[0.07] hover:shadow-[inset_0_0_18px_hsl(var(--primary)/0.12)]",
           speaking && "border-emerald-400/80 bg-emerald-500/[0.07]",
@@ -146,7 +146,7 @@ function UserListItem({
       </li>
     </UserContextMenu>
   );
-}
+});
 
 export function MemberList({
   members,
@@ -190,6 +190,8 @@ export function MemberList({
     (a, b) => (b.role.position ?? 0) - (a.role.position ?? 0),
   );
 
+  const openProfile = useCallback((m: VoxMember) => setProfileMember(m), []);
+
   const itemProps = (m: VoxMember) => ({
     member: m,
     guildId,
@@ -198,7 +200,7 @@ export function MemberList({
     canModerate,
     voice: voiceState[m.user_id],
     onMessage,
-    onOpenProfile: setProfileMember,
+    onOpenProfile: openProfile,
   });
 
   const renderGroup = (title: string, list: VoxMember[], key: string, dotClass?: string) => {
@@ -230,9 +232,9 @@ export function MemberList({
 
   return (
     <>
-      <aside className="w-60 h-full bg-transparent overflow-y-auto">
+      <aside className="perf-scroll transform-gpu will-change-transform w-60 h-full bg-transparent overflow-y-auto">
         {/* Blueprint header: ENTITY POD */}
-        <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-gradient-to-b from-[hsl(220_35%_5%/0.9)] to-transparent backdrop-blur-sm border-b border-primary/15">
+        <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-gradient-to-b from-[hsl(220_35%_5%/0.9)] to-transparent border-b border-primary/15">
           <div className="flex items-center justify-between">
             <div className="font-display text-[11px] tracking-[0.28em] text-primary/80 text-glow uppercase">
               Entity pod

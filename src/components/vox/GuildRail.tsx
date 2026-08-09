@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Hexagon, Network } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
