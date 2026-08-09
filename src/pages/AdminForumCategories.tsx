@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import {
@@ -35,6 +36,7 @@ import {
   ArrowDown,
   Loader2,
   MessageSquare,
+  FolderTree,
 } from "lucide-react";
 
 interface Category {
@@ -43,8 +45,11 @@ interface Category {
   slug: string;
   description: string | null;
   position: number;
+  parent_id: string | null;
   thread_count?: number;
 }
+
+const NO_PARENT = "__none__";
 
 const slugify = (s: string) =>
   s
