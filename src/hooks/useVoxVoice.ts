@@ -171,6 +171,27 @@ export function useVoxVoice(channelId: string | null) {
     try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
   };
 
+  /** Ghost guard: if a peer never recovers, purge it from UI + DB. */
+  const cancelHardDrop = (remoteUserId: string) => {
+    window.clearTimeout(dropTimersRef.current[remoteUserId]);
+    delete dropTimersRef.current[remoteUserId];
+  };
+
+  const scheduleHardDrop = (remoteUserId: string, delay = 10000) => {
+    if (dropTimersRef.current[remoteUserId]) return;
+    dropTimersRef.current[remoteUserId] = window.setTimeout(() => {
+      delete dropTimersRef.current[remoteUserId];
+      const pc = peersRef.current[remoteUserId];
+      const s = pc?.iceConnectionState;
+      if (s === "connected" || s === "completed") return;
+      stopRemotePeer(remoteUserId);
+      if (channelId) {
+        void supabase.from("vox_voice_participants").delete()
+          .eq("channel_id", channelId).eq("user_id", remoteUserId);
+      }
+    }, delay);
+  };
+
   const requestPeerReconnect = (remoteUserId: string, delay = 1200) => {
     if (reconnectTimersRef.current[remoteUserId]) return;
     reconnectTimersRef.current[remoteUserId] = window.setTimeout(() => {
