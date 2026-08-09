@@ -137,6 +137,8 @@ export function useVoxVoice(channelId: string | null) {
   const stopRemotePeer = (remoteUserId: string, removeQueuedIce = true) => {
     window.clearTimeout(reconnectTimersRef.current[remoteUserId]);
     delete reconnectTimersRef.current[remoteUserId];
+    window.clearTimeout(dropTimersRef.current[remoteUserId]);
+    delete dropTimersRef.current[remoteUserId];
     const pc = peersRef.current[remoteUserId];
     if (pc) {
       try { pc.ontrack = null; pc.onicecandidate = null; pc.onconnectionstatechange = null; pc.oniceconnectionstatechange = null; pc.close(); } catch {}
