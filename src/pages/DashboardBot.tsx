@@ -573,13 +573,7 @@ const DashboardBot = () => {
                     selectedGuildId === g.guild_id ? "border-primary bg-primary/5" : ""
                   }`}
                 >
-                  {g.icon_url ? (
-                    <img src={g.icon_url} className="h-8 w-8 rounded-full" alt="" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
-                      {g.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <GuildAvatar src={g.icon_url} name={g.name} className="h-8 w-8" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{g.name}</div>
                     <code className="text-xs text-muted-foreground">{g.guild_id}</code>
