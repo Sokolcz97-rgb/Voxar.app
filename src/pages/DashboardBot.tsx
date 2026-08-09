@@ -432,7 +432,7 @@ const DashboardBot = () => {
                   {selectedGuild ? (
                     <>
                       {selectedGuild.icon_url ? (
-                        <img src={selectedGuild.icon_url} className="h-5 w-5 rounded-full" alt="" />
+                        <GuildAvatar src={selectedGuild.icon_url} name={selectedGuild.name} className="h-5 w-5" textClassName="text-[8px]" />
                       ) : (
                         <Server className="h-4 w-4" />
                       )}
