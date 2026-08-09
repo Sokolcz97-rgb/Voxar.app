@@ -54,6 +54,7 @@ export function useVoxVoice(channelId: string | null) {
   const [deafened, setDeafened] = useState(false);
   const [remotes, setRemotes] = useState<Record<string, RemotePeer>>({});
   const [selfLevel, setSelfLevel] = useState(0);
+  const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [videoOn, setVideoOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
   const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null);
@@ -542,6 +543,7 @@ export function useVoxVoice(channelId: string | null) {
     channelRef.current = null;
     setRemotes({});
     setSelfLevel(0);
+    setPresentIds(new Set());
   };
 
   const leave = useCallback(async () => {
@@ -857,7 +859,7 @@ export function useVoxVoice(channelId: string | null) {
 
 
   return {
-    connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen,
+    connected, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
     videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
     startVideo, stopVideo, startScreen, stopScreen, applyCamQuality,
   };
