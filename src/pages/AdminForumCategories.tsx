@@ -376,6 +376,28 @@ const AdminForumCategories = () => {
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Nadřazená kategorie</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Žádná (hlavní kategorie)" />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value={NO_PARENT}>Žádná (hlavní kategorie)</SelectItem>
+                  {cats
+                    .filter((c) => !c.parent_id && c.id !== editing?.id)
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Podkategorie mohou být zanořené jen o jednu úroveň. V kategorii s
+                podkategoriemi nelze zakládat nová vlákna.
+              </p>
+            </div>
             <DialogFooter>
               <Button
                 type="button"
