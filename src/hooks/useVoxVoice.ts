@@ -502,6 +502,8 @@ export function useVoxVoice(channelId: string | null) {
     Object.keys(peersRef.current).forEach((remoteUserId) => stopRemotePeer(remoteUserId));
     Object.values(reconnectTimersRef.current).forEach((timer) => window.clearTimeout(timer));
     reconnectTimersRef.current = {};
+    Object.values(dropTimersRef.current).forEach((timer) => window.clearTimeout(timer));
+    dropTimersRef.current = {};
     pendingIceRef.current = {};
     peerConnectionIdsRef.current = {};
     document.querySelectorAll("[id^='vox-audio-']").forEach((el) => el.remove());
