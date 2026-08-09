@@ -135,6 +135,7 @@ const AdminForumCategories = () => {
           name: name.trim(),
           slug: slug.trim(),
           description: description.trim() || null,
+          parent_id: parentId === NO_PARENT ? null : parentId,
         })
         .eq("id", editing.id);
       setSaving(false);
@@ -150,6 +151,7 @@ const AdminForumCategories = () => {
         slug: slug.trim(),
         description: description.trim() || null,
         position: nextPos,
+        parent_id: parentId === NO_PARENT ? null : parentId,
       });
       setSaving(false);
       if (error) {
