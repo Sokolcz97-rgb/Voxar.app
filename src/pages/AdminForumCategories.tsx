@@ -249,14 +249,26 @@ const AdminForumCategories = () => {
             {cats.map((c, i) => (
               <Card
                 key={c.id}
-                className="glass border-border p-5 flex items-center gap-4"
+                className={`glass border-border p-5 flex items-center gap-4 ${
+                  c.parent_id ? "ml-6 md:ml-10 border-l-2 border-l-primary/40" : ""
+                }`}
               >
                 <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                  {c.parent_id ? (
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  ) : (
+                    <FolderTree className="h-5 w-5 text-primary" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display font-bold">{c.name}</h3>
+                    {c.parent_id && (
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                        podkategorie ·{" "}
+                        {cats.find((x) => x.id === c.parent_id)?.name ?? "—"}
+                      </span>
+                    )}
                     <code className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       /{c.slug}
                     </code>
