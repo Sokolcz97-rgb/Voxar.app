@@ -241,13 +241,8 @@ export function DiscordGuildPicker({ open, onOpenChange, onDiscordConnected, onC
                 const submitting = submittingIds.has(g.id);
                 return (
                   <div key={g.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                    {g.icon_url ? (
-                      <img src={g.icon_url} alt="" className="w-10 h-10 rounded-full" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
-                        {g.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <GuildAvatar src={g.icon_url} name={g.name} className="w-10 h-10" textClassName="text-sm" />
+
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{g.name}</div>
                       <div className="text-xs text-muted-foreground">
