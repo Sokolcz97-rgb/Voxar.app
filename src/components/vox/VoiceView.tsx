@@ -50,7 +50,8 @@ function VideoTile({ stream, label, mirrored }: { stream: MediaStream; label: st
 export function VoiceView({ channel }: { channel: VoxChannel }) {
   const { user } = useAuth();
   const { channel: activeChannel, api, joinChannel, leaveChannel } = useVoiceCall();
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [rows, setRows] = useState<Participant[]>([]);
+  const [observedIds, setObservedIds] = useState<Set<string> | null>(null);
   const joinedHere = api.connected && activeChannel?.id === channel.id;
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
       const ids = data.map((d: any) => d.user_id);
       const { data: profs } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
       const profMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p]));
-      setParticipants(data.map((d: any) => ({ ...d, ...profMap[d.user_id] })));
+      setRows(data.map((d: any) => ({ ...d, ...profMap[d.user_id] })));
     };
     load();
     const ch = supabase.channel(`vox_vp_${channel.id}`)
@@ -73,10 +74,37 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [channel.id]);
 
+  // Observer presence: when we are NOT in this room we still need to know who
+  // is really connected, so stale DB rows never render as ghost avatars.
+  useEffect(() => {
+    if (joinedHere) { setObservedIds(null); return; }
+    const obs = supabase.channel(`vox_voice_${channel.id}`, {
+      config: { broadcast: { self: false }, presence: { key: `obs-${user?.id ?? "anon"}-${Math.random().toString(36).slice(2)}` } },
+    });
+    const sync = () => {
+      const state = obs.presenceState<{ user_id?: string }>();
+      const ids = new Set<string>();
+      Object.values(state).flat().forEach((p: any) => p?.user_id && ids.add(p.user_id));
+      setObservedIds(ids);
+    };
+    obs
+      .on("presence", { event: "sync" }, sync)
+      .on("presence", { event: "join" }, sync)
+      .on("presence", { event: "leave" }, sync)
+      .subscribe();
+    return () => { supabase.removeChannel(obs); };
+  }, [channel.id, joinedHere, user?.id]);
+
+  const liveIds = joinedHere ? api.presentIds : observedIds;
+  const participants = rows.filter(
+    (p) => p.user_id === user?.id || !liveIds || liveIds.size === 0 || liveIds.has(p.user_id),
+  );
+
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);
     return p?.display_name || uid.slice(0, 8);
   };
+
 
   const remoteVideos = joinedHere
     ? Object.values(api.remotes)

@@ -54,6 +54,7 @@ export function useVoxVoice(channelId: string | null) {
   const [deafened, setDeafened] = useState(false);
   const [remotes, setRemotes] = useState<Record<string, RemotePeer>>({});
   const [selfLevel, setSelfLevel] = useState(0);
+  const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [videoOn, setVideoOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
   const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null);
@@ -74,10 +75,22 @@ export function useVoxVoice(channelId: string | null) {
   const pendingIceRef = useRef<Record<string, PendingIceCandidate[]>>({});
   const peerConnectionIdsRef = useRef<Record<string, string>>({});
   const reconnectTimersRef = useRef<Record<string, number>>({});
+  const dropTimersRef = useRef<Record<string, number>>({});
   const connectedRef = useRef(false);
   const joiningRef = useRef(false);
   const mutedRef = useRef(false);
   const deafenedRef = useRef(false);
+  const accessTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      accessTokenRef.current = data.session?.access_token ?? null;
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      accessTokenRef.current = session?.access_token ?? null;
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const updateRemote = (userId: string, patch: Partial<RemotePeer>) => {
     setRemotes((prev) => ({ ...prev, [userId]: { userId, stream: null, level: 0, ...prev[userId], ...patch } }));
@@ -136,6 +149,8 @@ export function useVoxVoice(channelId: string | null) {
   const stopRemotePeer = (remoteUserId: string, removeQueuedIce = true) => {
     window.clearTimeout(reconnectTimersRef.current[remoteUserId]);
     delete reconnectTimersRef.current[remoteUserId];
+    window.clearTimeout(dropTimersRef.current[remoteUserId]);
+    delete dropTimersRef.current[remoteUserId];
     const pc = peersRef.current[remoteUserId];
     if (pc) {
       try { pc.ontrack = null; pc.onicecandidate = null; pc.onconnectionstatechange = null; pc.oniceconnectionstatechange = null; pc.close(); } catch {}
@@ -169,6 +184,27 @@ export function useVoxVoice(channelId: string | null) {
       return;
     }
     try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+  };
+
+  /** Ghost guard: if a peer never recovers, purge it from UI + DB. */
+  const cancelHardDrop = (remoteUserId: string) => {
+    window.clearTimeout(dropTimersRef.current[remoteUserId]);
+    delete dropTimersRef.current[remoteUserId];
+  };
+
+  const scheduleHardDrop = (remoteUserId: string, delay = 10000) => {
+    if (dropTimersRef.current[remoteUserId]) return;
+    dropTimersRef.current[remoteUserId] = window.setTimeout(() => {
+      delete dropTimersRef.current[remoteUserId];
+      const pc = peersRef.current[remoteUserId];
+      const s = pc?.iceConnectionState;
+      if (s === "connected" || s === "completed") return;
+      stopRemotePeer(remoteUserId);
+      if (channelId) {
+        void supabase.from("vox_voice_participants").delete()
+          .eq("channel_id", channelId).eq("user_id", remoteUserId);
+      }
+    }, delay);
   };
 
   const requestPeerReconnect = (remoteUserId: string, delay = 1200) => {
@@ -250,13 +286,17 @@ export function useVoxVoice(channelId: string | null) {
         delete reconnectTimersRef.current[remoteUserId];
         return;
       }
-      if (pc.connectionState === "failed") requestPeerReconnect(remoteUserId, 500);
-      if (pc.connectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+      if (pc.connectionState === "failed") { requestPeerReconnect(remoteUserId, 500); scheduleHardDrop(remoteUserId); }
+      if (pc.connectionState === "disconnected") { requestPeerReconnect(remoteUserId, 3500); scheduleHardDrop(remoteUserId); }
+      if (pc.connectionState === "closed") stopRemotePeer(remoteUserId);
     };
     pc.onconnectionstatechange = watchConnection;
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === "failed") requestPeerReconnect(remoteUserId, 500);
-      if (pc.iceConnectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+      const s = pc.iceConnectionState;
+      if (s === "connected" || s === "completed") cancelHardDrop(remoteUserId);
+      if (s === "failed") { requestPeerReconnect(remoteUserId, 500); scheduleHardDrop(remoteUserId); }
+      if (s === "disconnected") { requestPeerReconnect(remoteUserId, 3500); scheduleHardDrop(remoteUserId); }
+      if (s === "closed") stopRemotePeer(remoteUserId);
     };
 
     if (initiator) {
@@ -419,8 +459,30 @@ export function useVoxVoice(channelId: string | null) {
       stopRemotePeer(payload.from);
     });
 
+    // Realtime presence = source of truth for who is actually in the room.
+    // A dropped socket fires `leave` within seconds, so ghosts get purged.
+    ch.on("presence", { event: "leave" }, ({ leftPresences }: any) => {
+      (leftPresences ?? []).forEach((p: any) => {
+        const uid = p?.user_id as string | undefined;
+        if (!uid || uid === user.id) return;
+        stopRemotePeer(uid);
+        void supabase.from("vox_voice_participants").delete()
+          .eq("channel_id", channelId).eq("user_id", uid);
+      });
+    });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState<{ user_id?: string }>();
+      const present = new Set<string>();
+      Object.values(state).flat().forEach((p: any) => p?.user_id && present.add(p.user_id));
+      setPresentIds(present);
+      Object.keys(peersRef.current).forEach((uid) => {
+        if (!present.has(uid)) stopRemotePeer(uid);
+      });
+    });
+
     try {
       await waitForSubscribed(ch);
+      await ch.track({ user_id: user.id, session_id: sessionIdRef.current });
       await supabase.from("vox_voice_participants").upsert({
         channel_id: channelId,
         user_id: user.id,
@@ -437,6 +499,7 @@ export function useVoxVoice(channelId: string | null) {
         if (user.id < row.user_id) createPeer(row.user_id, true);
       });
       await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
+    
     } catch (e) {
       console.error("Hlasová signalizace selhala", e);
       await leaveCleanupOnly();
@@ -452,6 +515,8 @@ export function useVoxVoice(channelId: string | null) {
     Object.keys(peersRef.current).forEach((remoteUserId) => stopRemotePeer(remoteUserId));
     Object.values(reconnectTimersRef.current).forEach((timer) => window.clearTimeout(timer));
     reconnectTimersRef.current = {};
+    Object.values(dropTimersRef.current).forEach((timer) => window.clearTimeout(timer));
+    dropTimersRef.current = {};
     pendingIceRef.current = {};
     peerConnectionIdsRef.current = {};
     document.querySelectorAll("[id^='vox-audio-']").forEach((el) => el.remove());
@@ -478,6 +543,7 @@ export function useVoxVoice(channelId: string | null) {
     channelRef.current = null;
     setRemotes({});
     setSelfLevel(0);
+    setPresentIds(new Set());
   };
 
   const leave = useCallback(async () => {
@@ -485,10 +551,46 @@ export function useVoxVoice(channelId: string | null) {
     connectedRef.current = false;
     joiningRef.current = false;
     channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
+    try { await channelRef.current?.untrack(); } catch { /* noop */ }
     await leaveCleanupOnly();
     setConnected(false);
     await supabase.from("vox_voice_participants").delete().eq("channel_id", channelId).eq("user_id", user.id);
   }, [user, channelId]);
+
+  // Tab close / reload: fire a synchronous keepalive DELETE so the row never
+  // outlives the socket, plus a best-effort broadcast leave for instant UI removal.
+  useEffect(() => {
+    if (!user || !channelId) return;
+    const handleDisconnect = () => {
+      if (!connectedRef.current) return;
+      try {
+        channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
+        void channelRef.current?.untrack();
+      } catch { /* noop */ }
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const token = accessTokenRef.current;
+      if (!url || !key || !token) return;
+      try {
+        fetch(
+          `${url}/rest/v1/vox_voice_participants?channel_id=eq.${channelId}&user_id=eq.${user.id}`,
+          {
+            method: "DELETE",
+            keepalive: true,
+            headers: { apikey: key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          },
+        ).catch(() => {});
+      } catch { /* noop */ }
+    };
+    window.addEventListener("beforeunload", handleDisconnect);
+    window.addEventListener("pagehide", handleDisconnect);
+    return () => {
+      window.removeEventListener("beforeunload", handleDisconnect);
+      window.removeEventListener("pagehide", handleDisconnect);
+    };
+  }, [user, channelId]);
+
+
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -757,7 +859,7 @@ export function useVoxVoice(channelId: string | null) {
 
 
   return {
-    connected, muted, deafened, remotes, selfLevel, join, leave, toggleMute, toggleDeafen,
+    connected, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
     videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
     startVideo, stopVideo, startScreen, stopScreen, applyCamQuality,
   };
