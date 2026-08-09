@@ -473,6 +473,7 @@ export function useVoxVoice(channelId: string | null) {
       const state = ch.presenceState<{ user_id?: string }>();
       const present = new Set<string>();
       Object.values(state).flat().forEach((p: any) => p?.user_id && present.add(p.user_id));
+      setPresentIds(present);
       Object.keys(peersRef.current).forEach((uid) => {
         if (!present.has(uid)) stopRemotePeer(uid);
       });
