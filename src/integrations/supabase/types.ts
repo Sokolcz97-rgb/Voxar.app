@@ -1483,6 +1483,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          parent_id: string | null
           position: number
           slug: string
         }
@@ -1491,6 +1492,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          parent_id?: string | null
           position?: number
           slug: string
         }
@@ -1499,10 +1501,19 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          parent_id?: string | null
           position?: number
           slug?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "forum_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       forum_posts: {
         Row: {

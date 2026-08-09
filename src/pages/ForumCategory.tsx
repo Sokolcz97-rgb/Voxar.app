@@ -8,10 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Pin, Lock, Plus, ChevronLeft, MessageCircle, Paperclip } from "lucide-react";
+import { Loader2, Pin, Lock, Plus, ChevronLeft, ChevronRight, MessageCircle, Paperclip, Pencil, Trash2, FolderTree } from "lucide-react";
 import { SEO } from "@/components/SEO";
 
 interface Thread {
@@ -27,6 +39,14 @@ interface Thread {
   author?: { display_name: string | null; username: string | null } | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  parent_id: string | null;
+}
+
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
@@ -35,8 +55,12 @@ const ForumCategory = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user, isBanned } = useAuth();
+  const { can } = usePermissions();
   const { t, i18n } = useTranslation();
-  const [category, setCategory] = useState<{ id: string; name: string; description: string | null } | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [parent, setParent] = useState<Category | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -45,12 +69,28 @@ const ForumCategory = () => {
   const [submitting, setSubmitting] = useState(false);
   const newThreadEditorRef = useRef<RichEditorHandle>(null);
 
+  // moderation state
+  const [editThread, setEditThread] = useState<Thread | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState<string>("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Thread | null>(null);
+
+  const canEditAny = can("forum", "edit_any");
+  const canDeleteAny = can("forum", "delete_any");
+  const canModerate = canEditAny || canDeleteAny;
+
   const load = async () => {
     setLoading(true);
-    const { data: cat } = await supabase
-      .from("forum_categories").select("*").eq("slug", slug).maybeSingle();
-    if (!cat) { setLoading(false); return; }
+    const { data: cats } = await supabase.from("forum_categories").select("*").order("position");
+    const list = (cats ?? []) as Category[];
+    setAllCategories(list);
+
+    const cat = list.find((c) => c.slug === slug) ?? null;
+    if (!cat) { setCategory(null); setLoading(false); return; }
     setCategory(cat);
+    setParent(cat.parent_id ? list.find((c) => c.id === cat.parent_id) ?? null : null);
+    setSubcategories(list.filter((c) => c.parent_id === cat.id));
 
     const { data: ts } = await supabase
       .from("forum_threads").select("*")
@@ -70,6 +110,8 @@ const ForumCategory = () => {
         return { ...t, post_count: count ?? 0, author: profMap.get(t.user_id) ?? null };
       }));
       setThreads(enriched);
+    } else {
+      setThreads([]);
     }
     setLoading(false);
   };
@@ -104,7 +146,48 @@ const ForumCategory = () => {
     navigate(`/forum/${slug}/${thread.slug}`);
   };
 
+  const openThreadEdit = (th: Thread) => {
+    setEditThread(th);
+    setEditTitle(th.title);
+    setEditCategoryId(category?.id ?? "");
+  };
+
+  const saveThreadEdit = async () => {
+    if (!editThread) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("forum_threads")
+      .update({ title: editTitle.trim(), category_id: editCategoryId })
+      .eq("id", editThread.id);
+    setSavingEdit(false);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    setEditThread(null);
+    toast({ title: "Vlákno upraveno" });
+    load();
+  };
+
+  const deleteThread = async () => {
+    if (!confirmDelete) return;
+    await supabase.from("forum_posts").delete().eq("thread_id", confirmDelete.id);
+    const { error } = await supabase.from("forum_threads").delete().eq("id", confirmDelete.id);
+    setConfirmDelete(null);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Vlákno smazáno" });
+    load();
+  };
+
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
+  const hasSubs = subcategories.length > 0;
+  const catLabel = (c: Category) => {
+    const p = c.parent_id ? allCategories.find((x) => x.id === c.parent_id) : null;
+    return p ? `${p.name} → ${c.name}` : c.name;
+  };
 
   return (
     <div className="min-h-screen relative">
@@ -117,9 +200,17 @@ const ForumCategory = () => {
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
       <main className="container py-10 animate-fade-in">
-        <Link to="/forum" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors mb-4">
-          <ChevronLeft className="h-4 w-4 mr-1" /> {t("forum.backToForum")}
-        </Link>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
+          <Link to="/forum" className="inline-flex items-center hover:text-primary transition-colors">
+            <ChevronLeft className="h-4 w-4 mr-1" /> {t("forum.backToForum")}
+          </Link>
+          {parent && (
+            <>
+              <span>/</span>
+              <Link to={`/forum/${parent.slug}`} className="hover:text-primary transition-colors">{parent.name}</Link>
+            </>
+          )}
+        </div>
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -132,7 +223,7 @@ const ForumCategory = () => {
                 <h1 className="font-display font-black text-3xl md:text-4xl text-glow">{category.name}</h1>
                 {category.description && <p className="text-muted-foreground mt-2">{category.description}</p>}
               </div>
-              {user && !isBanned && (
+              {user && !isBanned && !hasSubs && (
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-primary text-primary-foreground hover:bg-primary-glow">
@@ -164,15 +255,41 @@ const ForumCategory = () => {
               )}
             </div>
 
+            {hasSubs && (
+              <div className="space-y-3 mb-8">
+                <h2 className="font-display font-bold text-lg flex items-center gap-2">
+                  <FolderTree className="h-4 w-4 text-primary" /> Podkategorie
+                </h2>
+                {subcategories.map((s) => (
+                  <Link key={s.id} to={`/forum/${s.slug}`}>
+                    <Card className="glass border-border p-5 hover:border-primary/60 transition-all flex items-center gap-4 group">
+                      <MessageCircle className="h-5 w-5 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display font-bold group-hover:text-primary transition-colors truncate">{s.name}</h3>
+                        {s.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{s.description}</p>}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {hasSubs && threads.length > 0 && (
+              <p className="text-sm text-muted-foreground mb-3">
+                Tato kategorie obsahuje podkategorie – vlákna níže by měla být přesunuta do některé z nich.
+              </p>
+            )}
+
             <div className="space-y-3">
-              {threads.length === 0 && (
+              {threads.length === 0 && !hasSubs && (
                 <Card className="glass border-border p-10 text-center text-muted-foreground">
                   {t("forum.noThreads")}
                 </Card>
               )}
               {threads.map((th) => (
-                <Link key={th.id} to={`/forum/${slug}/${th.slug}`}>
-                  <Card className="glass border-border p-5 hover:border-primary/60 transition-all flex items-center gap-4 group">
+                <Card key={th.id} className="glass border-border p-5 hover:border-primary/60 transition-all flex items-center gap-4 group">
+                  <Link to={`/forum/${slug}/${th.slug}`} className="flex items-center gap-4 flex-1 min-w-0">
                     <MessageCircle className="h-5 w-5 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -188,13 +305,83 @@ const ForumCategory = () => {
                       <div className="font-display font-bold text-primary">{th.post_count}</div>
                       <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("forum.repliesShort")}</div>
                     </div>
-                  </Card>
-                </Link>
+                  </Link>
+                  {canModerate && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {canEditAny && (
+                        <Button size="icon" variant="ghost" title="Upravit / přesunout" onClick={() => openThreadEdit(th)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteAny && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Smazat vlákno"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setConfirmDelete(th)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </Card>
               ))}
             </div>
           </>
         )}
       </main>
+
+      <Dialog open={!!editThread} onOpenChange={(o) => !o && setEditThread(null)}>
+        <DialogContent className="glass border-border">
+          <DialogHeader><DialogTitle>Upravit vlákno</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mod-title">Název</Label>
+              <Input id="mod-title" maxLength={120} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Kategorie / podkategorie</Label>
+              <Select value={editCategoryId} onValueChange={setEditCategoryId}>
+                <SelectTrigger><SelectValue placeholder="Vyber kategorii" /></SelectTrigger>
+                <SelectContent className="z-[100]">
+                  {allCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{catLabel(c)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditThread(null)}>Zrušit</Button>
+            <Button
+              onClick={saveThreadEdit}
+              disabled={savingEdit || !editTitle.trim() || !editCategoryId}
+              className="bg-primary text-primary-foreground hover:bg-primary-glow"
+            >
+              {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : "Uložit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Smazat vlákno?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vlákno „{confirmDelete?.title}" a všechny jeho příspěvky budou trvale odstraněny.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zrušit</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteThread} className="bg-destructive text-destructive-foreground">
+              Smazat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

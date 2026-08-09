@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import {
@@ -35,6 +36,7 @@ import {
   ArrowDown,
   Loader2,
   MessageSquare,
+  FolderTree,
 } from "lucide-react";
 
 interface Category {
@@ -43,8 +45,11 @@ interface Category {
   slug: string;
   description: string | null;
   position: number;
+  parent_id: string | null;
   thread_count?: number;
 }
+
+const NO_PARENT = "__none__";
 
 const slugify = (s: string) =>
   s
@@ -67,6 +72,7 @@ const AdminForumCategories = () => {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [parentId, setParentId] = useState<string>(NO_PARENT);
   const [slugTouched, setSlugTouched] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -88,7 +94,7 @@ const AdminForumCategories = () => {
           return { ...c, thread_count: count ?? 0 };
         })
       );
-      setCats(enriched);
+      setCats(enriched as Category[]);
     }
     setLoading(false);
   };
@@ -102,6 +108,7 @@ const AdminForumCategories = () => {
     setName("");
     setSlug("");
     setDescription("");
+    setParentId(NO_PARENT);
     setSlugTouched(false);
     setOpenForm(true);
   };
@@ -111,6 +118,7 @@ const AdminForumCategories = () => {
     setName(c.name);
     setSlug(c.slug);
     setDescription(c.description ?? "");
+    setParentId(c.parent_id ?? NO_PARENT);
     setSlugTouched(true);
     setOpenForm(true);
   };
@@ -127,6 +135,7 @@ const AdminForumCategories = () => {
           name: name.trim(),
           slug: slug.trim(),
           description: description.trim() || null,
+          parent_id: parentId === NO_PARENT ? null : parentId,
         })
         .eq("id", editing.id);
       setSaving(false);
@@ -142,6 +151,7 @@ const AdminForumCategories = () => {
         slug: slug.trim(),
         description: description.trim() || null,
         position: nextPos,
+        parent_id: parentId === NO_PARENT ? null : parentId,
       });
       setSaving(false);
       if (error) {
@@ -239,14 +249,26 @@ const AdminForumCategories = () => {
             {cats.map((c, i) => (
               <Card
                 key={c.id}
-                className="glass border-border p-5 flex items-center gap-4"
+                className={`glass border-border p-5 flex items-center gap-4 ${
+                  c.parent_id ? "ml-6 md:ml-10 border-l-2 border-l-primary/40" : ""
+                }`}
               >
                 <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                  {c.parent_id ? (
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  ) : (
+                    <FolderTree className="h-5 w-5 text-primary" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display font-bold">{c.name}</h3>
+                    {c.parent_id && (
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                        podkategorie ·{" "}
+                        {cats.find((x) => x.id === c.parent_id)?.name ?? "—"}
+                      </span>
+                    )}
                     <code className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       /{c.slug}
                     </code>
@@ -353,6 +375,28 @@ const AdminForumCategories = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Nadřazená kategorie</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Žádná (hlavní kategorie)" />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value={NO_PARENT}>Žádná (hlavní kategorie)</SelectItem>
+                  {cats
+                    .filter((c) => !c.parent_id && c.id !== editing?.id)
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Podkategorie mohou být zanořené jen o jednu úroveň. V kategorii s
+                podkategoriemi nelze zakládat nová vlákna.
+              </p>
             </div>
             <DialogFooter>
               <Button
