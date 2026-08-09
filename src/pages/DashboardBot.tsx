@@ -526,7 +526,10 @@ const DashboardBot = () => {
                 „Změnit server".
               </DialogDescription>
             </DialogHeader>
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-2">
+            <div
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 space-y-2 [contain:paint]"
+              style={{ transform: "translateZ(0)", willChange: "transform" }}
+            >
               {canManageBot && (
                 <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
                   <Button
