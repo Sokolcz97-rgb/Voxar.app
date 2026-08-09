@@ -78,8 +78,8 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   // is really connected, so stale DB rows never render as ghost avatars.
   useEffect(() => {
     if (joinedHere) { setObservedIds(null); return; }
-    const obs = supabase.channel(`vox_voice_obs_${channel.id}_${Math.random().toString(36).slice(2)}`, {
-      config: { presence: { key: `obs-${user?.id ?? "anon"}` } },
+    const obs = supabase.channel(`vox_voice_${channel.id}`, {
+      config: { broadcast: { self: false }, presence: { key: `obs-${user?.id ?? "anon"}-${Math.random().toString(36).slice(2)}` } },
     });
     const sync = () => {
       const state = obs.presenceState<{ user_id?: string }>();
