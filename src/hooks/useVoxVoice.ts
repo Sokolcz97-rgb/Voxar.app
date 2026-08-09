@@ -445,8 +445,29 @@ export function useVoxVoice(channelId: string | null) {
       stopRemotePeer(payload.from);
     });
 
+    // Realtime presence = source of truth for who is actually in the room.
+    // A dropped socket fires `leave` within seconds, so ghosts get purged.
+    ch.on("presence", { event: "leave" }, ({ leftPresences }: any) => {
+      (leftPresences ?? []).forEach((p: any) => {
+        const uid = p?.user_id as string | undefined;
+        if (!uid || uid === user.id) return;
+        stopRemotePeer(uid);
+        void supabase.from("vox_voice_participants").delete()
+          .eq("channel_id", channelId).eq("user_id", uid);
+      });
+    });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState<{ user_id?: string }>();
+      const present = new Set<string>();
+      Object.values(state).flat().forEach((p: any) => p?.user_id && present.add(p.user_id));
+      Object.keys(peersRef.current).forEach((uid) => {
+        if (!present.has(uid)) stopRemotePeer(uid);
+      });
+    });
+
     try {
       await waitForSubscribed(ch);
+      await ch.track({ user_id: user.id, session_id: sessionIdRef.current });
       await supabase.from("vox_voice_participants").upsert({
         channel_id: channelId,
         user_id: user.id,
@@ -463,6 +484,7 @@ export function useVoxVoice(channelId: string | null) {
         if (user.id < row.user_id) createPeer(row.user_id, true);
       });
       await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
+    
     } catch (e) {
       console.error("Hlasová signalizace selhala", e);
       await leaveCleanupOnly();
