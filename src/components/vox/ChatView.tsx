@@ -252,9 +252,12 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
     }
   };
 
-  const deleteMsg = async (id: string) => {
+  const deleteMsg = useCallback(async (id: string) => {
     await supabase.from("vox_messages").delete().eq("id", id);
-  };
+  }, []);
+
+  const openKeyDialog = useCallback(() => setE2eeOpen(true), []);
+
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
