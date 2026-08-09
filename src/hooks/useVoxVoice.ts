@@ -250,13 +250,17 @@ export function useVoxVoice(channelId: string | null) {
         delete reconnectTimersRef.current[remoteUserId];
         return;
       }
-      if (pc.connectionState === "failed") requestPeerReconnect(remoteUserId, 500);
-      if (pc.connectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+      if (pc.connectionState === "failed") { requestPeerReconnect(remoteUserId, 500); scheduleHardDrop(remoteUserId); }
+      if (pc.connectionState === "disconnected") { requestPeerReconnect(remoteUserId, 3500); scheduleHardDrop(remoteUserId); }
+      if (pc.connectionState === "closed") stopRemotePeer(remoteUserId);
     };
     pc.onconnectionstatechange = watchConnection;
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === "failed") requestPeerReconnect(remoteUserId, 500);
-      if (pc.iceConnectionState === "disconnected") requestPeerReconnect(remoteUserId, 3500);
+      const s = pc.iceConnectionState;
+      if (s === "connected" || s === "completed") cancelHardDrop(remoteUserId);
+      if (s === "failed") { requestPeerReconnect(remoteUserId, 500); scheduleHardDrop(remoteUserId); }
+      if (s === "disconnected") { requestPeerReconnect(remoteUserId, 3500); scheduleHardDrop(remoteUserId); }
+      if (s === "closed") stopRemotePeer(remoteUserId);
     };
 
     if (initiator) {
