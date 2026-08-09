@@ -26,6 +26,7 @@ import { ServerStatsCard } from "@/components/ServerStatsCard";
 import { MinecraftPanel } from "@/components/MinecraftPanel";
 import { PointsPanel } from "@/components/PointsPanel";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { GuildAvatar } from "@/components/GuildAvatar";
 import {
   Select,
   SelectContent,
@@ -431,7 +432,7 @@ const DashboardBot = () => {
                   {selectedGuild ? (
                     <>
                       {selectedGuild.icon_url ? (
-                        <img src={selectedGuild.icon_url} className="h-5 w-5 rounded-full" alt="" />
+                        <GuildAvatar src={selectedGuild.icon_url} name={selectedGuild.name} className="h-5 w-5" textClassName="text-[8px]" />
                       ) : (
                         <Server className="h-4 w-4" />
                       )}
@@ -525,9 +526,12 @@ const DashboardBot = () => {
                 „Změnit server".
               </DialogDescription>
             </DialogHeader>
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-2">
+            <div
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 space-y-2 [contain:paint]"
+              style={{ transform: "translateZ(0)", willChange: "transform" }}
+            >
               {canManageBot && (
-                <div className="flex gap-2 sticky top-0 bg-background/80 backdrop-blur py-2 z-10">
+                <div className="flex gap-2 sticky top-0 bg-background py-2 z-10">
                   <Button
                     type="button"
                     size="sm"
@@ -572,13 +576,7 @@ const DashboardBot = () => {
                     selectedGuildId === g.guild_id ? "border-primary bg-primary/5" : ""
                   }`}
                 >
-                  {g.icon_url ? (
-                    <img src={g.icon_url} className="h-8 w-8 rounded-full" alt="" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
-                      {g.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <GuildAvatar src={g.icon_url} name={g.name} className="h-8 w-8" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{g.name}</div>
                     <code className="text-xs text-muted-foreground">{g.guild_id}</code>
