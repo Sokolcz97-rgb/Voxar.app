@@ -537,10 +537,46 @@ export function useVoxVoice(channelId: string | null) {
     connectedRef.current = false;
     joiningRef.current = false;
     channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
+    try { await channelRef.current?.untrack(); } catch { /* noop */ }
     await leaveCleanupOnly();
     setConnected(false);
     await supabase.from("vox_voice_participants").delete().eq("channel_id", channelId).eq("user_id", user.id);
   }, [user, channelId]);
+
+  // Tab close / reload: fire a synchronous keepalive DELETE so the row never
+  // outlives the socket, plus a best-effort broadcast leave for instant UI removal.
+  useEffect(() => {
+    if (!user || !channelId) return;
+    const handleDisconnect = () => {
+      if (!connectedRef.current) return;
+      try {
+        channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
+        void channelRef.current?.untrack();
+      } catch { /* noop */ }
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const token = accessTokenRef.current;
+      if (!url || !key || !token) return;
+      try {
+        fetch(
+          `${url}/rest/v1/vox_voice_participants?channel_id=eq.${channelId}&user_id=eq.${user.id}`,
+          {
+            method: "DELETE",
+            keepalive: true,
+            headers: { apikey: key, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          },
+        ).catch(() => {});
+      } catch { /* noop */ }
+    };
+    window.addEventListener("beforeunload", handleDisconnect);
+    window.addEventListener("pagehide", handleDisconnect);
+    return () => {
+      window.removeEventListener("beforeunload", handleDisconnect);
+      window.removeEventListener("pagehide", handleDisconnect);
+    };
+  }, [user, channelId]);
+
+
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
