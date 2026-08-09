@@ -288,75 +288,28 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
         {messages.map((m, i) => {
           const p = profiles[m.author_id];
           const prev = messages[i - 1];
-          const compact = prev && prev.author_id === m.author_id &&
+          const compact = !!prev && prev.author_id === m.author_id &&
             (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime()) < 5 * 60_000;
           const member = members.find((mm) => mm.user_id === m.author_id);
           const topRole = member?.roles?.[0] ?? null;
           const name = member?.nickname || p?.display_name || m.author_id.slice(0, 8);
-          const mine = m.author_id === user?.id;
-          const ringColor = topRole?.color || "hsl(var(--primary))";
           return (
-            <div key={m.id} className={cn("group flex gap-3", compact ? "pl-12" : "")}>
-              {!compact && (
-                <div
-                  className="rank-ring w-9 h-9 shrink-0"
-                  style={{ ["--rank-color" as any]: ringColor }}
-                >
-                  <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
-                    {p?.avatar_url
-                      ? <img loading="lazy" decoding="async" src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
-                      : name.slice(0, 2).toUpperCase()}
-                  </div>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                {!compact && (
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <span
-                      className="font-sans font-semibold text-sm"
-                      style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}66` }}
-                    >
-                      {name}
-                    </span>
-                    {topRole && <RoleBadge role={topRole} />}
-                    <span className="text-[10px] font-sans tracking-wide text-muted-foreground/70">
-                      {new Date(m.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                )}
-                {isEncrypted(m.content) ? (
-                  plain[m.id] ? (
-                    <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 flex gap-1.5">
-                      <Lock className="w-3 h-3 mt-1 shrink-0 text-emerald-400/80" />
-                      <span>{plain[m.id]}</span>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setE2eeOpen(true)}
-                      className="text-sm text-muted-foreground/70 italic flex items-center gap-1.5 hover:text-primary"
-                    >
-                      <Lock className="w-3 h-3" /> Zašifrovaný paket — zadej klíč sektoru
-                    </button>
-                  )
-                ) : (
-                  m.content && <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90">{m.content}</div>
-                )}
-                {Array.isArray(m.attachments) && m.attachments.length > 0 && (
-                  <AttachmentList items={m.attachments as Attachment[]} />
-                )}
-              </div>
-              {mine && (
-                <button
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
-                  onClick={() => deleteMsg(m.id)}
-                  title="Smazat paket"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <MessageRow
+              key={m.id}
+              m={m}
+              compact={compact}
+              name={name}
+              ringColor={topRole?.color || "hsl(var(--primary))"}
+              topRole={topRole}
+              avatarUrl={p?.avatar_url ?? null}
+              mine={m.author_id === user?.id}
+              decrypted={plain[m.id]}
+              onDelete={deleteMsg}
+              onNeedKey={openKeyDialog}
+            />
           );
         })}
+
         <div ref={bottomRef} />
       </div>
 
