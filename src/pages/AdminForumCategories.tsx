@@ -72,6 +72,7 @@ const AdminForumCategories = () => {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [parentId, setParentId] = useState<string>(NO_PARENT);
   const [slugTouched, setSlugTouched] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -93,7 +94,7 @@ const AdminForumCategories = () => {
           return { ...c, thread_count: count ?? 0 };
         })
       );
-      setCats(enriched);
+      setCats(enriched as Category[]);
     }
     setLoading(false);
   };
@@ -107,6 +108,7 @@ const AdminForumCategories = () => {
     setName("");
     setSlug("");
     setDescription("");
+    setParentId(NO_PARENT);
     setSlugTouched(false);
     setOpenForm(true);
   };
@@ -116,6 +118,7 @@ const AdminForumCategories = () => {
     setName(c.name);
     setSlug(c.slug);
     setDescription(c.description ?? "");
+    setParentId(c.parent_id ?? NO_PARENT);
     setSlugTouched(true);
     setOpenForm(true);
   };
