@@ -74,6 +74,7 @@ export function useVoxVoice(channelId: string | null) {
   const pendingIceRef = useRef<Record<string, PendingIceCandidate[]>>({});
   const peerConnectionIdsRef = useRef<Record<string, string>>({});
   const reconnectTimersRef = useRef<Record<string, number>>({});
+  const dropTimersRef = useRef<Record<string, number>>({});
   const connectedRef = useRef(false);
   const joiningRef = useRef(false);
   const mutedRef = useRef(false);
