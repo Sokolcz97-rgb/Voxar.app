@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Hash, Send, Trash2, Lock, LockOpen, Paperclip, X, FileDown, Loader2 } from "lucide-react";
