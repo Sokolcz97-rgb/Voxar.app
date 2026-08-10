@@ -1,0 +1,4 @@
+/dev-server/minecraft-plugin/src/main/java/com/studiovoxario/voxariobridge/BridgeClient.java
+/dev-server/minecraft-plugin/src/main/java/com/studiovoxario/voxariobridge/EventsListener.java
+/dev-server/minecraft-plugin/src/main/java/com/studiovoxario/voxariobridge/Json.java
+/dev-server/minecraft-plugin/src/main/java/com/studiovoxario/voxariobridge/VoxarioBridge.java
