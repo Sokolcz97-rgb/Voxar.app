@@ -1,7 +1,7 @@
 # VoxarioForge
 
 Vlastní obsahový engine pro Minecraft (alternativa k ItemsAdder/Nexo, vlastní terminologie).
-**Folia 1.21.11+**, kompilováno na **JDK 25**, běží i na čistém Paperu.
+**Folia 1.21.11+**, kompilováno na **Java 21** (běží na JDK 21+ i 25), funguje i na čistém Paperu.
 
 ## Pojmy
 
@@ -17,7 +17,8 @@ Vlastní obsahový engine pro Minecraft (alternativa k ItemsAdder/Nexo, vlastní
 
 1. `VoxarioForge.jar` → `plugins/`, restart serveru.
 2. Vznikne `plugins/VoxarioForge/packs/default/` s `items.yml` a složkou `blueprints/`.
-3. Exportované `.bbmodel` soubory z Blockbenche nahraj do `blueprints/`.
+3. Modely nahraj do `blueprints/` — podporované formáty: `.bbmodel` (Blockbench), `.iaentitymodel` / `.json` (ItemsAdder / Bedrock geometry).
+   U `.iaentitymodel` bez vložené textury přidej vedle stejně pojmenovaný `.png`.
 4. V `items.yml` přiřaď `blueprint: <jmeno souboru bez pripony>`.
 5. `/voxforge reload` a `/voxforge pack` — vznikne `VoxarioForge-Pack.zip`.
 6. ZIP nahostuj a URL + SHA-1 vlož do `config.yml` (`pack.url`, `pack.sha1`).
@@ -32,7 +33,7 @@ Vlastní obsahový engine pro Minecraft (alternativa k ItemsAdder/Nexo, vlastní
 
 ## Co umí
 
-- `.bbmodel` → vanilla model JSON (elementy, UV přepočet dle resolution, rotace, display)
+- `.bbmodel` i `.iaentitymodel` (Bedrock geometry) → vanilla model JSON (elementy, UV přepočet, rotace, display)
 - automatická extrakce PNG textur z base64 v `.bbmodel`
 - `item_model` komponenta (1.21.4+ formát `assets/<ns>/items/<id>.json`) – žádná CustomModelData kolize
 - atributy (damage, speed, armor, health…), enchanty, unbreakable, hide-flags, lore, kategorie
@@ -43,5 +44,5 @@ Vlastní obsahový engine pro Minecraft (alternativa k ItemsAdder/Nexo, vlastní
 ## Build
 
 ```bash
-JAVA_HOME=<jdk25> mvn -B package   # target/VoxarioForge.jar
+JAVA_HOME=<jdk21+> mvn -B package   # target/VoxarioForge.jar
 ```
