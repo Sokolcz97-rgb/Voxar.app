@@ -74,10 +74,14 @@ public final class ContentRegistry {
             if (items.isFile()) loadItems(pack.getName(), items);
 
             File bpDir = new File(pack, "blueprints");
-            File[] bbs = bpDir.listFiles((d, n) -> n.toLowerCase(Locale.ROOT).endsWith(".bbmodel"));
+            File[] bbs = bpDir.listFiles((d, n) -> {
+                String low = n.toLowerCase(Locale.ROOT);
+                return low.endsWith(".bbmodel") || low.endsWith(".iaentitymodel") || low.endsWith(".json");
+            });
             if (bbs != null) {
                 for (File bb : bbs) {
-                    String name = bb.getName().substring(0, bb.getName().length() - ".bbmodel".length());
+                    String n = bb.getName();
+                    String name = n.substring(0, n.lastIndexOf('.'));
                     blueprints.put(name.toLowerCase(Locale.ROOT), bb);
                 }
             }
