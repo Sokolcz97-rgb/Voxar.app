@@ -215,4 +215,148 @@ public final class BlueprintCompiler {
     private static double round(double v) {
         return Math.round(v * 10000.0) / 10000.0;
     }
+
+    // ---------------- .iaentitymodel / Bedrock geometry ----------------
+
+    private static boolean isBedrock(JsonObject o) {
+        if (o.has("minecraft:geometry")) return true;
+        for (String k : o.keySet()) {
+            if (k.startsWith("geometry.")) return true;
+        }
+        return false;
+    }
+
+    /** Prevede Bedrock geometry (.iaentitymodel / .geo.json) na bbmodel-like JSON. */
+    private static JsonObject fromBedrock(JsonObject src) {
+        JsonObject geo = null;
+        if (src.has("minecraft:geometry") && src.get("minecraft:geometry").isJsonArray()) {
+            JsonArray arr = src.getAsJsonArray("minecraft:geometry");
+            if (arr.size() > 0 && arr.get(0).isJsonObject()) geo = arr.get(0).getAsJsonObject();
+        } else {
+            for (String k : src.keySet()) {
+                if (k.startsWith("geometry.") && src.get(k).isJsonObject()) {
+                    geo = src.getAsJsonObject(k);
+                    break;
+                }
+            }
+        }
+        JsonObject out = new JsonObject();
+        if (geo == null) {
+            out.add("elements", new JsonArray());
+            return out;
+        }
+
+        double texW = 16, texH = 16;
+        JsonObject desc = geo.has("description") && geo.get("description").isJsonObject()
+                ? geo.getAsJsonObject("description") : geo;
+        if (desc.has("texture_width")) texW = desc.get("texture_width").getAsDouble();
+        if (desc.has("texture_height")) texH = desc.get("texture_height").getAsDouble();
+        if (texW <= 0) texW = 16;
+        if (texH <= 0) texH = 16;
+
+        JsonObject res = new JsonObject();
+        res.addProperty("width", texW);
+        res.addProperty("height", texH);
+        out.add("resolution", res);
+
+        JsonArray elements = new JsonArray();
+        JsonArray bones = geo.has("bones") && geo.get("bones").isJsonArray()
+                ? geo.getAsJsonArray("bones") : new JsonArray();
+
+        for (JsonElement be : bones) {
+            if (!be.isJsonObject()) continue;
+            JsonObject bone = be.getAsJsonObject();
+            if (!bone.has("cubes") || !bone.get("cubes").isJsonArray()) continue;
+            for (JsonElement ce : bone.getAsJsonArray("cubes")) {
+                if (!ce.isJsonObject()) continue;
+                JsonObject cube = ce.getAsJsonObject();
+                if (!cube.has("origin") || !cube.has("size")) continue;
+
+                double[] o = vec3(cube.getAsJsonArray("origin"));
+                double[] s = vec3(cube.getAsJsonArray("size"));
+                double inflate = cube.has("inflate") ? cube.get("inflate").getAsDouble() : 0;
+
+                // Bedrock -> Java: X je zrcadlene, posun o 8
+                double x1 = 8 - (o[0] + s[0]) - inflate;
+                double x2 = 8 - o[0] + inflate;
+                double y1 = o[1] - inflate;
+                double y2 = o[1] + s[1] + inflate;
+                double z1 = o[2] + 8 - inflate;
+                double z2 = o[2] + s[2] + 8 + inflate;
+
+                JsonObject el = new JsonObject();
+                el.add("from", arr(new double[]{x1, y1, z1}));
+                el.add("to", arr(new double[]{x2, y2, z2}));
+
+                if (cube.has("rotation") && cube.get("rotation").isJsonArray()) {
+                    el.add("rotation", cube.getAsJsonArray("rotation"));
+                    double[] piv = cube.has("pivot")
+                            ? vec3(cube.getAsJsonArray("pivot"))
+                            : new double[]{o[0] + s[0] / 2, o[1] + s[1] / 2, o[2] + s[2] / 2};
+                    el.add("origin", arr(new double[]{8 - piv[0], piv[1], piv[2] + 8}));
+                }
+
+                el.add("faces", bedrockFaces(cube, s));
+                elements.add(el);
+            }
+        }
+        out.add("elements", elements);
+        return out;
+    }
+
+    private static JsonObject bedrockFaces(JsonObject cube, double[] size) {
+        JsonObject faces = new JsonObject();
+        JsonElement uvEl = cube.get("uv");
+
+        if (uvEl != null && uvEl.isJsonObject()) {
+            // per-face UV
+            JsonObject uvObj = uvEl.getAsJsonObject();
+            for (String dir : List.of("north", "east", "south", "west", "up", "down")) {
+                if (!uvObj.has(dir) || !uvObj.get(dir).isJsonObject()) continue;
+                JsonObject f = uvObj.getAsJsonObject(dir);
+                if (!f.has("uv") || !f.has("uv_size")) continue;
+                double[] p = vec2(f.getAsJsonArray("uv"));
+                double[] sz = vec2(f.getAsJsonArray("uv_size"));
+                faces.add(dir, face(p[0], p[1], p[0] + sz[0], p[1] + sz[1]));
+            }
+            return faces;
+        }
+
+        if (uvEl != null && uvEl.isJsonArray()) {
+            // box UV
+            double[] uv = vec2(uvEl.getAsJsonArray());
+            double u = uv[0], v = uv[1];
+            double w = size[0], h = size[1], d = size[2];
+            faces.add("up", face(u + d, v, u + d + w, v + d));
+            faces.add("down", face(u + d + w, v + d, u + d + w * 2, v));
+            faces.add("east", face(u, v + d, u + d, v + d + h));
+            faces.add("north", face(u + d, v + d, u + d + w, v + d + h));
+            faces.add("west", face(u + d + w, v + d, u + d * 2 + w, v + d + h));
+            faces.add("south", face(u + d * 2 + w, v + d, u + d * 2 + w * 2, v + d + h));
+        }
+        return faces;
+    }
+
+    private static JsonObject face(double u1, double v1, double u2, double v2) {
+        JsonObject f = new JsonObject();
+        f.add("uv", arr(new double[]{u1, v1, u2, v2}));
+        f.addProperty("texture", 0);
+        return f;
+    }
+
+    private static double[] vec3(JsonArray a) {
+        return new double[]{
+                a.size() > 0 ? a.get(0).getAsDouble() : 0,
+                a.size() > 1 ? a.get(1).getAsDouble() : 0,
+                a.size() > 2 ? a.get(2).getAsDouble() : 0
+        };
+    }
+
+    private static double[] vec2(JsonArray a) {
+        return new double[]{
+                a.size() > 0 ? a.get(0).getAsDouble() : 0,
+                a.size() > 1 ? a.get(1).getAsDouble() : 0
+        };
+    }
+}
 }
