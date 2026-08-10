@@ -155,6 +155,12 @@ public final class BlueprintCompiler {
             model.add("display", defaultDisplay());
         }
 
+        if (pngs.isEmpty()) {
+            File png = new File(bbmodel.getParentFile(),
+                    bbmodel.getName().substring(0, bbmodel.getName().lastIndexOf('.')) + ".png");
+            if (png.isFile()) pngs.put(id + "_0", Files.readAllBytes(png.toPath()));
+        }
+
         return new Compiled(id, model, pngs);
     }
 
@@ -358,5 +364,4 @@ public final class BlueprintCompiler {
                 a.size() > 1 ? a.get(1).getAsDouble() : 0
         };
     }
-}
 }
