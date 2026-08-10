@@ -1,0 +1,17 @@
+name: VoxarioBridge
+version: 1.0.0
+main: com.studiovoxario.voxariobridge.VoxarioBridge
+api-version: "1.16"
+author: StudioVoxario
+description: Propojeni Minecraft serveru s Discordem pres StudioVoxario bridge.
+commands:
+  discord:
+    description: Propojeni Minecraft uctu s Discordem
+    usage: /discord link <KOD>
+  voxario:
+    description: Sprava pluginu VoxarioBridge
+    usage: /voxario reload|test
+    permission: voxario.admin
+permissions:
+  voxario.admin:
+    default: op

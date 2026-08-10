@@ -1,0 +1,17 @@
+# VoxarioBridge
+# Endpoint a token najdes v dashboardu: Bot -> Games -> Minecraft
+bridge-url: "https://rioexuvgvmdwvidfakxy.supabase.co/functions/v1/minecraft-bridge"
+token: "SEM-VLOZ-PLUGIN-TOKEN"
+
+events:
+  chat: true
+  join: true
+  leave: true
+  death: true
+  achievement: true
+  server-status: true
+
+# Stahovani zprav z Discordu do hry (polling v sekundach, 0 = vypnuto)
+pull-interval: 3
+# Format zpravy z Discordu v herním chatu
+discord-to-mc-format: "&9[Discord] &b{name}&f: {message}"
