@@ -30,6 +30,14 @@ public final class BlueprintCompiler {
         String raw = Files.readString(bbmodel.toPath(), StandardCharsets.UTF_8);
         JsonObject src = JsonParser.parseString(raw).getAsJsonObject();
 
+        // .iaentitymodel / bedrock geometry -> prevod na bbmodel-like strukturu
+        if (isBedrock(src)) {
+            src = fromBedrock(src);
+        } else if (src.has("model") && src.get("model").isJsonObject() && !src.has("elements")) {
+            JsonObject inner = src.getAsJsonObject("model");
+            if (isBedrock(inner) || inner.has("elements")) src = isBedrock(inner) ? fromBedrock(inner) : inner;
+        }
+
         double resW = 16, resH = 16;
         if (src.has("resolution")) {
             JsonObject res = src.getAsJsonObject("resolution");
@@ -38,6 +46,7 @@ public final class BlueprintCompiler {
         }
         if (resW <= 0) resW = 16;
         if (resH <= 0) resH = 16;
+
 
         // --- textury ---
         Map<String, byte[]> pngs = new LinkedHashMap<>();
