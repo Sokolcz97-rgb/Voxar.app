@@ -1,0 +1,28 @@
+# VoxarioForge
+# Vlastni obsahovy engine (Constructs / Fixtures / Sectors / Blueprints)
+
+# Namespace pouzity v resource packu a klicich (ns:id)
+namespace: "voxforge"
+
+pack:
+  # Automaticky sestavit resource pack pri startu serveru
+  build-on-start: true
+  # Nazev vysledneho ZIPu v plugins/VoxarioForge/
+  file-name: "VoxarioForge-Pack.zip"
+  description: "StudioVoxario - VoxarioForge content pack"
+  # Verejna URL na hostovany ZIP (prazdne = neposilat hracum)
+  url: ""
+  # SHA-1 hash packu (nepovinne, doporucene pri url)
+  sha1: ""
+  # Vyzadovat pack pri pripojeni
+  required: false
+
+fixtures:
+  # Povolit umistovani nabytku (ItemDisplay + Interaction hitbox)
+  enabled: true
+  # Zarovnani na mrizku 0.25 bloku
+  grid-snap: true
+
+gui:
+  title: "&b&lVOXARIO&f FORGE"
+  rows: 6
