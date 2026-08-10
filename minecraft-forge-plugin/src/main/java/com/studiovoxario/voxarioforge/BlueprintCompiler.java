@@ -53,9 +53,10 @@ public final class BlueprintCompiler {
         JsonObject texMap = new JsonObject();
         List<String> texKeys = new ArrayList<>();
 
-        if (src.has("textures")) {
+        if (src.has("textures") && src.get("textures").isJsonArray()) {
             JsonArray textures = src.getAsJsonArray("textures");
             for (int i = 0; i < textures.size(); i++) {
+                if (!textures.get(i).isJsonObject()) continue;
                 JsonObject t = textures.get(i).getAsJsonObject();
                 String source = t.has("source") ? t.get("source").getAsString() : null;
                 String fileName = id + "_" + i;
@@ -67,9 +68,13 @@ public final class BlueprintCompiler {
                 texKeys.add(String.valueOf(i));
             }
         }
-        if (!texKeys.isEmpty()) {
-            texMap.addProperty("particle", namespace + ":item/" + id + "_0");
+        if (texKeys.isEmpty()) {
+            // .iaentitymodel / geometry bez vlozene textury -> ocekava <id>_0.png v blueprints/
+            texMap.addProperty("0", namespace + ":item/" + id + "_0");
+            texKeys.add("0");
         }
+        texMap.addProperty("particle", namespace + ":item/" + id + "_0");
+
 
         // --- elementy ---
         JsonArray outElements = new JsonArray();
