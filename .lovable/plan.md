@@ -1,28 +1,36 @@
-## Cíl
-Pokračovat v redesignu `/app` shellu přesně podle blueprintu (image-68), ale **AIHelper na veřejném webu vrátit do původní podoby** — holo `NEON // AI` orb má zůstat jen uvnitř desktop aplikace / `/app`.
+# Chyba "Failed to read console input" — diagnóza
 
-## Kroky
+Tahle chyba **nepochází z pluginu VoxarioForge**. Jde o chybu konzole samotného serveru:
 
-### 1. Rozdělit AIHelper na web vs. app variantu
-- Vrátit `src/components/AIHelper.tsx` do původní (pre-blueprint) podoby, kterou používá marketing web (Index, Novinky, Forum…).
-- Vytvořit nový `src/components/vox/AIHelperHolo.tsx` s holo `NEON // AI` orbem + hex-frame panelem.
-- V `src/pages/app/AppShell.tsx` použít `AIHelperHolo` místo `AIHelper`.
+```text
+java.io.IOException: Neplatný popisovač (Invalid handle)
+  at net.minecrell.terminalconsole.SimpleTerminalConsole.readCommands
+```
 
-### 2. Dokončit blueprint sekce, které ještě nejsou hotové
-- **GuildRail top badge**: přidat `STUDIO // VOXARIO` monogram nad seznam sektorů (levý horní roh schématu).
-- **ChannelSidebar footer**: přidat mini status pás pod SelfPanel — „NET LINK ● SYNC" s pulzující tečkou (spodní část levého podu ve schématu).
-- **MemberList**: doplnit pravou hex-frame lištu s ikonami filtrů (ALL / VOICE / ADMIN) nad seznam členů, dle schématu.
-- **AppServerSettings / AppUserSettings**: sjednotit záhlaví do `// SEKCE …` stylu (uppercase, tracking, tenký scanline pruh), aby settings pody nevypadaly jako běžný shadcn dialog.
-- **CreateGuildDialog / JoinGuildDialog / CreateChannelDialog**: přeobléknout do `holo-context-menu` stylu (polygon clip, glow border, uppercase font-display nadpisy).
+Server se snaží číst příkazy ze standardního vstupu (stdin), ale ten není dostupný — typicky když se server spouští:
+- na pozadí (`start /b`, služba, panel bez konzole),
+- přes skript, kde je stdin přesměrován nebo zavřený,
+- v Dockeru bez `-i` / `tty`.
 
-### 3. Detaily z blueprintu, které chybí
-- **Rank ring legenda**: malý dekorativní ukazatel v ENTITY POD hlavičce (barevné tečky = role hoisted colors).
-- **Speaking ring**: ověřit, že se aktivuje i v `VoiceView` dlaždicích (ne jen v MemberList).
-- **Scanline animace**: přidat jemný `.holo-scanline` overlay na hlavní pody (`AppShell`), aby celý HUD dýchal.
+Plugin se do toho nijak neplete a server běží dál, jen nejde psát příkazy do konzole.
 
-### 4. Bez zásahů
-- Žádné změny v business logice, DB, RLS, hlasovém stacku ani v marketing stránkách kromě návratu původního `AIHelper.tsx`.
+## Řešení (na straně spouštění serveru)
 
-## Soubory
-- upravit: `src/components/AIHelper.tsx` (vrátit původní), `src/pages/app/AppShell.tsx`, `src/components/vox/GuildRail.tsx`, `src/components/vox/ChannelSidebar.tsx`, `src/components/vox/MemberList.tsx`, `src/components/vox/AppServerSettings.tsx`, `src/components/vox/AppUserSettings.tsx`, `src/components/vox/CreateGuildDialog.tsx`, `src/components/vox/CreateChannelDialog.tsx`, `src/components/vox/VoiceView.tsx`, `src/index.css` (přidat `.holo-scanline`, případně `.net-link`).
-- vytvořit: `src/components/vox/AIHelperHolo.tsx`.
+1. Ve start skriptu přidat za jar parametr `nogui` a spouštět přímo v okně konzole:
+   ```text
+   java -Xmx4G -jar folia.jar nogui
+   ```
+2. Pokud server běží na pozadí / jako služba, vypnout čtení konzole přepínačem JVM:
+   ```text
+   java -Djline.terminal=jline.UnsupportedTerminal -jar folia.jar nogui
+   ```
+   nebo `-Dterminal.jline=false -Dterminal.ansi=true`
+3. V Dockeru přidat `stdin_open: true` a `tty: true` (resp. `docker run -it`).
+4. Ve Windows `.bat` použít `java ...` bez `start /b` a bez `< NUL`.
+
+## Co udělám v repozitáři
+
+- Doplním do `minecraft-forge-plugin/README.md` sekci **Řešení potíží** s touto chybou a doporučenými start příkazy (Windows `.bat` i Linux `.sh` příklad).
+- Ověřím, že `VoxarioForge.jar` je stále přeložený na Java 21 (class 65), aby nedošlo k záměně s dřívější chybou verze.
+
+Pokud chceš, můžu místo toho rovnou hledat jinou chybu — pošli log z okamžiku startu (řádky s `VoxarioForge`), pokud se plugin nenačetl.
