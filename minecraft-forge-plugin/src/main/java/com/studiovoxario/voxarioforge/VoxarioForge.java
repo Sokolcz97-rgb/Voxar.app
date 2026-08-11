@@ -51,6 +51,8 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         this.namespace = getConfig().getString("namespace", "voxforge").toLowerCase(Locale.ROOT);
         this.constructKey = new NamespacedKey(this, "construct");
         this.fixtureKey = new NamespacedKey(this, "fixture");
@@ -202,6 +204,10 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
 
     public String namespace() {
         return namespace;
+    }
+
+    public ImportWatcher importWatcher() {
+        return watcher;
     }
 
     public SourceManager sources() {

@@ -31,7 +31,13 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(Component.text("Jen pro hrace.", NamedTextColor.RED));
                     return true;
                 }
-                plugin.gui().open(player, 0, args.length > 1 ? args[1] : null);
+                if (args.length > 1 && plugin.sources().get(args[1]) != null) {
+                    plugin.gui().open(player, 0, args[1], args.length > 2 ? args[2] : null);
+                } else if (args.length > 1) {
+                    plugin.gui().open(player, 0, null, args[1]);
+                } else {
+                    plugin.gui().openMenu(player);
+                }
             }
             case "station" -> {
                 if (!(sender instanceof Player player)) {
@@ -136,6 +142,22 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                             + s.recipes().size(), NamedTextColor.GRAY));
                 }
             }
+            case "sources" -> {
+                sender.sendMessage(Component.text("Zdroje obsahu:", NamedTextColor.AQUA));
+                for (SourceManager.Source s : plugin.sources().sources().values()) {
+                    sender.sendMessage(Component.text(" - " + s.id() + " [" + s.format() + "] "
+                            + (s.enabled() ? "on" : "off") + " | itemu: "
+                            + plugin.registry().bySource(s.id()).size()
+                            + " | sources/" + s.id() + "/", NamedTextColor.GRAY));
+                }
+            }
+            case "import" -> {
+                if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
+                sender.sendMessage(Component.text("Kontroluji imports/ ...", NamedTextColor.YELLOW));
+                plugin.importWatcher().tick();
+                plugin.reloadContent();
+                plugin.rebuildPack(sender);
+            }
             case "blueprints" -> {
                 sender.sendMessage(Component.text("Blueprints:", NamedTextColor.AQUA));
                 plugin.registry().blueprints().keySet().forEach(b ->
@@ -143,7 +165,9 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
             }
             default -> {
                 sender.sendMessage(Component.text("VoxarioForge", NamedTextColor.AQUA));
-                sender.sendMessage(Component.text("/voxforge gui [kategorie] - prohlizec obsahu", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge gui [zdroj] [kategorie] - RPG prohlizec obsahu", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge sources - seznam zdroju (oraxen/itemsadder/nexo/voxario)", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge import - zpracovat ZIPy z imports/ a prestavet pack", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge station <id> - otevrit RPG stanici", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge stations - seznam stanic", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge give <id> [hrac] [pocet]", NamedTextColor.GRAY));
@@ -179,6 +203,7 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
             out.addAll(plugin.registry().constructs().keySet());
         } else if (args.length == 2 && args[0].equalsIgnoreCase("gui")) {
+            out.addAll(plugin.sources().sources().keySet());
             out.addAll(plugin.registry().categories());
         } else if (args.length == 2 && args[0].equalsIgnoreCase("station")) {
             out.addAll(plugin.stations().stations().keySet());
