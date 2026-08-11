@@ -46,3 +46,47 @@ Vlastní obsahový engine pro Minecraft (alternativa k ItemsAdder/Nexo, vlastní
 ```bash
 JAVA_HOME=<jdk21+> mvn -B package   # target/VoxarioForge.jar
 ```
+
+## RPG stanice (Stations)
+
+Konfigurace: `plugins/VoxarioForge/stations.yml`
+
+- `anvil` (KOVADLINA) – item + surovina → vylepšený Construct, volitelně cena v levelech
+- `workbench` (VERPÁNEK) – klasická 3×3 mřížka s vlastními surovinami
+- `alchemy` (ALCHYMIE) – míchání lahviček
+
+Stanice se otevírají pravým klikem na odpovídající vanilla blok (`stations.replace-vanilla: true`)
+nebo příkazem `/voxforge station <id>`. Tokeny surovin: `IRON_INGOT` (vanilla) nebo `vox:ruby_blade` (Construct).
+
+Ukázkové modely (`.bbmodel`) jsou přibalené: `ruby_blade`, `rune_hammer`, `mana_flask`, `arcane_lantern`.
+
+## MySQL synchronizace a automatický pack
+
+`config.yml`:
+
+```yaml
+mysql:
+  enabled: true
+  host: "127.0.0.1"
+  port: 3306
+  database: "voxarioforge"
+  user: "voxario"
+  password: "..."
+  auto-sync: true
+  interval-seconds: 60
+pack:
+  http:
+    enabled: true
+    port: 8123
+    public-host: "mc.studiovoxario.com"
+```
+
+- Tabulky `voxforge_files` a `voxforge_pack` se vytvoří samy.
+- Při startu se obsah stáhne z DB, sestaví se pack a nahraje zpět (`/voxforge sync push|pull|status`).
+- Každých `interval-seconds` se kontrolují změny – při změně se obsah načte, pack přestaví
+  a všem online hráčům se automaticky pošle nová verze (`pack.auto-resend`).
+- Vestavěný pack server hostuje ZIP na `http://<public-host>:<port>/pack.zip`, takže klienti
+  stahují pack automaticky bez externího hostingu.
+
+Java: přeloženo na **Java 21** (class 65), běží na JDK 21 i vyšších (25 apod.).
+MySQL driver se stahuje automaticky přes Paper `libraries` (nemusíš nic přidávat).

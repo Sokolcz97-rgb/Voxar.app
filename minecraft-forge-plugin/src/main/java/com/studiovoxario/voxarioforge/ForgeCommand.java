@@ -33,6 +33,23 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                 }
                 plugin.gui().open(player, 0, args.length > 1 ? args[1] : null);
             }
+            case "station" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage(Component.text("Jen pro hrace.", NamedTextColor.RED));
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(Component.text("Stanice: "
+                            + String.join(", ", plugin.stations().stations().keySet()), NamedTextColor.YELLOW));
+                    return true;
+                }
+                Station station = plugin.stations().get(args[1]);
+                if (station == null) {
+                    sender.sendMessage(Component.text("Stanice nenalezena: " + args[1], NamedTextColor.RED));
+                    return true;
+                }
+                plugin.stationGui().open(player, station);
+            }
             case "give" -> {
                 if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
                 if (args.length < 2) {
@@ -59,12 +76,44 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                 if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
                 plugin.rebuildPack(sender);
             }
+            case "sync" -> {
+                if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
+                if (!plugin.mysql().enabled()) {
+                    sender.sendMessage(Component.text("MySQL sync je vypnuty (config.yml -> mysql.enabled).",
+                            NamedTextColor.RED));
+                    return true;
+                }
+                String mode = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "status";
+                Scheduling.async(plugin, () -> {
+                    try {
+                        switch (mode) {
+                            case "push" -> sender.sendMessage(Component.text(
+                                    "Nahrano " + plugin.mysql().push() + " souboru do MySQL.", NamedTextColor.AQUA));
+                            case "pull" -> {
+                                int changed = plugin.mysql().pull();
+                                Scheduling.global(plugin, plugin::reloadContent);
+                                plugin.rebuildPack(sender);
+                                sender.sendMessage(Component.text("Staženo " + changed + " zmen z MySQL.",
+                                        NamedTextColor.AQUA));
+                            }
+                            default -> sender.sendMessage(Component.text(
+                                    "MySQL sync aktivni | pack URL: "
+                                            + (plugin.packServer().publicUrl().isBlank()
+                                            ? "nenastaveno" : plugin.packServer().publicUrl()),
+                                    NamedTextColor.AQUA));
+                        }
+                    } catch (Exception e) {
+                        sender.sendMessage(Component.text("Sync selhal: " + e.getMessage(), NamedTextColor.RED));
+                    }
+                });
+            }
             case "reload" -> {
                 if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
                 plugin.reloadConfig();
                 plugin.reloadContent();
                 sender.sendMessage(Component.text("VoxarioForge nacten znovu ("
-                        + plugin.registry().constructs().size() + " constructs).", NamedTextColor.AQUA));
+                        + plugin.registry().constructs().size() + " constructs, "
+                        + plugin.stations().stations().size() + " stanic).", NamedTextColor.AQUA));
             }
             case "list" -> {
                 sender.sendMessage(Component.text("Constructs:", NamedTextColor.AQUA));
@@ -73,23 +122,30 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                             + (c.fixture() ? "(fixture)" : ""), NamedTextColor.GRAY));
                 }
             }
-            case "blueprints" -> {
-                sender.sendMessage(Component.text("Blueprints (.bbmodel):", NamedTextColor.AQUA));
-                plugin.registry().blueprints().keySet()
-                        .forEach(b -> sender.sendMessage(Component.text(" - " + b, NamedTextColor.GRAY)));
+            case "stations" -> {
+                sender.sendMessage(Component.text("Stanice:", NamedTextColor.AQUA));
+                for (Station s : plugin.stations().stations().values()) {
+                    sender.sendMessage(Component.text(" - " + s.id() + " [" + s.type() + "] receptu: "
+                            + s.recipes().size(), NamedTextColor.GRAY));
+                }
             }
-            default -> help(sender);
+            case "blueprints" -> {
+                sender.sendMessage(Component.text("Blueprints:", NamedTextColor.AQUA));
+                plugin.registry().blueprints().keySet().forEach(b ->
+                        sender.sendMessage(Component.text(" - " + b, NamedTextColor.GRAY)));
+            }
+            default -> {
+                sender.sendMessage(Component.text("VoxarioForge", NamedTextColor.AQUA));
+                sender.sendMessage(Component.text("/voxforge gui [kategorie] - prohlizec obsahu", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge station <id> - otevrit RPG stanici", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge stations - seznam stanic", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge give <id> [hrac] [pocet]", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge pack - sestavit resource pack", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge sync push|pull|status - MySQL", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge reload | list | blueprints", NamedTextColor.GRAY));
+            }
         }
         return true;
-    }
-
-    private void help(CommandSender sender) {
-        sender.sendMessage(Component.text("=== VoxarioForge ===", NamedTextColor.AQUA));
-        sender.sendMessage(Component.text("/voxforge gui [kategorie] - otevre Forge Terminal", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/voxforge give <id> [hrac] [pocet]", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/voxforge pack - sestavi resource pack", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/voxforge reload - znovu nacte packy", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/voxforge list | blueprints", NamedTextColor.GRAY));
     }
 
     private boolean deny(CommandSender sender) {
@@ -109,13 +165,18 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("gui", "give", "pack", "reload", "list", "blueprints", "help")) {
+            for (String s : List.of("gui", "station", "stations", "give", "pack", "sync",
+                    "reload", "list", "blueprints", "help")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
             out.addAll(plugin.registry().constructs().keySet());
         } else if (args.length == 2 && args[0].equalsIgnoreCase("gui")) {
             out.addAll(plugin.registry().categories());
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("station")) {
+            out.addAll(plugin.stations().stations().keySet());
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("sync")) {
+            out.addAll(List.of("push", "pull", "status"));
         }
         return out;
     }
