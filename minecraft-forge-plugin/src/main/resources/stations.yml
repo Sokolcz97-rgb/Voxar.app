@@ -1,0 +1,65 @@
+# VoxarioForge - RPG stanice
+# type: craft (3x3 mrizka) | anvil (item + surovina)
+# Tokeny surovin: vanilla material (IRON_INGOT) nebo vlastni construct (vox:ruby_blade)
+
+stations:
+  anvil:
+    type: anvil
+    title: "&c&lKOVADLINA &8| &7Prekovani"
+    icon: ANVIL
+    vanilla: ANVIL
+    recipes:
+      - input: "IRON_SWORD"
+        material: "DIAMOND"
+        material-amount: 2
+        result: "vox:ruby_blade"
+        amount: 1
+        cost: 5
+      - input: "vox:ruby_blade"
+        material: "NETHERITE_SCRAP"
+        material-amount: 1
+        result: "vox:rune_hammer"
+        amount: 1
+        cost: 10
+
+  workbench:
+    type: craft
+    title: "&6&lVERPANEK &8| &7Vyroba"
+    icon: CRAFTING_TABLE
+    vanilla: CRAFTING_TABLE
+    recipes:
+      - shape:
+          - " R "
+          - " R "
+          - " S "
+        ingredients:
+          R: "REDSTONE_BLOCK"
+          S: "STICK"
+        result: "vox:ruby_blade"
+        amount: 1
+      - shape:
+          - "GGG"
+          - "GTG"
+          - "GGG"
+        ingredients:
+          G: "GLASS_PANE"
+          T: "TORCH"
+        result: "vox:arcane_lantern"
+        amount: 1
+
+  alchemy:
+    type: craft
+    title: "&d&lALCHYMIE &8| &7Michani"
+    icon: BREWING_STAND
+    vanilla: BREWING_STAND
+    recipes:
+      - shape:
+          - " L "
+          - "GBG"
+          - " G "
+        ingredients:
+          L: "LAPIS_LAZULI"
+          G: "GLASS_BOTTLE"
+          B: "BLAZE_POWDER"
+        result: "vox:mana_flask"
+        amount: 2
