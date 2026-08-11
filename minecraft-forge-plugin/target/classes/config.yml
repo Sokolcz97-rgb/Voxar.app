@@ -1,25 +1,29 @@
 # VoxarioForge
 # Vlastni obsahovy engine (Constructs / Fixtures / Stations / Blueprints)
 # Paper / Folia 1.21.11+, Java 21 a vyssi
+#
+# Struktura slozek (vytvori se sama):
+#   plugins/VoxarioForge/sources/voxario|itemsadder|oraxen|nexo/
+#       items/ models/ textures/ gui/ source.yml
+#   plugins/VoxarioForge/imports/   -> sem hod ZIP, sam se rozbali
+#   plugins/VoxarioForge/output/    -> hotovy resource pack
 
-# Namespace pouzity v resource packu a klicich (ns:id)
 namespace: "voxforge"
 
+content:
+  # Automaticky hlidat zmeny v sources/ a imports/ a hned prestavet pack
+  auto-build: true
+  watch-seconds: 5
+
 pack:
-  # Automaticky sestavit resource pack pri startu serveru
   build-on-start: true
-  # Nazev vysledneho ZIPu v plugins/VoxarioForge/
   file-name: "VoxarioForge-Pack.zip"
   description: "StudioVoxario - VoxarioForge content pack"
   # Verejna URL na hostovany ZIP (prazdne = pouzije se vestaveny pack server)
   url: ""
-  # SHA-1 hash packu (dopocita se automaticky po sestaveni)
   sha1: ""
-  # Vyzadovat pack pri pripojeni
   required: false
-  # Po prestavbe packu ho hned znovu poslat vsem online hracum
   auto-resend: true
-  # Vestavene HTTP hostovani packu -> hraci si ho stahnou automaticky
   http:
     enabled: true
     port: 8123
@@ -43,15 +47,13 @@ mysql:
   publish-pack: true
 
 stations:
-  # Nahradit vanilla kovadlinu / verpanek RPG rozhranim
   replace-vanilla: true
 
 fixtures:
-  # Povolit umistovani nabytku (ItemDisplay + Interaction hitbox)
   enabled: true
-  # Zarovnani na mrizku 0.25 bloku
   grid-snap: true
 
 gui:
-  title: "&b&lVOXARIO&f FORGE"
+  # Titulek hlavniho RPG menu (vyber pluginu)
+  title: "&6&l⚒ &e&lVOXARIO FORGE &6&l⚒"
   rows: 6
