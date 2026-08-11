@@ -3,12 +3,9 @@ package com.studiovoxario.voxarioforge;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemFlag;
@@ -18,14 +15,14 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * Nacita packy (plugins/VoxarioForge/packs/&lt;pack&gt;/items.yml) a stavi z nich ItemStacky.
+ * Nacita obsah ze slozek sources/&lt;zdroj&gt;/ (items, models, textures)
+ * a stavi z nej ItemStacky. Klice jsou ve tvaru "zdroj:id".
  */
 public final class ContentRegistry {
 
@@ -34,6 +31,7 @@ public final class ContentRegistry {
     private final VoxarioForge plugin;
     private final Map<String, Construct> constructs = new LinkedHashMap<>();
     private final Map<String, File> blueprints = new LinkedHashMap<>();
+    private final Map<String, File> textures = new LinkedHashMap<>();
 
     public ContentRegistry(VoxarioForge plugin) {
         this.plugin = plugin;
@@ -47,8 +45,30 @@ public final class ContentRegistry {
         return blueprints;
     }
 
+    public Map<String, File> textures() {
+        return textures;
+    }
+
+    public static String key(String source, String id) {
+        return source.toLowerCase(Locale.ROOT) + ":" + id.toLowerCase(Locale.ROOT);
+    }
+
+    /** Prijme "zdroj:id" i holé "id". */
     public Construct get(String id) {
-        return constructs.get(id);
+        if (id == null) return null;
+        String low = id.toLowerCase(Locale.ROOT);
+        Construct direct = constructs.get(low);
+        if (direct != null) return direct;
+        for (Construct c : constructs.values()) if (c.id().equals(low)) return c;
+        return null;
+    }
+
+    public List<Construct> bySource(String source) {
+        List<Construct> out = new ArrayList<>();
+        for (Construct c : constructs.values()) {
+            if (source == null || source.equalsIgnoreCase(c.pack())) out.add(c);
+        }
+        return out;
     }
 
     public List<String> categories() {
@@ -59,77 +79,87 @@ public final class ContentRegistry {
         return out;
     }
 
+    /** Cesta modelu v resource packu: item/&lt;zdroj&gt;/&lt;id&gt; */
+    public static String modelPath(Construct c) {
+        return c.pack().toLowerCase(Locale.ROOT) + "/" + c.id();
+    }
+
+    public File blueprintOf(Construct c) {
+        if (c.blueprint() == null || c.blueprint().isBlank()) return null;
+        String bp = c.blueprint().toLowerCase(Locale.ROOT);
+        File own = blueprints.get(key(c.pack(), bp));
+        if (own != null) return own;
+        for (Map.Entry<String, File> e : blueprints.entrySet()) {
+            if (e.getKey().endsWith(":" + bp)) return e.getValue();
+        }
+        return null;
+    }
+
+    public File textureOf(Construct c, String name) {
+        String low = name.toLowerCase(Locale.ROOT);
+        File own = textures.get(key(c.pack(), low));
+        if (own != null) return own;
+        for (Map.Entry<String, File> e : textures.entrySet()) {
+            if (e.getKey().endsWith(":" + low)) return e.getValue();
+        }
+        return null;
+    }
+
     public void reload() {
         constructs.clear();
         blueprints.clear();
+        textures.clear();
 
-        File packsDir = new File(plugin.getDataFolder(), "packs");
-        if (!packsDir.isDirectory()) return;
-
-        File[] packs = packsDir.listFiles(File::isDirectory);
-        if (packs == null) return;
-
-        for (File pack : packs) {
-            File items = new File(pack, "items.yml");
-            if (items.isFile()) loadItems(pack.getName(), items);
-
-            File bpDir = new File(pack, "blueprints");
-            File[] bbs = bpDir.listFiles((d, n) -> {
-                String low = n.toLowerCase(Locale.ROOT);
-                return low.endsWith(".bbmodel") || low.endsWith(".iaentitymodel") || low.endsWith(".json");
-            });
-            if (bbs != null) {
-                for (File bb : bbs) {
-                    String n = bb.getName();
-                    String name = n.substring(0, n.lastIndexOf('.'));
-                    blueprints.put(name.toLowerCase(Locale.ROOT), bb);
-                }
-            }
+        for (SourceManager.Source source : plugin.sources().sources().values()) {
+            if (!source.enabled()) continue;
+            scanModels(source);
+            scanTextures(source);
+            scanItems(source);
         }
-        plugin.getLogger().info("Nacteno " + constructs.size() + " constructs a " + blueprints.size() + " blueprints.");
+
+        plugin.getLogger().info("Nacteno " + constructs.size() + " constructs, "
+                + blueprints.size() + " modelu a " + textures.size() + " textur z "
+                + plugin.sources().enabled().size() + " zdroju.");
     }
 
-    private void loadItems(String packName, File file) {
-        YamlConfiguration yml = YamlConfiguration.loadConfiguration(file);
-        ConfigurationSection root = yml.getConfigurationSection("constructs");
-        if (root == null) return;
+    private void scanModels(SourceManager.Source source) {
+        walk(source.models(), f -> {
+            String n = f.getName().toLowerCase(Locale.ROOT);
+            if (!(n.endsWith(".bbmodel") || n.endsWith(".iaentitymodel") || n.endsWith(".json"))) return;
+            String base = n.substring(0, n.lastIndexOf('.'));
+            blueprints.put(key(source.id(), base), f);
+        });
+    }
 
-        for (String id : root.getKeys(false)) {
-            ConfigurationSection s = root.getConfigurationSection(id);
-            if (s == null) continue;
-            Material mat = Material.matchMaterial(s.getString("material", "PAPER"));
-            if (mat == null) {
-                plugin.getLogger().warning("Construct '" + id + "': neznamy material, preskakuji.");
-                continue;
+    private void scanTextures(SourceManager.Source source) {
+        walk(source.textures(), f -> {
+            String n = f.getName().toLowerCase(Locale.ROOT);
+            if (!n.endsWith(".png")) return;
+            textures.put(key(source.id(), n.substring(0, n.length() - 4)), f);
+        });
+    }
+
+    private void scanItems(SourceManager.Source source) {
+        walk(source.items(), f -> {
+            String n = f.getName().toLowerCase(Locale.ROOT);
+            if (!(n.endsWith(".yml") || n.endsWith(".yaml"))) return;
+            try {
+                for (Construct c : ItemImporter.parse(source, f)) {
+                    constructs.put(key(source.id(), c.id()), c);
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Chyba v " + f.getName() + ": " + e.getMessage());
             }
+        });
+    }
 
-            Map<String, Double> attrs = new HashMap<>();
-            ConfigurationSection as = s.getConfigurationSection("attributes");
-            if (as != null) for (String k : as.getKeys(false)) attrs.put(k, as.getDouble(k));
-
-            Map<String, Integer> ench = new HashMap<>();
-            ConfigurationSection es = s.getConfigurationSection("enchants");
-            if (es != null) for (String k : es.getKeys(false)) ench.put(k, es.getInt(k));
-
-            List<Double> hb = s.getDoubleList("fixture-hitbox");
-            float w = hb.size() > 0 ? hb.get(0).floatValue() : 1.0f;
-            float h = hb.size() > 1 ? hb.get(1).floatValue() : 1.0f;
-
-            constructs.put(id.toLowerCase(Locale.ROOT), new Construct(
-                    packName,
-                    id.toLowerCase(Locale.ROOT),
-                    s.getString("display", id),
-                    mat,
-                    s.getString("blueprint"),
-                    s.getString("category", "misc"),
-                    s.getStringList("lore"),
-                    s.getBoolean("unbreakable", false),
-                    s.getBoolean("hide-flags", false),
-                    s.getBoolean("fixture", false),
-                    (float) s.getDouble("fixture-scale", 1.0),
-                    w, h,
-                    attrs, ench
-            ));
+    private void walk(File dir, java.util.function.Consumer<File> consumer) {
+        if (dir == null || !dir.isDirectory()) return;
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.isDirectory()) walk(f, consumer);
+            else consumer.accept(f);
         }
     }
 
@@ -150,7 +180,7 @@ public final class ContentRegistry {
         }
 
         if (c.blueprint() != null && !c.blueprint().isBlank()) {
-            meta.setItemModel(new NamespacedKey(plugin.namespace(), c.id()));
+            meta.setItemModel(new NamespacedKey(plugin.namespace(), modelPath(c)));
         }
 
         meta.setUnbreakable(c.unbreakable());
@@ -169,7 +199,8 @@ public final class ContentRegistry {
         applyAttribute(meta, c, "movement-speed", Attribute.MOVEMENT_SPEED);
         applyAttribute(meta, c, "knockback-resistance", Attribute.KNOCKBACK_RESISTANCE);
 
-        meta.getPersistentDataContainer().set(plugin.constructKey(), PersistentDataType.STRING, c.id());
+        meta.getPersistentDataContainer().set(plugin.constructKey(), PersistentDataType.STRING,
+                key(c.pack(), c.id()));
         stack.setItemMeta(meta);
         return stack;
     }
@@ -178,7 +209,7 @@ public final class ContentRegistry {
         Double value = c.attributes().get(cfgKey);
         if (value == null) return;
         AttributeModifier mod = new AttributeModifier(
-                new NamespacedKey(plugin.namespace(), c.id() + "_" + cfgKey),
+                new NamespacedKey(plugin.namespace(), c.pack() + "_" + c.id() + "_" + cfgKey),
                 value,
                 AttributeModifier.Operation.ADD_NUMBER,
                 EquipmentSlotGroup.MAINHAND
