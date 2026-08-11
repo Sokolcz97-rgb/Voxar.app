@@ -115,6 +115,13 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                         + plugin.registry().constructs().size() + " constructs, "
                         + plugin.stations().stations().size() + " stanic).", NamedTextColor.AQUA));
             }
+            case "reset" -> {
+                if (!sender.hasPermission("voxarioforge.admin")) return deny(sender);
+                plugin.restoreDefaults();
+                plugin.rebuildPack(sender);
+                sender.sendMessage(Component.text("Vestaveny obsah obnoven a pack se prestavuje.",
+                        NamedTextColor.AQUA));
+            }
             case "list" -> {
                 sender.sendMessage(Component.text("Constructs:", NamedTextColor.AQUA));
                 for (Construct c : plugin.registry().constructs().values()) {
@@ -142,7 +149,7 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("/voxforge give <id> [hrac] [pocet]", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge pack - sestavit resource pack", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge sync push|pull|status - MySQL", NamedTextColor.GRAY));
-                sender.sendMessage(Component.text("/voxforge reload | list | blueprints", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge reset - obnovit vestavene modely/stanice\n/voxforge reload | list | blueprints", NamedTextColor.GRAY));
             }
         }
         return true;
@@ -166,7 +173,7 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             for (String s : List.of("gui", "station", "stations", "give", "pack", "sync",
-                    "reload", "list", "blueprints", "help")) {
+                    "reload", "reset", "list", "blueprints", "help")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {

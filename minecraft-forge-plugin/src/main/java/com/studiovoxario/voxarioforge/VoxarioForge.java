@@ -18,6 +18,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -31,6 +34,9 @@ import java.util.Locale;
  *  - Forge Pack = vygenerovany resource pack
  */
 public final class VoxarioForge extends JavaPlugin implements Listener {
+
+    private static final List<String> DEFAULT_BLUEPRINTS =
+            List.of("ruby_blade", "arcane_lantern", "rune_hammer", "mana_flask");
 
     private ContentRegistry registry;
     private ForgeGUI gui;
@@ -107,28 +113,65 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         if (packServer != null) packServer.stop();
     }
 
+    /**
+     * Rozbali vestavena data. Pri zmene verze pluginu se defaultni pack i stanice
+     * prepisou (stara verze se zazalohuje jako *.bak), aby se nove modely a GUI
+     * skutecne projevily i na existujici instalaci.
+     */
     private void setupDefaults() {
-        File packs = new File(getDataFolder(), "packs/default");
-        if (!packs.exists()) {
-            packs.mkdirs();
-            new File(packs, "blueprints").mkdirs();
-            saveResource("packs/default/items.yml", false);
-            saveDefaultBlueprint("ruby_blade");
-            saveDefaultBlueprint("arcane_lantern");
-            saveDefaultBlueprint("rune_hammer");
-            saveDefaultBlueprint("mana_flask");
+        File dataFolder = getDataFolder();
+        dataFolder.mkdirs();
+
+        File marker = new File(dataFolder, ".assets-version");
+        String current = getPluginMeta().getVersion();
+        String installed = "";
+        try {
+            if (marker.isFile()) installed = Files.readString(marker.toPath()).trim();
+        } catch (Exception ignored) {
         }
-        File stationsFile = new File(getDataFolder(), "stations.yml");
-        if (!stationsFile.isFile()) saveResource("stations.yml", false);
+        boolean upgrade = !current.equals(installed);
+
+        File packs = new File(dataFolder, "packs/default");
+        boolean fresh = !packs.exists();
+        packs.mkdirs();
+        new File(packs, "blueprints").mkdirs();
+
+        if (fresh || upgrade) {
+            backup(new File(packs, "items.yml"), upgrade && !fresh);
+            saveResource("packs/default/items.yml", true);
+            for (String bp : DEFAULT_BLUEPRINTS) saveDefaultBlueprint(bp);
+
+            backup(new File(dataFolder, "stations.yml"), upgrade && !fresh);
+            saveResource("stations.yml", true);
+
+            try {
+                Files.writeString(marker.toPath(), current);
+            } catch (Exception ignored) {
+            }
+            if (upgrade && !fresh) {
+                getLogger().info("Aktualizovan vestaveny obsah na verzi " + current
+                        + " (puvodni soubory ulozeny jako *.bak).");
+            }
+        }
+    }
+
+    private void backup(File file, boolean doBackup) {
+        if (!doBackup || !file.isFile()) return;
+        try {
+            Files.copy(file.toPath(), new File(file.getParentFile(), file.getName() + ".bak").toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception ignored) {
+        }
     }
 
     private void saveDefaultBlueprint(String name) {
         try {
-            saveResource("packs/default/blueprints/" + name + ".bbmodel", false);
+            saveResource("packs/default/blueprints/" + name + ".bbmodel", true);
         } catch (Exception ignored) {
             // blueprint neni v jaru
         }
     }
+
 
     public String namespace() {
         return namespace;
@@ -164,6 +207,14 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
 
     public NamespacedKey fixtureKey() {
         return fixtureKey;
+    }
+
+    /** Znovu rozbali vestavena data (prepise defaultni pack a stanice). */
+    public void restoreDefaults() {
+        File marker = new File(getDataFolder(), ".assets-version");
+        marker.delete();
+        setupDefaults();
+        reloadContent();
     }
 
     public void reloadContent() {
@@ -243,9 +294,16 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     /** Posle hraci aktualni resource pack. */
     public void sendPack(Player player) {
         String url = packServer.publicUrl();
-        if (url == null || url.isBlank()) return;
+        if (url == null || url.isBlank()) {
+            getLogger().warning("Resource pack nelze odeslat: chybi pack.url nebo pack.http.public-host v config.yml.");
+            return;
+        }
         String sha1 = packSha1 != null && !packSha1.isBlank()
                 ? packSha1 : getConfig().getString("pack.sha1", "");
+        // cache-buster - jinak klient pouzije stary stazeny pack
+        if (sha1 != null && !sha1.isBlank()) {
+            url = url + (url.contains("?") ? "&" : "?") + "v=" + sha1.substring(0, 12);
+        }
         boolean required = getConfig().getBoolean("pack.required", false);
         try {
             player.setResourcePack(url, sha1 == null ? "" : sha1, required,
