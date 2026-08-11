@@ -8,14 +8,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Sestavi resource pack ZIP ze vsech blueprintu a constructu.
+ * Sestavi resource pack ZIP ze vsech zdroju (voxario / itemsadder / oraxen / nexo).
+ * Modely i textury jsou v packu oddelene do podslozek podle zdroje.
  */
 public final class PackBuilder {
 
@@ -33,16 +38,16 @@ public final class PackBuilder {
     public Result build() throws Exception {
         String ns = plugin.namespace();
         String fileName = plugin.getConfig().getString("pack.file-name", "VoxarioForge-Pack.zip");
-        File out = new File(plugin.getDataFolder(), fileName);
-        File parent = out.getParentFile();
-        if (parent != null) parent.mkdirs();
+        File outDir = plugin.sources().output();
+        outDir.mkdirs();
+        File out = new File(outDir, fileName);
 
         int models = 0;
         int textures = 0;
+        Set<String> written = new HashSet<>();
 
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(buffer, StandardCharsets.UTF_8)) {
-            // pack.mcmeta
             JsonObject meta = new JsonObject();
             JsonObject pack = new JsonObject();
             pack.addProperty("pack_format", 46);
@@ -53,41 +58,77 @@ public final class PackBuilder {
             supported.addProperty("max_inclusive", 99);
             pack.add("supported_formats", supported);
             meta.add("pack", pack);
-            write(zip, "pack.mcmeta", GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
+            write(zip, "pack.mcmeta", GSON.toJson(meta).getBytes(StandardCharsets.UTF_8), written);
+
+            // volne textury z kazdeho zdroje -> textures/item/<zdroj>/<nazev>.png
+            for (SourceManager.Source source : plugin.sources().enabled()) {
+                for (Map.Entry<String, File> e : plugin.registry().textures().entrySet()) {
+                    if (!e.getKey().startsWith(source.id() + ":")) continue;
+                    String name = e.getKey().substring(source.id().length() + 1);
+                    String path = "assets/" + ns + "/textures/item/" + source.id() + "/" + name + ".png";
+                    if (write(zip, path, Files.readAllBytes(e.getValue().toPath()), written)) textures++;
+                }
+            }
 
             for (Construct c : plugin.registry().constructs().values()) {
                 String bp = c.blueprint();
                 if (bp == null || bp.isBlank()) continue;
-                File bbmodel = plugin.registry().blueprints().get(bp.toLowerCase());
-                if (bbmodel == null) {
-                    plugin.getLogger().warning("Blueprint '" + bp + "' pro construct '" + c.id() + "' nenalezen.");
+                File model = plugin.registry().blueprintOf(c);
+                if (model == null) {
+                    plugin.getLogger().warning("Model '" + bp + "' pro '" + c.pack() + ":" + c.id()
+                            + "' nenalezen v sources/" + c.pack() + "/models/.");
                     continue;
                 }
 
-                BlueprintCompiler.Compiled compiled = BlueprintCompiler.compile(ns, c.id(), bbmodel);
+                String path = ContentRegistry.modelPath(c);
+                JsonObject modelJson;
+                Map<String, byte[]> inline;
 
-                write(zip, "assets/" + ns + "/models/item/" + c.id() + ".json",
-                        GSON.toJson(compiled.model()).getBytes(StandardCharsets.UTF_8));
+                if (model.getName().toLowerCase(Locale.ROOT).endsWith(".json")) {
+                    modelJson = GSON.fromJson(Files.readString(model.toPath(), StandardCharsets.UTF_8),
+                            JsonObject.class);
+                    inline = Map.of();
+                } else {
+                    BlueprintCompiler.Compiled compiled = BlueprintCompiler.compile(ns, path, model);
+                    modelJson = compiled.model();
+                    inline = compiled.textures();
+                }
+
+                write(zip, "assets/" + ns + "/models/item/" + path + ".json",
+                        GSON.toJson(modelJson).getBytes(StandardCharsets.UTF_8), written);
                 models++;
 
-                // item model definition (1.21.4+ item_model komponenta)
                 JsonObject def = new JsonObject();
                 JsonObject modelRef = new JsonObject();
                 modelRef.addProperty("type", "minecraft:model");
-                modelRef.addProperty("model", ns + ":item/" + c.id());
+                modelRef.addProperty("model", ns + ":item/" + path);
                 def.add("model", modelRef);
-                write(zip, "assets/" + ns + "/items/" + c.id() + ".json",
-                        GSON.toJson(def).getBytes(StandardCharsets.UTF_8));
+                write(zip, "assets/" + ns + "/items/" + path + ".json",
+                        GSON.toJson(def).getBytes(StandardCharsets.UTF_8), written);
 
-                for (Map.Entry<String, byte[]> tex : compiled.textures().entrySet()) {
-                    write(zip, "assets/" + ns + "/textures/item/" + tex.getKey() + ".png", tex.getValue());
-                    textures++;
+                for (Map.Entry<String, byte[]> tex : inline.entrySet()) {
+                    if (write(zip, "assets/" + ns + "/textures/item/" + tex.getKey() + ".png",
+                            tex.getValue(), written)) textures++;
+                }
+
+                // model bez vlozene textury (.iaentitymodel) -> hledej PNG ve zdroji
+                if (inline.isEmpty()) {
+                    File png = plugin.registry().textureOf(c, bp);
+                    if (png == null) png = plugin.registry().textureOf(c, c.id());
+                    if (png != null) {
+                        if (write(zip, "assets/" + ns + "/textures/item/" + path + "_0.png",
+                                Files.readAllBytes(png.toPath()), written)) textures++;
+                    }
                 }
             }
         }
 
         byte[] bytes = buffer.toByteArray();
         try (FileOutputStream fos = new FileOutputStream(out)) {
+            fos.write(bytes);
+        }
+        // kopie i v korenove slozce kvuli zpetne kompatibilite / pack serveru
+        try (FileOutputStream fos = new FileOutputStream(new File(plugin.getDataFolder(), fileName))) {
             fos.write(bytes);
         }
 
@@ -97,9 +138,11 @@ public final class PackBuilder {
         return new Result(models, textures, out, sha1);
     }
 
-    private void write(ZipOutputStream zip, String path, byte[] data) throws Exception {
+    private boolean write(ZipOutputStream zip, String path, byte[] data, Set<String> written) throws Exception {
+        if (!written.add(path)) return false;
         zip.putNextEntry(new ZipEntry(path));
         zip.write(data);
         zip.closeEntry();
+        return true;
     }
 }

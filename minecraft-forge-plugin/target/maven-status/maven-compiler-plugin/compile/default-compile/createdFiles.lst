@@ -1,12 +1,16 @@
 com/studiovoxario/voxarioforge/ForgeCommand.class
 com/studiovoxario/voxarioforge/ForgeGUI.class
+com/studiovoxario/voxarioforge/ImportWatcher.class
 com/studiovoxario/voxarioforge/BlueprintCompiler$Compiled.class
+com/studiovoxario/voxarioforge/ItemImporter.class
 com/studiovoxario/voxarioforge/FixtureManager.class
 com/studiovoxario/voxarioforge/ForgeGUI$Holder.class
 com/studiovoxario/voxarioforge/StationManager.class
 com/studiovoxario/voxarioforge/Scheduling.class
 com/studiovoxario/voxarioforge/VoxarioForge.class
+com/studiovoxario/voxarioforge/SourceManager.class
 com/studiovoxario/voxarioforge/Construct.class
+com/studiovoxario/voxarioforge/SourceManager$Source.class
 com/studiovoxario/voxarioforge/StationGUI.class
 com/studiovoxario/voxarioforge/PackBuilder$Result.class
 com/studiovoxario/voxarioforge/MySqlSync.class

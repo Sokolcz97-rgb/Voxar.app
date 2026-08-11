@@ -90,3 +90,25 @@ pack:
 
 Java: přeloženo na **Java 21** (class 65), běží na JDK 21 i vyšších (25 apod.).
 MySQL driver se stahuje automaticky přes Paper `libraries` (nemusíš nic přidávat).
+
+## v1.2.0 - slozky podle pluginu
+
+```
+plugins/VoxarioForge/
+  sources/
+    voxario/    itemsadder/    oraxen/    nexo/
+      items/     configy v danem formatu (.yml)
+      models/    .bbmodel / .iaentitymodel / .json
+      textures/  .png
+      gui/gui.yml  RPG vzhled GUI daneho zdroje
+      source.yml   enabled / format / ikona
+  imports/   sem hod ZIP (nazev urcuje cil: oraxen-*.zip -> sources/oraxen)
+  output/    hotovy VoxarioForge-Pack.zip
+```
+
+- GUI (`/voxforge gui`) nejdriv nabidne vyber pluginu, pak obsah daneho zdroje.
+- Configy ItemsAdderu (`items:` / `resource.model_path`) i Oraxenu/Nexa
+  (`<id>: material/Pack.model`) se ctou primo, nemusis nic prepisovat.
+- `content.auto-build` v config.yml hlida zmeny a automaticky stavi novy ZIP;
+  pri zapnutem MySQL se zmeny hned publikuji ostatnim serverum.
+- Nove prikazy: `/voxforge sources`, `/voxforge import`.

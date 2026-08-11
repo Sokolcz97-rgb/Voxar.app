@@ -26,18 +26,15 @@ import java.util.Locale;
 /**
  * VoxarioForge - vlastni obsahovy engine pro Paper/Folia 1.21.11+ (JDK 21+).
  *
- * Terminologie:
- *  - Construct  = vlastni item (nastroj, zbran, dekorace)
- *  - Blueprint  = .bbmodel / .iaentitymodel model
- *  - Fixture    = 3D nabytek umisteny ve svete
- *  - Station    = RPG pracoviste (kovadlina, verpanek, alchymie)
- *  - Forge Pack = vygenerovany resource pack
+ * Slozky: plugins/VoxarioForge/sources/&lt;voxario|itemsadder|oraxen|nexo&gt;/
+ *         {items, models, textures, gui}, imports/, output/
  */
 public final class VoxarioForge extends JavaPlugin implements Listener {
 
     private static final List<String> DEFAULT_BLUEPRINTS =
             List.of("ruby_blade", "arcane_lantern", "rune_hammer", "mana_flask");
 
+    private SourceManager sources;
     private ContentRegistry registry;
     private ForgeGUI gui;
     private StationManager stations;
@@ -45,6 +42,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     private PackBuilder packBuilder;
     private MySqlSync mysql;
     private PackServer packServer;
+    private ImportWatcher watcher;
     private NamespacedKey constructKey;
     private NamespacedKey fixtureKey;
     private String namespace;
@@ -53,10 +51,13 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         this.namespace = getConfig().getString("namespace", "voxforge").toLowerCase(Locale.ROOT);
         this.constructKey = new NamespacedKey(this, "construct");
         this.fixtureKey = new NamespacedKey(this, "fixture");
 
+        this.sources = new SourceManager(this);
         setupDefaults();
 
         this.mysql = new MySqlSync(this);
@@ -68,7 +69,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         if (mysql.enabled()) {
             try {
                 int pulled = mysql.pull();
-                if (pulled > 0) getLogger().info("MySQL: staženo " + pulled + " souboru obsahu.");
+                if (pulled > 0) getLogger().info("MySQL: stazeno " + pulled + " souboru obsahu.");
             } catch (Exception e) {
                 getLogger().warning("MySQL pull selhal: " + e.getMessage());
             }
@@ -82,6 +83,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         this.stationGui = new StationGUI(this);
         this.packServer = new PackServer(this);
         this.packServer.start();
+        this.watcher = new ImportWatcher(this);
 
         getServer().getPluginManager().registerEvents(gui, this);
         getServer().getPluginManager().registerEvents(stationGui, this);
@@ -99,6 +101,11 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
             Scheduling.async(this, () -> rebuildPack(null));
         }
 
+        if (getConfig().getBoolean("content.auto-build", true)) {
+            long sec = Math.max(3, getConfig().getLong("content.watch-seconds", 5));
+            Scheduling.asyncTimer(this, watcher::tick, sec, sec);
+        }
+
         if (mysql.enabled() && getConfig().getBoolean("mysql.auto-sync", true)) {
             long seconds = Math.max(10, getConfig().getLong("mysql.interval-seconds", 60));
             Scheduling.asyncTimer(this, this::syncTick, seconds, seconds);
@@ -113,14 +120,11 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         if (packServer != null) packServer.stop();
     }
 
-    /**
-     * Rozbali vestavena data. Pri zmene verze pluginu se defaultni pack i stanice
-     * prepisou (stara verze se zazalohuje jako *.bak), aby se nove modely a GUI
-     * skutecne projevily i na existujici instalaci.
-     */
+    /** Vytvori slozkovou strukturu a rozbali vestaveny obsah do sources/voxario. */
     private void setupDefaults() {
         File dataFolder = getDataFolder();
         dataFolder.mkdirs();
+        sources.setup();
 
         File marker = new File(dataFolder, ".assets-version");
         String current = getPluginMeta().getVersion();
@@ -131,26 +135,60 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         }
         boolean upgrade = !current.equals(installed);
 
-        File packs = new File(dataFolder, "packs/default");
-        boolean fresh = !packs.exists();
-        packs.mkdirs();
-        new File(packs, "blueprints").mkdirs();
+        File items = new File(dataFolder, "sources/voxario/items/items.yml");
+        boolean fresh = !items.isFile();
 
         if (fresh || upgrade) {
-            backup(new File(packs, "items.yml"), upgrade && !fresh);
-            saveResource("packs/default/items.yml", true);
-            for (String bp : DEFAULT_BLUEPRINTS) saveDefaultBlueprint(bp);
+            backup(items, upgrade && !fresh);
+            saveResource("sources/voxario/items/items.yml", true);
+            for (String bp : DEFAULT_BLUEPRINTS) {
+                try {
+                    saveResource("sources/voxario/models/" + bp + ".bbmodel", true);
+                } catch (Exception ignored) {
+                }
+            }
 
             backup(new File(dataFolder, "stations.yml"), upgrade && !fresh);
             saveResource("stations.yml", true);
+
+            // migrace ze stare struktury packs/default -> sources/voxario
+            migrateLegacy();
 
             try {
                 Files.writeString(marker.toPath(), current);
             } catch (Exception ignored) {
             }
-            if (upgrade && !fresh) {
-                getLogger().info("Aktualizovan vestaveny obsah na verzi " + current
-                        + " (puvodni soubory ulozeny jako *.bak).");
+        }
+        sources.reload();
+    }
+
+    private void migrateLegacy() {
+        File legacy = new File(getDataFolder(), "packs");
+        if (!legacy.isDirectory()) return;
+        File models = new File(getDataFolder(), "sources/voxario/models");
+        File itemsDir = new File(getDataFolder(), "sources/voxario/items");
+        models.mkdirs();
+        itemsDir.mkdirs();
+        moveAll(legacy, models, itemsDir);
+        getLogger().info("Stara slozka packs/ byla prevedena do sources/voxario/.");
+    }
+
+    private void moveAll(File dir, File models, File itemsDir) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.isDirectory()) {
+                moveAll(f, models, itemsDir);
+                continue;
+            }
+            String n = f.getName().toLowerCase(Locale.ROOT);
+            File target = null;
+            if (n.endsWith(".bbmodel") || n.endsWith(".iaentitymodel")) target = new File(models, f.getName());
+            else if (n.endsWith(".yml") && !n.equals("items.yml")) target = new File(itemsDir, f.getName());
+            if (target == null || target.exists()) continue;
+            try {
+                Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception ignored) {
             }
         }
     }
@@ -164,17 +202,16 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         }
     }
 
-    private void saveDefaultBlueprint(String name) {
-        try {
-            saveResource("packs/default/blueprints/" + name + ".bbmodel", true);
-        } catch (Exception ignored) {
-            // blueprint neni v jaru
-        }
-    }
-
-
     public String namespace() {
         return namespace;
+    }
+
+    public ImportWatcher importWatcher() {
+        return watcher;
+    }
+
+    public SourceManager sources() {
+        return sources;
     }
 
     public ContentRegistry registry() {
@@ -209,7 +246,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         return fixtureKey;
     }
 
-    /** Znovu rozbali vestavena data (prepise defaultni pack a stanice). */
+    /** Znovu rozbali vestavena data a obnovi strukturu slozek. */
     public void restoreDefaults() {
         File marker = new File(getDataFolder(), ".assets-version");
         marker.delete();
@@ -218,6 +255,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     }
 
     public void reloadContent() {
+        sources.reload();
         registry.reload();
         stations.reload();
     }
@@ -271,7 +309,7 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
                 }
 
                 String msg = "Forge Pack hotov: " + result.models() + " modelu, "
-                        + result.textures() + " textur -> " + result.file().getName()
+                        + result.textures() + " textur -> output/" + result.file().getName()
                         + " (sha1 " + result.sha1().substring(0, 12) + "...)";
                 getLogger().info(msg);
                 if (feedback != null) {
@@ -300,7 +338,6 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         }
         String sha1 = packSha1 != null && !packSha1.isBlank()
                 ? packSha1 : getConfig().getString("pack.sha1", "");
-        // cache-buster - jinak klient pouzije stary stazeny pack
         if (sha1 != null && !sha1.isBlank()) {
             url = url + (url.contains("?") ? "&" : "?") + "v=" + sha1.substring(0, 12);
         }

@@ -1,0 +1,55 @@
+# VoxarioForge - ukazkovy pack "default"
+# Kazdy zaznam = Construct (vlastni item). Blueprint = nazev .bbmodel souboru
+# ve slozce plugins/VoxarioForge/packs/default/blueprints/ (bez pripony).
+
+constructs:
+  ruby_blade:
+    display: "&cRubinova cepel"
+    material: IRON_SWORD
+    blueprint: ruby_blade
+    category: weapons
+    lore:
+      - "&7Vykovano v StudioVoxario"
+      - "&8Construct: ruby_blade"
+    unbreakable: true
+    hide-flags: true
+    attributes:
+      attack-damage: 9.5
+      attack-speed: -2.4
+    enchants:
+      SHARPNESS: 3
+
+  rune_hammer:
+    display: "&6Runove kladivo"
+    material: IRON_AXE
+    blueprint: rune_hammer
+    category: weapons
+    lore:
+      - "&7Tezke jako hora"
+      - "&8Construct: rune_hammer"
+    unbreakable: true
+    hide-flags: true
+    attributes:
+      attack-damage: 12.0
+      attack-speed: -3.0
+    enchants:
+      KNOCKBACK: 2
+
+  mana_flask:
+    display: "&dLahvicka many"
+    material: PAPER
+    blueprint: mana_flask
+    category: consumables
+    lore:
+      - "&7Zari modrym svetlem"
+
+  arcane_lantern:
+    display: "&bArkanni lucerna"
+    material: PAPER
+    blueprint: arcane_lantern
+    category: fixtures
+    fixture: true              # lze umistit do sveta jako 3D nabytek
+    fixture-scale: 1.0
+    fixture-hitbox: [0.8, 1.2] # sirka, vyska
+    lore:
+      - "&7Poloz na zem pravym klikem"
