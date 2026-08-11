@@ -18,6 +18,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -31,6 +34,9 @@ import java.util.Locale;
  *  - Forge Pack = vygenerovany resource pack
  */
 public final class VoxarioForge extends JavaPlugin implements Listener {
+
+    private static final List<String> DEFAULT_BLUEPRINTS =
+            List.of("ruby_blade", "arcane_lantern", "rune_hammer", "mana_flask");
 
     private ContentRegistry registry;
     private ForgeGUI gui;
@@ -203,6 +209,14 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         return fixtureKey;
     }
 
+    /** Znovu rozbali vestavena data (prepise defaultni pack a stanice). */
+    public void restoreDefaults() {
+        File marker = new File(getDataFolder(), ".assets-version");
+        marker.delete();
+        setupDefaults();
+        reloadContent();
+    }
+
     public void reloadContent() {
         registry.reload();
         stations.reload();
@@ -280,9 +294,16 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
     /** Posle hraci aktualni resource pack. */
     public void sendPack(Player player) {
         String url = packServer.publicUrl();
-        if (url == null || url.isBlank()) return;
+        if (url == null || url.isBlank()) {
+            getLogger().warning("Resource pack nelze odeslat: chybi pack.url nebo pack.http.public-host v config.yml.");
+            return;
+        }
         String sha1 = packSha1 != null && !packSha1.isBlank()
                 ? packSha1 : getConfig().getString("pack.sha1", "");
+        // cache-buster - jinak klient pouzije stary stazeny pack
+        if (sha1 != null && !sha1.isBlank()) {
+            url = url + (url.contains("?") ? "&" : "?") + "v=" + sha1.substring(0, 12);
+        }
         boolean required = getConfig().getBoolean("pack.required", false);
         try {
             player.setResourcePack(url, sha1 == null ? "" : sha1, required,
