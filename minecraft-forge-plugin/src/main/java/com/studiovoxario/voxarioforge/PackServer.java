@@ -24,7 +24,7 @@ public final class PackServer {
     }
 
     public void start() {
-        if (!plugin.getConfig().getBoolean("pack.http.enabled", false)) return;
+        if (!plugin.getConfig().getBoolean("pack.http.enabled", true)) return;
         int port = plugin.getConfig().getInt("pack.http.port", 8123);
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -77,7 +77,7 @@ public final class PackServer {
     public String publicUrl() {
         String configured = plugin.getConfig().getString("pack.url", "");
         if (configured != null && !configured.isBlank()) return configured;
-        if (!plugin.getConfig().getBoolean("pack.http.enabled", false)) return "";
+        if (!plugin.getConfig().getBoolean("pack.http.enabled", true)) return "";
         String host = plugin.getConfig().getString("pack.http.public-host", "");
         if (host == null || host.isBlank()) host = detectHost();
         if (host == null || host.isBlank()) return "";

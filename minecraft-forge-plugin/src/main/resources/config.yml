@@ -21,7 +21,7 @@ pack:
   auto-resend: true
   # Vestavene HTTP hostovani packu -> hraci si ho stahnou automaticky
   http:
-    enabled: false
+    enabled: true
     port: 8123
     # Verejna adresa serveru (IP nebo domena) bez lomitka na konci
     public-host: ""
