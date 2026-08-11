@@ -49,6 +49,13 @@ public final class Scheduling {
         plugin.getServer().getAsyncScheduler().runNow(plugin, t -> task.run());
     }
 
+    /** Opakovana async uloha (v sekundach). */
+    public static void asyncTimer(Plugin plugin, Runnable task, long delaySeconds, long periodSeconds) {
+        plugin.getServer().getAsyncScheduler().runAtFixedRate(plugin, t -> task.run(),
+                Math.max(1L, delaySeconds), Math.max(1L, periodSeconds), java.util.concurrent.TimeUnit.SECONDS);
+    }
+
+
     /** Bezi na regionu dane entity (Folia-safe). */
     public static void entity(Plugin plugin, Entity entity, Consumer<Entity> task) {
         entity.getScheduler().run(plugin, t -> task.accept(entity), null);
