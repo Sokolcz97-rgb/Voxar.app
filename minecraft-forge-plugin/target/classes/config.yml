@@ -1,5 +1,6 @@
 # VoxarioForge
-# Vlastni obsahovy engine (Constructs / Fixtures / Sectors / Blueprints)
+# Vlastni obsahovy engine (Constructs / Fixtures / Stations / Blueprints)
+# Paper / Folia 1.21.11+, Java 21 a vyssi
 
 # Namespace pouzity v resource packu a klicich (ns:id)
 namespace: "voxforge"
@@ -10,12 +11,40 @@ pack:
   # Nazev vysledneho ZIPu v plugins/VoxarioForge/
   file-name: "VoxarioForge-Pack.zip"
   description: "StudioVoxario - VoxarioForge content pack"
-  # Verejna URL na hostovany ZIP (prazdne = neposilat hracum)
+  # Verejna URL na hostovany ZIP (prazdne = pouzije se vestaveny pack server)
   url: ""
-  # SHA-1 hash packu (nepovinne, doporucene pri url)
+  # SHA-1 hash packu (dopocita se automaticky po sestaveni)
   sha1: ""
   # Vyzadovat pack pri pripojeni
   required: false
+  # Po prestavbe packu ho hned znovu poslat vsem online hracum
+  auto-resend: true
+  # Vestavene HTTP hostovani packu -> hraci si ho stahnou automaticky
+  http:
+    enabled: false
+    port: 8123
+    # Verejna adresa serveru (IP nebo domena) bez lomitka na konci
+    public-host: ""
+
+# Synchronizace obsahu a packu pres MySQL (vice serveru = jeden obsah)
+mysql:
+  enabled: false
+  host: "127.0.0.1"
+  port: 3306
+  database: "voxarioforge"
+  user: "root"
+  password: ""
+  params: "useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8&serverTimezone=UTC"
+  # Automaticky stahovat zmeny z DB a prestavovat pack
+  auto-sync: true
+  interval-seconds: 60
+  # Ukladat hotovy ZIP packu i do databaze
+  store-pack-blob: true
+  publish-pack: true
+
+stations:
+  # Nahradit vanilla kovadlinu / verpanek RPG rozhranim
+  replace-vanilla: true
 
 fixtures:
   # Povolit umistovani nabytku (ItemDisplay + Interaction hitbox)
