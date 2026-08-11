@@ -107,28 +107,65 @@ public final class VoxarioForge extends JavaPlugin implements Listener {
         if (packServer != null) packServer.stop();
     }
 
+    /**
+     * Rozbali vestavena data. Pri zmene verze pluginu se defaultni pack i stanice
+     * prepisou (stara verze se zazalohuje jako *.bak), aby se nove modely a GUI
+     * skutecne projevily i na existujici instalaci.
+     */
     private void setupDefaults() {
-        File packs = new File(getDataFolder(), "packs/default");
-        if (!packs.exists()) {
-            packs.mkdirs();
-            new File(packs, "blueprints").mkdirs();
-            saveResource("packs/default/items.yml", false);
-            saveDefaultBlueprint("ruby_blade");
-            saveDefaultBlueprint("arcane_lantern");
-            saveDefaultBlueprint("rune_hammer");
-            saveDefaultBlueprint("mana_flask");
+        File dataFolder = getDataFolder();
+        dataFolder.mkdirs();
+
+        File marker = new File(dataFolder, ".assets-version");
+        String current = getPluginMeta().getVersion();
+        String installed = "";
+        try {
+            if (marker.isFile()) installed = Files.readString(marker.toPath()).trim();
+        } catch (Exception ignored) {
         }
-        File stationsFile = new File(getDataFolder(), "stations.yml");
-        if (!stationsFile.isFile()) saveResource("stations.yml", false);
+        boolean upgrade = !current.equals(installed);
+
+        File packs = new File(dataFolder, "packs/default");
+        boolean fresh = !packs.exists();
+        packs.mkdirs();
+        new File(packs, "blueprints").mkdirs();
+
+        if (fresh || upgrade) {
+            backup(new File(packs, "items.yml"), upgrade && !fresh);
+            saveResource("packs/default/items.yml", true);
+            for (String bp : DEFAULT_BLUEPRINTS) saveDefaultBlueprint(bp);
+
+            backup(new File(dataFolder, "stations.yml"), upgrade && !fresh);
+            saveResource("stations.yml", true);
+
+            try {
+                Files.writeString(marker.toPath(), current);
+            } catch (Exception ignored) {
+            }
+            if (upgrade && !fresh) {
+                getLogger().info("Aktualizovan vestaveny obsah na verzi " + current
+                        + " (puvodni soubory ulozeny jako *.bak).");
+            }
+        }
+    }
+
+    private void backup(File file, boolean doBackup) {
+        if (!doBackup || !file.isFile()) return;
+        try {
+            Files.copy(file.toPath(), new File(file.getParentFile(), file.getName() + ".bak").toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception ignored) {
+        }
     }
 
     private void saveDefaultBlueprint(String name) {
         try {
-            saveResource("packs/default/blueprints/" + name + ".bbmodel", false);
+            saveResource("packs/default/blueprints/" + name + ".bbmodel", true);
         } catch (Exception ignored) {
             // blueprint neni v jaru
         }
     }
+
 
     public String namespace() {
         return namespace;
