@@ -13,6 +13,8 @@
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jar.name>VoxarioForge</jar.name>
+    <folia.supported>true</folia.supported>
   </properties>
 
   <repositories>
@@ -32,7 +34,7 @@
   </dependencies>
 
   <build>
-    <finalName>VoxarioForge</finalName>
+    <finalName>${jar.name}</finalName>
     <resources>
       <resource>
         <directory>src/main/resources</directory>
@@ -47,4 +49,14 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>paper</id>
+      <properties>
+        <jar.name>VoxarioForge-Paper</jar.name>
+        <folia.supported>false</folia.supported>
+      </properties>
+    </profile>
+  </profiles>
 </project>
