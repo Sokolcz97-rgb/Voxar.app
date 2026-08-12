@@ -95,20 +95,73 @@ public final class ContentRegistry {
         return null;
     }
 
+    /** Nalezena textura: relativni cesta (bez .png) + soubor na disku. */
+    public record Tex(String relPath, File file) {
+    }
+
     public File textureOf(Construct c, String name) {
-        String low = name.toLowerCase(Locale.ROOT);
-        File own = textures.get(key(c.pack(), low));
-        if (own != null) return own;
-        for (Map.Entry<String, File> e : textures.entrySet()) {
-            if (e.getKey().endsWith(":" + low)) return e.getValue();
+        Tex t = findTexture(c, name);
+        return t == null ? null : t.file();
+    }
+
+    /**
+     * Najde texturu podle reference z configu. Zkousi (v tomto poradi):
+     * texture-path + ref, samotny ref, jen nazev souboru - nejdriv ve vlastnim
+     * zdroji, pak ve vsech ostatnich.
+     */
+    public Tex findTexture(Construct c, String ref) {
+        if (ref == null || ref.isBlank()) return null;
+        String base = normalize(ref);
+        List<String> candidates = new ArrayList<>();
+        if (c != null && c.texturePath() != null && !c.texturePath().isBlank()) {
+            candidates.add(normalize(c.texturePath()) + "/" + base);
+        }
+        candidates.add(base);
+        int slash = base.lastIndexOf('/');
+        if (slash >= 0) candidates.add(base.substring(slash + 1));
+
+        String pack = c == null ? null : c.pack();
+        for (String cand : candidates) {
+            Tex t = lookup(pack, cand);
+            if (t != null) return t;
         }
         return null;
+    }
+
+    private Tex lookup(String pack, String path) {
+        if (pack != null) {
+            File own = textures.get(key(pack, path));
+            if (own != null) return new Tex(path, own);
+            String alias = textureAliases.get(key(pack, path));
+            if (alias != null) return new Tex(alias, textures.get(key(pack, alias)));
+        }
+        for (Map.Entry<String, File> e : textures.entrySet()) {
+            if (e.getKey().endsWith(":" + path)) {
+                return new Tex(e.getKey().substring(e.getKey().indexOf(':') + 1), e.getValue());
+            }
+        }
+        for (Map.Entry<String, String> e : textureAliases.entrySet()) {
+            if (e.getKey().endsWith(":" + path)) {
+                String src = e.getKey().substring(0, e.getKey().indexOf(':'));
+                File f = textures.get(key(src, e.getValue()));
+                if (f != null) return new Tex(e.getValue(), f);
+            }
+        }
+        return null;
+    }
+
+    private static String normalize(String raw) {
+        String p = raw.replace('\\', '/').toLowerCase(Locale.ROOT).trim();
+        while (p.startsWith("/")) p = p.substring(1);
+        if (p.endsWith(".png")) p = p.substring(0, p.length() - 4);
+        return p;
     }
 
     public void reload() {
         constructs.clear();
         blueprints.clear();
         textures.clear();
+        textureAliases.clear();
 
         for (SourceManager.Source source : plugin.sources().sources().values()) {
             if (!source.enabled()) continue;
@@ -132,12 +185,23 @@ public final class ContentRegistry {
     }
 
     private void scanTextures(SourceManager.Source source) {
-        walk(source.textures(), f -> {
-            String n = f.getName().toLowerCase(Locale.ROOT);
-            if (!n.endsWith(".png")) return;
-            textures.put(key(source.id(), n.substring(0, n.length() - 4)), f);
-        });
+        for (File dir : source.textureDirs()) {
+            if (dir == null || !dir.isDirectory()) continue;
+            String root = dir.getAbsolutePath();
+            walk(dir, f -> {
+                String n = f.getName().toLowerCase(Locale.ROOT);
+                if (!n.endsWith(".png")) return;
+                String rel = f.getAbsolutePath().substring(root.length())
+                        .replace('\\', '/').toLowerCase(Locale.ROOT);
+                while (rel.startsWith("/")) rel = rel.substring(1);
+                rel = rel.substring(0, rel.length() - 4);
+                textures.put(key(source.id(), rel), f);
+                String simple = n.substring(0, n.length() - 4);
+                if (!simple.equals(rel)) textureAliases.putIfAbsent(key(source.id(), simple), rel);
+            });
+        }
     }
+
 
     private void scanItems(SourceManager.Source source) {
         walk(source.items(), f -> {
