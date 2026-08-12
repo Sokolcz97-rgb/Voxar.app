@@ -58,7 +58,10 @@ public final class ItemImporter {
                     s.getString("blueprint"), s.getString("category", "misc"), s.getStringList("lore"),
                     s.getBoolean("unbreakable", false), s.getBoolean("hide-flags", false),
                     s.getBoolean("fixture", false), (float) s.getDouble("fixture-scale", 1.0),
-                    w, h, attrs, ench));
+                    w, h, attrs, ench,
+                    textureMap(s, "textures"),
+                    s.getString("texture-path", s.getString("texture_path", ""))));
+
         }
         return out;
     }
