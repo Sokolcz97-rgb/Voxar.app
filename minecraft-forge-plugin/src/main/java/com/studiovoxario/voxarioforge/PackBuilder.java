@@ -60,12 +60,13 @@ public final class PackBuilder {
             meta.add("pack", pack);
             write(zip, "pack.mcmeta", GSON.toJson(meta).getBytes(StandardCharsets.UTF_8), written);
 
-            // volne textury z kazdeho zdroje -> textures/item/<zdroj>/<nazev>.png
+            // volne textury z kazdeho zdroje -> textures/<pack.texture-folder>/<relativni cesta>.png
             for (SourceManager.Source source : plugin.sources().enabled()) {
+                String folder = folderOf(source);
                 for (Map.Entry<String, File> e : plugin.registry().textures().entrySet()) {
                     if (!e.getKey().startsWith(source.id() + ":")) continue;
                     String name = e.getKey().substring(source.id().length() + 1);
-                    String path = "assets/" + ns + "/textures/item/" + source.id() + "/" + name + ".png";
+                    String path = "assets/" + ns + "/textures/" + folder + "/" + name + ".png";
                     if (write(zip, path, Files.readAllBytes(e.getValue().toPath()), written)) textures++;
                 }
             }
@@ -94,6 +95,29 @@ public final class PackBuilder {
                     inline = compiled.textures();
                 }
 
+                // --- rucne nastavene textury z configu (vice PNG na jeden model) ---
+                SourceManager.Source src = plugin.sources().get(c.pack());
+                String folder = src != null ? folderOf(src) : "item/" + c.pack();
+                Set<String> overridden = new HashSet<>();
+                if (!c.textures().isEmpty()) {
+                    JsonObject texMap = modelJson.has("textures")
+                            ? modelJson.getAsJsonObject("textures") : new JsonObject();
+                    for (Map.Entry<String, String> e : c.textures().entrySet()) {
+                        ContentRegistry.Tex tex = plugin.registry().findTexture(c, e.getValue());
+                        if (tex == null) {
+                            plugin.getLogger().warning("Textura '" + e.getValue() + "' pro '"
+                                    + c.pack() + ":" + c.id() + "' nenalezena.");
+                            continue;
+                        }
+                        texMap.addProperty(e.getKey(), ns + ":" + folder + "/" + tex.relPath());
+                        overridden.add(e.getKey());
+                        String zipPath = "assets/" + ns + "/textures/" + folder + "/"
+                                + tex.relPath() + ".png";
+                        if (write(zip, zipPath, Files.readAllBytes(tex.file().toPath()), written)) textures++;
+                    }
+                    modelJson.add("textures", texMap);
+                }
+
                 write(zip, "assets/" + ns + "/models/item/" + path + ".json",
                         GSON.toJson(modelJson).getBytes(StandardCharsets.UTF_8), written);
                 models++;
@@ -107,12 +131,15 @@ public final class PackBuilder {
                         GSON.toJson(def).getBytes(StandardCharsets.UTF_8), written);
 
                 for (Map.Entry<String, byte[]> tex : inline.entrySet()) {
+                    // slot prepsany configem -> vlozenou texturu nepotrebujeme
+                    String slot = tex.getKey().substring(tex.getKey().lastIndexOf('_') + 1);
+                    if (overridden.contains(slot)) continue;
                     if (write(zip, "assets/" + ns + "/textures/item/" + tex.getKey() + ".png",
                             tex.getValue(), written)) textures++;
                 }
 
                 // model bez vlozene textury (.iaentitymodel) -> hledej PNG ve zdroji
-                if (inline.isEmpty()) {
+                if (inline.isEmpty() && c.textures().isEmpty()) {
                     File png = plugin.registry().textureOf(c, bp);
                     if (png == null) png = plugin.registry().textureOf(c, c.id());
                     if (png != null) {
@@ -121,6 +148,8 @@ public final class PackBuilder {
                     }
                 }
             }
+        }
+
         }
 
         byte[] bytes = buffer.toByteArray();
