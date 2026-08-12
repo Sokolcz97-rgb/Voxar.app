@@ -150,7 +150,7 @@ public final class PackBuilder {
             }
         }
 
-        }
+
 
         byte[] bytes = buffer.toByteArray();
         try (FileOutputStream fos = new FileOutputStream(out)) {
