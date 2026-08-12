@@ -158,6 +158,20 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                 plugin.reloadContent();
                 plugin.rebuildPack(sender);
             }
+            case "guide", "tutorial", "navod" -> {
+                sender.sendMessage(Component.text("=== VoxarioForge - rychly navod ===", NamedTextColor.GOLD));
+                sender.sendMessage(Component.text("1) Model (.bbmodel/.iaentitymodel) -> sources/<zdroj>/models/", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("2) Textury (.png, i podslozky) -> sources/<zdroj>/textures/", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("3) Config itemu -> sources/<zdroj>/items/*.yml", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("4) /voxforge pack a /voxforge give <id>", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("VICE TEXTUR NA MODEL:", NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("  texture-path: \"weapons/ruby\"", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("  textures: { 0: blade, 1: hilt, particle: blade }", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("CESTY: sources/<zdroj>/source.yml -> paths.items/models/textures/gui", NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("       pack.texture-folder = kam textury padnou v packu", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("Ukazky: sources/<zdroj>/EXAMPLE-*.yml", NamedTextColor.AQUA));
+                sender.sendMessage(Component.text("Cely navod: plugins/VoxarioForge/GUIDE/", NamedTextColor.AQUA));
+            }
             case "blueprints" -> {
                 sender.sendMessage(Component.text("Blueprints:", NamedTextColor.AQUA));
                 plugin.registry().blueprints().keySet().forEach(b ->
@@ -171,6 +185,7 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("/voxforge station <id> - otevrit RPG stanici", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge stations - seznam stanic", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge give <id> [hrac] [pocet]", NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("/voxforge guide - navod (textury, cesty, configy)", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge pack - sestavit resource pack", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge sync push|pull|status - MySQL", NamedTextColor.GRAY));
                 sender.sendMessage(Component.text("/voxforge reset - obnovit vestavene modely/stanice\n/voxforge reload | list | blueprints", NamedTextColor.GRAY));
@@ -197,7 +212,7 @@ public final class ForgeCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             for (String s : List.of("gui", "station", "stations", "give", "pack", "sync",
-                    "reload", "reset", "list", "blueprints", "help")) {
+                    "reload", "reset", "list", "blueprints", "guide", "help")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
