@@ -32,6 +32,8 @@ public final class ContentRegistry {
     private final Map<String, Construct> constructs = new LinkedHashMap<>();
     private final Map<String, File> blueprints = new LinkedHashMap<>();
     private final Map<String, File> textures = new LinkedHashMap<>();
+    private final Map<String, String> textureAliases = new LinkedHashMap<>();
+
 
     public ContentRegistry(VoxarioForge plugin) {
         this.plugin = plugin;
