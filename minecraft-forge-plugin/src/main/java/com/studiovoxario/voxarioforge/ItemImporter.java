@@ -85,12 +85,14 @@ public final class ItemImporter {
             if (mat == null) mat = Material.PAPER;
 
             String model = null;
+            Map<String, String> tex = new LinkedHashMap<>();
+            String texPath = "";
             if (res != null) {
                 model = res.getString("model_path");
-                if (model == null) {
-                    List<String> tex = res.getStringList("textures");
-                    if (!tex.isEmpty()) model = tex.get(0);
-                }
+                tex = textureMap(res, "textures");
+                if (tex.isEmpty()) tex = textureMap(res, "texture");
+                texPath = res.getString("texture_path", res.getString("textures_path", ""));
+                if (model == null && !tex.isEmpty()) model = tex.values().iterator().next();
             }
 
             out.add(new Construct(
@@ -101,10 +103,11 @@ public final class ItemImporter {
                     s.getStringList("lore"),
                     s.getBoolean("unbreakable", false), true,
                     s.getBoolean("fixture", false), 1.0f, 1.0f, 1.0f,
-                    new HashMap<>(), new HashMap<>()));
+                    new HashMap<>(), new HashMap<>(), tex, texPath));
         }
         return out;
     }
+
 
     private static boolean section(ConfigurationSection s, String key) {
         return s.getConfigurationSection(key) != null;
