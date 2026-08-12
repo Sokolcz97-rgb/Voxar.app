@@ -112,3 +112,37 @@ plugins/VoxarioForge/
 - `content.auto-build` v config.yml hlida zmeny a automaticky stavi novy ZIP;
   pri zapnutem MySQL se zmeny hned publikuji ostatnim serverum.
 - Nove prikazy: `/voxforge sources`, `/voxforge import`.
+
+## v1.3.0 - konfigurovatelne cesty a vice textur
+
+`sources/<zdroj>/source.yml`:
+
+```yaml
+paths:
+  items: ["items", "configs"]
+  models: ["models", "blueprints"]
+  textures: ["textures", "textures/weapons", "assets/png"]
+  gui: "gui"
+pack:
+  texture-folder: "item/mujpack"   # kam textury padnou v resource packu
+```
+
+Vice PNG na jeden Blockbench model (sloty odpovidaji `textures` v .bbmodel):
+
+```yaml
+constructs:
+  ruby_blade:
+    material: IRON_SWORD
+    blueprint: ruby_blade
+    texture-path: "weapons/ruby"    # spolecny prefix ve slozkach textur
+    textures:
+      0: blade         # -> weapons/ruby/blade.png
+      1: hilt          # -> weapons/ruby/hilt.png
+      particle: blade
+```
+
+ItemsAdder (`resource.textures`) i Oraxen/Nexo (`Pack.textures`) seznamy textur se ctou primo.
+
+- `/voxforge guide` – rychly navod primo ve hre
+- `plugins/VoxarioForge/GUIDE/` – podrobna dokumentace (markdown)
+- `sources/<zdroj>/EXAMPLE-*.yml` – ukazkove configy pro kazdy format
