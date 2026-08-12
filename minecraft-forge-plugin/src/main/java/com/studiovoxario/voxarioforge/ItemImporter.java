@@ -127,22 +127,16 @@ public final class ItemImporter {
 
             ConfigurationSection pack = s.getConfigurationSection("Pack");
             String model = pack != null ? pack.getString("model", pack.getString("parent_model")) : null;
-            if (model == null && pack != null) {
-                List<String> tex = pack.getStringList("textures");
-                if (!tex.isEmpty()) model = tex.get(0);
-            }
+            Map<String, String> tex = pack != null ? textureMap(pack, "textures") : new LinkedHashMap<>();
+            if (pack != null && tex.isEmpty()) tex = textureMap(pack, "texture");
+            String texPath = pack != null ? pack.getString("texture_path", "") : "";
+            if (model == null && !tex.isEmpty()) model = tex.values().iterator().next();
 
             Map<String, Integer> ench = new HashMap<>();
             ConfigurationSection es = s.getConfigurationSection("Enchantments");
             if (es != null) for (String k : es.getKeys(false)) ench.put(k, es.getInt(k));
 
             Map<String, Double> attrs = new HashMap<>();
-            ConfigurationSection mech = s.getConfigurationSection("Mechanics");
-            if (mech != null) {
-                if (mech.contains("custom_durability.value")) {
-                    // durability nema primy ekvivalent, ignorujeme
-                }
-            }
 
             out.add(new Construct(
                     source.id(), id.toLowerCase(Locale.ROOT),
@@ -150,12 +144,41 @@ public final class ItemImporter {
                     mat, lastSegment(model),
                     s.getString("category", "misc"), s.getStringList("lore"),
                     s.getBoolean("unbreakable", false), s.getBoolean("injectId", false),
-                    false, 1.0f, 1.0f, 1.0f, attrs, ench));
+                    false, 1.0f, 1.0f, 1.0f, attrs, ench, tex, texPath));
         }
         return out;
     }
 
     // ---------------------------------------------------------------- helper
+
+    /**
+     * Nacte mapovani textur. Podporuje:
+     *   textures: {0: "a/b", 1: "c", particle: "a/b"}
+     *   textures: ["a/b", "c"]   -> sloty 0, 1
+     *   textures: "a/b"          -> slot 0
+     */
+    static Map<String, String> textureMap(ConfigurationSection s, String key) {
+        Map<String, String> out = new LinkedHashMap<>();
+        if (s == null || !s.contains(key)) return out;
+        ConfigurationSection sec = s.getConfigurationSection(key);
+        if (sec != null) {
+            for (String k : sec.getKeys(false)) {
+                String v = sec.getString(k);
+                if (v != null && !v.isBlank()) out.put(k.toLowerCase(Locale.ROOT), v);
+            }
+            return out;
+        }
+        Object raw = s.get(key);
+        if (raw instanceof List<?> list) {
+            for (int i = 0; i < list.size(); i++) {
+                Object v = list.get(i);
+                if (v != null) out.put(String.valueOf(i), String.valueOf(v));
+            }
+        } else if (raw instanceof String str && !str.isBlank()) {
+            out.put("0", str);
+        }
+        return out;
+    }
 
     private static String lastSegment(String path) {
         if (path == null || path.isBlank()) return null;
@@ -166,6 +189,7 @@ public final class ItemImporter {
         if (dot > 0) p = p.substring(0, dot);
         return p.toLowerCase(Locale.ROOT);
     }
+
 
     private static Material material(String name) {
         if (name == null) return null;
