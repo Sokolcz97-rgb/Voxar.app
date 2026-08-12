@@ -167,6 +167,16 @@ public final class PackBuilder {
         return new Result(models, textures, out, sha1);
     }
 
+    /** Slozka v resource packu, kam padaji textury daneho zdroje. */
+    private String folderOf(SourceManager.Source source) {
+        String f = source.packTextureFolder();
+        if (f == null || f.isBlank()) f = "item/" + source.id();
+        f = f.replace('\\', '/').toLowerCase(Locale.ROOT);
+        while (f.startsWith("/")) f = f.substring(1);
+        while (f.endsWith("/")) f = f.substring(0, f.length() - 1);
+        return f;
+    }
+
     private boolean write(ZipOutputStream zip, String path, byte[] data, Set<String> written) throws Exception {
         if (!written.add(path)) return false;
         zip.putNextEntry(new ZipEntry(path));
