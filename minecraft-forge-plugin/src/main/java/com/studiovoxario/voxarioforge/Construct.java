@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Construct = jedna polozka vlastniho obsahu (item, nastroj, nabytek).
+ * Construct = jedna polozka vlastniho obsahu (item, blok, nabytek).
+ *
+ * textures  = mapa slotu modelu -> nazev/cesta PNG (napr. {"0": "sword/blade", "1": "sword/hilt"})
+ * texturePath = volitelna slozka (prefix) pro hledani textur teto polozky
  */
 public record Construct(
         String pack,
@@ -23,7 +26,9 @@ public record Construct(
         float fixtureWidth,
         float fixtureHeight,
         Map<String, Double> attributes,
-        Map<String, Integer> enchants
+        Map<String, Integer> enchants,
+        Map<String, String> textures,
+        String texturePath
 ) {
     public String key() {
         return id;

@@ -1,6 +1,7 @@
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/BlueprintCompiler.java
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/Construct.java
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/ContentRegistry.java
+/dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/Examples.java
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/FixtureManager.java
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/ForgeCommand.java
 /dev-server/minecraft-forge-plugin/src/main/java/com/studiovoxario/voxarioforge/ForgeGUI.java
