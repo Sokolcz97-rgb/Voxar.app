@@ -2,7 +2,7 @@ name: VoxarioForge
 version: 1.3.0
 main: com.studiovoxario.voxarioforge.VoxarioForge
 api-version: "1.21"
-folia-supported: true
+folia-supported: false
 author: StudioVoxario
 description: Vlastni obsah pro Minecraft - Constructs (itemy), Fixtures (nabytek), Stations (RPG kovadlina/verpanek), Blueprints (.bbmodel/.iaentitymodel), automaticky resource pack a MySQL sync.
 libraries:
