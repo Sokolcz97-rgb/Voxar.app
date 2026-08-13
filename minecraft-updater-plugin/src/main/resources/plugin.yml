@@ -1,0 +1,16 @@
+name: VoxarioUpdater
+version: ${project.version}
+main: com.studiovoxario.voxarioupdater.VoxarioUpdater
+api-version: "1.21"
+folia-supported: true
+author: StudioVoxario
+description: Automaticka kontrola a aktualizace pluginu (GitHub, Modrinth, Hangar, Spigot, Polymart, BuiltByBit) s overenim vlastnictvi u placenych pluginu.
+commands:
+  voxupdate:
+    description: Sprava aktualizaci pluginu
+    usage: /voxupdate help
+    aliases: [vupd, updater]
+    permission: voxarioupdater.admin
+permissions:
+  voxarioupdater.admin:
+    default: op
