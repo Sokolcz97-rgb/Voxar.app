@@ -1,0 +1,55 @@
+# VoxarioUpdater - automaticke aktualizace pluginu
+# Paper 1.21.11+, Java 21+
+#
+# Jak to funguje:
+#  1) Plugin precte vsechny .jar v plugins/ a z jejich plugin.yml / configu zjisti
+#     odkud pochazi (github, modrinth, hangar, spigot, polymart, builtbybit).
+#  2) Zkontroluje nejnovejsi verzi u dane platformy.
+#  3) Placene pluginy stahne POUZE tehdy, kdyz overi, ze je server-owner vlastni
+#     (prihlaseni probiha v prohlizeci / pres API token, hesla se NIKDY neukladaji).
+#  4) Novy jar se ulozi do plugins/update/ a nasadi se pri restartu (bezpecne).
+
+apply: restart          # restart = nasadit pri dalsim startu (doporuceno), manual = jen stahnout
+staging-folder: update  # slozka uvnitr plugins/, kterou Paper nacte pri startu
+check-on-start: true
+check-interval-minutes: 180
+auto-download: false    # true = nalezene aktualizace rovnou stahovat (jen ty overene)
+notify-ops: true
+ignore:                 # pluginy, ktere se nikdy neaktualizuji
+  - VoxarioUpdater
+
+security:
+  # Nikdy neukladame hesla. Ulozeny je pouze API token / OAuth token, sifrovany AES-GCM.
+  store-passwords: false
+  # Placeny plugin se nikdy nestahne bez uspesneho overeni vlastnictvi.
+  require-ownership: true
+  # Stazeny soubor se overi (velikost, ZIP magic, pritomnost plugin.yml) pred nasazenim.
+  verify-jar: true
+  # Zaloha puvodniho jaru pred vymenou
+  backup: true
+
+providers:
+  github:
+    enabled: true
+    # Nepovinne: osobni token jen pro vyssi rate-limit (public data)
+    token: ""
+  modrinth:
+    enabled: true
+  hangar:
+    enabled: true
+  spigot:
+    enabled: true
+  polymart:
+    enabled: true
+  builtbybit:
+    enabled: true
+
+# Rucni prirazeni zdroje pluginu, kdyz ho autodetekce nenajde.
+# provider: github|modrinth|hangar|spigot|polymart|builtbybit
+overrides:
+#  MujPlugin:
+#    provider: github
+#    id: "owner/repo"
+#  JinyPlugin:
+#    provider: spigot
+#    id: "12345"
