@@ -1,0 +1,32 @@
+# VoxarioPerms - GUI sprava permissions
+# Paper 1.21.11+, Java 21+
+
+# Hluboky sken: hleda permissions i v bytecode pluginu (najde i nedeklarovane).
+# Vypni, pokud mas hodne pluginu a chces rychlejsi sken.
+deep-scan: true
+
+# Zapisuje kazdou zmenu do plugins/VoxarioPerms/audit.log
+audit-log: true
+
+# true = nic se ve skutecnosti nezmeni, jen se zapise do logu (test)
+dry-run: false
+
+# Pluginy, ktere se v GUI nezobrazi
+ignore-plugins:
+  - VoxarioPerms
+
+# Rucne pridane permissions ke konkretnimu pluginu (kdyz je autodetekce nenajde)
+extra-permissions:
+#  MujPlugin:
+#    - mujplugin.special.node
+#    - mujplugin.vip
+
+# Prednastavene mapovani skupina -> role. Da se menit i v GUI (ulozi se do roles.yml).
+# owner | admin | moderator | builder | helper | default
+default-roles:
+  owner: OWNER
+  admin: ADMIN
+  moderator: MODERATOR
+  builder: BUILDER
+  helper: HELPER
+  default: DEFAULT
