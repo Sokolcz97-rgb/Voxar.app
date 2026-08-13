@@ -40,6 +40,19 @@ public final class VaultBackend implements PermBackend {
 
     @Override public List<String> groups() { return vaultGroups(); }
 
+    /** Zjisti pres Vault, zda skupina ma permission. null = nelze zjistit. */
+    static Boolean groupHas(String group, String node) {
+        Object p = provider();
+        if (p == null) return null;
+        try {
+            Object r = p.getClass().getMethod("groupHas", String.class, String.class, String.class)
+                    .invoke(p, null, group, node);
+            return r instanceof Boolean b ? (b ? Boolean.TRUE : null) : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     /** Vault se nevolá prikazem – zmeny provadi primo API. */
     @Override public List<String> grantCommands(String group, String node, boolean value) { return List.of(); }
     @Override public List<String> unsetCommands(String group, String node) { return List.of(); }

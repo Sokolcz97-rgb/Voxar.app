@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /** LuckPerms - skupiny cte pres LuckPerms API (reflexe), zmeny dela pres /lp prikazy. */
 public final class LuckPermsBackend extends CommandBackend {
@@ -36,6 +38,33 @@ public final class LuckPermsBackend extends CommandBackend {
             out.addAll(VaultBackend.vaultGroups());
         }
         out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
+    }
+
+    @Override
+    public Map<String, Boolean> groupPermissions(String group) {
+        Map<String, Boolean> out = new LinkedHashMap<>();
+        try {
+            Class<?> provider = Class.forName("net.luckperms.api.LuckPermsProvider");
+            Object api = provider.getMethod("get").invoke(null);
+            Class<?> apiIf = Class.forName("net.luckperms.api.LuckPerms");
+            Object gm = apiIf.getMethod("getGroupManager").invoke(api);
+            Class<?> gmIf = Class.forName("net.luckperms.api.model.group.GroupManager");
+            Object g = gmIf.getMethod("getGroup", String.class).invoke(gm, group);
+            if (g == null) return out;
+            Class<?> groupIf = Class.forName("net.luckperms.api.model.PermissionHolder");
+            Object data = groupIf.getMethod("data").invoke(g);
+            Class<?> nodeMapIf = Class.forName("net.luckperms.api.node.NodeMap");
+            Object nodes = nodeMapIf.getMethod("toCollection").invoke(data);
+            Class<?> nodeIf = Class.forName("net.luckperms.api.node.Node");
+            if (nodes instanceof Collection<?> col) {
+                for (Object n : col) {
+                    Object key = nodeIf.getMethod("getKey").invoke(n);
+                    Object val = nodeIf.getMethod("getValue").invoke(n);
+                    if (key != null) out.put(String.valueOf(key), Boolean.TRUE.equals(val));
+                }
+            }
+        } catch (Throwable ignored) {}
         return out;
     }
 
