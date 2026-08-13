@@ -146,6 +146,60 @@ public final class GuiManager implements Listener {
         p.openInventory(inv);
     }
 
+    /** Seznam nodu podle filtru "skryt uz udelene". */
+    private List<String> visibleNodes(Session s) {
+        if (s.nodes == null) return List.of();
+        if (!s.hideOwned) return s.nodes;
+        List<String> out = new ArrayList<>();
+        for (String n : s.nodes) if (!Boolean.TRUE.equals(s.current.get(n))) out.add(n);
+        return out;
+    }
+
+    /** Vyber skupiny, pro kterou budeme permissions zobrazovat a menit. */
+    public void openGroupPick(Player p) {
+        Session s = session(p);
+        s.stage = Session.Stage.GROUPPICK;
+        PermBackend b = plugin.backends().byId(s.backendId);
+        Inventory inv = create("&8Pro kterou skupinu? &7| " + (b == null ? "?" : b.display()), 6);
+        List<String> groups = b == null ? List.of() : b.groups();
+        for (int i = 0; i < 45 && i < groups.size(); i++) {
+            String g = groups.get(i);
+            Role r = plugin.roles().get(g);
+            inv.setItem(i, item(Material.PLAYER_HEAD, r.color + g,
+                    List.of("&7Role: " + r.color + r.label,
+                            "", "&eKlik &7= nacist jeji permissions")));
+        }
+        if (groups.isEmpty()) {
+            inv.setItem(22, item(Material.BARRIER, "&cZadne skupiny nenalezeny", null));
+        }
+        inv.setItem(49, item(Material.BARRIER, "&cZpet", null));
+        p.openInventory(inv);
+    }
+
+    /** Nacte aktualni permissions skupiny (async) a otevre seznam permissions. */
+    private void loadGroupAndOpenPerms(Player p, PermBackend b, String group) {
+        Session s = session(p);
+        s.targetGroup = group;
+        p.sendMessage(Txt.c("&7Nacitam permissions skupiny &f" + group + "&7..."));
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            Map<String, Boolean> map = new HashMap<>();
+            try {
+                Map<String, Boolean> known = b.groupPermissions(group);
+                if (s.nodes != null) {
+                    for (String n : s.nodes) {
+                        Boolean v = known.isEmpty() ? b.has(group, n) : b.has(group, n);
+                        if (v != null) map.put(n, v);
+                    }
+                }
+                for (var en : known.entrySet()) map.putIfAbsent(en.getKey(), en.getValue());
+            } catch (Throwable ignored) {}
+            Bukkit.getGlobalRegionScheduler().run(plugin, t2 -> {
+                s.current = map;
+                if (p.isOnline()) openPerms(p);
+            });
+        });
+    }
+
     public void openPerms(Player p) {
         Session s = session(p);
         s.stage = Session.Stage.PERMS;
@@ -279,6 +333,13 @@ public final class GuiManager implements Listener {
                     openGroupPick(p);
                 }
             }
+            case GROUPPICK -> {
+                if (slot == 49) { openPlugins(p); return; }
+                PermBackend b = plugin.backends().byId(s.backendId);
+                if (b == null) return;
+                List<String> groups = b.groups();
+                if (slot < 45 && slot < groups.size()) loadGroupAndOpenPerms(p, b, groups.get(slot));
+            }
             case PERMS -> {
                 if (slot == 45) { if (s.page > 0) s.page--; openPerms(p); return; }
                 if (slot == 53) { if ((s.page + 1) * 45 < visibleNodes(s).size()) s.page++; openPerms(p); return; }
@@ -314,6 +375,9 @@ public final class GuiManager implements Listener {
                     else n = a.grant(b, g, new ArrayList<>(s.selected), !click.isRightClick(), p);
                     p.sendMessage(Txt.c("&a" + n + " &7permissions -> skupina &f" + g + " &7(" + b.display() + ")"));
                     p.closeInventory();
+                    s.targetGroup = g;
+                    Bukkit.getGlobalRegionScheduler().runDelayed(plugin, t ->
+                            { if (p.isOnline()) loadGroupAndOpenPerms(p, b, g); }, 20L);
                 }
             }
             case ROLES -> {
@@ -365,7 +429,7 @@ public final class GuiManager implements Listener {
             p.sendMessage(Txt.c("&aSkupina &f" + group + " &azískala wildcard &f*"));
             return;
         }
-        List<PermScanner.ScannedPlugin> all = plugin.scanner().scan(plugin.getConfig().getBoolean("deep-scan", true));
+        List<PermScanner.ScannedPlugin> all = plugin.scanner().cached(plugin.getConfig().getBoolean("deep-scan", true));
         int total = 0;
         for (var sp : all) {
             List<String> pick = Presets.pick(r, sp.nodes());
