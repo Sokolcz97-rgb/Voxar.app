@@ -1,0 +1,16 @@
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/Applier.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/Guide.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/PermScanner.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/PermsCommand.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/Presets.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/RoleConfig.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/Txt.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/VoxarioPerms.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/BackendRegistry.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/CommandBackend.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/LuckPermsBackend.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/PermBackend.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/SimpleBackends.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/backend/VaultBackend.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/gui/GuiManager.java
+/dev-server/minecraft-perms-plugin/src/main/java/com/studiovoxario/voxarioperms/gui/Session.java
