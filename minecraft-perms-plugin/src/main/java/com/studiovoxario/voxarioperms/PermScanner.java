@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -41,7 +39,6 @@ public final class PermScanner {
         }
     }
 
-    private static final Pattern NODE = Pattern.compile("[a-zA-Z][a-zA-Z0-9_-]{2,}(?:\\.[a-zA-Z0-9_*-]+){1,6}");
     private static final Set<String> BAD_PREFIX = Set.of(
             "java", "javax", "sun", "com.google", "org.bukkit", "org.spigotmc", "io.papermc",
             "net.kyori", "org.yaml", "org.apache", "kotlin", "net.minecraft", "org.slf4j",
@@ -50,6 +47,21 @@ public final class PermScanner {
     private final VoxarioPerms plugin;
 
     public PermScanner(VoxarioPerms plugin) { this.plugin = plugin; }
+
+    private volatile List<ScannedPlugin> cache;
+    private volatile long cacheAt;
+
+    /** Vysledek z cache (5 minut), aby se nescanovalo pri kazdem kliku. */
+    public List<ScannedPlugin> cached(boolean deep) {
+        List<ScannedPlugin> c = cache;
+        if (c != null && System.currentTimeMillis() - cacheAt < 300_000L) return c;
+        List<ScannedPlugin> fresh = scan(deep);
+        cache = fresh;
+        cacheAt = System.currentTimeMillis();
+        return fresh;
+    }
+
+    public void invalidate() { cache = null; }
 
     public List<ScannedPlugin> scan(boolean deep) {
         List<ScannedPlugin> out = new ArrayList<>();
@@ -126,7 +138,10 @@ public final class PermScanner {
         }
     }
 
-    /** Najde permission-like retezce primo v bytecode (konstanty). */
+    /**
+     * Najde permission-like retezce primo v bytecode (konstanty).
+     * Bez regexu - rucni skener konstantnich retezcu (regex zpusoboval zamrznuti serveru).
+     */
     private void deepScan(ZipFile zf, ScannedPlugin sp) {
         String base = sp.name.toLowerCase(Locale.ROOT);
         Set<String> found = new LinkedHashSet<>();
@@ -135,20 +150,50 @@ public final class PermScanner {
         while (it.hasMoreElements()) {
             ZipEntry e = it.nextElement();
             if (!e.getName().endsWith(".class")) continue;
-            if (scanned++ > 4000) break;
+            if (e.getSize() > 512_000) continue;
+            if (scanned++ > 1500) break;
             try (var in = zf.getInputStream(e)) {
-                String s = new String(in.readAllBytes(), StandardCharsets.ISO_8859_1);
-                Matcher m = NODE.matcher(s);
-                while (m.find()) {
-                    String node = m.group();
-                    if (!accept(node, base)) continue;
-                    found.add(node);
-                    if (found.size() > 400) break;
-                }
+                byte[] data = in.readAllBytes();
+                extract(data, base, found);
             } catch (Exception ignored) {}
-            if (found.size() > 400) break;
+            if (found.size() >= 300) break;
         }
         for (String n : found) sp.perms.putIfAbsent(n, "detekovano ze zdrojoveho kodu");
+    }
+
+    /** Linearni pruchod bajty - hleda tokeny typu "plugin.neco.dalsi". */
+    private void extract(byte[] data, String base, Set<String> found) {
+        int n = data.length;
+        int i = 0;
+        StringBuilder sb = new StringBuilder(64);
+        while (i < n) {
+            char c = (char) (data[i] & 0xFF);
+            if (isTokenChar(c)) {
+                if (sb.length() < 128) sb.append(c);
+            } else {
+                if (sb.length() >= 5) consider(sb.toString(), base, found);
+                sb.setLength(0);
+                if (found.size() >= 300) return;
+            }
+            i++;
+        }
+        if (sb.length() >= 5) consider(sb.toString(), base, found);
+    }
+
+    private static boolean isTokenChar(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                || c == '.' || c == '_' || c == '-' || c == '*';
+    }
+
+    private void consider(String token, String base, Set<String> found) {
+        int dot = token.indexOf('.');
+        if (dot <= 0 || dot == token.length() - 1) return;
+        if (token.indexOf("..") >= 0) return;
+        int dots = 0;
+        for (int k = 0; k < token.length(); k++) if (token.charAt(k) == '.') dots++;
+        if (dots > 6) return;
+        if (!accept(token, base)) return;
+        found.add(token);
     }
 
     private boolean accept(String node, String base) {
