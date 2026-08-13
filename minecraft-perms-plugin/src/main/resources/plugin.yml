@@ -1,0 +1,17 @@
+name: VoxarioPerms
+version: ${project.version}
+main: com.studiovoxario.voxarioperms.VoxarioPerms
+api-version: "1.21"
+author: StudioVoxario
+description: GUI sprava permissions pro LuckPerms a dalsi permission pluginy - automaticka detekce permissions vsech pluginu na serveru, skupiny, role a rychla tlacitka.
+softdepend: [LuckPerms, Vault, PermissionsEx, GroupManager, zPermissions, UltraPermissions, PowerfulPerms]
+commands:
+  voxperms:
+    description: Sprava permissions (GUI)
+    usage: /voxperms
+    aliases: [vp, vperms]
+    permission: voxarioperms.admin
+permissions:
+  voxarioperms.admin:
+    description: Pristup k VoxarioPerms
+    default: op
