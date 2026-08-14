@@ -2877,6 +2877,7 @@ export type Database = {
           is_deafened: boolean
           is_muted: boolean
           joined_at: string
+          last_seen: string
           session_id: string
           user_id: string
         }
@@ -2885,6 +2886,7 @@ export type Database = {
           is_deafened?: boolean
           is_muted?: boolean
           joined_at?: string
+          last_seen?: string
           session_id: string
           user_id: string
         }
@@ -2893,6 +2895,7 @@ export type Database = {
           is_deafened?: boolean
           is_muted?: boolean
           joined_at?: string
+          last_seen?: string
           session_id?: string
           user_id?: string
         }
@@ -3100,6 +3103,8 @@ export type Database = {
         Args: { _guild: string; _user: string }
         Returns: undefined
       }
+      vox_voice_heartbeat: { Args: { _channel: string }; Returns: undefined }
+      vox_voice_purge_stale: { Args: { _channel?: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "editor" | "user" | "banned" | "content_creator"
