@@ -409,10 +409,20 @@ export function useVoxVoice(channelId: string | null) {
         monitorTracks.forEach((t) => { try { t.stop(); } catch {} });
       });
     } catch (e) {
-      console.error("Mikrofon nedostupný", e);
+      const err = e as Error;
+      console.error("Mikrofon nedostupný", err);
+      const denied = err?.name === "NotAllowedError" || err?.name === "SecurityError";
+      toast({
+        title: denied ? "Přístup k mikrofonu zamítnut" : "Mikrofon nedostupný",
+        description: denied
+          ? "Povol mikrofon v nastavení prohlížeče a zkus se připojit znovu."
+          : err?.message || "Nepodařilo se otevřít vstupní zařízení.",
+        variant: "destructive",
+      });
       joiningRef.current = false;
       return;
     }
+
 
     const ch = supabase.channel(`vox_voice_${channelId}`, { config: { broadcast: { self: false } } });
     channelRef.current = ch;
