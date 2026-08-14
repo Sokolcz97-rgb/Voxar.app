@@ -98,10 +98,13 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
     return () => { supabase.removeChannel(obs); };
   }, [channel.id, joinedHere, user?.id]);
 
+  // Presence is the single source of truth — DB rows alone never render a user,
+  // so a closed tab / dead socket can't leave a ghost behind.
   const liveIds = joinedHere ? api.presentIds : observedIds;
   const participants = rows.filter(
-    (p) => p.user_id === user?.id || !liveIds || liveIds.size === 0 || liveIds.has(p.user_id),
+    (p) => (joinedHere && p.user_id === user?.id) || (!!liveIds && liveIds.has(p.user_id)),
   );
+
 
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);
