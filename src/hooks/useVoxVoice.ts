@@ -493,13 +493,17 @@ export function useVoxVoice(channelId: string | null) {
     try {
       await waitForSubscribed(ch);
       await ch.track({ user_id: user.id, session_id: sessionIdRef.current });
-      await supabase.from("vox_voice_participants").upsert({
+      // Drop anyone whose heartbeat died before we build peers for them.
+      await (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
+      const { error: upsertError } = await supabase.from("vox_voice_participants").upsert({
         channel_id: channelId,
         user_id: user.id,
         session_id: sessionIdRef.current,
         is_muted: false,
         is_deafened: false,
-      });
+        last_seen: new Date().toISOString(),
+      } as any);
+      if (upsertError) throw upsertError;
       const { data: existing } = await supabase
         .from("vox_voice_participants")
         .select("user_id")
@@ -511,11 +515,18 @@ export function useVoxVoice(channelId: string | null) {
       await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
     
     } catch (e) {
-      console.error("Hlasová signalizace selhala", e);
+      const err = e as Error;
+      console.error("Hlasová signalizace selhala", err);
+      toast({
+        title: "Připojení k hlasovému kanálu selhalo",
+        description: err?.message || "Zkontroluj připojení k síti a zkus to znovu.",
+        variant: "destructive",
+      });
       await leaveCleanupOnly();
       joiningRef.current = false;
       return;
     }
+
     connectedRef.current = true;
     setConnected(true);
     joiningRef.current = false;
