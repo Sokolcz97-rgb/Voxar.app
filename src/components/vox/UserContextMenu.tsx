@@ -185,21 +185,21 @@ export function UserContextMenu({
                 </ContextMenuSub>
               )}
 
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={doKick}
-                disabled={busy || member.role === "owner"}
-              >
-                <UserX className="w-4 h-4 mr-2" /> Eject entity
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={() => setBanOpen(true)}
-                disabled={busy || member.role === "owner"}
-              >
-                <Ban className="w-4 h-4 mr-2" /> Purge // ban…
-              </ContextMenuItem>
+              <div className="ctx-danger">
+                <div className="px-2 pb-1 text-[8px] tracking-[0.3em] text-destructive/80">// DANGER · ZONE</div>
+                <ContextMenuItem
+                  onSelect={doKick}
+                  disabled={busy || member.role === "owner"}
+                >
+                  <UserX className="w-4 h-4 mr-2" /> Eject entity
+                </ContextMenuItem>
+                <ContextMenuItem
+                  onSelect={() => setBanOpen(true)}
+                  disabled={busy || member.role === "owner"}
+                >
+                  <Ban className="w-4 h-4 mr-2" /> Purge // ban…
+                </ContextMenuItem>
+              </div>
             </>
           )}
         </ContextMenuContent>
