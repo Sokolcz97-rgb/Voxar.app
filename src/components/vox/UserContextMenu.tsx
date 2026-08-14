@@ -151,7 +151,7 @@ export function UserContextMenu({
                 <ContextMenuSubTrigger>
                   <MicOff className="w-4 h-4 mr-2 text-primary" /> Server mute
                 </ContextMenuSubTrigger>
-                <ContextMenuSubContent className="holo-context-menu font-display uppercase tracking-wider text-xs">
+                <ContextMenuSubContent className="holo-context-menu holo-ctx font-display uppercase tracking-wider text-xs">
                   <ContextMenuItem onSelect={() => doServerMute(5)}>5 min</ContextMenuItem>
                   <ContextMenuItem onSelect={() => doServerMute(30)}>30 min</ContextMenuItem>
                   <ContextMenuItem onSelect={() => doServerMute(60)}>1 hr</ContextMenuItem>
@@ -167,7 +167,7 @@ export function UserContextMenu({
                   <ContextMenuSubTrigger>
                     <Tag className="w-4 h-4 mr-2 text-primary" /> Assign rank
                   </ContextMenuSubTrigger>
-                  <ContextMenuSubContent className="holo-context-menu max-h-80 overflow-y-auto font-display uppercase tracking-wider text-xs">
+                  <ContextMenuSubContent className="holo-context-menu holo-ctx max-h-80 overflow-y-auto font-display uppercase tracking-wider text-xs">
                     {assignableRoles.map((r) => (
                       <ContextMenuCheckboxItem
                         key={r.id}
