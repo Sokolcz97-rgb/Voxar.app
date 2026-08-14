@@ -57,6 +57,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      await (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channel.id });
       const { data } = await supabase
         .from("vox_voice_participants")
         .select("user_id, is_muted, is_deafened")
@@ -68,11 +69,13 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
       setRows(data.map((d: any) => ({ ...d, ...profMap[d.user_id] })));
     };
     load();
+    const purge = window.setInterval(load, 30000);
     const ch = supabase.channel(`vox_vp_${channel.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_voice_participants", filter: `channel_id=eq.${channel.id}` }, load)
       .subscribe();
-    return () => { mounted = false; supabase.removeChannel(ch); };
+    return () => { mounted = false; window.clearInterval(purge); supabase.removeChannel(ch); };
   }, [channel.id]);
+
 
   // Observer presence: when we are NOT in this room we still need to know who
   // is really connected, so stale DB rows never render as ghost avatars.
@@ -95,10 +98,13 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
     return () => { supabase.removeChannel(obs); };
   }, [channel.id, joinedHere, user?.id]);
 
+  // Presence is the single source of truth — DB rows alone never render a user,
+  // so a closed tab / dead socket can't leave a ghost behind.
   const liveIds = joinedHere ? api.presentIds : observedIds;
   const participants = rows.filter(
-    (p) => p.user_id === user?.id || !liveIds || liveIds.size === 0 || liveIds.has(p.user_id),
+    (p) => (joinedHere && p.user_id === user?.id) || (!!liveIds && liveIds.has(p.user_id)),
   );
+
 
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.vox_voice_purge_stale(uuid) FROM anon;

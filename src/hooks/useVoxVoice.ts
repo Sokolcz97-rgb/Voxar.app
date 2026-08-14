@@ -409,10 +409,20 @@ export function useVoxVoice(channelId: string | null) {
         monitorTracks.forEach((t) => { try { t.stop(); } catch {} });
       });
     } catch (e) {
-      console.error("Mikrofon nedostupný", e);
+      const err = e as Error;
+      console.error("Mikrofon nedostupný", err);
+      const denied = err?.name === "NotAllowedError" || err?.name === "SecurityError";
+      toast({
+        title: denied ? "Přístup k mikrofonu zamítnut" : "Mikrofon nedostupný",
+        description: denied
+          ? "Povol mikrofon v nastavení prohlížeče a zkus se připojit znovu."
+          : err?.message || "Nepodařilo se otevřít vstupní zařízení.",
+        variant: "destructive",
+      });
       joiningRef.current = false;
       return;
     }
+
 
     const ch = supabase.channel(`vox_voice_${channelId}`, { config: { broadcast: { self: false } } });
     channelRef.current = ch;
@@ -483,13 +493,17 @@ export function useVoxVoice(channelId: string | null) {
     try {
       await waitForSubscribed(ch);
       await ch.track({ user_id: user.id, session_id: sessionIdRef.current });
-      await supabase.from("vox_voice_participants").upsert({
+      // Drop anyone whose heartbeat died before we build peers for them.
+      await (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
+      const { error: upsertError } = await supabase.from("vox_voice_participants").upsert({
         channel_id: channelId,
         user_id: user.id,
         session_id: sessionIdRef.current,
         is_muted: false,
         is_deafened: false,
-      });
+        last_seen: new Date().toISOString(),
+      } as any);
+      if (upsertError) throw upsertError;
       const { data: existing } = await supabase
         .from("vox_voice_participants")
         .select("user_id")
@@ -501,11 +515,18 @@ export function useVoxVoice(channelId: string | null) {
       await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
     
     } catch (e) {
-      console.error("Hlasová signalizace selhala", e);
+      const err = e as Error;
+      console.error("Hlasová signalizace selhala", err);
+      toast({
+        title: "Připojení k hlasovému kanálu selhalo",
+        description: err?.message || "Zkontroluj připojení k síti a zkus to znovu.",
+        variant: "destructive",
+      });
       await leaveCleanupOnly();
       joiningRef.current = false;
       return;
     }
+
     connectedRef.current = true;
     setConnected(true);
     joiningRef.current = false;
@@ -590,6 +611,25 @@ export function useVoxVoice(channelId: string | null) {
     };
   }, [user, channelId]);
 
+  // Heartbeat: keeps our row alive and purges rows whose client vanished.
+  useEffect(() => {
+    if (!connected || !channelId) return;
+    const beat = () => {
+      void (supabase.rpc as any)("vox_voice_heartbeat", { _channel: channelId });
+      void (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
+    };
+    beat();
+    const t = window.setInterval(beat, 15000);
+    return () => window.clearInterval(t);
+  }, [connected, channelId]);
+
+  // Sign-out while in a call: tear the session down immediately.
+  useEffect(() => {
+    if (user || !connectedRef.current) return;
+    connectedRef.current = false;
+    setConnected(false);
+    void leaveCleanupOnly();
+  }, [user]);
 
 
   const toggleMute = useCallback(() => {
