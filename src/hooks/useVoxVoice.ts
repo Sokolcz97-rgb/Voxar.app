@@ -611,6 +611,25 @@ export function useVoxVoice(channelId: string | null) {
     };
   }, [user, channelId]);
 
+  // Heartbeat: keeps our row alive and purges rows whose client vanished.
+  useEffect(() => {
+    if (!connected || !channelId) return;
+    const beat = () => {
+      void (supabase.rpc as any)("vox_voice_heartbeat", { _channel: channelId });
+      void (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
+    };
+    beat();
+    const t = window.setInterval(beat, 15000);
+    return () => window.clearInterval(t);
+  }, [connected, channelId]);
+
+  // Sign-out while in a call: tear the session down immediately.
+  useEffect(() => {
+    if (user || !connectedRef.current) return;
+    connectedRef.current = false;
+    setConnected(false);
+    void leaveCleanupOnly();
+  }, [user]);
 
 
   const toggleMute = useCallback(() => {
