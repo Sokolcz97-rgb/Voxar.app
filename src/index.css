@@ -565,6 +565,127 @@
     100% { transform: translateY(100%); opacity: 0; }
   }
 
+  /* ------------------------------------------------------------
+     Holo context menu — full HUD interior (entity / node menus)
+     ------------------------------------------------------------ */
+  .holo-ctx {
+    padding: 0.35rem !important;
+    background:
+      radial-gradient(120% 80% at 0% 0%, hsl(184 100% 54% / 0.10), transparent 60%),
+      linear-gradient(160deg, hsl(215 55% 8% / 0.97), hsl(228 60% 4% / 0.97)) !important;
+    border: 1px solid hsl(184 100% 54% / 0.42) !important;
+    box-shadow:
+      inset 0 1px 0 hsl(184 100% 80% / 0.16),
+      inset 0 0 0 1px hsl(220 60% 2% / 0.9),
+      inset 0 0 46px hsl(184 100% 54% / 0.07),
+      0 0 22px hsl(184 100% 54% / 0.18),
+      0 34px 70px -38px hsl(220 90% 1%) !important;
+  }
+  /* corner brackets */
+  .holo-ctx > .ctx-brackets { position: absolute; inset: 3px; pointer-events: none; }
+  .holo-ctx > .ctx-brackets::before,
+  .holo-ctx > .ctx-brackets::after {
+    content: ""; position: absolute; width: 14px; height: 14px;
+    border: 1px solid hsl(184 100% 65% / 0.65);
+  }
+  .holo-ctx > .ctx-brackets::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+  .holo-ctx > .ctx-brackets::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+  /* Header sub-panel */
+  .holo-ctx .ctx-head {
+    position: relative;
+    margin-bottom: 0.35rem;
+    padding: 0.5rem 0.6rem;
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+    background: linear-gradient(100deg, hsl(184 100% 54% / 0.16), hsl(184 100% 54% / 0.02));
+    border-left: 2px solid hsl(184 100% 60% / 0.9);
+    box-shadow: inset 0 0 24px hsl(184 100% 54% / 0.12);
+  }
+
+  /* Section labels: // AUDIO · LOCAL */
+  .holo-ctx .ctx-section {
+    display: flex; align-items: center; gap: 0.45rem;
+    padding: 0.4rem 0.55rem 0.2rem;
+    font-size: 9px; letter-spacing: 0.18em;
+    color: hsl(184 100% 68% / 0.75);
+  }
+  .holo-ctx .ctx-section::after {
+    content: ""; flex: 1; height: 1px;
+    background: repeating-linear-gradient(90deg, hsl(184 100% 60% / 0.55) 0 3px, transparent 3px 6px);
+  }
+
+  /* Items */
+  .holo-ctx [role="menuitem"],
+  .holo-ctx [role="menuitemcheckbox"] {
+    position: relative;
+    border-radius: 0 !important;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+    color: hsl(186 60% 82%);
+    padding-left: 0.6rem;
+    transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .holo-ctx [role="menuitem"] svg,
+  .holo-ctx [role="menuitemcheckbox"] svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px hsl(184 100% 60% / 0.55)); }
+  .holo-ctx [role="menuitem"][data-highlighted],
+  .holo-ctx [role="menuitemcheckbox"][data-highlighted] {
+    background: linear-gradient(90deg, hsl(184 100% 54% / 0.22), hsl(184 100% 54% / 0.04)) !important;
+    color: hsl(184 100% 88%) !important;
+    box-shadow: inset 2px 0 0 hsl(184 100% 62%), inset 0 0 18px hsl(184 100% 54% / 0.14);
+    text-shadow: 0 0 10px hsl(184 100% 60% / 0.7);
+  }
+  .holo-ctx [role="separator"] {
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, hsl(184 100% 60% / 0.35), transparent) !important;
+    margin: 0.3rem 0.25rem !important;
+  }
+
+  /* Danger sub-panel */
+  .holo-ctx .ctx-danger {
+    margin-top: 0.35rem;
+    padding: 0.25rem;
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+    background: linear-gradient(120deg, hsl(0 85% 55% / 0.12), transparent 70%);
+    border: 1px solid hsl(0 85% 60% / 0.35);
+    box-shadow: inset 0 0 22px hsl(0 90% 50% / 0.12);
+  }
+  .holo-ctx .ctx-danger [role="menuitem"] { color: hsl(0 90% 72%) !important; }
+  .holo-ctx .ctx-danger [role="menuitem"] svg { filter: drop-shadow(0 0 5px hsl(0 90% 60% / 0.7)); }
+  .holo-ctx .ctx-danger [role="menuitem"][data-highlighted] {
+    background: linear-gradient(90deg, hsl(0 85% 55% / 0.28), transparent) !important;
+    color: hsl(0 95% 82%) !important;
+    box-shadow: inset 2px 0 0 hsl(0 90% 62%), inset 0 0 18px hsl(0 90% 50% / 0.18);
+    text-shadow: 0 0 10px hsl(0 90% 60% / 0.8);
+  }
+
+  /* Audio slider inside the menu */
+  .holo-ctx .ctx-audio {
+    margin: 0 0.25rem 0.25rem;
+    padding: 0.5rem 0.6rem;
+    clip-path: polygon(0 5px, 5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+    background: linear-gradient(160deg, hsl(214 60% 10% / 0.85), hsl(226 60% 5% / 0.85));
+    border: 1px solid hsl(184 100% 54% / 0.22);
+    box-shadow: inset 0 1px 0 hsl(184 100% 80% / 0.08);
+  }
+  .holo-ctx .ctx-audio [data-orientation="horizontal"] > span:first-child {
+    background: hsl(220 60% 8%) !important;
+    border: 1px solid hsl(184 100% 54% / 0.25);
+    border-radius: 0 !important;
+    height: 6px;
+  }
+  .holo-ctx .ctx-audio [data-orientation="horizontal"] > span:first-child > span {
+    background: linear-gradient(90deg, hsl(184 100% 45%), hsl(184 100% 70%)) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 12px hsl(184 100% 60% / 0.6);
+  }
+  .holo-ctx .ctx-audio [role="slider"] {
+    width: 12px !important; height: 16px !important;
+    border-radius: 0 !important;
+    clip-path: polygon(50% 0, 100% 28%, 100% 100%, 0 100%, 0 28%);
+    background: hsl(184 100% 72%) !important;
+    border: 0 !important;
+    box-shadow: 0 0 12px hsl(184 100% 60% / 0.9);
+  }
+
   /* ============================================================
      HUD Blueprint — Detail 4: Radial float / breathing pods
      Subtle 3D tilt + slow bob so the pod grid feels alive.
