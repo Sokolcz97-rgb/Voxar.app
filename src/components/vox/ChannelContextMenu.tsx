@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem,
-  ContextMenuSeparator, ContextMenuLabel,
+
 } from "@/components/ui/context-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -47,14 +47,18 @@ export function ChannelContextMenu({ channel, canManage, onCreateChannel, onOpen
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="holo-context-menu w-56 text-foreground font-display tracking-wider uppercase text-xs">
-          <ContextMenuLabel className="flex items-center gap-2 text-primary text-glow">
-            {channel.type === "text" ? <Hash className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            {channel.name}
-          </ContextMenuLabel>
-          <ContextMenuSeparator />
+        <ContextMenuContent className="holo-context-menu holo-ctx w-56 text-foreground font-display tracking-wider uppercase text-xs">
+          <span className="ctx-brackets" aria-hidden />
+          <div className="ctx-head">
+            <div className="text-[8px] tracking-[0.3em] text-primary/60 mb-0.5">// NODE · {channel.type}</div>
+            <div className="flex items-center gap-2 text-primary text-glow text-[13px] truncate">
+              {channel.type === "text" ? <Hash className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              {channel.name}
+            </div>
+          </div>
           {canManage && (
             <>
+              <div className="ctx-section">// NODE · OPS</div>
               <ContextMenuItem onSelect={() => onCreateChannel(channel.type)}>
                 <Plus className="w-4 h-4 mr-2 text-primary" /> Create node
               </ContextMenuItem>
@@ -64,13 +68,12 @@ export function ChannelContextMenu({ channel, canManage, onCreateChannel, onOpen
               <ContextMenuItem onSelect={() => onOpenSettings?.(channel)}>
                 <Settings className="w-4 h-4 mr-2 text-primary" /> Node settings
               </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={() => setConfirmOpen(true)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Delete node
-              </ContextMenuItem>
+              <div className="ctx-danger">
+                <div className="px-2 pb-1 text-[8px] tracking-[0.3em] text-destructive/80">// DANGER · ZONE</div>
+                <ContextMenuItem onSelect={() => setConfirmOpen(true)}>
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete node
+                </ContextMenuItem>
+              </div>
             </>
           )}
           {!canManage && (

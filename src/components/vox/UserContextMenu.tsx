@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem,
-  ContextMenuSeparator, ContextMenuLabel, ContextMenuSub, ContextMenuSubTrigger,
+  ContextMenuSub, ContextMenuSubTrigger,
   ContextMenuSubContent, ContextMenuCheckboxItem,
 } from "@/components/ui/context-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -96,12 +96,15 @@ export function UserContextMenu({
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="holo-context-menu w-64 text-foreground font-display tracking-wider uppercase text-xs">
-          <ContextMenuLabel className="truncate text-primary text-glow flex items-center gap-2">
-            <User className="w-3.5 h-3.5" />
-            {member.nickname || member.display_name || member.user_id.slice(0, 8)}
-          </ContextMenuLabel>
-          <ContextMenuSeparator />
+        <ContextMenuContent className="holo-context-menu holo-ctx w-64 text-foreground font-display tracking-wider uppercase text-xs">
+          <span className="ctx-brackets" aria-hidden />
+          <div className="ctx-head">
+            <div className="text-[8px] tracking-[0.3em] text-primary/60 mb-0.5">// ENTITY · 0x{member.user_id.slice(0, 4)}</div>
+            <div className="truncate text-primary text-glow flex items-center gap-2 text-[13px]">
+              <User className="w-3.5 h-3.5" />
+              {member.nickname || member.display_name || member.user_id.slice(0, 8)}
+            </div>
+          </div>
 
           {!isSelf && (
             <ContextMenuItem onSelect={() => onMessage?.(member)}>
@@ -114,16 +117,13 @@ export function UserContextMenu({
 
           {!isSelf && (
             <>
-              <ContextMenuSeparator />
-              <ContextMenuLabel className="text-[10px] uppercase tracking-widest text-primary/70 font-display">
-                // AUDIO · LOCAL
-              </ContextMenuLabel>
-              <div className="px-2 py-1.5 normal-case tracking-normal">
+              <div className="ctx-section">// AUDIO · LOCAL</div>
+              <div className="ctx-audio normal-case tracking-normal">
                 <div className="flex items-center justify-between text-[11px] mb-1.5">
                   <span className="flex items-center gap-1.5 text-muted-foreground font-display uppercase tracking-widest">
                     <Volume2 className="w-3.5 h-3.5" /> Gain
                   </span>
-                  <span className="font-mono text-primary">{vol}%</span>
+                  <span className="font-mono text-primary text-glow">{vol}%</span>
                 </div>
                 <Slider
                   min={0} max={200} step={5}
@@ -142,16 +142,16 @@ export function UserContextMenu({
 
           {canModerate && !isSelf && (
             <>
-              <ContextMenuSeparator />
-              <ContextMenuLabel className="text-[10px] uppercase tracking-widest text-primary/70 font-display flex items-center gap-1">
+              <div className="ctx-section">
                 <Shield className="w-3 h-3" /> // MOD · TOOLS
-              </ContextMenuLabel>
+              </div>
+
 
               <ContextMenuSub>
                 <ContextMenuSubTrigger>
                   <MicOff className="w-4 h-4 mr-2 text-primary" /> Server mute
                 </ContextMenuSubTrigger>
-                <ContextMenuSubContent className="holo-context-menu font-display uppercase tracking-wider text-xs">
+                <ContextMenuSubContent className="holo-context-menu holo-ctx font-display uppercase tracking-wider text-xs">
                   <ContextMenuItem onSelect={() => doServerMute(5)}>5 min</ContextMenuItem>
                   <ContextMenuItem onSelect={() => doServerMute(30)}>30 min</ContextMenuItem>
                   <ContextMenuItem onSelect={() => doServerMute(60)}>1 hr</ContextMenuItem>
@@ -167,7 +167,7 @@ export function UserContextMenu({
                   <ContextMenuSubTrigger>
                     <Tag className="w-4 h-4 mr-2 text-primary" /> Assign rank
                   </ContextMenuSubTrigger>
-                  <ContextMenuSubContent className="holo-context-menu max-h-80 overflow-y-auto font-display uppercase tracking-wider text-xs">
+                  <ContextMenuSubContent className="holo-context-menu holo-ctx max-h-80 overflow-y-auto font-display uppercase tracking-wider text-xs">
                     {assignableRoles.map((r) => (
                       <ContextMenuCheckboxItem
                         key={r.id}
@@ -185,21 +185,21 @@ export function UserContextMenu({
                 </ContextMenuSub>
               )}
 
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={doKick}
-                disabled={busy || member.role === "owner"}
-              >
-                <UserX className="w-4 h-4 mr-2" /> Eject entity
-              </ContextMenuItem>
-              <ContextMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={() => setBanOpen(true)}
-                disabled={busy || member.role === "owner"}
-              >
-                <Ban className="w-4 h-4 mr-2" /> Purge // ban…
-              </ContextMenuItem>
+              <div className="ctx-danger">
+                <div className="px-2 pb-1 text-[8px] tracking-[0.3em] text-destructive/80">// DANGER · ZONE</div>
+                <ContextMenuItem
+                  onSelect={doKick}
+                  disabled={busy || member.role === "owner"}
+                >
+                  <UserX className="w-4 h-4 mr-2" /> Eject entity
+                </ContextMenuItem>
+                <ContextMenuItem
+                  onSelect={() => setBanOpen(true)}
+                  disabled={busy || member.role === "owner"}
+                >
+                  <Ban className="w-4 h-4 mr-2" /> Purge // ban…
+                </ContextMenuItem>
+              </div>
             </>
           )}
         </ContextMenuContent>
