@@ -425,7 +425,7 @@ export function useVoxVoice(channelId: string | null) {
           : err?.message || "Nepodařilo se otevřít vstupní zařízení.",
         variant: "destructive",
       });
-      joiningRef.current = false;
+      joiningRef.current = false; setConnecting(false);
       return;
     }
 
@@ -529,13 +529,13 @@ export function useVoxVoice(channelId: string | null) {
         variant: "destructive",
       });
       await leaveCleanupOnly();
-      joiningRef.current = false;
+      joiningRef.current = false; setConnecting(false);
       return;
     }
 
     connectedRef.current = true;
     setConnected(true);
-    joiningRef.current = false;
+    joiningRef.current = false; setConnecting(false);
   }, [user, channelId, createPeer]);
 
   const leaveCleanupOnly = async () => {
@@ -576,7 +576,7 @@ export function useVoxVoice(channelId: string | null) {
   const leave = useCallback(async () => {
     if (!user || !channelId) return;
     connectedRef.current = false;
-    joiningRef.current = false;
+    joiningRef.current = false; setConnecting(false);
     channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
     try { await channelRef.current?.untrack(); } catch { /* noop */ }
     await leaveCleanupOnly();
