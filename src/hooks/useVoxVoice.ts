@@ -79,6 +79,7 @@ export function useVoxVoice(channelId: string | null) {
   const connectedRef = useRef(false);
   const joiningRef = useRef(false);
   const joinStartedAtRef = useRef(0);
+  const [connecting, setConnecting] = useState(false);
   const mutedRef = useRef(false);
   const deafenedRef = useRef(false);
   const accessTokenRef = useRef<string | null>(null);
