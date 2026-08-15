@@ -78,6 +78,7 @@ export function useVoxVoice(channelId: string | null) {
   const dropTimersRef = useRef<Record<string, number>>({});
   const connectedRef = useRef(false);
   const joiningRef = useRef(false);
+  const joinStartedAtRef = useRef(0);
   const mutedRef = useRef(false);
   const deafenedRef = useRef(false);
   const accessTokenRef = useRef<string | null>(null);
