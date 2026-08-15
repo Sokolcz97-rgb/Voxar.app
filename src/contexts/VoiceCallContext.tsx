@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useVoxVoice } from "@/hooks/useVoxVoice";
 import type { VoxChannel } from "@/components/vox/ChannelSidebar";
+import { RoomAudioRenderer, RoomContext } from "@livekit/components-react";
 
 type VoiceApi = ReturnType<typeof useVoxVoice>;
 
@@ -14,9 +15,8 @@ interface VoiceCallCtx {
 const Ctx = createContext<VoiceCallCtx | null>(null);
 
 /**
- * Global, route-independent voice session.
- * Mounted above the router so WebRTC peers, signaling and audio elements
- * survive navigation between channels, pages and views.
+ * Global, route-independent LiveKit room session.
+ * Mounted above the router so the SFU connection and media tracks survive navigation.
  */
 export function VoiceCallProvider({ children }: { children: ReactNode }) {
   const [channel, setChannel] = useState<VoxChannel | null>(null);
@@ -47,9 +47,12 @@ export function VoiceCallProvider({ children }: { children: ReactNode }) {
   }, [api.leave]);
 
   return (
-    <Ctx.Provider value={{ channel: api.connected ? channel : channel, api, joinChannel, leaveChannel }}>
-      {children}
-    </Ctx.Provider>
+    <RoomContext.Provider value={api.room}>
+      <Ctx.Provider value={{ channel, api, joinChannel, leaveChannel }}>
+        {children}
+        <RoomAudioRenderer room={api.room} muted={api.deafened} />
+      </Ctx.Provider>
+    </RoomContext.Provider>
   );
 }
 

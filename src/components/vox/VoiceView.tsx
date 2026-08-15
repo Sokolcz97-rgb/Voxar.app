@@ -52,7 +52,6 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   const { user } = useAuth();
   const { channel: activeChannel, api, joinChannel, leaveChannel } = useVoiceCall();
   const [rows, setRows] = useState<Participant[]>([]);
-  const [observedIds, setObservedIds] = useState<Set<string> | null>(null);
   const joinedHere = api.connected && activeChannel?.id === channel.id;
 
   useEffect(() => {
@@ -77,34 +76,11 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
     return () => { mounted = false; window.clearInterval(purge); supabase.removeChannel(ch); };
   }, [channel.id]);
 
-
-  // Observer presence: when we are NOT in this room we still need to know who
-  // is really connected, so stale DB rows never render as ghost avatars.
-  useEffect(() => {
-    if (joinedHere) { setObservedIds(null); return; }
-    const obs = supabase.channel(`vox_voice_${channel.id}`, {
-      config: { broadcast: { self: false }, presence: { key: `obs-${user?.id ?? "anon"}-${Math.random().toString(36).slice(2)}` } },
-    });
-    const sync = () => {
-      const state = obs.presenceState<{ user_id?: string }>();
-      const ids = new Set<string>();
-      Object.values(state).flat().forEach((p: any) => p?.user_id && ids.add(p.user_id));
-      setObservedIds(ids);
-    };
-    obs
-      .on("presence", { event: "sync" }, sync)
-      .on("presence", { event: "join" }, sync)
-      .on("presence", { event: "leave" }, sync)
-      .subscribe();
-    return () => { supabase.removeChannel(obs); };
-  }, [channel.id, joinedHere, user?.id]);
-
-  // Presence is the single source of truth — DB rows alone never render a user,
-  // so a closed tab / dead socket can't leave a ghost behind.
-  const liveIds = joinedHere ? api.presentIds : observedIds;
-  const participants = rows.filter(
-    (p) => (joinedHere && p.user_id === user?.id) || (!!liveIds && liveIds.has(p.user_id)),
-  );
+  // Inside the active room, LiveKit is authoritative. Outside it, the short-lived
+  // metadata rows provide sidebar/view previews and are purged by heartbeat.
+  const participants = joinedHere
+    ? rows.filter((participant) => api.presentIds.has(participant.user_id))
+    : rows;
 
 
   const handleJoin = async () => {
