@@ -7,6 +7,7 @@ import type { VoxChannel } from "./ChannelSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { CallDock } from "./CallDock";
+import { toast } from "@/hooks/use-toast";
 
 interface Participant {
   user_id: string;
