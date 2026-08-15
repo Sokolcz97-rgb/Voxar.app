@@ -905,7 +905,7 @@ export function useVoxVoice(channelId: string | null) {
 
 
   return {
-    connected, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
+    connected, connecting, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
     videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
     startVideo, stopVideo, startScreen, stopScreen, applyCamQuality,
   };
