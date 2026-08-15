@@ -261,8 +261,8 @@ export function useVoxVoice(channelId: string | null) {
   useEffect(() => {
     if (!connected || !channelId) return;
     const beat = () => {
-      void (supabase.rpc as never)("vox_voice_heartbeat", { _channel: channelId });
-      void (supabase.rpc as never)("vox_voice_purge_stale", { _channel: channelId });
+      void (supabase.rpc as any)("vox_voice_heartbeat", { _channel: channelId });
+      void (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
     };
     beat();
     const timer = window.setInterval(beat, 15_000);
