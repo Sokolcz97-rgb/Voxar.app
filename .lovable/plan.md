@@ -1,36 +1,38 @@
-# Chyba "Failed to read console input" — diagnóza
+# LiveKit voice engine migration
 
-Tahle chyba **nepochází z pluginu VoxarioForge**. Jde o chybu konzole samotného serveru:
+## Goal
+Replace the hand-built peer-to-peer WebRTC mesh with LiveKit Cloud while preserving the existing Voxar.app voice-channel layout, HUD controls, camera, screen sharing, and route-independent call session.
 
-```text
-java.io.IOException: Neplatný popisovač (Invalid handle)
-  at net.minecrell.terminalconsole.SimpleTerminalConsole.readCommands
-```
+## Implementation
+1. **Install the LiveKit SDKs**
+   - Add `livekit-client` and `@livekit/components-react`.
+   - Keep LiveKit credentials out of the browser bundle.
 
-Server se snaží číst příkazy ze standardního vstupu (stdin), ale ten není dostupný — typicky když se server spouští:
-- na pozadí (`start /b`, služba, panel bez konzole),
-- přes skript, kde je stdin přesměrován nebo zavřený,
-- v Dockeru bez `-i` / `tty`.
+2. **Add secure connection-token issuance**
+   - Create an authenticated backend function that validates the signed-in user and confirms they belong to the guild containing the requested voice channel.
+   - Generate a short-lived LiveKit room token using `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`.
+   - Grant only room join, publish, subscribe, and data permissions for that channel’s deterministic LiveKit room.
 
-Plugin se do toho nijak neplete a server běží dál, jen nejde psát příkazy do konzole.
+3. **Replace the raw WebRTC engine**
+   - Rebuild `useVoxVoice` around one persistent LiveKit `Room` supplied through the React LiveKit room context.
+   - Remove manual offers, answers, ICE queues, peer reconnection timers, browser-created audio elements, and realtime signaling broadcasts.
+   - Use LiveKit connection and participant events for connected/connecting state, reconnects, active speakers, remote tracks, and disconnect cleanup.
+   - Keep the current public voice API so the surrounding application needs minimal changes.
 
-## Řešení (na straně spouštění serveru)
+4. **Migrate media controls**
+   - Route mute, camera, quality changes, and screen sharing through LiveKit publication APIs.
+   - Preserve the desktop screen-source picker and browser screen picker behavior.
+   - Render subscribed room audio with LiveKit’s audio renderer and build video tiles from LiveKit track publications.
 
-1. Ve start skriptu přidat za jar parametr `nogui` a spouštět přímo v okně konzole:
-   ```text
-   java -Xmx4G -jar folia.jar nogui
-   ```
-2. Pokud server běží na pozadí / jako služba, vypnout čtení konzole přepínačem JVM:
-   ```text
-   java -Djline.terminal=jline.UnsupportedTerminal -jar folia.jar nogui
-   ```
-   nebo `-Dterminal.jline=false -Dterminal.ansi=true`
-3. V Dockeru přidat `stdin_open: true` a `tty: true` (resp. `docker run -it`).
-4. Ve Windows `.bat` použít `java ...` bez `start /b` a bez `< NUL`.
+5. **Make LiveKit the presence source of truth**
+   - Drive the open voice view from actual LiveKit participants so disconnected users disappear immediately.
+   - Continue syncing the existing participant table only as lightweight metadata for channel/sidebar previews, with heartbeat cleanup retained as a fallback.
 
-## Co udělám v repozitáři
+6. **Preserve and verify the HUD**
+   - Keep the current dark chamfered controls and Czech status/error messages.
+   - Verify join, leave, microphone mute, camera, screen sharing, participant removal, failed-token handling, and navigation while connected.
 
-- Doplním do `minecraft-forge-plugin/README.md` sekci **Řešení potíží** s touto chybou a doporučenými start příkazy (Windows `.bat` i Linux `.sh` příklad).
-- Ověřím, že `VoxarioForge.jar` je stále přeložený na Java 21 (class 65), aby nedošlo k záměně s dřívější chybou verze.
-
-Pokud chceš, můžu místo toho rovnou hledat jinou chybu — pošli log z okamžiku startu (řádky s `VoxarioForge`), pokud se plugin nenačetl.
+## Technical notes
+- Room name: deterministic from the voice-channel UUID; raw room names and API secrets are never accepted from the client.
+- Identity: authenticated user ID; display name comes from the backend profile.
+- No mock transport is used: the configured LiveKit Cloud project provides the SFU, signaling, STUN, and TURN infrastructure.
