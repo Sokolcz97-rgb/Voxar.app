@@ -27,6 +27,15 @@ const ICE = {
 
 const VOICE_PREF_KEY = "sv.voicePrefs";
 
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, message: string): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
 interface VoicePrefs {
   inputDeviceId?: string;
   outputDeviceId?: string;
@@ -340,8 +349,11 @@ export function useVoxVoice(channelId: string | null) {
     const prefs = readVoicePrefs();
     try {
       // Autoplay policy: unlock/resume audio strictly from the user's Join click.
-      await ensureCtx();
-      const raw = await navigator.mediaDevices.getUserMedia({
+      await withTimeout(ensureCtx(), 8000, "Zvukový systém se nepodařilo inicializovat.");
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Tento prohlížeč nepodporuje přístup k mikrofonu.");
+      }
+      const raw = await withTimeout(navigator.mediaDevices.getUserMedia({
         audio: {
           deviceId: prefs.inputDeviceId ? { exact: prefs.inputDeviceId } : undefined,
           // Force DSP on to prevent echo loop — remote audio picked up by mic must be cancelled.
@@ -350,7 +362,7 @@ export function useVoxVoice(channelId: string | null) {
           autoGainControl: true,
         },
         video: false,
-      });
+      }), 15000, "Požadavek na mikrofon vypršel. Zkontroluj oprávnění prohlížeče.");
       rawStreamRef.current = raw;
 
       // IMPORTANT: publish the raw mic track directly to peers.
@@ -498,27 +510,39 @@ export function useVoxVoice(channelId: string | null) {
 
     try {
       await waitForSubscribed(ch);
-      await ch.track({ user_id: user.id, session_id: sessionIdRef.current });
+      await withTimeout(
+        ch.track({ user_id: user.id, session_id: sessionIdRef.current }),
+        8000,
+        "Nepodařilo se zaregistrovat přítomnost v hlasovém kanálu.",
+      );
       // Drop anyone whose heartbeat died before we build peers for them.
-      await (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId });
-      const { error: upsertError } = await supabase.from("vox_voice_participants").upsert({
+      await withTimeout(
+        (supabase.rpc as any)("vox_voice_purge_stale", { _channel: channelId }),
+        8000,
+        "Čištění hlasového kanálu vypršelo.",
+      );
+      const { error: upsertError } = await withTimeout(supabase.from("vox_voice_participants").upsert({
         channel_id: channelId,
         user_id: user.id,
         session_id: sessionIdRef.current,
         is_muted: false,
         is_deafened: false,
         last_seen: new Date().toISOString(),
-      } as any);
+      } as any), 8000, "Registrace v hlasovém kanálu vypršela.");
       if (upsertError) throw upsertError;
-      const { data: existing } = await supabase
+      const { data: existing } = await withTimeout(supabase
         .from("vox_voice_participants")
         .select("user_id")
         .eq("channel_id", channelId)
-        .neq("user_id", user.id);
+        .neq("user_id", user.id), 8000, "Načtení účastníků vypršelo.");
       (existing ?? []).forEach((row: { user_id: string }) => {
         if (user.id < row.user_id) createPeer(row.user_id, true);
       });
-      await ch.send({ type: "broadcast", event: "join", payload: { from: user.id } });
+      await withTimeout(
+        ch.send({ type: "broadcast", event: "join", payload: { from: user.id } }),
+        8000,
+        "Oznámení o připojení vypršelo.",
+      );
     
     } catch (e) {
       const err = e as Error;
