@@ -78,6 +78,8 @@ export function useVoxVoice(channelId: string | null) {
   const dropTimersRef = useRef<Record<string, number>>({});
   const connectedRef = useRef(false);
   const joiningRef = useRef(false);
+  const joinStartedAtRef = useRef(0);
+  const [connecting, setConnecting] = useState(false);
   const mutedRef = useRef(false);
   const deafenedRef = useRef(false);
   const accessTokenRef = useRef<string | null>(null);
@@ -329,8 +331,12 @@ export function useVoxVoice(channelId: string | null) {
   });
 
   const join = useCallback(async () => {
-    if (!user || !channelId || connectedRef.current || joiningRef.current) return;
+    if (!user || !channelId || connectedRef.current) return;
+    // A stuck flag from a previous aborted attempt must never dead-lock the button.
+    if (joiningRef.current && Date.now() - joinStartedAtRef.current < 20000) return;
     joiningRef.current = true;
+    joinStartedAtRef.current = Date.now();
+    setConnecting(true);
     const prefs = readVoicePrefs();
     try {
       // Autoplay policy: unlock/resume audio strictly from the user's Join click.
@@ -419,7 +425,7 @@ export function useVoxVoice(channelId: string | null) {
           : err?.message || "Nepodařilo se otevřít vstupní zařízení.",
         variant: "destructive",
       });
-      joiningRef.current = false;
+      joiningRef.current = false; setConnecting(false);
       return;
     }
 
@@ -523,13 +529,13 @@ export function useVoxVoice(channelId: string | null) {
         variant: "destructive",
       });
       await leaveCleanupOnly();
-      joiningRef.current = false;
+      joiningRef.current = false; setConnecting(false);
       return;
     }
 
     connectedRef.current = true;
     setConnected(true);
-    joiningRef.current = false;
+    joiningRef.current = false; setConnecting(false);
   }, [user, channelId, createPeer]);
 
   const leaveCleanupOnly = async () => {
@@ -570,7 +576,7 @@ export function useVoxVoice(channelId: string | null) {
   const leave = useCallback(async () => {
     if (!user || !channelId) return;
     connectedRef.current = false;
-    joiningRef.current = false;
+    joiningRef.current = false; setConnecting(false);
     channelRef.current?.send({ type: "broadcast", event: "leave", payload: { from: user.id } });
     try { await channelRef.current?.untrack(); } catch { /* noop */ }
     await leaveCleanupOnly();
@@ -899,7 +905,7 @@ export function useVoxVoice(channelId: string | null) {
 
 
   return {
-    connected, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
+    connected, connecting, muted, deafened, remotes, selfLevel, presentIds, join, leave, toggleMute, toggleDeafen,
     videoOn, screenOn, localVideoStream, toggleVideo, toggleScreen,
     startVideo, stopVideo, startScreen, stopScreen, applyCamQuality,
   };

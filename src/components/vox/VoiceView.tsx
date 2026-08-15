@@ -7,6 +7,7 @@ import type { VoxChannel } from "./ChannelSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { CallDock } from "./CallDock";
+import { toast } from "@/hooks/use-toast";
 
 interface Participant {
   user_id: string;
@@ -106,6 +107,18 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   );
 
 
+  const handleJoin = async () => {
+    try {
+      await joinChannel(channel);
+    } catch (e) {
+      toast({
+        title: "Připojení selhalo",
+        description: (e as Error)?.message || "Nepodařilo se navázat hlasové spojení.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);
     return p?.display_name || uid.slice(0, 8);
@@ -204,13 +217,22 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
           <CallDock />
         ) : (
           <div className="p-4 flex items-center justify-center gap-3">
-            <Button
-              onClick={() => void joinChannel(channel)}
-              size="lg"
-              className="gap-2 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 font-display tracking-widest uppercase text-xs"
+            <button
+              type="button"
+              disabled={api.connecting}
+              onClick={handleJoin}
+              className={cn(
+                "group relative px-8 py-3 rounded-none bg-[hsl(222_45%_5%/0.85)] border border-primary/50",
+                "font-display tracking-[0.28em] uppercase text-xs text-primary",
+                "[clip-path:polygon(14px_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%,0_14px)]",
+                "transition-all duration-150 flex items-center gap-2.5",
+                "hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_22px_hsl(var(--primary)/0.5)] hover:text-glow",
+                "disabled:opacity-60 disabled:cursor-wait",
+              )}
             >
-              <Phone className="w-4 h-4" /> PŘIPOJIT LINK
-            </Button>
+              <Phone className={cn("w-4 h-4", api.connecting && "animate-pulse")} />
+              {api.connecting ? "// NAVAZUJI SPOJENÍ…" : "// PŘIPOJIT LINK"}
+            </button>
             {api.connected && (
               <Button
                 onClick={() => void leaveChannel()}
