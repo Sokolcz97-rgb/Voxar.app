@@ -331,8 +331,12 @@ export function useVoxVoice(channelId: string | null) {
   });
 
   const join = useCallback(async () => {
-    if (!user || !channelId || connectedRef.current || joiningRef.current) return;
+    if (!user || !channelId || connectedRef.current) return;
+    // A stuck flag from a previous aborted attempt must never dead-lock the button.
+    if (joiningRef.current && Date.now() - joinStartedAtRef.current < 20000) return;
     joiningRef.current = true;
+    joinStartedAtRef.current = Date.now();
+    setConnecting(true);
     const prefs = readVoicePrefs();
     try {
       // Autoplay policy: unlock/resume audio strictly from the user's Join click.
