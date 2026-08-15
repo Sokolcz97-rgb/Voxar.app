@@ -106,6 +106,18 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   );
 
 
+  const handleJoin = async () => {
+    try {
+      await joinChannel(channel);
+    } catch (e) {
+      toast({
+        title: "Připojení selhalo",
+        description: (e as Error)?.message || "Nepodařilo se navázat hlasové spojení.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);
     return p?.display_name || uid.slice(0, 8);
