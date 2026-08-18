@@ -350,7 +350,7 @@ const Messages = () => {
                   {searchResults.map((r) => (
                     <button key={r.user_id} onClick={() => startConversation(r.user_id)}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left">
-                      <UserAvatar url={r.avatar_url} name={r.display_name || r.username} className="h-9 w-9" />
+                      <UserAvatar url={r.avatar_url} name={r.display_name || r.username} userId={r.user_id} className="h-9 w-9" />
                       <div className="min-w-0">
                         <div className="font-display font-bold truncate">{r.display_name || r.username}</div>
                         {r.username && <div className="text-xs text-muted-foreground truncate">@{r.username}</div>}

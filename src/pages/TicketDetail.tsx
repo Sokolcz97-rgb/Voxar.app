@@ -249,7 +249,7 @@ const TicketDetail = () => {
 
             <Card className="glass border-border p-5 mb-4">
               <div className="flex items-center gap-3 mb-3">
-                <UserAvatar url={author?.avatar_url} name={author?.display_name || author?.username} className="h-9 w-9" />
+                <UserAvatar url={author?.avatar_url} name={author?.display_name || author?.username} userId={author?.user_id} className="h-9 w-9" />
                 <div>
                   <div className="font-display font-bold text-sm">{author?.display_name || author?.username || t("common.player")}</div>
                   <div className="text-[11px] text-muted-foreground uppercase tracking-widest">{t("tickets.originalMsg")}</div>
@@ -264,7 +264,7 @@ const TicketDetail = () => {
                   r.is_internal ? "border-accent/50 bg-accent/5" : "border-border"
                 }`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <UserAvatar url={r.author?.avatar_url} name={r.author?.display_name || r.author?.username} className="h-9 w-9" />
+                    <UserAvatar url={r.author?.avatar_url} name={r.author?.display_name || r.author?.username} userId={r.author?.user_id} className="h-9 w-9" />
                     <div className="flex-1 min-w-0">
                       <div className="font-display font-bold text-sm truncate">
                         {r.author?.display_name || r.author?.username || t("common.player")}

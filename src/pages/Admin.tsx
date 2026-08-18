@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
   Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
-  Package, ClipboardList, KeyRound, Terminal,
+  Package, ClipboardList, KeyRound, Terminal, Sparkles,
 } from "lucide-react";
 
 type Section = {
@@ -29,6 +29,7 @@ const groups: Group[] = [
     sections: [
       { icon: Users, title: "Uživatelé, role & oprávnění", desc: "Účty, role a co každá role smí", to: "/admin/users" },
       { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
+      { icon: Sparkles, title: "Kosmetika", desc: "Přidělovat uživatelům rámečky avatarů", to: "/admin/cosmetics" },
       { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk pro uživatele", to: "/tickets" },
     ],
   },

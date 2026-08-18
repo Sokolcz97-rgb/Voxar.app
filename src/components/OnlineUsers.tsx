@@ -59,7 +59,7 @@ export const OnlineUsers = ({ currentUserId }: { currentUserId: string }) => {
             const content = (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:border-primary/50 transition-colors bg-card/40">
                 <div className="relative">
-                  <UserAvatar url={u.avatar_url} name={name} className="h-8 w-8" />
+                  <UserAvatar url={u.avatar_url} name={name} userId={u.user_id} className="h-8 w-8" />
                   <PresenceDot userId={u.user_id} className="absolute -bottom-0.5 -right-0.5" />
                 </div>
                 <span className="text-sm font-medium">
