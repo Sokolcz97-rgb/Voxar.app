@@ -72,6 +72,7 @@ const UserListItem = memo(function UserListItem({
   member, guildId, currentUserId, allRoles, canModerate, voice, onMessage, onOpenProfile,
 }: ItemProps) {
   const m = member;
+  const cosmeticRing = useCosmeticRing(m.user_id);
   const name = m.nickname || m.display_name || m.user_id.slice(0, 8);
   const top = topAnyRole(m);
   const isSelf = m.user_id === currentUserId;

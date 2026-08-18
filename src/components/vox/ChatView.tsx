@@ -92,6 +92,7 @@ interface RowProps {
 const MessageRow = memo(function MessageRow({
   m, compact, name, ringColor, topRole, avatarUrl, mine, decrypted, onDelete, onNeedKey,
 }: RowProps) {
+  const cosmeticRing = useCosmeticRing((m as any).user_id);
   return (
     <div className={cn("perf-row group flex gap-3", compact ? "pl-12" : "")}>
       {!compact && (

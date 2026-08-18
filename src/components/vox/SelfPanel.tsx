@@ -2,6 +2,7 @@ import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { Mic, MicOff, Headphones, HeadphoneOff, Settings, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   displayName: string;
@@ -21,6 +22,8 @@ export function SelfPanel({
   displayName, avatarUrl, status = "Online", muted, deafened, speaking,
   connectedChannelName, onToggleMute, onToggleDeafen, onLeaveVoice, onOpenSettings,
 }: Props) {
+  const { user } = useAuth();
+  const cosmeticRing = useCosmeticRing(user?.id);
   const showSpeaking = speaking && !muted;
   const subtitle = connectedChannelName
     ? (showSpeaking ? "Speaking" : connectedChannelName)
