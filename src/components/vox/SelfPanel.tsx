@@ -1,3 +1,4 @@
+import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { Mic, MicOff, Headphones, HeadphoneOff, Settings, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,7 @@ export function SelfPanel({
       <div className="h-16 px-2 flex items-center gap-2">
         <div className="flex items-center gap-2.5 flex-1 min-w-0 px-1">
           <div
-            className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring")}
+            className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring", cosmeticRing)}
             style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
           >
             <div className="rank-inner w-9 h-9 flex items-center justify-center text-xs font-display font-bold">

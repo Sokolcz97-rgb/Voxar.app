@@ -1,3 +1,4 @@
+import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -94,7 +95,7 @@ const MessageRow = memo(function MessageRow({
   return (
     <div className={cn("perf-row group flex gap-3", compact ? "pl-12" : "")}>
       {!compact && (
-        <div className="rank-ring w-9 h-9 shrink-0" style={{ ["--rank-color" as any]: ringColor }}>
+        <div className={cn("rank-ring w-9 h-9 shrink-0", cosmeticRing)} style={{ ["--rank-color" as any]: ringColor }}>
           <div className="rank-inner overflow-hidden flex items-center justify-center text-xs font-display font-bold">
             {avatarUrl
               ? <img loading="lazy" decoding="async" src={avatarUrl} alt={name} className="w-full h-full object-cover" />

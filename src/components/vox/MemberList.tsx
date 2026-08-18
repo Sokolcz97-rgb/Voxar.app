@@ -1,3 +1,4 @@
+import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { useState, useCallback, memo } from "react";
 import { Crown, Shield, Mic, MicOff, HeadphoneOff, Volume2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -105,7 +106,7 @@ const UserListItem = memo(function UserListItem({
 
         <div className="relative shrink-0">
           <div
-            className={cn("rank-ring", speaking && "speaking-ring")}
+            className={cn("rank-ring", speaking && "speaking-ring", cosmeticRing)}
             style={{ ["--rank-color" as any]: top?.color || "hsl(184 100% 54% / 0.55)" }}
           >
             <div className="rank-inner w-8 h-8 flex items-center justify-center text-xs font-semibold">
