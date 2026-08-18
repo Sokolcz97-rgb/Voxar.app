@@ -140,6 +140,10 @@ export function useCosmetics() {
   return ctx;
 }
 
+export function useCosmeticsSafe() {
+  return useContext(CosmeticsContext);
+}
+
 /** Returns the equipped cosmetic id for a user, loading it on demand. */
 export function useUserCosmetic(userId?: string | null) {
   const ctx = useContext(CosmeticsContext);
