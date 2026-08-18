@@ -8,6 +8,7 @@ export interface VoxGuild {
   id: string;
   name: string;
   icon_url: string | null;
+  cosmetic_id?: string | null;
 }
 
 interface Props {
@@ -33,7 +34,7 @@ const GuildButton = memo(function GuildButton({
           aria-label={g.name}
         >
           <div className="guild-logo-stage w-[72px] h-[72px] p-2 shrink-0 flex items-center justify-center overflow-visible">
-            <div className={cn("hex-ring w-14 h-14 transition-all shrink-0 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]", active && "speaking-ring")}>
+            <div className={cn("hex-ring w-14 h-14 transition-all shrink-0 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]", active && "speaking-ring", g.cosmetic_id === "supporter_gold" && "cosmetic-hex-supporter")}>
               <div className={cn(
                 "hex-frame w-full h-full flex items-center justify-center text-sm font-display font-bold overflow-hidden border border-primary/40",
                 active

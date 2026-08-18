@@ -64,7 +64,7 @@ export default function AppShell() {
     const { data: memberships } = await supabase.from("vox_guild_members").select("guild_id").eq("user_id", user.id);
     const ids = memberships?.map((m: any) => m.guild_id) ?? [];
     if (!ids.length) { setGuilds([]); setActiveGuildId(null); return; }
-    const { data } = await supabase.from("vox_guilds").select("id, name, icon_url").in("id", ids).order("created_at");
+    const { data } = await supabase.from("vox_guilds").select("id, name, icon_url, cosmetic_id").in("id", ids).order("created_at");
     setGuilds((data ?? []) as VoxGuild[]);
     setActiveGuildId((prev) => prev && data?.some((g: any) => g.id === prev) ? prev : (data?.[0]?.id ?? null));
   };
