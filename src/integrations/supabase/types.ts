@@ -2487,6 +2487,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_cosmetics: {
+        Row: {
+          cosmetic_id: string
+          created_at: string
+          equipped: boolean
+          id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cosmetic_id: string
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cosmetic_id?: string
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_discord_links: {
         Row: {
           created_at: string
