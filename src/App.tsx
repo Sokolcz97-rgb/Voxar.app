@@ -54,6 +54,7 @@ import FormResults from "./pages/FormResults.tsx";
 import PublicForm from "./pages/PublicForm.tsx";
 import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
+import AdminConsole from "./pages/AdminConsole.tsx";
 import AppShell from "./pages/app/AppShell.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
