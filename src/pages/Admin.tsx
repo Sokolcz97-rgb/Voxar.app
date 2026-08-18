@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
   Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
-  Package, ClipboardList, KeyRound,
+  Package, ClipboardList, KeyRound, Terminal,
 } from "lucide-react";
 
 type Section = {
@@ -70,6 +70,7 @@ const groups: Group[] = [
       { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost, komunita a stav webu", to: "/admin/stats" },
       { icon: Settings, title: "Nastavení webu", desc: "Texty na úvodce, navbaru, logo a zápatí", to: "/admin/settings" },
       { icon: KeyRound, title: "Kódy ke stažení", desc: "Generovat a spravovat přístupové/promo kódy pro /desktop", to: "/admin/download-codes" },
+      { icon: Terminal, title: "Konzole", desc: "Živý log konzole, chyby a diagnostika prohlížeče", to: "/admin/console" },
     ],
   },
 ];

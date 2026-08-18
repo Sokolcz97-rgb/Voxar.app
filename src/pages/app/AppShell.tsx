@@ -16,7 +16,6 @@ import { AppUserSettings } from "@/components/vox/AppUserSettings";
 import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
-import { DevConsole } from "@/components/vox/DevConsole";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { CallDock } from "@/components/vox/CallDock";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
@@ -414,7 +413,6 @@ export default function AppShell() {
         onCreate={createChannel}
       />
       <DesktopUpdateFab />
-      <DevConsole />
     </div>
   );
 }
