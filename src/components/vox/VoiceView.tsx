@@ -1,4 +1,4 @@
-import { useCosmeticRing } from "@/hooks/useCosmeticRing";
+import { useCosmeticRings } from "@/hooks/useCosmeticRing";
 import { useEffect, useRef, useState } from "react";
 import { Volume2, MicOff, PhoneOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   const participants = joinedHere
     ? rows.filter((participant) => api.presentIds.has(participant.user_id))
     : rows;
+  const cosmeticRings = useCosmeticRings(participants.map((participant) => participant.user_id));
 
 
   const handleJoin = async () => {
