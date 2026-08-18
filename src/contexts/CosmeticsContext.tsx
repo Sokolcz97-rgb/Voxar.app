@@ -142,9 +142,11 @@ export function useCosmetics() {
 
 /** Returns the equipped cosmetic id for a user, loading it on demand. */
 export function useUserCosmetic(userId?: string | null) {
-  const { equippedByUser, trackUser } = useCosmetics();
+  const ctx = useContext(CosmeticsContext);
+  const trackUser = ctx?.trackUser;
   useEffect(() => {
-    trackUser(userId);
+    trackUser?.(userId);
   }, [userId, trackUser]);
-  return userId ? equippedByUser[userId] ?? null : null;
+  if (!ctx || !userId) return null;
+  return ctx.equippedByUser[userId] ?? null;
 }
