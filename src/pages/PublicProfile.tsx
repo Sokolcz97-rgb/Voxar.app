@@ -228,7 +228,7 @@ const PublicProfile = () => {
             <Card className="glass border-border p-8">
               <div className="flex items-start gap-5 flex-wrap">
                 <div className="relative">
-                  <UserAvatar url={profile.avatar_url} name={name} className="h-24 w-24" />
+                  <UserAvatar url={profile.avatar_url} name={name} userId={profile.user_id} className="h-24 w-24" />
                   <PresenceDot
                     userId={profile.user_id}
                     showOffline

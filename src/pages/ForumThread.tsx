@@ -165,6 +165,7 @@ const ForumThread = () => {
                       <UserAvatar
                         url={p.author?.avatar_url}
                         name={p.author?.display_name || p.author?.username}
+                        userId={p.user_id}
                         className="h-10 w-10 group-hover:ring-2 group-hover:ring-primary/50 transition-all"
                       />
                       <PresenceDot userId={p.user_id} className="absolute -bottom-0.5 -right-0.5" />

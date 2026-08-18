@@ -418,6 +418,7 @@ const Messages = () => {
                                 <UserAvatar
                                   url={c.other.avatar_url}
                                   name={c.other.display_name || c.other.username}
+                                  userId={c.other.user_id}
                                   className={cn(
                                     "h-11 w-11 ring-2 transition-all",
                                     isActive ? "ring-primary/60" : "ring-transparent group-hover/conv:ring-primary/30"

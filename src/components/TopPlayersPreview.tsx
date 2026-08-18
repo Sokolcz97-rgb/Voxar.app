@@ -99,7 +99,7 @@ export const TopPlayersPreview = () => {
                 >
                   {medal(i)}
                 </div>
-                <UserAvatar url={e.avatar_url} name={name} className="h-12 w-12" />
+                <UserAvatar url={e.avatar_url} name={name} userId={e.user_id} className="h-12 w-12" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{name}</div>
                   {e.username && (

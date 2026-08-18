@@ -134,7 +134,7 @@ const Leaderboard = () => {
                       {medal(i)}
                     </div>
                     <div className="relative shrink-0">
-                      <UserAvatar url={e.avatar_url} name={name} className="h-10 w-10" />
+                      <UserAvatar url={e.avatar_url} name={name} userId={e.user_id} className="h-10 w-10" />
                       <PresenceDot userId={e.user_id} className="absolute -bottom-0.5 -right-0.5" />
                     </div>
                     <div className="flex-1 min-w-0">
