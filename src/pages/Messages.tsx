@@ -518,6 +518,7 @@ const Messages = () => {
                           <UserAvatar
                             url={active.other.avatar_url}
                             name={active.other.display_name || active.other.username}
+                            userId={active.other.user_id}
                             className="h-10 w-10 ring-2 ring-primary/40 group-hover:ring-primary/70 transition-all"
                           />
                           <PresenceDot userId={active.other.user_id} className="absolute -bottom-0.5 -right-0.5" />
@@ -600,6 +601,7 @@ const Messages = () => {
                                     <UserAvatar
                                       url={other?.avatar_url}
                                       name={other?.display_name || other?.username}
+                                      userId={other?.user_id}
                                       className="h-8 w-8"
                                     />
                                   </div>

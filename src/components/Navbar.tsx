@@ -189,7 +189,7 @@ export function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button aria-label={displayName} className="relative rounded-full border border-primary/30 hover:border-primary/70 transition-colors">
-                  <UserAvatar url={avatarUrl} name={displayName} className="h-9 w-9" />
+                  <UserAvatar url={avatarUrl} name={displayName} userId={user?.id} className="h-9 w-9" />
                   {(unreadMessages > 0 || openTickets > 0) && (
                     <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary" />
                   )}
@@ -197,7 +197,7 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 p-0 overflow-hidden">
                 <div className="px-4 py-3 flex items-center gap-3">
-                  <UserAvatar url={avatarUrl} name={displayName} className="h-10 w-10 border-primary/30" />
+                  <UserAvatar url={avatarUrl} name={displayName} userId={user?.id} className="h-10 w-10 border-primary/30" />
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">{displayName}</p>
                     <p className="text-xs text-muted-foreground truncate">{email}</p>
