@@ -120,7 +120,7 @@ const AppRoutes = () => {
       <Route path="/f/:slug" element={<PublicForm />} />
       <Route path="/desktop" element={<DownloadDesktop />} />
       <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
-      <Route path="/admin/cosmetics" element={<ProtectedRoute requireAdmin><AdminCosmetics /></ProtectedRoute>} />
+      <Route path="/admin/cosmetics" element={<ProtectedRoute requireEditor><AdminCosmetics /></ProtectedRoute>} />
       <Route path="/admin/console" element={<ProtectedRoute requireEditor><AdminConsole /></ProtectedRoute>} />
       <Route path="/app" element={<AppAccessGate><AppShell /></AppAccessGate>} />
       <Route path="/:slug" element={<DynamicPage />} />
