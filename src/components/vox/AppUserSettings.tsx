@@ -16,6 +16,8 @@ import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import { MicTester } from "@/components/vox/MicTester";
 import { GdprPanel } from "@/components/vox/GdprPanel";
+import { AppearanceInventory } from "@/components/AppearanceInventory";
+import { GuildCosmeticsPanel } from "@/components/vox/GuildCosmeticsPanel";
 
 type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "privacy" | "about";
 
