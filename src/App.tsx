@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
+import { CosmeticsProvider } from "@/contexts/CosmeticsContext";
 import { InlineEditorProvider } from "@/contexts/InlineEditorContext";
 import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
 import { InlineEditorChrome } from "@/components/pageBuilder/InlineEditorChrome";
@@ -55,6 +56,7 @@ import PublicForm from "./pages/PublicForm.tsx";
 import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
 import AdminConsole from "./pages/AdminConsole.tsx";
+import AdminCosmetics from "./pages/AdminCosmetics.tsx";
 import AppShell from "./pages/app/AppShell.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
@@ -118,6 +120,7 @@ const AppRoutes = () => {
       <Route path="/f/:slug" element={<PublicForm />} />
       <Route path="/desktop" element={<DownloadDesktop />} />
       <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
+      <Route path="/admin/cosmetics" element={<ProtectedRoute requireAdmin><AdminCosmetics /></ProtectedRoute>} />
       <Route path="/admin/console" element={<ProtectedRoute requireEditor><AdminConsole /></ProtectedRoute>} />
       <Route path="/app" element={<AppAccessGate><AppShell /></AppAccessGate>} />
       <Route path="/:slug" element={<DynamicPage />} />
@@ -143,6 +146,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SiteSettingsProvider>
+            <CosmeticsProvider>
             <PresenceProvider>
               <VoiceCallProvider>
               <InlineEditorProvider>
@@ -153,6 +157,7 @@ const App = () => (
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>
+            </CosmeticsProvider>
           </SiteSettingsProvider>
         </AuthProvider>
       </BrowserRouter>

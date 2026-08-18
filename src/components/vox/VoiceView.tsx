@@ -1,3 +1,4 @@
+import { useCosmeticRings } from "@/hooks/useCosmeticRing";
 import { useEffect, useRef, useState } from "react";
 import { Volume2, MicOff, PhoneOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   const participants = joinedHere
     ? rows.filter((participant) => api.presentIds.has(participant.user_id))
     : rows;
+  const cosmeticRings = useCosmeticRings(participants.map((participant) => participant.user_id));
 
 
   const handleJoin = async () => {
@@ -158,7 +160,7 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
                   speaking && "shadow-[0_0_28px_hsl(160_84%_50%/0.5)]"
                 )}>
                   <div
-                    className={cn("rank-ring w-20 h-20", speaking && "speaking-ring")}
+                    className={cn("rank-ring w-20 h-20", speaking && "speaking-ring", cosmeticRings[p.user_id] || "")}
                     style={{ ["--rank-color" as any]: speaking ? "hsl(160 84% 50%)" : "hsl(var(--primary))" }}
                   >
                     <div className="rank-inner overflow-hidden flex items-center justify-center text-lg font-display font-bold">

@@ -1887,3 +1887,51 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     }
   }
 }
+
+@layer components {
+  /* ===== Cosmetic avatar borders ===== */
+  .cosmetic-frame {
+    position: relative;
+    display: inline-flex;
+    isolation: isolate;
+  }
+  .cosmetic-frame > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Supporter — glowing golden hexagon */
+  .cosmetic-supporter {
+    padding: 3px;
+    background: linear-gradient(140deg, hsl(45 100% 72%), hsl(38 96% 52%) 45%, hsl(48 100% 78%));
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    filter: drop-shadow(0 0 6px hsl(45 100% 60% / 0.75)) drop-shadow(0 0 16px hsl(40 100% 50% / 0.45));
+    animation: cosmetic-gold-pulse 3s ease-in-out infinite;
+  }
+  .cosmetic-supporter > * {
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    box-shadow: inset 0 0 10px hsl(45 100% 60% / 0.55);
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+  .cosmetic-supporter > * img {
+    border-radius: 0 !important;
+  }
+  @keyframes cosmetic-gold-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px hsl(45 100% 60% / 0.7)) drop-shadow(0 0 14px hsl(40 100% 50% / 0.35)); }
+    50% { filter: drop-shadow(0 0 10px hsl(45 100% 65% / 0.95)) drop-shadow(0 0 26px hsl(40 100% 50% / 0.6)); }
+  }
+}
+
+@layer components {
+  /* Cosmetic border applied to HUD rank rings (app member list, chat, voice, self panel) */
+  .rank-ring.cosmetic-ring-supporter {
+    --rank-color: hsl(45 100% 60%) !important;
+    filter: drop-shadow(0 0 8px hsl(45 100% 60% / 0.8)) drop-shadow(0 0 18px hsl(40 100% 50% / 0.45));
+    animation: cosmetic-gold-pulse 3s ease-in-out infinite;
+  }
+  .rank-ring.cosmetic-ring-supporter .rank-inner {
+    box-shadow: inset 0 0 10px hsl(45 100% 60% / 0.6);
+  }
+}

@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
+import { AppearanceInventory } from "@/components/AppearanceInventory";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   ensureNotificationPermission,
@@ -275,6 +276,12 @@ const Profile = () => {
             </form>
           )}
         </Card>
+
+        {!loading && (
+          <Card className="glass border-border p-8">
+            <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username || user?.email} />
+          </Card>
+        )}
 
         {!loading && (
           <Card className="glass border-border p-8">
