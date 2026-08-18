@@ -386,9 +386,13 @@ export function AppUserSettings({ onClose }: Props) {
           )}
 
           {tab === "appearance" && (
-            <div className="space-y-3">
-              <ToggleRow label="Kompaktní zobrazení" val={appearance.compact} onChange={(v) => saveAppearance({ compact: v })} />
-              <ToggleRow label="Omezit animace" val={appearance.reduceMotion} onChange={(v) => saveAppearance({ reduceMotion: v })} />
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <ToggleRow label="Kompaktní zobrazení" val={appearance.compact} onChange={(v) => saveAppearance({ compact: v })} />
+                <ToggleRow label="Omezit animace" val={appearance.reduceMotion} onChange={(v) => saveAppearance({ reduceMotion: v })} />
+              </div>
+              <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username} />
+              <GuildCosmeticsPanel />
             </div>
           )}
 
