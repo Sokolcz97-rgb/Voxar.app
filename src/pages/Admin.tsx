@@ -70,6 +70,7 @@ const groups: Group[] = [
       { icon: BarChart3, title: "Statistiky", desc: "Návštěvnost, komunita a stav webu", to: "/admin/stats" },
       { icon: Settings, title: "Nastavení webu", desc: "Texty na úvodce, navbaru, logo a zápatí", to: "/admin/settings" },
       { icon: KeyRound, title: "Kódy ke stažení", desc: "Generovat a spravovat přístupové/promo kódy pro /desktop", to: "/admin/download-codes" },
+      { icon: Terminal, title: "Konzole", desc: "Živý log konzole, chyby a diagnostika prohlížeče", to: "/admin/console" },
     ],
   },
 ];
