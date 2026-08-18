@@ -70,7 +70,7 @@ export function GuildCosmeticsPanel() {
           {guilds.map((g) => {
             const active = getCosmetic(g.cosmetic_id);
             return (
-              <li key={g.id} className="border border-primary/20 bg-[hsl(222_42%_9%)]/70 p-4 hud-panel-chamfer">
+              <li key={g.id} className="border border-primary/20 bg-[hsl(222_42%_9%)]/70 p-4">
                 <div className="flex items-center gap-3">
                   <div className={cn("hex-ring w-12 h-12 shrink-0", g.cosmetic_id === "supporter_gold" && "cosmetic-hex-supporter")}>
                     <div className="hex-frame w-full h-full flex items-center justify-center overflow-hidden bg-secondary/80 text-primary/80 text-xs font-display font-bold">
