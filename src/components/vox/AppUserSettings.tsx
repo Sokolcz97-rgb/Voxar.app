@@ -16,6 +16,8 @@ import { AvatarUpload } from "@/components/AvatarUpload";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import { MicTester } from "@/components/vox/MicTester";
 import { GdprPanel } from "@/components/vox/GdprPanel";
+import { AppearanceInventory } from "@/components/AppearanceInventory";
+import { GuildCosmeticsPanel } from "@/components/vox/GuildCosmeticsPanel";
 
 type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "privacy" | "about";
 
@@ -386,9 +388,13 @@ export function AppUserSettings({ onClose }: Props) {
           )}
 
           {tab === "appearance" && (
-            <div className="space-y-3">
-              <ToggleRow label="Kompaktní zobrazení" val={appearance.compact} onChange={(v) => saveAppearance({ compact: v })} />
-              <ToggleRow label="Omezit animace" val={appearance.reduceMotion} onChange={(v) => saveAppearance({ reduceMotion: v })} />
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <ToggleRow label="Kompaktní zobrazení" val={appearance.compact} onChange={(v) => saveAppearance({ compact: v })} />
+                <ToggleRow label="Omezit animace" val={appearance.reduceMotion} onChange={(v) => saveAppearance({ reduceMotion: v })} />
+              </div>
+              <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username} />
+              <GuildCosmeticsPanel />
             </div>
           )}
 
