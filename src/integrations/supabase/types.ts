@@ -2725,6 +2725,7 @@ export type Database = {
       }
       vox_guilds: {
         Row: {
+          cosmetic_id: string | null
           created_at: string
           icon_url: string | null
           id: string
@@ -2734,6 +2735,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cosmetic_id?: string | null
           created_at?: string
           icon_url?: string | null
           id?: string
@@ -2743,6 +2745,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cosmetic_id?: string | null
           created_at?: string
           icon_url?: string | null
           id?: string
@@ -3127,6 +3130,10 @@ export type Database = {
       }
       vox_mute_member: {
         Args: { _guild: string; _minutes: number; _user: string }
+        Returns: undefined
+      }
+      vox_set_guild_cosmetic: {
+        Args: { _cosmetic: string; _guild: string }
         Returns: undefined
       }
       vox_unban_member: {
