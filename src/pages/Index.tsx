@@ -269,6 +269,8 @@ const Index = () => {
               <a href="/terms" className="hover:text-primary transition-colors">{t("home.footer.terms")}</a>
               <span className="opacity-40">·</span>
               <a href="/privacy" className="hover:text-primary transition-colors">{t("home.footer.privacy")}</a>
+              <span className="opacity-40">·</span>
+              <a href="/obchodni-podminky" className="hover:text-primary transition-colors">Obchodní podmínky</a>
             </nav>
           </div>
         </div>
