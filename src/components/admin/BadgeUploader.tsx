@@ -162,7 +162,6 @@ export function BadgeUploader() {
     await refresh();
   };
 
-  const previewScale = useMemo(() => `${scale}%`, [scale]);
 
   return (
     <div className="space-y-6">
