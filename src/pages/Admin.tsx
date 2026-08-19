@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
   Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
-  Package, ClipboardList, KeyRound, Terminal, Sparkles,
+  Package, ClipboardList, KeyRound, Terminal, Sparkles, ShoppingBag,
 } from "lucide-react";
 
 type Section = {
