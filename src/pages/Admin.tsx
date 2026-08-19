@@ -62,6 +62,7 @@ const groups: Group[] = [
     sections: [
       { icon: ClipboardList, title: "Přehled zakázek", desc: "Skrytý přehled všech zakázek od zákazníků", to: "/zakazky" },
       { icon: Package, title: "Katalog 3D modelů", desc: "Public Domain modely nabízené v objednávkovém formuláři", to: "/admin/order-models" },
+      { icon: ShoppingBag, title: "Obchod", desc: "Rámečky, plugin licence, ceny a platební nastavení", to: "/obchod" },
     ],
   },
   {
