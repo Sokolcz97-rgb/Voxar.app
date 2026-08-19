@@ -23,6 +23,8 @@ import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
+import { TranslatedContent } from "@/components/TranslatedContent";
+import { SlashCommandMenu, type SlashCommand } from "@/components/SlashCommandMenu";
 import { PageHero } from "@/components/PageHero";
 import { cn } from "@/lib/utils";
 
