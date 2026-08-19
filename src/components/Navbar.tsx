@@ -154,24 +154,6 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <div className="hidden sm:flex items-center gap-1">
-            {secondaryNav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                data-active={isActive(item.to)}
-                className="web-navlink relative px-3 py-2 text-sm font-medium text-muted-foreground"
-              >
-                {item.label}
-                {item.badge && item.badge > 0 ? (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
-                    {item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            ))}
-          </div>
-
           <GlobalSearch />
 
           <button
@@ -181,6 +163,16 @@ export function Navbar() {
           >
             <Keyboard className="h-4 w-4" />
           </button>
+
+          <div className="hidden sm:flex items-center gap-1">
+            <Link
+              to="/desktop"
+              data-active={isActive("/desktop")}
+              className="web-navlink relative px-3 py-2 text-sm font-medium text-muted-foreground"
+            >
+              Ke stažení
+            </Link>
+          </div>
 
           <div className="hidden sm:block">
             <LanguageSwitcher />
