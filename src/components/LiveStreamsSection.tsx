@@ -177,6 +177,29 @@ export function LiveStreamsSection() {
         </Card>
       ) : (
         <div className="space-y-10">
+          {totalLive > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
+                <div className="w-1 h-8 rounded-full bg-destructive" />
+                <h3 className="font-display font-bold text-xl text-destructive">
+                  Active Streamers
+                </h3>
+                <Badge
+                  variant="outline"
+                  className="border-0 font-bold bg-destructive/15 text-destructive gap-1"
+                >
+                  <Radio className="h-3 w-3 animate-pulse" /> {totalLive} online
+                </Badge>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {streams
+                  .filter((s) => s.is_live)
+                  .map((s) => (
+                    <StreamCard key={`live-${s.id}`} s={s} />
+                  ))}
+              </div>
+            </div>
+          )}
           {PLATFORM_ORDER.map((p) => {
             const list = byPlatform[p];
             if (list.length === 0) return null;
