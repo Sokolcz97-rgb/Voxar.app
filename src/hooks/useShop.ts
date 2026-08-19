@@ -32,12 +32,37 @@ export function useShop() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [itemsRes, settingsRes] = await Promise.all([
+    const [itemsRes, publicRes, settingsRes] = await Promise.all([
       supabase.from("shop_items").select("*").order("sort_order").order("title"),
+      supabase.rpc("get_public_shop_config"),
+      // payment account details are only readable for signed-in users
       supabase.from("shop_settings").select("*").limit(1).maybeSingle(),
     ]);
-    setItems(((itemsRes.data ?? []) as unknown as ShopItem[]));
-    setSettings((settingsRes.data as unknown as ShopSettings) ?? null);
+
+    setItems((itemsRes.data ?? []) as unknown as ShopItem[]);
+
+    const pub = (Array.isArray(publicRes.data) ? publicRes.data[0] : publicRes.data) as
+      | { id: string; donate_min: number; donate_max: number; refund_notice: string | null }
+      | undefined;
+    const priv = settingsRes.data as unknown as ShopSettings | null;
+
+    if (priv) {
+      setSettings(priv);
+    } else if (pub) {
+      setSettings({
+        id: pub.id,
+        paypal_email: null,
+        paypal_me: null,
+        iban: null,
+        account_number: null,
+        bank_recipient: null,
+        donate_min: pub.donate_min,
+        donate_max: pub.donate_max,
+        refund_notice: pub.refund_notice,
+      });
+    } else {
+      setSettings(null);
+    }
     setLoading(false);
   }, []);
 
