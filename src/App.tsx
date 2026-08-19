@@ -165,6 +165,7 @@ const App = () => (
                 <InlineEditorChrome />
                  <RootAIHelper />
                 <ShortcutsHelp />
+                <LiveNowHud />
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>
