@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Shield, Users, Settings, BarChart3, MessageSquareWarning,
   Palette, Gamepad2, MessageCircle, Radio, Newspaper, MessageSquare, Bot,
-  Package, ClipboardList, KeyRound, Terminal, Sparkles, ShoppingBag,
+  Package, ClipboardList, KeyRound, Terminal, Sparkles, ShoppingBag, Receipt,
 } from "lucide-react";
 
 type Section = {
@@ -62,6 +62,7 @@ const groups: Group[] = [
     sections: [
       { icon: ClipboardList, title: "Přehled zakázek", desc: "Skrytý přehled všech zakázek od zákazníků", to: "/zakazky" },
       { icon: Package, title: "Katalog 3D modelů", desc: "Public Domain modely nabízené v objednávkovém formuláři", to: "/admin/order-models" },
+      { icon: Receipt, title: "Nákupy a dary", desc: "Kdo si co koupil, za kolik a kolik daroval", to: "/admin/nakupy" },
       { icon: ShoppingBag, title: "Obchod", desc: "Rámečky, plugin licence, ceny a platební nastavení", to: "/obchod" },
     ],
   },
