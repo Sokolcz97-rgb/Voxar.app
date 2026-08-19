@@ -23,6 +23,8 @@ import { moderate } from "@/lib/moderate";
 import { BannedNotice } from "@/components/BannedNotice";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { RichContent } from "@/components/RichContent";
+import { TranslatedContent } from "@/components/TranslatedContent";
+import { SlashCommandMenu, type SlashCommand } from "@/components/SlashCommandMenu";
 import { PageHero } from "@/components/PageHero";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +77,20 @@ const Messages = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<RichEditorHandle>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // Slash command palette (tactical terminal above the composer)
+  const [slashDismissed, setSlashDismissed] = useState(false);
+  const plainText = text.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+  const slashQuery =
+    !slashDismissed && /^\/[a-z]*$/i.test(plainText) ? plainText.slice(1) : null;
+  useEffect(() => {
+    if (!plainText.startsWith("/")) setSlashDismissed(false);
+  }, [plainText]);
+  const applySlashCommand = (cmd: SlashCommand) => {
+    setText(`<p>/${cmd.name} </p>`);
+    setSlashDismissed(true);
+    editorRef.current?.focus();
+  };
 
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
   const formatTime = (iso: string) =>
@@ -623,15 +639,17 @@ const Messages = () => {
                                             : cn("rounded-2xl", !isFirst && "rounded-tl-md", !isLast && "rounded-bl-md")
                                         )}
                                       >
-                                        <RichContent
-                                          content={m.content}
-                                          className={cn(
-                                            "rich-content prose prose-sm max-w-none break-words [&_p]:my-0",
-                                            mine
-                                              ? "[&_*]:!text-primary-foreground [&_a]:underline"
-                                              : "prose-invert"
-                                          )}
-                                        />
+                                        {mine ? (
+                                          <RichContent
+                                            content={m.content}
+                                            className="rich-content prose prose-sm max-w-none break-words [&_p]:my-0 [&_*]:!text-primary-foreground [&_a]:underline"
+                                          />
+                                        ) : (
+                                          <TranslatedContent
+                                            content={m.content}
+                                            className="rich-content prose prose-sm max-w-none break-words [&_p]:my-0 prose-invert"
+                                          />
+                                        )}
                                         {isLast && (
                                           <p className={cn(
                                             "text-[10px] mt-1 opacity-60 text-right select-none",
@@ -661,8 +679,15 @@ const Messages = () => {
                   ) : (
                     <form
                       onSubmit={send}
-                      className="border-t border-primary/20 p-3 bg-gradient-to-t from-primary/5 to-background/30 backdrop-blur-sm"
+                      className="relative border-t border-primary/20 p-3 bg-gradient-to-t from-primary/5 to-background/30 backdrop-blur-sm"
                     >
+                      {slashQuery !== null && (
+                        <SlashCommandMenu
+                          query={slashQuery}
+                          onSelect={applySlashCommand}
+                          onClose={() => setSlashDismissed(true)}
+                        />
+                      )}
                       <div className="relative rounded-2xl border border-primary/30 bg-background/70 backdrop-blur-md focus-within:border-primary/70 focus-within:shadow-[var(--glow-soft)] transition-all overflow-hidden">
                         <RichEditor
                           ref={editorRef}

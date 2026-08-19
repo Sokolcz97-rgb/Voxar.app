@@ -51,6 +51,8 @@ import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
 import AdminOrderModels from "./pages/AdminOrderModels.tsx";
 import LiveNow from "./pages/LiveNow.tsx";
+import BountyBoard from "./pages/BountyBoard.tsx";
+import { LiveNowHud } from "@/components/LiveNowHud";
 import MyForms from "./pages/MyForms.tsx";
 import FormEditor from "./pages/FormEditor.tsx";
 import FormResults from "./pages/FormResults.tsx";
@@ -120,6 +122,7 @@ const AppRoutes = () => {
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
       <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
       <Route path="/live" element={<LiveNow />} />
+      <Route path="/kontrakty" element={<BountyBoard />} />
       <Route path="/profile/formulare" element={<ProtectedRoute><MyForms /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
@@ -162,6 +165,7 @@ const App = () => (
                 <InlineEditorChrome />
                  <RootAIHelper />
                 <ShortcutsHelp />
+                <LiveNowHud />
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>

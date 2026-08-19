@@ -25,6 +25,7 @@ import {
   Newspaper,
   MessageCircle,
   Radio,
+  Target,
   LogIn,
   Download,
   ShoppingBag,
@@ -108,6 +109,7 @@ export function Navbar() {
     { to: "/servery", label: "Servery", icon: Server },
     { to: "/novinky", label: "Novinky", icon: Newspaper },
     { to: "/live", label: "Live Now", icon: Radio },
+    { to: "/kontrakty", label: "Bounty Board", icon: Target },
     { to: "/obchod", label: "Obchod", icon: ShoppingBag },
     ...navPages.map((p) => ({ to: `/${p.slug}`, label: p.nav_label, icon: ChevronRight })),
   ];
