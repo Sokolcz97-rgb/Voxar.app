@@ -70,6 +70,7 @@ export function Navbar() {
   };
 
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [bgRemoverOpen, setBgRemoverOpen] = useState(false);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
