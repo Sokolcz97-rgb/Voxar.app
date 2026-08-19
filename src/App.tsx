@@ -44,6 +44,8 @@ import AdminStats from "./pages/AdminStats.tsx";
 import DiscordOAuthComplete from "./pages/DiscordOAuthComplete.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
+import ShopPage from "./pages/Shop.tsx";
+import BusinessTerms from "./pages/BusinessTerms.tsx";
 import Orders from "./pages/Orders.tsx";
 import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
@@ -110,6 +112,8 @@ const AppRoutes = () => {
       <Route path="/novinky" element={<Novinky />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/obchod" element={<ShopPage />} />
+      <Route path="/obchodni-podminky" element={<BusinessTerms />} />
       <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />

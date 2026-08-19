@@ -2257,6 +2257,90 @@ export type Database = {
           },
         ]
       }
+      shop_items: {
+        Row: {
+          active: boolean
+          cosmetic_id: string | null
+          created_at: string
+          description: string | null
+          features: string[]
+          id: string
+          image_url: string | null
+          kind: string
+          price_czk: number
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          kind?: string
+          price_czk?: number
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          kind?: string
+          price_czk?: number
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shop_settings: {
+        Row: {
+          account_number: string | null
+          bank_recipient: string | null
+          donate_max: number
+          donate_min: number
+          iban: string | null
+          id: string
+          paypal_email: string | null
+          paypal_me: string | null
+          refund_notice: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_recipient?: string | null
+          donate_max?: number
+          donate_min?: number
+          iban?: string | null
+          id?: string
+          paypal_email?: string | null
+          paypal_me?: string | null
+          refund_notice?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_recipient?: string | null
+          donate_max?: number
+          donate_min?: number
+          iban?: string | null
+          id?: string
+          paypal_email?: string | null
+          paypal_me?: string | null
+          refund_notice?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_announcements: {
         Row: {
           body: string
