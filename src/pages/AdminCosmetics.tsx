@@ -12,6 +12,9 @@ import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Sparkles, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BadgeUploader } from "@/components/admin/BadgeUploader";
+import { useSearchParams } from "react-router-dom";
 
 type Profile = {
   user_id: string;
@@ -31,6 +34,8 @@ const AdminCosmetics = () => {
   const [selected, setSelected] = useState<string>(COSMETICS[0]?.id ?? "");
   const [onlyOwners, setOnlyOwners] = useState(false);
   const { styles } = useCosmeticStyles();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") === "badges" ? "badges" : "assign";
 
   /** Vestavěné styly + badge nahrané v administraci */
   const allStyles = useMemo(
@@ -105,10 +110,24 @@ const AdminCosmetics = () => {
         <PageHero
           eyebrow="Administrace"
           title="Kosmetika"
-          description="Vyber styl rámečku, pak uživatelům přiděl (1) nebo odeber (0) jeho vlastnictví."
+          description="Nahraj nové badge s automatickým odstraněním pozadí a přiděluj rámečky uživatelům."
           icon={Sparkles}
         />
 
+        <Tabs
+          value={tab}
+          onValueChange={(v) => setParams(v === "badges" ? { tab: "badges" } : {}, { replace: true })}
+        >
+          <TabsList className="mb-6">
+            <TabsTrigger value="assign">Přidělování</TabsTrigger>
+            <TabsTrigger value="badges">Nahrát badge</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="badges">
+            <BadgeUploader />
+          </TabsContent>
+
+          <TabsContent value="assign">
         {/* Náhledy hexagon stylů */}
         <Card className="glass border-border p-6 mb-6">
           <h3 className="font-display text-sm tracking-[0.2em] uppercase text-primary mb-4">
@@ -209,6 +228,8 @@ const AdminCosmetics = () => {
             </ul>
           )}
         </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
