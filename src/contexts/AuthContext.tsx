@@ -41,11 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Then check existing session
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+    // Then check existing session and resolve roles before declaring auth ready
+    supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) loadRoles(sess.user.id);
+      if (sess?.user) await loadRoles(sess.user.id);
       setLoading(false);
     });
 

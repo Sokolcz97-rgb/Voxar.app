@@ -32,8 +32,10 @@ export function UserAvatar({ url, name, className, userId, cosmeticId }: Props) 
   if (!cosmetic) return avatar;
 
   if (cosmetic.id === "supporter_gold") {
-    // Frame emblem: the transparent centre hole is ~30.9% of the artwork width,
-    // so the overlay is scaled to ~324% of the avatar and centred on it.
+    // The VIP emblem is intentionally smaller than the artwork's natural hole ratio
+    // (324%) so it doesn't overlap adjacent nicknames. With ~150% scale the border is
+    // still visible but sits closer to the avatar, and the transparent centre hole
+    // reveals the avatar's face through it.
     return (
       <span className="relative inline-flex shrink-0 isolate">
         <span className="relative z-0 rounded-full overflow-hidden">{avatar}</span>
@@ -44,8 +46,8 @@ export function UserAvatar({ url, name, className, userId, cosmeticId }: Props) 
           draggable={false}
           className="pointer-events-none absolute z-10 max-w-none select-none"
           style={{
-            width: "324%",
-            height: "324%",
+            width: "150%",
+            height: "150%",
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
