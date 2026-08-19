@@ -298,10 +298,18 @@ export function BadgeUploader() {
               </p>
               <div className="flex items-center gap-8 p-6 bg-card/40 border border-border/60">
                 {[40, 64].map((size) => (
-                  <span key={size} className="relative inline-flex isolate">
+                  <span
+                    key={size}
+                    className="relative inline-flex isolate shrink-0"
+                    style={{ width: size, height: size }}
+                  >
                     <span
-                      className="relative z-0 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center font-display text-xs"
-                      style={{ width: size, height: size }}
+                      className="absolute left-1/2 top-1/2 z-0 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center font-display text-xs"
+                      style={{
+                        width: size,
+                        height: size,
+                        transform: `translate(-50%, -50%) scale(${100 / scale})`,
+                      }}
                     >
                       VX
                     </span>
@@ -310,14 +318,7 @@ export function BadgeUploader() {
                         src={processedUrl}
                         alt=""
                         aria-hidden
-                        className="pointer-events-none absolute z-10 max-w-none"
-                        style={{
-                          width: previewScale,
-                          height: previewScale,
-                          left: "50%",
-                          top: "50%",
-                          transform: "translate(-50%, -50%)",
-                        }}
+                        className="pointer-events-none absolute inset-0 z-10 h-full w-full object-contain"
                       />
                     )}
                   </span>
