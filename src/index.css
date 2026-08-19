@@ -383,7 +383,7 @@
 
   /* Hexagonal HUD avatar frame */
   .hex-frame {
-    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    clip-path: polygon(50% 0%, 85% 25%, 85% 75%, 50% 100%, 15% 75%, 15% 25%);
   }
   .hex-ring {
     position: relative;
@@ -391,7 +391,7 @@
   .hex-ring::before {
     content: "";
     position: absolute; inset: -3px;
-    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    clip-path: polygon(50% 0%, 85% 25%, 85% 75%, 50% 100%, 15% 75%, 15% 25%);
     background: conic-gradient(from 0deg, hsl(184 100% 54%), hsl(280 90% 60%), hsl(184 100% 54%));
     z-index: -1;
     filter: blur(0.5px);
@@ -1923,13 +1923,13 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
     position: absolute;
     inset: 0;
     background: linear-gradient(140deg, hsl(45 100% 72%), hsl(38 96% 52%) 45%, hsl(48 100% 78%));
-    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    clip-path: polygon(50% 0%, 85% 25%, 85% 75%, 50% 100%, 15% 75%, 15% 25%);
     filter: drop-shadow(0 0 6px hsl(45 100% 60% / 0.75)) drop-shadow(0 0 16px hsl(40 100% 50% / 0.45));
     animation: cosmetic-gold-pulse 3s ease-in-out infinite;
     z-index: 0;
   }
   .cosmetic-supporter > * {
-    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    clip-path: polygon(50% 0%, 85% 25%, 85% 75%, 50% 100%, 15% 75%, 15% 25%);
     box-shadow: inset 0 0 10px hsl(45 100% 60% / 0.55);
     border: 0 !important;
     border-radius: 0 !important;
