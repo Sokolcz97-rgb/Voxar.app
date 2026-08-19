@@ -2131,9 +2131,9 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
    ============================================================ */
 @layer utilities {
   /* Kill legacy rounding everywhere (pills/avatars keep rounded-full) */
-  :where(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl,
-         .rounded-2xl, .rounded-3xl) {
-    border-radius: 0;
+  .rounded, .rounded-sm, .rounded-md, .rounded-lg,
+  .rounded-xl, .rounded-2xl, .rounded-3xl {
+    border-radius: 0 !important;
   }
 
   /* Base card surface used by shadcn <Card> */
