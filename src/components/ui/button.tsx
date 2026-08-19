@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "btn-3d hover:-translate-y-0.5",
+          "btn-3d btn-3d-primary",
         hero:
-          "btn-3d hover:-translate-y-0.5",
+          "btn-3d btn-3d-primary",
         destructive:
-          "btn-3d text-destructive-foreground hover:shadow-[0_0_20px_hsl(var(--destructive)/0.45)]",
+          "btn-3d btn-3d-danger",
         outline:
           "btn-3d",
         secondary:
