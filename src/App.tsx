@@ -122,6 +122,7 @@ const AppRoutes = () => {
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
       <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
       <Route path="/live" element={<LiveNow />} />
+      <Route path="/kontrakty" element={<BountyBoard />} />
       <Route path="/profile/formulare" element={<ProtectedRoute><MyForms /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
       <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
