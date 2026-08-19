@@ -87,7 +87,7 @@ export function CapabilitiesShowcase() {
           </span>
         </div>
         <h2 className="font-display font-black text-4xl md:text-5xl mb-4">
-          <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent text-glow">
+          <span className="web-title-metal">
             Web + Discord Bot
           </span>
         </h2>
