@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { COSMETICS } from "@/lib/cosmetics";
+import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Sparkles, X } from "lucide-react";
@@ -29,6 +30,18 @@ const AdminCosmetics = () => {
   const [busy, setBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string>(COSMETICS[0]?.id ?? "");
   const [onlyOwners, setOnlyOwners] = useState(false);
+  const { styles } = useCosmeticStyles();
+
+  /** Vestavěné styly + badge nahrané v administraci */
+  const allStyles = useMemo(
+    () => [
+      ...COSMETICS.map((c) => ({ id: c.id, name: c.name, description: c.description })),
+      ...styles
+        .filter((s) => s.active)
+        .map((s) => ({ id: s.id, name: s.name, description: s.description ?? "" })),
+    ],
+    [styles],
+  );
 
   const load = async () => {
     const [{ data: p }, { data: c }] = await Promise.all([
@@ -102,7 +115,7 @@ const AdminCosmetics = () => {
             Styly rámečků
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {COSMETICS.map((c) => {
+            {allStyles.map((c) => {
               const active = selected === c.id;
               return (
                 <button
