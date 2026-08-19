@@ -30,6 +30,7 @@ const groups: Group[] = [
       { icon: Users, title: "Uživatelé, role & oprávnění", desc: "Účty, role a co každá role smí", to: "/admin/users" },
       { icon: Shield, title: "Moderace", desc: "Log filtrovaného a zablokovaného obsahu", to: "/admin/moderation" },
       { icon: Sparkles, title: "Kosmetika", desc: "Přidělovat uživatelům rámečky avatarů", to: "/admin/cosmetics" },
+      { icon: Sparkles, title: "Badge & rámečky", desc: "Nahrát badge a odstranit pozadí", to: "/admin/badges" },
       { icon: MessageSquareWarning, title: "Tickety", desc: "Helpdesk pro uživatele", to: "/tickets" },
     ],
   },

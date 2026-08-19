@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useCosmetics } from "@/contexts/CosmeticsContext";
 import { getCosmetic } from "@/lib/cosmetics";
+import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 export function AppearanceInventory({ avatarUrl, name }: { avatarUrl?: string | null; name?: string | null }) {
   const { user } = useAuth();
   const { myItems, loadingMine, setEquipped } = useCosmetics();
+  const { styles } = useCosmeticStyles();
 
   const toggle = async (cosmeticId: string, equipped: boolean) => {
     await setEquipped(cosmeticId, equipped);
@@ -37,7 +39,9 @@ export function AppearanceInventory({ avatarUrl, name }: { avatarUrl?: string | 
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {myItems.map((item) => {
-            const def = getCosmetic(item.cosmetic_id);
+            const builtin = getCosmetic(item.cosmetic_id);
+            const uploaded = styles.find((s) => s.id === item.cosmetic_id);
+            const def = builtin ?? (uploaded ? { id: uploaded.id, name: uploaded.name, description: uploaded.description ?? "" } : null);
             if (!def) return null;
             return (
               <Card key={item.id} className="glass border-border p-5 flex gap-4 items-center">
