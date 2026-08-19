@@ -19,11 +19,13 @@ interface Props {
 
 export function UserAvatar({ url, name, className, userId, cosmeticId }: Props) {
   const equipped = useUserCosmetic(userId);
-  const cosmetic = getCosmetic(cosmeticId ?? equipped);
+  const activeId = cosmeticId ?? equipped;
+  const cosmetic = getCosmetic(activeId);
+  const uploaded = useCosmeticStyle(cosmetic ? null : activeId);
   const initials = (name || "?").slice(0, 2).toUpperCase();
 
   const avatar = (
-    <Avatar className={cn(!cosmetic && "border border-border", className)}>
+    <Avatar className={cn(!cosmetic && !uploaded && "border border-border", className)}>
       {url && <AvatarImage src={url} alt={name ?? ""} />}
       <AvatarFallback className="bg-primary/10 text-primary text-xs font-display font-bold">
         {initials}
@@ -31,7 +33,27 @@ export function UserAvatar({ url, name, className, userId, cosmeticId }: Props) 
     </Avatar>
   );
 
+  // Badge uploaded through the admin panel (transparent PNG overlay).
+  if (!cosmetic && uploaded) {
+    const size = `${uploaded.scale || 135}%`;
+    return (
+      <span className="relative inline-flex shrink-0 isolate">
+        <span className="relative z-0 rounded-full overflow-hidden">{avatar}</span>
+        <img
+          src={uploaded.image_url}
+          alt=""
+          aria-hidden
+          draggable={false}
+          loading="lazy"
+          className="pointer-events-none absolute z-10 max-w-none select-none"
+          style={{ width: size, height: size, left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
+        />
+      </span>
+    );
+  }
+
   if (!cosmetic) return avatar;
+
 
   if (cosmetic.id === "supporter_gold") {
     // The VIP emblem is scaled to 135% so the decorative border is visible but
