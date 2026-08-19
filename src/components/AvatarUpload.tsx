@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, Loader2, Trash2, Eraser } from "lucide-react";
 import { toast } from "sonner";
+import { BackgroundRemoverDialog } from "@/components/BackgroundRemoverDialog";
 
 interface Props {
   userId: string;
@@ -16,7 +17,9 @@ interface Props {
 export function AvatarUpload({ userId, avatarUrl, fallback, onChange }: Props) {
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
+  const [bgOpen, setBgOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
 
   const upload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
