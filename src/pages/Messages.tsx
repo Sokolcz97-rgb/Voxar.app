@@ -78,6 +78,20 @@ const Messages = () => {
   const editorRef = useRef<RichEditorHandle>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
+  // Slash command palette (tactical terminal above the composer)
+  const [slashDismissed, setSlashDismissed] = useState(false);
+  const plainText = text.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+  const slashQuery =
+    !slashDismissed && /^\/[a-z]*$/i.test(plainText) ? plainText.slice(1) : null;
+  useEffect(() => {
+    if (!plainText.startsWith("/")) setSlashDismissed(false);
+  }, [plainText]);
+  const applySlashCommand = (cmd: SlashCommand) => {
+    setText(`<p>/${cmd.name} </p>`);
+    setSlashDismissed(true);
+    editorRef.current?.focus();
+  };
+
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "cs-CZ";
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
