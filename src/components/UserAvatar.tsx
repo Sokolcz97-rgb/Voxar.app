@@ -2,6 +2,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserCosmetic } from "@/contexts/CosmeticsContext";
 import { getCosmetic } from "@/lib/cosmetics";
+import vipFrame from "@/assets/vip-supporter-frame.png.asset.json";
+
 
 interface Props {
   url?: string | null;
@@ -29,5 +31,30 @@ export function UserAvatar({ url, name, className, userId, cosmeticId }: Props) 
 
   if (!cosmetic) return avatar;
 
+  if (cosmetic.id === "supporter_gold") {
+    // Frame emblem: the transparent centre hole is ~30.9% of the artwork width,
+    // so the overlay is scaled to ~324% of the avatar and centred on it.
+    return (
+      <span className="relative inline-flex shrink-0 isolate">
+        <span className="relative z-0 rounded-full overflow-hidden">{avatar}</span>
+        <img
+          src={vipFrame.url}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="pointer-events-none absolute z-10 max-w-none select-none"
+          style={{
+            width: "324%",
+            height: "324%",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      </span>
+    );
+  }
+
   return <span className={cn("cosmetic-frame", cosmetic.className)}>{avatar}</span>;
+
 }
