@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCosmetics } from "@/contexts/CosmeticsContext";
 import { getCosmetic } from "@/lib/cosmetics";
+import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
+import { CosmeticFrame } from "@/components/CosmeticFrame";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Loader2, Sparkles } from "lucide-react";
@@ -13,6 +15,7 @@ type Guild = { id: string; name: string; icon_url: string | null; cosmetic_id: s
 export function GuildCosmeticsPanel() {
   const { user } = useAuth();
   const { myItems, loadingMine } = useCosmetics();
+  const { styles } = useCosmeticStyles();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -46,6 +49,14 @@ export function GuildCosmeticsPanel() {
     toast({ title: cosmeticId ? "Rámeček nahozen" : "Rámeček sundán" });
   };
 
+  /** Resolve any owned id — built-in cosmetic or badge uploaded in the admin panel. */
+  const resolve = (id: string) => {
+    const builtin = getCosmetic(id);
+    if (builtin) return { id: builtin.id, name: builtin.name };
+    const uploaded = styles.find((s) => s.id === id && s.active);
+    return uploaded ? { id: uploaded.id, name: uploaded.name } : null;
+  };
+
   const owned = myItems.filter((i) => i.quantity > 0);
 
   return (
@@ -68,17 +79,19 @@ export function GuildCosmeticsPanel() {
       ) : (
         <ul className="space-y-3">
           {guilds.map((g) => {
-            const active = getCosmetic(g.cosmetic_id);
+            const active = g.cosmetic_id ? resolve(g.cosmetic_id) : null;
             return (
               <li key={g.id} className="border border-primary/20 bg-[hsl(222_42%_9%)]/70 p-4">
                 <div className="flex items-center gap-3">
-                  <div className={cn("hex-ring w-12 h-12 shrink-0", g.cosmetic_id === "supporter_gold" && "cosmetic-hex-supporter")}>
-                    <div className="hex-frame w-full h-full flex items-center justify-center overflow-hidden bg-secondary/80 text-primary/80 text-xs font-display font-bold">
-                      {g.icon_url
-                        ? <img src={g.icon_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                        : g.name.slice(0, 2).toUpperCase()}
+                  <CosmeticFrame cosmeticId={g.cosmetic_id} className="w-12 h-12">
+                    <div className="hex-ring w-12 h-12 shrink-0">
+                      <div className="hex-frame w-full h-full flex items-center justify-center overflow-hidden bg-secondary/80 text-primary/80 text-xs font-display font-bold">
+                        {g.icon_url
+                          ? <img src={g.icon_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                          : g.name.slice(0, 2).toUpperCase()}
+                      </div>
                     </div>
-                  </div>
+                  </CosmeticFrame>
                   <div className="min-w-0 flex-1">
                     <div className="font-display text-xs tracking-[0.18em] uppercase truncate">{g.name}</div>
                     <div className="text-[11px] text-muted-foreground truncate">
@@ -89,7 +102,7 @@ export function GuildCosmeticsPanel() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {owned.map((item) => {
-                    const def = getCosmetic(item.cosmetic_id);
+                    const def = resolve(item.cosmetic_id);
                     if (!def) return null;
                     const isOn = g.cosmetic_id === def.id;
                     return (
