@@ -24,7 +24,14 @@ const ShopPage = () => {
 
   const [adminMode, setAdminMode] = useState(false);
   const [donation, setDonation] = useState(100);
-  const [checkout, setCheckout] = useState<{ title: string; amount: number; note: string } | null>(null);
+  const [checkout, setCheckout] = useState<{
+    title: string;
+    amount: number;
+    note: string;
+    kind: "frame" | "plugin" | "donation";
+    itemId: string | null;
+    cosmeticId: string | null;
+  } | null>(null);
 
   const frames = useMemo(
     () => items.filter((i) => i.kind === "frame" && (i.active || adminMode)),
@@ -42,7 +49,14 @@ const ShopPage = () => {
     "Na dary ani na zakoupené rámečky a digitální obsah neposkytujeme vrácení peněz (refund).";
 
   const buy = (item: ShopItem) =>
-    setCheckout({ title: item.title, amount: item.price_czk, note: item.title });
+    setCheckout({
+      title: item.title,
+      amount: item.price_czk,
+      note: item.title,
+      kind: item.kind,
+      itemId: item.id,
+      cosmeticId: item.cosmetic_id,
+    });
 
   return (
     <div className="min-h-screen relative">
@@ -198,7 +212,14 @@ const ShopPage = () => {
                   className="w-full"
                   disabled={donation <= 0}
                   onClick={() =>
-                    setCheckout({ title: "Podpora projektu", amount: donation, note: "Dar StudioVoxario" })
+                    setCheckout({
+                      title: "Podpora projektu",
+                      amount: donation,
+                      note: "Dar StudioVoxario",
+                      kind: "donation",
+                      itemId: null,
+                      cosmeticId: null,
+                    })
                   }
                 >
                   Přispět {donation} Kč
@@ -231,6 +252,9 @@ const ShopPage = () => {
         amount={checkout?.amount ?? 0}
         note={checkout?.note ?? ""}
         settings={settings}
+        kind={checkout?.kind ?? "donation"}
+        itemId={checkout?.itemId ?? null}
+        cosmeticId={checkout?.cosmeticId ?? null}
       />
     </div>
   );
