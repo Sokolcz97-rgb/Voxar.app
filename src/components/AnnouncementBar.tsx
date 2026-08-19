@@ -53,23 +53,23 @@ interface Announcement {
 
 const variantStyles: Record<Variant, { wrap: string; icon: JSX.Element; label: string }> = {
   info: {
-    wrap: "border-primary/40 bg-primary/5",
+    wrap: "border-primary/40",
     icon: <Info className="h-4 w-4 text-primary" />,
     label: "Info",
   },
   warning: {
-    wrap: "border-yellow-500/40 bg-yellow-500/5",
+    wrap: "border-yellow-500/50 [box-shadow:inset_3px_0_0_hsl(45_100%_55%/0.9)]",
     icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
     label: "Varování",
   },
   success: {
-    wrap: "border-emerald-500/40 bg-emerald-500/5",
+    wrap: "border-emerald-500/50 [box-shadow:inset_3px_0_0_hsl(150_80%_45%/0.9)]",
     icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
     label: "Úspěch",
   },
   highlight: {
-    wrap: "border-accent/40 bg-accent/5",
-    icon: <Sparkles className="h-4 w-4 text-accent" />,
+    wrap: "border-gold/50 [box-shadow:inset_3px_0_0_hsl(var(--gold)/0.9)]",
+    icon: <Sparkles className="h-4 w-4 text-gold" />,
     label: "Novinka",
   },
 };
@@ -234,7 +234,7 @@ export function AnnouncementBar() {
                 <div
                   key={a.id}
                   className={cn(
-                    "relative flex items-start gap-3 rounded-xl border backdrop-blur-sm px-4 py-3 md:px-5 md:py-4",
+                    "web-alert relative flex items-start gap-3 border backdrop-blur-sm px-5 py-3 md:px-6 md:py-4",
                     v.wrap,
                     !a.is_active && "opacity-60",
                   )}
@@ -242,7 +242,7 @@ export function AnnouncementBar() {
                   <div className="pt-0.5">{v.icon}</div>
                   <div className="flex-1 min-w-0">
                     {a.title && (
-                      <div className="font-display font-semibold text-sm md:text-base leading-tight mb-0.5">
+                      <div className="font-display font-semibold text-sm md:text-base leading-tight mb-0.5 tracking-wide">
                         {a.title}
                       </div>
                     )}

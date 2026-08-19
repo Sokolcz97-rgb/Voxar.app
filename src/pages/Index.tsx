@@ -96,9 +96,9 @@ const Index = () => {
         {/* HERO */}
         <section className="container relative pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 web-panel">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 web-panel">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
                 {settings.hero_badge || t("home.badge")}
               </span>
             </div>
@@ -106,7 +106,7 @@ const Index = () => {
             <h1 className="font-display font-black text-4xl md:text-5xl lg:text-7xl mb-5 leading-tight break-words">
               <span className="text-foreground">{settings.hero_title_1 || t("home.title1")}</span>
               <br />
-              <span className="bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
+              <span className="web-title-metal">
                 {settings.hero_title_2 || t("home.title2")}
               </span>
             </h1>
@@ -117,32 +117,32 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center flex-wrap">
               {user ? (
-                <Button size="lg" variant="hero" className="web-cut w-full sm:w-auto" asChild>
+                <Button size="lg" variant="ghost" className="web-btn web-btn-primary w-full sm:w-auto" asChild>
                   <Link to="/dashboard">
                     {settings.hero_cta_label || t("home.enter")} <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
                 <>
-                  <Button size="lg" variant="hero" className="web-cut w-full sm:w-auto" asChild>
+                  <Button size="lg" variant="ghost" className="web-btn web-btn-primary w-full sm:w-auto" asChild>
                     <Link to="/auth">
                       {t("home.signUp")} <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button size="lg" variant="outline" className="web-cut w-full sm:w-auto" asChild>
+                  <Button size="lg" variant="ghost" className="web-btn w-full sm:w-auto" asChild>
                     <Link to="/auth">{t("home.signIn")}</Link>
                   </Button>
                 </>
               )}
               {discord && (
-                <Button size="lg" variant="outline" className="web-cut w-full sm:w-auto" asChild>
+                <Button size="lg" variant="ghost" className="web-btn w-full sm:w-auto" asChild>
                   <a href={discord.invite_url} target="_blank" rel="noreferrer">
                     <MessageCircle className="mr-1 h-4 w-4" />
                     {discord.name}
                   </a>
                 </Button>
               )}
-              <InviteBotButton size="lg" variant="outline" className="web-cut w-full sm:w-auto" />
+              <InviteBotButton size="lg" variant="ghost" className="web-btn w-full sm:w-auto" />
             </div>
 
             {/* Stats strip */}
@@ -153,9 +153,9 @@ const Index = () => {
                 { value: String(registeredCount), label: t("home.stats.online") },
                 { value: String(visitorCount), label: t("home.stats.visitors") },
               ].map((s) => (
-                <div key={s.label} className="web-panel p-4 sm:p-5">
-                  <div className="font-display text-2xl md:text-3xl font-bold text-primary">{s.value}</div>
-                  <div className="web-copy text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.label}</div>
+                <div key={s.label} className="web-panel web-stat p-4 sm:p-5">
+                  <div className="font-display text-2xl md:text-3xl font-bold text-primary text-glow">{s.value}</div>
+                  <div className="web-copy text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -173,18 +173,26 @@ const Index = () => {
             ].map((f, i) => (
               <div
                 key={f.title}
-                className={`group web-panel p-6 animate-fade-in ${i === 0 ? "web-cut web-panel-accent" : ""}`}
+                className={`group web-panel p-6 animate-fade-in ${i === 0 ? "web-panel-accent" : ""}`}
                 style={{ animationDelay: `${i * 80}ms` }}
               >
-                <div className="w-10 h-10 flex items-center justify-center mb-4 border border-primary/25 text-primary">
+                <div
+                  className={`w-10 h-10 flex items-center justify-center mb-4 web-cut border transition-colors ${
+                    i === 0
+                      ? "border-gold/40 text-gold bg-gold/10 group-hover:border-gold"
+                      : "border-primary/30 text-primary bg-primary/5 group-hover:border-primary group-hover:shadow-[0_0_18px_-4px_hsl(var(--primary))]"
+                  }`}
+                  style={{ ["--wc" as string]: "8px" }}
+                >
                   <f.icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-display font-bold text-lg mb-2">{f.title}</h3>
+                <h3 className="font-display font-bold text-lg mb-2 tracking-wide">{f.title}</h3>
                 <p className="web-copy text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </section>
+
 
 
         {/* CAPABILITIES */}
