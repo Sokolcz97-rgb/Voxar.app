@@ -303,6 +303,8 @@ export function Navbar() {
           </Sheet>
         </div>
       </div>
+      <BackgroundRemoverDialog open={bgRemoverOpen} onOpenChange={setBgRemoverOpen} />
     </header>
   );
+
 }
