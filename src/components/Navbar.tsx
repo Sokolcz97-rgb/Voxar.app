@@ -25,6 +25,7 @@ import {
   Newspaper,
   MessageCircle,
   Radio,
+  Target,
   LogIn,
   Download,
   ShoppingBag,
