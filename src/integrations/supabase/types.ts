@@ -918,6 +918,86 @@ export type Database = {
         }
         Relationships: []
       }
+      bounties: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty: string
+          id: string
+          reward_cosmetic_id: string | null
+          reward_label: string
+          slots: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          reward_cosmetic_id?: string | null
+          reward_label?: string
+          slots?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          reward_cosmetic_id?: string | null
+          reward_label?: string
+          slots?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bounty_contracts: {
+        Row: {
+          accepted_at: string
+          bounty_id: string
+          completed_at: string | null
+          id: string
+          note: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          bounty_id: string
+          completed_at?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          bounty_id?: string
+          completed_at?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bounty_contracts_bounty_id_fkey"
+            columns: ["bounty_id"]
+            isOneToOne: false
+            referencedRelation: "bounties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_bot_automod: {
         Row: {
           action: string
@@ -3192,6 +3272,7 @@ export type Database = {
       }
     }
     Functions: {
+      bounty_complete: { Args: { _contract_id: string }; Returns: undefined }
       can: { Args: { _action: string; _module: string }; Returns: boolean }
       clear_conversation_for_me: {
         Args: { _conv_id: string }
