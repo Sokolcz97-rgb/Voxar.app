@@ -623,15 +623,17 @@ const Messages = () => {
                                             : cn("rounded-2xl", !isFirst && "rounded-tl-md", !isLast && "rounded-bl-md")
                                         )}
                                       >
-                                        <RichContent
-                                          content={m.content}
-                                          className={cn(
-                                            "rich-content prose prose-sm max-w-none break-words [&_p]:my-0",
-                                            mine
-                                              ? "[&_*]:!text-primary-foreground [&_a]:underline"
-                                              : "prose-invert"
-                                          )}
-                                        />
+                                        {mine ? (
+                                          <RichContent
+                                            content={m.content}
+                                            className="rich-content prose prose-sm max-w-none break-words [&_p]:my-0 [&_*]:!text-primary-foreground [&_a]:underline"
+                                          />
+                                        ) : (
+                                          <TranslatedContent
+                                            content={m.content}
+                                            className="rich-content prose prose-sm max-w-none break-words [&_p]:my-0 prose-invert"
+                                          />
+                                        )}
                                         {isLast && (
                                           <p className={cn(
                                             "text-[10px] mt-1 opacity-60 text-right select-none",
