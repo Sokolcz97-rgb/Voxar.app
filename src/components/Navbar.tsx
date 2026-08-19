@@ -28,7 +28,9 @@ import {
   LogIn,
   Download,
   ShoppingBag,
+  Eraser,
 } from "lucide-react";
+import { BackgroundRemoverDialog } from "@/components/BackgroundRemoverDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
