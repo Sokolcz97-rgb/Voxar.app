@@ -217,7 +217,18 @@ export function Navbar() {
                       ) : null}
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setBgRemoverOpen(true);
+                    }}
+                    className="gap-3 px-3 py-2.5 cursor-pointer"
+                  >
+                    <Eraser className="h-4 w-4 text-primary" />
+                    <span className="text-sm">Odstranit pozadí z obrázku</span>
+                  </DropdownMenuItem>
                 </div>
+
                 <DropdownMenuSeparator className="bg-border/60" />
                 <div className="p-1">
                   <DropdownMenuItem onClick={handleSignOut} className="gap-3 px-3 py-2.5 cursor-pointer text-destructive focus:text-destructive">
