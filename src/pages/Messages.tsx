@@ -665,8 +665,15 @@ const Messages = () => {
                   ) : (
                     <form
                       onSubmit={send}
-                      className="border-t border-primary/20 p-3 bg-gradient-to-t from-primary/5 to-background/30 backdrop-blur-sm"
+                      className="relative border-t border-primary/20 p-3 bg-gradient-to-t from-primary/5 to-background/30 backdrop-blur-sm"
                     >
+                      {slashQuery !== null && (
+                        <SlashCommandMenu
+                          query={slashQuery}
+                          onSelect={applySlashCommand}
+                          onClose={() => setSlashDismissed(true)}
+                        />
+                      )}
                       <div className="relative rounded-2xl border border-primary/30 bg-background/70 backdrop-blur-md focus-within:border-primary/70 focus-within:shadow-[var(--glow-soft)] transition-all overflow-hidden">
                         <RichEditor
                           ref={editorRef}
