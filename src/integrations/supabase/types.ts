@@ -1161,6 +1161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cosmetic_styles: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          image_url: string
+          name: string
+          scale: number
+          sort_order: number
+          storage_path: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id: string
+          image_url: string
+          name: string
+          scale?: number
+          sort_order?: number
+          storage_path?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+          scale?: number
+          sort_order?: number
+          storage_path?: string | null
+        }
+        Relationships: []
+      }
       discord_oauth_sessions: {
         Row: {
           created_at: string
