@@ -2,7 +2,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserCosmetic } from "@/contexts/CosmeticsContext";
 import { getCosmetic } from "@/lib/cosmetics";
+import { useCosmeticStyle } from "@/hooks/useCosmeticStyles";
 import vipFrame from "@/assets/vip-supporter-frame.png.asset.json";
+
 
 
 interface Props {
