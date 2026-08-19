@@ -9,7 +9,8 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { COSMETICS } from "@/lib/cosmetics";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Minus, Plus, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Check, Loader2, Sparkles, X } from "lucide-react";
 
 type Profile = {
   user_id: string;
@@ -26,6 +27,8 @@ const AdminCosmetics = () => {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string>(COSMETICS[0]?.id ?? "");
+  const [onlyOwners, setOnlyOwners] = useState(false);
 
   const load = async () => {
     const [{ data: p }, { data: c }] = await Promise.all([
@@ -45,10 +48,9 @@ const AdminCosmetics = () => {
     void load();
   }, []);
 
-  const adjust = async (userId: string, cosmeticId: string, delta: number) => {
-    const current = inv[userId]?.[cosmeticId] ?? 0;
-    const next = Math.max(0, current + delta);
-    if (next === current) return;
+  /** Binární přepnutí vlastnictví: 1 = má, 0 = nemá */
+  const setOwnership = async (userId: string, cosmeticId: string, owned: boolean) => {
+    const next = owned ? 1 : 0;
     setBusy(`${userId}:${cosmeticId}`);
     const { error } = await supabase
       .from("user_cosmetics")
@@ -62,15 +64,25 @@ const AdminCosmetics = () => {
       return;
     }
     setInv((prev) => ({ ...prev, [userId]: { ...(prev[userId] ?? {}), [cosmeticId]: next } }));
+    toast({ title: owned ? "Rámeček přidělen" : "Rámeček odebrán" });
   };
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return profiles;
-    return profiles.filter((p) =>
-      `${p.display_name ?? ""} ${p.username ?? ""}`.toLowerCase().includes(s),
-    );
-  }, [profiles, q]);
+    let list = profiles;
+    if (s) {
+      list = list.filter((p) =>
+        `${p.display_name ?? ""} ${p.username ?? ""}`.toLowerCase().includes(s),
+      );
+    }
+    if (onlyOwners) list = list.filter((p) => (inv[p.user_id]?.[selected] ?? 0) > 0);
+    return list;
+  }, [profiles, q, onlyOwners, inv, selected]);
+
+  const ownersCount = useMemo(
+    () => profiles.filter((p) => (inv[p.user_id]?.[selected] ?? 0) > 0).length,
+    [profiles, inv, selected],
+  );
 
   return (
     <div className="min-h-screen relative">
@@ -80,64 +92,104 @@ const AdminCosmetics = () => {
         <PageHero
           eyebrow="Administrace"
           title="Kosmetika"
-          description="Přidávej nebo odebírej uživatelům kosmetické rámečky avatarů."
+          description="Vyber styl rámečku, pak uživatelům přiděl (1) nebo odeber (0) jeho vlastnictví."
           icon={Sparkles}
         />
 
+        {/* Náhledy hexagon stylů */}
+        <Card className="glass border-border p-6 mb-6">
+          <h3 className="font-display text-sm tracking-[0.2em] uppercase text-primary mb-4">
+            Styly rámečků
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {COSMETICS.map((c) => {
+              const active = selected === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelected(c.id)}
+                  className={cn(
+                    "text-left p-4 border transition-colors bg-card/40",
+                    active
+                      ? "border-yellow-400/70 bg-yellow-500/5"
+                      : "border-border/60 hover:border-primary/60",
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <UserAvatar name="VX" cosmeticId={c.id} className="h-12 w-12" />
+                    <div className="min-w-0">
+                      <div className="font-display text-xs tracking-[0.18em] uppercase truncate">
+                        {c.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {active ? "Vybráno" : "Kliknutím vybrat"}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 line-clamp-3">{c.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
         <Card className="glass border-border p-6">
-          <Input
-            placeholder="Hledat uživatele…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="mb-5 max-w-sm"
-          />
+          <div className="flex flex-wrap items-center gap-3 mb-5">
+            <Input
+              placeholder="Hledat uživatele…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button
+              variant={onlyOwners ? "default" : "outline"}
+              size="sm"
+              onClick={() => setOnlyOwners((v) => !v)}
+            >
+              Jen vlastníci ({ownersCount})
+            </Button>
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-10">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6">Žádní uživatelé.</p>
           ) : (
             <ul className="divide-y divide-border">
               {filtered.map((p) => {
                 const name = p.display_name || p.username || "Uživatel";
+                const owned = (inv[p.user_id]?.[selected] ?? 0) > 0;
+                const key = `${p.user_id}:${selected}`;
                 return (
                   <li key={p.user_id} className="py-3 flex items-center gap-3 flex-wrap">
-                    <UserAvatar url={p.avatar_url} name={name} userId={p.user_id} className="h-9 w-9" />
+                    <UserAvatar
+                      url={p.avatar_url}
+                      name={name}
+                      cosmeticId={owned ? selected : null}
+                      className="h-9 w-9"
+                    />
                     <span className="font-medium flex-1 min-w-[140px] truncate">{name}</span>
-                    <div className="flex items-center gap-4 flex-wrap">
-                      {COSMETICS.map((c) => {
-                        const qty = inv[p.user_id]?.[c.id] ?? 0;
-                        const key = `${p.user_id}:${c.id}`;
-                        return (
-                          <div key={c.id} className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{c.name}</span>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              className="h-7 w-7"
-                              disabled={busy === key || qty === 0}
-                              onClick={() => adjust(p.user_id, c.id, -1)}
-                              aria-label="Odebrat"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <Badge variant={qty > 0 ? "default" : "secondary"} className="min-w-8 justify-center">
-                              {qty}
-                            </Badge>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              className="h-7 w-7"
-                              disabled={busy === key}
-                              onClick={() => adjust(p.user_id, c.id, 1)}
-                              aria-label="Přidat"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <Badge variant={owned ? "default" : "secondary"} className="min-w-8 justify-center">
+                      {owned ? 1 : 0}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant={owned ? "outline" : "default"}
+                      disabled={busy === key}
+                      onClick={() => setOwnership(p.user_id, selected, !owned)}
+                    >
+                      {busy === key ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : owned ? (
+                        <X className="h-3.5 w-3.5" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" />
+                      )}
+                      {owned ? "Vzít" : "Dát"}
+                    </Button>
                   </li>
                 );
               })}
