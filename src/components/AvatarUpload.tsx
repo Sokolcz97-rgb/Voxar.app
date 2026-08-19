@@ -97,6 +97,16 @@ export function AvatarUpload({ userId, avatarUrl, fallback, onChange }: Props) {
         >
           <Camera className="h-4 w-4 mr-2" /> {t("avatar.upload")}
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setBgOpen(true)}
+          disabled={uploading}
+          className="border-primary/40 text-primary hover:bg-primary/10"
+        >
+          <Eraser className="h-4 w-4 mr-2" /> Odstranit pozadí
+        </Button>
         {avatarUrl && (
           <Button
             type="button"
@@ -110,6 +120,8 @@ export function AvatarUpload({ userId, avatarUrl, fallback, onChange }: Props) {
           </Button>
         )}
       </div>
+      <BackgroundRemoverDialog open={bgOpen} onOpenChange={setBgOpen} onApply={(file) => upload(file)} />
     </div>
   );
 }
+
