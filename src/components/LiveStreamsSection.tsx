@@ -201,11 +201,12 @@ export function LiveStreamsSection() {
             </div>
           )}
           {PLATFORM_ORDER.map((p) => {
-            const list = byPlatform[p];
+            // live streamers are surfaced in the "Active Streamers" block above
+            const list = byPlatform[p].filter((s) => !s.is_live);
             if (list.length === 0) return null;
             const meta = PLATFORM_META[p];
-            const liveCount = list.filter((s) => s.is_live).length;
-            const upCount = list.length - liveCount;
+            const liveCount = 0;
+            const upCount = list.length;
             return (
               <div key={p}>
                 <div className="flex items-center gap-3 mb-4 flex-wrap">
