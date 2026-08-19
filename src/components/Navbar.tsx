@@ -27,6 +27,7 @@ import {
   Radio,
   LogIn,
   Download,
+  ShoppingBag,
 } from "lucide-react";
 import {
   DropdownMenu,
