@@ -59,6 +59,7 @@ import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
 import AdminConsole from "./pages/AdminConsole.tsx";
 import AdminCosmetics from "./pages/AdminCosmetics.tsx";
+import AdminPurchases from "./pages/AdminPurchases.tsx";
 import AdminBadges from "./pages/AdminBadges.tsx";
 import AppShell from "./pages/app/AppShell.tsx";
 import { AIHelper } from "@/components/AIHelper";
@@ -126,6 +127,7 @@ const AppRoutes = () => {
       <Route path="/desktop" element={<DownloadDesktop />} />
       <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
       <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
+      <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
       <Route path="/admin/cosmetics" element={<ProtectedRoute requireEditor><AdminCosmetics /></ProtectedRoute>} />
       <Route path="/admin/console" element={<ProtectedRoute requireEditor><AdminConsole /></ProtectedRoute>} />
       <Route path="/app" element={<AppAccessGate><AppShell /></AppAccessGate>} />

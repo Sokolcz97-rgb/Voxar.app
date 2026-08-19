@@ -2302,6 +2302,84 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_purchases: {
+        Row: {
+          amount_czk: number
+          contact: string | null
+          cosmetic_id: string | null
+          created_at: string
+          currency: string
+          fulfilled: boolean
+          id: string
+          item_id: string | null
+          kind: string
+          note: string | null
+          order_id: string | null
+          paid_at: string | null
+          payment_method: string | null
+          requires_manual: boolean
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_czk?: number
+          contact?: string | null
+          cosmetic_id?: string | null
+          created_at?: string
+          currency?: string
+          fulfilled?: boolean
+          id?: string
+          item_id?: string | null
+          kind?: string
+          note?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          requires_manual?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_czk?: number
+          contact?: string | null
+          cosmetic_id?: string | null
+          created_at?: string
+          currency?: string
+          fulfilled?: boolean
+          id?: string
+          item_id?: string | null
+          kind?: string
+          note?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          requires_manual?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_purchases_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_purchases_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_settings: {
         Row: {
           account_number: string | null
@@ -3155,6 +3233,15 @@ export type Database = {
         Returns: string
       }
       get_page_draft_blocks: { Args: { _slug: string }; Returns: Json }
+      get_public_shop_config: {
+        Args: never
+        Returns: {
+          donate_max: number
+          donate_min: number
+          id: string
+          refund_notice: string
+        }[]
+      }
       get_public_site_settings: {
         Args: never
         Returns: {
@@ -3221,6 +3308,7 @@ export type Database = {
         }[]
       }
       redeem_download_code: { Args: { _code: string }; Returns: boolean }
+      shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }
