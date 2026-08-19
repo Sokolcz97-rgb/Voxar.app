@@ -110,6 +110,8 @@ const AppRoutes = () => {
       <Route path="/novinky" element={<Novinky />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/obchod" element={<ShopPage />} />
+      <Route path="/obchodni-podminky" element={<BusinessTerms />} />
       <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
       <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
