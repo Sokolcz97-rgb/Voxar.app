@@ -16,6 +16,7 @@ import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { AppearanceInventory } from "@/components/AppearanceInventory";
+import { MyGames } from "@/components/MyGames";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   ensureNotificationPermission,
@@ -276,6 +277,8 @@ const Profile = () => {
             </form>
           )}
         </Card>
+
+        {!loading && <MyGames />}
 
         {!loading && (
           <Card className="glass border-border p-8">

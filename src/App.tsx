@@ -53,6 +53,7 @@ import AdminOrderModels from "./pages/AdminOrderModels.tsx";
 import LiveNow from "./pages/LiveNow.tsx";
 import BountyBoard from "./pages/BountyBoard.tsx";
 import { LiveNowHud } from "@/components/LiveNowHud";
+import { LfgHud } from "@/components/LfgHud";
 import MyForms from "./pages/MyForms.tsx";
 import FormEditor from "./pages/FormEditor.tsx";
 import FormResults from "./pages/FormResults.tsx";
@@ -166,6 +167,7 @@ const App = () => (
                  <RootAIHelper />
                 <ShortcutsHelp />
                 <LiveNowHud />
+                <LfgHud />
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>

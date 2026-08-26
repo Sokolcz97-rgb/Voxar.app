@@ -24,6 +24,7 @@ type Game = {
   steam_appid: number | null;
   position: number;
   is_active: boolean;
+  color_tag: string;
 };
 
 const slugify = (s: string) =>
@@ -42,6 +43,7 @@ const AdminGames = () => {
   const [conn, setConn] = useState<"ip_port" | "invite_code">("ip_port");
   const [steamId, setSteamId] = useState<string>("");
   const [position, setPosition] = useState<string>("100");
+  const [colorTag, setColorTag] = useState<string>("#22d3ee");
 
   // steam search
   const [steamQ, setSteamQ] = useState("");
@@ -57,7 +59,7 @@ const AdminGames = () => {
   const openCreate = () => {
     setEditing(null);
     setName(""); setSlug(""); setDescription(""); setIconUrl("");
-    setConn("ip_port"); setSteamId(""); setPosition("100");
+    setConn("ip_port"); setSteamId(""); setPosition("100"); setColorTag("#22d3ee");
     setSteamQ(""); setSteamResults([]);
     setOpen(true);
   };
@@ -67,6 +69,7 @@ const AdminGames = () => {
     setName(g.name); setSlug(g.slug); setDescription(g.description ?? "");
     setIconUrl(g.icon_url ?? ""); setConn(g.connection_type);
     setSteamId(g.steam_appid?.toString() ?? ""); setPosition(g.position.toString());
+    setColorTag(g.color_tag || "#22d3ee");
     setOpen(true);
   };
 
@@ -80,6 +83,7 @@ const AdminGames = () => {
       connection_type: conn,
       steam_appid: steamId ? parseInt(steamId, 10) : null,
       position: parseInt(position, 10) || 100,
+      color_tag: colorTag,
     };
     const res = editing
       ? await supabase.from("games").update(payload).eq("id", editing.id)
@@ -141,7 +145,10 @@ const AdminGames = () => {
                   <div className="h-12 w-12 rounded bg-primary/10 border border-primary/30" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display font-bold truncate">{g.name}</h3>
+                  <h3 className="font-display font-bold truncate flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: g.color_tag, boxShadow: `0 0 10px ${g.color_tag}` }} />
+                    <span className="truncate">{g.name}</span>
+                  </h3>
                   <p className="text-xs text-muted-foreground">/{g.slug}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {g.connection_type === "ip_port" ? "IP + port" : "Invite kód"}
@@ -219,6 +226,18 @@ const AdminGames = () => {
             <div>
               <Label>Popis</Label>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <div>
+              <Label>Barevný tag</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={colorTag}
+                  onChange={(e) => setColorTag(e.target.value)}
+                  className="h-9 w-14 bg-transparent border border-border p-1 cursor-pointer"
+                />
+                <Input value={colorTag} onChange={(e) => setColorTag(e.target.value)} placeholder="#22d3ee" />
+              </div>
             </div>
             <div>
               <Label>Ikona URL</Label>
