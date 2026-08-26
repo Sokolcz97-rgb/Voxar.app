@@ -16,6 +16,7 @@ import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { AppearanceInventory } from "@/components/AppearanceInventory";
+import { MyGames } from "@/components/MyGames";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import {
   ensureNotificationPermission,
@@ -279,7 +280,8 @@ const Profile = () => {
 
         {!loading && (
           <Card className="glass border-border p-8">
-            <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username || user?.email} />
+            <MyGames />
+        <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username || user?.email} />
           </Card>
         )}
 

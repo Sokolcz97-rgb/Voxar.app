@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { ActivityChart } from "@/components/ActivityChart";
 import { RecommendedThreads } from "@/components/RecommendedThreads";
 import { OnlineUsers } from "@/components/OnlineUsers";
+import { LfgWidget } from "@/components/LfgWidget";
 
 type RecentThread = { id: string; title: string; slug: string; created_at: string; category_id: string };
 type RecentDm = {
@@ -199,6 +200,7 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {user && <LfgWidget />}
         {user && <OnlineUsers currentUserId={user.id} />}
         {user && <ActivityChart userId={user.id} />}
         {user && <RecommendedThreads userId={user.id} />}
