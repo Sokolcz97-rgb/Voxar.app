@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
   User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw, MonitorCog,
-ShieldCheck,
+ShieldCheck, Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -18,8 +18,9 @@ import { MicTester } from "@/components/vox/MicTester";
 import { GdprPanel } from "@/components/vox/GdprPanel";
 import { AppearanceInventory } from "@/components/AppearanceInventory";
 import { GuildCosmeticsPanel } from "@/components/vox/GuildCosmeticsPanel";
+import { AppDevTools } from "@/components/vox/AppDevTools";
 
-type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "privacy" | "about";
+type TabKey = "profile" | "connections" | "account" | "voice" | "appearance" | "notifications" | "app" | "privacy" | "devtools" | "about";
 
 interface Props {
   onClose: () => void;
@@ -53,7 +54,7 @@ type NotifPrefs = { desktop: boolean; sounds: boolean; mentions: boolean };
 const defaultNotif: NotifPrefs = { desktop: true, sounds: true, mentions: true };
 
 export function AppUserSettings({ onClose }: Props) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [tab, setTab] = useState<TabKey>("profile");
 
   // Profile
@@ -183,6 +184,7 @@ export function AppUserSettings({ onClose }: Props) {
     { key: "appearance", label: "Vzhled", icon: Palette },
     { key: "app", label: "Aplikace", icon: MonitorCog },
     { key: "privacy", label: "Soukromí a GDPR", icon: ShieldCheck },
+    ...(isAdmin ? [{ key: "devtools" as TabKey, label: "Vývojářské nástroje", icon: Terminal }] : []),
     { key: "about", label: "O aplikaci", icon: Info },
   ];
 
@@ -401,6 +403,8 @@ export function AppUserSettings({ onClose }: Props) {
           {tab === "app" && <AppSettingsPanel />}
 
           {tab === "privacy" && <GdprPanel />}
+
+          {tab === "devtools" && isAdmin && <AppDevTools />}
 
           {tab === "about" && <AboutPanel userEmail={user?.email ?? ""} />}
         </div>
