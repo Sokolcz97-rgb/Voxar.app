@@ -3390,9 +3390,13 @@ export type Database = {
       get_public_shop_config: {
         Args: never
         Returns: {
+          account_number: string
+          bank_recipient: string
           donate_max: number
           donate_min: number
+          iban: string
           id: string
+          paypal_me: string
           refund_notice: string
         }[]
       }
