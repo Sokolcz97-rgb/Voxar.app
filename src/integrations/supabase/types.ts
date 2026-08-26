@@ -1775,6 +1775,7 @@ export type Database = {
       }
       games: {
         Row: {
+          color_tag: string
           connection_type: Database["public"]["Enums"]["server_connection_type"]
           created_at: string
           description: string | null
@@ -1788,6 +1789,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color_tag?: string
           connection_type?: Database["public"]["Enums"]["server_connection_type"]
           created_at?: string
           description?: string | null
@@ -1801,6 +1803,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color_tag?: string
           connection_type?: Database["public"]["Enums"]["server_connection_type"]
           created_at?: string
           description?: string | null
@@ -1814,6 +1817,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lfg_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          game_id: string
+          id: string
+          note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          game_id: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          game_id?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lfg_requests_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       live_streams_cache: {
         Row: {
@@ -2821,6 +2862,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_games: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_games_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_restrictions: {
         Row: {
