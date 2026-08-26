@@ -24,6 +24,16 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Resolve app version
+        id: appver
+        shell: pwsh
+        run: |
+          $v = (Get-Content electron/package.json -Raw | ConvertFrom-Json).version
+          if (!$v) { throw "Version missing in electron/package.json" }
+          Write-Host "App version: $v"
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+
       - name: Install root deps
         run: npm install
 
