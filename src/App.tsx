@@ -73,6 +73,8 @@ import { useLocation } from "react-router-dom";
 import { DesktopRouteGuard } from "@/components/DesktopRouteGuard";
 import { AppAccessGate } from "@/components/vox/AppAccessGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
+import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
+
 
 const queryClient = new QueryClient();
 
@@ -168,6 +170,8 @@ const App = () => (
                 <ShortcutsHelp />
                 <LiveNowHud />
                 <LfgHud />
+                <SystemUpdateAlert />
+
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>
