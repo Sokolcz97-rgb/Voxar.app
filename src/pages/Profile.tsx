@@ -278,10 +278,11 @@ const Profile = () => {
           )}
         </Card>
 
+        {!loading && <MyGames />}
+
         {!loading && (
           <Card className="glass border-border p-8">
-            <MyGames />
-        <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username || user?.email} />
+            <AppearanceInventory avatarUrl={avatarUrl} name={displayName || username || user?.email} />
           </Card>
         )}
 

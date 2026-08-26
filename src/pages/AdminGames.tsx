@@ -59,7 +59,7 @@ const AdminGames = () => {
   const openCreate = () => {
     setEditing(null);
     setName(""); setSlug(""); setDescription(""); setIconUrl("");
-    setConn("ip_port"); setSteamId(""); setPosition("100"); setColorTag("#22d3ee");
+    setConn("ip_port"); setSteamId(""); setPosition("100"); setColorTag("#22d3ee"); setColorTag("#22d3ee");
     setSteamQ(""); setSteamResults([]);
     setOpen(true);
   };
