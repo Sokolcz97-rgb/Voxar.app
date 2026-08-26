@@ -124,7 +124,7 @@ jobs:
           Write-Host "== Concatenate SFX + config + payload =="
           $outDir = "installer/dist/final"
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $renamed = Join-Path $outDir "VoxarAppSetup-0.0.9-alpha.exe"
+          $renamed = Join-Path $outDir "VoxarAppSetup-${{ steps.appver.outputs.version }}.exe"
           if (Test-Path $renamed) { Remove-Item $renamed -Force }
           $out = [System.IO.File]::Open($renamed, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
           try {
@@ -141,7 +141,7 @@ jobs:
           "path=$renamed"       | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "size=$size"          | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "sha256=$hash"        | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "filename=VoxarAppSetup-0.0.9-alpha.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "filename=VoxarAppSetup-${{ steps.appver.outputs.version }}.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Create / update GitHub Release
         id: release
@@ -151,7 +151,7 @@ jobs:
           name: StudioVoxario Desktop (latest)
           body: |
             Automatický build z commitu ${{ github.sha }}.
-            Verze: 0.0.9-alpha
+            Verze: ${{ steps.appver.outputs.version }}
           files: ${{ steps.locate.outputs.path }}
           prerelease: true
           make_latest: 'false'
@@ -179,12 +179,29 @@ jobs:
           Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value $json -Encoding UTF8
           Get-Content src/assets/downloads/windows-installer.asset.json
 
+          New-Item -ItemType Directory -Force -Path public | Out-Null
+          $manifest = [ordered]@{
+            version    = "${{ steps.appver.outputs.version }}"
+            notes      = "Automaticky vydaná verze ${{ steps.appver.outputs.version }}."
+            url        = $url
+            sha256     = "${{ steps.locate.outputs.sha256 }}"
+            size       = [int64]"${{ steps.locate.outputs.size }}"
+            filename   = "${{ steps.locate.outputs.filename }}"
+            channels   = [ordered]@{
+              stable = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
+              beta   = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
+            }
+            updated_at = (Get-Date).ToUniversalTime().ToString("o")
+          }
+          Set-Content -Path public/desktop-version.json -Value ($manifest | ConvertTo-Json -Depth 6) -Encoding UTF8
+          Get-Content public/desktop-version.json
+
       - name: Commit updated pointer
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/assets/downloads/windows-installer.asset.json
+          git add src/assets/downloads/windows-installer.asset.json public/desktop-version.json
           if git diff --cached --quiet; then
             echo "No pointer changes to commit."
           else
