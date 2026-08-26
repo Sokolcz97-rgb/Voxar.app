@@ -168,6 +168,8 @@ const App = () => (
                 <ShortcutsHelp />
                 <LiveNowHud />
                 <LfgHud />
+                <SystemUpdateAlert />
+
               </InlineEditorProvider>
               </VoiceCallProvider>
             </PresenceProvider>
