@@ -31,7 +31,6 @@ interface Stats {
   servers: number;
   serversOnline: number;
   liveStreams: number;
-  upcomingGames: number;
   recentSignups: number;
   recentPosts: number;
 }
@@ -109,7 +108,6 @@ const AdminStats = () => {
         servers,
         serversOnline,
         liveStreams,
-        upcomingGames,
         recentSignups,
         recentPosts,
       ] = await Promise.all([
@@ -130,10 +128,6 @@ const AdminStats = () => {
           .eq("is_approved", true)
           .eq("is_online", true),
         supabase.from("live_streams_cache").select("*", head).eq("is_live", true),
-        supabase
-          .from("game_releases")
-          .select("*", head)
-          .gte("release_date", now),
         supabase.from("profiles").select("*", head).gte("created_at", sinceWeek),
         supabase
           .from("forum_posts")
@@ -152,7 +146,6 @@ const AdminStats = () => {
         servers: servers.count ?? 0,
         serversOnline: serversOnline.count ?? 0,
         liveStreams: liveStreams.count ?? 0,
-        upcomingGames: upcomingGames.count ?? 0,
         recentSignups: recentSignups.count ?? 0,
         recentPosts: recentPosts.count ?? 0,
       });
@@ -285,13 +278,6 @@ const AdminStats = () => {
                 value={stats.ticketsOpen}
                 tone={stats.ticketsOpen > 0 ? "destructive" : "primary"}
                 hint={`Z ${stats.tickets} celkem`}
-              />
-              <StatCard
-                icon={Newspaper}
-                label="Nadcházející hry"
-                value={stats.upcomingGames}
-                tone="muted"
-                hint="V kalendáři novinek"
               />
             </div>
 

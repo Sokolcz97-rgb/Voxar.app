@@ -35,7 +35,7 @@ const webFeatures: Feature[] = [
   { icon: Hash, title: "Přímé zprávy", desc: "Soukromé konverzace 1:1 s notifikacemi a překladem." },
   { icon: Trophy, title: "Žebříčky & body", desc: "Top hráči, aktivita, statistiky a měsíční pořadí." },
   { icon: Radio, title: "Live streamy", desc: "Automatický přehled živých vysílání z Twitche a YouTube." },
-  { icon: Newspaper, title: "Novinky & herní releasy", desc: "Aktuální novinky, releasy her a nadcházející tituly." },
+  { icon: Newspaper, title: "Changelog aplikace", desc: "Přehled všech úprav, oprav a novinek ve webu i aplikaci." },
   { icon: Ticket, title: "Ticket systém", desc: "Podpora, žádosti a hlášení propojené s Discordem." },
   { icon: ShoppingBag, title: "Objednávky služeb", desc: "Vytváření zakázek, správa modelů a přehled objednávek." },
   { icon: Palette, title: "Page Builder", desc: "Editace obsahu přímo na stránce, bloky a shortcodes." },

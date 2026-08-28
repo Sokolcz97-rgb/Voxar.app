@@ -1716,63 +1716,6 @@ export type Database = {
           },
         ]
       }
-      game_releases: {
-        Row: {
-          cover_url: string | null
-          created_at: string
-          fetched_at: string
-          genres: string[]
-          hype: number | null
-          id: string
-          igdb_id: number
-          is_released: boolean
-          name: string
-          platforms: string[]
-          release_date: string | null
-          release_human: string | null
-          slug: string | null
-          summary: string | null
-          updated_at: string
-          url: string | null
-        }
-        Insert: {
-          cover_url?: string | null
-          created_at?: string
-          fetched_at?: string
-          genres?: string[]
-          hype?: number | null
-          id?: string
-          igdb_id: number
-          is_released?: boolean
-          name: string
-          platforms?: string[]
-          release_date?: string | null
-          release_human?: string | null
-          slug?: string | null
-          summary?: string | null
-          updated_at?: string
-          url?: string | null
-        }
-        Update: {
-          cover_url?: string | null
-          created_at?: string
-          fetched_at?: string
-          genres?: string[]
-          hype?: number | null
-          id?: string
-          igdb_id?: number
-          is_released?: boolean
-          name?: string
-          platforms?: string[]
-          release_date?: string | null
-          release_human?: string | null
-          slug?: string | null
-          summary?: string | null
-          updated_at?: string
-          url?: string | null
-        }
-        Relationships: []
-      }
       games: {
         Row: {
           color_tag: string
