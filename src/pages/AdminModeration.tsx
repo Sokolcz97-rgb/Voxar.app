@@ -191,6 +191,24 @@ const AdminModeration = () => {
           })}
         </div>
       </main>
+
+      <AlertDialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent className="glass border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "old" ? t("moderationLog.confirmOldTitle") : t("moderationLog.confirmAllTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("moderationLog.confirmDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", { defaultValue: "Zrušit" })}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirm && purge(confirm)} disabled={purging}>
+              {t("moderationLog.purgeAll")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };
