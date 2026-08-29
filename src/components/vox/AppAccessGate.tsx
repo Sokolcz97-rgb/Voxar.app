@@ -107,7 +107,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     setBusy(false);
     if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
     if (data === true) {
-      localStorage.setItem(keyFor(user.id), "1");
+      sessionStorage.setItem(keyFor(user.id), "1");
       toast({ title: "Přístup povolen" });
       setUnlocked(true);
     } else {
