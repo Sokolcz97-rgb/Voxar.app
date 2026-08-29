@@ -127,10 +127,20 @@ const AdminModeration = () => {
             </h1>
             <p className="text-muted-foreground mt-2">{t("moderationLog.subtitle")}</p>
           </div>
-          <Button variant="outline" onClick={load} disabled={loading} className="border-border">
-            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            {t("common.refresh")}
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={load} disabled={loading} className="border-border">
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              {t("common.refresh")}
+            </Button>
+            <Button variant="outline" onClick={() => setConfirm("old")} disabled={purging} className="border-border">
+              <CalendarClock className="h-4 w-4 mr-2" />
+              {t("moderationLog.purgeOld")}
+            </Button>
+            <Button variant="destructive" onClick={() => setConfirm("all")} disabled={purging}>
+              {purging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              {t("moderationLog.purgeAll")}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-3">
