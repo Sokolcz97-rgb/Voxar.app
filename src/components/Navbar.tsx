@@ -134,8 +134,7 @@ export function Navbar() {
 
   const allMobileItems = [...primaryNav, ...secondaryNav, ...profileMenuItems];
 
-  const visibleNav = primaryNav.slice(0, 5);
-  const moreNav = primaryNav.slice(5);
+  const compactNavCount = 3;
 
   return (
     <header className="web-nav sticky top-0 z-50">
@@ -148,27 +147,30 @@ export function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-0.5 md:gap-1 ml-1 lg:ml-2 min-w-0 flex-nowrap overflow-hidden" aria-label="Hlavní navigace">
-          {visibleNav.map((item) => (
+        <nav className="hidden md:flex items-center gap-0.5 md:gap-1 ml-1 lg:ml-2 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
+          {primaryNav.map((item, idx) => (
             <Link
               key={item.to}
               to={item.to}
               data-active={isActive(item.to)}
-              className="web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap"
+              className={cn(
+                "web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
+                idx >= compactNavCount && "hidden lg:flex"
+              )}
             >
               {item.label}
             </Link>
           ))}
 
-          {moreNav.length > 0 && (
+          {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary">
+                <button className="web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary lg:hidden">
                   Více
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[10rem] p-1">
-                {moreNav.map((item) => (
+                {primaryNav.slice(compactNavCount).map((item) => (
                   <DropdownMenuItem key={item.to} asChild className="cursor-pointer">
                     <Link
                       to={item.to}
