@@ -62,14 +62,14 @@ async function resolveLiveAsset(p: AssetPointer): Promise<AssetPointer | null> {
 
 
 
-function AccessGate({ onUnlock }: { onUnlock: () => void }) {
+function AccessGate({ userId, onUnlock }: { userId: string | null; onUnlock: () => void }) {
   const { toast } = useToast();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) return;
+    if (!code.trim() || !userId) return;
     setBusy(true);
     const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
     setBusy(false);
@@ -78,7 +78,7 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
       return;
     }
     if (data === true) {
-      localStorage.setItem(ACCESS_KEY, "1");
+      sessionStorage.setItem(accessKeyFor(userId), "1");
       toast({ title: "Přístup povolen" });
       onUnlock();
     } else {
@@ -97,21 +97,29 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
             </div>
             <h1 className="text-2xl font-bold mb-2">Chráněná stránka</h1>
             <p className="text-sm text-muted-foreground">
-              Ke stažení desktop aplikace zadejte přístupový nebo promo kód.
+              {userId
+                ? "Ke stažení desktop aplikace zadejte přístupový nebo promo kód."
+                : "Ke stažení desktop aplikace se musíte nejprve přihlásit."}
             </p>
           </div>
-          <form onSubmit={submit} className="space-y-3">
-            <Input
-              placeholder="Zadejte kód"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              autoFocus
-              className="text-center font-mono tracking-wider"
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Ověřuji…" : "Odemknout"}
+          {userId ? (
+            <form onSubmit={submit} className="space-y-3">
+              <Input
+                placeholder="Zadejte kód"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                autoFocus
+                className="text-center font-mono tracking-wider"
+              />
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Ověřuji…" : "Odemknout"}
+              </Button>
+            </form>
+          ) : (
+            <Button asChild className="w-full">
+              <Link to="/auth">Přihlásit se</Link>
             </Button>
-          </form>
+          )}
         </Card>
       </div>
     </div>
@@ -119,13 +127,20 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
 }
 
 export default function Download() {
-  const [unlocked, setUnlocked] = useState<boolean>(() => localStorage.getItem(ACCESS_KEY) === "1");
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const [unlocked, setUnlocked] = useState(false);
   const [pointer, setPointer] = useState<AssetPointer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (unlocked) localStorage.setItem(ACCESS_KEY, "1");
-  }, [unlocked]);
+    LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
+    if (!userId) {
+      setUnlocked(false);
+      return;
+    }
+    setUnlocked(sessionStorage.getItem(accessKeyFor(userId)) === "1");
+  }, [userId]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -138,7 +153,8 @@ export default function Download() {
     return () => { alive = false; };
   }, [unlocked]);
 
-  if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
+  if (!unlocked) return <AccessGate userId={userId} onUnlock={() => setUnlocked(true)} />;
+
 
   const sizeMb = pointer?.size ? `${(pointer.size / 1_000_000).toFixed(1)} MB` : "";
   const filename = pointer?.original_filename || "VoxarAppSetup.exe";
