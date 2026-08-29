@@ -135,7 +135,7 @@ export function Navbar() {
 
   const allMobileItems = [...primaryNav, ...secondaryNav, ...profileMenuItems];
 
-  const compactNavCount = 3;
+  const compactNavCount = 2;
 
   return (
     <header className="web-nav sticky top-0 z-50">
@@ -155,7 +155,7 @@ export function Navbar() {
               to={item.to}
               data-active={isActive(item.to)}
               className={cn(
-                "web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
+                "web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
                 idx >= compactNavCount && "hidden lg:flex"
               )}
             >
@@ -166,7 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary lg:hidden">
+                <button className="web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary lg:hidden">
                   Více
                 </button>
               </DropdownMenuTrigger>
