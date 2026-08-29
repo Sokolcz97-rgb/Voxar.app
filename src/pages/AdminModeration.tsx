@@ -44,6 +44,28 @@ const AdminModeration = () => {
   const [rows, setRows] = useState<LogRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
   const [loading, setLoading] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [confirm, setConfirm] = useState<null | "old" | "all">(null);
+
+  const purge = async (mode: "old" | "all") => {
+    setPurging(true);
+    let q = supabase.from("moderation_log").delete();
+    if (mode === "old") {
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      q = q.lt("created_at", cutoff);
+    } else {
+      q = q.gte("created_at", "1970-01-01");
+    }
+    const { error, count } = await q.select("id", { count: "exact" });
+    setPurging(false);
+    setConfirm(null);
+    if (error) {
+      toast.error(t("moderationLog.deleteError"));
+      return;
+    }
+    toast.success(t("moderationLog.deleted", { count: count ?? 0 }));
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
