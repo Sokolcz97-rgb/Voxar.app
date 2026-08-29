@@ -155,7 +155,7 @@ export function Navbar() {
               to={item.to}
               data-active={isActive(item.to)}
               className={cn(
-                "web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
+                "web-navlink px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
                 idx >= compactNavCount && "hidden xl:flex"
               )}
             >
@@ -166,7 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
+                <button className="web-navlink px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
                   Více
                 </button>
               </DropdownMenuTrigger>
@@ -203,7 +203,7 @@ export function Navbar() {
             <Link
               to="/desktop"
               data-active={isActive("/desktop")}
-              className="web-navlink relative px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground whitespace-nowrap"
+              className="web-navlink relative px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground whitespace-nowrap"
               aria-label="Ke stažení"
             >
               <span className="hidden xl:inline">Ke stažení</span>
