@@ -1,19 +1,19 @@
 {
-  "version": "0.0.10-alpha",
-  "notes": "Automaticky vydaná verze 0.0.10-alpha.",
-  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.10-alpha.exe",
-  "sha256": "77a63a946dc5c32c287b543d134b0a8f55475e752ebf5725f374df1641a89d7b",
-  "size": 234877115,
-  "filename": "VoxarAppSetup-0.0.10-alpha.exe",
+  "version": "0.0.12-alpha",
+  "notes": "Automaticky vydaná verze 0.0.12-alpha.",
+  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.12-alpha.exe",
+  "sha256": "a6d55735e2fe643fe86c736aae3f859fd0ee3cc70aa08f05099061faf4703571",
+  "size": 234880648,
+  "filename": "VoxarAppSetup-0.0.12-alpha.exe",
   "channels": {
     "stable": {
-      "version": "0.0.10-alpha",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.10-alpha.exe"
+      "version": "0.0.12-alpha",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.12-alpha.exe"
     },
     "beta": {
-      "version": "0.0.10-alpha",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.10-alpha.exe"
+      "version": "0.0.12-alpha",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/VoxarAppSetup-0.0.12-alpha.exe"
     }
   },
-  "updated_at": "2026-08-29T13:04:39.3068886Z"
+  "updated_at": "2026-08-29T13:11:41.9225407Z"
 }
