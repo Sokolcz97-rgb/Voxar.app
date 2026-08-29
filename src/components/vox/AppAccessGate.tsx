@@ -44,7 +44,14 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
   // Přístup je vázaný na přihlášeného uživatele – po odhlášení se zámek vrátí.
   useEffect(() => {
     try {
-      localStorage.removeItem(LEGACY_KEY);
+      // Vyčistíme všechny staré (trvalé) odemčené stavy – kód nesmí přežít odhlášení.
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("sv_download_access_"))
+        .forEach((k) => localStorage.removeItem(k));
+      Object.keys(sessionStorage)
+        .filter((k) => k.startsWith("sv_download_access_") && (!user || k !== keyFor(user.id)))
+        .forEach((k) => sessionStorage.removeItem(k));
     } catch {
       /* ignore */
     }
@@ -52,7 +59,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
       setUnlocked(false);
       return;
     }
-    setUnlocked(localStorage.getItem(keyFor(user.id)) === "1");
+    setUnlocked(sessionStorage.getItem(keyFor(user.id)) === "1");
   }, [user?.id]);
 
   if (loading) {
