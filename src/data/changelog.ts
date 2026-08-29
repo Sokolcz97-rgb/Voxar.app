@@ -14,6 +14,24 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.0.12-alpha",
+    date: "2026-08-29",
+    title: "Oprava přihlášení v desktop aplikaci",
+    titleEn: "Desktop app sign-in fix",
+    changes: [
+      {
+        type: "fix",
+        text: "Přihlášení přes Google (a další poskytovatele) se nyní otevře přímo v aplikaci místo prohlížeče, takže se účet skutečně přihlásí.",
+        textEn: "Google (and other provider) sign-in now opens inside the app instead of the browser, so the account is actually signed in.",
+      },
+      {
+        type: "fix",
+        text: "Aplikace při startu maže HTTP cache, takže vždy načte aktuální verzi a nezobrazuje staré přihlašovací okno.",
+        textEn: "The app clears its HTTP cache on start so it always loads the current version instead of an outdated sign-in screen.",
+      },
+    ],
+  },
+  {
     version: "0.0.11-alpha",
     date: "2026-08-28",
     title: "Novinky = changelog aplikace",
