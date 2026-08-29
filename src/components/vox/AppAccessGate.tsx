@@ -72,30 +72,13 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     );
   }
 
+  // Nepřihlášený uživatel dostane rovnou in-app přihlašovací obrazovku.
+  // (Odkaz na /auth v desktop shellu způsoboval probliknutí – DesktopRouteGuard
+  // uživatele okamžitě vracel zpět na /app.)
   if (!user) {
-    return (
-      <Frame>
-        <div className="text-center">
-          <Crest icon={<LogIn className="w-7 h-7 text-primary relative" />} />
-          <div className="text-[10px] font-display uppercase tracking-[0.32em] text-primary/70 mb-1">// SESSION · OFFLINE</div>
-          <h1 className="text-2xl font-display uppercase tracking-[0.16em] text-glow mb-2">Nejste přihlášen</h1>
-          <p className="text-xs text-muted-foreground mb-6">
-            Přístup do StudioVoxario aplikace je vázán na přihlášený účet. Přihlaste se a poté zadejte svůj přístupový nebo
-            promo kód.
-          </p>
-          <Button
-            asChild
-            className="w-full font-display uppercase tracking-[0.22em] bg-primary/15 text-primary border border-primary/50 hover:bg-primary/25 shadow-[0_0_18px_hsl(var(--primary)/0.25)]"
-          >
-            <Link to="/auth">// PŘIHLÁSIT SE</Link>
-          </Button>
-          <div className="mt-5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
-            AUTH · CHANNEL · STUDIOVOXARIO
-          </div>
-        </div>
-      </Frame>
-    );
+    return <AppAuthGate />;
   }
+
 
   if (unlocked) return <>{children}</>;
 
