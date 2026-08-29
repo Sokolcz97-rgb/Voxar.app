@@ -384,6 +384,13 @@
     "original": "Original",
     "result": "Result",
     "staffOnly": "Staff only",
+    "purgeOld": "Delete older than 7 days",
+    "purgeAll": "Clear entire log",
+    "confirmOldTitle": "Delete records older than 7 days?",
+    "confirmAllTitle": "Clear the entire moderation log?",
+    "confirmDesc": "This action cannot be undone.",
+    "deleted": "Deleted records: {{count}}",
+    "deleteError": "Deletion failed",
     "actions": {
       "blocked": "Blocked",
       "filtered": "Filtered"

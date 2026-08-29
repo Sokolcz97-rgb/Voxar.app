@@ -384,6 +384,13 @@
     "original": "Originál",
     "result": "Výsledek",
     "staffOnly": "Pouze pro staff",
+    "purgeOld": "Smazat starší 7 dnů",
+    "purgeAll": "Vymazat celý log",
+    "confirmOldTitle": "Smazat záznamy starší 7 dnů?",
+    "confirmAllTitle": "Vymazat celý log moderace?",
+    "confirmDesc": "Tuto akci nelze vrátit zpět.",
+    "deleted": "Smazáno záznamů: {{count}}",
+    "deleteError": "Mazání se nezdařilo",
     "actions": {
       "blocked": "Zablokováno",
       "filtered": "Filtrováno"

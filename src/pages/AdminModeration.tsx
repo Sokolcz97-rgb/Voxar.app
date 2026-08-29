@@ -5,9 +5,20 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Shield, ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Shield, ShieldAlert, Loader2, RefreshCw, Trash2, CalendarClock } from "lucide-react";
 
 interface LogRow {
   id: string;
@@ -33,6 +44,28 @@ const AdminModeration = () => {
   const [rows, setRows] = useState<LogRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
   const [loading, setLoading] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [confirm, setConfirm] = useState<null | "old" | "all">(null);
+
+  const purge = async (mode: "old" | "all") => {
+    setPurging(true);
+    let q = supabase.from("moderation_log").delete({ count: "exact" });
+    if (mode === "old") {
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      q = q.lt("created_at", cutoff);
+    } else {
+      q = q.gte("created_at", "1970-01-01");
+    }
+    const { error, count } = await q;
+    setPurging(false);
+    setConfirm(null);
+    if (error) {
+      toast.error(t("moderationLog.deleteError"));
+      return;
+    }
+    toast.success(t("moderationLog.deleted", { count: count ?? 0 }));
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -94,10 +127,20 @@ const AdminModeration = () => {
             </h1>
             <p className="text-muted-foreground mt-2">{t("moderationLog.subtitle")}</p>
           </div>
-          <Button variant="outline" onClick={load} disabled={loading} className="border-border">
-            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            {t("common.refresh")}
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={load} disabled={loading} className="border-border">
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              {t("common.refresh")}
+            </Button>
+            <Button variant="outline" onClick={() => setConfirm("old")} disabled={purging} className="border-border">
+              <CalendarClock className="h-4 w-4 mr-2" />
+              {t("moderationLog.purgeOld")}
+            </Button>
+            <Button variant="destructive" onClick={() => setConfirm("all")} disabled={purging}>
+              {purging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              {t("moderationLog.purgeAll")}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -148,6 +191,24 @@ const AdminModeration = () => {
           })}
         </div>
       </main>
+
+      <AlertDialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent className="glass border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "old" ? t("moderationLog.confirmOldTitle") : t("moderationLog.confirmAllTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("moderationLog.confirmDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", { defaultValue: "Zrušit" })}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirm && purge(confirm)} disabled={purging}>
+              {t("moderationLog.purgeAll")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };
