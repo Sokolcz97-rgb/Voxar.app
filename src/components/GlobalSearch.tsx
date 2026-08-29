@@ -74,7 +74,7 @@ export const GlobalSearch = () => {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground text-sm px-1.5"
         aria-label={t("search.label")}
       >
         <Search className="h-4 w-4 sm:mr-2" />
