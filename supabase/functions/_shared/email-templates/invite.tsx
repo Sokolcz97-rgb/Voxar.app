@@ -11,7 +11,6 @@ import {
   Html,
   Link,
   Preview,
-  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -21,33 +20,34 @@ interface InviteEmailProps {
   confirmationUrl: string
 }
 
-export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailProps) => (
-  <Html lang="cs" dir="ltr">
-    <Head />
-    <Preview>Pozvánka do {siteName}</Preview>
+export const InviteEmail = ({
+  siteName,
+  siteUrl,
+  confirmationUrl,
+}: InviteEmailProps) => (
+  <Html lang="en" dir="ltr">
+    <Head>
+      <style>{darkModeCss}</style>
+    </Head>
+    <Preview>You've been invited to join {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={brand}>
-          <Text style={brandText}>{siteName}</Text>
-        </Section>
-        <Section style={card}>
-          <Heading style={h1}>Máš pozvánku</Heading>
-          <Text style={text}>
-            Byl/a jsi pozván/a do{' '}
-            <Link href={siteUrl} style={link}>
-              <strong>{siteName}</strong>
-            </Link>
-            . Klikni na tlačítko níže, přijmi pozvánku a vytvoř si účet.
-          </Text>
-          <Section style={{ textAlign: 'center' as const, margin: '28px 0' }}>
-            <Button style={button} href={confirmationUrl}>
-              Přijmout pozvánku
-            </Button>
-          </Section>
-          <Text style={footer}>
-            Pokud jsi pozvánku nečekal/a, tento e-mail můžeš ignorovat.
-          </Text>
-        </Section>
+        <Heading style={h1}>You've been invited</Heading>
+        <Text style={text}>
+          You've been invited to join{' '}
+          <Link href={siteUrl} style={link}>
+            <strong>{siteName}</strong>
+          </Link>
+          . Click the button below to accept the invitation and create your
+          account.
+        </Text>
+        <Button className="dm-btn" style={button} href={confirmationUrl}>
+          Accept Invitation
+        </Button>
+        <Text style={footer}>
+          If you weren't expecting this invitation, you can safely ignore this
+          email.
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -55,43 +55,36 @@ export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailP
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Rajdhani, Segoe UI, Arial, sans-serif' }
-const container = { padding: '32px 20px', maxWidth: '560px', margin: '0 auto' }
-const brand = { textAlign: 'center' as const, padding: '0 0 20px' }
-const brandText = {
-  fontFamily: 'Orbitron, Arial, sans-serif',
-  fontSize: '22px',
-  fontWeight: 800 as const,
-  letterSpacing: '2px',
-  color: '#06090F',
-  margin: 0,
-}
-const card = {
-  backgroundColor: '#06090F',
-  border: '1px solid #17E9FF',
-  borderRadius: '10px',
-  padding: '32px 28px',
-  boxShadow: '0 0 24px rgba(23,233,255,0.25)',
-}
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '20px 25px' }
 const h1 = {
-  fontFamily: 'Orbitron, Arial, sans-serif',
-  fontSize: '24px',
-  fontWeight: 700 as const,
-  color: '#17E9FF',
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
   margin: '0 0 20px',
-  letterSpacing: '1px',
 }
-const text = { fontSize: '15px', color: '#DDEEF2', lineHeight: '1.6', margin: '0 0 16px' }
-const link = { color: '#17E9FF', textDecoration: 'underline' }
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#17E9FF',
-  color: '#06090F',
-  fontSize: '15px',
-  fontWeight: 700 as const,
-  borderRadius: '10px',
-  padding: '14px 28px',
+  backgroundColor: '#000000',
+  color: '#ffffff',
+  fontSize: '14px',
+  border: '1px solid #000000',
+  borderRadius: '8px',
+  padding: '12px 20px',
   textDecoration: 'none',
-  letterSpacing: '1px',
-  textTransform: 'uppercase' as const,
 }
-const footer = { fontSize: '12px', color: '#7A8A90', margin: '24px 0 0', lineHeight: '1.5' }
+const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
+const darkModeCss = `
+  @media (prefers-color-scheme: dark) {
+    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  }
+  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+`
