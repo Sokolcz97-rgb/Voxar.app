@@ -548,6 +548,12 @@ async function runLauncherSequence() {
 }
 
 app.whenReady().then(async () => {
+  // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
+  // aby aplikace vždy načetla aktuální verzi webu, ne starou zakešovanou.
+  try {
+    await session.defaultSession.clearCache();
+  } catch { /* ignore */ }
+
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
     const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen", "display-capture"];
     cb(allowed.includes(permission));
