@@ -7,8 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-const LEGACY_KEY = "sv_download_access_v1";
-const keyFor = (uid: string) => `sv_download_access_v2_${uid}`;
+const LEGACY_KEYS = ["sv_download_access_v1"];
+// Přístup platí jen pro aktuální relaci (sessionStorage) a jen pro daného uživatele.
+const keyFor = (uid: string) => `sv_download_access_v3_${uid}`;
 
 function Frame({ children }: { children: ReactNode }) {
   return (
@@ -43,7 +44,14 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
   // Přístup je vázaný na přihlášeného uživatele – po odhlášení se zámek vrátí.
   useEffect(() => {
     try {
-      localStorage.removeItem(LEGACY_KEY);
+      // Vyčistíme všechny staré (trvalé) odemčené stavy – kód nesmí přežít odhlášení.
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("sv_download_access_"))
+        .forEach((k) => localStorage.removeItem(k));
+      Object.keys(sessionStorage)
+        .filter((k) => k.startsWith("sv_download_access_") && (!user || k !== keyFor(user.id)))
+        .forEach((k) => sessionStorage.removeItem(k));
     } catch {
       /* ignore */
     }
@@ -51,7 +59,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
       setUnlocked(false);
       return;
     }
-    setUnlocked(localStorage.getItem(keyFor(user.id)) === "1");
+    setUnlocked(sessionStorage.getItem(keyFor(user.id)) === "1");
   }, [user?.id]);
 
   if (loading) {
@@ -99,7 +107,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     setBusy(false);
     if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
     if (data === true) {
-      localStorage.setItem(keyFor(user.id), "1");
+      sessionStorage.setItem(keyFor(user.id), "1");
       toast({ title: "Přístup povolen" });
       setUnlocked(true);
     } else {

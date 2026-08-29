@@ -157,7 +157,7 @@ export function Navbar() {
               key={item.to}
               to={item.to}
               data-active={isActive(item.to)}
-              className={cn(navLinkBase, idx >= compactNavCount && "hidden xl:flex")}
+              className={cn(navLinkBase, idx >= compactNavCount && "hidden")}
             >
               {item.label}
             </Link>
@@ -166,7 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn(navLinkBase, "hover:text-primary xl:hidden")}>Více</button>
+                <button className={cn(navLinkBase, "hover:text-primary")}>Více</button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[10rem] p-1">
                 {primaryNav.slice(compactNavCount).map((item) => (
