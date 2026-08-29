@@ -5,9 +5,20 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Shield, ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Shield, ShieldAlert, Loader2, RefreshCw, Trash2, CalendarClock } from "lucide-react";
 
 interface LogRow {
   id: string;
