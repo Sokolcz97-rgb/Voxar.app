@@ -1,11 +1,12 @@
 import { useEffect, useState, ReactNode } from "react";
-import { Lock, KeyRound, LogIn, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Lock, KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppAuthGate } from "@/components/vox/AppAuthGate";
+
 
 const LEGACY_KEYS = ["sv_download_access_v1"];
 // Přístup platí jen pro aktuální relaci (sessionStorage) a jen pro daného uživatele.
