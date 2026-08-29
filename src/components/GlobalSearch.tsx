@@ -74,12 +74,12 @@ export const GlobalSearch = () => {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground px-1.5 lg:px-2"
         aria-label={t("search.label")}
       >
-        <Search className="h-4 w-4 sm:mr-2" />
-        <span className="hidden sm:inline">{t("search.placeholder")}</span>
-        <kbd className="hidden md:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+        <Search className="h-4 w-4 lg:mr-2" />
+        <span className="hidden lg:inline">{t("search.placeholder")}</span>
+        <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           ⌘K
         </kbd>
       </Button>
