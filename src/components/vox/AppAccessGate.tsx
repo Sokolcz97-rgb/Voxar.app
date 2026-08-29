@@ -7,8 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-const LEGACY_KEY = "sv_download_access_v1";
-const keyFor = (uid: string) => `sv_download_access_v2_${uid}`;
+const LEGACY_KEYS = ["sv_download_access_v1"];
+// Přístup platí jen pro aktuální relaci (sessionStorage) a jen pro daného uživatele.
+const keyFor = (uid: string) => `sv_download_access_v3_${uid}`;
 
 function Frame({ children }: { children: ReactNode }) {
   return (
