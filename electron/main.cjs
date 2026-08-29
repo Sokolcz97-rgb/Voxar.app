@@ -170,7 +170,6 @@ function createMainWindow() {
   });
 
 
-  // Open external links in system browser
   // Open external links in system browser — kromě přihlašovacích (OAuth) oken,
   // ta musí zůstat uvnitř aplikace, jinak se uživatel přihlásí v prohlížeči
   // a aplikace o session nikdy nedozví.
