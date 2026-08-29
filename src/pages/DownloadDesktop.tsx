@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const LEGACY_KEYS = ["sv_download_access_v1", "sv_download_access_v2"];
 const accessKeyFor = (userId: string) => `sv_download_access_v3_${userId}`;
@@ -219,7 +221,7 @@ export default function Download() {
           <button
             className="mt-4 text-xs text-muted-foreground underline hover:text-foreground block mx-auto"
             onClick={() => {
-              localStorage.removeItem(ACCESS_KEY);
+              if (userId) sessionStorage.removeItem(accessKeyFor(userId));
               setUnlocked(false);
             }}
           >
