@@ -10,6 +10,7 @@ import {
   Heading,
   Html,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -18,29 +19,31 @@ interface RecoveryEmailProps {
   confirmationUrl: string
 }
 
-export const RecoveryEmail = ({
-  siteName,
-  confirmationUrl,
-}: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Reset your password for {siteName}</Preview>
+export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps) => (
+  <Html lang="cs" dir="ltr">
+    <Head />
+    <Preview>Obnovení hesla pro {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
-        <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Reset Password
-        </Button>
-        <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
-        </Text>
+        <Section style={brand}>
+          <Text style={brandText}>{siteName}</Text>
+        </Section>
+        <Section style={card}>
+          <Heading style={h1}>Obnovení hesla</Heading>
+          <Text style={text}>
+            Obdrželi jsme žádost o obnovení hesla k účtu na {siteName}. Klikni na
+            tlačítko níže a nastav si nové heslo.
+          </Text>
+          <Section style={{ textAlign: 'center' as const, margin: '28px 0' }}>
+            <Button style={button} href={confirmationUrl}>
+              Obnovit heslo
+            </Button>
+          </Section>
+          <Text style={footer}>
+            Pokud jsi o obnovení hesla nežádal/a, tento e-mail můžeš ignorovat.
+            Tvé heslo zůstane beze změny.
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
@@ -48,35 +51,42 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
+const main = { backgroundColor: '#ffffff', fontFamily: 'Rajdhani, Segoe UI, Arial, sans-serif' }
+const container = { padding: '32px 20px', maxWidth: '560px', margin: '0 auto' }
+const brand = { textAlign: 'center' as const, padding: '0 0 20px' }
+const brandText = {
+  fontFamily: 'Orbitron, Arial, sans-serif',
   fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
+  fontWeight: 800 as const,
+  letterSpacing: '2px',
+  color: '#06090F',
+  margin: 0,
+}
+const card = {
+  backgroundColor: '#06090F',
+  border: '1px solid #17E9FF',
+  borderRadius: '10px',
+  padding: '32px 28px',
+  boxShadow: '0 0 24px rgba(23,233,255,0.25)',
+}
+const h1 = {
+  fontFamily: 'Orbitron, Arial, sans-serif',
+  fontSize: '24px',
+  fontWeight: 700 as const,
+  color: '#17E9FF',
   margin: '0 0 20px',
+  letterSpacing: '1px',
 }
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
+const text = { fontSize: '15px', color: '#DDEEF2', lineHeight: '1.6', margin: '0 0 16px' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #000000',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  backgroundColor: '#17E9FF',
+  color: '#06090F',
+  fontSize: '15px',
+  fontWeight: 700 as const,
+  borderRadius: '10px',
+  padding: '14px 28px',
   textDecoration: 'none',
+  letterSpacing: '1px',
+  textTransform: 'uppercase' as const,
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
+const footer = { fontSize: '12px', color: '#7A8A90', margin: '24px 0 0', lineHeight: '1.5' }
