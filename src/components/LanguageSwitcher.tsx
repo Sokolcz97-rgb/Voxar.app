@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 px-2 font-mono uppercase tracking-wider text-xs">
+        <Button variant="ghost" size="sm" className="gap-1.5 px-1.5 font-mono uppercase tracking-wider text-sm">
           <Languages className="h-4 w-4" />
           {current.toUpperCase()}
         </Button>

@@ -137,27 +137,27 @@ export function Navbar() {
 
   const compactNavCount = 2;
 
+  const navLinkBase =
+    "web-navlink px-1.5 py-1.5 text-sm lg:text-base font-medium text-muted-foreground leading-relaxed whitespace-nowrap";
+
   return (
     <header className="web-nav sticky top-0 z-50">
-      <div className="container flex h-16 items-center gap-2 lg:gap-4">
+      <div className="container flex h-16 items-center gap-1 lg:gap-2">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-1.5 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
-          <span className="font-display font-black text-sm sm:text-base tracking-[0.12em] uppercase text-primary">
+          <span className="font-display font-black text-base sm:text-lg tracking-[0.12em] uppercase text-primary">
             {settings.site_name || "StudioVoxario"}
           </span>
         </Link>
 
         {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-0.5 ml-1 lg:ml-2 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
+        <nav className="hidden md:flex items-center gap-0 ml-0.5 lg:ml-1 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
           {primaryNav.map((item, idx) => (
             <Link
               key={item.to}
               to={item.to}
               data-active={isActive(item.to)}
-              className={cn(
-                "web-navlink px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
-                idx >= compactNavCount && "hidden xl:flex"
-              )}
+              className={cn(navLinkBase, idx >= compactNavCount && "hidden xl:flex")}
             >
               {item.label}
             </Link>
@@ -166,9 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
-                  Více
-                </button>
+                <button className={cn(navLinkBase, "hover:text-primary xl:hidden")}>Více</button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[10rem] p-1">
                 {primaryNav.slice(compactNavCount).map((item) => (
@@ -188,7 +186,7 @@ export function Navbar() {
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-0.5">
           <GlobalSearch />
 
           <button
@@ -203,7 +201,7 @@ export function Navbar() {
             <Link
               to="/desktop"
               data-active={isActive("/desktop")}
-              className="web-navlink relative px-1.5 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground whitespace-nowrap"
+              className={cn(navLinkBase, "relative")}
               aria-label="Ke stažení"
             >
               <span className="hidden xl:inline">Ke stažení</span>
@@ -273,7 +271,7 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-xs px-2 py-1.5 xl:px-3">
+            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-sm px-2 py-1 xl:px-3">
               <Link to="/auth" aria-label={t("nav.signIn")}>
                 <LogIn className="h-4 w-4 xl:mr-1.5" />
                 <span className="hidden xl:inline">{t("nav.signIn")}</span>
