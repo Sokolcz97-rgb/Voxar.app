@@ -3295,16 +3295,7 @@ export type Database = {
         Returns: undefined
       }
       current_user_discord_id: { Args: never; Returns: string }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
       discord_id_for_user: { Args: { _user_id: string }; Returns: string }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       get_featured_streamers: {
         Args: never
         Returns: {
@@ -3391,23 +3382,6 @@ export type Database = {
         Returns: number
       }
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       redeem_download_code: { Args: { _code: string }; Returns: boolean }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
