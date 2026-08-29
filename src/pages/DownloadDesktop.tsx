@@ -7,7 +7,8 @@ import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const ACCESS_KEY = "sv_download_access_v1";
+const LEGACY_KEYS = ["sv_download_access_v1", "sv_download_access_v2"];
+const accessKeyFor = (userId: string) => `sv_download_access_v3_${userId}`;
 
 const features = [
   { icon: Bell, title: "Desktop notifikace", desc: "Zprávy, zakázky a stream alerty přímo v systému." },
