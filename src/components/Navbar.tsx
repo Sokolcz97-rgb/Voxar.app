@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -134,37 +135,66 @@ export function Navbar() {
 
   const allMobileItems = [...primaryNav, ...secondaryNav, ...profileMenuItems];
 
+  const compactNavCount = 2;
+
   return (
     <header className="web-nav sticky top-0 z-50">
-      <div className="container flex h-16 items-center gap-4">
+      <div className="container flex h-16 items-center gap-2 lg:gap-4">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
-          <span className="font-display font-black text-base sm:text-lg tracking-[0.18em] uppercase text-primary">
+        <Link to="/" className="flex items-center gap-1.5 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
+          <span className="font-display font-black text-sm sm:text-base tracking-[0.12em] uppercase text-primary">
             {settings.site_name || "StudioVoxario"}
           </span>
         </Link>
 
         {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-1 ml-2 min-w-0" aria-label="Hlavní navigace">
-          {primaryNav.map((item) => (
+        <nav className="hidden md:flex items-center gap-0.5 ml-1 lg:ml-2 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
+          {primaryNav.map((item, idx) => (
             <Link
               key={item.to}
               to={item.to}
               data-active={isActive(item.to)}
-              className="web-navlink px-3 py-2 text-sm font-medium text-muted-foreground leading-relaxed"
+              className={cn(
+                "web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
+                idx >= compactNavCount && "hidden xl:flex"
+              )}
             >
               {item.label}
             </Link>
           ))}
+
+          {primaryNav.length > compactNavCount && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
+                  Více
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[10rem] p-1">
+                {primaryNav.slice(compactNavCount).map((item) => (
+                  <DropdownMenuItem key={item.to} asChild className="cursor-pointer">
+                    <Link
+                      to={item.to}
+                      data-active={isActive(item.to)}
+                      className="web-navlink flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground leading-relaxed"
+                    >
+                      <item.icon className="h-4 w-4 text-muted-foreground" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1">
           <GlobalSearch />
 
           <button
             onClick={() => window.dispatchEvent(new Event("shortcuts:open"))}
             aria-label={t("shortcuts.title")}
-            className="hidden lg:flex h-9 w-9 items-center justify-center border border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+            className="hidden xl:flex h-9 w-9 items-center justify-center border border-primary/20 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
           >
             <Keyboard className="h-4 w-4" />
           </button>
@@ -173,9 +203,11 @@ export function Navbar() {
             <Link
               to="/desktop"
               data-active={isActive("/desktop")}
-              className="web-navlink relative px-3 py-2 text-sm font-medium text-muted-foreground"
+              className="web-navlink relative px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground whitespace-nowrap"
+              aria-label="Ke stažení"
             >
-              Ke stažení
+              <span className="hidden xl:inline">Ke stažení</span>
+              <Download className="h-4 w-4 xl:hidden" />
             </Link>
           </div>
 
@@ -241,10 +273,10 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" className="web-cut hidden sm:inline-flex">
-              <Link to="/auth">
-                <LogIn className="h-4 w-4 mr-1.5" />
-                {t("nav.signIn")}
+            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-xs px-2 py-1.5 xl:px-3">
+              <Link to="/auth" aria-label={t("nav.signIn")}>
+                <LogIn className="h-4 w-4 xl:mr-1.5" />
+                <span className="hidden xl:inline">{t("nav.signIn")}</span>
               </Link>
             </Button>
           )}
