@@ -156,7 +156,7 @@ export function Navbar() {
               data-active={isActive(item.to)}
               className={cn(
                 "web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
-                idx >= compactNavCount && "hidden lg:flex"
+                idx >= compactNavCount && "hidden xl:flex"
               )}
             >
               {item.label}
@@ -166,7 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary lg:hidden">
+                <button className="web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
                   Více
                 </button>
               </DropdownMenuTrigger>
