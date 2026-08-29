@@ -105,13 +105,13 @@ export function Navbar() {
   const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || "";
 
   const primaryNav: NavItem[] = [
+    { to: "/obchod", label: "Obchod", icon: ShoppingBag },
     { to: "/forum", label: t("nav.forum"), icon: MessageCircle },
     { to: "/leaderboard", label: t("nav.leaderboard"), icon: Trophy },
     { to: "/servery", label: "Servery", icon: Server },
     { to: "/novinky", label: "Novinky", icon: Newspaper },
     { to: "/live", label: "Live Now", icon: Radio },
     { to: "/kontrakty", label: "Bounty Board", icon: Target },
-    { to: "/obchod", label: "Obchod", icon: ShoppingBag },
     ...navPages.map((p) => ({ to: `/${p.slug}`, label: p.nav_label, icon: ChevronRight })),
   ];
 
