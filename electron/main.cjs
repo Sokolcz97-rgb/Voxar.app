@@ -147,7 +147,9 @@ function createMainWindow() {
     },
   });
 
-  mainWindow.loadURL(APP_URL);
+  // Načítáme vždy čerstvou verzi (jinak Electron drží starý HTML/JS v cache
+  // a uživatel vidí zastaralé přihlašovací okno).
+  mainWindow.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
 
   // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
   mainWindow.webContents.once("did-finish-load", () => {
