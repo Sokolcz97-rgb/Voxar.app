@@ -148,14 +148,14 @@ export function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-0.5 md:gap-1 ml-1 lg:ml-2 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
+        <nav className="hidden md:flex items-center gap-0.5 ml-1 lg:ml-2 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
           {primaryNav.map((item, idx) => (
             <Link
               key={item.to}
               to={item.to}
               data-active={isActive(item.to)}
               className={cn(
-                "web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
+                "web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap",
                 idx >= compactNavCount && "hidden xl:flex"
               )}
             >
@@ -166,7 +166,7 @@ export function Navbar() {
           {primaryNav.length > compactNavCount && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="web-navlink px-1.5 lg:px-2 py-1.5 text-[11px] lg:text-xs xl:text-sm font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
+                <button className="web-navlink px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground leading-relaxed whitespace-nowrap hover:text-primary xl:hidden">
                   Více
                 </button>
               </DropdownMenuTrigger>
@@ -203,11 +203,11 @@ export function Navbar() {
             <Link
               to="/desktop"
               data-active={isActive("/desktop")}
-              className="web-navlink relative px-2 py-1.5 text-xs lg:text-sm font-medium text-muted-foreground whitespace-nowrap"
+              className="web-navlink relative px-1.5 py-1.5 text-[11px] lg:text-xs font-medium text-muted-foreground whitespace-nowrap"
               aria-label="Ke stažení"
             >
-              <span className="hidden lg:inline">Ke stažení</span>
-              <Download className="h-4 w-4 lg:hidden" />
+              <span className="hidden xl:inline">Ke stažení</span>
+              <Download className="h-4 w-4 xl:hidden" />
             </Link>
           </div>
 
