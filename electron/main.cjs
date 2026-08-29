@@ -171,11 +171,33 @@ function createMainWindow() {
 
 
   // Open external links in system browser
+  // Open external links in system browser — kromě přihlašovacích (OAuth) oken,
+  // ta musí zůstat uvnitř aplikace, jinak se uživatel přihlásí v prohlížeči
+  // a aplikace o session nikdy nedozví.
+  const AUTH_HOSTS = [
+    "accounts.google.com",
+    "appleid.apple.com",
+    "login.microsoftonline.com",
+    "login.live.com",
+    "discord.com",
+    "id.twitch.tv",
+  ];
+  const isAuthUrl = (u) =>
+    AUTH_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith(`.${h}`)) ||
+    u.hostname.endsWith(".supabase.co") ||
+    u.hostname.endsWith(".lovable.app") ||
+    u.hostname.endsWith(".lovable.dev");
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     try {
       const u = new URL(url);
       const appHost = new URL(APP_URL).hostname;
       if (u.hostname === appHost) return { action: "allow" };
+      if (isAuthUrl(u)) {
+        // Přihlášení otevřeme přímo v hlavním okně, redirect se vrátí zpět do /app.
+        mainWindow.loadURL(url).catch(() => {});
+        return { action: "deny" };
+      }
     } catch {}
     shell.openExternal(url);
     return { action: "deny" };
