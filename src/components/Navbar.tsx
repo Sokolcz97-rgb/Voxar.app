@@ -273,10 +273,10 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-xs px-3 py-1.5">
-              <Link to="/auth">
-                <LogIn className="h-4 w-4 mr-1.5" />
-                {t("nav.signIn")}
+            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-xs px-2 py-1.5 xl:px-3">
+              <Link to="/auth" aria-label={t("nav.signIn")}>
+                <LogIn className="h-4 w-4 xl:mr-1.5" />
+                <span className="hidden xl:inline">{t("nav.signIn")}</span>
               </Link>
             </Button>
           )}
