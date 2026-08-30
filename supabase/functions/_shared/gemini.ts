@@ -172,8 +172,9 @@ export async function geminiChatCompletion(req: ChatCompletionRequest): Promise<
     if (resp.ok) break;
     lastDetail = await resp.text();
     console.error(`[gemini] ${resp.status} for model ${m}: ${lastDetail.slice(0, 300)}`);
-    // Fallback jen pro přetížení/limit, ne pro 4xx (špatný klíč/request)
-    if (resp.status !== 503 && resp.status !== 429 && resp.status !== 500) break;
+    // Fallback pro přetížení/limit a pro 404 (model byl vyřazen),
+    // ne pro ostatní 4xx (špatný klíč/request).
+    if (![503, 429, 500, 404].includes(resp.status)) break;
   }
 
   if (!resp || !resp.ok) {
