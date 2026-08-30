@@ -52,7 +52,7 @@ async function aiModerate(text: string): Promise<{ severe: boolean; reason: stri
   if (!apiKey) return { severe: false, reason: "" };
   try {
     const r = await geminiChatCompletion({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-3.5-flash-lite",
       messages: [
         {
           role: "system",

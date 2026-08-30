@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     const systemPrompt = `You are a translation engine. Translate the user's message to ${langName}. Preserve formatting, emoji, mentions, URLs and code blocks. If the text is already in the target language, return it unchanged. Respond ONLY with the translation, no explanations, no quotes.`;
 
     const resp = await geminiChatCompletion({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: text },
