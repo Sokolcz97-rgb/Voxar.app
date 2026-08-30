@@ -44,6 +44,9 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
 
   // Přístup je vázaný na přihlášeného uživatele – po odhlášení se zámek vrátí.
   useEffect(() => {
+    // Dokud se session načítá, nic nemažeme – jinak bychom smazali klíč
+    // právě přihlášeného uživatele hned po reloadu.
+    if (loading) return;
     try {
       // Vyčistíme všechny staré (trvalé) odemčené stavy – kód nesmí přežít odhlášení.
       for (const k of LEGACY_KEYS) localStorage.removeItem(k);
@@ -61,7 +64,8 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
       return;
     }
     setUnlocked(sessionStorage.getItem(keyFor(user.id)) === "1");
-  }, [user?.id]);
+  }, [user?.id, loading]);
+
 
   if (loading) {
     return (
