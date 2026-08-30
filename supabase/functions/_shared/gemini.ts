@@ -26,12 +26,12 @@ type ChatCompletionRequest = {
 // REST `generateContent` v současné době podporuje pouze 1.5 / 2.0 / 2.5 řadu.
 // "Gemini 3" a "3.5" modely viditelné v AI Studiu jsou jen pro Live API.
 function mapModel(m?: string): string {
-  if (!m) return "gemini-2.5-flash";
+  if (!m) return "gemini-3.5-flash";
   const id = m.replace(/^google\//, "");
-  if (id.includes("pro")) return "gemini-2.5-flash"; // Pro není na free tieru
-  if (id.includes("flash-lite")) return "gemini-2.5-flash-lite";
-  if (id.includes("flash")) return "gemini-2.5-flash";
-  return "gemini-2.5-flash";
+  if (id.includes("pro")) return "gemini-3.5-flash"; // Pro není na free tieru
+  if (id.includes("flash-lite")) return "gemini-3.5-flash-lite";
+  if (id.includes("flash")) return "gemini-3.5-flash";
+  return "gemini-3.5-flash";
 }
 
 function partsFromContent(content: any): any[] {
