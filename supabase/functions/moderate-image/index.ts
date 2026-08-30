@@ -78,7 +78,7 @@ async function classifyImage(url: string): Promise<{
     "reason krátce česky. categories krátké tagy.";
 
   const r = await geminiChatCompletion({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.5-flash",
     messages: [
       { role: "system", content: sys },
       {
