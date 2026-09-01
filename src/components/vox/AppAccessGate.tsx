@@ -39,6 +39,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const [unlocked, setUnlocked] = useState(false);
+  const [checkingIp, setCheckingIp] = useState(true);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -66,8 +67,32 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     setUnlocked(sessionStorage.getItem(keyFor(user.id)) === "1");
   }, [user?.id, loading]);
 
+  // Ověření podle IP – pokud z této IP už byl kód jednou použit, pustíme dál.
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      setCheckingIp(false);
+      return;
+    }
+    let cancelled = false;
+    setCheckingIp(true);
+    supabase.functions
+      .invoke("app-access", { body: { action: "check" } })
+      .then(({ data }) => {
+        if (cancelled) return;
+        if ((data as any)?.allowed) {
+          sessionStorage.setItem(keyFor(user.id), "1");
+          setUnlocked(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setCheckingIp(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, loading]);
 
-  if (loading) {
+  if (loading || (user && checkingIp && !unlocked)) {
     return (
       <Frame>
         <div className="flex items-center justify-center py-8 text-primary">
@@ -91,17 +116,20 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     e.preventDefault();
     if (!code.trim()) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
+    const { data, error } = await supabase.functions.invoke("app-access", {
+      body: { action: "redeem", code: code.trim() },
+    });
     setBusy(false);
     if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    if (data === true) {
+    if ((data as any)?.allowed) {
       sessionStorage.setItem(keyFor(user.id), "1");
-      toast({ title: "Přístup povolen" });
+      toast({ title: "Přístup povolen", description: "Tato IP adresa už kód příště zadávat nebude." });
       setUnlocked(true);
     } else {
       toast({ title: "Neplatný kód", description: "Zkontrolujte kód nebo požádejte o nový.", variant: "destructive" });
     }
   };
+
 
   return (
     <Frame>
