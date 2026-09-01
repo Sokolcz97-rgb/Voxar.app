@@ -296,9 +296,35 @@ const Profile = () => {
         <aside className="space-y-6">
           <Card className="glass border-border p-6">
             <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              <h3 className="font-display font-bold text-lg">Zprávy</h3>
+            </div>
+            <Link to="/messages" className="block group">
+              <div className="rounded-lg p-3 bg-primary/5 hover:bg-primary/10 border border-primary/20 transition">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <div className="font-semibold text-sm">Soukromé zprávy (DM)</div>
+                  </div>
+                  {unreadMessages > 0 && (
+                    <span className="text-xs font-bold rounded-full px-2 py-0.5 bg-primary text-primary-foreground">
+                      {unreadMessages}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Otevři konverzace a napiš ostatním uživatelům.
+                </div>
+              </div>
+            </Link>
+          </Card>
+
+          <Card className="glass border-border p-6">
+            <div className="flex items-center gap-2 mb-4">
               <AppWindow className="h-5 w-5 text-primary" />
               <h3 className="font-display font-bold text-lg">Aplikace</h3>
             </div>
+
 
             <div className="pl-2 border-l-2 border-primary/30 space-y-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Formuláře</div>
