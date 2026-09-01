@@ -1,6 +1,6 @@
 import { useCosmeticRings } from "@/hooks/useCosmeticRing";
-import { useEffect, useRef, useState } from "react";
-import { Volume2, MicOff, PhoneOff, Phone } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Volume2, MicOff, PhoneOff, Phone, Eye, EyeOff, Maximize2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -18,21 +18,34 @@ interface Participant {
   avatar_url?: string | null;
 }
 
-/** Grid column count based on participant tiles (1x1, 2x2, 3x3 …). */
-function gridCols(n: number) {
-  if (n <= 1) return "grid-cols-1";
-  if (n <= 4) return "grid-cols-1 sm:grid-cols-2";
-  if (n <= 9) return "grid-cols-2 lg:grid-cols-3";
-  return "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
-}
-
-function VideoTile({ stream, label, mirrored }: { stream: MediaStream; label: string; mirrored?: boolean }) {
+function VideoTile({
+  stream,
+  label,
+  mirrored,
+  className,
+  onExpand,
+  spotlighted,
+}: {
+  stream: MediaStream;
+  label: string;
+  mirrored?: boolean;
+  className?: string;
+  onExpand?: () => void;
+  spotlighted?: boolean;
+}) {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     if (ref.current && ref.current.srcObject !== stream) ref.current.srcObject = stream;
   }, [stream]);
   return (
-    <div className="relative aspect-video bg-[hsl(222_40%_5%)] border border-primary/30 overflow-hidden [clip-path:polygon(14px_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%,0_14px)]">
+    <div
+      className={cn(
+        "relative bg-[hsl(222_40%_5%)] border overflow-hidden group",
+        "[clip-path:polygon(14px_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%,0_14px)]",
+        spotlighted ? "border-emerald-400/60 shadow-[0_0_28px_hsl(160_84%_50%/0.25)]" : "border-primary/30",
+        className,
+      )}
+    >
       {/* Local element is always muted — prevents microphone echo. */}
       <video
         ref={ref}
@@ -41,7 +54,17 @@ function VideoTile({ stream, label, mirrored }: { stream: MediaStream; label: st
         muted
         className={cn("w-full h-full object-cover", mirrored && "scale-x-[-1]")}
       />
-      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-[hsl(222_42%_5%/0.8)] flex items-center gap-1.5">
+      {onExpand && !spotlighted && (
+        <button
+          type="button"
+          onClick={onExpand}
+          title="Zobrazit na hlavní ploše"
+          className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center border border-primary/40 bg-[hsl(222_42%_5%/0.8)] text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/15"
+        >
+          <Maximize2 className="w-3 h-3" />
+        </button>
+      )}
+      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-[hsl(222_42%_5%/0.85)] flex items-center gap-1.5">
         <span className="w-1 h-1 bg-emerald-400" />
         <span className="text-[9px] font-display tracking-[0.24em] uppercase text-primary/90 truncate">{label}</span>
       </div>
@@ -53,6 +76,9 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   const { user } = useAuth();
   const { channel: activeChannel, api, joinChannel, leaveChannel } = useVoiceCall();
   const [rows, setRows] = useState<Participant[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { display_name?: string | null; avatar_url?: string | null }>>({});
+  const [spotlight, setSpotlight] = useState<string | null>(null);
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const joinedHere = api.connected && activeChannel?.id === channel.id;
 
   useEffect(() => {
@@ -67,23 +93,48 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
       const ids = data.map((d: any) => d.user_id);
       const { data: profs } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
       const profMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p]));
+      setProfiles((prev) => ({ ...prev, ...profMap }));
       setRows(data.map((d: any) => ({ ...d, ...profMap[d.user_id] })));
     };
     load();
-    const purge = window.setInterval(load, 30000);
+    const purge = window.setInterval(load, 15000);
     const ch = supabase.channel(`vox_vp_${channel.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_voice_participants", filter: `channel_id=eq.${channel.id}` }, load)
       .subscribe();
     return () => { mounted = false; window.clearInterval(purge); supabase.removeChannel(ch); };
   }, [channel.id]);
 
-  // Inside the active room, LiveKit is authoritative. Outside it, the short-lived
-  // metadata rows provide sidebar/view previews and are purged by heartbeat.
-  const participants = joinedHere
-    ? rows.filter((participant) => api.presentIds.has(participant.user_id))
-    : rows;
-  const cosmeticRings = useCosmeticRings(participants.map((participant) => participant.user_id));
+  // Roster = union of live SFU presence and metadata rows. Never drop someone
+  // just because one of the two sources lags behind — that hid participants.
+  const participants: Participant[] = useMemo(() => {
+    const map = new Map<string, Participant>();
+    for (const r of rows) map.set(r.user_id, r);
+    if (joinedHere) {
+      api.presentIds.forEach((id) => {
+        if (!map.has(id)) {
+          map.set(id, { user_id: id, is_muted: false, is_deafened: false, ...(profiles[id] || {}) });
+        }
+      });
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      (a.user_id === user?.id ? -1 : b.user_id === user?.id ? 1 : (a.display_name || a.user_id).localeCompare(b.display_name || b.user_id)),
+    );
+  }, [rows, joinedHere, api.presentIds, profiles, user?.id]);
 
+  // Fetch profiles for SFU-only identities that have no metadata row yet.
+  useEffect(() => {
+    const missing = participants.filter((p) => !p.display_name && !profiles[p.user_id]).map((p) => p.user_id);
+    if (!missing.length) return;
+    let mounted = true;
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", missing);
+      if (!mounted || !data) return;
+      setProfiles((prev) => ({ ...prev, ...Object.fromEntries(data.map((p: any) => [p.user_id, p])) }));
+    })();
+    return () => { mounted = false; };
+  }, [participants, profiles]);
+
+  const cosmeticRings = useCosmeticRings(participants.map((participant) => participant.user_id));
 
   const handleJoin = async () => {
     try {
@@ -99,21 +150,29 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
 
   const nameOf = (uid: string) => {
     const p = participants.find((x) => x.user_id === uid);
-    return p?.display_name || uid.slice(0, 8);
+    return p?.display_name || profiles[uid]?.display_name || (uid === user?.id ? "TY" : uid.slice(0, 8));
   };
-
 
   const remoteVideos = joinedHere
     ? Object.values(api.remotes)
         .filter((r: any) => r.stream && r.stream.getVideoTracks().length > 0)
         .map((r: any) => ({ id: r.userId as string, stream: r.stream as MediaStream }))
     : [];
-  const videoTiles = [
+  const allTiles = [
     ...(joinedHere && api.localVideoStream
-      ? [{ id: "self", stream: api.localVideoStream, label: "TY", mirrored: api.videoOn && !api.screenOn }]
+      ? [{ id: user?.id || "self", stream: api.localVideoStream, label: "TY", mirrored: api.videoOn && !api.screenOn }]
       : []),
     ...remoteVideos.map((r) => ({ id: r.id, stream: r.stream, label: nameOf(r.id), mirrored: false })),
   ];
+  const videoIds = new Set(allTiles.map((t) => t.id));
+  const tiles = allTiles.filter((t) => !hidden[t.id]);
+
+  useEffect(() => {
+    if (spotlight && !tiles.some((t) => t.id === spotlight)) setSpotlight(null);
+  }, [spotlight, tiles]);
+
+  const main = spotlight ? tiles.find((t) => t.id === spotlight) : tiles[0];
+  const strip = tiles.filter((t) => t.id !== main?.id);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
@@ -125,12 +184,97 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {videoTiles.length > 0 && (
-          <div className={cn("grid gap-3 mb-6", gridCols(videoTiles.length))}>
-            {videoTiles.map((t) => (
-              <VideoTile key={t.id} stream={t.stream} label={t.label} mirrored={t.mirrored} />
-            ))}
+      {/* Roster strip — vždy vidíš celou relaci, i když nikdo nevysílá obraz. */}
+      {participants.length > 0 && (
+        <div className="shrink-0 border-b border-primary/15 bg-[hsl(222_42%_5%/0.5)] px-3 py-2">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Users className="w-3 h-3 text-primary/70" />
+            <span className="text-[9px] font-display uppercase tracking-[0.28em] text-primary/70">
+              // RELACE · {participants.length}
+            </span>
+            <span className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent" />
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto hud-scrollbar pb-0.5">
+            {participants.map((p) => {
+              const isMe = p.user_id === user?.id;
+              const level = isMe ? api.selfLevel : (api.remotes[p.user_id]?.level ?? 0);
+              const speaking = joinedHere && level > 0.08 && !p.is_muted;
+              const name = p.display_name || profiles[p.user_id]?.display_name || (isMe ? "TY" : p.user_id.slice(0, 8));
+              const hasVideo = videoIds.has(p.user_id);
+              const isHidden = !!hidden[p.user_id];
+              return (
+                <div
+                  key={p.user_id}
+                  className={cn(
+                    "shrink-0 flex items-center gap-2 pl-1.5 pr-2 py-1 border transition-colors",
+                    "[clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]",
+                    speaking
+                      ? "border-emerald-400/60 bg-emerald-500/10"
+                      : "border-primary/25 bg-[hsl(222_42%_7%/0.7)]",
+                  )}
+                >
+                  <div className="w-6 h-6 overflow-hidden border border-primary/30 flex items-center justify-center text-[9px] font-display">
+                    {(p.avatar_url || profiles[p.user_id]?.avatar_url)
+                      ? <img src={(p.avatar_url || profiles[p.user_id]?.avatar_url) as string} alt={name} className="w-full h-full object-cover" />
+                      : name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className={cn("text-[10px] font-display tracking-wide truncate max-w-[110px]", speaking ? "text-emerald-300" : "text-foreground/85")}>
+                    {name}
+                  </span>
+                  {p.is_muted && <MicOff className="w-3 h-3 text-destructive" />}
+                  {hasVideo && (
+                    <>
+                      <button
+                        type="button"
+                        title={isHidden ? "Zobrazit náhled" : "Skrýt náhled"}
+                        onClick={() => setHidden((h) => ({ ...h, [p.user_id]: !isHidden }))}
+                        className={cn("transition-colors", isHidden ? "text-muted-foreground hover:text-primary" : "text-emerald-300 hover:text-emerald-200")}
+                      >
+                        {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      {!isHidden && (
+                        <button
+                          type="button"
+                          title="Na hlavní plochu"
+                          onClick={() => setSpotlight(p.user_id)}
+                          className={cn("transition-colors", spotlight === p.user_id ? "text-emerald-300" : "text-primary/70 hover:text-primary")}
+                        >
+                          <Maximize2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto hud-scrollbar p-4 sm:p-5">
+        {main && (
+          <div className="mb-5 flex flex-col lg:flex-row gap-3 items-start">
+            <VideoTile
+              stream={main.stream}
+              label={main.label}
+              mirrored={main.mirrored}
+              spotlighted
+              className="w-full lg:flex-1 aspect-video max-h-[48vh]"
+            />
+            {strip.length > 0 && (
+              <div className="flex lg:flex-col gap-2 w-full lg:w-44 overflow-x-auto lg:overflow-visible">
+                {strip.map((t) => (
+                  <VideoTile
+                    key={t.id}
+                    stream={t.stream}
+                    label={t.label}
+                    mirrored={t.mirrored}
+                    onExpand={() => setSpotlight(t.id)}
+                    className="w-40 lg:w-full aspect-video shrink-0"
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -147,42 +291,58 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
             </div>
           </div>
         ) : (
-          <div className={cn("grid gap-4 max-w-5xl mx-auto", gridCols(participants.length))}>
+          <div className="flex flex-wrap gap-3">
             {participants.map((p) => {
               const isMe = p.user_id === user?.id;
               const level = isMe ? api.selfLevel : (api.remotes[p.user_id]?.level ?? 0);
               const speaking = joinedHere && level > 0.08 && !p.is_muted;
-              const name = p.display_name || p.user_id.slice(0, 8);
+              const name = p.display_name || profiles[p.user_id]?.display_name || (isMe ? "TY" : p.user_id.slice(0, 8));
+              const avatar = p.avatar_url || profiles[p.user_id]?.avatar_url;
               const pct = Math.min(100, Math.round(level * 180));
+              const hasVideo = videoIds.has(p.user_id);
               return (
                 <div key={p.user_id} className={cn(
-                  "holo-pod aspect-square p-4 flex flex-col items-center justify-center gap-3 transition-all",
-                  speaking && "shadow-[0_0_28px_hsl(160_84%_50%/0.5)]"
+                  "holo-pod w-[136px] p-3 flex flex-col items-center gap-2 transition-all",
+                  speaking && "shadow-[0_0_22px_hsl(160_84%_50%/0.4)]"
                 )}>
                   <div
-                    className={cn("rank-ring w-20 h-20", speaking && "speaking-ring", cosmeticRings[p.user_id] || "")}
+                    className={cn("rank-ring w-14 h-14", speaking && "speaking-ring", cosmeticRings[p.user_id] || "")}
                     style={{ ["--rank-color" as any]: speaking ? "hsl(160 84% 50%)" : "hsl(var(--primary))" }}
                   >
-                    <div className="rank-inner overflow-hidden flex items-center justify-center text-lg font-display font-bold">
-                      {p.avatar_url
-                        ? <img loading="lazy" decoding="async" src={p.avatar_url} alt={name} className="w-full h-full object-cover" />
+                    <div className="rank-inner overflow-hidden flex items-center justify-center text-sm font-display font-bold">
+                      {avatar
+                        ? <img loading="lazy" decoding="async" src={avatar} alt={name} className="w-full h-full object-cover" />
                         : name.slice(0, 2).toUpperCase()}
                     </div>
                   </div>
-                  <div className="font-display tracking-wider text-xs truncate max-w-full text-foreground">
+                  <div className="font-display tracking-wider text-[11px] truncate max-w-full text-foreground">
                     {name}{isMe && <span className="text-primary"> // TY</span>}
                   </div>
-                  <div className="w-full h-1 rounded-full bg-background/60 overflow-hidden border border-primary/20">
+                  <div className="w-full h-1 bg-background/60 overflow-hidden border border-primary/20">
                     <div
                       className={cn("h-full transition-[width] duration-75", p.is_muted ? "bg-destructive/70" : "bg-emerald-400")}
                       style={{ width: `${p.is_muted ? 0 : pct}%` }}
                     />
                   </div>
-                  {p.is_muted && (
-                    <div className="flex items-center gap-1 text-[10px] font-display tracking-widest uppercase text-destructive">
-                      <MicOff className="w-3 h-3" /> MUTED
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 h-4">
+                    {p.is_muted && (
+                      <span className="flex items-center gap-1 text-[9px] font-display tracking-widest uppercase text-destructive">
+                        <MicOff className="w-3 h-3" /> MUTE
+                      </span>
+                    )}
+                    {hasVideo && (
+                      <button
+                        type="button"
+                        onClick={() => (hidden[p.user_id]
+                          ? setHidden((h) => ({ ...h, [p.user_id]: false }))
+                          : setSpotlight(p.user_id))}
+                        title={hidden[p.user_id] ? "Zobrazit náhled" : "Zobrazit video na hlavní ploše"}
+                        className="flex items-center gap-1 text-[9px] font-display tracking-widest uppercase text-emerald-300 hover:text-emerald-200"
+                      >
+                        {hidden[p.user_id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} VIDEO
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
