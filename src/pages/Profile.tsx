@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package, AppWindow, ClipboardList } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package, AppWindow, ClipboardList, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -18,6 +18,7 @@ import { AccountSettings } from "@/components/AccountSettings";
 import { AppearanceInventory } from "@/components/AppearanceInventory";
 import { MyGames } from "@/components/MyGames";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   ensureNotificationPermission,
   playNotifSound,
@@ -32,6 +33,7 @@ import { Play } from "lucide-react";
 const Profile = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { unreadMessages } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState("");
@@ -296,9 +298,35 @@ const Profile = () => {
         <aside className="space-y-6">
           <Card className="glass border-border p-6">
             <div className="flex items-center gap-2 mb-4">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              <h3 className="font-display font-bold text-lg">Zprávy</h3>
+            </div>
+            <Link to="/messages" className="block group">
+              <div className="rounded-lg p-3 bg-primary/5 hover:bg-primary/10 border border-primary/20 transition">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <div className="font-semibold text-sm">Soukromé zprávy (DM)</div>
+                  </div>
+                  {unreadMessages > 0 && (
+                    <span className="text-xs font-bold rounded-full px-2 py-0.5 bg-primary text-primary-foreground">
+                      {unreadMessages}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Otevři konverzace a napiš ostatním uživatelům.
+                </div>
+              </div>
+            </Link>
+          </Card>
+
+          <Card className="glass border-border p-6">
+            <div className="flex items-center gap-2 mb-4">
               <AppWindow className="h-5 w-5 text-primary" />
               <h3 className="font-display font-bold text-lg">Aplikace</h3>
             </div>
+
 
             <div className="pl-2 border-l-2 border-primary/30 space-y-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Formuláře</div>
