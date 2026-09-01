@@ -308,16 +308,20 @@ export default function AppShell() {
                 <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
 
                   <ChannelSidebar
+                    guildId={activeGuildId}
                     guildName={activeGuild.name}
                     inviteCode={inviteCode}
                     channels={channels}
+                    categoryEmojis={categoryEmojis}
                     activeId={activeChannel?.id ?? null}
                     onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
                     onCreateChannel={openCreateChannel}
                     isAdmin={isAdmin}
                     voiceParticipants={voiceParticipants}
                     onOpenServerSettings={() => setView("server-settings")}
+                    onCategoriesChanged={() => { void loadCategories(); }}
                   />
+
                 </div>
                 {voiceConn && (
                   <div className="holo-pod pod-left shrink-0 overflow-hidden">
@@ -433,9 +437,12 @@ export default function AppShell() {
       <CreateChannelDialog
         open={createChannelOpen}
         initialType={createChannelType}
+        initialCategory={createChannelCategory}
+        categories={categoryNames}
         onOpenChange={setCreateChannelOpen}
         onCreate={createChannel}
       />
+
       <DesktopUpdateFab />
     </div>
   );
