@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Hash, Volume2, ChevronDown, ChevronRight, Plus, Copy, Check, Settings, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { ChannelContextMenu } from "@/components/vox/ChannelContextMenu";
+import { CategoryContextMenu } from "@/components/vox/CategoryContextMenu";
+import { ChannelSettingsDialog } from "@/components/vox/ChannelSettingsDialog";
+import { CategorySettingsDialog } from "@/components/vox/CategorySettingsDialog";
 
 export interface VoxChannel {
   id: string;
@@ -12,38 +14,49 @@ export interface VoxChannel {
   type: "text" | "voice";
   category: string | null;
   position: number;
+  emoji?: string | null;
+  topic?: string | null;
 }
 
 interface Props {
+  guildId?: string | null;
   guildName: string;
   inviteCode: string | null;
   channels: VoxChannel[];
+  /** category name -> emoji */
+  categoryEmojis?: Record<string, string | null>;
   activeId: string | null;
   onSelect: (ch: VoxChannel) => void;
-  onCreateChannel: (type: "text" | "voice") => void;
+  onCreateChannel: (type: "text" | "voice", category?: string | null) => void;
   isAdmin: boolean;
   voiceParticipants: Record<string, Array<{ user_id: string; nickname?: string; is_muted?: boolean }>>;
   onOpenServerSettings?: () => void;
+  onCategoriesChanged?: () => void;
 }
 
-const catLabel = (cat: string, type: "text" | "voice") => {
-  const c = (cat || "").toLowerCase();
-  if (type === "voice" || c.includes("hlas") || c.includes("voice")) return "HLASOVÁ SEKCE";
-  if (c.includes("text")) return "TEXTOVÁ SEKCE";
-  return (cat || "SEKCE").toUpperCase();
-};
+const catLabel = (cat: string) => (cat || "SEKCE").toUpperCase();
 
 export function ChannelSidebar({
-  guildName, inviteCode, channels, activeId, onSelect, onCreateChannel, isAdmin, voiceParticipants, onOpenServerSettings,
+  guildId = null, guildName, inviteCode, channels, categoryEmojis = {}, activeId, onSelect,
+  onCreateChannel, isAdmin, voiceParticipants, onOpenServerSettings, onCategoriesChanged,
 }: Props) {
   const [collapsedCats, setCollapsed] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
+  const [editChannel, setEditChannel] = useState<VoxChannel | null>(null);
+  const [editCategory, setEditCategory] = useState<string | null>(null);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
 
   const grouped = channels.reduce<Record<string, VoxChannel[]>>((acc, c) => {
-    const cat = c.category || (c.type === "voice" ? "Hlasová sekce" : "Textová sekce");
+    const cat = c.category || (c.type === "voice" ? "Hlasové kanály" : "Textové kanály");
     (acc[cat] ||= []).push(c);
     return acc;
   }, {});
+  const categoryNames = Object.keys(grouped);
+
+  const openCategoryDialog = (cat: string | null) => {
+    setEditCategory(cat);
+    setCategoryDialogOpen(true);
+  };
 
   const copyInvite = () => {
     if (!inviteCode) return;
@@ -103,24 +116,34 @@ export function ChannelSidebar({
         {Object.entries(grouped).map(([cat, chans]) => {
           const collapsed = collapsedCats[cat];
           const type = chans[0]?.type ?? "text";
+          const catEmoji = categoryEmojis[cat] ?? null;
           return (
             <div key={cat} className="space-y-1">
-              <div className="flex items-center justify-between px-1.5 py-1.5 mb-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
-
-                <button className="flex items-center gap-1 hover:text-primary" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
-                  {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  {catLabel(cat, type)}
-                </button>
-                {isAdmin && (
-                  <button
-                    className="opacity-0 group-hover:opacity-100 hover:text-primary"
-                    onClick={() => onCreateChannel(type)}
-                    title="Přidat node"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
+              <CategoryContextMenu
+                category={cat}
+                canManage={isAdmin}
+                onEdit={() => openCategoryDialog(cat)}
+                onCreateCategory={() => openCategoryDialog(null)}
+                onCreateChannel={(t) => onCreateChannel(t, cat)}
+              >
+                <div className="flex items-center justify-between px-1.5 py-1.5 mb-1 text-[10px] font-display uppercase tracking-[0.22em] text-primary/60 group">
+                  <button className="flex items-center gap-1.5 min-w-0 hover:text-primary" onClick={() => setCollapsed(s => ({ ...s, [cat]: !collapsed }))}>
+                    {collapsed ? <ChevronRight className="w-3 h-3 shrink-0" /> : <ChevronDown className="w-3 h-3 shrink-0" />}
+                    {catEmoji && <span className="text-[12px] leading-none">{catEmoji}</span>}
+                    <span className="truncate">{catLabel(cat)}</span>
                   </button>
-                )}
-              </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100">
+                      <button className="hover:text-primary" onClick={() => openCategoryDialog(cat)} title="Upravit sekci">
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button className="hover:text-primary" onClick={() => onCreateChannel(type, cat)} title="Přidat node">
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </CategoryContextMenu>
               {!collapsed && chans.map((c) => {
                 const active = c.id === activeId;
                 const vp = voiceParticipants[c.id] ?? [];
@@ -130,29 +153,45 @@ export function ChannelSidebar({
                     <ChannelContextMenu
                       channel={c}
                       canManage={isAdmin}
-                      onCreateChannel={onCreateChannel}
-                      onOpenSettings={() => onOpenServerSettings?.()}
+                      onCreateChannel={(t) => onCreateChannel(t, c.category)}
+                      onOpenSettings={(ch) => setEditChannel(ch)}
                     >
-                      <button
-                        onClick={() => onSelect(c)}
+                      <div
                         className={cn(
-                          "sector-node w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors font-display tracking-wide",
+                          "sector-node group/node w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors font-display tracking-wide cursor-pointer",
                           active
                             ? "active text-foreground bg-primary/20 border border-primary [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]"
                             : "text-muted-foreground hover:text-foreground"
                         )}
+                        onClick={() => onSelect(c)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === "Enter") onSelect(c); }}
                       >
-                        {c.type === "text"
-                          ? <Hash className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
-                          : <Volume2 className={cn("w-4 h-4 shrink-0", active && "text-primary")} />}
+                        {c.emoji
+                          ? <span className="text-[15px] leading-none shrink-0">{c.emoji}</span>
+                          : c.type === "text"
+                            ? <Hash className={cn("w-4 h-4 shrink-0", active && "text-primary")} />
+                            : <Volume2 className={cn("w-4 h-4 shrink-0", active && "text-primary")} />}
                         <span className="truncate uppercase text-[13px]">{c.name}</span>
-                        {c.type === "voice" && hasSpeaker && (
-                          <span className="ml-auto holo-eq"><span/><span/><span/><span/></span>
-                        )}
-                        {active && !hasSpeaker && (
-                          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
-                        )}
-                      </button>
+                        <span className="ml-auto flex items-center gap-1.5 shrink-0">
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setEditChannel(c); }}
+                              className="opacity-0 group-hover/node:opacity-100 text-primary/70 hover:text-primary transition-opacity"
+                              title="Upravit node"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+                          {c.type === "voice" && hasSpeaker && (
+                            <span className="holo-eq"><span/><span/><span/><span/></span>
+                          )}
+                          {active && !hasSpeaker && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                          )}
+                        </span>
+                      </div>
                     </ChannelContextMenu>
                     {c.type === "voice" && vp.length > 0 && (
                       <ul className="ml-4 mt-1 mb-1.5 space-y-0.5 border-l border-primary/25 pl-3">
@@ -181,6 +220,15 @@ export function ChannelSidebar({
             </div>
           );
         })}
+
+        {isAdmin && (
+          <button
+            onClick={() => openCategoryDialog(null)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-[9px] font-display uppercase tracking-[0.26em] text-primary/60 border border-dashed border-primary/25 hover:text-primary hover:border-primary/60 transition-colors"
+          >
+            <Plus className="w-3 h-3" /> Nová sekce
+          </button>
+        )}
       </div>
 
       {/* Blueprint: NET LINK status strip */}
@@ -191,6 +239,21 @@ export function ChannelSidebar({
         </span>
         <span className="text-muted-foreground">● Sync</span>
       </div>
+
+      <ChannelSettingsDialog
+        channel={editChannel}
+        categories={categoryNames}
+        open={!!editChannel}
+        onOpenChange={(v) => { if (!v) setEditChannel(null); }}
+      />
+      <CategorySettingsDialog
+        guildId={guildId}
+        category={editCategory}
+        emoji={editCategory ? categoryEmojis[editCategory] ?? null : null}
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+        onSaved={onCategoriesChanged}
+      />
     </div>
   );
 }
