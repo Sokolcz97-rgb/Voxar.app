@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_access_ips: {
+        Row: {
+          code_id: string | null
+          created_at: string
+          id: string
+          ip: string
+          last_seen_at: string
+          user_id: string | null
+        }
+        Insert: {
+          code_id?: string | null
+          created_at?: string
+          id?: string
+          ip: string
+          last_seen_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          code_id?: string | null
+          created_at?: string
+          id?: string
+          ip?: string
+          last_seen_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_access_ips_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "download_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_commands: {
         Row: {
           content: Json
