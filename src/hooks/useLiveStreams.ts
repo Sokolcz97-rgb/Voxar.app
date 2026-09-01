@@ -67,7 +67,7 @@ export function useLiveStreams() {
         .catch((e) => console.warn("check-live-streams trigger failed", e));
     }
     const channel = supabase
-      .channel("live_streams_changes")
+      .channel(`live_streams_changes-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "live_streams_cache" },
