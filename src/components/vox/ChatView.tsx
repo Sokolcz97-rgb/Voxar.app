@@ -264,8 +264,15 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       <div className="h-14 px-5 flex items-center gap-3 border-b border-primary/15">
-        <Hash className="w-4 h-4 text-primary text-glow" />
+        {channel.emoji
+          ? <span className="text-base leading-none">{channel.emoji}</span>
+          : <Hash className="w-4 h-4 text-primary text-glow" />}
         <span className="font-display tracking-widest uppercase text-sm text-primary text-glow">{channel.name}</span>
+        {channel.topic && (
+          <span className="hidden md:block max-w-[38ch] truncate pl-3 ml-1 border-l border-primary/20 text-[11px] text-muted-foreground">
+            {channel.topic}
+          </span>
+        )}
         <span className="ml-auto text-[10px] font-display tracking-widest uppercase text-muted-foreground">
           NODE // {messages.length} PKT
         </span>
