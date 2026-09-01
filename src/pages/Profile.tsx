@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package, AppWindow, ClipboardList } from "lucide-react";
+import { Bell, Loader2, Volume2, Radio, ExternalLink, Link as LinkIcon, AtSign, UserCog, Package, AppWindow, ClipboardList, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHero } from "@/components/PageHero";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -18,6 +18,7 @@ import { AccountSettings } from "@/components/AccountSettings";
 import { AppearanceInventory } from "@/components/AppearanceInventory";
 import { MyGames } from "@/components/MyGames";
 import { SocialHandleField } from "@/components/SocialHandleField";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   ensureNotificationPermission,
   playNotifSound,
@@ -32,6 +33,7 @@ import { Play } from "lucide-react";
 const Profile = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { unreadMessages } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState("");
