@@ -2912,32 +2912,73 @@ export type Database = {
           },
         ]
       }
-      vox_channels: {
+      vox_categories: {
         Row: {
-          category: string | null
           created_at: string
+          emoji: string | null
           guild_id: string
           id: string
           name: string
           position: number
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          guild_id: string
+          id?: string
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          guild_id?: string
+          id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_categories_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_channels: {
+        Row: {
+          category: string | null
+          created_at: string
+          emoji: string | null
+          guild_id: string
+          id: string
+          name: string
+          position: number
+          topic: string | null
           type: Database["public"]["Enums"]["vox_channel_type"]
         }
         Insert: {
           category?: string | null
           created_at?: string
+          emoji?: string | null
           guild_id: string
           id?: string
           name: string
           position?: number
+          topic?: string | null
           type?: Database["public"]["Enums"]["vox_channel_type"]
         }
         Update: {
           category?: string | null
           created_at?: string
+          emoji?: string | null
           guild_id?: string
           id?: string
           name?: string
           position?: number
+          topic?: string | null
           type?: Database["public"]["Enums"]["vox_channel_type"]
         }
         Relationships: [

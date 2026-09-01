@@ -8,6 +8,13 @@
       "when": 1787997845804,
       "tag": "0000_moderation_log_admin_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788291366119,
+      "tag": "0001_vox_channel_customization",
+      "breakpoints": true
     }
   ]
 }

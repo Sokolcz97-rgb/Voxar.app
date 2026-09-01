@@ -185,20 +185,44 @@ export default function AppShell() {
 
   const [createChannelOpen, setCreateChannelOpen] = useState(false);
   const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
+  const [createChannelCategory, setCreateChannelCategory] = useState<string | null>(null);
+  const [categoryRows, setCategoryRows] = useState<Array<{ name: string; emoji: string | null }>>([]);
 
-  const openCreateChannel = (type: "text" | "voice") => {
+  const loadCategories = async () => {
+    if (!activeGuildId) { setCategoryRows([]); return; }
+    const { data } = await supabase.from("vox_categories")
+      .select("name, emoji").eq("guild_id", activeGuildId).order("position");
+    setCategoryRows((data ?? []) as any[]);
+  };
+  useEffect(() => { void loadCategories(); }, [activeGuildId]);
+
+  const categoryEmojis = useMemo(
+    () => Object.fromEntries(categoryRows.map((c) => [c.name, c.emoji])),
+    [categoryRows],
+  );
+  const categoryNames = useMemo(() => {
+    const fromChannels = channels.map((c) => c.category).filter(Boolean) as string[];
+    return Array.from(new Set([...categoryRows.map((c) => c.name), ...fromChannels]));
+  }, [categoryRows, channels]);
+
+  const openCreateChannel = (type: "text" | "voice", category?: string | null) => {
     if (!activeGuildId) return;
     setCreateChannelType(type);
+    setCreateChannelCategory(category ?? null);
     setCreateChannelOpen(true);
   };
 
-  const createChannel = async (type: "text" | "voice", name: string) => {
+  const createChannel = async (payload: {
+    type: "text" | "voice"; name: string; emoji: string | null; category: string | null; topic: string | null;
+  }) => {
     if (!activeGuildId) return;
     const { error } = await supabase.from("vox_channels").insert({
       guild_id: activeGuildId,
-      name: name.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
-      type,
-      category: type === "text" ? "Textové kanály" : "Hlasové kanály",
+      name: payload.name.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
+      type: payload.type,
+      emoji: payload.emoji,
+      topic: payload.topic,
+      category: payload.category ?? (payload.type === "text" ? "Textové kanály" : "Hlasové kanály"),
       position: channels.length,
     });
     if (error) {
@@ -284,16 +308,20 @@ export default function AppShell() {
                 <div className="holo-pod pod-left holo-float flex-1 min-h-0 flex flex-col overflow-hidden drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
 
                   <ChannelSidebar
+                    guildId={activeGuildId}
                     guildName={activeGuild.name}
                     inviteCode={inviteCode}
                     channels={channels}
+                    categoryEmojis={categoryEmojis}
                     activeId={activeChannel?.id ?? null}
                     onSelect={(ch) => { setActiveChannel(ch); setView("main"); }}
                     onCreateChannel={openCreateChannel}
                     isAdmin={isAdmin}
                     voiceParticipants={voiceParticipants}
                     onOpenServerSettings={() => setView("server-settings")}
+                    onCategoriesChanged={() => { void loadCategories(); }}
                   />
+
                 </div>
                 {voiceConn && (
                   <div className="holo-pod pod-left shrink-0 overflow-hidden">
@@ -409,9 +437,12 @@ export default function AppShell() {
       <CreateChannelDialog
         open={createChannelOpen}
         initialType={createChannelType}
+        initialCategory={createChannelCategory}
+        categories={categoryNames}
         onOpenChange={setCreateChannelOpen}
         onCreate={createChannel}
       />
+
       <DesktopUpdateFab />
     </div>
   );
