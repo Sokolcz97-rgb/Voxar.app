@@ -28,6 +28,8 @@ export function ChannelContextMenu({ channel, canManage, onCreateChannel, onOpen
       name: `${channel.name}-copy`.slice(0, 64),
       type: channel.type,
       category: channel.category,
+      emoji: channel.emoji ?? null,
+      topic: channel.topic ?? null,
       position: (channel.position ?? 0) + 1,
     });
     if (error) toast({ title: "Nelze duplikovat", description: error.message, variant: "destructive" });
