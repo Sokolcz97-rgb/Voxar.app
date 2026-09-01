@@ -2,35 +2,61 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Hash, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmojiPicker } from "@/components/vox/EmojiPicker";
+
+export interface NewChannelPayload {
+  type: "text" | "voice";
+  name: string;
+  emoji: string | null;
+  category: string | null;
+  topic: string | null;
+}
 
 interface Props {
   open: boolean;
   initialType?: "text" | "voice";
+  initialCategory?: string | null;
+  categories?: string[];
   onOpenChange: (v: boolean) => void;
-  onCreate: (type: "text" | "voice", name: string) => Promise<void> | void;
+  onCreate: (payload: NewChannelPayload) => Promise<void> | void;
 }
 
-export function CreateChannelDialog({ open, initialType = "text", onOpenChange, onCreate }: Props) {
+export function CreateChannelDialog({
+  open, initialType = "text", initialCategory = null, categories = [], onOpenChange, onCreate,
+}: Props) {
   const [type, setType] = useState<"text" | "voice">(initialType);
   const [name, setName] = useState("");
+  const [emoji, setEmoji] = useState<string | null>(null);
+  const [topic, setTopic] = useState("");
+  const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (open) {
       setType(initialType);
       setName("");
+      setEmoji(null);
+      setTopic("");
+      setCategory(initialCategory ?? (initialType === "text" ? "Textové kanály" : "Hlasové kanály"));
       setBusy(false);
     }
-  }, [open, initialType]);
+  }, [open, initialType, initialCategory]);
 
   const submit = async () => {
     const clean = name.trim();
     if (!clean) return;
     setBusy(true);
     try {
-      await onCreate(type, clean);
+      await onCreate({
+        type,
+        name: clean,
+        emoji,
+        category: category.trim() || null,
+        topic: topic.trim() || null,
+      });
       onOpenChange(false);
     } finally {
       setBusy(false);
@@ -81,15 +107,64 @@ export function CreateChannelDialog({ open, initialType = "text", onOpenChange, 
 
           <div>
             <div className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 mb-1.5">
-              // Node ID
+              // Ikona &amp; Node ID
+            </div>
+            <div className="flex gap-2">
+              <EmojiPicker
+                value={emoji}
+                onChange={setEmoji}
+                fallback={type === "text" ? <Hash className="w-4 h-4 text-primary/70" /> : <Volume2 className="w-4 h-4 text-primary/70" />}
+              />
+              <Input
+                value={name}
+                autoFocus
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
+                placeholder={type === "text" ? "obecné" : "General"}
+                className="bg-background/40 border-primary/30 font-display tracking-wider focus-visible:border-primary/70 focus-visible:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 mb-1.5">
+              // Sekce (kategorie)
             </div>
             <Input
-              value={name}
-              autoFocus
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
-              placeholder={type === "text" ? "obecné" : "General"}
-              className="bg-background/40 border-primary/30 font-display tracking-wider focus-visible:border-primary/70 focus-visible:ring-primary/30"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              list="vox-create-category-list"
+              className="bg-background/40 border-primary/30 font-display tracking-wider"
+            />
+            <datalist id="vox-create-category-list">
+              {categories.map((c) => <option key={c} value={c} />)}
+            </datalist>
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    className="px-2 py-1 text-[9px] font-display uppercase tracking-[0.2em] border border-primary/25 text-muted-foreground hover:text-primary hover:border-primary/60 transition-colors"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="text-[10px] font-display uppercase tracking-[0.28em] text-primary/70 mb-1.5">
+              // Popis (nepovinné)
+            </div>
+            <Textarea
+              value={topic}
+              onChange={(e) => setTopic(e.target.value.slice(0, 300))}
+              rows={2}
+              placeholder="K čemu tenhle node slouží?"
+              className="bg-background/40 border-primary/30 resize-none"
             />
           </div>
         </div>
