@@ -569,11 +569,19 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
     createMainWindow(targetUrl);
     createTray();
     applyAutoStart(settings.autoStart);
-    mainWindow.webContents.once("did-finish-load", () => {
-      launcherWindow?.close();
+    // Pojistka: když se stránka nenačte (offline, výpadek serveru), okno se
+    // dřív nikdy neukázalo a launcher zůstal viset — aplikace „nešla spustit".
+    let shown = false;
+    const reveal = () => {
+      if (shown) return;
+      shown = true;
+      try { launcherWindow?.close(); } catch {}
       launcherWindow = null;
       if (!settings.startMinimized) mainWindow?.show();
-    });
+    };
+    mainWindow.webContents.once("did-finish-load", reveal);
+    mainWindow.webContents.once("did-fail-load", () => setTimeout(reveal, 500));
+    setTimeout(reveal, 15_000);
   } else {
     // Okno už existuje — přepni ho na vybraný modul (jinak by uživatel
     // zůstal v tom předchozím).
@@ -591,9 +599,18 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
 ipcMain.handle("app:open-module", (_e, mod) => {
   const key = typeof mod === "string" ? mod : mod?.module;
   if (key === "browser") {
+    const info = getModulesInfo();
+    if (!info.browser.installed) {
+      if (!info.browser.available) {
+        shell.openExternal(DOWNLOAD_PAGE);
+        return { ok: false, needsDownload: true, url: DOWNLOAD_PAGE };
+      }
+      writeModulesState({ browser: { installed: true, installedAt: new Date().toISOString() } });
+    }
     createBrowserWindow();
     return { ok: true };
   }
+
   const targetUrl = MODULE_URLS[key];
   if (!targetUrl) return { ok: false };
   pendingModule = key;
