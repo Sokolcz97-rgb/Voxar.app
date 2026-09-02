@@ -165,9 +165,6 @@ export default function Download() {
       setPointer(p);
       setLoading(false);
     });
-    loadBrowserPointer().then((p) => {
-      if (alive) setBrowserPointer(p);
-    });
     return () => { alive = false; };
   }, [unlocked]);
 
