@@ -14,6 +14,40 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.0.14-alpha",
+    date: "2026-09-02",
+    title: "Volné stahování, reset klíčů a záložky v prohlížeči",
+    titleEn: "Open downloads, key reset and browser bookmarks",
+    changes: [
+      {
+        type: "improvement",
+        text: "Stránka Ke stažení už nevyžaduje přístupový kód – instalátor si stáhne kdokoliv.",
+        textEn: "The Download page no longer asks for an access code – anyone can grab the installer.",
+      },
+      {
+        type: "security",
+        text: "Přístupový klíč se nově vyžaduje až při spuštění Voxar.app (na webu i v nainstalované aplikaci).",
+        textEn: "The access key is now required only when launching Voxar.app (web and installed app).",
+      },
+      {
+        type: "security",
+        text: "Všechny dosud použité klíče byly resetovány včetně zapamatovaných IP adres – každý je musí zadat znovu.",
+        textEn: "All previously redeemed keys were reset, including remembered IP addresses – everyone must enter them again.",
+      },
+      {
+        type: "feature",
+        text: "VoxarioBrowser má záložky: lišta, panel se správou a import z Chrome, Edge, Opera GX, Opery, Brave, Vivaldi i Firefoxu.",
+        textEn: "VoxarioBrowser gained bookmarks: a bar, a management panel and import from Chrome, Edge, Opera GX, Opera, Brave, Vivaldi and Firefox.",
+      },
+      {
+        type: "feature",
+        text: "Export záložek do Netscape HTML nebo JSON a import z libovolného exportovaného souboru (Ctrl+D, Ctrl+Shift+B).",
+        textEn: "Bookmark export to Netscape HTML or JSON and import from any exported file (Ctrl+D, Ctrl+Shift+B).",
+      },
+    ],
+  },
+  {
+
     version: "0.0.12-alpha",
     date: "2026-08-29",
     title: "Oprava přihlášení v desktop aplikaci",
