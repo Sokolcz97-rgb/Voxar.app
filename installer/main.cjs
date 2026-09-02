@@ -20,10 +20,32 @@ const sevenBin = require("7zip-bin");
 const Winreg = require("winreg");
 const ws = require("windows-shortcuts");
 
-const APP_NAME = "Voxar.app";
-const APP_EXE = "Voxar.app.exe";
+// Produkt se čte z resources/product.json — stejný instalátor a stejný payload
+// (build Voxar.app) umí nainstalovat i samostatný VoxarioBrowser.
+const PRODUCT = (() => {
+  const defaults = {
+    id: "voxar-app",
+    name: "Voxar.app",
+    exe: "Voxar.app.exe",
+    args: [],
+    browserOnly: false,
+  };
+  for (const p of [
+    path.join(process.resourcesPath || __dirname, "product.json"),
+    path.join(__dirname, "resources", "product.json"),
+  ]) {
+    try {
+      if (fs.existsSync(p)) return { ...defaults, ...JSON.parse(fs.readFileSync(p, "utf8")) };
+    } catch {}
+  }
+  return defaults;
+})();
+
+const APP_NAME = PRODUCT.name;
+const APP_EXE = PRODUCT.exe;
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), APP_NAME);
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${APP_NAME}`;
+
 
 const isUninstall = process.argv.includes("--uninstall");
 
