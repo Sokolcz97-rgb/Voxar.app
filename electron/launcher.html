@@ -488,6 +488,14 @@
     $('continueBtn').addEventListener('click', () => {
       ipcRenderer.invoke('launcher:continue');
     });
+
+    const splashContinueBtn = $('splashContinueBtn');
+    splashContinueBtn.addEventListener('click', () => {
+      ipcRenderer.invoke('launcher:continue');
+    });
+    ipcRenderer.on('launcher:ready', () => {
+      splashContinueBtn.style.display = '';
+    });
   </script>
 </body>
 </html>
