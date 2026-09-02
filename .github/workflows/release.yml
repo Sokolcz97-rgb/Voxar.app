@@ -154,11 +154,9 @@ jobs:
             Automatický build z commitu ${{ github.sha }}.
             Verze: ${{ steps.appver.outputs.version }}
 
-            - `VoxarAppSetup-${{ steps.appver.outputs.version }}.exe` — Voxar.app (rozcestník: HUB / Voxar.app / VoxarioBrowser)
-            - `VoxarioBrowserSetup-${{ steps.appver.outputs.version }}.exe` — samostatný VoxarioBrowser (Chromium engine)
+            - `StudioVoxarioSetup-${{ steps.appver.outputs.version }}.exe` — jeden instalátor: Voxar.app + modul VoxarioBrowser (volitelně)
           files: |
-            installer/dist/final/VoxarAppSetup-${{ steps.appver.outputs.version }}.exe
-            installer/dist/final/VoxarioBrowserSetup-${{ steps.appver.outputs.version }}.exe
+            installer/dist/final/StudioVoxarioSetup-${{ steps.appver.outputs.version }}.exe
           prerelease: true
           make_latest: 'false'
         env:
@@ -169,8 +167,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path src/assets/downloads | Out-Null
           $base = "https://github.com/${{ github.repository }}/releases/download/desktop-latest"
-          $url        = "$base/${{ steps.locate.outputs.app_filename }}"
-          $browserUrl = "$base/${{ steps.locate.outputs.browser_filename }}"
+          $url  = "$base/${{ steps.locate.outputs.app_filename }}"
 
           $obj = [ordered]@{
             version           = 1
@@ -186,20 +183,6 @@ jobs:
           }
           Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value ($obj | ConvertTo-Json -Depth 5) -Encoding UTF8
 
-          $objB = [ordered]@{
-            version           = 1
-            url               = $browserUrl
-            original_filename = "${{ steps.locate.outputs.browser_filename }}"
-            size              = [int64]"${{ steps.locate.outputs.browser_size }}"
-            sha256            = "${{ steps.locate.outputs.browser_sha256 }}"
-            content_type      = "application/x-msdownload"
-            source            = "github-release"
-            tag               = "desktop-latest"
-            commit            = "${{ github.sha }}"
-            updated_at        = (Get-Date).ToUniversalTime().ToString("o")
-          }
-          Set-Content -Path src/assets/downloads/browser-installer.asset.json -Value ($objB | ConvertTo-Json -Depth 5) -Encoding UTF8
-
           New-Item -ItemType Directory -Force -Path public | Out-Null
           $manifest = [ordered]@{
             version    = "${{ steps.appver.outputs.version }}"
@@ -208,12 +191,6 @@ jobs:
             sha256     = "${{ steps.locate.outputs.app_sha256 }}"
             size       = [int64]"${{ steps.locate.outputs.app_size }}"
             filename   = "${{ steps.locate.outputs.app_filename }}"
-            browser    = [ordered]@{
-              url      = $browserUrl
-              sha256   = "${{ steps.locate.outputs.browser_sha256 }}"
-              size     = [int64]"${{ steps.locate.outputs.browser_size }}"
-              filename = "${{ steps.locate.outputs.browser_filename }}"
-            }
             channels   = [ordered]@{
               stable = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
               beta   = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
@@ -227,7 +204,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/assets/downloads/windows-installer.asset.json src/assets/downloads/browser-installer.asset.json public/desktop-version.json
+          git add src/assets/downloads/windows-installer.asset.json public/desktop-version.json
+
           if git diff --cached --quiet; then
             echo "No pointer changes to commit."
           else
