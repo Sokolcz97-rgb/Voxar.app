@@ -77,6 +77,8 @@ if (!gotLock) {
 }
 
 let mainWindow = null;
+let browserWindow = null;
+
 let settingsWindow = null;
 let tray = null;
 let isQuitting = false;
