@@ -148,7 +148,8 @@ jobs:
             "$($t.key)_filename=$($t.out)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
 
-          "paths=$($paths -join "`n")" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host ("== Built installers ==`n" + ($paths -join "`n"))
+
 
       - name: Create / update GitHub Release
         id: release
