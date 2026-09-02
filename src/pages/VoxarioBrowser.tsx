@@ -10,8 +10,11 @@ import {
   ArrowRight,
   RotateCw,
   Globe,
+  LogOut,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrowserWebview, type WebviewHandle } from "@/components/vox/BrowserWebview";
 
 export type BrowserTab = {
   id: string;
@@ -31,9 +34,15 @@ const DOCK_ITEMS = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+function getDesktopBridge(): any {
+  if (typeof window === "undefined") return null;
+  return (window as any).studioVoxarioDesktop ?? null;
+}
+
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
+
 
 function normalizeUrl(input: string) {
   const trimmed = input.trim();
@@ -50,9 +59,15 @@ export default function VoxarioBrowser() {
   const [activeTabId, setActiveTabId] = useState<string>(INITIAL_TABS[0].id);
   const [urlInput, setUrlInput] = useState<string>(INITIAL_TABS[0].url);
   const [activeDock, setActiveDock] = useState<string | null>(null);
+  const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, loading: false });
   const urlInputRef = useRef<HTMLInputElement>(null);
+  const engines = useRef<Record<string, WebviewHandle | null>>({});
+  const desktop = getDesktopBridge();
+  const hasEngine = typeof window !== "undefined" && !!(window as any).process?.versions?.electron
+    || !!desktop?.isDesktop;
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+
 
   const updateActiveTabUrl = useCallback(
     (url: string) => {
@@ -112,19 +127,29 @@ export default function VoxarioBrowser() {
   );
 
   const navigateBack = useCallback(() => {
-    // Mock navigation history — real Electron webview will call webview.goBack()
-    setUrlInput((prev) => prev);
-  }, []);
+    engines.current[activeTabId]?.goBack();
+  }, [activeTabId]);
 
   const navigateForward = useCallback(() => {
-    // Mock navigation history — real Electron webview will call webview.goForward()
-    setUrlInput((prev) => prev);
-  }, []);
+    engines.current[activeTabId]?.goForward();
+  }, [activeTabId]);
 
   const reloadPage = useCallback(() => {
-    // Mock reload — real Electron webview will call webview.reload()
-    setUrlInput(activeTab?.url ?? "");
-  }, [activeTab?.url]);
+    const engine = engines.current[activeTabId];
+    if (engine) engine.reload();
+    else setUrlInput(activeTab?.url ?? "");
+  }, [activeTabId, activeTab?.url]);
+
+  const returnToLauncher = useCallback(() => {
+    getDesktopBridge()?.returnToLauncher?.();
+  }, []);
+
+  const openVoxarApp = useCallback(() => {
+    const bridge = getDesktopBridge();
+    if (bridge?.openModule) bridge.openModule("app");
+    else window.location.assign("/app");
+  }, []);
+
 
   const handleDockClick = useCallback(
     (id: string) => {
@@ -187,6 +212,24 @@ export default function VoxarioBrowser() {
           })}
 
           <div className="flex-1" />
+
+          <button
+            type="button"
+            onClick={openVoxarApp}
+            title="Voxar.app"
+            className="relative w-10 h-10 flex items-center justify-center bg-secondary/40 hover:bg-gold/15 text-muted-foreground hover:text-gold transition-all duration-200"
+          >
+            <Network className="w-[18px] h-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={returnToLauncher}
+            title="Zpět do launcheru"
+            className="relative w-10 h-10 flex items-center justify-center bg-secondary/40 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all duration-200"
+          >
+            <LogOut className="w-[18px] h-[18px]" />
+          </button>
+
 
           <div className="font-display text-[9px] tracking-[0.3em] text-muted-foreground/60 uppercase rotate-180 [writing-mode:vertical-rl]">
             Voxario
@@ -253,19 +296,22 @@ export default function VoxarioBrowser() {
               <button
                 type="button"
                 onClick={navigateBack}
+                disabled={hasEngine && !navState.canGoBack}
                 title="Back"
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={navigateForward}
+                disabled={hasEngine && !navState.canGoForward}
                 title="Forward"
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
+
               <button
                 type="button"
                 onClick={reloadPage}
@@ -293,22 +339,42 @@ export default function VoxarioBrowser() {
 
         {/* Viewport */}
         <div className="holo-pod pod-center flex-1 min-h-0 overflow-hidden relative">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-center p-8 pointer-events-none select-none">
-            <div className="hex-frame w-28 h-28 flex items-center justify-center bg-primary/5 animate-pulse">
-              <Globe className="w-12 h-12 text-primary/60 text-glow" />
+          {hasEngine ? (
+            tabs.map((tab) => (
+              <BrowserWebview
+                key={tab.id}
+                url={tab.url}
+                active={tab.id === activeTabId}
+                onRegister={(api) => { engines.current[tab.id] = api; }}
+                onNavigate={(next) => {
+                  setTabs((prev) => prev.map((t) => (t.id === tab.id ? { ...t, url: next } : t)));
+                  if (tab.id === activeTabId) setUrlInput(next);
+                }}
+                onTitle={(title) =>
+                  setTabs((prev) => prev.map((t) => (t.id === tab.id ? { ...t, title } : t)))
+                }
+                onNavState={(s) => { if (tab.id === activeTabId) setNavState(s); }}
+              />
+            ))
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-center p-8 pointer-events-none select-none">
+              <div className="hex-frame w-28 h-28 flex items-center justify-center bg-primary/5 animate-pulse">
+                <Globe className="w-12 h-12 text-primary/60 text-glow" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="font-display text-xl tracking-[0.22em] uppercase text-glow">
+                  VoxarioBrowser
+                </h1>
+                <p className="font-mono text-sm text-muted-foreground max-w-md">
+                  Chromium engine běží pouze v desktopové aplikaci. Ve webové verzi je náhled vypnutý.
+                </p>
+              </div>
+              <div className="font-mono text-xs text-muted-foreground/60 border border-primary/20 px-4 py-2 bg-background/40">
+                Active URL: {activeTab?.url || "—"}
+              </div>
             </div>
-            <div className="space-y-2">
-              <h1 className="font-display text-xl tracking-[0.22em] uppercase text-glow">
-                VoxarioBrowser
-              </h1>
-              <p className="font-mono text-sm text-muted-foreground max-w-md">
-                [Electron &lt;webview&gt; Engine Initialized Here]
-              </p>
-            </div>
-            <div className="font-mono text-xs text-muted-foreground/60 border border-primary/20 px-4 py-2 bg-background/40">
-              Active URL: {activeTab?.url || "—"}
-            </div>
-          </div>
+          )}
+
 
           {/* Decorative HUD grid lines inside viewport */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
