@@ -220,21 +220,11 @@ export default function Download() {
               <p className="text-xs text-muted-foreground mt-3">
                 {filename}{sizeMb ? ` · ${sizeMb}` : ""}
               </p>
-              {browserPointer && (
-                <div className="mt-6">
-                  <Button size="lg" variant="outline" className="btn-3d" asChild>
-                    <a href={browserPointer.url} download={browserPointer.original_filename}>
-                      <Globe className="h-5 w-5 mr-2" />
-                      Stáhnout VoxarioBrowser
-                    </a>
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {browserPointer.original_filename}
-                    {browserPointer.size ? ` · ${(browserPointer.size / 1_000_000).toFixed(1)} MB` : ""}
-                    {" · samostatný prohlížeč s Chromium enginem"}
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-primary" />
+                Obsahuje i modul VoxarioBrowser – vybereš ho přímo v instalátoru.
+              </p>
+
             </>
           ) : (
             <Card className="max-w-lg mx-auto p-6 border-primary/40">
