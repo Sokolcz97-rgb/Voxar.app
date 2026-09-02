@@ -58,6 +58,7 @@ import FormEditor from "./pages/FormEditor.tsx";
 import FormResults from "./pages/FormResults.tsx";
 import PublicForm from "./pages/PublicForm.tsx";
 import DownloadDesktop from "./pages/DownloadDesktop.tsx";
+import VoxarioBrowser from "./pages/VoxarioBrowser.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
 import AdminConsole from "./pages/AdminConsole.tsx";
 import AdminCosmetics from "./pages/AdminCosmetics.tsx";
