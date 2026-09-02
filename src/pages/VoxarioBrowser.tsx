@@ -127,19 +127,29 @@ export default function VoxarioBrowser() {
   );
 
   const navigateBack = useCallback(() => {
-    // Mock navigation history — real Electron webview will call webview.goBack()
-    setUrlInput((prev) => prev);
-  }, []);
+    engines.current[activeTabId]?.goBack();
+  }, [activeTabId]);
 
   const navigateForward = useCallback(() => {
-    // Mock navigation history — real Electron webview will call webview.goForward()
-    setUrlInput((prev) => prev);
-  }, []);
+    engines.current[activeTabId]?.goForward();
+  }, [activeTabId]);
 
   const reloadPage = useCallback(() => {
-    // Mock reload — real Electron webview will call webview.reload()
-    setUrlInput(activeTab?.url ?? "");
-  }, [activeTab?.url]);
+    const engine = engines.current[activeTabId];
+    if (engine) engine.reload();
+    else setUrlInput(activeTab?.url ?? "");
+  }, [activeTabId, activeTab?.url]);
+
+  const returnToLauncher = useCallback(() => {
+    getDesktopBridge()?.returnToLauncher?.();
+  }, []);
+
+  const openVoxarApp = useCallback(() => {
+    const bridge = getDesktopBridge();
+    if (bridge?.openModule) bridge.openModule("app");
+    else window.location.assign("/app");
+  }, []);
+
 
   const handleDockClick = useCallback(
     (id: string) => {
