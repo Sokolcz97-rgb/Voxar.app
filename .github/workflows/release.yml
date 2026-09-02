@@ -88,9 +88,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           $targets = @(
-            [ordered]@{ key = "app";     payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "Voxar.app";       prompt = "Instalovat Voxar.app?";      out = "VoxarAppSetup-$version.exe" },
-            [ordered]@{ key = "browser"; payload = "installer/dist/VoxarioBrowserInstaller-win32-x64"; exe = "VoxarioBrowserInstaller.exe"; title = "VoxarioBrowser"; prompt = "Instalovat VoxarioBrowser?"; out = "VoxarioBrowserSetup-$version.exe" }
+            [ordered]@{ key = "app"; payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "StudioVoxario"; prompt = "Instalovat StudioVoxario (Voxar.app + VoxarioBrowser)?"; out = "StudioVoxarioSetup-$version.exe" }
           )
+
 
           $paths = @()
           foreach ($t in $targets) {
