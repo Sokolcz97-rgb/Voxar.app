@@ -180,9 +180,9 @@ ipcMain.handle("installer:uninstall", async (_e, opts) => {
   const dir = opts?.dir || DEFAULT_DIR;
   assertSafeInstallDir(dir);
   send("log", `Odinstalace: ${dir}`);
+  await removeDir(dir, (p) => send("progress", { phase: "remove", pct: p }));
   await removeShortcuts();
   await removeUninstallRegistry();
-  await removeDir(dir, (p) => send("progress", { phase: "remove", pct: p }));
   send("progress", { phase: "done", pct: 1 });
   return { ok: true };
 });
@@ -299,6 +299,8 @@ function writeUninstallRegistry(dir) {
   const uninstallExe = path.join(UNINSTALL_DIR, path.basename(process.execPath));
   if (!fs.existsSync(uninstallExe)) throw new Error("Odinstalátor nebyl správně vytvořen.");
   const uninstallCommand = `"${uninstallExe}" --uninstall --target=${encodeURIComponent(dir)}`;
+  const installedSizeKb = Math.min(0x7fffffff, Math.ceil(directorySize(dir) / 1024));
+  const installDate = new Date().toISOString().slice(0, 10).replaceAll("-", "");
 
   return new Promise((resolve) => {
     reg.create(() => {
@@ -308,8 +310,10 @@ function writeUninstallRegistry(dir) {
         ["DisplayVersion", "REG_SZ", app.getVersion()],
         ["Publisher", "REG_SZ", "StudioVoxario"],
         ["InstallLocation", "REG_SZ", dir],
+        ["InstallDate", "REG_SZ", installDate],
         ["UninstallString", "REG_SZ", uninstallCommand],
         ["QuietUninstallString", "REG_SZ", uninstallCommand],
+        ["EstimatedSize", "REG_DWORD", String(installedSizeKb)],
         ["NoModify", "REG_DWORD", "1"],
         ["NoRepair", "REG_DWORD", "1"],
       ];
@@ -317,6 +321,21 @@ function writeUninstallRegistry(dir) {
       entries.forEach(([k, t, v]) => reg.set(k, t, v, () => { if (--remaining === 0) resolve(); }));
     });
   });
+}
+
+function directorySize(dir) {
+  let total = 0;
+  const pending = [dir];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current) continue;
+    for (const item of fs.readdirSync(current, { withFileTypes: true })) {
+      const itemPath = path.join(current, item.name);
+      if (item.isDirectory()) pending.push(itemPath);
+      else if (item.isFile()) total += fs.statSync(itemPath).size;
+    }
+  }
+  return total;
 }
 
 function removeUninstallRegistry() {
