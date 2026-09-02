@@ -20,6 +20,17 @@ export function DesktopRouteGuard() {
       (window as any).studioVoxarioDesktop?.isDesktop === true;
     if (!isDesktop) return;
 
+    // Modul „StudioVoxario HUB" se v desktopu spouští s ?hub=1 — v tom režimu
+    // je celý web povolený (uživatel se vrací do launcheru přes rozcestník).
+    try {
+      if (new URLSearchParams(window.location.search).get("hub") === "1") {
+        sessionStorage.setItem("sv_desktop_hub", "1");
+      }
+      if (sessionStorage.getItem("sv_desktop_hub") === "1") return;
+    } catch {
+      /* sessionStorage nedostupný */
+    }
+
     const path = location.pathname;
     // Cesty, které v desktop aplikaci dávají smysl.
     const allowed =
@@ -33,6 +44,7 @@ export function DesktopRouteGuard() {
       navigate("/app", { replace: true });
     }
   }, [location.pathname, navigate]);
+
 
   return null;
 }
