@@ -4,8 +4,13 @@ const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
 let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", components: { app: true, browser: true } };
+let operationRunning = false;
 
 async function boot() {
+  if (!window.installer) {
+    document.body.innerHTML = '<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor nelze spustit: komunikační rozhraní nebylo načteno.</main>';
+    return;
+  }
   const d = await window.installer.defaults();
   state.dir = d.defaultDir;
   state.mode = d.mode;
@@ -58,7 +63,7 @@ async function boot() {
   $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
   $("closeBtn").addEventListener("click", () => window.installer.close());
   $("btnMin").addEventListener("click", () => window.installer.minimize?.());
-  $("btnClose").addEventListener("click", () => window.installer.close());
+  $("btnClose").addEventListener("click", () => { if (!operationRunning) window.installer.close(); });
   $("uninCancel").addEventListener("click", () => window.installer.close());
   $("uninGo").addEventListener("click", startUninstall);
 
@@ -85,6 +90,8 @@ function activate(step) {
 }
 
 async function startInstall() {
+  operationRunning = true;
+  $("btnClose").disabled = true;
   activate("install");
   try {
     await window.installer.install({
@@ -107,11 +114,16 @@ async function startInstall() {
     $("launchBtn").style.display = "none";
     $("launchBrowserBtn").style.display = "none";
     activate("done");
+  } finally {
+    operationRunning = false;
+    $("btnClose").disabled = false;
   }
 }
 
 
 async function startUninstall() {
+  operationRunning = true;
+  $("btnClose").disabled = true;
   activate("install");
   try {
     await window.installer.uninstall({ dir: state.dir });
@@ -121,9 +133,16 @@ async function startUninstall() {
     activate("done");
   } catch (err) {
     $("doneTitle").textContent = "Odinstalace se nezdařila";
-    $("doneMsg").textContent = String(err?.message || err);
+    $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
     activate("done");
+  } finally {
+    operationRunning = false;
+    $("btnClose").disabled = false;
   }
 }
 
-boot();
+boot().catch((err) => {
+  console.error(err);
+  const message = String(err?.message || err);
+  document.body.innerHTML = `<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor se nepodařilo inicializovat.<br><br>${message}</main>`;
+});

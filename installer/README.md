@@ -5,7 +5,7 @@ Vlastní HUD Electron instalátor pro Windows — bez klasického Windows okna, 
 ## Co dělá
 
 1. HUD wizard: Vítejte → Umístění → **Kanál (Stable / Beta)** → Instalace → Hotovo.
-2. Rozbalí přiložený `resources/app.7z` do `%LOCALAPPDATA%\StudioVoxario`.
+2. Rozbalí přiložený `resources/app.7z` do `%LOCALAPPDATA%\Voxar.app`.
 3. Vytvoří zkratky (Start Menu + volitelně plocha) přes `windows-shortcuts` (LNK přes native, žádný `powershell.exe`).
 4. Zapíše `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario` přes `winreg`.
 5. Uloží `channel.json` do install složky — launcher ho čte a nastaví `autoUpdater.channel`.
@@ -17,8 +17,8 @@ Vlastní HUD Electron instalátor pro Windows — bez klasického Windows okna, 
 ```bash
 # 1) V root repa: vytvoř Windows build aplikace
 cd /dev-server
-npx vite build
-npx @electron/packager electron StudioVoxario \
+npm run desktop:prepare
+npx @electron/packager electron Voxar.app \
   --platform=win32 --arch=x64 \
   --out=electron-release --overwrite
 

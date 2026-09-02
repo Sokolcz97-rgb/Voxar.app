@@ -10,6 +10,7 @@ const {
   shell,
   session,
   desktopCapturer,
+  dialog,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -25,6 +26,7 @@ const HUB_URL = (() => {
 })();
 // "browser" je nativní Electron modul (browser.html), ne webová routa.
 const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
+const LOCAL_RENDERER = path.join(__dirname, "dist", "index.html");
 let pendingModule = "app";
 
 // Samostatná instalace VoxarioBrowseru: product.json vedle exe (nebo --browser)
@@ -213,6 +215,49 @@ function showMain() {
   mainWindow.focus();
 }
 
+function localRouteFor(url) {
+  if (url === HUB_URL) return "/launcher";
+  return "/app";
+}
+
+async function showRendererFailure(targetUrl, remoteError, localError) {
+  const details = [
+    `Online adresa: ${targetUrl}`,
+    `Lokální UI: ${LOCAL_RENDERER}`,
+    `Online chyba: ${remoteError?.message || remoteError || "neznámá"}`,
+    `Lokální chyba: ${localError?.message || localError || "neznámá"}`,
+  ].join("\n");
+  console.error("Voxar.app renderer nelze načíst\n" + details);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
+  await dialog.showMessageBox(mainWindow || undefined, {
+    type: "error",
+    title: "Voxar.app nelze spustit",
+    message: "Nepodařilo se načíst online ani lokální uživatelské rozhraní.",
+    detail: details,
+    buttons: ["Zavřít"],
+  });
+}
+
+async function loadMainTarget(targetUrl) {
+  try {
+    await mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+    return true;
+  } catch (remoteError) {
+    console.error("Online UI se nenačetlo, zkouším lokální renderer", remoteError);
+    if (!fs.existsSync(LOCAL_RENDERER)) {
+      await showRendererFailure(targetUrl, remoteError, new Error("dist/index.html není součástí balíčku"));
+      return false;
+    }
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (localError) {
+      await showRendererFailure(targetUrl, remoteError, localError);
+      return false;
+    }
+  }
+}
+
 function createMainWindow(startUrl) {
   const targetUrl = startUrl || MODULE_URLS[pendingModule] || APP_URL;
   mainWindow = new BrowserWindow({
@@ -242,7 +287,7 @@ function createMainWindow(startUrl) {
 
   // Načítáme vždy čerstvou verzi (jinak Electron drží starý HTML/JS v cache
   // a uživatel vidí zastaralé přihlašovací okno).
-  mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+  loadMainTarget(targetUrl).catch((error) => console.error("Renderer startup failed", error));
 
   // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
   mainWindow.webContents.once("did-finish-load", () => {
@@ -591,7 +636,7 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
     // Okno už existuje — přepni ho na vybraný modul (jinak by uživatel
     // zůstal v tom předchozím).
     try {
-      mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+      loadMainTarget(targetUrl).catch((error) => console.error("Module switch failed", error));
     } catch {}
     launcherWindow?.close();
     launcherWindow = null;
@@ -623,7 +668,7 @@ ipcMain.handle("app:open-module", (_e, mod) => {
     createMainWindow(targetUrl);
     mainWindow.once("ready-to-show", () => mainWindow?.show());
   } else {
-    mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+    loadMainTarget(targetUrl).catch((error) => console.error("Module open failed", error));
     showMain();
   }
   return { ok: true };

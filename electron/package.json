@@ -7,13 +7,16 @@
   "main": "main.cjs",
   "private": true,
   "dependencies": {
-    "@electron/packager": "^20.0.3",
-    "electron": "^31.7.7",
     "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.3",
+    "electron": "^31.7.7"
   },
   "scripts": {
     "start": "electron .",
-    "pack:win": "@electron/packager . Voxar.app --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico",
-    "pack:linux": "@electron/packager . Voxar.app --platform=linux --arch=x64 --out=dist --overwrite"
+    "verify:renderer": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.html'))throw Error('Missing electron/dist/index.html')\"",
+    "pack:win": "npm run verify:renderer && @electron/packager . Voxar.app --platform=win32 --arch=x64 --out=release --overwrite --asar --icon=assets/icon.ico --ignore='^/release($|/)'",
+    "pack:linux": "npm run verify:renderer && @electron/packager . Voxar.app --platform=linux --arch=x64 --out=release --overwrite --asar --ignore='^/release($|/)'"
   }
 }
