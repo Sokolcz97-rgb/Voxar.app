@@ -434,6 +434,13 @@ ipcMain.handle("launcher:open-logs", () => {
 });
 ipcMain.handle("launcher:continue", (_e, payload) => {
   const mod = typeof payload === "string" ? payload : payload?.module;
+  if (mod === "browser") {
+    createBrowserWindow();
+    createTray();
+    try { launcherWindow?.close(); } catch {}
+    launcherWindow = null;
+    return { ok: true };
+  }
   if (mod && MODULE_URLS[mod]) pendingModule = mod;
   const targetUrl = MODULE_URLS[pendingModule] || APP_URL;
   if (!mainWindow) {
@@ -455,11 +462,16 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
     launcherWindow = null;
     showMain();
   }
+  return { ok: true };
 });
 
 // Přepnutí modulu přímo z běžícího okna (např. tlačítko Voxar.app v prohlížeči).
 ipcMain.handle("app:open-module", (_e, mod) => {
   const key = typeof mod === "string" ? mod : mod?.module;
+  if (key === "browser") {
+    createBrowserWindow();
+    return { ok: true };
+  }
   const targetUrl = MODULE_URLS[key];
   if (!targetUrl) return { ok: false };
   pendingModule = key;
@@ -472,6 +484,52 @@ ipcMain.handle("app:open-module", (_e, mod) => {
   }
   return { ok: true };
 });
+
+// -------- VoxarioBrowser: nativní Chromium okno --------
+function createBrowserWindow() {
+  if (browserWindow && !browserWindow.isDestroyed()) {
+    if (browserWindow.isMinimized()) browserWindow.restore();
+    browserWindow.show();
+    browserWindow.focus();
+    return browserWindow;
+  }
+  browserWindow = new BrowserWindow({
+    width: 1440,
+    height: 920,
+    minWidth: 900,
+    minHeight: 600,
+    frame: false,
+    backgroundColor: "#05070d",
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "assets", "icon.png"),
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+      webviewTag: true,
+      webSecurity: true,
+    },
+  });
+  browserWindow.loadFile(path.join(__dirname, "browser.html"));
+  browserWindow.on("closed", () => (browserWindow = null));
+
+  // Popupy z webview otevři jako nový panel uvnitř prohlížeče.
+  browserWindow.webContents.on("did-attach-webview", (_e, wc) => {
+    wc.setWindowOpenHandler(({ url }) => {
+      try { browserWindow?.webContents.send("browser:open-tab", url); } catch {}
+      return { action: "deny" };
+    });
+  });
+  return browserWindow;
+}
+
+ipcMain.handle("browser:window", (_e, action) => {
+  if (!browserWindow || browserWindow.isDestroyed()) return false;
+  if (action === "minimize") browserWindow.minimize();
+  else if (action === "maximize") browserWindow.isMaximized() ? browserWindow.unmaximize() : browserWindow.maximize();
+  else if (action === "close") browserWindow.destroy();
+  return true;
+});
+
 
 
 // -------- Rollback flow --------
