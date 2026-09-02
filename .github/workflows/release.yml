@@ -30,6 +30,7 @@ jobs:
         run: |
           $v = (Get-Content electron/package.json -Raw | ConvertFrom-Json).version
           if (!$v) { throw "Version missing in electron/package.json" }
+          if ($v -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z\.-]+)?$') { throw "Version '$v' is not valid semver (x.y.z)" }
           Write-Host "App version: $v"
           "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 

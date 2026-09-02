@@ -1,7 +1,7 @@
 {
   "name": "studiovoxario-installer",
   "productName": "StudioVoxario Installer",
-  "version": "0.0.12.6",
+  "version": "0.0.13",
   "description": "Vlastní HUD instalátor StudioVoxario (bez klasického Windows okna)",
   "author": "StudioVoxario",
   "main": "main.cjs",
