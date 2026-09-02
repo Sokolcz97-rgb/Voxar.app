@@ -52,7 +52,7 @@ jobs:
         run: npm install
 
       - name: Package Electron app (win32-x64)
-        run: npx --yes @electron/packager electron Voxar.app --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=electron/assets/icon.ico
+        run: npx --yes @electron/packager electron Voxar.app --platform=win32 --arch=x64 --out=electron-release --overwrite --asar --icon=electron/assets/icon.ico --ignore="^/release($|/)"
 
       - name: Prepare installer icon
         shell: pwsh

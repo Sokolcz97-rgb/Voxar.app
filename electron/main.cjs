@@ -239,22 +239,24 @@ async function showRendererFailure(targetUrl, remoteError, localError) {
 }
 
 async function loadMainTarget(targetUrl) {
+  let localError = null;
+  if (fs.existsSync(LOCAL_RENDERER)) {
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (error) {
+      localError = error;
+      console.error("Lokální UI se nenačetlo, zkouším online verzi", error);
+    }
+  } else {
+    localError = new Error("dist/index.html není součástí balíčku");
+  }
   try {
     await mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
     return true;
   } catch (remoteError) {
-    console.error("Online UI se nenačetlo, zkouším lokální renderer", remoteError);
-    if (!fs.existsSync(LOCAL_RENDERER)) {
-      await showRendererFailure(targetUrl, remoteError, new Error("dist/index.html není součástí balíčku"));
-      return false;
-    }
-    try {
-      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
-      return true;
-    } catch (localError) {
-      await showRendererFailure(targetUrl, remoteError, localError);
-      return false;
-    }
+    await showRendererFailure(targetUrl, remoteError, localError);
+    return false;
   }
 }
 
