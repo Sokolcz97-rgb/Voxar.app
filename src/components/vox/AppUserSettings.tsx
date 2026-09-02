@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
   User as UserIcon, Lock, Mic, Palette, Info, LogOut, X, Bell, Radio, Link2, RefreshCw, MonitorCog,
-ShieldCheck, Terminal,
+ShieldCheck, Terminal, Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/AvatarUpload";
