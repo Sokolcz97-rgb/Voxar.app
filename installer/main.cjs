@@ -1,14 +1,17 @@
 /*
  * Voxar.app custom installer — Electron main process.
  *
+ * JEDEN instalátor pro oba produkty:
+ *   - Voxar.app (hlavní aplikace + rozcestník)
+ *   - VoxarioBrowser (modul — stejný payload, spouští se s `--browser`)
+ * Uživatel si v kroku „Komponenty" vybere aplikaci, prohlížeč nebo obojí.
+ *
  * Cíle:
  *  - Žádné volání cmd.exe / .bat / .cmd / powershell.exe.
- *  - Instalace user-scope do %LOCALAPPDATA%\StudioVoxario (žádné UAC).
+ *  - Instalace user-scope do %LOCALAPPDATA%\Voxar.app (žádné UAC).
  *  - Zápis Uninstall registry přes `winreg` (čistý Node).
- *  - Shortcuts přes `windows-shortcuts` (LNK přes ffi/native, bez shellu).
+ *  - Shortcuts přes `windows-shortcuts` (LNK přes native, bez shellu).
  *  - Rozbalení payloadu (resources/app.7z) přes `node-7z` + přiložený 7za.
- *  - Finální launch aplikace: spawn(exe, [], { detached, windowsHide, stdio: 'ignore' }).unref().
- *  - Uninstall: stejný binary s `--uninstall`, rovněž bez shellu.
  */
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
@@ -20,32 +23,11 @@ const sevenBin = require("7zip-bin");
 const Winreg = require("winreg");
 const ws = require("windows-shortcuts");
 
-// Produkt se čte z resources/product.json — stejný instalátor a stejný payload
-// (build Voxar.app) umí nainstalovat i samostatný VoxarioBrowser.
-const PRODUCT = (() => {
-  const defaults = {
-    id: "voxar-app",
-    name: "Voxar.app",
-    exe: "Voxar.app.exe",
-    args: [],
-    browserOnly: false,
-  };
-  for (const p of [
-    path.join(process.resourcesPath || __dirname, "product.json"),
-    path.join(__dirname, "resources", "product.json"),
-  ]) {
-    try {
-      if (fs.existsSync(p)) return { ...defaults, ...JSON.parse(fs.readFileSync(p, "utf8")) };
-    } catch {}
-  }
-  return defaults;
-})();
-
-const APP_NAME = PRODUCT.name;
-const APP_EXE = PRODUCT.exe;
+const APP_NAME = "Voxar.app";
+const APP_EXE = "Voxar.app.exe";
+const BROWSER_NAME = "VoxarioBrowser";
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), APP_NAME);
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${APP_NAME}`;
-
 
 const isUninstall = process.argv.includes("--uninstall");
 
@@ -54,7 +36,7 @@ let win;
 function createWindow() {
   win = new BrowserWindow({
     width: 760,
-    height: 500,
+    height: 520,
     frame: false,
     transparent: true,
     resizable: false,
@@ -70,7 +52,6 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "ui", "index.html"), {
     query: { mode: isUninstall ? "uninstall" : "install" },
   });
-  // win.webContents.openDevTools({ mode: "detach" });
 }
 
 app.whenReady().then(createWindow);
@@ -99,10 +80,13 @@ ipcMain.handle("installer:close", () => {
   app.quit();
 });
 
-ipcMain.handle("installer:launch", (_e, dir) => {
-  const exe = path.join(dir, APP_EXE);
+ipcMain.handle("installer:launch", (_e, payload) => {
+  const dir = typeof payload === "string" ? payload : payload?.dir;
+  const target = typeof payload === "object" ? payload?.target : "app";
+  const exe = path.join(dir || DEFAULT_DIR, APP_EXE);
   if (!fs.existsSync(exe)) throw new Error("Aplikace nebyla nalezena po instalaci");
-  const child = spawn(exe, PRODUCT.args || [], { detached: true, windowsHide: true, stdio: "ignore" });
+  const args = target === "browser" ? ["--browser"] : [];
+  const child = spawn(exe, args, { detached: true, windowsHide: true, stdio: "ignore" });
   child.unref();
   setTimeout(() => app.quit(), 300);
 });
@@ -112,8 +96,14 @@ ipcMain.handle("installer:install", async (_e, opts) => {
   const dir = opts?.dir || DEFAULT_DIR;
   const channel = opts?.channel === "beta" ? "beta" : "stable";
   const createDesktopShortcut = opts?.desktopShortcut !== false;
+  const components = {
+    app: opts?.components?.app !== false,
+    browser: !!opts?.components?.browser,
+  };
+  if (!components.app && !components.browser) components.app = true;
 
   send("log", `Instaluji do: ${dir}`);
+  send("log", `Komponenty: ${[components.app && APP_NAME, components.browser && BROWSER_NAME].filter(Boolean).join(" + ")}`);
   send("log", `Kanál aktualizací: ${channel}`);
 
   fs.mkdirSync(dir, { recursive: true });
@@ -133,31 +123,19 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     throw new Error(`Po rozbalení chybí ${APP_EXE} v ${dir}. Archiv je poškozený nebo neúplný.`);
   }
 
-  // 1b) Zapsat product.json — launcher podle něj pozná, že jde o samostatný
-  //     VoxarioBrowser (spustí rovnou prohlížeč, bez rozcestníku).
-  try {
-    fs.writeFileSync(
-      path.join(dir, "product.json"),
-      JSON.stringify({ id: PRODUCT.id, name: APP_NAME, browserOnly: !!PRODUCT.browserOnly }, null, 2),
-    );
-  } catch (err) {
-    send("log", `! product.json se nepodařilo zapsat: ${err?.message || err}`);
-  }
+  // 1b) modules.json — launcher podle něj pozná, jestli je modul prohlížeče
+  //     nainstalovaný (a případně nabídne doinstalování).
+  writeJson(path.join(dir, "modules.json"), {
+    browser: { installed: !!components.browser, installedAt: components.browser ? new Date().toISOString() : null },
+  });
 
   // 2) Zapsat channel.json.
-  try {
-    fs.writeFileSync(
-      path.join(dir, "channel.json"),
-      JSON.stringify({ channel, chosenAt: new Date().toISOString() }, null, 2),
-    );
-  } catch (err) {
-    send("log", `! channel.json se nepodařilo zapsat: ${err?.message || err}`);
-  }
+  writeJson(path.join(dir, "channel.json"), { channel, chosenAt: new Date().toISOString() });
 
   // 3) Zkratky — selhání nesmí shodit instalaci.
   send("progress", { phase: "shortcuts", pct: 0.9 });
   try {
-    await createShortcuts(dir, createDesktopShortcut);
+    await createShortcuts(dir, createDesktopShortcut, components);
   } catch (err) {
     send("log", `! Zkratky se nepodařilo vytvořit: ${err?.message || err}`);
   }
@@ -170,24 +148,17 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     send("log", `! Zápis do registru selhal: ${err?.message || err}`);
   }
 
-
   // 5) Uložit instalační meta pro uninstaller.
-  fs.writeFileSync(
-    path.join(dir, "installer.json"),
-    JSON.stringify(
-      {
-        version: app.getVersion(),
-        installedAt: new Date().toISOString(),
-        installDir: dir,
-        desktopShortcut: createDesktopShortcut,
-      },
-      null,
-      2,
-    ),
-  );
+  writeJson(path.join(dir, "installer.json"), {
+    version: app.getVersion(),
+    installedAt: new Date().toISOString(),
+    installDir: dir,
+    desktopShortcut: createDesktopShortcut,
+    components,
+  });
 
   send("progress", { phase: "done", pct: 1 });
-  return { ok: true, dir };
+  return { ok: true, dir, components };
 });
 
 // ---------- UNINSTALL ----------
@@ -204,6 +175,14 @@ ipcMain.handle("installer:uninstall", async (_e, opts) => {
 // ---------- helpers ----------
 function send(event, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(`installer:${event}`, payload);
+}
+
+function writeJson(file, data) {
+  try {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2));
+  } catch (err) {
+    send("log", `! ${path.basename(file)} se nepodařilo zapsat: ${err?.message || err}`);
+  }
 }
 
 function extract(archive, dest, onProgress) {
@@ -236,24 +215,27 @@ function getRunnableSevenZipBinary() {
   return found;
 }
 
-function createShortcuts(dir, desktop) {
+function createShortcuts(dir, desktop, components) {
   const exe = path.join(dir, APP_EXE);
   const startMenu = path.join(process.env.APPDATA || os.homedir(), "Microsoft", "Windows", "Start Menu", "Programs", APP_NAME);
   fs.mkdirSync(startMenu, { recursive: true });
+  const desktopDir = path.join(os.homedir(), "Desktop");
 
-  const args = (PRODUCT.args || []).join(" ");
-  const tasks = [
-    { path: path.join(startMenu, `${APP_NAME}.lnk`), target: exe, icon: exe, args, desc: `Otevřít ${APP_NAME}` },
-  ];
-  if (desktop) {
-    const desktopDir = path.join(os.homedir(), "Desktop");
-    tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), target: exe, icon: exe, args, desc: `Otevřít ${APP_NAME}` });
+  const tasks = [];
+  if (components.app) {
+    tasks.push({ path: path.join(startMenu, `${APP_NAME}.lnk`), args: "", desc: `Otevřít ${APP_NAME}` });
+    if (desktop) tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), args: "", desc: `Otevřít ${APP_NAME}` });
   }
+  if (components.browser) {
+    tasks.push({ path: path.join(startMenu, `${BROWSER_NAME}.lnk`), args: "--browser", desc: `Otevřít ${BROWSER_NAME}` });
+    if (desktop) tasks.push({ path: path.join(desktopDir, `${BROWSER_NAME}.lnk`), args: "--browser", desc: `Otevřít ${BROWSER_NAME}` });
+  }
+
   return Promise.all(
     tasks.map(
       (t) =>
         new Promise((resolve, reject) =>
-          ws.create(t.path, { target: t.target, args: t.args || "", icon: t.icon, desc: t.desc, workingDir: dir }, (err) => (err ? reject(err) : resolve())),
+          ws.create(t.path, { target: exe, args: t.args, icon: exe, desc: t.desc, workingDir: dir }, (err) => (err ? reject(err) : resolve())),
         ),
     ),
   );
@@ -261,9 +243,11 @@ function createShortcuts(dir, desktop) {
 
 function removeShortcuts() {
   const startMenu = path.join(process.env.APPDATA || os.homedir(), "Microsoft", "Windows", "Start Menu", "Programs", APP_NAME);
-  const desktop = path.join(os.homedir(), "Desktop", `${APP_NAME}.lnk`);
+  const desktopDir = path.join(os.homedir(), "Desktop");
   try { fs.rmSync(startMenu, { recursive: true, force: true }); } catch {}
-  try { fs.rmSync(desktop, { force: true }); } catch {}
+  for (const name of [APP_NAME, BROWSER_NAME]) {
+    try { fs.rmSync(path.join(desktopDir, `${name}.lnk`), { force: true }); } catch {}
+  }
   return Promise.resolve();
 }
 
@@ -297,11 +281,7 @@ function removeUninstallRegistry() {
 }
 
 async function removeDir(dir, onProgress) {
-  try {
-    onProgress(0.1);
-    fs.rmSync(dir, { recursive: true, force: true });
-    onProgress(1);
-  } catch (err) {
-    throw err;
-  }
+  onProgress(0.1);
+  fs.rmSync(dir, { recursive: true, force: true });
+  onProgress(1);
 }
