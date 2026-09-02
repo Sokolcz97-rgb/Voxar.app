@@ -296,19 +296,22 @@ export default function VoxarioBrowser() {
               <button
                 type="button"
                 onClick={navigateBack}
+                disabled={hasEngine && !navState.canGoBack}
                 title="Back"
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={navigateForward}
+                disabled={hasEngine && !navState.canGoForward}
                 title="Forward"
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
+
               <button
                 type="button"
                 onClick={reloadPage}
