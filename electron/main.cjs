@@ -427,8 +427,9 @@ ipcMain.handle("launcher:open-logs", () => {
 ipcMain.handle("launcher:continue", (_e, payload) => {
   const mod = typeof payload === "string" ? payload : payload?.module;
   if (mod && MODULE_URLS[mod]) pendingModule = mod;
+  const targetUrl = MODULE_URLS[pendingModule] || APP_URL;
   if (!mainWindow) {
-    createMainWindow(MODULE_URLS[pendingModule]);
+    createMainWindow(targetUrl);
     createTray();
     applyAutoStart(settings.autoStart);
     mainWindow.webContents.once("did-finish-load", () => {
@@ -437,11 +438,33 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
       if (!settings.startMinimized) mainWindow?.show();
     });
   } else {
+    // Okno už existuje — přepni ho na vybraný modul (jinak by uživatel
+    // zůstal v tom předchozím).
+    try {
+      mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+    } catch {}
     launcherWindow?.close();
     launcherWindow = null;
     showMain();
   }
 });
+
+// Přepnutí modulu přímo z běžícího okna (např. tlačítko Voxar.app v prohlížeči).
+ipcMain.handle("app:open-module", (_e, mod) => {
+  const key = typeof mod === "string" ? mod : mod?.module;
+  const targetUrl = MODULE_URLS[key];
+  if (!targetUrl) return { ok: false };
+  pendingModule = key;
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createMainWindow(targetUrl);
+    mainWindow.once("ready-to-show", () => mainWindow?.show());
+  } else {
+    mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+    showMain();
+  }
+  return { ok: true };
+});
+
 
 // -------- Rollback flow --------
 let rollbackInProgress = false;
