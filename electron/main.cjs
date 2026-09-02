@@ -762,6 +762,8 @@ app.whenReady().then(async () => {
 
 app.on("second-instance", () => showMain());
 app.on("window-all-closed", () => {
+  // Samostatný prohlížeč nemá tray — zavřením okna se aplikace ukončí.
+  if (BROWSER_ONLY) return app.quit();
   if (process.platform !== "darwin" && !settings.closeToTray) app.quit();
 });
 app.on("before-quit", () => {
