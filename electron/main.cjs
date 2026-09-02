@@ -42,6 +42,65 @@ const BROWSER_ONLY = (() => {
   return false;
 })();
 
+// -------- Moduly (VoxarioBrowser) --------
+// Instalátor zapíše `modules.json` vedle exe. Když modul chybí, rozcestník
+// nabídne jeho doinstalování — engine je součástí balíčku, takže instalace
+// probíhá lokálně a okamžitě; jen pokud soubory chybí, stáhneme instalátor.
+const INSTALL_DIR = (() => {
+  try { return path.dirname(process.execPath); } catch { return __dirname; }
+})();
+const MODULES_FILE = "modules.json";
+const DOWNLOAD_PAGE = "https://studiovoxario.com/download";
+
+function modulesPathCandidates() {
+  const list = [path.join(INSTALL_DIR, MODULES_FILE)];
+  try { list.push(path.join(app.getPath("userData"), MODULES_FILE)); } catch {}
+  return list;
+}
+
+function readModulesState() {
+  for (const p of modulesPathCandidates()) {
+    try {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, "utf8"));
+        return { browser: { installed: !!data?.browser?.installed } };
+      }
+    } catch {}
+  }
+  // Žádný soubor (vývoj / starší instalace) — modul považujeme za nenainstalovaný.
+  return { browser: { installed: false } };
+}
+
+function writeModulesState(state) {
+  let lastErr = null;
+  for (const p of modulesPathCandidates()) {
+    try {
+      fs.writeFileSync(p, JSON.stringify(state, null, 2));
+      return true;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  console.error("modules.json zápis selhal", lastErr);
+  return false;
+}
+
+// Engine prohlížeče je součástí balíčku (browser.html) — pokud existuje,
+// instalace modulu je jen lokální aktivace, bez stahování.
+function browserPayloadAvailable() {
+  try { return fs.existsSync(path.join(__dirname, "browser.html")); } catch { return false; }
+}
+
+function getModulesInfo() {
+  const state = readModulesState();
+  return {
+    browser: {
+      installed: !!state.browser.installed,
+      available: browserPayloadAvailable(),
+    },
+  };
+}
+
 
 // Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
 // obcházení web security přes CLI flagy.
