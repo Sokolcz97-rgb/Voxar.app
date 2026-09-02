@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles, Loader2 } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,18 @@ const features = [
 // `src/assets/downloads/windows-installer.asset.json`. Načítáme ho dynamicky,
 // aby stránka nespadla, když pointer zatím neexistuje (build ještě neproběhl).
 type AssetPointer = { url: string; original_filename?: string; size?: number };
+
+async function loadBrowserPointer(): Promise<AssetPointer | null> {
+  try {
+    const mods = import.meta.glob("@/assets/downloads/browser-installer.asset.json", { eager: true }) as Record<string, any>;
+    const first = Object.values(mods)[0];
+    const data = first?.default ?? first;
+    if (!data?.url) return null;
+    return await resolveLiveAsset(data as AssetPointer);
+  } catch {
+    return null;
+  }
+}
 
 async function loadInstallerPointer(): Promise<AssetPointer | null> {
   try {
@@ -133,6 +145,7 @@ export default function Download() {
   const userId = user?.id ?? null;
   const [unlocked, setUnlocked] = useState(false);
   const [pointer, setPointer] = useState<AssetPointer | null>(null);
+  const [browserPointer, setBrowserPointer] = useState<AssetPointer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -151,6 +164,9 @@ export default function Download() {
       if (!alive) return;
       setPointer(p);
       setLoading(false);
+    });
+    loadBrowserPointer().then((p) => {
+      if (alive) setBrowserPointer(p);
     });
     return () => { alive = false; };
   }, [unlocked]);
@@ -204,6 +220,21 @@ export default function Download() {
               <p className="text-xs text-muted-foreground mt-3">
                 {filename}{sizeMb ? ` · ${sizeMb}` : ""}
               </p>
+              {browserPointer && (
+                <div className="mt-6">
+                  <Button size="lg" variant="outline" className="btn-3d" asChild>
+                    <a href={browserPointer.url} download={browserPointer.original_filename}>
+                      <Globe className="h-5 w-5 mr-2" />
+                      Stáhnout VoxarioBrowser
+                    </a>
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {browserPointer.original_filename}
+                    {browserPointer.size ? ` · ${(browserPointer.size / 1_000_000).toFixed(1)} MB` : ""}
+                    {" · samostatný prohlížeč s Chromium enginem"}
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <Card className="max-w-lg mx-auto p-6 border-primary/40">
