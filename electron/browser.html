@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>VoxarioBrowser</title>
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: #0b111c;
+      --panel2: #101828;
+      --line: #1e293b;
+      --cyan: #22d3ee;
+      --gold: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+      display: flex; height: 100vh;
+    }
+    /* ---------- Dock ---------- */
+    .dock {
+      width: 58px; flex: 0 0 58px; background: var(--panel);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 0; gap: 8px;
+    }
+    .dock .brand {
+      width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+      color: var(--cyan); border: 1px solid rgba(34,211,238,.45); font-size: 15px;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      margin-bottom: 8px;
+    }
+    .dockbtn {
+      width: 38px; height: 38px; background: transparent; color: var(--muted);
+      border: 1px solid transparent; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+      transition: .15s;
+    }
+    .dockbtn:hover { color: var(--cyan); border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.08); }
+    .dockbtn.gold:hover { color: var(--gold); border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.08); }
+    .spacer { flex: 1; }
+
+    /* ---------- Main ---------- */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .tabbar {
+      display: flex; align-items: stretch; gap: 4px; padding: 6px 8px 0;
+      background: var(--panel); border-bottom: 1px solid var(--line);
+      -webkit-app-region: drag; overflow-x: auto; scrollbar-width: none;
+    }
+    .tabbar::-webkit-scrollbar { display: none; }
+    .tab {
+      -webkit-app-region: no-drag;
+      display: flex; align-items: center; gap: 8px; min-width: 130px; max-width: 220px;
+      padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line);
+      border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer;
+      font-size: 12px; white-space: nowrap;
+      clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+    }
+    .tab .t { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .tab.active { color: var(--text); border-bottom-color: var(--cyan); box-shadow: 0 4px 18px -8px var(--cyan) inset; }
+    .tab .x { opacity: .5; padding: 0 2px; }
+    .tab .x:hover { opacity: 1; color: #f87171; }
+    .newtab { -webkit-app-region: no-drag; background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; padding: 0 12px; font-size: 16px; }
+    .newtab:hover { color: var(--cyan); border-color: rgba(34,211,238,.5); }
+    .wctl { -webkit-app-region: no-drag; margin-left: auto; display: flex; gap: 2px; align-items: center; }
+    .wctl button { background: transparent; border: 0; color: var(--muted); width: 36px; height: 28px; cursor: pointer; font-size: 13px; }
+    .wctl button:hover { background: rgba(148,163,184,.15); color: var(--text); }
+    .wctl button.close:hover { background: #dc2626; color: #fff; }
+
+    .navbar { display: flex; align-items: center; gap: 6px; padding: 8px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    .navbtn { background: transparent; border: 1px solid var(--line); color: var(--muted); width: 32px; height: 32px; cursor: pointer; border-radius: 6px; font-size: 14px; }
+    .navbtn:hover:not(:disabled) { color: var(--cyan); border-color: rgba(34,211,238,.5); }
+    .navbtn:disabled { opacity: .3; cursor: default; }
+    .urlwrap { flex: 1; display: flex; align-items: center; gap: 8px; background: #060b14; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; }
+    .urlwrap:focus-within { border-color: rgba(34,211,238,.6); box-shadow: 0 0 18px -6px var(--cyan); }
+    .urlwrap .lock { font-size: 11px; color: var(--cyan); }
+    #url { flex: 1; background: transparent; border: 0; outline: 0; color: var(--text); font-size: 13px; }
+    .prog { height: 2px; background: transparent; }
+    .prog.on { background: linear-gradient(90deg, transparent, var(--cyan), transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: slide 1s linear infinite; }
+    @keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+
+    .viewport { flex: 1; min-height: 0; position: relative; background: #0a0a0f; }
+    webview { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    .findbar { display: none; position: absolute; top: 8px; right: 12px; z-index: 20; background: var(--panel2); border: 1px solid var(--line); padding: 6px; gap: 6px; align-items: center; }
+    .findbar.on { display: flex; }
+    .findbar input { background: #060b14; border: 1px solid var(--line); color: var(--text); padding: 4px 8px; outline: none; }
+    .status { position: absolute; left: 0; bottom: 0; z-index: 20; background: rgba(5,7,13,.9); border: 1px solid var(--line); border-left: 0; border-bottom: 0; color: var(--muted); font-size: 11px; padding: 3px 10px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="dock">
+    <div class="brand">◉</div>
+    <button class="dockbtn gold" id="goApp" title="Voxar.app">◈</button>
+    <button class="dockbtn gold" id="goHub" title="StudioVoxario HUB">⬢</button>
+    <button class="dockbtn" data-url="https://kick.com" title="Kick Stream">▶</button>
+    <button class="dockbtn" data-url="https://www.twitch.tv" title="Twitch">✦</button>
+    <button class="dockbtn" data-url="https://panel.studiovoxario.com" title="Pterodactyl Server Manager">⛁</button>
+    <div class="spacer"></div>
+    <button class="dockbtn" id="btnFind" title="Najít na stránce (Ctrl+F)">⌕</button>
+    <button class="dockbtn" id="btnDev" title="DevTools (F12)">⚙</button>
+    <button class="dockbtn" id="btnLauncher" title="Zpět do rozcestníku">⏻</button>
+  </div>
+
+  <div class="main">
+    <div class="tabbar" id="tabbar">
+      <button class="newtab" id="newtab" title="Nový panel (Ctrl+T)">+</button>
+      <div class="wctl">
+        <button id="wmin" title="Minimalizovat">—</button>
+        <button id="wmax" title="Maximalizovat">▢</button>
+        <button id="wclose" class="close" title="Zavřít">✕</button>
+      </div>
+    </div>
+
+    <div class="navbar">
+      <button class="navbtn" id="back" title="Zpět">←</button>
+      <button class="navbtn" id="fwd" title="Vpřed">→</button>
+      <button class="navbtn" id="reload" title="Obnovit">⟳</button>
+      <button class="navbtn" id="home" title="Domů">⌂</button>
+      <div class="urlwrap">
+        <span class="lock" id="lock">▮</span>
+        <input id="url" placeholder="Zadej adresu nebo hledej…" spellcheck="false" />
+      </div>
+    </div>
+    <div class="prog" id="prog"></div>
+
+    <div class="viewport" id="viewport">
+      <div class="findbar" id="findbar">
+        <input id="findinput" placeholder="Najít…" />
+        <button class="navbtn" id="findnext">↓</button>
+        <button class="navbtn" id="findclose">✕</button>
+      </div>
+      <div class="status" id="status" style="display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer, shell } = require('electron');
+    const $ = (id) => document.getElementById(id);
+    const HOME = 'https://www.google.com';
+
+    let tabs = [];
+    let activeId = null;
+    let seq = 0;
+
+    const viewport = $('viewport');
+    const tabbar = $('tabbar');
+    const newTabBtn = $('newtab');
+
+    function toUrl(input) {
+      const s = (input || '').trim();
+      if (!s) return HOME;
+      if (/^(https?|file|about|chrome):/i.test(s)) return s;
+      if (/^[\w.-]+\.[a-z]{2,}(\/|$|:\d)/i.test(s) || s === 'localhost') return 'https://' + s;
+      return 'https://www.google.com/search?q=' + encodeURIComponent(s);
+    }
+
+    function activeTab() { return tabs.find((t) => t.id === activeId); }
+
+    function createTab(url) {
+      const id = 'tab' + ++seq;
+      const wv = document.createElement('webview');
+      wv.setAttribute('src', toUrl(url));
+      wv.setAttribute('allowpopups', 'true');
+      wv.setAttribute('partition', 'persist:voxario');
+      wv.style.display = 'none';
+      viewport.appendChild(wv);
+
+      const tab = { id, wv, title: 'Nový panel', url: toUrl(url), loading: true, back: false, fwd: false };
+      tabs.push(tab);
+
+      const sync = () => {
+        try {
+          tab.url = wv.getURL() || tab.url;
+          tab.back = wv.canGoBack();
+          tab.fwd = wv.canGoForward();
+          tab.loading = wv.isLoading();
+        } catch {}
+        render();
+      };
+      wv.addEventListener('page-title-updated', (e) => { tab.title = e.title; render(); });
+      wv.addEventListener('did-start-loading', () => { tab.loading = true; render(); });
+      wv.addEventListener('did-stop-loading', sync);
+      wv.addEventListener('did-navigate', sync);
+      wv.addEventListener('did-navigate-in-page', sync);
+      wv.addEventListener('dom-ready', sync);
+      wv.addEventListener('new-window', (e) => { createTab(e.url); });
+      wv.addEventListener('update-target-url', (e) => {
+        const st = $('status');
+        if (e.url) { st.textContent = e.url; st.style.display = ''; } else { st.style.display = 'none'; }
+      });
+
+      setActive(id);
+      return tab;
+    }
+
+    function closeTab(id) {
+      const i = tabs.findIndex((t) => t.id === id);
+      if (i < 0) return;
+      tabs[i].wv.remove();
+      tabs.splice(i, 1);
+      if (!tabs.length) { createTab(HOME); return; }
+      if (activeId === id) setActive(tabs[Math.max(0, i - 1)].id);
+      else render();
+    }
+
+    function setActive(id) {
+      activeId = id;
+      tabs.forEach((t) => { t.wv.style.display = t.id === id ? 'flex' : 'none'; });
+      render();
+      const t = activeTab();
+      if (t) $('url').value = t.url;
+    }
+
+    function render() {
+      // tabs
+      [...tabbar.querySelectorAll('.tab')].forEach((n) => n.remove());
+      tabs.forEach((t) => {
+        const el = document.createElement('div');
+        el.className = 'tab' + (t.id === activeId ? ' active' : '');
+        const label = document.createElement('span');
+        label.className = 't';
+        label.textContent = (t.loading ? '· ' : '') + (t.title || t.url);
+        const x = document.createElement('span');
+        x.className = 'x';
+        x.textContent = '✕';
+        x.onclick = (e) => { e.stopPropagation(); closeTab(t.id); };
+        el.onclick = () => setActive(t.id);
+        el.appendChild(label);
+        el.appendChild(x);
+        tabbar.insertBefore(el, newTabBtn);
+      });
+      const t = activeTab();
+      $('back').disabled = !t || !t.back;
+      $('fwd').disabled = !t || !t.fwd;
+      $('prog').className = 'prog' + (t && t.loading ? ' on' : '');
+      if (t && document.activeElement !== $('url')) $('url').value = t.url;
+      $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
+      document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
+    }
+
+    // ---- controls ----
+    newTabBtn.onclick = () => createTab(HOME);
+    $('back').onclick = () => activeTab()?.wv.goBack();
+    $('fwd').onclick = () => activeTab()?.wv.goForward();
+    $('reload').onclick = () => activeTab()?.wv.reload();
+    $('home').onclick = () => activeTab()?.wv.loadURL(HOME);
+    $('url').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const u = toUrl($('url').value);
+        const t = activeTab();
+        if (t) { t.url = u; t.wv.loadURL(u); }
+      }
+    });
+    $('url').addEventListener('focus', () => $('url').select());
+
+    document.querySelectorAll('.dockbtn[data-url]').forEach((b) => {
+      b.onclick = () => createTab(b.getAttribute('data-url'));
+    });
+    $('goApp').onclick = () => ipcRenderer.invoke('app:open-module', 'app');
+    $('goHub').onclick = () => ipcRenderer.invoke('app:open-module', 'hub');
+    $('btnLauncher').onclick = () => ipcRenderer.invoke('app:return-to-launcher');
+    $('btnDev').onclick = () => { try { activeTab()?.wv.openDevTools(); } catch {} };
+
+    // find in page
+    const findbar = $('findbar');
+    function openFind() { findbar.classList.add('on'); $('findinput').focus(); }
+    function closeFind() {
+      findbar.classList.remove('on');
+      try { activeTab()?.wv.stopFindInPage('clearSelection'); } catch {}
+    }
+    $('btnFind').onclick = openFind;
+    $('findclose').onclick = closeFind;
+    const doFind = (again) => {
+      const q = $('findinput').value;
+      if (!q) return;
+      try { activeTab()?.wv.findInPage(q, { findNext: again }); } catch {}
+    };
+    $('findnext').onclick = () => doFind(true);
+    $('findinput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doFind(true);
+      if (e.key === 'Escape') closeFind();
+    });
+
+    // window controls
+    $('wmin').onclick = () => ipcRenderer.invoke('browser:window', 'minimize');
+    $('wmax').onclick = () => ipcRenderer.invoke('browser:window', 'maximize');
+    $('wclose').onclick = () => ipcRenderer.invoke('browser:window', 'close');
+
+    // shortcuts
+    window.addEventListener('keydown', (e) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.key.toLowerCase() === 't') { e.preventDefault(); createTab(HOME); }
+      else if (ctrl && e.key.toLowerCase() === 'w') { e.preventDefault(); if (activeId) closeTab(activeId); }
+      else if (ctrl && e.key.toLowerCase() === 'l') { e.preventDefault(); $('url').focus(); }
+      else if (ctrl && e.key.toLowerCase() === 'r') { e.preventDefault(); activeTab()?.wv.reload(); }
+      else if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); openFind(); }
+      else if (e.key === 'F12') { e.preventDefault(); try { activeTab()?.wv.openDevTools(); } catch {} }
+      else if (e.key === 'Escape') closeFind();
+      else if (e.key === 'F5') { e.preventDefault(); activeTab()?.wv.reload(); }
+    });
+
+    createTab(HOME);
+  </script>
+</body>
+</html>
