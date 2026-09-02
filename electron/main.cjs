@@ -355,6 +355,10 @@ ipcMain.handle("app:return-to-launcher", () => {
       mainWindow.destroy();
       mainWindow = null;
     }
+    if (browserWindow && !browserWindow.isDestroyed()) {
+      browserWindow.destroy();
+      browserWindow = null;
+    }
     if (!launcherWindow || launcherWindow.isDestroyed()) {
       createLauncher();
     } else {
@@ -362,8 +366,14 @@ ipcMain.handle("app:return-to-launcher", () => {
       launcherWindow.show();
       launcherWindow.focus();
     }
+    try {
+      launcherWindow?.setMinimumSize(980, 560);
+      launcherWindow?.setSize(1020, 600);
+      launcherWindow?.center();
+    } catch {}
     setLauncherStatus("Vyberte modul");
     try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
+
     return { ok: true };
   } catch (e) {
     console.error("return-to-launcher failed", e);
