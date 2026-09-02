@@ -5,6 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Electron otevírá produkční renderer přes file://, proto musí být všechny
+  // odkazy na JS/CSS relativní k dist/index.html.
+  base: "./",
   server: {
     host: "::",
     port: 8080,

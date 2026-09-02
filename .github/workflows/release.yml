@@ -39,7 +39,13 @@ jobs:
         run: npm install
 
       - name: Build frontend (Vite)
-        run: npx vite build
+        run: npm run desktop:prepare
+
+      - name: Verify packaged renderer
+        shell: pwsh
+        run: |
+          if (!(Test-Path "electron/dist/index.html")) { throw "Missing electron/dist/index.html" }
+          if (!(Test-Path "electron/dist/assets")) { throw "Missing electron/dist/assets" }
 
       - name: Install electron deps
         working-directory: electron
@@ -89,7 +95,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           $targets = @(
-            [ordered]@{ key = "app"; payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "StudioVoxario"; prompt = "Instalovat StudioVoxario (Voxar.app + VoxarioBrowser)?"; out = "StudioVoxarioSetup-$version.exe" }
+            [ordered]@{ key = "app"; payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "StudioVoxario"; out = "StudioVoxarioSetup-$version.exe" }
           )
 
 
@@ -112,7 +118,6 @@ jobs:
             $configLines = @(
               ';!@Install@!UTF-8!',
               ('Title="{0}"' -f $t.title),
-              ('BeginPrompt="{0}"' -f $t.prompt),
               ('RunProgram="{0}"' -f $t.exe),
               'GUIMode="2"',
               ';!@InstallEnd@!'
