@@ -10,8 +10,11 @@ import {
   ArrowRight,
   RotateCw,
   Globe,
+  LogOut,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrowserWebview, type WebviewHandle } from "@/components/vox/BrowserWebview";
 
 export type BrowserTab = {
   id: string;
@@ -31,9 +34,15 @@ const DOCK_ITEMS = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+function getDesktopBridge(): any {
+  if (typeof window === "undefined") return null;
+  return (window as any).studioVoxarioDesktop ?? null;
+}
+
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
+
 
 function normalizeUrl(input: string) {
   const trimmed = input.trim();
