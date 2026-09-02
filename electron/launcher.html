@@ -582,7 +582,15 @@
         chooser.style.display = 'none';
         const ind = $('indetBar'); if (ind) ind.style.display = '';
         $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : (mod === 'hub' ? 'Spouštím StudioVoxario HUB…' : 'Spouštím Voxar.app…');
-        const out = await ipcRenderer.invoke('launcher:continue', { module: mod });
+        let out = null;
+        try {
+          out = await ipcRenderer.invoke('launcher:continue', { module: mod });
+        } catch (err) {
+          chooser.style.display = '';
+          if (ind) ind.style.display = 'none';
+          $('status').textContent = 'Spuštění selhalo: ' + (err && err.message ? err.message : err);
+          return;
+        }
         if (out && out.ok === false) {
           chooser.style.display = '';
           if (ind) ind.style.display = 'none';
