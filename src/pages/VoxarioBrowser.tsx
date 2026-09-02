@@ -318,22 +318,42 @@ export default function VoxarioBrowser() {
 
         {/* Viewport */}
         <div className="holo-pod pod-center flex-1 min-h-0 overflow-hidden relative">
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-center p-8 pointer-events-none select-none">
-            <div className="hex-frame w-28 h-28 flex items-center justify-center bg-primary/5 animate-pulse">
-              <Globe className="w-12 h-12 text-primary/60 text-glow" />
+          {hasEngine ? (
+            tabs.map((tab) => (
+              <BrowserWebview
+                key={tab.id}
+                url={tab.url}
+                active={tab.id === activeTabId}
+                onRegister={(api) => { engines.current[tab.id] = api; }}
+                onNavigate={(next) => {
+                  setTabs((prev) => prev.map((t) => (t.id === tab.id ? { ...t, url: next } : t)));
+                  if (tab.id === activeTabId) setUrlInput(next);
+                }}
+                onTitle={(title) =>
+                  setTabs((prev) => prev.map((t) => (t.id === tab.id ? { ...t, title } : t)))
+                }
+                onNavState={(s) => { if (tab.id === activeTabId) setNavState(s); }}
+              />
+            ))
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-center p-8 pointer-events-none select-none">
+              <div className="hex-frame w-28 h-28 flex items-center justify-center bg-primary/5 animate-pulse">
+                <Globe className="w-12 h-12 text-primary/60 text-glow" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="font-display text-xl tracking-[0.22em] uppercase text-glow">
+                  VoxarioBrowser
+                </h1>
+                <p className="font-mono text-sm text-muted-foreground max-w-md">
+                  Chromium engine běží pouze v desktopové aplikaci. Ve webové verzi je náhled vypnutý.
+                </p>
+              </div>
+              <div className="font-mono text-xs text-muted-foreground/60 border border-primary/20 px-4 py-2 bg-background/40">
+                Active URL: {activeTab?.url || "—"}
+              </div>
             </div>
-            <div className="space-y-2">
-              <h1 className="font-display text-xl tracking-[0.22em] uppercase text-glow">
-                VoxarioBrowser
-              </h1>
-              <p className="font-mono text-sm text-muted-foreground max-w-md">
-                [Electron &lt;webview&gt; Engine Initialized Here]
-              </p>
-            </div>
-            <div className="font-mono text-xs text-muted-foreground/60 border border-primary/20 px-4 py-2 bg-background/40">
-              Active URL: {activeTab?.url || "—"}
-            </div>
-          </div>
+          )}
+
 
           {/* Decorative HUD grid lines inside viewport */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
