@@ -327,6 +327,30 @@ ipcMain.handle("app:quit", () => {
   isQuitting = true;
   app.quit();
 });
+ipcMain.handle("app:return-to-launcher", () => {
+  try {
+    if (settingsWindow && !settingsWindow.isDestroyed()) {
+      settingsWindow.close();
+      settingsWindow = null;
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.close();
+      mainWindow = null;
+    }
+    if (!launcherWindow || launcherWindow.isDestroyed()) {
+      createLauncher();
+    } else {
+      launcherWindow.show();
+      launcherWindow.focus();
+    }
+    setLauncherStatus("Připraveno – pokračujte do aplikace");
+    try { launcherWindow?.webContents.send("launcher:ready"); } catch {}
+    return { ok: true };
+  } catch (e) {
+    console.error("return-to-launcher failed", e);
+    return { ok: false, error: String(e) };
+  }
+});
 ipcMain.handle("app:reload", () => mainWindow?.webContents.reload());
 ipcMain.handle("app:hard-reload", () => {
   try {

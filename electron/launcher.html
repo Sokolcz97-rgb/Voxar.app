@@ -182,6 +182,8 @@
       </div>
     </div>
 
+    <button id="splashContinueBtn" class="btn primary" style="display:none;margin-top:6px;">Pokračovat do aplikace</button>
+
     <div class="ver" id="ver"></div>
   </div>
 
@@ -485,6 +487,14 @@
     });
     $('continueBtn').addEventListener('click', () => {
       ipcRenderer.invoke('launcher:continue');
+    });
+
+    const splashContinueBtn = $('splashContinueBtn');
+    splashContinueBtn.addEventListener('click', () => {
+      ipcRenderer.invoke('launcher:continue');
+    });
+    ipcRenderer.on('launcher:ready', () => {
+      splashContinueBtn.style.display = '';
     });
   </script>
 </body>
