@@ -169,7 +169,10 @@ function applyAutoStart(enabled) {
 }
 
 function createTray() {
+  // Dvojí vytvoření tray ikony (např. návrat z rozcestníku) shodí start.
+  if (tray && !tray.isDestroyed?.()) return tray;
   const iconPath = path.join(__dirname, "assets", "tray.png");
+
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 20, height: 20 });
   tray = new Tray(icon);
   tray.setToolTip("Voxar.app");
