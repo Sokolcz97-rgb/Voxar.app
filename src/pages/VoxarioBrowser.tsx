@@ -213,6 +213,24 @@ export default function VoxarioBrowser() {
 
           <div className="flex-1" />
 
+          <button
+            type="button"
+            onClick={openVoxarApp}
+            title="Voxar.app"
+            className="relative w-10 h-10 flex items-center justify-center bg-secondary/40 hover:bg-gold/15 text-muted-foreground hover:text-gold transition-all duration-200"
+          >
+            <Network className="w-[18px] h-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={returnToLauncher}
+            title="Zpět do launcheru"
+            className="relative w-10 h-10 flex items-center justify-center bg-secondary/40 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all duration-200"
+          >
+            <LogOut className="w-[18px] h-[18px]" />
+          </button>
+
+
           <div className="font-display text-[9px] tracking-[0.3em] text-muted-foreground/60 uppercase rotate-180 [writing-mode:vertical-rl]">
             Voxario
           </div>
