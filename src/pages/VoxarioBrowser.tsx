@@ -59,9 +59,15 @@ export default function VoxarioBrowser() {
   const [activeTabId, setActiveTabId] = useState<string>(INITIAL_TABS[0].id);
   const [urlInput, setUrlInput] = useState<string>(INITIAL_TABS[0].url);
   const [activeDock, setActiveDock] = useState<string | null>(null);
+  const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, loading: false });
   const urlInputRef = useRef<HTMLInputElement>(null);
+  const engines = useRef<Record<string, WebviewHandle | null>>({});
+  const desktop = getDesktopBridge();
+  const hasEngine = typeof window !== "undefined" && !!(window as any).process?.versions?.electron
+    || !!desktop?.isDesktop;
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
+
 
   const updateActiveTabUrl = useCallback(
     (url: string) => {
