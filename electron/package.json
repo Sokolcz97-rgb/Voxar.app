@@ -10,5 +10,10 @@
     "@electron/packager": "^20.0.3",
     "electron": "^31.7.7",
     "electron-updater": "^6.8.9"
+  },
+  "scripts": {
+    "start": "electron .",
+    "pack:win": "@electron/packager . Voxar.app --platform=win32 --arch=x64 --out=dist --overwrite --icon=assets/icon.ico",
+    "pack:linux": "@electron/packager . Voxar.app --platform=linux --arch=x64 --out=dist --overwrite"
   }
 }
