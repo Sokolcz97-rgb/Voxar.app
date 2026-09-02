@@ -57,7 +57,7 @@ async function boot() {
   $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "app" }));
   $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
   $("closeBtn").addEventListener("click", () => window.installer.close());
-  $("btnMin").addEventListener("click", () => require("@electron/remote")?.getCurrentWindow?.().minimize?.());
+  $("btnMin").addEventListener("click", () => window.installer.minimize?.());
   $("btnClose").addEventListener("click", () => window.installer.close());
   $("uninCancel").addEventListener("click", () => window.installer.close());
   $("uninGo").addEventListener("click", startUninstall);

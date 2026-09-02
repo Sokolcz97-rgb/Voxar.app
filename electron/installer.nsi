@@ -4,7 +4,7 @@ Unicode true
 !include "LogicLib.nsh"
 
 Name "StudioVoxario"
-OutFile "StudioVoxarioSetup-0.0.9-alpha.exe"
+OutFile "StudioVoxarioSetup-0.0.12.6.exe"
 InstallDir "$LOCALAPPDATA\StudioVoxario"
 InstallDirRegKey HKCU "Software\StudioVoxario" "InstallDir"
 RequestExecutionLevel user
@@ -47,7 +47,7 @@ Section "StudioVoxario" SecMain
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "Publisher" "StudioVoxario"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
-    "DisplayVersion" "0.0.9-alpha"
+    "DisplayVersion" "0.0.12.6"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \
     "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\StudioVoxario" \

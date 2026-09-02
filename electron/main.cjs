@@ -582,9 +582,11 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
       launcherWindow = null;
       if (!settings.startMinimized) mainWindow?.show();
     };
+    mainWindow.webContents.once("dom-ready", reveal);
     mainWindow.webContents.once("did-finish-load", reveal);
     mainWindow.webContents.once("did-fail-load", () => setTimeout(reveal, 500));
-    setTimeout(reveal, 15_000);
+    // Pojistka: okno ukážeme nejpozději po 6 s, i kdyby se stránka nenačetla.
+    setTimeout(reveal, 6_000);
   } else {
     // Okno už existuje — přepni ho na vybraný modul (jinak by uživatel
     // zůstal v tom předchozím).

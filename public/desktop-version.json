@@ -1,18 +1,18 @@
 {
-  "version": "0.0.12-alpha",
-  "notes": "Automaticky vydaná verze 0.0.12-alpha.",
-  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12-alpha.exe",
+  "version": "0.0.12.6",
+  "notes": "Automaticky vydaná verze 0.0.12.6.",
+  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12.6.exe",
   "sha256": "fb3a2032d50cba96646841cd47f4b90105922d46583b6a23a4ca143022b7944c",
   "size": 234892530,
-  "filename": "StudioVoxarioSetup-0.0.12-alpha.exe",
+  "filename": "StudioVoxarioSetup-0.0.12.6.exe",
   "channels": {
     "stable": {
-      "version": "0.0.12-alpha",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12-alpha.exe"
+      "version": "0.0.12.6",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12.6.exe"
     },
     "beta": {
-      "version": "0.0.12-alpha",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12-alpha.exe"
+      "version": "0.0.12.6",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.12.6.exe"
     }
   },
   "updated_at": "2026-09-02T14:23:27.5342960Z"
