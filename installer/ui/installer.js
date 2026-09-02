@@ -87,9 +87,17 @@ function activate(step) {
 async function startInstall() {
   activate("install");
   try {
-    await window.installer.install({ dir: state.dir, channel: state.channel, desktopShortcut: state.desktopShortcut });
+    await window.installer.install({
+      dir: state.dir,
+      channel: state.channel,
+      desktopShortcut: state.desktopShortcut,
+      components: state.components,
+    });
+    const parts = [state.components.app && "Voxar.app", state.components.browser && "VoxarioBrowser"].filter(Boolean);
     $("doneTitle").textContent = "Hotovo!";
-    $("doneMsg").textContent = `StudioVoxario je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
+    $("doneMsg").textContent = `${parts.join(" + ")} je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
+    $("launchBtn").style.display = state.components.app ? "" : "none";
+    $("launchBrowserBtn").style.display = state.components.browser ? "" : "none";
     activate("done");
   } catch (err) {
     $("doneTitle").textContent = "Instalace se nezdařila";
@@ -97,9 +105,11 @@ async function startInstall() {
     $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
 
     $("launchBtn").style.display = "none";
+    $("launchBrowserBtn").style.display = "none";
     activate("done");
   }
 }
+
 
 async function startUninstall() {
   activate("install");
