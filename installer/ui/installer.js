@@ -6,6 +6,10 @@ const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", components: { app: true, browser: true } };
 
 async function boot() {
+  if (!window.installer) {
+    document.body.innerHTML = '<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor nelze spustit: komunikační rozhraní nebylo načteno.</main>';
+    return;
+  }
   const d = await window.installer.defaults();
   state.dir = d.defaultDir;
   state.mode = d.mode;
@@ -126,4 +130,8 @@ async function startUninstall() {
   }
 }
 
-boot();
+boot().catch((err) => {
+  console.error(err);
+  const message = String(err?.message || err);
+  document.body.innerHTML = `<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor se nepodařilo inicializovat.<br><br>${message}</main>`;
+});

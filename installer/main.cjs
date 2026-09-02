@@ -27,9 +27,12 @@ const APP_NAME = "Voxar.app";
 const APP_EXE = "Voxar.app.exe";
 const BROWSER_NAME = "VoxarioBrowser";
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), APP_NAME);
+const UNINSTALL_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), ".StudioVoxario-uninstaller");
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${APP_NAME}`;
 
 const isUninstall = process.argv.includes("--uninstall");
+const targetArg = process.argv.find((arg) => arg.startsWith("--target="));
+const uninstallTarget = targetArg ? decodeURIComponent(targetArg.slice("--target=".length)) : DEFAULT_DIR;
 
 let win;
 
@@ -49,7 +52,12 @@ function createWindow() {
     },
   });
   win.setMenu(null);
-  win.loadFile(path.join(__dirname, "ui", "index.html"), {
+  const installerUi = path.join(__dirname, "ui", "index.html");
+  if (!fs.existsSync(installerUi)) {
+    console.error(`Installer UI nebylo nalezeno: ${installerUi}`);
+    return require("electron").dialog.showErrorBox("StudioVoxario Installer", `Chybí soubor uživatelského rozhraní:\n${installerUi}`);
+  }
+  win.loadFile(installerUi, {
     query: { mode: isUninstall ? "uninstall" : "install" },
   });
 }
@@ -61,7 +69,7 @@ app.on("window-all-closed", () => app.quit());
 ipcMain.handle("installer:defaults", () => ({
   appName: APP_NAME,
   version: app.getVersion(),
-  defaultDir: DEFAULT_DIR,
+  defaultDir: isUninstall ? uninstallTarget : DEFAULT_DIR,
   mode: isUninstall ? "uninstall" : "install",
 }));
 
@@ -105,6 +113,7 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     browser: !!opts?.components?.browser,
   };
   if (!components.app && !components.browser) components.app = true;
+  assertSafeInstallDir(dir);
 
   send("log", `Instaluji do: ${dir}`);
   send("log", `Komponenty: ${[components.app && APP_NAME, components.browser && BROWSER_NAME].filter(Boolean).join(" + ")}`);
@@ -144,12 +153,13 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     send("log", `! Zkratky se nepodařilo vytvořit: ${err?.message || err}`);
   }
 
-  // 4) Registry Uninstall — rovněž nefatální.
+  // 4) Samostatný runtime odinstalátoru + záznam ve Windows.
   send("progress", { phase: "registry", pct: 0.95 });
   try {
+    installUninstallerRuntime();
     await writeUninstallRegistry(dir);
   } catch (err) {
-    send("log", `! Zápis do registru selhal: ${err?.message || err}`);
+    throw new Error(`Vytvoření odinstalátoru selhalo: ${err?.message || err}`);
   }
 
   // 5) Uložit instalační meta pro uninstaller.
@@ -168,6 +178,7 @@ ipcMain.handle("installer:install", async (_e, opts) => {
 // ---------- UNINSTALL ----------
 ipcMain.handle("installer:uninstall", async (_e, opts) => {
   const dir = opts?.dir || DEFAULT_DIR;
+  assertSafeInstallDir(dir);
   send("log", `Odinstalace: ${dir}`);
   await removeShortcuts();
   await removeUninstallRegistry();
@@ -187,6 +198,34 @@ function writeJson(file, data) {
   } catch (err) {
     send("log", `! ${path.basename(file)} se nepodařilo zapsat: ${err?.message || err}`);
   }
+}
+
+function assertSafeInstallDir(dir) {
+  const resolved = path.resolve(String(dir || ""));
+  const root = path.parse(resolved).root;
+  const home = path.resolve(os.homedir());
+  if (!resolved || resolved === root || resolved === home || resolved.length < root.length + 8) {
+    throw new Error("Zvolené umístění není bezpečné pro instalaci nebo odinstalaci.");
+  }
+}
+
+function copyRuntimeTree(source, destination) {
+  fs.rmSync(destination, { recursive: true, force: true });
+  fs.cpSync(source, destination, {
+    recursive: true,
+    filter: (entry) => {
+      const relative = path.relative(source, entry).replaceAll("\\", "/");
+      return relative !== "resources/app.7z" && !relative.startsWith("resources/app.7z/");
+    },
+  });
+}
+
+function installUninstallerRuntime() {
+  const runtimeDir = path.dirname(process.execPath);
+  copyRuntimeTree(runtimeDir, UNINSTALL_DIR);
+  const exe = path.join(UNINSTALL_DIR, path.basename(process.execPath));
+  if (!fs.existsSync(exe)) throw new Error(`Chybí runtime odinstalátoru: ${exe}`);
+  return exe;
 }
 
 function extract(archive, dest, onProgress) {
@@ -257,9 +296,9 @@ function removeShortcuts() {
 
 function writeUninstallRegistry(dir) {
   const reg = new Winreg({ hive: Winreg.HKCU, key: REG_UNINSTALL });
-  const uninstallExe = path.join(dir, "Uninstall.exe");
-  // Zkopírovat aktuální installer jako Uninstall.exe.
-  try { fs.copyFileSync(process.execPath, uninstallExe); } catch {}
+  const uninstallExe = path.join(UNINSTALL_DIR, path.basename(process.execPath));
+  if (!fs.existsSync(uninstallExe)) throw new Error("Odinstalátor nebyl správně vytvořen.");
+  const uninstallCommand = `"${uninstallExe}" --uninstall --target=${encodeURIComponent(dir)}`;
 
   return new Promise((resolve) => {
     reg.create(() => {
@@ -269,7 +308,8 @@ function writeUninstallRegistry(dir) {
         ["DisplayVersion", "REG_SZ", app.getVersion()],
         ["Publisher", "REG_SZ", "StudioVoxario"],
         ["InstallLocation", "REG_SZ", dir],
-        ["UninstallString", "REG_SZ", `"${uninstallExe}" --uninstall`],
+        ["UninstallString", "REG_SZ", uninstallCommand],
+        ["QuietUninstallString", "REG_SZ", uninstallCommand],
         ["NoModify", "REG_DWORD", "1"],
         ["NoRepair", "REG_DWORD", "1"],
       ];
