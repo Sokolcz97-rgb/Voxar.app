@@ -210,14 +210,41 @@ function assertSafeInstallDir(dir) {
 }
 
 function copyRuntimeTree(source, destination) {
+  const sourceStat = fs.statSync(source);
+  if (!sourceStat.isDirectory()) throw new Error(`Runtime instalátoru není složka: ${source}`);
   fs.rmSync(destination, { recursive: true, force: true });
-  fs.cpSync(source, destination, {
-    recursive: true,
-    filter: (entry) => {
-      const relative = path.relative(source, entry).replaceAll("\\", "/");
-      return relative !== "resources/app.7z" && !relative.startsWith("resources/app.7z/");
-    },
-  });
+  fs.mkdirSync(destination, { recursive: true });
+
+  // fs.cpSync(source, destination, { recursive: true }) může v dočasné složce
+  // vytvořené 7-Zip SFX na Windows skončit ENOTDIR. Projdeme proto runtime sami
+  // a do odinstalátoru nekopírujeme velký instalační payload app.7z.
+  const pending = [{ from: source, to: destination, relative: "" }];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current) continue;
+    for (const entry of fs.readdirSync(current.from, { withFileTypes: true })) {
+      const relative = current.relative ? `${current.relative}/${entry.name}` : entry.name;
+      if (relative === "resources/app.7z" || relative.startsWith("resources/app.7z/")) continue;
+
+      const from = path.join(current.from, entry.name);
+      const to = path.join(current.to, entry.name);
+      if (entry.isDirectory()) {
+        fs.mkdirSync(to, { recursive: true });
+        pending.push({ from, to, relative });
+      } else if (entry.isFile()) {
+        fs.copyFileSync(from, to);
+      } else if (entry.isSymbolicLink()) {
+        const realSource = fs.realpathSync(from);
+        const realStat = fs.statSync(realSource);
+        if (realStat.isDirectory()) {
+          fs.mkdirSync(to, { recursive: true });
+          pending.push({ from: realSource, to, relative });
+        } else if (realStat.isFile()) {
+          fs.copyFileSync(realSource, to);
+        }
+      }
+    }
+  }
 }
 
 function installUninstallerRuntime() {
