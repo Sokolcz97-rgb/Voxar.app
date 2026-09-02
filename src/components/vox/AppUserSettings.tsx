@@ -218,12 +218,27 @@ export function AppUserSettings({ onClose }: Props) {
           ))}
           <div className="h-px bg-primary/15 my-2" />
           <button
+            onClick={() => {
+              const bridge = (typeof window !== "undefined" ? (window as any).studioVoxarioDesktop : null) as any;
+              if (bridge?.returnToLauncher) {
+                bridge.returnToLauncher();
+              } else {
+                window.location.assign("/launcher");
+              }
+            }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] font-display uppercase tracking-[0.16em] text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+          >
+            <Home className="w-4 h-4" />
+            Zpět do launcheru
+          </button>
+          <button
             onClick={() => signOut()}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] font-display uppercase tracking-[0.16em] text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4" />
             Odhlásit se
           </button>
+
         </nav>
       </aside>
 
