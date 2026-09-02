@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install" };
+let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", components: { app: true, browser: true } };
 
 async function boot() {
   const d = await window.installer.defaults();
@@ -29,21 +29,39 @@ async function boot() {
   });
   $("chkDesktop").addEventListener("change", (e) => (state.desktopShortcut = e.target.checked));
 
+  // Komponenty
+  const syncComponents = () => {
+    state.components.app = $("chkApp").checked;
+    state.components.browser = $("chkBrowser").checked;
+    $("cardApp").classList.toggle("selected", state.components.app);
+    $("cardBrowser").classList.toggle("selected", state.components.browser);
+    // Alespoň jedna komponenta musí zůstat zaškrtnutá.
+    if (!state.components.app && !state.components.browser) {
+      $("chkApp").checked = true;
+      state.components.app = true;
+      $("cardApp").classList.add("selected");
+    }
+  };
+  $("chkApp").addEventListener("change", syncComponents);
+  $("chkBrowser").addEventListener("change", syncComponents);
+
   qsa('input[name="channel"]').forEach((r) =>
     r.addEventListener("change", () => {
       state.channel = r.value;
-      qsa(".card").forEach((c) => c.classList.remove("selected"));
+      qsa('.panel[data-step="channel"] .card').forEach((c) => c.classList.remove("selected"));
       r.closest(".card").classList.add("selected");
     }),
   );
 
   $("startBtn").addEventListener("click", startInstall);
-  $("launchBtn").addEventListener("click", () => window.installer.launch(state.dir));
+  $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "app" }));
+  $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
   $("closeBtn").addEventListener("click", () => window.installer.close());
   $("btnMin").addEventListener("click", () => require("@electron/remote")?.getCurrentWindow?.().minimize?.());
   $("btnClose").addEventListener("click", () => window.installer.close());
   $("uninCancel").addEventListener("click", () => window.installer.close());
   $("uninGo").addEventListener("click", startUninstall);
+
 
   window.installer.onLog((line) => {
     const el = $("logBox"); el.textContent += (el.textContent ? "\n" : "") + line; el.scrollTop = el.scrollHeight;
@@ -69,9 +87,17 @@ function activate(step) {
 async function startInstall() {
   activate("install");
   try {
-    await window.installer.install({ dir: state.dir, channel: state.channel, desktopShortcut: state.desktopShortcut });
+    await window.installer.install({
+      dir: state.dir,
+      channel: state.channel,
+      desktopShortcut: state.desktopShortcut,
+      components: state.components,
+    });
+    const parts = [state.components.app && "Voxar.app", state.components.browser && "VoxarioBrowser"].filter(Boolean);
     $("doneTitle").textContent = "Hotovo!";
-    $("doneMsg").textContent = `StudioVoxario je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
+    $("doneMsg").textContent = `${parts.join(" + ")} je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
+    $("launchBtn").style.display = state.components.app ? "" : "none";
+    $("launchBrowserBtn").style.display = state.components.browser ? "" : "none";
     activate("done");
   } catch (err) {
     $("doneTitle").textContent = "Instalace se nezdařila";
@@ -79,9 +105,11 @@ async function startInstall() {
     $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
 
     $("launchBtn").style.display = "none";
+    $("launchBrowserBtn").style.display = "none";
     activate("done");
   }
 }
+
 
 async function startUninstall() {
   activate("install");

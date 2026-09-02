@@ -42,6 +42,65 @@ const BROWSER_ONLY = (() => {
   return false;
 })();
 
+// -------- Moduly (VoxarioBrowser) --------
+// Instalátor zapíše `modules.json` vedle exe. Když modul chybí, rozcestník
+// nabídne jeho doinstalování — engine je součástí balíčku, takže instalace
+// probíhá lokálně a okamžitě; jen pokud soubory chybí, stáhneme instalátor.
+const INSTALL_DIR = (() => {
+  try { return path.dirname(process.execPath); } catch { return __dirname; }
+})();
+const MODULES_FILE = "modules.json";
+const DOWNLOAD_PAGE = "https://studiovoxario.com/download";
+
+function modulesPathCandidates() {
+  const list = [path.join(INSTALL_DIR, MODULES_FILE)];
+  try { list.push(path.join(app.getPath("userData"), MODULES_FILE)); } catch {}
+  return list;
+}
+
+function readModulesState() {
+  for (const p of modulesPathCandidates()) {
+    try {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, "utf8"));
+        return { browser: { installed: !!data?.browser?.installed } };
+      }
+    } catch {}
+  }
+  // Žádný soubor (vývoj / starší instalace) — modul považujeme za nenainstalovaný.
+  return { browser: { installed: false } };
+}
+
+function writeModulesState(state) {
+  let lastErr = null;
+  for (const p of modulesPathCandidates()) {
+    try {
+      fs.writeFileSync(p, JSON.stringify(state, null, 2));
+      return true;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  console.error("modules.json zápis selhal", lastErr);
+  return false;
+}
+
+// Engine prohlížeče je součástí balíčku (browser.html) — pokud existuje,
+// instalace modulu je jen lokální aktivace, bez stahování.
+function browserPayloadAvailable() {
+  try { return fs.existsSync(path.join(__dirname, "browser.html")); } catch { return false; }
+}
+
+function getModulesInfo() {
+  const state = readModulesState();
+  return {
+    browser: {
+      installed: !!state.browser.installed,
+      available: browserPayloadAvailable(),
+    },
+  };
+}
+
 
 // Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
 // obcházení web security přes CLI flagy.
@@ -110,7 +169,10 @@ function applyAutoStart(enabled) {
 }
 
 function createTray() {
+  // Dvojí vytvoření tray ikony (např. návrat z rozcestníku) shodí start.
+  if (tray && !tray.isDestroyed?.()) return tray;
   const iconPath = path.join(__dirname, "assets", "tray.png");
+
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 20, height: 20 });
   tray = new Tray(icon);
   tray.setToolTip("Voxar.app");
@@ -459,26 +521,70 @@ ipcMain.handle("launcher:open-logs", () => {
     return null;
   }
 });
+// Stav modulů pro rozcestník.
+ipcMain.handle("modules:state", () => getModulesInfo());
+
+// Doinstalování modulu. Engine je součástí balíčku → aktivace je okamžitá.
+// Když soubory chybí (poškozená instalace), otevřeme stránku se stažením.
+ipcMain.handle("modules:install", (_e, name) => {
+  const key = typeof name === "string" ? name : name?.module;
+  if (key !== "browser") return { ok: false, error: "Neznámý modul" };
+  if (!browserPayloadAvailable()) {
+    shell.openExternal(DOWNLOAD_PAGE);
+    return { ok: false, downloading: true, url: DOWNLOAD_PAGE };
+  }
+  const state = readModulesState();
+  state.browser = { installed: true, installedAt: new Date().toISOString() };
+  writeModulesState(state);
+  return { ok: true, modules: getModulesInfo() };
+});
+
+ipcMain.handle("modules:uninstall", (_e, name) => {
+  const key = typeof name === "string" ? name : name?.module;
+  if (key !== "browser") return { ok: false };
+  const state = readModulesState();
+  state.browser = { installed: false };
+  writeModulesState(state);
+  return { ok: true, modules: getModulesInfo() };
+});
+
 ipcMain.handle("launcher:continue", (_e, payload) => {
   const mod = typeof payload === "string" ? payload : payload?.module;
   if (mod === "browser") {
+    const info = getModulesInfo();
+    if (!info.browser.installed) {
+      if (!info.browser.available) {
+        shell.openExternal(DOWNLOAD_PAGE);
+        return { ok: false, needsDownload: true, url: DOWNLOAD_PAGE };
+      }
+      writeModulesState({ browser: { installed: true, installedAt: new Date().toISOString() } });
+    }
     createBrowserWindow();
     createTray();
     try { launcherWindow?.close(); } catch {}
     launcherWindow = null;
     return { ok: true };
   }
+
   if (mod && MODULE_URLS[mod]) pendingModule = mod;
   const targetUrl = MODULE_URLS[pendingModule] || APP_URL;
   if (!mainWindow) {
     createMainWindow(targetUrl);
     createTray();
     applyAutoStart(settings.autoStart);
-    mainWindow.webContents.once("did-finish-load", () => {
-      launcherWindow?.close();
+    // Pojistka: když se stránka nenačte (offline, výpadek serveru), okno se
+    // dřív nikdy neukázalo a launcher zůstal viset — aplikace „nešla spustit".
+    let shown = false;
+    const reveal = () => {
+      if (shown) return;
+      shown = true;
+      try { launcherWindow?.close(); } catch {}
       launcherWindow = null;
       if (!settings.startMinimized) mainWindow?.show();
-    });
+    };
+    mainWindow.webContents.once("did-finish-load", reveal);
+    mainWindow.webContents.once("did-fail-load", () => setTimeout(reveal, 500));
+    setTimeout(reveal, 15_000);
   } else {
     // Okno už existuje — přepni ho na vybraný modul (jinak by uživatel
     // zůstal v tom předchozím).
@@ -496,9 +602,18 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
 ipcMain.handle("app:open-module", (_e, mod) => {
   const key = typeof mod === "string" ? mod : mod?.module;
   if (key === "browser") {
+    const info = getModulesInfo();
+    if (!info.browser.installed) {
+      if (!info.browser.available) {
+        shell.openExternal(DOWNLOAD_PAGE);
+        return { ok: false, needsDownload: true, url: DOWNLOAD_PAGE };
+      }
+      writeModulesState({ browser: { installed: true, installedAt: new Date().toISOString() } });
+    }
     createBrowserWindow();
     return { ok: true };
   }
+
   const targetUrl = MODULE_URLS[key];
   if (!targetUrl) return { ok: false };
   pendingModule = key;
