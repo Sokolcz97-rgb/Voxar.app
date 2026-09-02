@@ -20,8 +20,13 @@ const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app"
 const BROWSER_URL = (() => {
   try { return new URL("/browser", APP_URL).toString(); } catch { return "https://studiovoxario.com/browser"; }
 })();
-const MODULE_URLS = { app: APP_URL, browser: BROWSER_URL };
+const HUB_URL = (() => {
+  try { return new URL("/", APP_URL).toString(); } catch { return "https://studiovoxario.com/"; }
+})();
+// "browser" je nativní Electron modul (browser.html), ne webová routa.
+const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
 let pendingModule = "app";
+
 
 // Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
 // obcházení web security přes CLI flagy.
