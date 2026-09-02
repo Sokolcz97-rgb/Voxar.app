@@ -518,15 +518,51 @@ ipcMain.handle("launcher:open-logs", () => {
     return null;
   }
 });
+// Stav modulů pro rozcestník.
+ipcMain.handle("modules:state", () => getModulesInfo());
+
+// Doinstalování modulu. Engine je součástí balíčku → aktivace je okamžitá.
+// Když soubory chybí (poškozená instalace), otevřeme stránku se stažením.
+ipcMain.handle("modules:install", (_e, name) => {
+  const key = typeof name === "string" ? name : name?.module;
+  if (key !== "browser") return { ok: false, error: "Neznámý modul" };
+  if (!browserPayloadAvailable()) {
+    shell.openExternal(DOWNLOAD_PAGE);
+    return { ok: false, downloading: true, url: DOWNLOAD_PAGE };
+  }
+  const state = readModulesState();
+  state.browser = { installed: true, installedAt: new Date().toISOString() };
+  writeModulesState(state);
+  return { ok: true, modules: getModulesInfo() };
+});
+
+ipcMain.handle("modules:uninstall", (_e, name) => {
+  const key = typeof name === "string" ? name : name?.module;
+  if (key !== "browser") return { ok: false };
+  const state = readModulesState();
+  state.browser = { installed: false };
+  writeModulesState(state);
+  return { ok: true, modules: getModulesInfo() };
+});
+
 ipcMain.handle("launcher:continue", (_e, payload) => {
   const mod = typeof payload === "string" ? payload : payload?.module;
   if (mod === "browser") {
+    const info = getModulesInfo();
+    if (!info.browser.installed) {
+      if (!info.browser.available) {
+        shell.openExternal(DOWNLOAD_PAGE);
+        return { ok: false, needsDownload: true, url: DOWNLOAD_PAGE };
+      }
+      writeModulesState({ browser: { installed: true, installedAt: new Date().toISOString() } });
+    }
     createBrowserWindow();
     createTray();
     try { launcherWindow?.close(); } catch {}
     launcherWindow = null;
     return { ok: true };
   }
+
   if (mod && MODULE_URLS[mod]) pendingModule = mod;
   const targetUrl = MODULE_URLS[pendingModule] || APP_URL;
   if (!mainWindow) {
