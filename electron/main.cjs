@@ -16,6 +16,7 @@ const path = require("path");
 const fs = require("fs");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
+const bookmarks = require("./bookmarks.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
 const BROWSER_URL = (() => {
@@ -718,6 +719,54 @@ ipcMain.handle("browser:window", (_e, action) => {
   else if (action === "close") browserWindow.destroy();
   return true;
 });
+
+// -------- Záložky prohlížeče (import/export) --------
+ipcMain.handle("bookmarks:list", () => bookmarks.readBookmarks(app));
+ipcMain.handle("bookmarks:save", (_e, list) => bookmarks.writeBookmarks(app, list));
+ipcMain.handle("bookmarks:sources", () => {
+  try {
+    return bookmarks.detectSources().map((s) => ({ id: s.id, label: s.label, profiles: s.files.length }));
+  } catch (e) {
+    console.error("bookmarks:sources", e);
+    return [];
+  }
+});
+ipcMain.handle("bookmarks:import", (_e, id) => {
+  try {
+    return bookmarks.importFromSource(app, id);
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+});
+ipcMain.handle("bookmarks:import-file", async () => {
+  const target = browserWindow && !browserWindow.isDestroyed() ? browserWindow : undefined;
+  const res = await dialog.showOpenDialog(target, {
+    title: "Importovat záložky",
+    filters: [{ name: "Záložky", extensions: ["html", "htm", "json", "jsonlz4"] }],
+    properties: ["openFile"],
+  });
+  if (res.canceled || !res.filePaths[0]) return { ok: false, canceled: true };
+  return bookmarks.importFromFile(app, res.filePaths[0]);
+});
+ipcMain.handle("bookmarks:export-file", async () => {
+  const target = browserWindow && !browserWindow.isDestroyed() ? browserWindow : undefined;
+  const res = await dialog.showSaveDialog(target, {
+    title: "Exportovat záložky",
+    defaultPath: "voxario-bookmarks.html",
+    filters: [
+      { name: "Netscape HTML", extensions: ["html"] },
+      { name: "JSON", extensions: ["json"] },
+    ],
+  });
+  if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+  try {
+    return bookmarks.exportToFile(app, res.filePath);
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+});
+
+
 
 
 

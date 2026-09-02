@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react";
-import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Lock, Sparkles, Loader2, Globe } from "lucide-react";
+import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, RefreshCw, Sparkles, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
-
-const LEGACY_KEYS = ["sv_download_access_v1", "sv_download_access_v2"];
-const accessKeyFor = (userId: string) => `sv_download_access_v3_${userId}`;
 
 const features = [
   { icon: Bell, title: "Desktop notifikace", desc: "Zprávy, zakázky a stream alerty přímo v systému." },
@@ -64,88 +56,11 @@ async function resolveLiveAsset(p: AssetPointer): Promise<AssetPointer | null> {
 
 
 
-function AccessGate({ userId, onUnlock }: { userId: string | null; onUnlock: () => void }) {
-  const { toast } = useToast();
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code.trim() || !userId) return;
-    setBusy(true);
-    const { data, error } = await supabase.rpc("redeem_download_code", { _code: code.trim() });
-    setBusy(false);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
-    }
-    if (data === true) {
-      sessionStorage.setItem(accessKeyFor(userId), "1");
-      toast({ title: "Přístup povolen" });
-      onUnlock();
-    } else {
-      toast({ title: "Neplatný kód", description: "Zkontrolujte kód nebo požádejte o nový.", variant: "destructive" });
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-16 max-w-md">
-        <Card className="p-8">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 mb-4">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2">Chráněná stránka</h1>
-            <p className="text-sm text-muted-foreground">
-              {userId
-                ? "Ke stažení desktop aplikace zadejte přístupový nebo promo kód."
-                : "Ke stažení desktop aplikace se musíte nejprve přihlásit."}
-            </p>
-          </div>
-          {userId ? (
-            <form onSubmit={submit} className="space-y-3">
-              <Input
-                placeholder="Zadejte kód"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                autoFocus
-                className="text-center font-mono tracking-wider"
-              />
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? "Ověřuji…" : "Odemknout"}
-              </Button>
-            </form>
-          ) : (
-            <Button asChild className="w-full">
-              <Link to="/auth">Přihlásit se</Link>
-            </Button>
-          )}
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 export default function Download() {
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
-  const [unlocked, setUnlocked] = useState(false);
   const [pointer, setPointer] = useState<AssetPointer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
-    if (!userId) {
-      setUnlocked(false);
-      return;
-    }
-    setUnlocked(sessionStorage.getItem(accessKeyFor(userId)) === "1");
-  }, [userId]);
-
-  useEffect(() => {
-    if (!unlocked) return;
     let alive = true;
     loadInstallerPointer().then((p) => {
       if (!alive) return;
@@ -153,10 +68,7 @@ export default function Download() {
       setLoading(false);
     });
     return () => { alive = false; };
-  }, [unlocked]);
-
-  if (!unlocked) return <AccessGate userId={userId} onUnlock={() => setUnlocked(true)} />;
-
+  }, []);
 
   const sizeMb = pointer?.size ? `${(pointer.size / 1_000_000).toFixed(1)} MB` : "";
   const filename = pointer?.original_filename || "VoxarAppSetup.exe";
@@ -223,15 +135,6 @@ export default function Download() {
             </Card>
           )}
 
-          <button
-            className="mt-4 text-xs text-muted-foreground underline hover:text-foreground block mx-auto"
-            onClick={() => {
-              if (userId) sessionStorage.removeItem(accessKeyFor(userId));
-              setUnlocked(false);
-            }}
-          >
-            Odhlásit přístupový kód
-          </button>
         </div>
 
         <Card className="p-6 mb-10">

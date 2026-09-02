@@ -8,9 +8,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
 
 
-const LEGACY_KEYS = ["sv_download_access_v1"];
+const LEGACY_KEYS = ["sv_download_access_v1", "sv_download_access_v2", "sv_download_access_v3"];
 // Přístup platí jen pro aktuální relaci (sessionStorage) a jen pro daného uživatele.
-const keyFor = (uid: string) => `sv_download_access_v3_${uid}`;
+const keyFor = (uid: string) => `sv_app_access_v4_${uid}`;
 
 function Frame({ children }: { children: ReactNode }) {
   return (
@@ -52,10 +52,10 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
       // Vyčistíme všechny staré (trvalé) odemčené stavy – kód nesmí přežít odhlášení.
       for (const k of LEGACY_KEYS) localStorage.removeItem(k);
       Object.keys(localStorage)
-        .filter((k) => k.startsWith("sv_download_access_"))
+        .filter((k) => k.startsWith("sv_download_access_") || k.startsWith("sv_app_access_"))
         .forEach((k) => localStorage.removeItem(k));
       Object.keys(sessionStorage)
-        .filter((k) => k.startsWith("sv_download_access_") && (!user || k !== keyFor(user.id)))
+        .filter((k) => (k.startsWith("sv_download_access_") || k.startsWith("sv_app_access_")) && (!user || k !== keyFor(user.id)))
         .forEach((k) => sessionStorage.removeItem(k));
     } catch {
       /* ignore */
