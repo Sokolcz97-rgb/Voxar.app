@@ -343,12 +343,15 @@ ipcMain.handle("app:return-to-launcher", () => {
       settingsWindow = null;
     }
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.close();
+      // close() by se kvůli "closeToTray" jen skrylo a okno by zůstalo viset —
+      // proto okno rovnou zničíme, ať se dá modul znovu vybrat.
+      mainWindow.destroy();
       mainWindow = null;
     }
     if (!launcherWindow || launcherWindow.isDestroyed()) {
       createLauncher();
     } else {
+
       launcherWindow.show();
       launcherWindow.focus();
     }
