@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("svSettings", {
   quit: () => ipcRenderer.invoke("app:quit"),
   reload: () => ipcRenderer.invoke("app:reload"),
   checkUpdates: () => ipcRenderer.invoke("app:check-updates"),
+  returnToLauncher: () => ipcRenderer.invoke("app:return-to-launcher"),
 });
