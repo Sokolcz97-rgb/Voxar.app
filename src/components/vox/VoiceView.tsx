@@ -122,17 +122,23 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
   }, [rows, joinedHere, api.presentIds, profiles, user?.id]);
 
   // Fetch profiles for SFU-only identities that have no metadata row yet.
+  // Každé ID žádáme jen jednou — jinak by uživatel bez profilu způsobil nekonečnou smyčku.
+  const requestedProfileIds = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const missing = participants.filter((p) => !p.display_name && !profiles[p.user_id]).map((p) => p.user_id);
+    const missing = participants
+      .filter((p) => !p.display_name && !profiles[p.user_id] && !requestedProfileIds.current.has(p.user_id))
+      .map((p) => p.user_id);
     if (!missing.length) return;
+    missing.forEach((id) => requestedProfileIds.current.add(id));
     let mounted = true;
     void (async () => {
       const { data } = await supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", missing);
-      if (!mounted || !data) return;
+      if (!mounted || !data?.length) return;
       setProfiles((prev) => ({ ...prev, ...Object.fromEntries(data.map((p: any) => [p.user_id, p])) }));
     })();
     return () => { mounted = false; };
   }, [participants, profiles]);
+
 
   const cosmeticRings = useCosmeticRings(participants.map((participant) => participant.user_id));
 

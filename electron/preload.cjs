@@ -4,6 +4,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   isDesktop: true,
   platform: process.platform,
+  // Návrat na rozcestník modulů (Voxar.app / VoxarioBrowser)
+  returnToLauncher: () => ipcRenderer.invoke("app:return-to-launcher"),
   // Screen sharing: vlastní HUD picker v aplikaci.
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
   selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),
