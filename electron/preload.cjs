@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   platform: process.platform,
   // Návrat na rozcestník modulů (Voxar.app / VoxarioBrowser)
   returnToLauncher: () => ipcRenderer.invoke("app:return-to-launcher"),
+  // Přímé přepnutí modulu (Voxar.app <-> VoxarioBrowser) bez návratu do launcheru.
+  openModule: (mod) => ipcRenderer.invoke("app:open-module", mod),
+
   // Screen sharing: vlastní HUD picker v aplikaci.
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
   selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),
