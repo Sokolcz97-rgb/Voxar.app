@@ -17,6 +17,11 @@ const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelA
 const rollback = require("./rollback.cjs");
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
+const BROWSER_URL = (() => {
+  try { return new URL("/browser", APP_URL).toString(); } catch { return "https://studiovoxario.com/browser"; }
+})();
+const MODULE_URLS = { app: APP_URL, browser: BROWSER_URL };
+let pendingModule = "app";
 
 // Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
 // obcházení web security přes CLI flagy.
@@ -124,7 +129,8 @@ function showMain() {
   mainWindow.focus();
 }
 
-function createMainWindow() {
+function createMainWindow(startUrl) {
+  const targetUrl = startUrl || MODULE_URLS[pendingModule] || APP_URL;
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -149,7 +155,7 @@ function createMainWindow() {
 
   // Načítáme vždy čerstvou verzi (jinak Electron drží starý HTML/JS v cache
   // a uživatel vidí zastaralé přihlašovací okno).
-  mainWindow.loadURL(APP_URL, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
+  mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
 
   // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
   mainWindow.webContents.once("did-finish-load", () => {
@@ -343,8 +349,8 @@ ipcMain.handle("app:return-to-launcher", () => {
       launcherWindow.show();
       launcherWindow.focus();
     }
-    setLauncherStatus("Připraveno – pokračujte do aplikace");
-    try { launcherWindow?.webContents.send("launcher:ready"); } catch {}
+    setLauncherStatus("Vyberte modul");
+    try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
     return { ok: true };
   } catch (e) {
     console.error("return-to-launcher failed", e);
@@ -415,9 +421,11 @@ ipcMain.handle("launcher:open-logs", () => {
     return null;
   }
 });
-ipcMain.handle("launcher:continue", () => {
+ipcMain.handle("launcher:continue", (_e, payload) => {
+  const mod = typeof payload === "string" ? payload : payload?.module;
+  if (mod && MODULE_URLS[mod]) pendingModule = mod;
   if (!mainWindow) {
-    createMainWindow();
+    createMainWindow(MODULE_URLS[pendingModule]);
     createTray();
     applyAutoStart(settings.autoStart);
     mainWindow.webContents.once("did-finish-load", () => {
@@ -548,27 +556,14 @@ async function runLauncherSequence() {
     return; // installer will replace the app; do not boot the old UI
   }
 
-  setLauncherStatus("Načítání aplikace…");
-  createMainWindow();
-  createTray();
-  applyAutoStart(settings.autoStart);
-
-  mainWindow.webContents.once("did-finish-load", () => {
-    setTimeout(() => {
-      launcherWindow?.close();
-      launcherWindow = null;
-      if (!settings.startMinimized) mainWindow?.show();
-    }, 400);
-  });
-
-  // Safety net: if the window never finishes loading (offline etc.), close the launcher after 20s.
-  setTimeout(() => {
-    if (launcherWindow) {
-      launcherWindow.close();
-      launcherWindow = null;
-      mainWindow?.show();
-    }
-  }, 20000);
+  // Rozcestník: uživatel si vybere modul (Voxar.app / VoxarioBrowser)
+  setLauncherStatus("Vyberte modul");
+  try {
+    launcherWindow?.setMinimumSize(760, 520);
+    launcherWindow?.setSize(820, 560);
+    launcherWindow?.center();
+  } catch {}
+  try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
 }
 
 app.whenReady().then(async () => {
