@@ -133,6 +133,7 @@
     <button class="dockbtn" data-url="https://kick.com" title="Kick Stream">▶</button>
     <button class="dockbtn" data-url="https://www.twitch.tv" title="Twitch">✦</button>
     <button class="dockbtn" data-url="https://panel.studiovoxario.com" title="Pterodactyl Server Manager">⛁</button>
+    <button class="dockbtn" id="btnBookmarks" title="Záložky (Ctrl+Shift+B)">★</button>
     <div class="spacer"></div>
     <button class="dockbtn" id="btnFind" title="Najít na stránce (Ctrl+F)">⌕</button>
     <button class="dockbtn" id="btnDev" title="DevTools (F12)">⚙</button>
@@ -158,7 +159,9 @@
         <span class="lock" id="lock">▮</span>
         <input id="url" placeholder="Zadej adresu nebo hledej…" spellcheck="false" />
       </div>
+      <button class="navbtn" id="btnStar" title="Přidat do záložek (Ctrl+D)">☆</button>
     </div>
+    <div class="bmbar" id="bmbar"></div>
     <div class="prog" id="prog"></div>
 
     <div class="viewport" id="viewport">
@@ -167,8 +170,25 @@
         <button class="navbtn" id="findnext">↓</button>
         <button class="navbtn" id="findclose">✕</button>
       </div>
+      <div class="panel" id="bmpanel">
+        <h2>// Záložky</h2>
+        <div class="sub" id="bmcount">0 záložek</div>
+        <div class="row" id="bmsources"></div>
+        <div class="row">
+          <button class="pbtn" id="bmImportFile">Import ze souboru (HTML/JSON)</button>
+          <button class="pbtn gold" id="bmExport">Exportovat záložky</button>
+          <button class="pbtn" id="bmClose">Zavřít</button>
+        </div>
+        <div class="bmlist" id="bmlist"></div>
+        <div class="pnote">
+          Import čte profily Google Chrome, Microsoft Edge, Opera GX, Opery, Brave a Vivaldi a poslední zálohu záložek
+          Mozilly Firefox. Pokud prohlížeč není nalezen, exportuj z něj záložky do HTML a použij „Import ze souboru".
+          Export vytvoří Netscape HTML, který načte jakýkoliv prohlížeč.
+        </div>
+      </div>
       <div class="status" id="status" style="display:none"></div>
     </div>
+
   </div>
 
   <script>
