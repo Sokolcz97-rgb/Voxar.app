@@ -25,6 +25,7 @@ export function DesktopRouteGuard() {
     const allowed =
       path === "/app" ||
       path.startsWith("/app/") ||
+      path.startsWith("/browser") ||
       path.startsWith("/discord-oauth-complete") ||
       path.startsWith("/f/"); // veřejné formuláře přes deep link
     if (!allowed) {
