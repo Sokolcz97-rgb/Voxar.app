@@ -339,6 +339,109 @@
       if (e.key === 'Escape') closeFind();
     });
 
+    // ---- bookmarks ----
+    let bookmarks = [];
+    const bmpanel = $('bmpanel');
+
+    function renderBookmarks() {
+      $('bmcount').textContent = bookmarks.length + ' záložek';
+      const bar = $('bmbar');
+      bar.innerHTML = '';
+      if (!bookmarks.length) {
+        const e = document.createElement('span');
+        e.className = 'empty';
+        e.textContent = 'Zatím žádné záložky — přidej hvězdičkou nebo naimportuj z jiného prohlížeče (★).';
+        bar.appendChild(e);
+      }
+      bookmarks.slice(0, 40).forEach((b) => {
+        const chip = document.createElement('button');
+        chip.className = 'chip';
+        chip.textContent = b.title || b.url;
+        chip.title = b.url;
+        chip.onclick = () => { const t = activeTab(); if (t) { t.url = b.url; t.wv.loadURL(b.url); } };
+        bar.appendChild(chip);
+      });
+
+      const list = $('bmlist');
+      list.innerHTML = '';
+      bookmarks.forEach((b, i) => {
+        const row = document.createElement('div');
+        row.className = 'bmrow';
+        const ti = document.createElement('span');
+        ti.className = 'ti';
+        ti.textContent = b.title || b.url;
+        ti.onclick = () => { createTab(b.url); closePanel(); };
+        const u = document.createElement('span');
+        u.className = 'u';
+        u.textContent = b.url;
+        const src = document.createElement('span');
+        src.className = 'src';
+        src.textContent = b.source && b.source !== 'voxario' ? b.source : '';
+        const del = document.createElement('button');
+        del.className = 'del';
+        del.textContent = '✕';
+        del.onclick = async () => {
+          bookmarks.splice(i, 1);
+          bookmarks = await ipcRenderer.invoke('bookmarks:save', bookmarks);
+          renderBookmarks();
+        };
+        row.append(ti, u, src, del);
+        list.appendChild(row);
+      });
+    }
+
+    async function loadBookmarks() {
+      try { bookmarks = await ipcRenderer.invoke('bookmarks:list') || []; } catch { bookmarks = []; }
+      renderBookmarks();
+    }
+
+    async function renderSources() {
+      const wrap = $('bmsources');
+      wrap.innerHTML = '';
+      let sources = [];
+      try { sources = await ipcRenderer.invoke('bookmarks:sources') || []; } catch {}
+      if (!sources.length) {
+        const s = document.createElement('span');
+        s.className = 'empty';
+        s.textContent = 'Žádný nainstalovaný prohlížeč nebyl nalezen.';
+        wrap.appendChild(s);
+        return;
+      }
+      sources.forEach((s) => {
+        const b = document.createElement('button');
+        b.className = 'pbtn';
+        b.textContent = 'Import z ' + s.label;
+        b.onclick = async () => {
+          b.disabled = true;
+          const r = await ipcRenderer.invoke('bookmarks:import', s.id);
+          b.disabled = false;
+          if (r?.ok) { bookmarks = r.bookmarks; renderBookmarks(); b.textContent = '✓ ' + s.label + ' (+' + r.added + ')'; }
+          else b.textContent = 'Chyba: ' + (r?.error || 'import selhal');
+        };
+        wrap.appendChild(b);
+      });
+    }
+
+    function openPanel() { bmpanel.classList.add('on'); renderSources(); }
+    function closePanel() { bmpanel.classList.remove('on'); }
+
+    $('btnBookmarks').onclick = () => bmpanel.classList.contains('on') ? closePanel() : openPanel();
+    $('bmClose').onclick = closePanel;
+    $('bmImportFile').onclick = async () => {
+      const r = await ipcRenderer.invoke('bookmarks:import-file');
+      if (r?.ok) { bookmarks = r.bookmarks; renderBookmarks(); }
+    };
+    $('bmExport').onclick = () => ipcRenderer.invoke('bookmarks:export-file');
+    $('btnStar').onclick = async () => {
+      const t = activeTab();
+      if (!t) return;
+      bookmarks = await ipcRenderer.invoke('bookmarks:save', [
+        ...bookmarks,
+        { url: t.url, title: t.title || t.url, source: 'voxario' },
+      ]);
+      renderBookmarks();
+    };
+
     // window controls
     $('wmin').onclick = () => ipcRenderer.invoke('browser:window', 'minimize');
     $('wmax').onclick = () => ipcRenderer.invoke('browser:window', 'maximize');
@@ -347,17 +450,21 @@
     // shortcuts
     window.addEventListener('keydown', (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
-      if (ctrl && e.key.toLowerCase() === 't') { e.preventDefault(); createTab(HOME); }
+      if (ctrl && e.shiftKey && e.key.toLowerCase() === 'b') { e.preventDefault(); openPanel(); }
+      else if (ctrl && e.key.toLowerCase() === 'd') { e.preventDefault(); $('btnStar').click(); }
+      else if (ctrl && e.key.toLowerCase() === 't') { e.preventDefault(); createTab(HOME); }
       else if (ctrl && e.key.toLowerCase() === 'w') { e.preventDefault(); if (activeId) closeTab(activeId); }
       else if (ctrl && e.key.toLowerCase() === 'l') { e.preventDefault(); $('url').focus(); }
       else if (ctrl && e.key.toLowerCase() === 'r') { e.preventDefault(); activeTab()?.wv.reload(); }
       else if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); openFind(); }
       else if (e.key === 'F12') { e.preventDefault(); try { activeTab()?.wv.openDevTools(); } catch {} }
-      else if (e.key === 'Escape') closeFind();
+      else if (e.key === 'Escape') { closeFind(); closePanel(); }
       else if (e.key === 'F5') { e.preventDefault(); activeTab()?.wv.reload(); }
     });
 
     createTab(HOME);
+    loadBookmarks();
+
   </script>
 </body>
 </html>
