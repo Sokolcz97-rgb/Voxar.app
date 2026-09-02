@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install" };
+let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", components: { app: true, browser: true } };
 
 async function boot() {
   const d = await window.installer.defaults();
