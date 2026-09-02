@@ -130,7 +130,7 @@ const AppRoutes = () => {
       <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
       <Route path="/f/:slug" element={<PublicForm />} />
       <Route path="/desktop" element={<DownloadDesktop />} />
-      <Route path="/browser" element={<ProtectedRoute><VoxarioBrowser /></ProtectedRoute>} />
+      <Route path="/browser" element={<VoxarioBrowser />} />
       <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
       <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
       <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
