@@ -541,22 +541,57 @@
 
     // ---- Rozcestník modulů ----
     const chooser = $('chooser');
-    function showChooser() {
+    let modules = { browser: { installed: true, available: true } };
+
+    async function refreshModules() {
+      try {
+        modules = await ipcRenderer.invoke('modules:state');
+      } catch { return; }
+      const go = $('browserGo');
+      if (!go) return;
+      go.textContent = modules?.browser?.installed ? 'Spustit modul →' : 'Modul není nainstalován · Instalovat';
+      go.style.color = modules?.browser?.installed ? '#94a3b8' : '#22d3ee';
+    }
+
+    async function showChooser() {
       chooser.style.display = '';
       splashContinueBtn.style.display = 'none';
       const ind = $('indetBar'); if (ind) ind.style.display = 'none';
       const pp = $('progressPanel'); if (pp) pp.style.display = 'none';
+      await refreshModules();
     }
     ipcRenderer.on('launcher:choose', showChooser);
     chooser.querySelectorAll('.modcard').forEach((c) => {
-      c.addEventListener('click', () => {
+      c.addEventListener('click', async () => {
         const mod = c.getAttribute('data-module');
+
+        // Prohlížeč je modul — když není nainstalovaný, nejdřív ho doinstalujeme.
+        if (mod === 'browser' && !modules?.browser?.installed) {
+          $('status').textContent = 'Instaluji modul VoxarioBrowser…';
+          const ind0 = $('indetBar'); if (ind0) ind0.style.display = '';
+          const res = await ipcRenderer.invoke('modules:install', 'browser');
+          if (!res?.ok) {
+            if (ind0) ind0.style.display = 'none';
+            $('status').textContent = 'Modul nelze aktivovat — otevřel jsem stránku se stažením.';
+            await refreshModules();
+            return;
+          }
+          await refreshModules();
+        }
+
         chooser.style.display = 'none';
         const ind = $('indetBar'); if (ind) ind.style.display = '';
         $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : (mod === 'hub' ? 'Spouštím StudioVoxario HUB…' : 'Spouštím Voxar.app…');
-        ipcRenderer.invoke('launcher:continue', { module: mod });
+        const out = await ipcRenderer.invoke('launcher:continue', { module: mod });
+        if (out && out.ok === false) {
+          chooser.style.display = '';
+          if (ind) ind.style.display = 'none';
+          $('status').textContent = 'Modul není dostupný — stáhněte aktuální instalátor.';
+          await refreshModules();
+        }
       });
     });
+
   </script>
 </body>
 </html>
