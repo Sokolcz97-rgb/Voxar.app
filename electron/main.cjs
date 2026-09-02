@@ -21,7 +21,7 @@ const BROWSER_URL = (() => {
   try { return new URL("/browser", APP_URL).toString(); } catch { return "https://studiovoxario.com/browser"; }
 })();
 const HUB_URL = (() => {
-  try { return new URL("/", APP_URL).toString(); } catch { return "https://studiovoxario.com/"; }
+  try { return new URL("/?hub=1", APP_URL).toString(); } catch { return "https://studiovoxario.com/?hub=1"; }
 })();
 // "browser" je nativní Electron modul (browser.html), ne webová routa.
 const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
@@ -663,8 +663,8 @@ async function runLauncherSequence() {
   // Rozcestník: uživatel si vybere modul (Voxar.app / VoxarioBrowser)
   setLauncherStatus("Vyberte modul");
   try {
-    launcherWindow?.setMinimumSize(760, 520);
-    launcherWindow?.setSize(820, 560);
+    launcherWindow?.setMinimumSize(980, 560);
+    launcherWindow?.setSize(1020, 600);
     launcherWindow?.center();
   } catch {}
   try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
