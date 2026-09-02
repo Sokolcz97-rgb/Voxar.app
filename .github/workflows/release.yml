@@ -57,17 +57,10 @@ jobs:
         working-directory: installer
         run: npm install
 
-      - name: Build HUD installer .exe (Voxar.app)
+      - name: Build HUD installer .exe (Voxar.app + VoxarioBrowser modul)
         working-directory: installer
-        env:
-          PRODUCT: app
         run: node build.cjs
 
-      - name: Build HUD installer .exe (VoxarioBrowser)
-        working-directory: installer
-        env:
-          PRODUCT: browser
-        run: node build.cjs
 
       - name: Build self-extracting installers (.exe)
         id: locate
