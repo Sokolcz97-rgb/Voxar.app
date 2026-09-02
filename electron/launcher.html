@@ -86,7 +86,7 @@
     }
     .row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .modcard {
-      width: 300px; text-align: left; cursor: pointer;
+      width: 280px; text-align: left; cursor: pointer;
       background: rgba(15,23,42,.75); color: #e2e8f0;
       border: 1px solid rgba(251,191,36,.25);
       padding: 20px 18px 18px;
@@ -202,21 +202,28 @@
 
     <!-- Rozcestník modulů -->
     <div id="chooser" style="display:none;margin-top:18px;">
-      <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;">
-        <button class="modcard" data-module="app">
-          <div class="modicon" style="color:#fbbf24;border-color:rgba(251,191,36,.45);">◈</div>
-          <div class="modtitle">Voxar.app</div>
-          <div class="modsub">Community, LFG, Contracts, Inventories</div>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <button class="modcard" data-module="hub">
+          <div class="modicon" style="color:#fbbf24;border-color:rgba(251,191,36,.45);">⬢</div>
+          <div class="modtitle">StudioVoxario HUB</div>
+          <div class="modsub">Web, fórum, obchod, zakázky a novinky</div>
           <div class="modgo">Spustit modul →</div>
         </button>
         <button class="modcard cyan" data-module="browser">
           <div class="modicon" style="color:#22d3ee;border-color:rgba(34,211,238,.45);">◉</div>
           <div class="modtitle">VoxarioBrowser</div>
-          <div class="modsub">High-performance gaming web browser</div>
+          <div class="modsub">Plnohodnotný Chromium prohlížeč</div>
+          <div class="modgo">Spustit modul →</div>
+        </button>
+        <button class="modcard" data-module="app">
+          <div class="modicon" style="color:#fbbf24;border-color:rgba(251,191,36,.45);">◈</div>
+          <div class="modtitle">Voxar.app</div>
+          <div class="modsub">Komunikace, LFG, kontrakty, inventáře</div>
           <div class="modgo">Spustit modul →</div>
         </button>
       </div>
     </div>
+
 
     <div class="ver" id="ver"></div>
   </div>
@@ -545,7 +552,7 @@
         const mod = c.getAttribute('data-module');
         chooser.style.display = 'none';
         const ind = $('indetBar'); if (ind) ind.style.display = '';
-        $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : 'Spouštím Voxar.app…';
+        $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : (mod === 'hub' ? 'Spouštím StudioVoxario HUB…' : 'Spouštím Voxar.app…');
         ipcRenderer.invoke('launcher:continue', { module: mod });
       });
     });
