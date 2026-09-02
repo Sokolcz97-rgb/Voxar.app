@@ -2,8 +2,8 @@
   "version": "0.0.13",
   "notes": "Automaticky vydaná verze 0.0.13.",
   "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe",
-  "sha256": "f76ae998e21d58613ef8303a912404e22a703a693a444186484711ac4a01dbbc",
-  "size": 236607008,
+  "sha256": "181e290b069e094e378766b3bf44bd10396ce60f22dab26f02c9657d773118b5",
+  "size": 236624353,
   "filename": "StudioVoxarioSetup-0.0.13.exe",
   "channels": {
     "stable": {
@@ -15,5 +15,5 @@
       "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe"
     }
   },
-  "updated_at": "2026-09-02T15:54:08.5113255Z"
+  "updated_at": "2026-09-02T16:07:29.0744127Z"
 }
