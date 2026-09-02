@@ -24,18 +24,6 @@ const features = [
 // aby stránka nespadla, když pointer zatím neexistuje (build ještě neproběhl).
 type AssetPointer = { url: string; original_filename?: string; size?: number };
 
-async function loadBrowserPointer(): Promise<AssetPointer | null> {
-  try {
-    const mods = import.meta.glob("@/assets/downloads/browser-installer.asset.json", { eager: true }) as Record<string, any>;
-    const first = Object.values(mods)[0];
-    const data = first?.default ?? first;
-    if (!data?.url) return null;
-    return await resolveLiveAsset(data as AssetPointer);
-  } catch {
-    return null;
-  }
-}
-
 async function loadInstallerPointer(): Promise<AssetPointer | null> {
   try {
     // Vite glob – returns empty object until CI drops the pointer file.
@@ -145,7 +133,6 @@ export default function Download() {
   const userId = user?.id ?? null;
   const [unlocked, setUnlocked] = useState(false);
   const [pointer, setPointer] = useState<AssetPointer | null>(null);
-  const [browserPointer, setBrowserPointer] = useState<AssetPointer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
