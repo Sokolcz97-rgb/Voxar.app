@@ -20,10 +20,32 @@ const sevenBin = require("7zip-bin");
 const Winreg = require("winreg");
 const ws = require("windows-shortcuts");
 
-const APP_NAME = "Voxar.app";
-const APP_EXE = "Voxar.app.exe";
+// Produkt se čte z resources/product.json — stejný instalátor a stejný payload
+// (build Voxar.app) umí nainstalovat i samostatný VoxarioBrowser.
+const PRODUCT = (() => {
+  const defaults = {
+    id: "voxar-app",
+    name: "Voxar.app",
+    exe: "Voxar.app.exe",
+    args: [],
+    browserOnly: false,
+  };
+  for (const p of [
+    path.join(process.resourcesPath || __dirname, "product.json"),
+    path.join(__dirname, "resources", "product.json"),
+  ]) {
+    try {
+      if (fs.existsSync(p)) return { ...defaults, ...JSON.parse(fs.readFileSync(p, "utf8")) };
+    } catch {}
+  }
+  return defaults;
+})();
+
+const APP_NAME = PRODUCT.name;
+const APP_EXE = PRODUCT.exe;
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), APP_NAME);
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${APP_NAME}`;
+
 
 const isUninstall = process.argv.includes("--uninstall");
 
@@ -80,7 +102,7 @@ ipcMain.handle("installer:close", () => {
 ipcMain.handle("installer:launch", (_e, dir) => {
   const exe = path.join(dir, APP_EXE);
   if (!fs.existsSync(exe)) throw new Error("Aplikace nebyla nalezena po instalaci");
-  const child = spawn(exe, [], { detached: true, windowsHide: true, stdio: "ignore" });
+  const child = spawn(exe, PRODUCT.args || [], { detached: true, windowsHide: true, stdio: "ignore" });
   child.unref();
   setTimeout(() => app.quit(), 300);
 });
@@ -109,6 +131,17 @@ ipcMain.handle("installer:install", async (_e, opts) => {
   const exePath = path.join(dir, APP_EXE);
   if (!fs.existsSync(exePath)) {
     throw new Error(`Po rozbalení chybí ${APP_EXE} v ${dir}. Archiv je poškozený nebo neúplný.`);
+  }
+
+  // 1b) Zapsat product.json — launcher podle něj pozná, že jde o samostatný
+  //     VoxarioBrowser (spustí rovnou prohlížeč, bez rozcestníku).
+  try {
+    fs.writeFileSync(
+      path.join(dir, "product.json"),
+      JSON.stringify({ id: PRODUCT.id, name: APP_NAME, browserOnly: !!PRODUCT.browserOnly }, null, 2),
+    );
+  } catch (err) {
+    send("log", `! product.json se nepodařilo zapsat: ${err?.message || err}`);
   }
 
   // 2) Zapsat channel.json.
@@ -208,18 +241,19 @@ function createShortcuts(dir, desktop) {
   const startMenu = path.join(process.env.APPDATA || os.homedir(), "Microsoft", "Windows", "Start Menu", "Programs", APP_NAME);
   fs.mkdirSync(startMenu, { recursive: true });
 
+  const args = (PRODUCT.args || []).join(" ");
   const tasks = [
-    { path: path.join(startMenu, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít Voxar.app" },
+    { path: path.join(startMenu, `${APP_NAME}.lnk`), target: exe, icon: exe, args, desc: `Otevřít ${APP_NAME}` },
   ];
   if (desktop) {
     const desktopDir = path.join(os.homedir(), "Desktop");
-    tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), target: exe, icon: exe, desc: "Otevřít Voxar.app" });
+    tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), target: exe, icon: exe, args, desc: `Otevřít ${APP_NAME}` });
   }
   return Promise.all(
     tasks.map(
       (t) =>
         new Promise((resolve, reject) =>
-          ws.create(t.path, { target: t.target, icon: t.icon, desc: t.desc, workingDir: dir }, (err) => (err ? reject(err) : resolve())),
+          ws.create(t.path, { target: t.target, args: t.args || "", icon: t.icon, desc: t.desc, workingDir: dir }, (err) => (err ? reject(err) : resolve())),
         ),
     ),
   );

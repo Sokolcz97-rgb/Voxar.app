@@ -57,21 +57,24 @@ jobs:
         working-directory: installer
         run: npm install
 
-      - name: Build HUD installer .exe
+      - name: Build HUD installer .exe (Voxar.app)
         working-directory: installer
+        env:
+          PRODUCT: app
         run: node build.cjs
 
-      - name: Build self-extracting installer (.exe)
+      - name: Build HUD installer .exe (VoxarioBrowser)
+        working-directory: installer
+        env:
+          PRODUCT: browser
+        run: node build.cjs
+
+      - name: Build self-extracting installers (.exe)
         id: locate
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $payloadDir = Resolve-Path "installer/dist/StudioVoxarioInstaller-win32-x64"
-          $exe = Join-Path $payloadDir "StudioVoxarioInstaller.exe"
-          Write-Host "== Payload check =="
-          if (!(Test-Path $exe)) { throw "Installer payload not found at $exe" }
-          Write-Host "Payload dir: $payloadDir"
-          Get-ChildItem $payloadDir | Select-Object -First 20 Name, Length | Format-Table | Out-String | Write-Host
+          $version = "${{ steps.appver.outputs.version }}"
 
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
           if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
@@ -79,69 +82,73 @@ jobs:
           Write-Host "== Download LZMA SDK (SFX modules) =="
           $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
           $extraDir     = Join-Path $env:RUNNER_TEMP "lzma-sdk"
-          # 7-Zip Extra no longer contains 7zSD.sfx. The official LZMA SDK does.
           Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
-          Write-Host ("Downloaded: {0} bytes" -f (Get-Item $extraArchive).Length)
           if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
           New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
           & $sevenZip x $extraArchive "-o$extraDir" -y
-          if ($LASTEXITCODE -ne 0) { throw "7z extract of $extraArchive failed with code $LASTEXITCODE" }
-          $sfxCandidates = Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File
-          $sfx = $sfxCandidates | Select-Object -First 1
-          if ($null -eq $sfx) {
-            Write-Host "7zSD.sfx missing. SDK dir contents:"
-            Get-ChildItem -Recurse $extraDir | Select-Object FullName | Format-Table | Out-String | Write-Host
-            throw "7zSD.sfx not found after extracting LZMA SDK"
-          }
+          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
+          $sfx = (Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1)
+          if ($null -eq $sfx) { throw "7zSD.sfx not found after extracting LZMA SDK" }
           $sfx = $sfx.FullName
-          Write-Host ("SFX module: {0} ({1} bytes)" -f $sfx, (Get-Item $sfx).Length)
 
-          Write-Host "== Pack payload into 7z =="
-          $archive = Join-Path $env:RUNNER_TEMP "payload.7z"
-          if (Test-Path $archive) { Remove-Item $archive -Force }
-          Push-Location $payloadDir
-          try {
-            & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
-            if ($LASTEXITCODE -ne 0) { throw "7z pack failed with code $LASTEXITCODE" }
-          } finally { Pop-Location }
-          Write-Host ("Archive: {0} ({1:N1} MB)" -f $archive, ((Get-Item $archive).Length / 1MB))
-
-          Write-Host "== Write SFX config =="
-          $cfg = Join-Path $env:RUNNER_TEMP "config.txt"
-          $configLines = @(
-            ';!@Install@!UTF-8!',
-            'Title="Voxar.app"',
-            'BeginPrompt="Instalovat Voxar.app?"',
-            'RunProgram="StudioVoxarioInstaller.exe"',
-            'GUIMode="2"',
-            ';!@InstallEnd@!'
-          )
-          # SFX config MUST be UTF-8 with BOM; use .NET writer for byte-exact control.
-          $utf8Bom = New-Object System.Text.UTF8Encoding($true)
-          [System.IO.File]::WriteAllText($cfg, ($configLines -join "`r`n") + "`r`n", $utf8Bom)
-          Write-Host ("Config: {0} bytes" -f (Get-Item $cfg).Length)
-
-          Write-Host "== Concatenate SFX + config + payload =="
           $outDir = "installer/dist/final"
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $renamed = Join-Path $outDir "VoxarAppSetup-${{ steps.appver.outputs.version }}.exe"
-          if (Test-Path $renamed) { Remove-Item $renamed -Force }
-          $out = [System.IO.File]::Open($renamed, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
-          try {
-            foreach ($part in @($sfx, $cfg, $archive)) {
-              $inStream = [System.IO.File]::OpenRead($part)
-              try { $inStream.CopyTo($out) } finally { $inStream.Dispose() }
-            }
-          } finally { $out.Dispose() }
-          if (!(Test-Path $renamed)) { throw "SFX build failed — output missing" }
 
-          $size = (Get-Item $renamed).Length
-          $hash = (Get-FileHash $renamed -Algorithm SHA256).Hash.ToLower()
-          Write-Host ("== DONE == {0} ({1:N1} MB) sha256={2}" -f $renamed, ($size / 1MB), $hash)
-          "path=$renamed"       | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "size=$size"          | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "sha256=$hash"        | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "filename=VoxarAppSetup-${{ steps.appver.outputs.version }}.exe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          $targets = @(
+            [ordered]@{ key = "app";     payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "Voxar.app";       prompt = "Instalovat Voxar.app?";      out = "VoxarAppSetup-$version.exe" },
+            [ordered]@{ key = "browser"; payload = "installer/dist/VoxarioBrowserInstaller-win32-x64"; exe = "VoxarioBrowserInstaller.exe"; title = "VoxarioBrowser"; prompt = "Instalovat VoxarioBrowser?"; out = "VoxarioBrowserSetup-$version.exe" }
+          )
+
+          $paths = @()
+          foreach ($t in $targets) {
+            Write-Host ("== Building SFX for {0} ==" -f $t.key)
+            $payloadDir = Resolve-Path $t.payload
+            $exe = Join-Path $payloadDir $t.exe
+            if (!(Test-Path $exe)) { throw "Installer payload not found at $exe" }
+
+            $archive = Join-Path $env:RUNNER_TEMP ("payload-" + $t.key + ".7z")
+            if (Test-Path $archive) { Remove-Item $archive -Force }
+            Push-Location $payloadDir
+            try {
+              & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
+              if ($LASTEXITCODE -ne 0) { throw "7z pack failed with code $LASTEXITCODE" }
+            } finally { Pop-Location }
+
+            $cfg = Join-Path $env:RUNNER_TEMP ("config-" + $t.key + ".txt")
+            $configLines = @(
+              ';!@Install@!UTF-8!',
+              ('Title="{0}"' -f $t.title),
+              ('BeginPrompt="{0}"' -f $t.prompt),
+              ('RunProgram="{0}"' -f $t.exe),
+              'GUIMode="2"',
+              ';!@InstallEnd@!'
+            )
+            $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+            [System.IO.File]::WriteAllText($cfg, ($configLines -join "`r`n") + "`r`n", $utf8Bom)
+
+            $renamed = Join-Path $outDir $t.out
+            if (Test-Path $renamed) { Remove-Item $renamed -Force }
+            $out = [System.IO.File]::Open($renamed, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+            try {
+              foreach ($part in @($sfx, $cfg, $archive)) {
+                $inStream = [System.IO.File]::OpenRead($part)
+                try { $inStream.CopyTo($out) } finally { $inStream.Dispose() }
+              }
+            } finally { $out.Dispose() }
+            if (!(Test-Path $renamed)) { throw "SFX build failed — output missing for $($t.key)" }
+
+            $size = (Get-Item $renamed).Length
+            $hash = (Get-FileHash $renamed -Algorithm SHA256).Hash.ToLower()
+            Write-Host ("== DONE == {0} ({1:N1} MB) sha256={2}" -f $renamed, ($size / 1MB), $hash)
+            $paths += $renamed
+
+            "$($t.key)_path=$renamed"     | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "$($t.key)_size=$size"        | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "$($t.key)_sha256=$hash"      | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "$($t.key)_filename=$($t.out)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+          "paths=$($paths -join "`n")" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Create / update GitHub Release
         id: release
@@ -152,7 +159,12 @@ jobs:
           body: |
             Automatický build z commitu ${{ github.sha }}.
             Verze: ${{ steps.appver.outputs.version }}
-          files: ${{ steps.locate.outputs.path }}
+
+            - `VoxarAppSetup-${{ steps.appver.outputs.version }}.exe` — Voxar.app (rozcestník: HUB / Voxar.app / VoxarioBrowser)
+            - `VoxarioBrowserSetup-${{ steps.appver.outputs.version }}.exe` — samostatný VoxarioBrowser (Chromium engine)
+          files: |
+            installer/dist/final/VoxarAppSetup-${{ steps.appver.outputs.version }}.exe
+            installer/dist/final/VoxarioBrowserSetup-${{ steps.appver.outputs.version }}.exe
           prerelease: true
           make_latest: 'false'
         env:
@@ -162,31 +174,52 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path src/assets/downloads | Out-Null
-          $url = "https://github.com/${{ github.repository }}/releases/download/desktop-latest/${{ steps.locate.outputs.filename }}"
+          $base = "https://github.com/${{ github.repository }}/releases/download/desktop-latest"
+          $url        = "$base/${{ steps.locate.outputs.app_filename }}"
+          $browserUrl = "$base/${{ steps.locate.outputs.browser_filename }}"
+
           $obj = [ordered]@{
             version           = 1
             url               = $url
-            original_filename = "${{ steps.locate.outputs.filename }}"
-            size              = [int64]"${{ steps.locate.outputs.size }}"
-            sha256            = "${{ steps.locate.outputs.sha256 }}"
+            original_filename = "${{ steps.locate.outputs.app_filename }}"
+            size              = [int64]"${{ steps.locate.outputs.app_size }}"
+            sha256            = "${{ steps.locate.outputs.app_sha256 }}"
             content_type      = "application/x-msdownload"
             source            = "github-release"
             tag               = "desktop-latest"
             commit            = "${{ github.sha }}"
             updated_at        = (Get-Date).ToUniversalTime().ToString("o")
           }
-          $json = $obj | ConvertTo-Json -Depth 5
-          Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value $json -Encoding UTF8
-          Get-Content src/assets/downloads/windows-installer.asset.json
+          Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value ($obj | ConvertTo-Json -Depth 5) -Encoding UTF8
+
+          $objB = [ordered]@{
+            version           = 1
+            url               = $browserUrl
+            original_filename = "${{ steps.locate.outputs.browser_filename }}"
+            size              = [int64]"${{ steps.locate.outputs.browser_size }}"
+            sha256            = "${{ steps.locate.outputs.browser_sha256 }}"
+            content_type      = "application/x-msdownload"
+            source            = "github-release"
+            tag               = "desktop-latest"
+            commit            = "${{ github.sha }}"
+            updated_at        = (Get-Date).ToUniversalTime().ToString("o")
+          }
+          Set-Content -Path src/assets/downloads/browser-installer.asset.json -Value ($objB | ConvertTo-Json -Depth 5) -Encoding UTF8
 
           New-Item -ItemType Directory -Force -Path public | Out-Null
           $manifest = [ordered]@{
             version    = "${{ steps.appver.outputs.version }}"
             notes      = "Automaticky vydaná verze ${{ steps.appver.outputs.version }}."
             url        = $url
-            sha256     = "${{ steps.locate.outputs.sha256 }}"
-            size       = [int64]"${{ steps.locate.outputs.size }}"
-            filename   = "${{ steps.locate.outputs.filename }}"
+            sha256     = "${{ steps.locate.outputs.app_sha256 }}"
+            size       = [int64]"${{ steps.locate.outputs.app_size }}"
+            filename   = "${{ steps.locate.outputs.app_filename }}"
+            browser    = [ordered]@{
+              url      = $browserUrl
+              sha256   = "${{ steps.locate.outputs.browser_sha256 }}"
+              size     = [int64]"${{ steps.locate.outputs.browser_size }}"
+              filename = "${{ steps.locate.outputs.browser_filename }}"
+            }
             channels   = [ordered]@{
               stable = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
               beta   = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
@@ -194,17 +227,16 @@ jobs:
             updated_at = (Get-Date).ToUniversalTime().ToString("o")
           }
           Set-Content -Path public/desktop-version.json -Value ($manifest | ConvertTo-Json -Depth 6) -Encoding UTF8
-          Get-Content public/desktop-version.json
 
       - name: Commit updated pointer
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/assets/downloads/windows-installer.asset.json public/desktop-version.json
+          git add src/assets/downloads/windows-installer.asset.json src/assets/downloads/browser-installer.asset.json public/desktop-version.json
           if git diff --cached --quiet; then
             echo "No pointer changes to commit."
           else
-            git commit -m "ci: update Windows installer pointer [skip ci]"
+            git commit -m "ci: update Windows installer pointers [skip ci]"
             git push
           fi

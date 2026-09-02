@@ -27,6 +27,21 @@ const HUB_URL = (() => {
 const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
 let pendingModule = "app";
 
+// Samostatná instalace VoxarioBrowseru: product.json vedle exe (nebo --browser)
+// znamená, že se má rovnou otevřít nativní prohlížeč, bez rozcestníku.
+const BROWSER_ONLY = (() => {
+  if (process.argv.slice(1).some((a) => a === "--browser")) return true;
+  for (const p of [
+    path.join(path.dirname(process.execPath), "product.json"),
+    path.join(__dirname, "product.json"),
+  ]) {
+    try {
+      if (fs.existsSync(p)) return !!JSON.parse(fs.readFileSync(p, "utf8")).browserOnly;
+    } catch {}
+  }
+  return false;
+})();
+
 
 // Anti-tamper (basic): v produkci zakážeme remote debugging, --inspect a
 // obcházení web security přes CLI flagy.
@@ -721,7 +736,11 @@ app.whenReady().then(async () => {
     }
   }
 
-  runLauncherSequence();
+  if (BROWSER_ONLY) {
+    createBrowserWindow();
+  } else {
+    runLauncherSequence();
+  }
 
   // Živá quiet-kontrola pro FAB v UI (bez dialogů). První hned po startu,
   // pak každých 15 min. Manifest se fetchuje s cache-bustem, takže výsledek
@@ -743,6 +762,8 @@ app.whenReady().then(async () => {
 
 app.on("second-instance", () => showMain());
 app.on("window-all-closed", () => {
+  // Samostatný prohlížeč nemá tray — zavřením okna se aplikace ukončí.
+  if (BROWSER_ONLY) return app.quit();
   if (process.platform !== "darwin" && !settings.closeToTray) app.quit();
 });
 app.on("before-quit", () => {

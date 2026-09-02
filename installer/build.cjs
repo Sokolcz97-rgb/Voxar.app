@@ -26,6 +26,17 @@ const RESOURCES = path.join(ROOT, "resources");
 const PAYLOAD = path.join(ROOT, "..", "electron-release", "Voxar.app-win32-x64");
 const OUT_ARCHIVE = path.join(RESOURCES, "app.7z");
 const OUT_7ZA = path.join(RESOURCES, "7za.exe");
+const OUT_PRODUCT = path.join(RESOURCES, "product.json");
+
+// Který produkt balíme? Stejný payload (build Voxar.app) slouží oběma:
+//   PRODUCT=app     → Voxar.app (rozcestník)
+//   PRODUCT=browser → VoxarioBrowser (spustí se rovnou prohlížeč)
+const PRODUCTS = {
+  app: { id: "voxar-app", name: "Voxar.app", exe: "Voxar.app.exe", args: [], browserOnly: false, installerName: "StudioVoxarioInstaller" },
+  browser: { id: "voxario-browser", name: "VoxarioBrowser", exe: "Voxar.app.exe", args: ["--browser"], browserOnly: true, installerName: "VoxarioBrowserInstaller" },
+};
+const PRODUCT = PRODUCTS[process.env.PRODUCT || "app"];
+if (!PRODUCT) { console.error(`✗ Neznámý PRODUCT: ${process.env.PRODUCT}`); process.exit(1); }
 
 async function main() {
   if (!fs.existsSync(PAYLOAD)) {
@@ -36,6 +47,8 @@ async function main() {
   fs.mkdirSync(RESOURCES, { recursive: true });
   if (fs.existsSync(OUT_ARCHIVE)) fs.rmSync(OUT_ARCHIVE);
   fs.copyFileSync(sevenBin.path7za, OUT_7ZA);
+  fs.writeFileSync(OUT_PRODUCT, JSON.stringify(PRODUCT, null, 2));
+  console.log("→ Produkt:", PRODUCT.name);
 
   console.log("→ Balím payload:", PAYLOAD);
   await new Promise((resolve, reject) => {
@@ -49,16 +62,17 @@ async function main() {
   execFileSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
     [
-      "@electron/packager", ".", "StudioVoxarioInstaller",
+      "@electron/packager", ".", PRODUCT.installerName,
       "--platform=win32", "--arch=x64",
       "--out=dist", "--overwrite",
       "--icon=assets/icon.ico",
       "--extra-resource=resources/app.7z",
       "--extra-resource=resources/7za.exe",
+      "--extra-resource=resources/product.json",
     ],
     { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );
-  console.log("\n✓ Hotovo: dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe");
+  console.log(`\n✓ Hotovo: dist/${PRODUCT.installerName}-win32-x64/${PRODUCT.installerName}.exe`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
