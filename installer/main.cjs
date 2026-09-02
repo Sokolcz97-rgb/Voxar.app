@@ -76,6 +76,10 @@ ipcMain.handle("installer:pick-dir", async (_e, current) => {
   return path.join(res.filePaths[0], APP_NAME);
 });
 
+ipcMain.handle("installer:minimize", () => {
+  try { win?.minimize(); } catch {}
+});
+
 ipcMain.handle("installer:close", () => {
   app.quit();
 });
