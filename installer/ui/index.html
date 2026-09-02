@@ -42,15 +42,37 @@
         <h1>Vítejte v Voxar.app</h1>
         <p class="muted">Vlastní HUD instalátor — bez klasického Windows okna. Instalace neprobíhá pod administrátorem, aplikace se nainstaluje jen pro vás.</p>
         <ul class="bullets">
+          <li>Jeden instalátor pro Voxar.app i VoxarioBrowser</li>
           <li>Bez potřeby administrátorských práv</li>
-          <li>Bez klasického příkazového řádku</li>
           <li>Zvolíte si kanál aktualizací (Stable / Beta)</li>
           <li>Snadná odinstalace přes Ovládací panely</li>
         </ul>
         <div class="actions">
-          <button class="btn primary" data-next="location">Pokračovat →</button>
+          <button class="btn primary" data-next="components">Pokračovat →</button>
         </div>
       </section>
+
+      <!-- Components -->
+      <section class="panel" data-step="components">
+        <h1>Co chcete nainstalovat?</h1>
+        <p class="muted">Obě komponenty sdílejí stejný engine, takže instalace obou nezabere navíc téměř žádné místo.</p>
+        <div class="cards">
+          <label class="card selected" id="cardApp">
+            <input type="checkbox" id="chkApp" checked />
+            <div class="card-title">Voxar.app <span class="tag">doporučeno</span></div>
+            <div class="card-desc">Komunikační aplikace, HUB a rozcestník s moduly.</div>
+          </label>
+          <label class="card selected" id="cardBrowser">
+            <input type="checkbox" id="chkBrowser" checked />
+            <div class="card-title">VoxarioBrowser <span class="tag">modul</span></div>
+            <div class="card-desc">Chromium prohlížeč. Lze doinstalovat i později přímo z rozcestníku.</div>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" data-next="welcome">← Zpět</button>
+          <button class="btn primary" data-next="location">Pokračovat →</button>
+        </div>
+
 
       <!-- Location -->
       <section class="panel" data-step="location">
