@@ -392,7 +392,10 @@
   <script>
     const { ipcRenderer, shell } = require('electron');
     const $ = (id) => document.getElementById(id);
-    const HOME = 'https://www.google.com';
+    let HOME = 'https://www.google.com';
+    let SEARCH_TPL = 'https://www.google.com/search?q=%s';
+    let PREFS = {};
+    let ENGINES = [];
 
     let tabs = [];
     let activeId = null;
@@ -407,7 +410,7 @@
       if (!s) return HOME;
       if (/^(https?|file|about|chrome):/i.test(s)) return s;
       if (/^[\w.-]+\.[a-z]{2,}(\/|$|:\d)/i.test(s) || s === 'localhost') return 'https://' + s;
-      return 'https://www.google.com/search?q=' + encodeURIComponent(s);
+      return SEARCH_TPL.replace('%s', encodeURIComponent(s));
     }
 
     function activeTab() { return tabs.find((t) => t.id === activeId); }
@@ -433,7 +436,11 @@
         } catch {}
         render();
       };
-      wv.addEventListener('page-title-updated', (e) => { tab.title = e.title; render(); });
+      wv.addEventListener('page-title-updated', (e) => {
+        tab.title = e.title;
+        try { ipcRenderer.invoke('vb:history:push', { url: tab.url, title: e.title }); } catch {}
+        render();
+      });
       wv.addEventListener('did-start-loading', () => { tab.loading = true; render(); });
       wv.addEventListener('did-stop-loading', sync);
       wv.addEventListener('did-navigate', sync);
@@ -515,7 +522,6 @@
     $('goApp').onclick = () => ipcRenderer.invoke('app:open-module', 'app');
     $('goHub').onclick = () => ipcRenderer.invoke('app:open-module', 'hub');
     $('btnLauncher').onclick = () => ipcRenderer.invoke('app:return-to-launcher');
-    $('btnDev').onclick = () => { try { activeTab()?.wv.openDevTools(); } catch {} };
 
     // find in page
     const findbar = $('findbar');
@@ -655,8 +661,15 @@
       else if (ctrl && e.key.toLowerCase() === 'l') { e.preventDefault(); $('url').focus(); }
       else if (ctrl && e.key.toLowerCase() === 'r') { e.preventDefault(); activeTab()?.wv.reload(); }
       else if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); openFind(); }
-      else if (e.key === 'F12') { e.preventDefault(); try { activeTab()?.wv.openDevTools(); } catch {} }
-      else if (e.key === 'Escape') { closeFind(); closePanel(); }
+      else if (e.key === 'F12' || (ctrl && e.shiftKey && e.key.toLowerCase() === 'i')) {
+        e.preventDefault();
+        if (PREFS.devtoolsEnabled) { try { activeTab()?.wv.openDevTools(); } catch {} }
+        else flash('DevTools jsou vypnuté — zapni je v Nastavení → Pro vývojáře.');
+      }
+      else if (ctrl && e.key === ',') { e.preventDefault(); openSettings('search'); }
+      else if (ctrl && e.key.toLowerCase() === 'j') { e.preventDefault(); openSettings('downloads'); }
+      else if (ctrl && e.key.toLowerCase() === 'h') { e.preventDefault(); openSettings('history'); }
+      else if (e.key === 'Escape') { closeFind(); closePanel(); closeSettings(); }
       else if (e.key === 'F5') { e.preventDefault(); activeTab()?.wv.reload(); }
     });
 
