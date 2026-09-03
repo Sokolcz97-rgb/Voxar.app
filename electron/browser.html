@@ -673,6 +673,300 @@
       else if (e.key === 'F5') { e.preventDefault(); activeTab()?.wv.reload(); }
     });
 
+    /* ================= Nastavení VoxarioBrowser ================= */
+    const setpanel = $('setpanel');
+
+    function flash(msg) {
+      const st = $('status');
+      st.textContent = msg; st.style.display = '';
+      setTimeout(() => { st.style.display = 'none'; }, 3200);
+    }
+
+    const OPT_GROUPS = {
+      optsPrivacy: [
+        ['doNotTrack', 'Do Not Track / Sec-GPC', 'Posílat žádost o nesledování ke každému požadavku.'],
+        ['blockThirdPartyCookies', 'Blokovat cookies třetích stran', 'Omezí sledování napříč weby.'],
+        ['historyEnabled', 'Ukládat historii prohlížení', 'Vypnutím se nové stránky do historie nezapisují.'],
+        ['clearOnExit', 'Vymazat data při ukončení', 'Cache, cookies a data stránek se smažou po zavření prohlížeče.'],
+      ],
+      optsProtect: [
+        ['adblock', 'uBlock štít – reklamy', 'Vestavěná blokace reklamních a pop-up sítí.'],
+        ['blockTrackers', 'Blokovat trackery a analytiku', 'Google Analytics, Meta Pixel, Hotjar a další.'],
+        ['blockMalware', 'Ochrana před škodlivými weby', 'Blokuje známé podvodné a malware domény.'],
+        ['httpsOnly', 'Vynutit HTTPS', 'Nezabezpečené HTTP adresy se přepnou na HTTPS.'],
+        ['blockDangerousDownloads', 'Kontrola nebezpečných souborů', 'Před stažením .exe, .bat, .ps1 a dalších se zeptá.'],
+      ],
+      optsDownload: [
+        ['askDownloadLocation', 'Vždy se zeptat kam ukládat', 'Vypnuto = stahuje se rovnou bez dotazu.'],
+        ['blockDangerousDownloads', 'Skenovat rizikové přípony', 'Varování u spustitelných souborů.'],
+      ],
+      optsVault: [
+        ['savePasswords', 'Ukládat hesla ze stránek', 'Hesla jsou šifrovaná klíčem operačního systému.'],
+      ],
+      optsPerf: [
+        ['hardwareAcceleration', 'Hardwarová akcelerace (GPU)', 'Změna se projeví po restartu prohlížeče.'],
+        ['imageLoading', 'Načítat obrázky', 'Vypnutí výrazně sníží datový tok i zátěž.'],
+        ['backgroundThrottling', 'Uspávat panely na pozadí', 'Šetří CPU u neaktivních panelů.'],
+      ],
+      optsDev: [
+        ['devtoolsEnabled', 'Povolit DevTools', 'Otevírají se zkratkou F12 / Ctrl+Shift+I.'],
+      ],
+    };
+
+    function renderOptions() {
+      Object.entries(OPT_GROUPS).forEach(([hostId, items]) => {
+        const host = $(hostId);
+        if (!host) return;
+        host.innerHTML = '';
+        items.forEach(([key, label, desc]) => {
+          const row = document.createElement('div');
+          row.className = 'opt';
+          row.innerHTML =
+            '<div><div class="lbl"></div><div class="dsc"></div></div>' +
+            '<label class="sw"><input type="checkbox"><i></i></label>';
+          row.querySelector('.lbl').textContent = label;
+          row.querySelector('.dsc').textContent = desc;
+          const cb = row.querySelector('input');
+          cb.checked = !!PREFS[key];
+          cb.onchange = async () => {
+            PREFS = await ipcRenderer.invoke('vb:prefs:set', { [key]: cb.checked });
+            applyPrefsToUi();
+            if (key === 'hardwareAcceleration') flash('Změna GPU akcelerace se projeví po restartu prohlížeče.');
+          };
+          host.appendChild(row);
+        });
+      });
+    }
+
+    function renderEngines() {
+      const host = $('engines');
+      host.innerHTML = '';
+      ENGINES.forEach((e) => {
+        const b = document.createElement('button');
+        b.className = 'eng' + (PREFS.searchEngine === e.id ? ' on' : '');
+        b.textContent = e.label;
+        b.onclick = async () => {
+          PREFS = await ipcRenderer.invoke('vb:prefs:set', { searchEngine: e.id });
+          applyPrefsToUi();
+          renderEngines();
+        };
+        host.appendChild(b);
+      });
+    }
+
+    function applyPrefsToUi() {
+      const eng = ENGINES.find((e) => e.id === PREFS.searchEngine) || ENGINES[0];
+      if (eng) { SEARCH_TPL = eng.url; HOME = PREFS.homepage || eng.home; }
+      $('dlDir').textContent = 'Složka stahování: ' + (PREFS.downloadDir || '—');
+      $('url').placeholder = 'Zadej adresu nebo hledej přes ' + (eng ? eng.label : 'web') + '…';
+    }
+
+    async function loadPrefs() {
+      const res = await ipcRenderer.invoke('vb:prefs:get');
+      PREFS = res.prefs; ENGINES = res.engines;
+      $('homepage').value = PREFS.homepage || '';
+      $('encNote').textContent = res.encryption
+        ? 'Šifrování je aktivní — hesla jsou chráněná klíčem tohoto počítače (DPAPI/Keychain).'
+        : 'Pozor: systémové šifrování není dostupné, hesla by se uložila nešifrovaně.';
+      applyPrefsToUi();
+      renderEngines();
+      renderOptions();
+    }
+
+    $('homepage').addEventListener('change', async () => {
+      PREFS = await ipcRenderer.invoke('vb:prefs:set', { homepage: $('homepage').value.trim() });
+      applyPrefsToUi();
+    });
+
+    document.querySelectorAll('[data-clear]').forEach((b) => {
+      b.onclick = async () => {
+        const kinds = b.getAttribute('data-clear').split(',');
+        b.disabled = true;
+        const r = await ipcRenderer.invoke('vb:clear', kinds);
+        b.disabled = false;
+        $('clearNote').textContent = 'Vymazáno: ' + (r?.cleared || []).join(', ');
+        renderHistory(); renderDownloads();
+      };
+    });
+
+    /* --- stahování --- */
+    let dlItems = [];
+    const fmt = (n) => !n ? '—' : n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' kB';
+
+    function renderDownloads() {
+      const list = $('dllist');
+      list.innerHTML = '';
+      if (!dlItems.length) {
+        list.innerHTML = '<div class="dlrow"><span class="nm" style="color:#475569">Zatím nic staženého.</span></div>';
+      }
+      dlItems.forEach((d) => {
+        const row = document.createElement('div');
+        row.className = 'dlrow';
+        const nm = document.createElement('span');
+        nm.className = 'nm'; nm.textContent = d.filename; nm.title = d.url || '';
+        const size = document.createElement('span');
+        size.style.color = '#64748b'; size.style.fontSize = '11px';
+        size.textContent = d.state === 'progressing' ? fmt(d.received) + ' / ' + fmt(d.size) : fmt(d.size || d.received);
+        const st = document.createElement('span');
+        st.className = 'st ' + d.state; st.textContent = d.state;
+        const open = document.createElement('button');
+        open.className = 'mini'; open.textContent = 'Otevřít';
+        open.onclick = () => ipcRenderer.invoke('vb:downloads:open', d.id);
+        const rev = document.createElement('button');
+        rev.className = 'mini'; rev.textContent = 'Ve složce';
+        rev.onclick = () => ipcRenderer.invoke('vb:downloads:reveal', d.id);
+        const del = document.createElement('button');
+        del.className = 'mini dang'; del.textContent = '✕';
+        del.onclick = async () => { dlItems = await ipcRenderer.invoke('vb:downloads:remove', d.id); renderDownloads(); };
+        row.append(nm, size, st, open, rev, del);
+        list.appendChild(row);
+      });
+      const dot = $('btnDownloads').querySelector('.dot');
+      const active = dlItems.some((d) => d.state === 'progressing');
+      if (active && !dot) { const s2 = document.createElement('span'); s2.className = 'dot'; $('btnDownloads').appendChild(s2); }
+      if (!active && dot) dot.remove();
+    }
+
+    ipcRenderer.on('vb:downloads', (_e, items) => { dlItems = items || []; renderDownloads(); });
+    $('dlPick').onclick = async () => {
+      const r = await ipcRenderer.invoke('vb:downloads:pick-dir');
+      if (r?.ok) { PREFS.downloadDir = r.dir; applyPrefsToUi(); }
+    };
+    $('dlClear').onclick = async () => { dlItems = await ipcRenderer.invoke('vb:downloads:clear'); renderDownloads(); };
+
+    /* --- hesla --- */
+    async function renderPasswords() {
+      const items = await ipcRenderer.invoke('vb:passwords:list');
+      const list = $('pwlist');
+      list.innerHTML = '';
+      if (!items.length) list.innerHTML = '<div class="dlrow"><span class="nm" style="color:#475569">Žádná uložená hesla.</span></div>';
+      items.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'dlrow';
+        const nm = document.createElement('span');
+        nm.className = 'nm'; nm.textContent = it.origin + ' — ' + it.username;
+        const val = document.createElement('span');
+        val.style.fontFamily = 'ui-monospace, monospace'; val.style.color = '#64748b'; val.textContent = '••••••••';
+        const show = document.createElement('button');
+        show.className = 'mini'; show.textContent = 'Zobrazit';
+        show.onclick = async () => {
+          const r = await ipcRenderer.invoke('vb:passwords:reveal', it.id);
+          val.textContent = r.ok ? r.password : 'chyba';
+          val.style.color = r.ok ? '#e2e8f0' : '#f87171';
+        };
+        const enc = document.createElement('span');
+        enc.className = 'badge'; enc.textContent = it.enc ? 'šifrováno' : 'nešifrováno';
+        const del = document.createElement('button');
+        del.className = 'mini dang'; del.textContent = 'Odebrat';
+        del.onclick = async () => { await ipcRenderer.invoke('vb:passwords:delete', it.id); renderPasswords(); };
+        row.append(nm, val, enc, show, del);
+        list.appendChild(row);
+      });
+    }
+    $('pwSave').onclick = async () => {
+      const origin = $('pwOrigin').value.trim();
+      const username = $('pwUser').value.trim();
+      const password = $('pwPass').value;
+      if (!origin || !username || !password) return flash('Vyplň doménu, jméno i heslo.');
+      const r = await ipcRenderer.invoke('vb:passwords:save', { origin, username, password });
+      if (!r.ok) return flash(r.error || 'Uložení selhalo');
+      $('pwOrigin').value = ''; $('pwUser').value = ''; $('pwPass').value = '';
+      renderPasswords();
+    };
+
+    /* --- historie --- */
+    let histItems = [];
+    function renderHistory() {
+      const q = ($('hsearch').value || '').toLowerCase();
+      const list = $('hlist');
+      list.innerHTML = '';
+      const rows = histItems.filter((h) => !q || (h.title + h.url).toLowerCase().includes(q)).slice(0, 300);
+      if (!rows.length) list.innerHTML = '<div class="dlrow"><span class="nm" style="color:#475569">Historie je prázdná.</span></div>';
+      rows.forEach((h) => {
+        const row = document.createElement('div');
+        row.className = 'dlrow';
+        const nm = document.createElement('span');
+        nm.className = 'nm'; nm.textContent = h.title || h.url; nm.style.cursor = 'pointer';
+        nm.onclick = () => { createTab(h.url); closeSettings(); };
+        const u = document.createElement('span');
+        u.style.color = '#64748b'; u.style.fontSize = '11px'; u.style.maxWidth = '38%';
+        u.style.overflow = 'hidden'; u.style.textOverflow = 'ellipsis'; u.style.whiteSpace = 'nowrap';
+        u.textContent = h.url;
+        const at = document.createElement('span');
+        at.style.color = '#475569'; at.style.fontSize = '10px';
+        at.textContent = new Date(h.at).toLocaleString('cs-CZ');
+        const del = document.createElement('button');
+        del.className = 'mini dang'; del.textContent = '✕';
+        del.onclick = async () => { histItems = await ipcRenderer.invoke('vb:history:remove', h.url); renderHistory(); };
+        row.append(nm, u, at, del);
+        list.appendChild(row);
+      });
+    }
+    $('hsearch').addEventListener('input', renderHistory);
+
+    /* --- výkon --- */
+    let perfTimer = null;
+    function meter(k, v, pct) {
+      return '<div class="meter"><div class="k">' + k + '</div><div class="v">' + v + '</div>' +
+        (pct == null ? '' : '<div class="bar"><span style="width:' + Math.max(2, Math.min(100, pct)) + '%"></span></div>') + '</div>';
+    }
+    async function tickPerf() {
+      const s2 = await ipcRenderer.invoke('vb:stats');
+      const usedPct = s2.systemTotalMB ? (100 * (s2.systemTotalMB - s2.systemFreeMB)) / s2.systemTotalMB : null;
+      $('perfMeters').innerHTML =
+        meter('CPU prohlížeče', s2.cpuPercent + ' %', s2.cpuPercent) +
+        meter('RAM prohlížeče', s2.ramMB + ' MB', s2.systemTotalMB ? (100 * s2.ramMB) / s2.systemTotalMB : null) +
+        meter('Systémová paměť', Math.round((s2.systemTotalMB - s2.systemFreeMB) / 1024) + ' / ' + Math.round(s2.systemTotalMB / 1024) + ' GB', usedPct) +
+        meter('GPU akcelerace', s2.gpuEnabled ? 'zapnuta' : 'vypnuta', null) +
+        meter('Procesy', String(s2.processes), null) +
+        meter('Otevřené panely', String(tabs.length), null);
+      $('shieldStats').innerHTML =
+        meter('Reklamy', String(s2.blocked.ads), null) +
+        meter('Trackery', String(s2.blocked.trackers), null) +
+        meter('Škodlivé', String(s2.blocked.malware), null);
+    }
+    $('speedBtn').onclick = async () => {
+      $('speedOut').textContent = 'měřím…';
+      const r = await ipcRenderer.invoke('vb:speedtest');
+      $('speedOut').textContent = r.ok ? r.mbps + ' Mb/s (' + r.seconds + ' s)' : 'chyba měření';
+    };
+    $('resetPrefs').onclick = async () => {
+      PREFS = await ipcRenderer.invoke('vb:prefs:reset');
+      $('homepage').value = '';
+      applyPrefsToUi(); renderEngines(); renderOptions();
+      flash('Nastavení obnoveno na výchozí hodnoty.');
+    };
+
+    /* --- otevírání panelu --- */
+    async function openSettings(sec) {
+      closePanel();
+      setpanel.classList.add('on');
+      selectSection(sec || 'search');
+      await loadPrefs();
+      dlItems = await ipcRenderer.invoke('vb:downloads:list') || [];
+      histItems = await ipcRenderer.invoke('vb:history:list') || [];
+      renderDownloads(); renderHistory(); renderPasswords();
+      tickPerf();
+      if (perfTimer) clearInterval(perfTimer);
+      perfTimer = setInterval(tickPerf, 2000);
+    }
+    function closeSettings() {
+      setpanel.classList.remove('on');
+      if (perfTimer) { clearInterval(perfTimer); perfTimer = null; }
+    }
+    function selectSection(id) {
+      document.querySelectorAll('.setnav button').forEach((b) => b.classList.toggle('on', b.dataset.sec === id));
+      document.querySelectorAll('.sec').forEach((n) => n.classList.toggle('on', n.dataset.sec === id));
+    }
+    document.querySelectorAll('.setnav button').forEach((b) => { b.onclick = () => selectSection(b.dataset.sec); });
+    $('setClose').onclick = closeSettings;
+    $('btnSettings').onclick = () => setpanel.classList.contains('on') ? closeSettings() : openSettings('search');
+    $('btnDownloads').onclick = () => openSettings('downloads');
+    $('btnPerf').onclick = () => openSettings('perf');
+
+    loadPrefs().then(() => { if (tabs[0] && tabs[0].url === 'https://www.google.com' && HOME !== 'https://www.google.com') { tabs[0].wv.loadURL(HOME); } });
+    ipcRenderer.invoke('vb:downloads:list').then((d) => { dlItems = d || []; renderDownloads(); });
+
     createTab(HOME);
     loadBookmarks();
 
