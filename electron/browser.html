@@ -626,7 +626,7 @@
       });
     }
 
-    function openPanel() { bmpanel.classList.add('on'); renderSources(); }
+    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); renderSources(); }
     function closePanel() { bmpanel.classList.remove('on'); }
 
     $('btnBookmarks').onclick = () => bmpanel.classList.contains('on') ? closePanel() : openPanel();
