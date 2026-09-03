@@ -242,6 +242,148 @@
           Export vytvoří Netscape HTML, který načte jakýkoliv prohlížeč.
         </div>
       </div>
+      <div class="panel" id="setpanel">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px">
+          <h2 style="margin:0">// Voxario Control</h2>
+          <span class="sub" style="margin:0">Vlastní nastavení prohlížeče</span>
+          <button class="pbtn" style="margin-left:auto" id="setClose">Zavřít</button>
+        </div>
+        <div class="setwrap">
+          <div class="setnav">
+            <button data-sec="search" class="on">Vyhledávání</button>
+            <button data-sec="privacy">Soukromí</button>
+            <button data-sec="protect">Ochrana</button>
+            <button data-sec="downloads">Stahování</button>
+            <button data-sec="vault">Hesla</button>
+            <button data-sec="perf">Výkon &amp; síť</button>
+            <button data-sec="history">Historie</button>
+            <button data-sec="dev">Pro vývojáře</button>
+          </div>
+          <div class="setbody">
+
+            <div class="sec on" data-sec="search">
+              <div class="card">
+                <h3>Výchozí vyhledávač</h3>
+                <div class="engines" id="engines"></div>
+              </div>
+              <div class="card">
+                <h3>Domovská stránka</h3>
+                <div class="opt">
+                  <div><div class="lbl">Vlastní URL</div><div class="dsc">Prázdné = domovská stránka vyhledávače.</div></div>
+                  <input class="inp" id="homepage" style="width:280px" placeholder="https://studiovoxario.com" />
+                </div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="privacy">
+              <div class="card">
+                <h3>Soukromí</h3>
+                <div id="optsPrivacy"></div>
+              </div>
+              <div class="card">
+                <h3>Vymazat údaje o prohlížení</h3>
+                <div class="row">
+                  <button class="pbtn" data-clear="cache">Vymazat cache</button>
+                  <button class="pbtn" data-clear="cookies">Vymazat cookies</button>
+                  <button class="pbtn" data-clear="storage">Vymazat data stránek</button>
+                  <button class="pbtn" data-clear="history">Vymazat historii</button>
+                  <button class="pbtn" data-clear="downloads">Vymazat historii stahování</button>
+                  <button class="pbtn" data-clear="auth,hostcache">Přihlášení &amp; DNS cache</button>
+                  <button class="pbtn gold" data-clear="cache,cookies,storage,history,downloads,auth,hostcache">Vymazat vše</button>
+                </div>
+                <div class="pnote" id="clearNote">Mazání se týká profilu VoxarioBrowseru (persist:voxario).</div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="protect">
+              <div class="card">
+                <h3>Štít Voxario</h3>
+                <div id="optsProtect"></div>
+              </div>
+              <div class="card">
+                <h3>Statistika blokování</h3>
+                <div class="meters" id="shieldStats"></div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="downloads">
+              <div class="card">
+                <h3>Chování stahování</h3>
+                <div id="optsDownload"></div>
+                <div class="path" id="dlDir">—</div>
+                <div class="row">
+                  <button class="pbtn" id="dlPick">Změnit složku stahování</button>
+                  <button class="pbtn gold" id="dlClear">Vyčistit seznam</button>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Historie stahování</h3>
+                <div class="bmlist" id="dllist"></div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="vault">
+              <div class="card">
+                <h3>Uložená hesla</h3>
+                <div id="optsVault"></div>
+                <div class="pnote" id="encNote"></div>
+              </div>
+              <div class="card">
+                <h3>Přidat záznam</h3>
+                <div class="row">
+                  <input class="inp" id="pwOrigin" placeholder="doména (např. studiovoxario.com)" style="width:230px" />
+                  <input class="inp" id="pwUser" placeholder="přihlašovací jméno" style="width:180px" />
+                  <input class="inp" id="pwPass" type="password" placeholder="heslo" style="width:180px" />
+                  <button class="pbtn" id="pwSave">Uložit šifrovaně</button>
+                </div>
+                <div class="bmlist" id="pwlist"></div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="perf">
+              <div class="card">
+                <h3>Živé využití</h3>
+                <div class="meters" id="perfMeters"></div>
+              </div>
+              <div class="card">
+                <h3>Rychlost připojení</h3>
+                <div class="row">
+                  <button class="pbtn" id="speedBtn">Změřit rychlost stahování</button>
+                  <span class="badge" id="speedOut">nezměřeno</span>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Optimalizace</h3>
+                <div id="optsPerf"></div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="history">
+              <div class="card">
+                <h3>Historie prohlížení</h3>
+                <div class="row">
+                  <input class="inp" id="hsearch" placeholder="Hledat v historii…" style="width:260px" />
+                  <button class="pbtn gold" data-clear="history">Vymazat historii</button>
+                </div>
+                <div class="bmlist" id="hlist"></div>
+              </div>
+            </div>
+
+            <div class="sec" data-sec="dev">
+              <div class="card">
+                <h3>Vývojářské nástroje</h3>
+                <div id="optsDev"></div>
+                <div class="pnote">Když je povoleno, otevřeš DevTools klávesou <b>F12</b> nebo <b>Ctrl+Shift+I</b>. Ikona v liště zůstává skrytá.</div>
+              </div>
+              <div class="card">
+                <h3>Reset</h3>
+                <div class="row"><button class="pbtn gold" id="resetPrefs">Obnovit výchozí nastavení</button></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
       <div class="status" id="status" style="display:none"></div>
     </div>
 
