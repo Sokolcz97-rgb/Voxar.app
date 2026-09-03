@@ -17,6 +17,8 @@ const fs = require("fs");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
+const browserSettings = require("./browser-settings.cjs");
+browserSettings.applyHardwareAcceleration();
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
 const BROWSER_URL = (() => {
@@ -897,6 +899,7 @@ async function runLauncherSequence() {
 }
 
 app.whenReady().then(async () => {
+  browserSettings.registerBrowserSettings();
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // aby aplikace vždy načetla aktuální verzi webu, ne starou zakešovanou.
   try {
@@ -979,6 +982,7 @@ app.on("window-all-closed", () => {
 });
 app.on("before-quit", () => {
   isQuitting = true;
+  browserSettings.clearOnExitIfNeeded();
   rollback.recordCleanExit();
 });
 
