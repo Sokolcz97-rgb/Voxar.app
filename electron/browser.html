@@ -518,7 +518,9 @@
       const initial = toUrl(url);
       wv.setAttribute('src', initial === START ? 'about:blank' : initial);
       wv.setAttribute('allowpopups', 'true');
+      wv.setAttribute('useragent', CHROME_UA);
       wv.setAttribute('partition', 'persist:voxario');
+
       wv.style.display = 'none';
       viewport.appendChild(wv);
 
