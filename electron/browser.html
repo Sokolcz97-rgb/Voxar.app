@@ -93,7 +93,7 @@
     .status { position: absolute; left: 0; bottom: 0; z-index: 20; background: rgba(5,7,13,.9); border: 1px solid var(--line); border-left: 0; border-bottom: 0; color: var(--muted); font-size: 11px; padding: 3px 10px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* ---------- Záložky ---------- */
-    .bmbar { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--panel); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+    .bmbar { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--panel); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; position: relative; z-index: 50; }
     .bmbar::-webkit-scrollbar { display: none; }
     .bmbar .chip { background: transparent; border: 1px solid var(--line); color: var(--muted); font-size: 11px; padding: 3px 9px; cursor: pointer; white-space: nowrap; max-width: 190px; overflow: hidden; text-overflow: ellipsis;
       clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
@@ -101,7 +101,7 @@
     .bmbar .empty { color: #475569; font-size: 11px; padding: 3px 4px; }
     .bmfolder { position: relative; }
     .bmfolder .chip.dir { color: var(--gold); border-color: rgba(251,191,36,.35); }
-    .bmmenu { display: none; position: absolute; top: 100%; left: 0; z-index: 60; min-width: 230px; max-height: 60vh; overflow: auto;
+    .bmmenu { display: none; position: fixed; top: 0; left: 0; z-index: 9999; min-width: 230px; max-height: 70vh; overflow: auto;
       background: #070b13; border: 1px solid var(--line); padding: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.6); }
     .bmfolder.open .bmmenu { display: block; }
     .bmmenu button { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
@@ -115,7 +115,7 @@
     .bmtree .kids { display: none; }
     .bmtree .bmgroup.open > .kids { display: block; }
     .panel {
-      display: none; position: absolute; inset: 0; z-index: 40; background: rgba(5,7,13,.94);
+      display: none; position: absolute; inset: 0; z-index: 9998; background: rgba(5,7,13,.94);
       padding: 18px 22px; overflow: auto;
     }
     .panel.on { display: block; }
@@ -705,13 +705,28 @@
       t.wv.style.visibility = hide ? 'hidden' : 'visible';
     }
 
+    // Nabídka je fixed — dopočítáme pozici pod dlaždicí, aby nic neořízlo lištu.
+    function positionMenu(anchor, menu) {
+      const r = anchor.getBoundingClientRect();
+      menu.style.visibility = 'hidden';
+      menu.style.left = '0px';
+      menu.style.top = r.bottom + 2 + 'px';
+      const w = menu.offsetWidth || 230;
+      const left = Math.max(4, Math.min(r.left, window.innerWidth - w - 8));
+      menu.style.left = left + 'px';
+      menu.style.maxHeight = Math.max(160, window.innerHeight - r.bottom - 16) + 'px';
+      menu.style.visibility = '';
+    }
+
     function closeMenus() {
       document.querySelectorAll('.bmfolder.open').forEach((el) => el.classList.remove('open'));
       syncWebviewVisibility();
     }
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.bmfolder')) closeMenus();
+      if (!e.target.closest('.bmfolder') && !e.target.closest('.bmmenu')) closeMenus();
     });
+    window.addEventListener('resize', closeMenus);
+    document.addEventListener('scroll', closeMenus, true);
 
     function buildMenu(node, container) {
       for (const child of node.children.values()) {
@@ -768,7 +783,10 @@
           e.stopPropagation();
           const was = wrap.classList.contains('open');
           closeMenus();
-          if (!was) wrap.classList.add('open');
+          if (!was) {
+            wrap.classList.add('open');
+            positionMenu(chip, menu);
+          }
           syncWebviewVisibility();
         };
         wrap.append(chip, menu);
