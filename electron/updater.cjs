@@ -438,12 +438,30 @@ function setupEvents() {
         kind: "installing",
         title: "Instaluji aktualizaci",
         message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
-        detail: "Aplikace se ukončí a standardní instalátor dokončí aktualizaci bez příkazového okna.",
+        detail: "Instalace proběhne na pozadí a aplikace se hned poté sama znovu spustí.",
         version: downloadedVersion,
       }).catch(() => {});
     }
     isQuittingForUpdate();
-    setTimeout(() => autoUpdater.quitAndInstall(true, true), 600);
+    // isSilent = true (bez okna instalátoru), isForceRunAfter = true
+    // (aplikace se po dokončení sama spustí — uživatel nic nerestartuje).
+    setTimeout(() => {
+      try {
+        autoUpdater.quitAndInstall(true, true);
+      } catch (error) {
+        log(`quitAndInstall selhalo: ${error?.message || error}`);
+      }
+      // Pojistka: kdyby instalátor proces neukončil, aplikace zůstane
+      // použitelná a aktualizace se zkusí znovu při další kontrole.
+      setTimeout(() => {
+        if (diagnostics.status === "installing" || diagnostics.status === "downloaded") {
+          installing = false;
+          try { app.isQuittingForUpdate = false; } catch {}
+          diagnostics.status = "available";
+          log("Instalace neproběhla — aplikace pokračuje v běhu, zkusíme to při další kontrole.");
+        }
+      }, 20000);
+    }, 600);
   });
   autoUpdater.on("error", (error) => {
     diagnostics.status = "error";
