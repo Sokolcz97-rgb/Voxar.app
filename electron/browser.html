@@ -548,7 +548,12 @@
       wv.addEventListener('did-navigate', sync);
       wv.addEventListener('did-navigate-in-page', sync);
       wv.addEventListener('dom-ready', sync);
-      wv.addEventListener('new-window', (e) => { createTab(e.url); });
+      wv.addEventListener('new-window', (e) => {
+        // Přihlašovací okna řeší hlavní proces jako skutečný popup (window.opener).
+        if (isAuthUrl(e.url)) return;
+        createTab(e.url);
+      });
+
       wv.addEventListener('update-target-url', (e) => {
         const st = $('status');
         if (e.url) { st.textContent = e.url; st.style.display = ''; } else { st.style.display = 'none'; }
