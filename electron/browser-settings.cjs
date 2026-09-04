@@ -46,6 +46,15 @@ const DEFAULTS = {
   imageLoading: true,
   backgroundThrottling: true,
   maxActiveTabs: 0,
+  // limity zdrojů (0 = bez limitu)
+  cpuLimitPercent: 0,
+  ramLimitMB: 0,
+  gpuMode: "full", // full | limited | off
+  // relace
+  restoreSession: true,
+  // limity stahování
+  downloadLimitMbps: 0,
+  maxConcurrentDownloads: 0,
   // vývojář
   devtoolsEnabled: false,
 };
@@ -355,6 +364,7 @@ function installFilters() {
 
   ses.on("will-download", (event, item) => {
     const p = getPrefs();
+    enforceDownloadQueue(item, p);
     const filename = item.getFilename();
     const ext = path.extname(filename).toLowerCase();
 
