@@ -295,7 +295,12 @@ function createMainWindow(startUrl) {
   // Rollback: považuj spuštění za funkční až po HEALTHY_AFTER_MS bez pádu.
   mainWindow.webContents.once("did-finish-load", () => {
     rollback.scheduleHealthyMark(() => mainWindow);
+    // Auto-aktualizace Voxar.app: stejná pipeline jako u prohlížeče —
+    // po startu na pozadí stáhne novou verzi a nainstaluje ji bez ptaní.
+    setTimeout(() => runAppAutoUpdate().catch(() => {}), 5_000);
+    scheduleAppAutoUpdate();
   });
+
 
   // Zaznamenej pády renderu — spustí nabídku rollbacku při dalším startu i teď.
   mainWindow.webContents.on("render-process-gone", (_e, details) => {
