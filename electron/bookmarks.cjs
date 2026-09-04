@@ -119,19 +119,31 @@ function findChromiumBookmarkFiles(root) {
   return out;
 }
 
+const ROOT_LABELS = {
+  bookmark_bar: "Lišta záložek",
+  other: "Ostatní záložky",
+  synced: "Mobilní záložky",
+};
+
 function parseChromiumBookmarks(file, sourceLabel) {
   const data = JSON.parse(fs.readFileSync(file, "utf8"));
   const out = [];
-  const walk = (node, folder) => {
+  // Zachová celou stromovou strukturu složek tak, jak byla v původním prohlížeči.
+  const walk = (node, trail) => {
     if (!node) return;
     if (node.type === "url" && node.url) {
-      out.push({ url: node.url, title: node.name || node.url, folder, source: sourceLabel });
+      out.push({ url: node.url, title: node.name || node.url, folder: trail.join("/"), source: sourceLabel });
+      return;
     }
-    for (const child of node.children || []) {
-      walk(child, node.type === "folder" && node.name ? node.name : folder);
-    }
+    const next = node.name ? [...trail, String(node.name)] : trail;
+    for (const child of node.children || []) walk(child, next);
   };
-  for (const key of Object.keys(data.roots || {})) walk(data.roots[key], "");
+  for (const key of Object.keys(data.roots || {})) {
+    const root = data.roots[key];
+    if (!root || typeof root !== "object") continue;
+    const label = ROOT_LABELS[key] || root.name || key;
+    for (const child of root.children || []) walk(child, [label]);
+  }
   return out;
 }
 
