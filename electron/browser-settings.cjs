@@ -313,6 +313,12 @@ function installFilters() {
       const host = new URL(details.url).hostname.toLowerCase();
       if (/ERR_(SSL|CERT|CONNECTION|TOO_MANY_REDIRECTS|EMPTY_RESPONSE|ADDRESS_UNREACHABLE|NAME_NOT_RESOLVED)/i.test(details.error || "")) {
         httpsFailures.add(host);
+        // Okamžitě zkusíme původní HTTP adresu, ať uživatel nekončí na chybě.
+        try {
+          const { webContents } = require("electron");
+          const wc = details.webContentsId ? webContents.fromId(details.webContentsId) : null;
+          wc?.loadURL(details.url.replace(/^https:/i, "http:"));
+        } catch {}
       }
     } catch {}
   });
