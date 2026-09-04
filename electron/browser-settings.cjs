@@ -432,6 +432,10 @@ function applyPrefs() {
     if (p.downloadDir && !p.askDownloadLocation) ses.setDownloadPath(p.downloadDir);
     ses.setSpellCheckerEnabled?.(false);
   } catch {}
+  trackedContents.forEach((c) => {
+    if (c.isDestroyed?.()) trackedContents.delete(c);
+    else applyThrottling(c);
+  });
   broadcast("vb:prefs", getPrefs());
 }
 
@@ -513,6 +517,7 @@ function registerBrowserSettings() {
 
   getPrefs();
   installFilters();
+  watchWebContents();
   applyPrefs();
 
   ipcMain.handle("vb:prefs:get", () => ({ prefs: getPrefs(), engines: SEARCH_ENGINES, encryption: encryptionAvailable() }));
