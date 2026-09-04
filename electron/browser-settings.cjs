@@ -179,7 +179,25 @@ function encryptionAvailable() {
   try { return safeStorage.isEncryptionAvailable(); } catch { return false; }
 }
 function readVault() {
-  return readJson("browser-vault.json", []);
+  return migrateVault(readJson("browser-vault.json", []));
+}
+// Starší (nebo přenesené) záznamy mohou být uložené v čitelné podobě.
+// Při každém čtení je dodatečně zašifrujeme klíčem OS, aby se v souboru
+// nikdy nedrželo heslo v plaintextu — a aby přežily aktualizaci.
+function migrateVault(vault) {
+  if (!Array.isArray(vault) || !encryptionAvailable()) return Array.isArray(vault) ? vault : [];
+  let changed = false;
+  const next = vault.map((rec) => {
+    if (!rec || rec.enc || typeof rec.password !== "string") return rec;
+    try {
+      changed = true;
+      return { ...rec, password: safeStorage.encryptString(rec.password).toString("base64"), enc: true };
+    } catch {
+      return rec;
+    }
+  });
+  if (changed) writeJson("browser-vault.json", next);
+  return next;
 }
 function listPasswords() {
   return readVault().map((r) => ({ id: r.id, origin: r.origin, username: r.username, at: r.at, enc: !!r.enc }));
@@ -208,10 +226,28 @@ function savePassword({ origin, username, password }) {
   writeJson("browser-vault.json", vault);
   return { ok: true, items: listPasswords() };
 }
+// Změna hesla u existujícího záznamu — uloží se opět zašifrovaně
+// a zůstane zachované i po aktualizaci aplikace (data leží v userData).
+function updatePassword(id, password) {
+  const vault = readVault();
+  const idx = vault.findIndex((r) => r.id === id);
+  if (idx < 0) return { ok: false, error: "Záznam nenalezen" };
+  if (!password) return { ok: false, error: "Zadej nové heslo" };
+  const enc = encryptionAvailable();
+  vault[idx] = {
+    ...vault[idx],
+    password: enc ? safeStorage.encryptString(String(password)).toString("base64") : String(password),
+    enc,
+    at: Date.now(),
+  };
+  writeJson("browser-vault.json", vault);
+  return { ok: true, items: listPasswords() };
+}
 function deletePassword(id) {
   writeJson("browser-vault.json", readVault().filter((r) => r.id !== id));
   return listPasswords();
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Ochrana: blokace reklam, trackerů, malware                          */
