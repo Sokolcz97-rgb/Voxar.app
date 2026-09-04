@@ -2,11 +2,11 @@
   "version": 1,
   "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe",
   "original_filename": "StudioVoxarioSetup-0.0.13.exe",
-  "size": 236645347,
-  "sha256": "43905f8f798b7accde460c688326b2b0f7c61074081d8408d62940d479b9f581",
+  "size": 236654212,
+  "sha256": "c2dd4c123136598afa49ceee3d7233b30ee4aaeb924a60ea4c216630788e3983",
   "content_type": "application/x-msdownload",
   "source": "github-release",
   "tag": "desktop-latest",
-  "commit": "5070c92c888800639fa4f852185793d27f6557d7",
-  "updated_at": "2026-09-04T10:45:53.2116067Z"
+  "commit": "01a2553aa50b457c0fc7057616df706fe29a9709",
+  "updated_at": "2026-09-04T11:53:09.4002626Z"
 }
