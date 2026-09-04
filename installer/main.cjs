@@ -17,6 +17,11 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+// `original-fs` obchází ASAR vrstvu Electronu — bez něj se `resources/app.asar`
+// tváří jako složka a kopírování runtime odinstalátoru padá na ENOENT.
+let rawFs = fs;
+try { rawFs = require("original-fs"); } catch { rawFs = fs; }
+
 const { spawn } = require("child_process");
 const Seven = require("node-7z");
 const sevenBin = require("7zip-bin");
