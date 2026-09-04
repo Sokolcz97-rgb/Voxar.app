@@ -493,6 +493,24 @@
     let PREFS = {};
     let ENGINES = [];
 
+    // Vydáváme se za běžný desktopový Chrome — Google jinak odmítne přihlášení.
+    const CHROME_UA = (() => {
+      const ver = (window.process && window.process.versions && window.process.versions.chrome) || '126.0.0.0';
+      const plat = navigator.platform.startsWith('Mac')
+        ? 'Macintosh; Intel Mac OS X 10_15_7'
+        : navigator.platform.startsWith('Linux')
+          ? 'X11; Linux x86_64'
+          : 'Windows NT 10.0; Win64; x64';
+      return `Mozilla/5.0 (${plat}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${ver} Safari/537.36`;
+    })();
+
+    const AUTH_HOST_RE = /(^|\.)(accounts\.google\.com|accounts\.youtube\.com|myaccount\.google\.com|google\.com|gmail\.com|mail\.google\.com|login\.microsoftonline\.com|login\.live\.com|appleid\.apple\.com|github\.com|facebook\.com|discord\.com|seznam\.cz)$/i;
+    function isAuthUrl(u) {
+      try { return AUTH_HOST_RE.test(new URL(u).hostname); } catch { return false; }
+    }
+
+
+
     let tabs = [];
     let activeId = null;
     let seq = 0;
