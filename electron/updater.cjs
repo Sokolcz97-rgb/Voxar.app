@@ -4,7 +4,7 @@
 // starts the NSIS installer and quits the app via quitAndInstall().
 const { app, BrowserWindow, ipcMain, Notification } = require("electron");
 const { autoUpdater } = require("electron-updater");
-const { CancellationToken } = require("builder-util-runtime");
+
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
