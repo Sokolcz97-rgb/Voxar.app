@@ -570,6 +570,18 @@ function installFilters() {
   ses.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
     const headers = details.requestHeaders || {};
     const p = getPrefs();
+
+    // Vždy se hlásíme jako běžný Chrome — jinak Google zablokuje přihlášení.
+    Object.keys(headers).forEach((k) => {
+      if (k.toLowerCase() === "user-agent") delete headers[k];
+    });
+    headers["User-Agent"] = CHROME_UA;
+    headers["sec-ch-ua"] = SEC_CH_UA;
+    headers["sec-ch-ua-mobile"] = "?0";
+    headers["sec-ch-ua-platform"] = SEC_CH_UA_PLATFORM;
+    delete headers["X-Requested-With"];
+    delete headers["x-requested-with"];
+
     if (p.doNotTrack) {
       headers.DNT = "1";
       headers["Sec-GPC"] = "1";
@@ -578,8 +590,9 @@ function installFilters() {
       delete headers["Sec-GPC"];
     }
     // Blokace cookies třetích stran: u požadavků mimo doménu stránky
-    // odstraníme odesílanou hlavičku Cookie.
-    if (p.blockThirdPartyCookies && isThirdParty(details)) {
+    // odstraníme odesílanou hlavičku Cookie. Přihlašovací domény vyjímáme,
+    // jinak by OAuth/Google účet nikdy neprošel.
+    if (p.blockThirdPartyCookies && isThirdParty(details) && !isAuthHost(details.url)) {
       delete headers.Cookie;
       delete headers.cookie;
     }
@@ -588,7 +601,8 @@ function installFilters() {
 
   // …a zahodíme i Set-Cookie z odpovědí třetích stran.
   ses.webRequest.onHeadersReceived({ urls: ["<all_urls>"] }, (details, callback) => {
-    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details)) return callback({});
+    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details) || isAuthHost(details.url)) return callback({});
+
     const headers = { ...(details.responseHeaders || {}) };
     Object.keys(headers).forEach((k) => {
       if (k.toLowerCase() === "set-cookie") delete headers[k];
