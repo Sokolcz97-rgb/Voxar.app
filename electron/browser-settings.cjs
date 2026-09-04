@@ -740,6 +740,8 @@ function registerBrowserSettings() {
   ipcMain.handle("vb:passwords:save", (_e, rec) => savePassword(rec || {}));
   ipcMain.handle("vb:passwords:reveal", (_e, id) => revealPassword(id));
   ipcMain.handle("vb:passwords:delete", (_e, id) => deletePassword(id));
+  ipcMain.handle("vb:passwords:update", (_e, payload) => updatePassword(payload?.id, payload?.password));
+
 
   ipcMain.handle("vb:session:get", () => ({ session: getSession(), restore: getPrefs().restoreSession !== false }));
   ipcMain.handle("vb:session:set", (_e, data) => setSession(data));
