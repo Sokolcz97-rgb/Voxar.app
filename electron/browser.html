@@ -493,6 +493,24 @@
     let PREFS = {};
     let ENGINES = [];
 
+    // Vydáváme se za běžný desktopový Chrome — Google jinak odmítne přihlášení.
+    const CHROME_UA = (() => {
+      const ver = (window.process && window.process.versions && window.process.versions.chrome) || '126.0.0.0';
+      const plat = navigator.platform.startsWith('Mac')
+        ? 'Macintosh; Intel Mac OS X 10_15_7'
+        : navigator.platform.startsWith('Linux')
+          ? 'X11; Linux x86_64'
+          : 'Windows NT 10.0; Win64; x64';
+      return `Mozilla/5.0 (${plat}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${ver} Safari/537.36`;
+    })();
+
+    const AUTH_HOST_RE = /(^|\.)(accounts\.google\.com|accounts\.youtube\.com|myaccount\.google\.com|google\.com|gmail\.com|mail\.google\.com|login\.microsoftonline\.com|login\.live\.com|appleid\.apple\.com|github\.com|facebook\.com|discord\.com|seznam\.cz)$/i;
+    function isAuthUrl(u) {
+      try { return AUTH_HOST_RE.test(new URL(u).hostname); } catch { return false; }
+    }
+
+
+
     let tabs = [];
     let activeId = null;
     let seq = 0;
@@ -518,7 +536,9 @@
       const initial = toUrl(url);
       wv.setAttribute('src', initial === START ? 'about:blank' : initial);
       wv.setAttribute('allowpopups', 'true');
+      wv.setAttribute('useragent', CHROME_UA);
       wv.setAttribute('partition', 'persist:voxario');
+
       wv.style.display = 'none';
       viewport.appendChild(wv);
 
@@ -546,7 +566,12 @@
       wv.addEventListener('did-navigate', sync);
       wv.addEventListener('did-navigate-in-page', sync);
       wv.addEventListener('dom-ready', sync);
-      wv.addEventListener('new-window', (e) => { createTab(e.url); });
+      wv.addEventListener('new-window', (e) => {
+        // Přihlašovací okna řeší hlavní proces jako skutečný popup (window.opener).
+        if (isAuthUrl(e.url)) return;
+        createTab(e.url);
+      });
+
       wv.addEventListener('update-target-url', (e) => {
         const st = $('status');
         if (e.url) { st.textContent = e.url; st.style.display = ''; } else { st.style.display = 'none'; }
@@ -1317,7 +1342,11 @@
       flash('Režim GPU se projeví po restartu prohlížeče.');
     };
 
+    /* --- popup z webu, který se má otevřít jako nový panel --- */
+    ipcRenderer.on('browser:open-tab', (_e, url) => { if (url) createTab(url); });
+
     /* --- automatická aktualizace --- */
+
     ipcRenderer.invoke('vb:update:version').then((v) => { $('vbVersion').textContent = 'Nainstalovaná verze ' + v; }).catch(() => {});
     $('vbUpdateBtn').onclick = () => { ipcRenderer.invoke('vb:update:check').catch(() => {}); };
     ipcRenderer.on('vb:update', (_e, st) => {

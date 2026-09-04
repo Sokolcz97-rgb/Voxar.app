@@ -465,6 +465,8 @@ function applyNetworkLimit(contents) {
 }
 function watchWebContents() {
   app.on("web-contents-created", (_e, contents) => {
+    // Každý web (panel i přihlašovací popup) se hlásí jako běžný Chrome.
+    try { contents.setUserAgent(CHROME_UA); } catch {}
     try {
       if (contents.getType?.() !== "webview") return;
     } catch { return; }
@@ -475,9 +477,47 @@ function watchWebContents() {
 }
 
 
+
 function voxSession() {
   return session.fromPartition(PARTITION);
 }
+
+/* ------------------------------------------------------------------ */
+/* User-Agent — Google (a další) odmítají přihlášení v „embedded"      */
+/* prohlížeči. Vydáváme se proto za čistý desktopový Chrome.           */
+/* ------------------------------------------------------------------ */
+const CHROME_MAJOR = (process.versions.chrome || "126.0.0.0").split(".")[0];
+const CHROME_FULL = process.versions.chrome || "126.0.0.0";
+const UA_PLATFORM =
+  process.platform === "darwin"
+    ? "Macintosh; Intel Mac OS X 10_15_7"
+    : process.platform === "linux"
+      ? "X11; Linux x86_64"
+      : "Windows NT 10.0; Win64; x64";
+const CHROME_UA = `Mozilla/5.0 (${UA_PLATFORM}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_FULL} Safari/537.36`;
+const SEC_CH_UA = `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not?A_Brand";v="99"`;
+const SEC_CH_UA_PLATFORM =
+  process.platform === "darwin" ? '"macOS"' : process.platform === "linux" ? '"Linux"' : '"Windows"';
+
+// Hostitelé přihlašovacích/OAuth toků — nikdy je neomezujeme cookies filtry.
+const AUTH_HOST_RE =
+  /(^|\.)(accounts\.google\.com|accounts\.youtube\.com|myaccount\.google\.com|gstatic\.com|googleapis\.com|googleusercontent\.com|google\.com|youtube\.com|gmail\.com|mail\.google\.com|login\.microsoftonline\.com|login\.live\.com|appleid\.apple\.com|github\.com|facebook\.com|discord\.com|seznam\.cz)$/i;
+
+function isAuthHost(url) {
+  try {
+    return AUTH_HOST_RE.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function applyUserAgent() {
+  try {
+    voxSession().setUserAgent(CHROME_UA, "cs-CZ,cs;q=0.9,en-US;q=0.8,en;q=0.7");
+  } catch {}
+}
+
+
 
 
 let filtersInstalled = false;
@@ -485,10 +525,13 @@ function installFilters() {
   if (filtersInstalled) return;
   filtersInstalled = true;
   const ses = voxSession();
+  applyUserAgent();
 
   ses.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, (details, callback) => {
     const p = getPrefs();
     const url = details.url || "";
+    // Přihlašovací a účtové domény nikdy neblokujeme.
+    if (isAuthHost(url)) return callback({ cancel: false });
     if (p.blockMalware && hostMatches(url, MALWARE_HOSTS)) {
       blockStats.malware++;
       return callback({ cancel: true });
@@ -533,6 +576,18 @@ function installFilters() {
   ses.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
     const headers = details.requestHeaders || {};
     const p = getPrefs();
+
+    // Vždy se hlásíme jako běžný Chrome — jinak Google zablokuje přihlášení.
+    Object.keys(headers).forEach((k) => {
+      if (k.toLowerCase() === "user-agent") delete headers[k];
+    });
+    headers["User-Agent"] = CHROME_UA;
+    headers["sec-ch-ua"] = SEC_CH_UA;
+    headers["sec-ch-ua-mobile"] = "?0";
+    headers["sec-ch-ua-platform"] = SEC_CH_UA_PLATFORM;
+    delete headers["X-Requested-With"];
+    delete headers["x-requested-with"];
+
     if (p.doNotTrack) {
       headers.DNT = "1";
       headers["Sec-GPC"] = "1";
@@ -541,8 +596,9 @@ function installFilters() {
       delete headers["Sec-GPC"];
     }
     // Blokace cookies třetích stran: u požadavků mimo doménu stránky
-    // odstraníme odesílanou hlavičku Cookie.
-    if (p.blockThirdPartyCookies && isThirdParty(details)) {
+    // odstraníme odesílanou hlavičku Cookie. Přihlašovací domény vyjímáme,
+    // jinak by OAuth/Google účet nikdy neprošel.
+    if (p.blockThirdPartyCookies && isThirdParty(details) && !isAuthHost(details.url)) {
       delete headers.Cookie;
       delete headers.cookie;
     }
@@ -551,7 +607,8 @@ function installFilters() {
 
   // …a zahodíme i Set-Cookie z odpovědí třetích stran.
   ses.webRequest.onHeadersReceived({ urls: ["<all_urls>"] }, (details, callback) => {
-    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details)) return callback({});
+    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details) || isAuthHost(details.url)) return callback({});
+
     const headers = { ...(details.responseHeaders || {}) };
     Object.keys(headers).forEach((k) => {
       if (k.toLowerCase() === "set-cookie") delete headers[k];
@@ -710,6 +767,7 @@ function applyPrefs() {
     const ses = voxSession();
     if (p.downloadDir && !p.askDownloadLocation) ses.setDownloadPath(p.downloadDir);
     ses.setSpellCheckerEnabled?.(false);
+    applyUserAgent();
   } catch {}
   trackedContents.forEach((c) => {
     if (c.isDestroyed?.()) trackedContents.delete(c);
@@ -897,4 +955,8 @@ module.exports = {
   backupBrowserSettings: writeBackup,
   SEARCH_ENGINES,
   getPrefs,
+  CHROME_UA,
+  isAuthHost,
+  applyUserAgent,
 };
+
