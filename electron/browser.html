@@ -177,6 +177,28 @@
     .dockbtn .dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; }
     .dockbtn { position: relative; }
 
+    /* ---------- Úvodní stránka (rychlá volba) ---------- */
+    .startpage { display: none; position: absolute; inset: 0; z-index: 15; overflow: auto; padding: 46px 40px;
+      background: radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.12), transparent 60%), #05070d; }
+    .startpage.on { display: block; }
+    .startpage h1 { font-size: 15px; letter-spacing: .38em; text-transform: uppercase; color: var(--cyan); margin: 0 0 4px; }
+    .startpage .sub2 { color: var(--muted); font-size: 12px; margin-bottom: 22px; }
+    .dial { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; max-width: 1100px; }
+    .dialtile { position: relative; height: 104px; border: 1px solid var(--line); background: rgba(16,24,40,.7);
+      color: var(--text); cursor: pointer; text-align: left; padding: 14px; display: flex; flex-direction: column; justify-content: space-between;
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); transition: .15s; }
+    .dialtile:hover { border-color: rgba(34,211,238,.6); box-shadow: 0 0 30px -14px var(--cyan); transform: translateY(-2px); }
+    .dialtile .dt { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dialtile .du { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dialtile .ico { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--gold);
+      border: 1px solid rgba(251,191,36,.4); font-size: 13px; font-weight: 700;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+    .dialtile .rm { position: absolute; top: 6px; right: 8px; background: transparent; border: 0; color: #475569; font-size: 12px; cursor: pointer; }
+    .dialtile .rm:hover { color: #f87171; }
+    .dialadd { height: 104px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font-size: 24px; cursor: pointer; }
+    .dialadd:hover { color: var(--cyan); border-color: rgba(34,211,238,.5); }
+    .startfoot { margin-top: 26px; color: #475569; font-size: 11px; }
+
   </style>
 </head>
 <body>
@@ -221,6 +243,12 @@
     <div class="prog" id="prog"></div>
 
     <div class="viewport" id="viewport">
+      <div class="startpage" id="startpage">
+        <h1>// VoxarioBrowser</h1>
+        <div class="sub2">Uložené stránky — klikni pro otevření, ✕ pro smazání, + pro přidání.</div>
+        <div class="dial" id="dial"></div>
+        <div class="startfoot">Tip: Ctrl+T nový panel · Ctrl+D záložka · Ctrl+J stahování · Ctrl+, nastavení</div>
+      </div>
       <div class="findbar" id="findbar">
         <input id="findinput" placeholder="Najít…" />
         <button class="navbtn" id="findnext">↓</button>
@@ -317,6 +345,17 @@
                 </div>
               </div>
               <div class="card">
+                <h3>Limity stahování</h3>
+                <div class="opt">
+                  <div><div class="lbl">Maximální rychlost</div><div class="dsc">V Mb/s. 0 = bez omezení.</div></div>
+                  <input class="inp" id="dlSpeedLimit" type="number" min="0" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Souběžná stahování</div><div class="dsc">Další soubory počkají ve frontě. 0 = bez omezení.</div></div>
+                  <input class="inp" id="dlMaxParallel" type="number" min="0" step="1" style="width:110px" />
+                </div>
+              </div>
+              <div class="card">
                 <h3>Historie stahování</h3>
                 <div class="bmlist" id="dllist"></div>
               </div>
@@ -356,6 +395,26 @@
                 <h3>Optimalizace</h3>
                 <div id="optsPerf"></div>
               </div>
+              <div class="card">
+                <h3>Limity zdrojů</h3>
+                <div class="opt">
+                  <div><div class="lbl">Limit CPU</div><div class="dsc">V %. Při překročení se panely na pozadí uspí. 0 = bez limitu.</div></div>
+                  <input class="inp" id="cpuLimit" type="number" min="0" max="100" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Limit RAM</div><div class="dsc">V MB. Při překročení se neaktivní panely uvolní z paměti. 0 = bez limitu.</div></div>
+                  <input class="inp" id="ramLimit" type="number" min="0" step="64" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Režim GPU</div><div class="dsc">Projeví se po restartu prohlížeče.</div></div>
+                  <select class="inp" id="gpuMode" style="width:150px">
+                    <option value="full">Plná akcelerace</option>
+                    <option value="limited">Omezená</option>
+                    <option value="off">Vypnutá</option>
+                  </select>
+                </div>
+                <div class="pnote" id="limitNote"></div>
+              </div>
             </div>
 
             <div class="sec" data-sec="history">
@@ -392,7 +451,8 @@
   <script>
     const { ipcRenderer, shell } = require('electron');
     const $ = (id) => document.getElementById(id);
-    let HOME = 'https://www.google.com';
+    const START = 'voxario://start';
+    let HOME = START;
     let SEARCH_TPL = 'https://www.google.com/search?q=%s';
     let PREFS = {};
     let ENGINES = [];
@@ -408,6 +468,7 @@
     function toUrl(input) {
       const s = (input || '').trim();
       if (!s) return HOME;
+      if (s === START || s === 'voxario://start') return START;
       if (/^(https?|file|about|chrome):/i.test(s)) return s;
       if (/^[\w.-]+\.[a-z]{2,}(\/|$|:\d)/i.test(s) || s === 'localhost') return 'https://' + s;
       return SEARCH_TPL.replace('%s', encodeURIComponent(s));
@@ -418,22 +479,25 @@
     function createTab(url) {
       const id = 'tab' + ++seq;
       const wv = document.createElement('webview');
-      wv.setAttribute('src', toUrl(url));
+      const initial = toUrl(url);
+      wv.setAttribute('src', initial === START ? 'about:blank' : initial);
       wv.setAttribute('allowpopups', 'true');
       wv.setAttribute('partition', 'persist:voxario');
       wv.style.display = 'none';
       viewport.appendChild(wv);
 
-      const tab = { id, wv, title: 'Nový panel', url: toUrl(url), loading: true, back: false, fwd: false };
+      const tab = { id, wv, title: initial === START ? 'Úvodní stránka' : 'Nový panel', url: initial, loading: initial !== START, back: false, fwd: false };
       tabs.push(tab);
 
       const sync = () => {
         try {
-          tab.url = wv.getURL() || tab.url;
+          const live = wv.getURL();
+          if (tab.url !== START || (live && live !== 'about:blank')) tab.url = live || tab.url;
           tab.back = wv.canGoBack();
           tab.fwd = wv.canGoForward();
           tab.loading = wv.isLoading();
         } catch {}
+        saveSession();
         render();
       };
       wv.addEventListener('page-title-updated', (e) => {
@@ -464,14 +528,38 @@
       if (!tabs.length) { createTab(HOME); return; }
       if (activeId === id) setActive(tabs[Math.max(0, i - 1)].id);
       else render();
+      saveSession();
+    }
+
+    function navigate(tab, url) {
+      if (!tab) return;
+      const u = toUrl(url);
+      tab.url = u;
+      if (u === START) {
+        tab.title = 'Úvodní stránka';
+        tab.loading = false;
+        try { tab.wv.loadURL('about:blank'); } catch {}
+        render();
+        saveSession();
+        return;
+      }
+      try { tab.wv.loadURL(u); } catch {}
+      render();
     }
 
     function setActive(id) {
       activeId = id;
+      const target = tabs.find((t) => t.id === id);
+      if (target && target.suspended && target.pendingUrl) {
+        target.suspended = false;
+        try { target.wv.loadURL(target.pendingUrl); } catch {}
+        target.pendingUrl = null;
+      }
       tabs.forEach((t) => { t.wv.style.display = t.id === id ? 'flex' : 'none'; });
       render();
       const t = activeTab();
-      if (t) $('url').value = t.url;
+      if (t) $('url').value = t.url === START ? '' : t.url;
+      saveSession();
     }
 
     function render() {
@@ -498,6 +586,7 @@
       $('prog').className = 'prog' + (t && t.loading ? ' on' : '');
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
       $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
+      $('startpage').classList.toggle('on', !!t && t.url === START);
       document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
     }
 
@@ -506,12 +595,10 @@
     $('back').onclick = () => activeTab()?.wv.goBack();
     $('fwd').onclick = () => activeTab()?.wv.goForward();
     $('reload').onclick = () => activeTab()?.wv.reload();
-    $('home').onclick = () => activeTab()?.wv.loadURL(HOME);
+    $('home').onclick = () => navigate(activeTab(), HOME);
     $('url').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const u = toUrl($('url').value);
-        const t = activeTab();
-        if (t) { t.url = u; t.wv.loadURL(u); }
+        navigate(activeTab(), $('url').value);
       }
     });
     $('url').addEventListener('focus', () => $('url').select());
@@ -562,7 +649,7 @@
         chip.className = 'chip';
         chip.textContent = b.title || b.url;
         chip.title = b.url;
-        chip.onclick = () => { const t = activeTab(); if (t) { t.url = b.url; t.wv.loadURL(b.url); } };
+        chip.onclick = () => navigate(activeTab(), b.url);
         bar.appendChild(chip);
       });
 
@@ -688,6 +775,7 @@
         ['blockThirdPartyCookies', 'Blokovat cookies třetích stran', 'Omezí sledování napříč weby.'],
         ['historyEnabled', 'Ukládat historii prohlížení', 'Vypnutím se nové stránky do historie nezapisují.'],
         ['clearOnExit', 'Vymazat data při ukončení', 'Cache, cookies a data stránek se smažou po zavření prohlížeče.'],
+        ['restoreSession', 'Pokračovat tam, kde jsem přestal', 'Při startu se znovu otevřou naposledy otevřené panely.'],
       ],
       optsProtect: [
         ['adblock', 'uBlock štít – reklamy', 'Vestavěná blokace reklamních a pop-up sítí.'],
@@ -756,8 +844,13 @@
 
     function applyPrefsToUi() {
       const eng = ENGINES.find((e) => e.id === PREFS.searchEngine) || ENGINES[0];
-      if (eng) { SEARCH_TPL = eng.url; HOME = PREFS.homepage || eng.home; }
+      if (eng) { SEARCH_TPL = eng.url; HOME = PREFS.homepage ? PREFS.homepage : START; }
       $('dlDir').textContent = 'Složka stahování: ' + (PREFS.downloadDir || '—');
+      $('cpuLimit').value = PREFS.cpuLimitPercent || 0;
+      $('ramLimit').value = PREFS.ramLimitMB || 0;
+      $('dlSpeedLimit').value = PREFS.downloadLimitMbps || 0;
+      $('dlMaxParallel').value = PREFS.maxConcurrentDownloads || 0;
+      $('gpuMode').value = PREFS.gpuMode || 'full';
       $('url').placeholder = 'Zadej adresu nebo hledej přes ' + (eng ? eng.label : 'web') + '…';
     }
 
@@ -937,6 +1030,113 @@
       flash('Nastavení obnoveno na výchozí hodnoty.');
     };
 
+    /* --- relace: pokračovat tam, kde jsem přestal --- */
+    let sessionTimer = null;
+    function saveSession() {
+      if (sessionTimer) clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(() => {
+        const payload = {
+          tabs: tabs.map((t) => ({ url: t.url, title: t.title })),
+          activeIndex: Math.max(0, tabs.findIndex((t) => t.id === activeId)),
+        };
+        try { ipcRenderer.invoke('vb:session:set', payload); } catch {}
+      }, 600);
+    }
+
+    /* --- rychlá volba na úvodní stránce --- */
+    let dial = [];
+    function renderDial() {
+      const host = $('dial');
+      host.innerHTML = '';
+      dial.forEach((d, i) => {
+        const tile = document.createElement('button');
+        tile.className = 'dialtile';
+        tile.title = d.url;
+        let letter = '◈';
+        try { letter = new URL(d.url).hostname.replace(/^www\./, '').charAt(0).toUpperCase() || '◈'; } catch {}
+        const ico = document.createElement('div');
+        ico.className = 'ico'; ico.textContent = letter;
+        const wrap = document.createElement('div');
+        const ti = document.createElement('div');
+        ti.className = 'dt'; ti.textContent = d.title || d.url;
+        const u = document.createElement('div');
+        u.className = 'du';
+        try { u.textContent = new URL(d.url).hostname; } catch { u.textContent = d.url; }
+        wrap.append(ti, u);
+        const rm = document.createElement('button');
+        rm.className = 'rm'; rm.textContent = '✕'; rm.title = 'Odebrat';
+        rm.onclick = async (e) => {
+          e.stopPropagation();
+          dial.splice(i, 1);
+          dial = await ipcRenderer.invoke('vb:dial:save', dial);
+          renderDial();
+        };
+        tile.onclick = () => navigate(activeTab(), d.url);
+        tile.append(ico, wrap, rm);
+        host.appendChild(tile);
+      });
+      const add = document.createElement('button');
+      add.className = 'dialadd';
+      add.textContent = '+';
+      add.title = 'Přidat stránku';
+      add.onclick = addDialEntry;
+      host.appendChild(add);
+    }
+
+    async function addDialEntry() {
+      const t = activeTab();
+      const suggestion = t && t.url !== START ? t.url : '';
+      const url = window.prompt('Adresa stránky:', suggestion || 'https://');
+      if (!url) return;
+      const title = window.prompt('Název dlaždice:', t && t.url === url ? t.title : '') || url;
+      dial = await ipcRenderer.invoke('vb:dial:save', [...dial, { url: toUrl(url), title }]);
+      renderDial();
+    }
+
+    async function loadDial() {
+      try { dial = await ipcRenderer.invoke('vb:dial:list') || []; } catch { dial = []; }
+      renderDial();
+    }
+
+    /* --- limity CPU / RAM / stahování --- */
+    function bindNumber(id, key, note) {
+      const el = $(id);
+      if (!el) return;
+      el.onchange = async () => {
+        const val = Math.max(0, Number(el.value) || 0);
+        el.value = val;
+        PREFS = await ipcRenderer.invoke('vb:prefs:set', { [key]: val });
+        if (note) flash(note);
+      };
+    }
+    bindNumber('cpuLimit', 'cpuLimitPercent');
+    bindNumber('ramLimit', 'ramLimitMB');
+    bindNumber('dlSpeedLimit', 'downloadLimitMbps', 'Limit rychlosti stahování uložen.');
+    bindNumber('dlMaxParallel', 'maxConcurrentDownloads');
+    $('gpuMode').onchange = async () => {
+      PREFS = await ipcRenderer.invoke('vb:prefs:set', { gpuMode: $('gpuMode').value });
+      flash('Režim GPU se projeví po restartu prohlížeče.');
+    };
+
+    ipcRenderer.on('vb:limit', (_e, info) => {
+      const parts = [];
+      if (info.overCpu) parts.push('CPU ' + info.cpuPercent + ' % (limit ' + info.cpuLimit + ' %)');
+      if (info.overRam) parts.push('RAM ' + info.ramMB + ' MB (limit ' + info.ramLimit + ' MB)');
+      $('limitNote').textContent = 'Překročen limit: ' + parts.join(', ') + ' — panely na pozadí byly uvolněny.';
+      if (info.overRam) suspendBackgroundTabs();
+    });
+
+    // Uvolní neaktivní panely z paměti, adresu si pamatuje pro pozdější načtení.
+    function suspendBackgroundTabs() {
+      tabs.forEach((t) => {
+        if (t.id === activeId || t.suspended || t.url === START) return;
+        t.suspended = true;
+        t.pendingUrl = t.url;
+        try { t.wv.loadURL('about:blank'); } catch {}
+      });
+      render();
+    }
+
     /* --- otevírání panelu --- */
     async function openSettings(sec) {
       closePanel();
@@ -964,11 +1164,24 @@
     $('btnDownloads').onclick = () => openSettings('downloads');
     $('btnPerf').onclick = () => openSettings('perf');
 
-    loadPrefs().then(() => { if (tabs[0] && tabs[0].url === 'https://www.google.com' && HOME !== 'https://www.google.com') { tabs[0].wv.loadURL(HOME); } });
+    loadPrefs();
     ipcRenderer.invoke('vb:downloads:list').then((d) => { dlItems = d || []; renderDownloads(); });
 
-    createTab(HOME);
-    loadBookmarks();
+    (async () => {
+      let restored = false;
+      try {
+        const r = await ipcRenderer.invoke('vb:session:get');
+        if (r?.restore && Array.isArray(r.session?.tabs) && r.session.tabs.length) {
+          r.session.tabs.forEach((t) => createTab(t.url));
+          const idx = Math.min(Math.max(0, r.session.activeIndex || 0), tabs.length - 1);
+          if (tabs[idx]) setActive(tabs[idx].id);
+          restored = true;
+        }
+      } catch {}
+      if (!restored) createTab(HOME);
+      loadBookmarks();
+      loadDial();
+    })();
 
   </script>
 </body>
