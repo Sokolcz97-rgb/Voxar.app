@@ -1141,6 +1141,14 @@ app.on("window-all-closed", () => {
 let cleanupDone = false;
 app.on("before-quit", (event) => {
   isQuitting = true;
+  // Při ukončení kvůli aktualizaci nesmíme quit odkládat — instalátor
+  // navazuje na quit a sám aplikaci po dokončení znovu spustí.
+  if (app.isQuittingForUpdate) {
+    try { browserSettings.backupBrowserSettings?.(); } catch {}
+    cleanupDone = true;
+    rollback.recordCleanExit();
+    return;
+  }
   if (!cleanupDone) {
     // Záloha nastavení (přežije aktualizaci), pak asynchronní mazání dat.
     try { browserSettings.backupBrowserSettings?.(); } catch {}
@@ -1158,4 +1166,5 @@ app.on("before-quit", (event) => {
   }
   rollback.recordCleanExit();
 });
+
 
