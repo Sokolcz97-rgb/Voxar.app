@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Globe, Network, LogOut, Terminal, Users, Swords, ScrollText, Package } from "lucide-react";
+import { Globe, Network, LogOut, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StudioHub } from "@/components/hub/StudioHub";
 
 type LauncherView = "launcher" | "studio" | "browser";
 
@@ -37,63 +38,6 @@ function ReturnButton({ onClick }: { onClick: () => void }) {
       <LogOut className="w-4 h-4" />
       <span>Return to Hub</span>
     </button>
-  );
-}
-
-function StudioPlaceholder({ onReturn }: { onReturn: () => void }) {
-  return (
-    <div className="hud-root hud-shell h-screen w-screen overflow-hidden text-foreground flex flex-col">
-      <ReturnButton onClick={onReturn} />
-
-      <header className="shrink-0 pt-16 pb-6 text-center">
-        <div className="inline-flex items-center gap-3 mb-2">
-          <Network className="w-7 h-7 text-gold text-glow" />
-          <h1 className="font-display text-2xl tracking-[0.22em] uppercase text-glow">
-            StudioVoxario Hub
-          </h1>
-        </div>
-        <p className="font-mono text-sm text-muted-foreground">
-          Community command center // placeholder module
-        </p>
-      </header>
-
-      <main className="flex-1 min-h-0 px-6 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Community Feed", icon: Users, color: "primary" },
-          { label: "LFG Radar", icon: Swords, color: "gold" },
-          { label: "Contracts", icon: ScrollText, color: "primary" },
-          { label: "Inventory", icon: Package, color: "gold" },
-        ].map((tile) => {
-          const Icon = tile.icon;
-          return (
-            <div
-              key={tile.label}
-              className={cn(
-                "holo-pod pod-center p-5 flex flex-col gap-4",
-                "opacity-60 hover:opacity-100 transition-opacity duration-300"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className={cn("w-5 h-5", tile.color === "gold" ? "text-gold" : "text-primary")} />
-                <span className="font-display text-sm uppercase tracking-wider">{tile.label}</span>
-              </div>
-              <div className="flex-1 space-y-2">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-2 bg-secondary/60 w-full"
-                    style={{ width: `${60 + Math.random() * 35}%`, opacity: 0.4 + i * 0.12 }}
-                  />
-                ))}
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-widest">
-                Awaiting integration...
-              </div>
-            </div>
-          );
-        })}
-      </main>
-    </div>
   );
 }
 
@@ -149,7 +93,7 @@ export default function GameLauncher() {
   const [currentView, setCurrentView] = useState<LauncherView>("launcher");
 
   if (currentView === "studio") {
-    return <StudioPlaceholder onReturn={() => setCurrentView("launcher")} />;
+    return <StudioHub onReturn={() => setCurrentView("launcher")} />;
   }
 
   if (currentView === "browser") {
