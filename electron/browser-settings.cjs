@@ -256,24 +256,58 @@ function installFilters() {
       blockStats.trackers++;
       return callback({ cancel: true });
     }
-    if (p.httpsOnly && details.resourceType === "mainFrame" && /^http:\/\//i.test(url) && !/^http:\/\/(localhost|127\.)/i.test(url)) {
-      return callback({ redirectURL: url.replace(/^http:/i, "https:") });
+    if (p.httpsOnly && details.resourceType === "mainFrame" && /^http:\/\//i.test(url)) {
+      let host = "";
+      try { host = new URL(url).hostname; } catch {}
+      if (!isLocalHost(host) && !httpsFailures.has(host.toLowerCase())) {
+        return callback({ redirectURL: url.replace(/^http:/i, "https:") });
+      }
     }
     if (!p.imageLoading && details.resourceType === "image") return callback({ cancel: true });
     callback({ cancel: false });
   });
 
+  // Pokud HTTPS varianta selže, hostitele si zapamatujeme a příště ho pustíme
+  // přes HTTP — jinak by starší weby a routery skončily na chybové stránce.
+  ses.webRequest.onErrorOccurred({ urls: ["https://*/*"] }, (details) => {
+    if (details.resourceType !== "mainFrame") return;
+    try {
+      const host = new URL(details.url).hostname.toLowerCase();
+      if (/ERR_(SSL|CERT|CONNECTION|TOO_MANY_REDIRECTS|EMPTY_RESPONSE|ADDRESS_UNREACHABLE|NAME_NOT_RESOLVED)/i.test(details.error || "")) {
+        httpsFailures.add(host);
+      }
+    } catch {}
+  });
+
   ses.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
     const headers = details.requestHeaders || {};
-    if (getPrefs().doNotTrack) {
+    const p = getPrefs();
+    if (p.doNotTrack) {
       headers.DNT = "1";
       headers["Sec-GPC"] = "1";
     } else {
       delete headers.DNT;
       delete headers["Sec-GPC"];
     }
+    // Blokace cookies třetích stran: u požadavků mimo doménu stránky
+    // odstraníme odesílanou hlavičku Cookie.
+    if (p.blockThirdPartyCookies && isThirdParty(details)) {
+      delete headers.Cookie;
+      delete headers.cookie;
+    }
     callback({ requestHeaders: headers });
   });
+
+  // …a zahodíme i Set-Cookie z odpovědí třetích stran.
+  ses.webRequest.onHeadersReceived({ urls: ["<all_urls>"] }, (details, callback) => {
+    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details)) return callback({});
+    const headers = { ...(details.responseHeaders || {}) };
+    Object.keys(headers).forEach((k) => {
+      if (k.toLowerCase() === "set-cookie") delete headers[k];
+    });
+    callback({ responseHeaders: headers });
+  });
+
 
   ses.on("will-download", (event, item) => {
     const p = getPrefs();
