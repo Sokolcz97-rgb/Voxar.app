@@ -868,13 +868,39 @@ function createBrowserWindow() {
   });
   scheduleBrowserAutoUpdate();
 
-  // Popupy z webview otevři jako nový panel uvnitř prohlížeče.
+  // Popupy z webview: přihlašovací okna (Google, Microsoft, …) musí zůstat
+  // skutečnými popupy s vazbou na `window.opener`, jinak se přihlášení
+  // nikdy nedokončí. Ostatní popupy otevřeme jako nový panel.
   browserWindow.webContents.on("did-attach-webview", (_e, wc) => {
-    wc.setWindowOpenHandler(({ url }) => {
+    try { wc.setUserAgent(browserSettings.CHROME_UA); } catch {}
+    wc.setWindowOpenHandler(({ url, frameName, features }) => {
+      const isAuth = (() => {
+        try { return browserSettings.isAuthHost(url); } catch { return false; }
+      })();
+      const wantsPopup = /popup|width=|height=/i.test(features || "") || /oauth|login|signin|auth/i.test(frameName || "");
+      if (isAuth || wantsPopup) {
+        return {
+          action: "allow",
+          overrideBrowserWindowOptions: {
+            width: 520,
+            height: 680,
+            autoHideMenuBar: true,
+            backgroundColor: "#0b0f18",
+            parent: browserWindow || undefined,
+            webPreferences: {
+              partition: "persist:voxario",
+              contextIsolation: true,
+              nodeIntegration: false,
+              sandbox: true,
+            },
+          },
+        };
+      }
       try { browserWindow?.webContents.send("browser:open-tab", url); } catch {}
       return { action: "deny" };
     });
   });
+
   return browserWindow;
 }
 
