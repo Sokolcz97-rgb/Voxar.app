@@ -1317,7 +1317,11 @@
       flash('Režim GPU se projeví po restartu prohlížeče.');
     };
 
+    /* --- popup z webu, který se má otevřít jako nový panel --- */
+    ipcRenderer.on('browser:open-tab', (_e, url) => { if (url) createTab(url); });
+
     /* --- automatická aktualizace --- */
+
     ipcRenderer.invoke('vb:update:version').then((v) => { $('vbVersion').textContent = 'Nainstalovaná verze ' + v; }).catch(() => {});
     $('vbUpdateBtn').onclick = () => { ipcRenderer.invoke('vb:update:check').catch(() => {}); };
     ipcRenderer.on('vb:update', (_e, st) => {
