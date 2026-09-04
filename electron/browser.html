@@ -623,6 +623,7 @@
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
       $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
       $('startpage').classList.toggle('on', !!t && t.url === START);
+      syncWebviewVisibility();
       document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
     }
 
@@ -882,8 +883,8 @@
       });
     }
 
-    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); renderSources(); }
-    function closePanel() { bmpanel.classList.remove('on'); }
+    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); syncWebviewVisibility(); renderSources(); }
+    function closePanel() { bmpanel.classList.remove('on'); syncWebviewVisibility(); }
 
     $('btnBookmarks').onclick = () => bmpanel.classList.contains('on') ? closePanel() : openPanel();
     $('bmClose').onclick = closePanel;
@@ -1355,6 +1356,7 @@
     async function openSettings(sec) {
       closePanel();
       setpanel.classList.add('on');
+      syncWebviewVisibility();
       selectSection(sec || 'search');
       await loadPrefs();
       dlItems = await ipcRenderer.invoke('vb:downloads:list') || [];
@@ -1366,6 +1368,7 @@
     }
     function closeSettings() {
       setpanel.classList.remove('on');
+      syncWebviewVisibility();
       if (perfTimer) { clearInterval(perfTimer); perfTimer = null; }
     }
     function selectSection(id) {
