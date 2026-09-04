@@ -670,17 +670,95 @@
     let bookmarks = [];
     const bmpanel = $('bmpanel');
 
+    const openFolders = new Set();
+
+    function buildTree(list) {
+      const root = { name: '', children: new Map(), items: [] };
+      list.forEach((b, i) => {
+        let node = root;
+        String(b.folder || '').split('/').filter(Boolean).forEach((part) => {
+          if (!node.children.has(part)) node.children.set(part, { name: part, children: new Map(), items: [] });
+          node = node.children.get(part);
+        });
+        node.items.push({ b, i });
+      });
+      return root;
+    }
+
+    function countTree(node) {
+      let n = node.items.length;
+      for (const c of node.children.values()) n += countTree(c);
+      return n;
+    }
+
+    function closeMenus() {
+      document.querySelectorAll('.bmfolder.open').forEach((el) => el.classList.remove('open'));
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.bmfolder')) closeMenus();
+    });
+
+    function buildMenu(node, container) {
+      for (const child of node.children.values()) {
+        const btn = document.createElement('button');
+        btn.className = 'dir';
+        btn.textContent = '📁 ' + child.name + '  (' + countTree(child) + ')';
+        const sub = document.createElement('div');
+        sub.style.display = 'none';
+        sub.style.paddingLeft = '12px';
+        buildMenu(child, sub);
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+        };
+        container.append(btn, sub);
+      }
+      if (node.children.size && node.items.length) {
+        const sep = document.createElement('div');
+        sep.className = 'sep';
+        container.appendChild(sep);
+      }
+      for (const { b } of node.items) {
+        const btn = document.createElement('button');
+        btn.textContent = b.title || b.url;
+        btn.title = b.url;
+        btn.onclick = () => { closeMenus(); navigate(activeTab(), b.url); };
+        container.appendChild(btn);
+      }
+    }
+
     function renderBookmarks() {
       $('bmcount').textContent = bookmarks.length + ' záložek';
       const bar = $('bmbar');
       bar.innerHTML = '';
+      const tree = buildTree(bookmarks);
       if (!bookmarks.length) {
         const e = document.createElement('span');
         e.className = 'empty';
         e.textContent = 'Zatím žádné záložky — přidej hvězdičkou nebo naimportuj z jiného prohlížeče (★).';
         bar.appendChild(e);
       }
-      bookmarks.slice(0, 40).forEach((b) => {
+      // Složky nejdřív (jako v původním prohlížeči), pak volné záložky.
+      for (const child of tree.children.values()) {
+        const wrap = document.createElement('div');
+        wrap.className = 'bmfolder';
+        const chip = document.createElement('button');
+        chip.className = 'chip dir';
+        chip.textContent = '📁 ' + child.name;
+        chip.title = child.name + ' — ' + countTree(child) + ' záložek';
+        const menu = document.createElement('div');
+        menu.className = 'bmmenu';
+        buildMenu(child, menu);
+        chip.onclick = (e) => {
+          e.stopPropagation();
+          const was = wrap.classList.contains('open');
+          closeMenus();
+          if (!was) wrap.classList.add('open');
+        };
+        wrap.append(chip, menu);
+        bar.appendChild(wrap);
+      }
+      tree.items.slice(0, 40).forEach(({ b }) => {
         const chip = document.createElement('button');
         chip.className = 'chip';
         chip.textContent = b.title || b.url;
@@ -690,8 +768,16 @@
       });
 
       const list = $('bmlist');
+      list.className = 'bmlist bmtree';
       list.innerHTML = '';
-      bookmarks.forEach((b, i) => {
+
+      const removeAt = async (i) => {
+        bookmarks.splice(i, 1);
+        bookmarks = await ipcRenderer.invoke('bookmarks:save', bookmarks);
+        renderBookmarks();
+      };
+
+      const makeRow = ({ b, i }) => {
         const row = document.createElement('div');
         row.className = 'bmrow';
         const ti = document.createElement('span');
@@ -707,14 +793,46 @@
         const del = document.createElement('button');
         del.className = 'del';
         del.textContent = '✕';
-        del.onclick = async () => {
-          bookmarks.splice(i, 1);
-          bookmarks = await ipcRenderer.invoke('bookmarks:save', bookmarks);
-          renderBookmarks();
-        };
+        del.onclick = () => removeAt(i);
         row.append(ti, u, src, del);
-        list.appendChild(row);
-      });
+        return row;
+      };
+
+      const renderNode = (node, parentEl, pathKey, depth) => {
+        for (const child of node.children.values()) {
+          const key = pathKey + '/' + child.name;
+          const group = document.createElement('div');
+          group.className = 'bmgroup' + (openFolders.has(key) ? ' open' : '');
+          const head = document.createElement('div');
+          head.className = 'head';
+          head.style.paddingLeft = (10 + depth * 14) + 'px';
+          const caret = document.createElement('span');
+          caret.textContent = openFolders.has(key) ? '▾' : '▸';
+          const name = document.createElement('span');
+          name.textContent = '📁 ' + child.name;
+          const cnt = document.createElement('span');
+          cnt.className = 'cnt';
+          cnt.textContent = countTree(child) + ' položek';
+          head.append(caret, name, cnt);
+          head.onclick = () => {
+            if (openFolders.has(key)) openFolders.delete(key); else openFolders.add(key);
+            group.classList.toggle('open');
+            caret.textContent = group.classList.contains('open') ? '▾' : '▸';
+          };
+          const kids = document.createElement('div');
+          kids.className = 'kids';
+          renderNode(child, kids, key, depth + 1);
+          group.append(head, kids);
+          parentEl.appendChild(group);
+        }
+        for (const item of node.items) {
+          const row = makeRow(item);
+          row.style.paddingLeft = (10 + depth * 14) + 'px';
+          parentEl.appendChild(row);
+        }
+      };
+
+      renderNode(tree, list, '', 0);
     }
 
     async function loadBookmarks() {
