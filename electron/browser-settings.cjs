@@ -96,6 +96,7 @@ function setPrefs(patch) {
   prefs = { ...getPrefs(), ...(patch || {}) };
   writeJson("browser-prefs.json", prefs);
   applyPrefs();
+  try { writeBackup(); } catch {}
   return prefs;
 }
 
@@ -893,6 +894,7 @@ module.exports = {
   registerBrowserSettings,
   applyHardwareAcceleration,
   clearOnExitIfNeeded,
+  backupBrowserSettings: writeBackup,
   SEARCH_ENGINES,
   getPrefs,
 };
