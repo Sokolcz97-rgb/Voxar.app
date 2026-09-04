@@ -465,6 +465,8 @@ function applyNetworkLimit(contents) {
 }
 function watchWebContents() {
   app.on("web-contents-created", (_e, contents) => {
+    // Každý web (panel i přihlašovací popup) se hlásí jako běžný Chrome.
+    try { contents.setUserAgent(CHROME_UA); } catch {}
     try {
       if (contents.getType?.() !== "webview") return;
     } catch { return; }
@@ -473,6 +475,7 @@ function watchWebContents() {
     applyThrottling(contents);
   });
 }
+
 
 
 function voxSession() {
