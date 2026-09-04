@@ -1037,6 +1037,9 @@ function createLauncher() {
     revealWindow(launcherWindow);
   });
   launcherWindow.webContents.once("dom-ready", () => revealWindow(launcherWindow));
+  launcherWindow.webContents.once("did-finish-load", () => {
+    rollback.scheduleHealthyMark(() => launcherWindow);
+  });
   launcherWindow.once("ready-to-show", () => revealWindow(launcherWindow));
   setTimeout(() => revealWindow(launcherWindow), 2_000);
   launcherWindow.on("closed", () => (launcherWindow = null));
@@ -1097,10 +1100,8 @@ app.whenReady().then(async () => {
   startupLog(`Start aplikace ${app.getVersion()}`);
   browserSettings.registerBrowserSettings();
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
-  // aby aplikace vždy načetla aktuální verzi webu, ne starou zakešovanou.
-  try {
-    await session.defaultSession.clearCache();
-  } catch { /* ignore */ }
+  // ale nikdy kvůli tomu neblokujeme vytvoření prvního okna.
+  session.defaultSession.clearCache().catch((error) => startupLog("Vyčištění cache při startu selhalo", error));
 
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => {
     const allowed = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write", "fullscreen", "display-capture"];
