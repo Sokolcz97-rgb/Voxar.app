@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   checkUpdatesQuiet: () => ipcRenderer.invoke("app:check-updates-quiet"),
   // Spuštění instalace přímo z rendereru (kliknutí na ikonku).
   installUpdateNow: () => ipcRenderer.invoke("app:install-update-now"),
+  // Historie nainstalovaných verzí (kdy byla která verze poprvé spuštěna).
+  getVersionHistory: () => ipcRenderer.invoke("app:version-history"),
+
   // Odběr live oznámení o dostupné aktualizaci (broadcast z main procesu).
   onUpdateAvailability: (cb) => {
     const listener = (_e, payload) => { try { cb(payload); } catch {} };
