@@ -794,10 +794,14 @@ function registerBrowserSettings() {
   if (registered) return;
   registered = true;
 
+  // Po aktualizaci může být profil prázdný — obnovíme zálohu nastavení.
+  restoreBackupIfMissing();
   getPrefs();
   installFilters();
   watchWebContents();
   applyPrefs();
+  writeBackup();
+
   startResourceGuard();
 
   ipcMain.handle("vb:prefs:get", () => ({ prefs: getPrefs(), engines: SEARCH_ENGINES, encryption: encryptionAvailable() }));
