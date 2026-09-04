@@ -199,6 +199,9 @@ const DANGEROUS_EXT = [
 
 let blockStats = { ads: 0, trackers: 0, malware: 0 };
 
+// Hostitelé, u kterých HTTPS selhalo — příště je pustíme přes HTTP.
+const httpsFailures = new Set();
+
 function hostMatches(url, list) {
   try {
     const u = new URL(url);
@@ -209,9 +212,28 @@ function hostMatches(url, list) {
   }
 }
 
+// Lokální síť, .local a IP adresy v privátních rozsazích HTTPS nevynucujeme.
+function isLocalHost(hostname) {
+  const h = String(hostname || "").toLowerCase();
+  if (!h) return true;
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".home") || h.endsWith(".lan")) return true;
+  if (/^127\./.test(h) || h === "::1" || h === "[::1]") return true;
+  if (/^10\./.test(h)) return true;
+  if (/^192\.168\./.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+  if (/^169\.254\./.test(h)) return true;
+  if (!h.includes(".")) return true; // intranetová jména bez domény
+  return false;
+}
+
+function registrableHost(url) {
+  try { return new URL(url).hostname.toLowerCase().split(".").slice(-2).join("."); } catch { return ""; }
+}
+
 function voxSession() {
   return session.fromPartition(PARTITION);
 }
+
 
 let filtersInstalled = false;
 function installFilters() {
