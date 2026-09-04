@@ -230,6 +230,44 @@ function registrableHost(url) {
   try { return new URL(url).hostname.toLowerCase().split(".").slice(-2).join("."); } catch { return ""; }
 }
 
+// Požadavek mimo doménu právě zobrazené stránky.
+function isThirdParty(details) {
+  try {
+    const target = registrableHost(details.url);
+    if (!target) return false;
+    let pageUrl = "";
+    if (details.webContentsId) {
+      const { webContents } = require("electron");
+      pageUrl = webContents.fromId(details.webContentsId)?.getURL() || "";
+    }
+    if (!pageUrl) pageUrl = details.referrer || "";
+    const origin = registrableHost(pageUrl);
+    if (!origin) return false;
+    return origin !== target;
+  } catch {
+    return false;
+  }
+}
+
+// Uspávání panelů na pozadí (webview uvnitř prohlížeče).
+const trackedContents = new Set();
+function applyThrottling(contents) {
+  try {
+    contents.setBackgroundThrottling?.(getPrefs().backgroundThrottling !== false);
+  } catch {}
+}
+function watchWebContents() {
+  app.on("web-contents-created", (_e, contents) => {
+    try {
+      if (contents.getType?.() !== "webview") return;
+    } catch { return; }
+    trackedContents.add(contents);
+    contents.once("destroyed", () => trackedContents.delete(contents));
+    applyThrottling(contents);
+  });
+}
+
+
 function voxSession() {
   return session.fromPartition(PARTITION);
 }
