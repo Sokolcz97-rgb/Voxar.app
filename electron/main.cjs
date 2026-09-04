@@ -948,8 +948,12 @@ setUiBridge((payload) => {
     const id = ++promptSeq;
     pendingPrompts.set(id, { resolve });
     try {
-      win.show();
-      win.focus();
+      // Jen skutečné dotazy vytahují okno dopředu; oznámení o aktualizaci
+      // na pozadí nesmí uživatele vyrušit.
+      if (payload?.kind === "question") {
+        win.show();
+        win.focus();
+      }
       win.webContents.send("launcher:prompt", { id, ...payload });
     } catch (e) {
       pendingPrompts.delete(id);
