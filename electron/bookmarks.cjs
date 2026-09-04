@@ -46,7 +46,7 @@ function dedupe(list) {
     out.push({
       url,
       title: String(b?.title || url).slice(0, 300),
-      folder: b?.folder ? String(b.folder).slice(0, 120) : "",
+      folder: b?.folder ? String(b.folder).slice(0, 400) : "",
       source: b?.source || "voxario",
       addedAt: b?.addedAt || new Date().toISOString(),
     });
