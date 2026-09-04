@@ -177,6 +177,28 @@
     .dockbtn .dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; }
     .dockbtn { position: relative; }
 
+    /* ---------- Úvodní stránka (rychlá volba) ---------- */
+    .startpage { display: none; position: absolute; inset: 0; z-index: 15; overflow: auto; padding: 46px 40px;
+      background: radial-gradient(1200px 600px at 50% -10%, rgba(34,211,238,.12), transparent 60%), #05070d; }
+    .startpage.on { display: block; }
+    .startpage h1 { font-size: 15px; letter-spacing: .38em; text-transform: uppercase; color: var(--cyan); margin: 0 0 4px; }
+    .startpage .sub2 { color: var(--muted); font-size: 12px; margin-bottom: 22px; }
+    .dial { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; max-width: 1100px; }
+    .dialtile { position: relative; height: 104px; border: 1px solid var(--line); background: rgba(16,24,40,.7);
+      color: var(--text); cursor: pointer; text-align: left; padding: 14px; display: flex; flex-direction: column; justify-content: space-between;
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); transition: .15s; }
+    .dialtile:hover { border-color: rgba(34,211,238,.6); box-shadow: 0 0 30px -14px var(--cyan); transform: translateY(-2px); }
+    .dialtile .dt { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dialtile .du { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dialtile .ico { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--gold);
+      border: 1px solid rgba(251,191,36,.4); font-size: 13px; font-weight: 700;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+    .dialtile .rm { position: absolute; top: 6px; right: 8px; background: transparent; border: 0; color: #475569; font-size: 12px; cursor: pointer; }
+    .dialtile .rm:hover { color: #f87171; }
+    .dialadd { height: 104px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font-size: 24px; cursor: pointer; }
+    .dialadd:hover { color: var(--cyan); border-color: rgba(34,211,238,.5); }
+    .startfoot { margin-top: 26px; color: #475569; font-size: 11px; }
+
   </style>
 </head>
 <body>
@@ -221,6 +243,12 @@
     <div class="prog" id="prog"></div>
 
     <div class="viewport" id="viewport">
+      <div class="startpage" id="startpage">
+        <h1>// VoxarioBrowser</h1>
+        <div class="sub2">Uložené stránky — klikni pro otevření, ✕ pro smazání, + pro přidání.</div>
+        <div class="dial" id="dial"></div>
+        <div class="startfoot">Tip: Ctrl+T nový panel · Ctrl+D záložka · Ctrl+J stahování · Ctrl+, nastavení</div>
+      </div>
       <div class="findbar" id="findbar">
         <input id="findinput" placeholder="Najít…" />
         <button class="navbtn" id="findnext">↓</button>
@@ -317,6 +345,17 @@
                 </div>
               </div>
               <div class="card">
+                <h3>Limity stahování</h3>
+                <div class="opt">
+                  <div><div class="lbl">Maximální rychlost</div><div class="dsc">V Mb/s. 0 = bez omezení.</div></div>
+                  <input class="inp" id="dlSpeedLimit" type="number" min="0" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Souběžná stahování</div><div class="dsc">Další soubory počkají ve frontě. 0 = bez omezení.</div></div>
+                  <input class="inp" id="dlMaxParallel" type="number" min="0" step="1" style="width:110px" />
+                </div>
+              </div>
+              <div class="card">
                 <h3>Historie stahování</h3>
                 <div class="bmlist" id="dllist"></div>
               </div>
@@ -355,6 +394,26 @@
               <div class="card">
                 <h3>Optimalizace</h3>
                 <div id="optsPerf"></div>
+              </div>
+              <div class="card">
+                <h3>Limity zdrojů</h3>
+                <div class="opt">
+                  <div><div class="lbl">Limit CPU</div><div class="dsc">V %. Při překročení se panely na pozadí uspí. 0 = bez limitu.</div></div>
+                  <input class="inp" id="cpuLimit" type="number" min="0" max="100" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Limit RAM</div><div class="dsc">V MB. Při překročení se neaktivní panely uvolní z paměti. 0 = bez limitu.</div></div>
+                  <input class="inp" id="ramLimit" type="number" min="0" step="64" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Režim GPU</div><div class="dsc">Projeví se po restartu prohlížeče.</div></div>
+                  <select class="inp" id="gpuMode" style="width:150px">
+                    <option value="full">Plná akcelerace</option>
+                    <option value="limited">Omezená</option>
+                    <option value="off">Vypnutá</option>
+                  </select>
+                </div>
+                <div class="pnote" id="limitNote"></div>
               </div>
             </div>
 
