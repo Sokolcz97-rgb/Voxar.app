@@ -497,7 +497,7 @@ ipcMain.handle("app:return-to-launcher", () => {
       launcherWindow?.center();
     } catch {}
     setLauncherStatus("Vyberte modul");
-    try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
+    sendLauncherChoose();
 
     return { ok: true };
   } catch (e) {
@@ -908,7 +908,7 @@ async function runLauncherSequence() {
     launcherWindow?.setSize(1020, 600);
     launcherWindow?.center();
   } catch {}
-  try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
+  sendLauncherChoose();
 }
 
 app.whenReady().then(async () => {
