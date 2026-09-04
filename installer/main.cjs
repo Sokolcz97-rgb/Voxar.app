@@ -164,8 +164,10 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     installUninstallerRuntime();
     await writeUninstallRegistry(dir);
   } catch (err) {
-    throw new Error(`Vytvoření odinstalátoru selhalo: ${err?.message || err}`);
+    // Instalace samotná je hotová — odinstalátor je jen doplněk.
+    send("log", `! Odinstalátor se nepodařilo vytvořit: ${err?.message || err}`);
   }
+
 
   // 5) Uložit instalační meta pro uninstaller.
   writeJson(path.join(dir, "installer.json"), {
