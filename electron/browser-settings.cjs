@@ -522,10 +522,13 @@ function installFilters() {
   if (filtersInstalled) return;
   filtersInstalled = true;
   const ses = voxSession();
+  applyUserAgent();
 
   ses.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, (details, callback) => {
     const p = getPrefs();
     const url = details.url || "";
+    // Přihlašovací a účtové domény nikdy neblokujeme.
+    if (isAuthHost(url)) return callback({ cancel: false });
     if (p.blockMalware && hostMatches(url, MALWARE_HOSTS)) {
       blockStats.malware++;
       return callback({ cancel: true });
