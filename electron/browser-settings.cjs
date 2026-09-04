@@ -850,11 +850,16 @@ function registerBrowserSettings() {
   ipcMain.handle("vb:session:set", (_e, data) => setSession(data));
 
   ipcMain.handle("vb:dial:list", () => getDial());
-  ipcMain.handle("vb:dial:save", (_e, list) => setDial(list));
+  ipcMain.handle("vb:dial:save", (_e, list) => { const out = setDial(list); writeBackup(); return out; });
+
+  ipcMain.handle("vb:settings:export", () => exportSettings());
+  ipcMain.handle("vb:settings:import", () => importSettings());
+  ipcMain.handle("vb:settings:backup", () => writeBackup());
 
   ipcMain.handle("vb:stats", () => systemStats());
   ipcMain.handle("vb:speedtest", () => speedTest());
 }
+
 
 function applyHardwareAcceleration() {
   // musí být zavoláno před app.whenReady()
