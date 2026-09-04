@@ -396,6 +396,14 @@
                 <div id="optsPerf"></div>
               </div>
               <div class="card">
+                <h3>Aktualizace</h3>
+                <div class="opt">
+                  <div><div class="lbl">Verze prohlížeče</div><div class="dsc" id="vbVersion">—</div></div>
+                  <button class="pbtn" id="vbUpdateBtn">Zkontrolovat nyní</button>
+                </div>
+                <div class="pnote" id="vbUpdateNote">Prohlížeč se aktualizuje automaticky při spuštění i za běhu.</div>
+              </div>
+              <div class="card">
                 <h3>Limity zdrojů</h3>
                 <div class="opt">
                   <div><div class="lbl">Limit CPU</div><div class="dsc">V %. Při překročení se panely na pozadí uspí. 0 = bez limitu.</div></div>
@@ -1117,6 +1125,18 @@
       PREFS = await ipcRenderer.invoke('vb:prefs:set', { gpuMode: $('gpuMode').value });
       flash('Režim GPU se projeví po restartu prohlížeče.');
     };
+
+    /* --- automatická aktualizace --- */
+    ipcRenderer.invoke('vb:update:version').then((v) => { $('vbVersion').textContent = 'Nainstalovaná verze ' + v; }).catch(() => {});
+    $('vbUpdateBtn').onclick = () => { ipcRenderer.invoke('vb:update:check').catch(() => {}); };
+    ipcRenderer.on('vb:update', (_e, st) => {
+      const note = $('vbUpdateNote');
+      if (st.phase === 'checking') note.textContent = 'Kontroluji aktualizace…';
+      else if (st.phase === 'downloading') { note.textContent = 'Stahuji verzi ' + st.version + '…'; flash('Stahuji aktualizaci ' + st.version + '…'); }
+      else if (st.phase === 'installing') { note.textContent = 'Verze ' + st.version + ' se nainstaluje po ukončení prohlížeče.'; flash('Aktualizace ' + st.version + ' připravena — nainstaluje se po zavření.'); }
+      else if (st.phase === 'error') note.textContent = 'Aktualizace selhala: ' + st.error;
+      else note.textContent = 'Máte nejnovější verzi (' + (st.current || '') + '). Aktualizace probíhají automaticky.';
+    });
 
     ipcRenderer.on('vb:limit', (_e, info) => {
       const parts = [];
