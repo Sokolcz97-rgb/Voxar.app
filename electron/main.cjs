@@ -25,7 +25,7 @@ const BROWSER_URL = (() => {
   try { return new URL("/browser", APP_URL).toString(); } catch { return "https://studiovoxario.com/browser"; }
 })();
 const HUB_URL = (() => {
-  try { return new URL("/?hub=1", APP_URL).toString(); } catch { return "https://studiovoxario.com/?hub=1"; }
+  try { return new URL("/launcher?hub=1", APP_URL).toString(); } catch { return "https://studiovoxario.com/launcher?hub=1"; }
 })();
 // "browser" je nativní Electron modul (browser.html), ne webová routa.
 const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
