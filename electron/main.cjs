@@ -11,6 +11,7 @@ const {
   session,
   desktopCapturer,
   dialog,
+  screen,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -162,6 +163,35 @@ let settingsWindow = null;
 let tray = null;
 let isQuitting = false;
 
+function startupLog(message, error) {
+  try {
+    const line = `[${new Date().toISOString()}] ${message}${error ? `: ${error?.stack || error?.message || error}` : ""}\n`;
+    fs.mkdirSync(app.getPath("userData"), { recursive: true });
+    fs.appendFileSync(path.join(app.getPath("userData"), "startup.log"), line, "utf8");
+  } catch {}
+}
+
+function revealWindow(win) {
+  if (!win || win.isDestroyed()) return false;
+  try {
+    if (win.isMinimized()) win.restore();
+    const bounds = win.getBounds();
+    const visible = screen.getAllDisplays().some((display) => {
+      const area = display.workArea;
+      return bounds.x < area.x + area.width && bounds.x + bounds.width > area.x &&
+        bounds.y < area.y + area.height && bounds.y + bounds.height > area.y;
+    });
+    if (!visible) win.center();
+    win.show();
+    win.moveTop();
+    win.focus();
+    return true;
+  } catch (error) {
+    startupLog("Zobrazení okna selhalo", error);
+    return false;
+  }
+}
+
 function applyAutoStart(enabled) {
   try {
     app.setLoginItemSettings({
@@ -212,10 +242,16 @@ function createTray() {
 }
 
 function showMain() {
-  if (!mainWindow) return createMainWindow();
-  if (mainWindow.isMinimized()) mainWindow.restore();
-  if (!mainWindow.isVisible()) mainWindow.show();
-  mainWindow.focus();
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    const win = createMainWindow();
+    const reveal = () => revealWindow(win);
+    win.webContents.once("dom-ready", reveal);
+    win.webContents.once("did-fail-load", reveal);
+    setTimeout(reveal, 3_000);
+    return win;
+  }
+  revealWindow(mainWindow);
+  return mainWindow;
 }
 
 function localRouteFor(url) {
@@ -287,6 +323,7 @@ function createMainWindow(startUrl) {
       webSecurity: true,
     },
   });
+  startupLog(`Hlavní okno vytvořeno (${targetUrl})`);
 
   // Načítáme vždy čerstvou verzi (jinak Electron drží starý HTML/JS v cache
   // a uživatel vidí zastaralé přihlašovací okno).
@@ -794,9 +831,7 @@ ipcMain.handle("vb:update:version", () => app.getVersion());
 // -------- VoxarioBrowser: nativní Chromium okno --------
 function createBrowserWindow() {
   if (browserWindow && !browserWindow.isDestroyed()) {
-    if (browserWindow.isMinimized()) browserWindow.restore();
-    browserWindow.show();
-    browserWindow.focus();
+    revealWindow(browserWindow);
     return browserWindow;
   }
   browserWindow = new BrowserWindow({
@@ -815,7 +850,13 @@ function createBrowserWindow() {
       webSecurity: true,
     },
   });
-  browserWindow.loadFile(path.join(__dirname, "browser.html"));
+  startupLog("Okno VoxarioBrowseru vytvořeno");
+  browserWindow.loadFile(path.join(__dirname, "browser.html")).catch((error) => {
+    startupLog("VoxarioBrowser se nepodařilo načíst", error);
+    revealWindow(browserWindow);
+  });
+  browserWindow.webContents.once("dom-ready", () => revealWindow(browserWindow));
+  setTimeout(() => revealWindow(browserWindow), 3_000);
   browserWindow.on("closed", () => {
     browserWindow = null;
     if (browserUpdateTimer) { clearInterval(browserUpdateTimer); browserUpdateTimer = null; }
@@ -972,6 +1013,10 @@ setUiBridge((payload) => {
 
 
 function createLauncher() {
+  if (launcherWindow && !launcherWindow.isDestroyed()) {
+    revealWindow(launcherWindow);
+    return launcherWindow;
+  }
   launcherWindow = new BrowserWindow({
     width: 460,
     height: 340,
@@ -980,14 +1025,22 @@ function createLauncher() {
     frame: false,
     resizable: true,
     backgroundColor: "#020617",
-    show: true,
+    show: false,
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
     },
   });
-  launcherWindow.loadFile(path.join(__dirname, "launcher.html"));
+  startupLog("Launcher vytvořen");
+  launcherWindow.loadFile(path.join(__dirname, "launcher.html")).catch((error) => {
+    startupLog("Launcher se nepodařilo načíst", error);
+    revealWindow(launcherWindow);
+  });
+  launcherWindow.webContents.once("dom-ready", () => revealWindow(launcherWindow));
+  launcherWindow.once("ready-to-show", () => revealWindow(launcherWindow));
+  setTimeout(() => revealWindow(launcherWindow), 2_000);
   launcherWindow.on("closed", () => (launcherWindow = null));
+  return launcherWindow;
 }
 
 
@@ -1041,6 +1094,7 @@ async function runLauncherSequence() {
 
 
 app.whenReady().then(async () => {
+  startupLog(`Start aplikace ${app.getVersion()}`);
   browserSettings.registerBrowserSettings();
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // aby aplikace vždy načetla aktuální verzi webu, ne starou zakešovanou.
@@ -1079,27 +1133,31 @@ app.whenReady().then(async () => {
   // Historie verzí: zapíšeme datum prvního spuštění aktuální verze.
   recordInstalledVersion();
 
-  // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
+  // Nejdřív vždy vytvoříme viditelné okno. Kontrola předchozího pádu ani síť
+  // nesmí zablokovat start tak, že aplikace zůstane jen mezi procesy.
   const { suspicious, prev } = rollback.recordStartAttempt();
-
-  if (suspicious && (prev.consecutiveFailures || 0) >= 1) {
-    try {
-      const manifest = await fetchManifest().catch(() => null);
-      await rollback.performRollback({
-        manifest,
-        parentWindow: null,
-        reason: `Předchozí spuštění verze ${prev.lastStartVersion} skončilo neočekávaně${prev.lastCrash ? " (" + prev.lastCrash.reason + ")" : ""}.`,
-        installVerified,
-      });
-    } catch (e) {
-      console.error("startup rollback failed", e);
-    }
-  }
 
   if (BROWSER_ONLY) {
     createBrowserWindow();
   } else {
     runLauncherSequence();
+  }
+
+  if (suspicious && (prev.consecutiveFailures || 0) >= 1) {
+    setTimeout(async () => {
+      try {
+        const manifest = await fetchManifest().catch(() => null);
+        await rollback.performRollback({
+          manifest,
+          parentWindow: browserWindow || launcherWindow || mainWindow,
+          reason: `Předchozí spuštění verze ${prev.lastStartVersion} skončilo neočekávaně${prev.lastCrash ? " (" + prev.lastCrash.reason + ")" : ""}.`,
+          installVerified,
+        });
+      } catch (error) {
+        startupLog("Kontrola obnovy po startu selhala", error);
+        console.error("startup rollback failed", error);
+      }
+    }, 1_000);
   }
 
   // Živá quiet-kontrola pro FAB v UI (bez dialogů). První hned po startu,
@@ -1126,15 +1184,23 @@ app.on("second-instance", (_e, argv) => {
   const wantsBrowser = Array.isArray(argv) && argv.some((a) => a === "--browser");
   if (wantsBrowser) {
     if (browserWindow && !browserWindow.isDestroyed()) {
-      if (browserWindow.isMinimized()) browserWindow.restore();
-      browserWindow.show();
-      browserWindow.focus();
+      revealWindow(browserWindow);
     } else {
       createBrowserWindow();
     }
     return;
   }
-  showMain();
+  if (launcherWindow && !launcherWindow.isDestroyed()) revealWindow(launcherWindow);
+  else if (mainWindow && !mainWindow.isDestroyed()) revealWindow(mainWindow);
+  else if (browserWindow && !browserWindow.isDestroyed()) revealWindow(browserWindow);
+  else runLauncherSequence();
+});
+app.on("activate", () => {
+  if (launcherWindow && !launcherWindow.isDestroyed()) revealWindow(launcherWindow);
+  else if (mainWindow && !mainWindow.isDestroyed()) revealWindow(mainWindow);
+  else if (browserWindow && !browserWindow.isDestroyed()) revealWindow(browserWindow);
+  else if (BROWSER_ONLY) createBrowserWindow();
+  else runLauncherSequence();
 });
 app.on("window-all-closed", () => {
   // Samostatný prohlížeč nemá tray — zavřením okna se aplikace ukončí.
