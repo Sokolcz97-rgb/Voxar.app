@@ -1008,13 +1008,21 @@ async function runLauncherSequence() {
   createLauncher();
   setLauncherStatus("Kontrola aktualizací…");
 
+  const launcherChannel = settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable";
   let result = { status: "skipped" };
   try {
     result = await checkForUpdates({
       silent: true,
       parentWindow: launcherWindow,
-      channel: settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable",
+      channel: launcherChannel,
     });
+    // Launcher se aktualizuje sám: když je k dispozici novější balíček
+    // (obsahuje launcher, aplikaci i modul prohlížeče), rovnou ho stáhneme
+    // a necháme nainstalovat, aby se vždy spouštěla nejnovější verze.
+    if (result?.status === "available") {
+      setLauncherStatus("Stahuji novou verzi…");
+      result = await installUpdateFromRenderer({ parentWindow: launcherWindow, channel: launcherChannel });
+    }
   } catch (e) {
     console.error("launcher update check error", e);
   }
@@ -1023,6 +1031,7 @@ async function runLauncherSequence() {
     setLauncherStatus("Instaluji novou verzi… aplikace se ukončí.");
     return; // installer will replace the app; do not boot the old UI
   }
+
 
   // Rozcestník: uživatel si vybere modul (Voxar.app / VoxarioBrowser)
   setLauncherStatus("Vyberte modul");
