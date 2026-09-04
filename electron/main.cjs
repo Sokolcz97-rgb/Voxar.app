@@ -1079,8 +1079,12 @@ app.whenReady().then(async () => {
 
   }
 
+  // Historie verzí: zapíšeme datum prvního spuštění aktuální verze.
+  recordInstalledVersion();
+
   // Detekce nezdařeného předchozího startu — nabídneme rollback ještě před bootem.
   const { suspicious, prev } = rollback.recordStartAttempt();
+
   if (suspicious && (prev.consecutiveFailures || 0) >= 1) {
     try {
       const manifest = await fetchManifest().catch(() => null);
