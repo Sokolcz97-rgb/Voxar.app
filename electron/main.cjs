@@ -868,6 +868,19 @@ function setLauncherStatus(msg) {
   try { launcherWindow?.webContents.send("launcher:status", msg); } catch {}
 }
 
+// Rozcestník se smí poslat až po načtení rendereru, jinak se zpráva zahodí
+// a uživateli zůstane prázdný splash bez karet i tlačítka.
+function sendLauncherChoose() {
+  const win = launcherWindow;
+  if (!win || win.isDestroyed()) return;
+  const send = () => {
+    try { win.webContents.send("launcher:choose"); } catch {}
+  };
+  if (win.webContents.isLoading()) win.webContents.once("did-finish-load", send);
+  else send();
+}
+
+
 async function runLauncherSequence() {
   createLauncher();
   setLauncherStatus("Kontrola aktualizací…");
