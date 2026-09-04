@@ -1149,8 +1149,11 @@ let cleanupDone = false;
 app.on("before-quit", (event) => {
   isQuitting = true;
   if (!cleanupDone) {
+    // Záloha nastavení (přežije aktualizaci), pak asynchronní mazání dat.
+    try { browserSettings.backupBrowserSettings?.(); } catch {}
     // Mazání dat při ukončení je asynchronní — odložíme quit, ať se stihne.
     event.preventDefault();
+
     Promise.resolve(browserSettings.clearOnExitIfNeeded())
       .catch(() => {})
       .finally(() => {

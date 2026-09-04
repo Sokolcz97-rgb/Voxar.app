@@ -14,6 +14,40 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.0.15-alpha",
+    date: "2026-09-04",
+    title: "Automatické aktualizace, historie verzí a záloha nastavení",
+    titleEn: "Auto-updates, version history and settings backup",
+    changes: [
+      {
+        type: "feature",
+        text: "Voxar.app se aktualizuje sám hned po spuštění a pak průběžně na pozadí – nová verze se stáhne a nainstaluje bez ručního zásahu.",
+        textEn: "Voxar.app now updates itself right after launch and then continuously in the background.",
+      },
+      {
+        type: "feature",
+        text: "Nová stránka Historie verzí (/verze) ukazuje všechny vydané verze, která je aktuální a kdy byla nainstalovaná.",
+        textEn: "New Version history page (/verze) lists every release, the current one and when it was installed.",
+      },
+      {
+        type: "feature",
+        text: "VoxarioBrowser umí exportovat a importovat nastavení včetně uložených stránek, otevřených panelů a historie.",
+        textEn: "VoxarioBrowser can export and import settings including saved pages, open tabs and history.",
+      },
+      {
+        type: "improvement",
+        text: "Nastavení prohlížeče se automaticky zálohuje mimo profil, takže se po aktualizaci nebo přeinstalaci samo obnoví.",
+        textEn: "Browser settings are backed up outside the profile, so they restore automatically after an update or reinstall.",
+      },
+      {
+        type: "security",
+        text: "Uložená hesla v prohlížeči se převedou do podoby šifrované klíčem operačního systému a jdou kdykoliv změnit.",
+        textEn: "Saved browser passwords are migrated to OS-encrypted storage and can be changed at any time.",
+      },
+    ],
+  },
+  {
+
     version: "0.0.14-alpha",
     date: "2026-09-02",
     title: "Volné stahování, reset klíčů a záložky v prohlížeči",

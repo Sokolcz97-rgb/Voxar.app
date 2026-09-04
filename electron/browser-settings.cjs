@@ -96,6 +96,7 @@ function setPrefs(patch) {
   prefs = { ...getPrefs(), ...(patch || {}) };
   writeJson("browser-prefs.json", prefs);
   applyPrefs();
+  try { writeBackup(); } catch {}
   return prefs;
 }
 
@@ -171,6 +172,109 @@ function setDial(list) {
   writeJson("browser-dial.json", clean);
   return clean;
 }
+
+/* ------------------------------------------------------------------ */
+/* Export / import nastavení + záloha přežívající aktualizaci          */
+/* ------------------------------------------------------------------ */
+const BUNDLE_KIND = "voxariobrowser-settings";
+
+// Záloha leží mimo userData, takže ji přežije i přeinstalace/aktualizace,
+// která by userData vyčistila.
+function backupPath() {
+  return path.join(app.getPath("appData"), "VoxarioBrowser", "settings-backup.json");
+}
+
+function buildBundle() {
+  return {
+    kind: BUNDLE_KIND,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    app: app.getVersion(),
+    prefs: getPrefs(),
+    dial: getDial(),
+    session: getSession(),
+    history: getHistory().slice(0, 500),
+  };
+}
+
+function applyBundle(bundle) {
+  if (!bundle || bundle.kind !== BUNDLE_KIND) {
+    return { ok: false, error: "Neplatný soubor s nastavením." };
+  }
+  const counts = { dial: 0, session: 0, history: 0 };
+  if (bundle.prefs && typeof bundle.prefs === "object") {
+    prefs = { ...DEFAULTS, ...bundle.prefs };
+    writeJson("browser-prefs.json", prefs);
+    applyPrefs();
+  }
+  if (Array.isArray(bundle.dial)) counts.dial = setDial(bundle.dial).length;
+  if (bundle.session) counts.session = (setSession(bundle.session).tabs || []).length;
+  if (Array.isArray(bundle.history)) {
+    history = bundle.history
+      .filter((h) => h && typeof h.url === "string")
+      .slice(0, HISTORY_MAX)
+      .map((h) => ({ url: h.url, title: String(h.title || h.url).slice(0, 200), at: Number(h.at) || Date.now() }));
+    writeJson("browser-history.json", history);
+    counts.history = history.length;
+  }
+  broadcast("vb:settings:imported", counts);
+  return { ok: true, counts, prefs: getPrefs() };
+}
+
+function writeBackup() {
+  try {
+    const target = backupPath();
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, JSON.stringify(buildBundle(), null, 2), "utf8");
+    return { ok: true, path: target };
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+}
+
+// Po aktualizaci/přeinstalaci: pokud v userData chybí nastavení, obnovíme zálohu.
+function restoreBackupIfMissing() {
+  try {
+    if (fs.existsSync(fileIn("browser-prefs.json")) || fs.existsSync(fileIn("browser-dial.json"))) return { ok: false, skipped: true };
+    const raw = fs.readFileSync(backupPath(), "utf8");
+    return applyBundle(JSON.parse(raw));
+  } catch {
+    return { ok: false };
+  }
+}
+
+async function exportSettings() {
+  const res = await dialog.showSaveDialog({
+    title: "Exportovat nastavení VoxarioBrowseru",
+    defaultPath: `voxariobrowser-nastaveni-${new Date().toISOString().slice(0, 10)}.json`,
+    filters: [{ name: "JSON", extensions: ["json"] }],
+  });
+  if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+  try {
+    fs.writeFileSync(res.filePath, JSON.stringify(buildBundle(), null, 2), "utf8");
+    return { ok: true, path: res.filePath };
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+}
+
+async function importSettings() {
+  const res = await dialog.showOpenDialog({
+    title: "Importovat nastavení VoxarioBrowseru",
+    filters: [{ name: "JSON", extensions: ["json"] }],
+    properties: ["openFile"],
+  });
+  if (res.canceled || !res.filePaths[0]) return { ok: false, canceled: true };
+  try {
+    const bundle = JSON.parse(fs.readFileSync(res.filePaths[0], "utf8"));
+    const out = applyBundle(bundle);
+    if (out.ok) writeBackup();
+    return out;
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e) };
+  }
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Hesla (šifrovaná pomocí OS keychain / DPAPI)                        */
@@ -691,10 +795,14 @@ function registerBrowserSettings() {
   if (registered) return;
   registered = true;
 
+  // Po aktualizaci může být profil prázdný — obnovíme zálohu nastavení.
+  restoreBackupIfMissing();
   getPrefs();
   installFilters();
   watchWebContents();
   applyPrefs();
+  writeBackup();
+
   startResourceGuard();
 
   ipcMain.handle("vb:prefs:get", () => ({ prefs: getPrefs(), engines: SEARCH_ENGINES, encryption: encryptionAvailable() }));
@@ -747,11 +855,16 @@ function registerBrowserSettings() {
   ipcMain.handle("vb:session:set", (_e, data) => setSession(data));
 
   ipcMain.handle("vb:dial:list", () => getDial());
-  ipcMain.handle("vb:dial:save", (_e, list) => setDial(list));
+  ipcMain.handle("vb:dial:save", (_e, list) => { const out = setDial(list); writeBackup(); return out; });
+
+  ipcMain.handle("vb:settings:export", () => exportSettings());
+  ipcMain.handle("vb:settings:import", () => importSettings());
+  ipcMain.handle("vb:settings:backup", () => writeBackup());
 
   ipcMain.handle("vb:stats", () => systemStats());
   ipcMain.handle("vb:speedtest", () => speedTest());
 }
+
 
 function applyHardwareAcceleration() {
   // musí být zavoláno před app.whenReady()
@@ -781,6 +894,7 @@ module.exports = {
   registerBrowserSettings,
   applyHardwareAcceleration,
   clearOnExitIfNeeded,
+  backupBrowserSettings: writeBackup,
   SEARCH_ENGINES,
   getPrefs,
 };

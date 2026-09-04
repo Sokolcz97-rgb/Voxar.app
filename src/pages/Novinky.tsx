@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,15 @@ const Novinky = () => {
             </>
           }
         />
+
+        <Link
+          to="/verze"
+          className="inline-flex items-center gap-2 mb-6 text-sm text-primary hover:text-primary/80 border border-primary/40 rounded-md px-3 py-2"
+        >
+          <CalendarDays className="h-4 w-4" />
+          {cs ? "Historie verzí — co je nainstalované a kdy vyšlo" : "Version history — what is installed and when it shipped"}
+        </Link>
+
 
         <Card className="glass border-border p-4 mb-6">
           <div className="grid md:grid-cols-2 gap-3">

@@ -404,6 +404,19 @@
                 <div class="pnote" id="vbUpdateNote">Prohlížeč se aktualizuje automaticky při spuštění i za běhu.</div>
               </div>
               <div class="card">
+                <h3>Záloha nastavení</h3>
+                <div class="opt">
+                  <div><div class="lbl">Exportovat</div><div class="dsc">Uloží nastavení, uložené stránky, otevřené panely i historii do souboru.</div></div>
+                  <button class="pbtn" id="cfgExport">Exportovat</button>
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Importovat</div><div class="dsc">Načte nastavení ze souboru a přepíše aktuální.</div></div>
+                  <button class="pbtn" id="cfgImport">Importovat</button>
+                </div>
+                <div class="pnote" id="cfgNote">Záloha se ukládá i automaticky, takže se nastavení obnoví i po aktualizaci prohlížeče.</div>
+              </div>
+
+              <div class="card">
                 <h3>Limity zdrojů</h3>
                 <div class="opt">
                   <div><div class="lbl">Limit CPU</div><div class="dsc">V %. Při překročení se panely na pozadí uspí. 0 = bez limitu.</div></div>
@@ -1148,6 +1161,28 @@
       else if (st.phase === 'error') note.textContent = 'Aktualizace selhala: ' + st.error;
       else note.textContent = 'Máte nejnovější verzi (' + (st.current || '') + '). Aktualizace probíhají automaticky.';
     });
+
+    /* --- export / import nastavení --- */
+    $('cfgExport').onclick = async () => {
+      const r = await ipcRenderer.invoke('vb:settings:export');
+      if (r?.ok) { $('cfgNote').textContent = 'Nastavení uloženo: ' + r.path; flash('Nastavení exportováno.'); }
+      else if (!r?.canceled) $('cfgNote').textContent = 'Export selhal: ' + (r?.error || 'neznámá chyba');
+    };
+    $('cfgImport').onclick = async () => {
+      const r = await ipcRenderer.invoke('vb:settings:import');
+      if (r?.ok) {
+        const res = await ipcRenderer.invoke('vb:prefs:get');
+        PREFS = res.prefs; loadPrefs();
+        await loadDial();
+        histItems = await ipcRenderer.invoke('vb:history:list') || [];
+        renderHistory();
+        $('cfgNote').textContent = 'Importováno: ' + (r.counts?.dial || 0) + ' uložených stránek, ' + (r.counts?.history || 0) + ' položek historie.';
+        flash('Nastavení importováno.');
+      } else if (!r?.canceled) {
+        $('cfgNote').textContent = 'Import selhal: ' + (r?.error || 'neznámá chyba');
+      }
+    };
+
 
     ipcRenderer.on('vb:limit', (_e, info) => {
       const parts = [];
