@@ -677,6 +677,57 @@ ipcMain.handle("app:open-module", (_e, mod) => {
   return { ok: true };
 });
 
+// -------- VoxarioBrowser: automatická aktualizace --------
+// Prohlížeč se distribuuje ve stejném balíčku jako Voxar.app, takže stačí
+// spustit standardní update pipeline. Kontrola běží při startu/restartu okna
+// a pak periodicky; nová verze se stáhne a nainstaluje bez ptaní.
+let browserUpdateTimer = null;
+let browserUpdateRunning = false;
+
+function sendBrowserUpdate(state) {
+  try { browserWindow?.webContents.send("vb:update", state); } catch {}
+}
+
+async function runBrowserAutoUpdate({ manual = false } = {}) {
+  if (browserUpdateRunning) return { status: "busy" };
+  browserUpdateRunning = true;
+  const channel = settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable";
+  try {
+    sendBrowserUpdate({ phase: "checking", current: app.getVersion() });
+    const info = await checkForUpdatesQuiet({ channel });
+    if (!info?.available) {
+      sendBrowserUpdate({ phase: "up-to-date", current: app.getVersion() });
+      return { status: "up-to-date", current: app.getVersion() };
+    }
+    sendBrowserUpdate({ phase: "downloading", current: app.getVersion(), version: info.remote });
+    const res = await installUpdateFromRenderer({ parentWindow: browserWindow, channel });
+    if (res?.status === "installing") {
+      sendBrowserUpdate({ phase: "installing", version: res.version || info.remote });
+    } else if (res?.status === "error") {
+      sendBrowserUpdate({ phase: "error", error: res.error });
+    } else {
+      sendBrowserUpdate({ phase: "up-to-date", current: app.getVersion() });
+    }
+    return res;
+  } catch (e) {
+    sendBrowserUpdate({ phase: "error", error: String(e?.message || e) });
+    return { status: "error", error: String(e?.message || e) };
+  } finally {
+    browserUpdateRunning = false;
+    if (manual) { /* jednorázová kontrola z UI */ }
+  }
+}
+
+function scheduleBrowserAutoUpdate() {
+  if (browserUpdateTimer) clearInterval(browserUpdateTimer);
+  browserUpdateTimer = setInterval(() => {
+    if (browserWindow && !browserWindow.isDestroyed()) runBrowserAutoUpdate().catch(() => {});
+  }, 3 * 60 * 60 * 1000);
+}
+
+ipcMain.handle("vb:update:check", () => runBrowserAutoUpdate({ manual: true }));
+ipcMain.handle("vb:update:version", () => app.getVersion());
+
 // -------- VoxarioBrowser: nativní Chromium okno --------
 function createBrowserWindow() {
   if (browserWindow && !browserWindow.isDestroyed()) {
@@ -702,7 +753,16 @@ function createBrowserWindow() {
     },
   });
   browserWindow.loadFile(path.join(__dirname, "browser.html"));
-  browserWindow.on("closed", () => (browserWindow = null));
+  browserWindow.on("closed", () => {
+    browserWindow = null;
+    if (browserUpdateTimer) { clearInterval(browserUpdateTimer); browserUpdateTimer = null; }
+  });
+
+  // Auto-update při každém spuštění/restartu prohlížeče + periodicky.
+  browserWindow.webContents.once("did-finish-load", () => {
+    setTimeout(() => runBrowserAutoUpdate().catch(() => {}), 3_000);
+  });
+  scheduleBrowserAutoUpdate();
 
   // Popupy z webview otevři jako nový panel uvnitř prohlížeče.
   browserWindow.webContents.on("did-attach-webview", (_e, wc) => {
