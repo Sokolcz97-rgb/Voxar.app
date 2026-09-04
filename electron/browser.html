@@ -1162,6 +1162,28 @@
       else note.textContent = 'Máte nejnovější verzi (' + (st.current || '') + '). Aktualizace probíhají automaticky.';
     });
 
+    /* --- export / import nastavení --- */
+    $('cfgExport').onclick = async () => {
+      const r = await ipcRenderer.invoke('vb:settings:export');
+      if (r?.ok) { $('cfgNote').textContent = 'Nastavení uloženo: ' + r.path; flash('Nastavení exportováno.'); }
+      else if (!r?.canceled) $('cfgNote').textContent = 'Export selhal: ' + (r?.error || 'neznámá chyba');
+    };
+    $('cfgImport').onclick = async () => {
+      const r = await ipcRenderer.invoke('vb:settings:import');
+      if (r?.ok) {
+        const res = await ipcRenderer.invoke('vb:prefs:get');
+        PREFS = res.prefs; loadPrefs();
+        await loadDial();
+        histItems = await ipcRenderer.invoke('vb:history:list') || [];
+        renderHistory();
+        $('cfgNote').textContent = 'Importováno: ' + (r.counts?.dial || 0) + ' uložených stránek, ' + (r.counts?.history || 0) + ' položek historie.';
+        flash('Nastavení importováno.');
+      } else if (!r?.canceled) {
+        $('cfgNote').textContent = 'Import selhal: ' + (r?.error || 'neznámá chyba');
+      }
+    };
+
+
     ipcRenderer.on('vb:limit', (_e, info) => {
       const parts = [];
       if (info.overCpu) parts.push('CPU ' + info.cpuPercent + ' % (limit ' + info.cpuLimit + ' %)');
