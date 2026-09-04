@@ -623,6 +623,7 @@
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
       $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
       $('startpage').classList.toggle('on', !!t && t.url === START);
+      syncWebviewVisibility();
       document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
     }
 
@@ -691,8 +692,22 @@
       return n;
     }
 
+    // <webview> je nativní vrstva — maluje se vždy NAD HTML, takže rozbalovací
+    // seznamy (složky záložek, panely) by pod ní zmizely. Když je nad viewportem
+    // otevřený overlay, webview se na okamžik skryje.
+    function isOverlayOpen() {
+      return !!document.querySelector('.bmfolder.open, .panel.on');
+    }
+    function syncWebviewVisibility() {
+      const t = activeTab();
+      if (!t) return;
+      const hide = isOverlayOpen() || t.url === START;
+      t.wv.style.visibility = hide ? 'hidden' : 'visible';
+    }
+
     function closeMenus() {
       document.querySelectorAll('.bmfolder.open').forEach((el) => el.classList.remove('open'));
+      syncWebviewVisibility();
     }
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.bmfolder')) closeMenus();
@@ -754,6 +769,7 @@
           const was = wrap.classList.contains('open');
           closeMenus();
           if (!was) wrap.classList.add('open');
+          syncWebviewVisibility();
         };
         wrap.append(chip, menu);
         bar.appendChild(wrap);
@@ -867,8 +883,8 @@
       });
     }
 
-    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); renderSources(); }
-    function closePanel() { bmpanel.classList.remove('on'); }
+    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); syncWebviewVisibility(); renderSources(); }
+    function closePanel() { bmpanel.classList.remove('on'); syncWebviewVisibility(); }
 
     $('btnBookmarks').onclick = () => bmpanel.classList.contains('on') ? closePanel() : openPanel();
     $('bmClose').onclick = closePanel;
@@ -1340,6 +1356,7 @@
     async function openSettings(sec) {
       closePanel();
       setpanel.classList.add('on');
+      syncWebviewVisibility();
       selectSection(sec || 'search');
       await loadPrefs();
       dlItems = await ipcRenderer.invoke('vb:downloads:list') || [];
@@ -1351,6 +1368,7 @@
     }
     function closeSettings() {
       setpanel.classList.remove('on');
+      syncWebviewVisibility();
       if (perfTimer) { clearInterval(perfTimer); perfTimer = null; }
     }
     function selectSection(id) {
