@@ -957,13 +957,24 @@
         };
         const enc = document.createElement('span');
         enc.className = 'badge'; enc.textContent = it.enc ? 'šifrováno' : 'nešifrováno';
+        const chg = document.createElement('button');
+        chg.className = 'mini'; chg.textContent = 'Změnit heslo';
+        chg.onclick = async () => {
+          const next = window.prompt('Nové heslo pro ' + it.origin + ' (' + it.username + ')');
+          if (!next) return;
+          const r = await ipcRenderer.invoke('vb:passwords:update', { id: it.id, password: next });
+          if (!r?.ok) return flash(r?.error || 'Změna hesla selhala');
+          flash('Heslo změněno a zašifrováno.');
+          renderPasswords();
+        };
         const del = document.createElement('button');
         del.className = 'mini dang'; del.textContent = 'Odebrat';
         del.onclick = async () => { await ipcRenderer.invoke('vb:passwords:delete', it.id); renderPasswords(); };
-        row.append(nm, val, enc, show, del);
+        row.append(nm, val, enc, show, chg, del);
         list.appendChild(row);
       });
     }
+
     $('pwSave').onclick = async () => {
       const origin = $('pwOrigin').value.trim();
       const username = $('pwUser').value.trim();
