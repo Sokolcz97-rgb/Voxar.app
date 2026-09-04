@@ -231,43 +231,89 @@ function findFirefoxBackups() {
 function parseFirefoxBackup(file) {
   const data = JSON.parse(readMozLz4(file));
   const out = [];
-  const walk = (node, folder) => {
+  const walk = (node, trail) => {
     if (!node) return;
     if (node.uri && /^https?:/i.test(node.uri)) {
-      out.push({ url: node.uri, title: node.title || node.uri, folder, source: "Mozilla Firefox" });
+      out.push({ url: node.uri, title: node.title || node.uri, folder: trail.join("/"), source: "Mozilla Firefox" });
+      return;
     }
-    for (const child of node.children || []) walk(child, node.title || folder);
+    const next = node.title ? [...trail, String(node.title)] : trail;
+    for (const child of node.children || []) walk(child, next);
   };
-  walk(data, "");
+  for (const child of data.children || []) walk(child, []);
+  if (!out.length) walk(data, []);
   return out;
 }
 
 // ---------- Netscape HTML ----------
+const unescapeHtml = (s) =>
+  String(s)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
 function parseNetscapeHtml(html) {
   const out = [];
-  const re = /<A\s+[^>]*HREF="([^"]+)"[^>]*>([\s\S]*?)<\/A>/gi;
+  const trail = [];
+  // Projde dokument tokenově, aby se zachovalo zanoření složek (<H3> ... <DL> ... </DL>).
+  const re = /<H3[^>]*>([\s\S]*?)<\/H3>|<A\s+[^>]*HREF="([^"]*)"[^>]*>([\s\S]*?)<\/A>|<DL[^>]*>|<\/DL>/gi;
   let m;
+  let pendingFolder = null;
   while ((m = re.exec(html))) {
-    const url = m[1];
-    const title = m[2].replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").trim();
-    out.push({ url, title: title || url, folder: "", source: "HTML import" });
+    const token = m[0];
+    if (/^<H3/i.test(token)) {
+      pendingFolder = unescapeHtml(m[1].replace(/<[^>]*>/g, "")).trim();
+    } else if (/^<DL/i.test(token)) {
+      trail.push(pendingFolder || "");
+      pendingFolder = null;
+    } else if (/^<\/DL/i.test(token)) {
+      trail.pop();
+    } else if (m[2]) {
+      const title = unescapeHtml(m[3].replace(/<[^>]*>/g, "")).trim();
+      out.push({
+        url: m[2],
+        title: title || m[2],
+        folder: trail.filter(Boolean).join("/"),
+        source: "HTML import",
+      });
+    }
   }
   return out;
 }
 
 function toNetscapeHtml(list) {
-  const rows = list
-    .map((b) => `    <DT><A HREF="${escapeAttr(b.url)}">${escapeHtml(b.title || b.url)}</A>`)
-    .join("\n");
+  // Postaví strom podle cesty ve `folder`, aby se export otevřel se stejnou strukturou.
+  const root = { children: new Map(), items: [] };
+  for (const b of list) {
+    let node = root;
+    for (const part of String(b.folder || "").split("/").filter(Boolean)) {
+      if (!node.children.has(part)) node.children.set(part, { children: new Map(), items: [] });
+      node = node.children.get(part);
+    }
+    node.items.push(b);
+  }
+  const render = (node, depth) => {
+    const pad = "    ".repeat(depth);
+    const lines = [];
+    for (const [name, child] of node.children) {
+      lines.push(`${pad}<DT><H3>${escapeHtml(name)}</H3>`);
+      lines.push(`${pad}<DL><p>`);
+      lines.push(render(child, depth + 1));
+      lines.push(`${pad}</DL><p>`);
+    }
+    for (const b of node.items) {
+      lines.push(`${pad}<DT><A HREF="${escapeAttr(b.url)}">${escapeHtml(b.title || b.url)}</A>`);
+    }
+    return lines.filter(Boolean).join("\n");
+  };
   return `<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Bookmarks</TITLE>
 <H1>Bookmarks</H1>
 <DL><p>
-    <DT><H3>VoxarioBrowser</H3>
-    <DL><p>
-${rows}
-    </DL><p>
+${render(root, 1)}
 </DL><p>
 `;
 }
