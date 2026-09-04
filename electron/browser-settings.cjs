@@ -764,6 +764,7 @@ function applyPrefs() {
     const ses = voxSession();
     if (p.downloadDir && !p.askDownloadLocation) ses.setDownloadPath(p.downloadDir);
     ses.setSpellCheckerEnabled?.(false);
+    applyUserAgent();
   } catch {}
   trackedContents.forEach((c) => {
     if (c.isDestroyed?.()) trackedContents.delete(c);
