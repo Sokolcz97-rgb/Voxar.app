@@ -136,6 +136,43 @@ function saveDownloads() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Relace (pokračovat tam, kde jsem přestal) a rychlá volba            */
+/* ------------------------------------------------------------------ */
+function getSession() {
+  const data = readJson("browser-session.json", { tabs: [], activeIndex: 0 });
+  return { tabs: Array.isArray(data.tabs) ? data.tabs : [], activeIndex: Number(data.activeIndex) || 0 };
+}
+function setSession(data) {
+  const clean = {
+    tabs: (Array.isArray(data?.tabs) ? data.tabs : [])
+      .filter((t) => t && typeof t.url === "string")
+      .slice(0, 40)
+      .map((t) => ({ url: t.url, title: String(t.title || t.url).slice(0, 200) })),
+    activeIndex: Number(data?.activeIndex) || 0,
+  };
+  return writeJson("browser-session.json", clean);
+}
+
+function getDial() {
+  const list = readJson("browser-dial.json", null);
+  if (Array.isArray(list)) return list;
+  return [
+    { url: "https://studiovoxario.com", title: "StudioVoxario" },
+    { url: "https://www.youtube.com", title: "YouTube" },
+    { url: "https://kick.com", title: "Kick" },
+    { url: "https://www.twitch.tv", title: "Twitch" },
+  ];
+}
+function setDial(list) {
+  const clean = (Array.isArray(list) ? list : [])
+    .filter((d) => d && typeof d.url === "string" && /^https?:/i.test(d.url))
+    .slice(0, 60)
+    .map((d) => ({ url: d.url, title: String(d.title || d.url).slice(0, 120) }));
+  writeJson("browser-dial.json", clean);
+  return clean;
+}
+
+/* ------------------------------------------------------------------ */
 /* Hesla (šifrovaná pomocí OS keychain / DPAPI)                        */
 /* ------------------------------------------------------------------ */
 function encryptionAvailable() {
@@ -263,6 +300,27 @@ const trackedContents = new Set();
 function applyThrottling(contents) {
   try {
     contents.setBackgroundThrottling?.(getPrefs().backgroundThrottling !== false);
+  } catch {}
+  applyNetworkLimit(contents);
+}
+
+// Omezení rychlosti stahování přes Chrome DevTools protokol.
+function applyNetworkLimit(contents) {
+  const mbps = Number(getPrefs().downloadLimitMbps) || 0;
+  try {
+    if (!contents.debugger.isAttached()) {
+      if (mbps <= 0) return;
+      contents.debugger.attach("1.3");
+    }
+    contents.debugger.sendCommand("Network.enable").catch(() => {});
+    contents.debugger
+      .sendCommand("Network.emulateNetworkConditions", {
+        offline: false,
+        latency: 0,
+        downloadThroughput: mbps > 0 ? (mbps * 1000 * 1000) / 8 : -1,
+        uploadThroughput: -1,
+      })
+      .catch(() => {});
   } catch {}
 }
 function watchWebContents() {
@@ -439,6 +497,71 @@ function addDownloadRecord(rec) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Fronta stahování a hlídač zdrojů                                    */
+/* ------------------------------------------------------------------ */
+const activeDownloads = new Set();
+const waitingDownloads = [];
+
+function pumpDownloadQueue() {
+  const max = Number(getPrefs().maxConcurrentDownloads) || 0;
+  if (max <= 0) {
+    while (waitingDownloads.length) {
+      const item = waitingDownloads.shift();
+      try { item.resume(); } catch {}
+    }
+    return;
+  }
+  while (activeDownloads.size < max && waitingDownloads.length) {
+    const item = waitingDownloads.shift();
+    try {
+      if (item.isDestroyed?.()) continue;
+      activeDownloads.add(item);
+      item.resume();
+    } catch {}
+  }
+}
+
+function enforceDownloadQueue(item, p) {
+  const max = Number(p.maxConcurrentDownloads) || 0;
+  const release = () => {
+    activeDownloads.delete(item);
+    const i = waitingDownloads.indexOf(item);
+    if (i >= 0) waitingDownloads.splice(i, 1);
+    pumpDownloadQueue();
+  };
+  item.once("done", release);
+  if (max > 0 && activeDownloads.size >= max) {
+    waitingDownloads.push(item);
+    setTimeout(() => { try { item.pause(); } catch {} }, 0);
+  } else {
+    activeDownloads.add(item);
+  }
+}
+
+// Hlídač limitů CPU / RAM — při překročení upozorní prohlížeč, ať uvolní
+// panely na pozadí.
+let limitTimer = null;
+function startResourceGuard() {
+  if (limitTimer) return;
+  limitTimer = setInterval(() => {
+    const p = getPrefs();
+    const cpuLimit = Number(p.cpuLimitPercent) || 0;
+    const ramLimit = Number(p.ramLimitMB) || 0;
+    if (!cpuLimit && !ramLimit) return;
+    const s = systemStats();
+    const overCpu = cpuLimit > 0 && s.cpuPercent > cpuLimit;
+    const overRam = ramLimit > 0 && s.ramMB > ramLimit;
+    if (overCpu || overRam) {
+      broadcast("vb:limit", { overCpu, overRam, cpuPercent: s.cpuPercent, ramMB: s.ramMB, cpuLimit, ramLimit });
+      // Neaktivní panely necháme okamžitě uspat.
+      trackedContents.forEach((c) => {
+        try { if (!c.isDestroyed?.()) c.setBackgroundThrottling?.(true); } catch {}
+      });
+    }
+  }, 5000);
+}
+
+/* ------------------------------------------------------------------ */
 /* Aplikace nastavení na session                                       */
 /* ------------------------------------------------------------------ */
 function applyPrefs() {
@@ -452,6 +575,7 @@ function applyPrefs() {
     if (c.isDestroyed?.()) trackedContents.delete(c);
     else applyThrottling(c);
   });
+  pumpDownloadQueue();
   broadcast("vb:prefs", getPrefs());
 }
 
@@ -535,6 +659,7 @@ function registerBrowserSettings() {
   installFilters();
   watchWebContents();
   applyPrefs();
+  startResourceGuard();
 
   ipcMain.handle("vb:prefs:get", () => ({ prefs: getPrefs(), engines: SEARCH_ENGINES, encryption: encryptionAvailable() }));
   ipcMain.handle("vb:prefs:set", (_e, patch) => setPrefs(patch));
@@ -580,6 +705,12 @@ function registerBrowserSettings() {
   ipcMain.handle("vb:passwords:reveal", (_e, id) => revealPassword(id));
   ipcMain.handle("vb:passwords:delete", (_e, id) => deletePassword(id));
 
+  ipcMain.handle("vb:session:get", () => ({ session: getSession(), restore: getPrefs().restoreSession !== false }));
+  ipcMain.handle("vb:session:set", (_e, data) => setSession(data));
+
+  ipcMain.handle("vb:dial:list", () => getDial());
+  ipcMain.handle("vb:dial:save", (_e, list) => setDial(list));
+
   ipcMain.handle("vb:stats", () => systemStats());
   ipcMain.handle("vb:speedtest", () => speedTest());
 }
@@ -588,7 +719,17 @@ function applyHardwareAcceleration() {
   // musí být zavoláno před app.whenReady()
   try {
     const stored = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "browser-prefs.json"), "utf8"));
-    if (stored && stored.hardwareAcceleration === false) app.disableHardwareAcceleration();
+    if (!stored) return;
+    if (stored.hardwareAcceleration === false || stored.gpuMode === "off") {
+      app.disableHardwareAcceleration();
+      return;
+    }
+    if (stored.gpuMode === "limited") {
+      // Omezená akcelerace: GPU jen pro kompozici, bez náročného rasterizování.
+      app.commandLine.appendSwitch("disable-gpu-rasterization");
+      app.commandLine.appendSwitch("disable-accelerated-video-decode");
+      app.commandLine.appendSwitch("disable-gpu-compositing");
+    }
   } catch {}
 }
 
