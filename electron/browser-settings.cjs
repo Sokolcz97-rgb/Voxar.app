@@ -479,6 +479,43 @@ function voxSession() {
   return session.fromPartition(PARTITION);
 }
 
+/* ------------------------------------------------------------------ */
+/* User-Agent — Google (a další) odmítají přihlášení v „embedded"      */
+/* prohlížeči. Vydáváme se proto za čistý desktopový Chrome.           */
+/* ------------------------------------------------------------------ */
+const CHROME_MAJOR = (process.versions.chrome || "126.0.0.0").split(".")[0];
+const CHROME_FULL = process.versions.chrome || "126.0.0.0";
+const UA_PLATFORM =
+  process.platform === "darwin"
+    ? "Macintosh; Intel Mac OS X 10_15_7"
+    : process.platform === "linux"
+      ? "X11; Linux x86_64"
+      : "Windows NT 10.0; Win64; x64";
+const CHROME_UA = `Mozilla/5.0 (${UA_PLATFORM}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_FULL} Safari/537.36`;
+const SEC_CH_UA = `"Chromium";v="${CHROME_MAJOR}", "Google Chrome";v="${CHROME_MAJOR}", "Not?A_Brand";v="99"`;
+const SEC_CH_UA_PLATFORM =
+  process.platform === "darwin" ? '"macOS"' : process.platform === "linux" ? '"Linux"' : '"Windows"';
+
+// Hostitelé přihlašovacích/OAuth toků — nikdy je neomezujeme cookies filtry.
+const AUTH_HOST_RE =
+  /(^|\.)(accounts\.google\.com|accounts\.youtube\.com|myaccount\.google\.com|gstatic\.com|googleapis\.com|googleusercontent\.com|google\.com|youtube\.com|gmail\.com|mail\.google\.com|login\.microsoftonline\.com|login\.live\.com|appleid\.apple\.com|github\.com|facebook\.com|discord\.com|seznam\.cz)$/i;
+
+function isAuthHost(url) {
+  try {
+    return AUTH_HOST_RE.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function applyUserAgent() {
+  try {
+    voxSession().setUserAgent(CHROME_UA, "cs-CZ,cs;q=0.9,en-US;q=0.8,en;q=0.7");
+  } catch {}
+}
+
+
+
 
 let filtersInstalled = false;
 function installFilters() {
