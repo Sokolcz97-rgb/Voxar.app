@@ -199,6 +199,9 @@ const DANGEROUS_EXT = [
 
 let blockStats = { ads: 0, trackers: 0, malware: 0 };
 
+// Hostitelé, u kterých HTTPS selhalo — příště je pustíme přes HTTP.
+const httpsFailures = new Set();
+
 function hostMatches(url, list) {
   try {
     const u = new URL(url);
@@ -209,9 +212,66 @@ function hostMatches(url, list) {
   }
 }
 
+// Lokální síť, .local a IP adresy v privátních rozsazích HTTPS nevynucujeme.
+function isLocalHost(hostname) {
+  const h = String(hostname || "").toLowerCase();
+  if (!h) return true;
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".home") || h.endsWith(".lan")) return true;
+  if (/^127\./.test(h) || h === "::1" || h === "[::1]") return true;
+  if (/^10\./.test(h)) return true;
+  if (/^192\.168\./.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+  if (/^169\.254\./.test(h)) return true;
+  if (!h.includes(".")) return true; // intranetová jména bez domény
+  return false;
+}
+
+function registrableHost(url) {
+  try { return new URL(url).hostname.toLowerCase().split(".").slice(-2).join("."); } catch { return ""; }
+}
+
+// Požadavek mimo doménu právě zobrazené stránky.
+function isThirdParty(details) {
+  try {
+    const target = registrableHost(details.url);
+    if (!target) return false;
+    let pageUrl = "";
+    if (details.webContentsId) {
+      const { webContents } = require("electron");
+      pageUrl = webContents.fromId(details.webContentsId)?.getURL() || "";
+    }
+    if (!pageUrl) pageUrl = details.referrer || "";
+    const origin = registrableHost(pageUrl);
+    if (!origin) return false;
+    return origin !== target;
+  } catch {
+    return false;
+  }
+}
+
+// Uspávání panelů na pozadí (webview uvnitř prohlížeče).
+const trackedContents = new Set();
+function applyThrottling(contents) {
+  try {
+    contents.setBackgroundThrottling?.(getPrefs().backgroundThrottling !== false);
+  } catch {}
+}
+function watchWebContents() {
+  app.on("web-contents-created", (_e, contents) => {
+    try {
+      if (contents.getType?.() !== "webview") return;
+    } catch { return; }
+    trackedContents.add(contents);
+    contents.once("destroyed", () => trackedContents.delete(contents));
+    applyThrottling(contents);
+  });
+}
+
+
 function voxSession() {
   return session.fromPartition(PARTITION);
 }
+
 
 let filtersInstalled = false;
 function installFilters() {
@@ -234,24 +294,64 @@ function installFilters() {
       blockStats.trackers++;
       return callback({ cancel: true });
     }
-    if (p.httpsOnly && details.resourceType === "mainFrame" && /^http:\/\//i.test(url) && !/^http:\/\/(localhost|127\.)/i.test(url)) {
-      return callback({ redirectURL: url.replace(/^http:/i, "https:") });
+    if (p.httpsOnly && details.resourceType === "mainFrame" && /^http:\/\//i.test(url)) {
+      let host = "";
+      try { host = new URL(url).hostname; } catch {}
+      if (!isLocalHost(host) && !httpsFailures.has(host.toLowerCase())) {
+        return callback({ redirectURL: url.replace(/^http:/i, "https:") });
+      }
     }
     if (!p.imageLoading && details.resourceType === "image") return callback({ cancel: true });
     callback({ cancel: false });
   });
 
+  // Pokud HTTPS varianta selže, hostitele si zapamatujeme a příště ho pustíme
+  // přes HTTP — jinak by starší weby a routery skončily na chybové stránce.
+  ses.webRequest.onErrorOccurred({ urls: ["https://*/*"] }, (details) => {
+    if (details.resourceType !== "mainFrame") return;
+    try {
+      const host = new URL(details.url).hostname.toLowerCase();
+      if (/ERR_(SSL|CERT|CONNECTION|TOO_MANY_REDIRECTS|EMPTY_RESPONSE|ADDRESS_UNREACHABLE|NAME_NOT_RESOLVED)/i.test(details.error || "")) {
+        httpsFailures.add(host);
+        // Okamžitě zkusíme původní HTTP adresu, ať uživatel nekončí na chybě.
+        try {
+          const { webContents } = require("electron");
+          const wc = details.webContentsId ? webContents.fromId(details.webContentsId) : null;
+          wc?.loadURL(details.url.replace(/^https:/i, "http:"));
+        } catch {}
+      }
+    } catch {}
+  });
+
   ses.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
     const headers = details.requestHeaders || {};
-    if (getPrefs().doNotTrack) {
+    const p = getPrefs();
+    if (p.doNotTrack) {
       headers.DNT = "1";
       headers["Sec-GPC"] = "1";
     } else {
       delete headers.DNT;
       delete headers["Sec-GPC"];
     }
+    // Blokace cookies třetích stran: u požadavků mimo doménu stránky
+    // odstraníme odesílanou hlavičku Cookie.
+    if (p.blockThirdPartyCookies && isThirdParty(details)) {
+      delete headers.Cookie;
+      delete headers.cookie;
+    }
     callback({ requestHeaders: headers });
   });
+
+  // …a zahodíme i Set-Cookie z odpovědí třetích stran.
+  ses.webRequest.onHeadersReceived({ urls: ["<all_urls>"] }, (details, callback) => {
+    if (!getPrefs().blockThirdPartyCookies || !isThirdParty(details)) return callback({});
+    const headers = { ...(details.responseHeaders || {}) };
+    Object.keys(headers).forEach((k) => {
+      if (k.toLowerCase() === "set-cookie") delete headers[k];
+    });
+    callback({ responseHeaders: headers });
+  });
+
 
   ses.on("will-download", (event, item) => {
     const p = getPrefs();
@@ -338,6 +438,10 @@ function applyPrefs() {
     if (p.downloadDir && !p.askDownloadLocation) ses.setDownloadPath(p.downloadDir);
     ses.setSpellCheckerEnabled?.(false);
   } catch {}
+  trackedContents.forEach((c) => {
+    if (c.isDestroyed?.()) trackedContents.delete(c);
+    else applyThrottling(c);
+  });
   broadcast("vb:prefs", getPrefs());
 }
 
@@ -419,6 +523,7 @@ function registerBrowserSettings() {
 
   getPrefs();
   installFilters();
+  watchWebContents();
   applyPrefs();
 
   ipcMain.handle("vb:prefs:get", () => ({ prefs: getPrefs(), engines: SEARCH_ENGINES, encryption: encryptionAvailable() }));

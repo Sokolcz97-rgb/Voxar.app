@@ -497,7 +497,7 @@ ipcMain.handle("app:return-to-launcher", () => {
       launcherWindow?.center();
     } catch {}
     setLauncherStatus("Vyberte modul");
-    try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
+    sendLauncherChoose();
 
     return { ok: true };
   } catch (e) {
@@ -868,6 +868,19 @@ function setLauncherStatus(msg) {
   try { launcherWindow?.webContents.send("launcher:status", msg); } catch {}
 }
 
+// Rozcestník se smí poslat až po načtení rendereru, jinak se zpráva zahodí
+// a uživateli zůstane prázdný splash bez karet i tlačítka.
+function sendLauncherChoose() {
+  const win = launcherWindow;
+  if (!win || win.isDestroyed()) return;
+  const send = () => {
+    try { win.webContents.send("launcher:choose"); } catch {}
+  };
+  if (win.webContents.isLoading()) win.webContents.once("did-finish-load", send);
+  else send();
+}
+
+
 async function runLauncherSequence() {
   createLauncher();
   setLauncherStatus("Kontrola aktualizací…");
@@ -895,7 +908,7 @@ async function runLauncherSequence() {
     launcherWindow?.setSize(1020, 600);
     launcherWindow?.center();
   } catch {}
-  try { launcherWindow?.webContents.send("launcher:choose"); } catch {}
+  sendLauncherChoose();
 }
 
 app.whenReady().then(async () => {
@@ -974,15 +987,43 @@ app.whenReady().then(async () => {
   }, 4 * 60 * 60 * 1000);
 });
 
-app.on("second-instance", () => showMain());
+app.on("second-instance", (_e, argv) => {
+  // Zkratka VoxarioBrowser spouští stejné exe s "--browser" — druhá instance
+  // skončí, takže musíme argumenty vyhodnotit tady a otevřít prohlížeč.
+  const wantsBrowser = Array.isArray(argv) && argv.some((a) => a === "--browser");
+  if (wantsBrowser) {
+    if (browserWindow && !browserWindow.isDestroyed()) {
+      if (browserWindow.isMinimized()) browserWindow.restore();
+      browserWindow.show();
+      browserWindow.focus();
+    } else {
+      createBrowserWindow();
+    }
+    return;
+  }
+  showMain();
+});
 app.on("window-all-closed", () => {
   // Samostatný prohlížeč nemá tray — zavřením okna se aplikace ukončí.
   if (BROWSER_ONLY) return app.quit();
   if (process.platform !== "darwin" && !settings.closeToTray) app.quit();
 });
-app.on("before-quit", () => {
+
+let cleanupDone = false;
+app.on("before-quit", (event) => {
   isQuitting = true;
-  browserSettings.clearOnExitIfNeeded();
+  if (!cleanupDone) {
+    // Mazání dat při ukončení je asynchronní — odložíme quit, ať se stihne.
+    event.preventDefault();
+    Promise.resolve(browserSettings.clearOnExitIfNeeded())
+      .catch(() => {})
+      .finally(() => {
+        cleanupDone = true;
+        rollback.recordCleanExit();
+        app.quit();
+      });
+    return;
+  }
   rollback.recordCleanExit();
 });
 
