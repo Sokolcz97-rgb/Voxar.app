@@ -952,4 +952,8 @@ module.exports = {
   backupBrowserSettings: writeBackup,
   SEARCH_ENGINES,
   getPrefs,
+  CHROME_UA,
+  isAuthHost,
+  applyUserAgent,
 };
+
