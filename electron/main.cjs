@@ -1004,36 +1004,26 @@ function sendLauncherChoose() {
 }
 
 
+function runLauncherBackgroundUpdate() {
+  const launcherChannel = settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable";
+  // Aktualizace běží čistě na pozadí — rozcestník ani moduly se kvůli ní
+  // nezdržují. Po dokončení instalace se aplikace sama znovu spustí
+  // (quitAndInstall se spouští s forceRunAfter).
+  Promise.resolve()
+    .then(() => checkForUpdatesQuiet({ channel: launcherChannel }))
+    .then((info) => {
+      if (!info?.available) return null;
+      setLauncherStatus(`Stahuji verzi ${info.remote} na pozadí…`);
+      return installUpdateFromRenderer({ parentWindow: launcherWindow, channel: launcherChannel });
+    })
+    .catch((e) => console.error("launcher background update error", e));
+}
+
 async function runLauncherSequence() {
   createLauncher();
-  setLauncherStatus("Kontrola aktualizací…");
 
-  const launcherChannel = settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable";
-  let result = { status: "skipped" };
-  try {
-    result = await checkForUpdates({
-      silent: true,
-      parentWindow: launcherWindow,
-      channel: launcherChannel,
-    });
-    // Launcher se aktualizuje sám: když je k dispozici novější balíček
-    // (obsahuje launcher, aplikaci i modul prohlížeče), rovnou ho stáhneme
-    // a necháme nainstalovat, aby se vždy spouštěla nejnovější verze.
-    if (result?.status === "available") {
-      setLauncherStatus("Stahuji novou verzi…");
-      result = await installUpdateFromRenderer({ parentWindow: launcherWindow, channel: launcherChannel });
-    }
-  } catch (e) {
-    console.error("launcher update check error", e);
-  }
-
-  if (result?.status === "installing") {
-    setLauncherStatus("Instaluji novou verzi… aplikace se ukončí.");
-    return; // installer will replace the app; do not boot the old UI
-  }
-
-
-  // Rozcestník: uživatel si vybere modul (Voxar.app / VoxarioBrowser)
+  // Rozcestník: uživatel si vybere modul (Voxar.app / VoxarioBrowser).
+  // Zobrazíme ho okamžitě, aktualizace doběhne na pozadí.
   setLauncherStatus("Vyberte modul");
   try {
     launcherWindow?.setMinimumSize(980, 560);
@@ -1041,7 +1031,10 @@ async function runLauncherSequence() {
     launcherWindow?.center();
   } catch {}
   sendLauncherChoose();
+
+  runLauncherBackgroundUpdate();
 }
+
 
 app.whenReady().then(async () => {
   browserSettings.registerBrowserSettings();
