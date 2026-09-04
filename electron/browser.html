@@ -99,6 +99,21 @@
       clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
     .bmbar .chip:hover { color: var(--cyan); border-color: rgba(34,211,238,.45); background: rgba(34,211,238,.08); }
     .bmbar .empty { color: #475569; font-size: 11px; padding: 3px 4px; }
+    .bmfolder { position: relative; }
+    .bmfolder .chip.dir { color: var(--gold); border-color: rgba(251,191,36,.35); }
+    .bmmenu { display: none; position: absolute; top: 100%; left: 0; z-index: 60; min-width: 230px; max-height: 60vh; overflow: auto;
+      background: #070b13; border: 1px solid var(--line); padding: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.6); }
+    .bmfolder.open .bmmenu { display: block; }
+    .bmmenu button { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
+      font-size: 11px; padding: 5px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bmmenu button:hover { background: rgba(34,211,238,.1); color: var(--cyan); }
+    .bmmenu button.dir { color: var(--gold); }
+    .bmmenu .sep { height: 1px; background: var(--line); margin: 4px 0; }
+    .bmtree .bmgroup > .head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer;
+      color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--line); background: rgba(251,191,36,.05); }
+    .bmtree .bmgroup > .head .cnt { color: #64748b; letter-spacing: 0; text-transform: none; }
+    .bmtree .kids { display: none; }
+    .bmtree .bmgroup.open > .kids { display: block; }
     .panel {
       display: none; position: absolute; inset: 0; z-index: 40; background: rgba(5,7,13,.94);
       padding: 18px 22px; overflow: auto;
