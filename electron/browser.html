@@ -451,7 +451,8 @@
   <script>
     const { ipcRenderer, shell } = require('electron');
     const $ = (id) => document.getElementById(id);
-    let HOME = 'https://www.google.com';
+    const START = 'voxario://start';
+    let HOME = START;
     let SEARCH_TPL = 'https://www.google.com/search?q=%s';
     let PREFS = {};
     let ENGINES = [];
@@ -467,6 +468,7 @@
     function toUrl(input) {
       const s = (input || '').trim();
       if (!s) return HOME;
+      if (s === START || s === 'voxario://start') return START;
       if (/^(https?|file|about|chrome):/i.test(s)) return s;
       if (/^[\w.-]+\.[a-z]{2,}(\/|$|:\d)/i.test(s) || s === 'localhost') return 'https://' + s;
       return SEARCH_TPL.replace('%s', encodeURIComponent(s));
@@ -477,22 +479,25 @@
     function createTab(url) {
       const id = 'tab' + ++seq;
       const wv = document.createElement('webview');
-      wv.setAttribute('src', toUrl(url));
+      const initial = toUrl(url);
+      wv.setAttribute('src', initial === START ? 'about:blank' : initial);
       wv.setAttribute('allowpopups', 'true');
       wv.setAttribute('partition', 'persist:voxario');
       wv.style.display = 'none';
       viewport.appendChild(wv);
 
-      const tab = { id, wv, title: 'Nový panel', url: toUrl(url), loading: true, back: false, fwd: false };
+      const tab = { id, wv, title: initial === START ? 'Úvodní stránka' : 'Nový panel', url: initial, loading: initial !== START, back: false, fwd: false };
       tabs.push(tab);
 
       const sync = () => {
         try {
-          tab.url = wv.getURL() || tab.url;
+          const live = wv.getURL();
+          if (tab.url !== START || (live && live !== 'about:blank')) tab.url = live || tab.url;
           tab.back = wv.canGoBack();
           tab.fwd = wv.canGoForward();
           tab.loading = wv.isLoading();
         } catch {}
+        saveSession();
         render();
       };
       wv.addEventListener('page-title-updated', (e) => {
@@ -523,6 +528,23 @@
       if (!tabs.length) { createTab(HOME); return; }
       if (activeId === id) setActive(tabs[Math.max(0, i - 1)].id);
       else render();
+      saveSession();
+    }
+
+    function navigate(tab, url) {
+      if (!tab) return;
+      const u = toUrl(url);
+      tab.url = u;
+      if (u === START) {
+        tab.title = 'Úvodní stránka';
+        tab.loading = false;
+        try { tab.wv.loadURL('about:blank'); } catch {}
+        render();
+        saveSession();
+        return;
+      }
+      try { tab.wv.loadURL(u); } catch {}
+      render();
     }
 
     function setActive(id) {
@@ -530,7 +552,8 @@
       tabs.forEach((t) => { t.wv.style.display = t.id === id ? 'flex' : 'none'; });
       render();
       const t = activeTab();
-      if (t) $('url').value = t.url;
+      if (t) $('url').value = t.url === START ? '' : t.url;
+      saveSession();
     }
 
     function render() {
@@ -557,6 +580,7 @@
       $('prog').className = 'prog' + (t && t.loading ? ' on' : '');
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
       $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
+      $('startpage').classList.toggle('on', !!t && t.url === START);
       document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
     }
 
@@ -565,12 +589,10 @@
     $('back').onclick = () => activeTab()?.wv.goBack();
     $('fwd').onclick = () => activeTab()?.wv.goForward();
     $('reload').onclick = () => activeTab()?.wv.reload();
-    $('home').onclick = () => activeTab()?.wv.loadURL(HOME);
+    $('home').onclick = () => navigate(activeTab(), HOME);
     $('url').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const u = toUrl($('url').value);
-        const t = activeTab();
-        if (t) { t.url = u; t.wv.loadURL(u); }
+        navigate(activeTab(), $('url').value);
       }
     });
     $('url').addEventListener('focus', () => $('url').select());
@@ -621,7 +643,7 @@
         chip.className = 'chip';
         chip.textContent = b.title || b.url;
         chip.title = b.url;
-        chip.onclick = () => { const t = activeTab(); if (t) { t.url = b.url; t.wv.loadURL(b.url); } };
+        chip.onclick = () => navigate(activeTab(), b.url);
         bar.appendChild(chip);
       });
 
