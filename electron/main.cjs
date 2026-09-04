@@ -682,7 +682,65 @@ ipcMain.handle("app:open-module", (_e, mod) => {
   return { ok: true };
 });
 
+// -------- Voxar.app: automatická aktualizace + historie verzí --------
+let appUpdateTimer = null;
+let appUpdateRunning = false;
+
+const VERSION_HISTORY_PATH = path.join(app.getPath("userData"), "version-history.json");
+
+function readVersionHistory() {
+  try {
+    const list = JSON.parse(fs.readFileSync(VERSION_HISTORY_PATH, "utf8"));
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+// Zaznamená, kdy byla která verze poprvé spuštěna (= nainstalována).
+function recordInstalledVersion() {
+  try {
+    const list = readVersionHistory();
+    const version = app.getVersion();
+    if (list.some((r) => r.version === version)) return list;
+    list.unshift({ version, installedAt: new Date().toISOString(), channel: settings.updateChannel || "stable" });
+    fs.writeFileSync(VERSION_HISTORY_PATH, JSON.stringify(list.slice(0, 50), null, 2));
+    return list;
+  } catch {
+    return readVersionHistory();
+  }
+}
+
+async function runAppAutoUpdate({ manual = false } = {}) {
+  if (appUpdateRunning) return { status: "busy" };
+  appUpdateRunning = true;
+  const channel = settings.betaUnlocked && settings.updateChannel === "beta" ? "beta" : "stable";
+  try {
+    const info = await checkForUpdatesQuiet({ channel });
+    if (!info?.available) return { status: "up-to-date", current: app.getVersion() };
+    return await installUpdateFromRenderer({ parentWindow: mainWindow, channel });
+  } catch (e) {
+    return { status: "error", error: String(e?.message || e) };
+  } finally {
+    appUpdateRunning = false;
+    if (manual) { /* jednorázová kontrola z UI */ }
+  }
+}
+
+function scheduleAppAutoUpdate() {
+  if (appUpdateTimer) clearInterval(appUpdateTimer);
+  appUpdateTimer = setInterval(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) runAppAutoUpdate().catch(() => {});
+  }, 3 * 60 * 60 * 1000);
+}
+
+ipcMain.handle("app:version-history", () => ({
+  current: app.getVersion(),
+  history: readVersionHistory(),
+}));
+
 // -------- VoxarioBrowser: automatická aktualizace --------
+
 // Prohlížeč se distribuuje ve stejném balíčku jako Voxar.app, takže stačí
 // spustit standardní update pipeline. Kontrola běží při startu/restartu okna
 // a pak periodicky; nová verze se stáhne a nainstaluje bez ptaní.
