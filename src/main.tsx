@@ -10,6 +10,7 @@ import "./pages/app/community-reference-pass6.css";
 import "./pages/app/community-reference-pass7.css";
 import "./components/vox/reference/community-structured-chat.css";
 import "./components/vox/reference/community-structured-chat-hotfix.css";
+import "./components/vox/reference/community-structured-panels.css";
 import "./i18n";
 
 const syncAppTitle = () => {

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { GuildRail, type VoxGuild } from "@/components/vox/GuildRail";
-import { ChannelSidebar, type VoxChannel } from "@/components/vox/ChannelSidebar";
+import type { VoxChannel } from "@/components/vox/ChannelSidebar";
 import type { VoxMember } from "@/components/vox/MemberList";
 import { SelfPanel } from "@/components/vox/SelfPanel";
 import { ChatView } from "@/components/vox/ChatView";
@@ -16,23 +16,20 @@ import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { CallDock } from "@/components/vox/CallDock";
-import { ReferenceWelcomeBanner } from "@/components/vox/ReferenceWelcomeBanner";
-import { ReferenceActiveMembers } from "@/components/vox/ReferenceActiveMembers";
+import { CommunitySidebarPanel } from "@/components/vox/reference/CommunitySidebarPanel";
+import { CommunityRightPanel } from "@/components/vox/reference/CommunityRightPanel";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import {
   AudioLines,
   Bell,
   CalendarDays,
-  ChevronRight,
   Folder,
-  Gem,
   Home,
   Loader2,
   MoreHorizontal,
   Search,
   ShoppingBag,
-  UsersRound,
 } from "lucide-react";
 import voxLogo from "@/assets/vox-logo.png.asset.json";
 import "./community-reference.css";
@@ -55,6 +52,13 @@ export default function AppShellReference() {
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
   const [now, setNow] = useState(() => new Date());
 
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = useState(false);
+  const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
+  const [createChannelCategory, setCreateChannelCategory] = useState<string | null>(null);
+  const [categoryRows, setCategoryRows] = useState<Array<{ name: string; emoji: string | null }>>([]);
+
   const { channel: voiceChannel, api: voiceApi, leaveChannel } = useVoiceCall();
   const voiceConn = voiceApi.connected ? { channel: voiceChannel, api: voiceApi as any } : null;
 
@@ -65,7 +69,8 @@ export default function AppShellReference() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles")
+    supabase
+      .from("profiles")
       .select("display_name, avatar_url")
       .eq("user_id", user.id)
       .maybeSingle()
@@ -74,12 +79,13 @@ export default function AppShellReference() {
 
   const loadGuilds = async () => {
     if (!user) return;
+
     const { data: memberships } = await supabase
       .from("vox_guild_members")
       .select("guild_id")
       .eq("user_id", user.id);
 
-    const ids = memberships?.map((m: any) => m.guild_id) ?? [];
+    const ids = memberships?.map((membership: any) => membership.guild_id) ?? [];
     if (!ids.length) {
       setGuilds([]);
       setActiveGuildId(null);
@@ -93,9 +99,9 @@ export default function AppShellReference() {
       .order("created_at");
 
     setGuilds((data ?? []) as VoxGuild[]);
-    setActiveGuildId((prev) =>
-      prev && data?.some((g: any) => g.id === prev)
-        ? prev
+    setActiveGuildId((current) =>
+      current && data?.some((guild: any) => guild.id === current)
+        ? current
         : (data?.[0]?.id ?? null),
     );
   };
@@ -103,15 +109,12 @@ export default function AppShellReference() {
   useEffect(() => { void loadGuilds(); }, [user]);
 
   const activeGuild = useMemo(
-    () => guilds.find((g) => g.id === activeGuildId) ?? null,
+    () => guilds.find((guild) => guild.id === activeGuildId) ?? null,
     [guilds, activeGuildId],
   );
 
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-
   const buildMembers = async (guildId: string, membershipRows: any[]): Promise<VoxMember[]> => {
-    const ids = membershipRows.map((m: any) => m.user_id);
+    const ids = membershipRows.map((membership: any) => membership.user_id);
     const [{ data: profiles }, { data: presence }, { data: roles }, { data: memberRoles }] = await Promise.all([
       ids.length
         ? supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", ids)
@@ -123,11 +126,11 @@ export default function AppShellReference() {
       supabase.from("vox_member_roles").select("user_id, role_id").eq("guild_id", guildId),
     ]);
 
-    const profileMap = Object.fromEntries(((profiles ?? []) as any[]).map((p) => [p.user_id, p]));
-    const current = Date.now();
-    const presenceMap = Object.fromEntries(((presence ?? []) as any[]).map((p) => {
-      const stale = current - new Date(p.last_seen).getTime() > 90_000;
-      return [p.user_id, stale ? "offline" : p.status];
+    const profileMap = Object.fromEntries(((profiles ?? []) as any[]).map((item) => [item.user_id, item]));
+    const currentTime = Date.now();
+    const presenceMap = Object.fromEntries(((presence ?? []) as any[]).map((item) => {
+      const stale = currentTime - new Date(item.last_seen).getTime() > 90_000;
+      return [item.user_id, stale ? "offline" : item.status];
     }));
 
     const roleList = ((roles ?? []) as any[]).map((role) => ({
@@ -136,6 +139,7 @@ export default function AppShellReference() {
     }));
     const roleMap = Object.fromEntries(roleList.map((role) => [role.id, role]));
     const rolesByUser: Record<string, any[]> = {};
+
     ((memberRoles ?? []) as any[]).forEach((memberRole) => {
       const role = roleMap[memberRole.role_id];
       if (!role) return;
@@ -145,14 +149,14 @@ export default function AppShellReference() {
       list.sort((a, b) => (b.position ?? 0) - (a.position ?? 0)),
     );
 
-    return membershipRows.map((member: any) => ({
-      user_id: member.user_id,
-      nickname: member.nickname,
-      role: member.role,
-      display_name: profileMap[member.user_id]?.display_name ?? null,
-      avatar_url: profileMap[member.user_id]?.avatar_url ?? null,
-      status: presenceMap[member.user_id] ?? "offline",
-      roles: rolesByUser[member.user_id] ?? [],
+    return membershipRows.map((membership: any) => ({
+      user_id: membership.user_id,
+      nickname: membership.nickname,
+      role: membership.role,
+      display_name: profileMap[membership.user_id]?.display_name ?? null,
+      avatar_url: profileMap[membership.user_id]?.avatar_url ?? null,
+      status: presenceMap[membership.user_id] ?? "offline",
+      roles: rolesByUser[membership.user_id] ?? [],
     }));
   };
 
@@ -166,7 +170,10 @@ export default function AppShellReference() {
   };
 
   const refreshVoice = async () => {
-    const channelIds = channels.filter((channel) => channel.type === "voice").map((channel) => channel.id);
+    const channelIds = channels
+      .filter((channel) => channel.type === "voice")
+      .map((channel) => channel.id);
+
     if (!channelIds.length) {
       setVoiceParticipants({});
       return;
@@ -183,6 +190,7 @@ export default function AppShellReference() {
         member.display_name || member.nickname || member.user_id.slice(0, 6),
       ]),
     );
+
     const map: Record<string, any[]> = {};
     (data ?? []).forEach((participant: any) => {
       (map[participant.channel_id] ||= []).push({
@@ -211,15 +219,15 @@ export default function AppShellReference() {
       ]);
 
       setChannels((channelRows ?? []) as VoxChannel[]);
-      setActiveChannel((prev) => {
-        if (prev && channelRows?.some((channel: any) => channel.id === prev.id && channel.guild_id === activeGuildId)) {
-          return prev;
+      setActiveChannel((current) => {
+        if (current && channelRows?.some((channel: any) => channel.id === current.id && channel.guild_id === activeGuildId)) {
+          return current;
         }
         return (channelRows?.find((channel: any) => channel.type === "text") ?? channelRows?.[0]) as VoxChannel ?? null;
       });
       setInviteCode((guildRow as any)?.invite_code ?? null);
 
-      const selfMembership = membershipRows?.find((member: any) => member.user_id === user.id);
+      const selfMembership = membershipRows?.find((membership: any) => membership.user_id === user.id);
       setIsAdmin(selfMembership?.role === "owner" || selfMembership?.role === "mod");
       setMembers(await buildMembers(activeGuildId, membershipRows ?? []));
     })();
@@ -272,16 +280,12 @@ export default function AppShellReference() {
 
   useEffect(() => { void refreshVoice(); }, [channels, members]);
 
-  const [createChannelOpen, setCreateChannelOpen] = useState(false);
-  const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
-  const [createChannelCategory, setCreateChannelCategory] = useState<string | null>(null);
-  const [categoryRows, setCategoryRows] = useState<Array<{ name: string; emoji: string | null }>>([]);
-
   const loadCategories = async () => {
     if (!activeGuildId) {
       setCategoryRows([]);
       return;
     }
+
     const { data } = await supabase
       .from("vox_categories")
       .select("name, emoji")
@@ -317,6 +321,7 @@ export default function AppShellReference() {
     topic: string | null;
   }) => {
     if (!activeGuildId) return;
+
     const { error } = await supabase.from("vox_channels").insert({
       guild_id: activeGuildId,
       name: payload.name.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
@@ -344,46 +349,6 @@ export default function AppShellReference() {
   if (!user) return <AppAuthGate />;
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
-
-  const voiceStateByUser: Record<string, {
-    channel_id: string;
-    is_muted?: boolean;
-    is_deafened?: boolean;
-    speaking?: boolean;
-    level?: number;
-  }> = {};
-
-  Object.entries(voiceParticipants).forEach(([channelId, list]) => {
-    (list ?? []).forEach((participant: any) => {
-      voiceStateByUser[participant.user_id] = {
-        channel_id: channelId,
-        is_muted: participant.is_muted,
-        is_deafened: participant.is_deafened,
-      };
-    });
-  });
-
-  if (voiceConn?.api) {
-    const selfLevel: number = voiceConn.api.selfLevel ?? 0;
-    if (voiceStateByUser[user.id]) {
-      voiceStateByUser[user.id] = {
-        ...voiceStateByUser[user.id],
-        level: selfLevel,
-        speaking: selfLevel > 0.08 && !voiceConn.api.muted,
-      };
-    }
-
-    Object.entries(voiceConn.api.remotes ?? {}).forEach(([uid, remote]: [string, any]) => {
-      if (!voiceStateByUser[uid]) return;
-      voiceStateByUser[uid] = {
-        ...voiceStateByUser[uid],
-        level: remote.level,
-        speaking: remote.level > 0.08 && !voiceStateByUser[uid].is_muted,
-      };
-    });
-  }
-
-  const openDM = (member: VoxMember) => navigate(`/messages?user=${member.user_id}`);
   const selfSpeaking = !!(
     voiceConn?.api
     && (voiceConn.api.selfLevel ?? 0) > 0.08
@@ -409,6 +374,10 @@ export default function AppShellReference() {
   const onlineCount = members.filter((member) => (member.status || "offline") !== "offline").length;
   const firstVoiceChannel = channels.find((channel) => channel.type === "voice");
   const showSoon = (title: string) => toast({ title, description: "Tahle část rozhraní se ještě dopojí na vlastní data." });
+  const selectChannel = (channel: VoxChannel) => {
+    setActiveChannel(channel);
+    setView("main");
+  };
 
   return (
     <div className="vox-reference-shell">
@@ -432,10 +401,8 @@ export default function AppShellReference() {
           <button
             type="button"
             onClick={() => {
-              if (firstVoiceChannel) {
-                setActiveChannel(firstVoiceChannel);
-                setView("main");
-              } else showSoon("Hlas");
+              if (firstVoiceChannel) selectChannel(firstVoiceChannel);
+              else showSoon("Hlas");
             }}
           ><AudioLines /><span>Hlas</span></button>
           <button type="button" onClick={() => showSoon("Soubory")}><Folder /><span>Soubory</span></button>
@@ -470,49 +437,27 @@ export default function AppShellReference() {
         </aside>
 
         <section className="vox-reference-sidebar">
-          {activeGuild ? (
-            <>
-              <div className="vox-reference-community-card">
-                <div className="vox-reference-community-cover" />
-                <div className="vox-reference-community-title-row">
-                  <div className="vox-reference-community-mark">
-                    {activeGuild.icon_url ? <img src={activeGuild.icon_url} alt="" /> : activeGuild.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <strong>{activeGuild.name} <span aria-hidden="true" style={{ display: "inline", color: "#41dcff" }}>◆</span></strong>
-                    <span>Herní komunita & tvorba</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="vox-reference-server-menu">
-                <button type="button" className="active" onClick={() => setView("main")}><Home />Domů <ChevronRight className="ml-auto" /></button>
-                <button type="button" onClick={() => showSoon("Události")}><CalendarDays />Události</button>
-                <button type="button" onClick={() => showSoon("Členové")}><UsersRound />Členové</button>
-                <button type="button" onClick={() => navigate("/obchod")}><Gem />Boosty & Perky</button>
-              </div>
-
-              <div className="vox-reference-section-label">Komunikační zóna</div>
-              <div className="vox-reference-channel-wrap min-h-0 flex-1">
-                <ChannelSidebar
-                  guildId={activeGuildId}
-                  guildName={activeGuild.name}
-                  inviteCode={inviteCode}
-                  channels={channels}
-                  categoryEmojis={categoryEmojis}
-                  activeId={activeChannel?.id ?? null}
-                  onSelect={(channel) => { setActiveChannel(channel); setView("main"); }}
-                  onCreateChannel={openCreateChannel}
-                  isAdmin={isAdmin}
-                  voiceParticipants={voiceParticipants}
-                  onOpenServerSettings={() => setView("server-settings")}
-                  onCategoriesChanged={() => { void loadCategories(); }}
-                />
-              </div>
-
-              {voiceConn && <div className="vox-reference-call-dock"><CallDock compact /></div>}
-              <div className="vox-reference-self-wrap">{selfPanel}</div>
-            </>
+          {activeGuild && activeGuildId ? (
+            <CommunitySidebarPanel
+              guild={activeGuild}
+              guildId={activeGuildId}
+              inviteCode={inviteCode}
+              channels={channels}
+              categoryEmojis={categoryEmojis}
+              activeChannelId={activeChannel?.id ?? null}
+              isAdmin={isAdmin}
+              voiceParticipants={voiceParticipants}
+              selfPanel={selfPanel}
+              callDock={voiceConn ? <CallDock compact /> : undefined}
+              onSelectChannel={selectChannel}
+              onCreateChannel={openCreateChannel}
+              onOpenServerSettings={() => setView("server-settings")}
+              onCategoriesChanged={() => { void loadCategories(); }}
+              onHome={() => setView("main")}
+              onEvents={() => showSoon("Události")}
+              onMembers={() => showSoon("Členové")}
+              onBoosts={() => navigate("/obchod")}
+            />
           ) : (
             <div className="vox-reference-empty">
               <strong>SV</strong>
@@ -543,15 +488,18 @@ export default function AppShellReference() {
               />
             ) : activeChannel ? (
               activeChannel.type === "text" ? (
-                <div className="vox-ref-chat-stage">
-                  <ReferenceWelcomeBanner
-                    guildName={activeGuild.name}
-                    channels={channels}
-                    onSelectChannel={(channel) => { setActiveChannel(channel); setView("main"); }}
-                    onShowRules={() => toast({ title: "Pravidla komunity", description: "Pravidla můžeš připojit na vlastní stránku nebo kanál." })}
-                  />
-                  <ChatView channel={activeChannel} members={members} />
-                </div>
+                <ChatView
+                  channel={activeChannel}
+                  members={members}
+                  guildName={activeGuild.name}
+                  guildIconUrl={activeGuild.icon_url}
+                  channels={channels}
+                  onSelectChannel={selectChannel}
+                  onShowRules={() => toast({
+                    title: "Pravidla komunity",
+                    description: "Pravidla můžeš připojit na vlastní stránku nebo kanál.",
+                  })}
+                />
               ) : (
                 <VoiceView channel={activeChannel} />
               )
@@ -565,42 +513,18 @@ export default function AppShellReference() {
 
         <aside className="vox-reference-right">
           {activeGuild && view === "main" ? (
-            <div className="vox-reference-right-stack">
-              <section className="vox-reference-info-card">
-                <div className="vox-reference-card-kicker">O komunitě</div>
-                <h3>{activeGuild.name}</h3>
-                <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele.</p>
-                <div className="vox-reference-stat-row">
-                  <span><UsersRound /><b>{members.length}</b><small>členů</small></span>
-                  <span><span className="vox-reference-online-dot" /><b>{onlineCount}</b><small>online</small></span>
-                  <span><CalendarDays /><b>6</b><small>událostí</small></span>
-                </div>
-                <div className="vox-reference-tags"><span>HRY</span><span>KOMUNITA</span><span>TVORBA</span><span>PŘÁTELSTVÍ</span></div>
-              </section>
-
-              <section className="vox-reference-info-card vox-reference-event-card">
-                <div className="vox-reference-card-kicker">Právě se děje</div>
-                <div className="vox-reference-event-row">
-                  <div className="vox-reference-event-icon">🎮</div>
-                  <div className="min-w-0 flex-1"><strong>Páteční herní večer</strong><span>Dnes 20:00 · Hlasový kanál</span></div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (firstVoiceChannel) {
-                        setActiveChannel(firstVoiceChannel);
-                        setView("main");
-                      } else showSoon("Hlasový kanál");
-                    }}
-                  >Připojit se</button>
-                </div>
-              </section>
-
-              <section className="vox-reference-members-card">
-                <div className="vox-ref-right-section-title"><span>Aktivní členové</span><button type="button" onClick={() => showSoon("Všichni členové")}>Zobrazit vše →</button></div>
-                <ReferenceActiveMembers members={members} onMessage={openDM} />
-                <div className="vox-reference-footer-mark">— StudioVoxario · Lepší komunity tvoří lepší hráče.</div>
-              </section>
-            </div>
+            <CommunityRightPanel
+              guildName={activeGuild.name}
+              memberCount={members.length}
+              onlineCount={onlineCount}
+              members={members}
+              onJoinVoice={() => {
+                if (firstVoiceChannel) selectChannel(firstVoiceChannel);
+                else showSoon("Hlasový kanál");
+              }}
+              onShowMembers={() => showSoon("Všichni členové")}
+              onMessage={(member) => navigate(`/messages?user=${member.user_id}`)}
+            />
           ) : (
             <div className="vox-reference-empty"><span>Nastavení komunity</span></div>
           )}
