@@ -5,6 +5,7 @@ import "./pages/app/community-reference-final.css";
 import "./pages/app/community-reference-layout-fix.css";
 import "./pages/app/community-reference-pass3.css";
 import "./pages/app/community-reference-pass4.css";
+import "./pages/app/community-reference-pass5.css";
 import "./i18n";
 
 const syncAppTitle = () => {
