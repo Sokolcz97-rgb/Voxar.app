@@ -1,12 +1,6 @@
 import { LogIn, Plus } from "lucide-react";
 import { CosmeticFrame } from "@/components/CosmeticFrame";
-
-export interface VoxGuild {
-  id: string;
-  name: string;
-  icon_url: string | null;
-  cosmetic_id?: string | null;
-}
+import type { VoxGuild } from "@/components/vox/GuildRail";
 
 interface Props {
   guilds: VoxGuild[];
@@ -16,7 +10,7 @@ interface Props {
   onJoin: () => void;
 }
 
-export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
+export function CommunityGuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <div className="sv-guild-rail" aria-label="Komunity">
       <div className="sv-guild-rail-list">
