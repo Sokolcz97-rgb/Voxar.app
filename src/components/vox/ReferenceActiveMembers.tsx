@@ -3,7 +3,9 @@ import type { VoxMember } from "./MemberList";
 
 interface Props {
   members: VoxMember[];
+  currentUserId?: string | null;
   onMessage: (member: VoxMember) => void;
+  onSelf?: (member: VoxMember) => void;
 }
 
 const statusText: Record<string, string> = {
@@ -13,7 +15,7 @@ const statusText: Record<string, string> = {
   offline: "Offline",
 };
 
-export function ReferenceActiveMembers({ members, onMessage }: Props) {
+export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSelf }: Props) {
   const visible = [...members]
     .sort((a, b) => {
       const order: Record<string, number> = { online: 0, idle: 1, dnd: 2, offline: 3 };
@@ -27,13 +29,14 @@ export function ReferenceActiveMembers({ members, onMessage }: Props) {
         const name = member.nickname || member.display_name || member.user_id.slice(0, 8);
         const topRole = member.roles?.[0];
         const status = member.status || "offline";
+        const isSelf = member.user_id === currentUserId;
         return (
           <button
             type="button"
             key={member.user_id}
             className="vox-ref-active-member"
-            onClick={() => onMessage(member)}
-            title={`Napsat uživateli ${name}`}
+            onClick={() => isSelf ? onSelf?.(member) : onMessage(member)}
+            title={isSelf ? `Otevřít profil ${name}` : `Napsat uživateli ${name}`}
           >
             <span className="vox-ref-member-avatar" style={topRole?.color ? { borderColor: topRole.color } : undefined}>
               {member.avatar_url
@@ -49,7 +52,7 @@ export function ReferenceActiveMembers({ members, onMessage }: Props) {
               </span>
               <small>{statusText[status] || "Offline"}</small>
             </span>
-            <MessageCircle className="vox-ref-member-message" />
+            {!isSelf && <MessageCircle className="vox-ref-member-message" />}
           </button>
         );
       })}
