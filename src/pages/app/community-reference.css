@@ -1,0 +1,408 @@
+/* StudioVoxario community shell inspired by the supplied reference screenshot.
+   Scoped under .vox-reference-shell so the marketing site and admin UI stay untouched. */
+
+.vox-reference-shell {
+  --vox-bg: #020a13;
+  --vox-panel: rgba(3, 20, 34, 0.92);
+  --vox-panel-soft: rgba(7, 31, 49, 0.86);
+  --vox-line: rgba(37, 211, 255, 0.34);
+  --vox-line-strong: rgba(30, 223, 255, 0.76);
+  --vox-cyan: #22dcff;
+  --vox-cyan-soft: #79eaff;
+  --vox-blue: #1375b4;
+  --vox-purple: #a858ff;
+  --vox-text: #d7efff;
+  --vox-muted: #7392a8;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--vox-text);
+  background:
+    radial-gradient(circle at 67% 10%, rgba(25, 174, 255, 0.22), transparent 18%),
+    radial-gradient(circle at 84% 5%, rgba(146, 62, 255, 0.2), transparent 21%),
+    radial-gradient(circle at 37% 72%, rgba(20, 160, 210, 0.08), transparent 30%),
+    linear-gradient(140deg, #01070d 0%, #03111c 45%, #020814 100%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(29, 204, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(29, 204, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.55) 55%, transparent 100%);
+}
+
+.vox-reference-shell::after {
+  content: "";
+  position: absolute;
+  left: 48%;
+  top: -110px;
+  width: 430px;
+  height: 430px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 42% 35%, rgba(124, 224, 255, .72) 0 1%, transparent 2%),
+    radial-gradient(circle at 46% 44%, #124f76 0 13%, #082c4a 33%, #03101d 59%, transparent 61%);
+  box-shadow: 0 0 90px rgba(41, 181, 255, .22);
+  opacity: .82;
+}
+
+.vox-reference-titlebar {
+  height: 34px;
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 14px;
+  background: rgba(2, 10, 20, .9);
+  border-bottom: 1px solid rgba(60, 205, 255, .16);
+  color: #9fc4dc;
+  font-size: 12px;
+  letter-spacing: .02em;
+  user-select: none;
+}
+
+.vox-reference-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 15px;
+  color: #8eaac0;
+}
+
+.vox-reference-topbar {
+  height: 88px;
+  position: relative;
+  z-index: 18;
+  display: grid;
+  grid-template-columns: 315px minmax(500px, 1fr) 430px;
+  align-items: stretch;
+  border-bottom: 1px solid var(--vox-line);
+  background: linear-gradient(90deg, rgba(2, 15, 26, .98), rgba(3, 19, 34, .87) 58%, rgba(10, 15, 38, .9));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+}
+
+.vox-reference-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 30px;
+  border-right: 1px solid rgba(39, 210, 255, .22);
+}
+
+.vox-reference-brand::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 0;
+  width: 38px;
+  height: 100%;
+  background: rgba(3, 19, 34, .85);
+  clip-path: polygon(0 0, 48% 0, 100% 50%, 48% 100%, 0 100%, 50% 50%);
+  border-right: 1px solid rgba(39, 210, 255, .22);
+}
+
+.vox-reference-brand img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(29, 221, 255, .7));
+}
+
+.vox-reference-brand-copy strong {
+  display: block;
+  color: var(--vox-cyan);
+  font-size: 18px;
+  letter-spacing: .28em;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(34, 220, 255, .46);
+}
+
+.vox-reference-brand-copy span {
+  display: block;
+  margin-top: 4px;
+  color: #87dff1;
+  font-size: 10px;
+  letter-spacing: .42em;
+}
+
+.vox-reference-nav {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-left: 36px;
+}
+
+.vox-reference-nav button {
+  min-width: 100px;
+  padding: 12px 18px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-left: 1px solid rgba(35, 194, 244, .08);
+  background: transparent;
+  color: #8ec0dc;
+  transition: .18s ease;
+}
+
+.vox-reference-nav button:hover,
+.vox-reference-nav button.active {
+  color: var(--vox-cyan);
+  background: linear-gradient(to top, rgba(14, 178, 231, .16), transparent 70%);
+  box-shadow: inset 0 -2px 0 var(--vox-cyan), 0 12px 30px rgba(0, 200, 255, .07);
+}
+
+.vox-reference-nav button svg { width: 20px; height: 20px; }
+.vox-reference-nav button span { font-size: 12px; font-weight: 600; }
+
+.vox-reference-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 0 22px;
+}
+
+.vox-reference-search {
+  width: min(280px, 64%);
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: rgba(4, 20, 36, .78);
+  border: 1px solid rgba(38, 179, 224, .28);
+  border-radius: 7px;
+  color: #7e9eb5;
+  box-shadow: inset 0 0 20px rgba(0, 174, 255, .035);
+}
+
+.vox-reference-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #d9efff;
+  font-size: 12px;
+}
+
+.vox-reference-search kbd {
+  color: #75a8c4;
+  font-size: 10px;
+  border: 1px solid rgba(90, 169, 211, .35);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.vox-reference-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(39, 225, 255, .8);
+  box-shadow: 0 0 14px rgba(30, 223, 255, .25), 0 0 18px rgba(164, 82, 255, .2);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0d3652, #35145b);
+  color: white;
+  font-weight: 700;
+}
+
+.vox-reference-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.vox-reference-workspace {
+  position: relative;
+  z-index: 10;
+  height: calc(100vh - 122px);
+  display: grid;
+  grid-template-columns: 86px 286px minmax(0, 1fr) 326px;
+  gap: 10px;
+  padding: 9px 12px 13px;
+}
+
+.vox-reference-rail,
+.vox-reference-sidebar,
+.vox-reference-center,
+.vox-reference-right {
+  min-height: 0;
+  border: 1px solid rgba(31, 202, 248, .35);
+  background: linear-gradient(180deg, rgba(3, 23, 39, .9), rgba(1, 12, 22, .93));
+  box-shadow: inset 0 0 28px rgba(9, 124, 168, .045), 0 0 20px rgba(0,0,0,.24);
+}
+
+.vox-reference-rail {
+  position: relative;
+  clip-path: polygon(0 24px, 24px 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.vox-reference-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+.vox-reference-center {
+  overflow: hidden;
+  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
+}
+
+.vox-reference-right {
+  overflow: hidden;
+  clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+  border-color: rgba(66, 180, 255, .3);
+  box-shadow: inset 0 0 30px rgba(118, 62, 255, .045);
+}
+
+/* Re-purpose the existing horizontal GuildRail as a vertical server rail. */
+.vox-reference-rail > div,
+.vox-reference-rail .w-full.flex.flex-wrap {
+  width: 100% !important;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px 8px !important;
+  overflow-y: auto !important;
+}
+
+.vox-reference-rail .w-16.h-16 { width: 54px !important; height: 54px !important; }
+.vox-reference-rail .w-12.h-12 { width: 40px !important; height: 40px !important; }
+.vox-reference-rail .guild-logo-stage { width: 58px !important; height: 58px !important; padding: 3px !important; }
+.vox-reference-rail .guild-logo-stage + span { display: none !important; }
+.vox-reference-rail .flex-1.min-w-0 { flex: 0 0 auto !important; width: 100%; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 7px !important; }
+.vox-reference-rail .flex.items-center.gap-2.shrink-0 { margin-top: auto; flex-direction: column; width: 100%; }
+.vox-reference-rail .flex.items-center.gap-2.shrink-0 button { width: 48px; height: 48px; padding: 0 !important; justify-content: center; }
+.vox-reference-rail .flex.items-center.gap-2.shrink-0 button span { display: none !important; }
+.vox-reference-rail .text-\[9px\] { display: none !important; }
+
+.vox-reference-sidebar .w-64,
+.vox-reference-right .w-60 { width: 100% !important; }
+
+/* Existing Voxar components: make their shapes and tones match the screenshot. */
+.vox-reference-shell .sector-node {
+  border-radius: 5px;
+  clip-path: none !important;
+}
+
+.vox-reference-shell .rank-ring,
+.vox-reference-shell .rank-inner,
+.vox-reference-shell .hex-frame,
+.vox-reference-shell .hex-ring {
+  clip-path: none !important;
+  border-radius: 50%;
+}
+
+.vox-reference-shell .holo-pod,
+.vox-reference-shell .composer-pod,
+.vox-reference-shell .tx-bar,
+.vox-reference-shell .tx-send {
+  clip-path: none !important;
+}
+
+.vox-reference-shell .composer-pod {
+  border: 1px solid rgba(31, 205, 249, .35);
+  border-radius: 7px;
+  background: rgba(4, 22, 38, .88);
+  box-shadow: 0 0 22px rgba(23, 193, 241, .06), inset 0 0 22px rgba(23, 193, 241, .03);
+}
+
+.vox-reference-shell .tx-bar,
+.vox-reference-shell .tx-send {
+  border-radius: 6px;
+}
+
+.vox-reference-shell .tx-send {
+  border: 1px solid rgba(36, 214, 255, .6);
+  background: linear-gradient(135deg, rgba(0, 126, 178, .42), rgba(0, 57, 91, .5));
+  box-shadow: 0 0 14px rgba(0, 203, 255, .13);
+}
+
+.vox-reference-shell .holo-chip {
+  border-radius: 4px;
+}
+
+.vox-reference-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  color: var(--vox-muted);
+  padding: 30px;
+}
+
+.vox-reference-empty strong {
+  color: var(--vox-cyan);
+  font-size: clamp(26px, 4vw, 54px);
+  letter-spacing: .12em;
+  text-shadow: 0 0 24px rgba(34, 220, 255, .35);
+}
+
+.vox-ref-inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.vox-ref-inline-actions button {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 5px;
+  border: 1px solid rgba(34, 220, 255, .45);
+  background: rgba(5, 50, 72, .55);
+  color: var(--vox-cyan-soft);
+  font-size: 12px;
+}
+
+@media (max-width: 1280px) {
+  .vox-reference-topbar { grid-template-columns: 260px 1fr 320px; }
+  .vox-reference-workspace { grid-template-columns: 78px 248px minmax(0, 1fr) 282px; }
+  .vox-reference-nav button { min-width: 82px; padding-inline: 10px; }
+  .vox-reference-brand { padding-inline: 20px; }
+  .vox-reference-brand-copy strong { font-size: 15px; }
+}
+
+@media (max-width: 1040px) {
+  .vox-reference-topbar { grid-template-columns: 245px 1fr 190px; }
+  .vox-reference-nav button { min-width: 68px; }
+  .vox-reference-nav button span { font-size: 10px; }
+  .vox-reference-search { display: none; }
+  .vox-reference-workspace { grid-template-columns: 72px 238px minmax(0, 1fr); }
+  .vox-reference-right { display: none; }
+}
+
+@media (max-width: 760px) {
+  .vox-reference-titlebar { display: none; }
+  .vox-reference-topbar { height: 70px; grid-template-columns: 200px 1fr; }
+  .vox-reference-brand { padding-inline: 14px; }
+  .vox-reference-brand img { width: 38px; height: 38px; }
+  .vox-reference-brand-copy strong { font-size: 13px; }
+  .vox-reference-brand-copy span { font-size: 8px; }
+  .vox-reference-tools { display: none; }
+  .vox-reference-nav { padding-left: 10px; overflow-x: auto; }
+  .vox-reference-nav button { min-width: 56px; }
+  .vox-reference-nav button span { display: none; }
+  .vox-reference-workspace { height: calc(100vh - 70px); grid-template-columns: 64px minmax(0, 1fr); padding: 6px; }
+  .vox-reference-sidebar { display: none; }
+}
