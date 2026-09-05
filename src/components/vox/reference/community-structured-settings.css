@@ -1,0 +1,218 @@
+/* Structural settings surface. This replaces the screenshot-era pass rules for
+   AppUserSettings while keeping the existing settings functionality intact. */
+
+.vox-reference-shell .vox-reference-workspace:has(.hud-settings) {
+  grid-template-columns: 76px 258px minmax(0, 1fr) !important;
+}
+
+.vox-reference-shell .vox-reference-workspace:has(.hud-settings) .vox-reference-right {
+  display: none !important;
+}
+
+.vox-reference-shell .vox-reference-center:has(.hud-settings) {
+  overflow: hidden !important;
+  border-color: rgba(48, 211, 248, .30) !important;
+  background:
+    radial-gradient(circle at 82% 10%, rgba(32, 145, 196, .08), transparent 34%),
+    linear-gradient(180deg, rgba(3, 22, 37, .985), rgba(1, 13, 23, .995)) !important;
+}
+
+.vox-reference-shell .hud-settings {
+  height: 100%;
+  min-height: 0;
+  color: #d8edf8;
+  background: transparent !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-shell .hud-settings.holo-scanline::before,
+.vox-reference-shell .hud-settings.holo-scanline::after {
+  opacity: .035 !important;
+}
+
+.vox-reference-shell .hud-settings > aside {
+  width: 228px !important;
+  padding: 20px 15px !important;
+  border-right: 1px solid rgba(48, 202, 239, .18) !important;
+  background:
+    linear-gradient(180deg, rgba(3, 25, 40, .96), rgba(2, 17, 30, .985)) !important;
+  backdrop-filter: none !important;
+}
+
+.vox-reference-shell .hud-settings > aside > div:first-child {
+  margin-bottom: 16px !important;
+  padding: 0 5px 13px !important;
+  border-bottom: 1px solid rgba(48, 203, 239, .16);
+}
+
+.vox-reference-shell .hud-settings > aside > div:first-child > div:first-child {
+  color: #4ddff5 !important;
+  font: 650 8px/1 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: .20em !important;
+}
+
+.vox-reference-shell .hud-settings > aside > div:first-child > div:nth-child(2) {
+  margin-top: 6px !important;
+  color: #e8f8ff !important;
+  font: 700 13px/1.2 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: .05em !important;
+}
+
+.vox-reference-shell .hud-settings > aside > div:first-child > div:last-child {
+  display: none !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav {
+  display: grid;
+  gap: 3px;
+}
+
+.vox-reference-shell .hud-settings > aside nav > button {
+  min-height: 34px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  padding: 0 10px !important;
+  border: 1px solid transparent !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 3px !important;
+  color: #8da7b7 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 500 11px/1 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav > button:hover {
+  color: #dff8ff !important;
+  border-color: rgba(49, 198, 232, .10) !important;
+  background: rgba(14, 76, 96, .16) !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav > button[class*="bg-primary"] {
+  color: #e9fbff !important;
+  border-color: rgba(49, 218, 248, .14) !important;
+  border-left-color: #35def8 !important;
+  background: linear-gradient(90deg, rgba(18, 118, 145, .28), rgba(9, 61, 80, .12)) !important;
+  box-shadow: inset 0 0 22px rgba(39, 207, 239, .035) !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav > button svg {
+  width: 15px !important;
+  height: 15px !important;
+  stroke-width: 1.6;
+}
+
+.vox-reference-shell .hud-settings > aside nav > div.h-px {
+  margin: 10px 0 !important;
+  background: rgba(48, 195, 231, .13) !important;
+}
+
+.vox-reference-shell .hud-settings > div.flex-1 {
+  min-width: 0;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 197, 232, .3) transparent;
+}
+
+.vox-reference-shell .hud-settings > div.flex-1 > div {
+  width: min(100%, 980px) !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding: 24px 34px 40px !important;
+}
+
+.vox-reference-shell .hud-settings > div.flex-1 > div > div:first-child {
+  min-height: 66px;
+  margin-bottom: 18px !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid rgba(48, 196, 232, .16) !important;
+}
+
+.vox-reference-shell .hud-settings h1 {
+  margin: 5px 0 0 !important;
+  color: #f0fbff !important;
+  font: 750 22px/1 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: -.01em !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+}
+
+.vox-reference-shell .hud-settings h1 + * {
+  margin-top: 0;
+}
+
+.vox-reference-shell .hud-settings label {
+  color: #bfd3df !important;
+  font: 500 10px/1 Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-shell .hud-settings input,
+.vox-reference-shell .hud-settings textarea,
+.vox-reference-shell .hud-settings select {
+  border: 1px solid rgba(49, 190, 226, .24) !important;
+  border-radius: 4px !important;
+  color: #e4f6ff !important;
+  background: rgba(2, 17, 29, .72) !important;
+  box-shadow: inset 0 0 16px rgba(21, 155, 190, .02) !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-shell .hud-settings input {
+  min-height: 38px !important;
+}
+
+.vox-reference-shell .hud-settings textarea {
+  min-height: 92px !important;
+  resize: vertical;
+}
+
+.vox-reference-shell .hud-settings input:focus,
+.vox-reference-shell .hud-settings textarea:focus,
+.vox-reference-shell .hud-settings select:focus {
+  border-color: rgba(57, 220, 249, .65) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px rgba(57, 220, 249, .08), inset 0 0 18px rgba(31, 185, 220, .03) !important;
+}
+
+.vox-reference-shell .hud-settings input:disabled {
+  color: #6f8795 !important;
+  opacity: .82 !important;
+}
+
+.vox-reference-shell .hud-settings button:not(aside button) {
+  border-radius: 4px !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-shell .hud-settings button[class*="bg-primary"],
+.vox-reference-shell .hud-settings button:not(aside button)[class*="text-primary-foreground"] {
+  border: 1px solid rgba(68, 225, 250, .78) !important;
+  color: #03202c !important;
+  background: linear-gradient(180deg, #46e2f8, #1ab7d2) !important;
+  box-shadow: 0 0 16px rgba(40, 211, 240, .10) !important;
+}
+
+.vox-reference-shell .hud-settings [class*="space-y-5"] {
+  gap: 16px;
+}
+
+.vox-reference-shell .hud-settings .avatar-upload,
+.vox-reference-shell .hud-settings [class*="AvatarUpload"] {
+  max-width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .vox-reference-shell .vox-reference-workspace:has(.hud-settings) {
+    grid-template-columns: 72px 232px minmax(0, 1fr) !important;
+  }
+  .vox-reference-shell .hud-settings > aside { width: 205px !important; padding-inline: 11px !important; }
+  .vox-reference-shell .hud-settings > div.flex-1 > div { padding: 22px 24px 36px !important; }
+}
+
+@media (max-height: 760px) {
+  .vox-reference-shell .hud-settings > aside { padding-top: 13px !important; }
+  .vox-reference-shell .hud-settings > aside nav > button { min-height: 30px; }
+  .vox-reference-shell .hud-settings > div.flex-1 > div { padding-top: 16px !important; }
+}
