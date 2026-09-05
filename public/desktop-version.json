@@ -1,14 +1,20 @@
 {
-  "_comment": "Informativní metadata pro web. Update feed je latest.yml v GitHub Release (electron-updater).",
-  "version": "0.0.13",
-  "notes": "StudioVoxario 0.0.13",
-  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe",
-  "sha256": "f7e0e52e64ccf1e5a8712f11d73234d64e405d3dd62db1669b9b80199b922830",
-  "size": 236675640,
-  "filename": "StudioVoxarioSetup-0.0.13.exe",
+  "_comment": "Informativní metadata pro web. Update feed je latest.yml v GitHub Release.",
+  "version": "0.0.15",
+  "notes": "StudioVoxario 0.0.15",
+  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.15/StudioVoxarioSetup-0.0.15.exe",
+  "sha256": "8ae368dcb03678b30d091f4db5bf900ee3a9b3a6621fc6da8d7134c8d23a51a5",
+  "size": 77632708,
+  "filename": "StudioVoxarioSetup-0.0.15.exe",
   "channels": {
-    "stable": { "version": "0.0.13", "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe" },
-    "beta": { "version": "0.0.13", "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/desktop-latest/StudioVoxarioSetup-0.0.13.exe" }
+    "stable": {
+      "version": "0.0.15",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.15/StudioVoxarioSetup-0.0.15.exe"
+    },
+    "beta": {
+      "version": "0.0.15",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.15/StudioVoxarioSetup-0.0.15.exe"
+    }
   },
-  "updated_at": "2026-09-04T17:30:07.488Z"
+  "updated_at": "2026-09-05T17:30:28.721Z"
 }
