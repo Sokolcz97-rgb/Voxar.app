@@ -1,0 +1,855 @@
+/* Structural community chat.
+   New sv-* classes deliberately avoid the legacy screenshot-pass selectors so
+   header, welcome, messages and composer can own their layout without CSS hacks. */
+
+.vox-reference-center .sv-chat-shell {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #d9effc;
+  background:
+    radial-gradient(circle at 72% 22%, rgba(31, 151, 207, .035), transparent 32%),
+    linear-gradient(180deg, rgba(2, 17, 29, .70), rgba(1, 12, 22, .92));
+}
+
+/* --------------------------------------------------------------------------
+   CHANNEL HEADER
+   -------------------------------------------------------------------------- */
+.vox-reference-center .sv-channel-header {
+  flex: 0 0 64px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid rgba(43, 211, 250, .42);
+  background:
+    linear-gradient(90deg, rgba(5, 31, 48, .985), rgba(5, 28, 45, .90) 62%, rgba(4, 23, 39, .94));
+  box-shadow: inset 0 -12px 26px rgba(0, 153, 205, .025);
+  overflow: hidden;
+}
+
+.vox-reference-center .sv-channel-header-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vox-reference-center .sv-channel-header-icon {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  display: grid;
+  place-items: center;
+  color: #f0fbff;
+}
+
+.vox-reference-center .sv-channel-header-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  stroke-width: 1.6;
+}
+
+.vox-reference-center .sv-channel-header-copy {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 23px 16px;
+  align-content: center;
+}
+
+.vox-reference-center .sv-channel-header-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.vox-reference-center .sv-channel-header-title-row h1 {
+  min-width: 0;
+  margin: 0;
+  color: #f2fbff;
+  font: 700 16px/21px Inter, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vox-reference-center .sv-channel-hash {
+  width: 14px;
+  height: 14px;
+  color: #91afc2;
+}
+
+.vox-reference-center .sv-channel-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.vox-reference-center .sv-channel-header-copy p {
+  min-width: 0;
+  max-width: 70ch;
+  margin: 0;
+  color: #8caabd;
+  font: 400 10px/14px Inter, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vox-reference-center .sv-channel-header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vox-reference-center .sv-channel-online {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  color: #96b9cc;
+  font: 500 10px/1 Inter, "Segoe UI", sans-serif;
+  white-space: nowrap;
+}
+
+.vox-reference-center .sv-channel-online i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #32e69c;
+  box-shadow: 0 0 9px rgba(50, 230, 156, .70);
+}
+
+.vox-reference-center .sv-channel-divider {
+  width: 1px;
+  height: 27px;
+  margin: 0 3px;
+  background: rgba(67, 185, 221, .20);
+}
+
+.vox-reference-center .sv-channel-header-actions button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #87aabd;
+  background: transparent;
+  transition: .16s ease;
+}
+
+.vox-reference-center .sv-channel-header-actions button:hover {
+  color: #d7f7ff;
+  border-color: rgba(50, 216, 255, .35);
+  background: rgba(20, 147, 192, .10);
+}
+
+.vox-reference-center .sv-channel-header-actions button svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.65;
+}
+
+.vox-reference-center .sv-channel-header-actions .sv-channel-security {
+  margin-left: 2px;
+  border-color: rgba(48, 199, 239, .26);
+  background: rgba(3, 25, 41, .68);
+}
+
+.vox-reference-center .sv-channel-header-actions .sv-channel-security.active {
+  color: #5bf0b3;
+  border-color: rgba(91, 240, 179, .42);
+}
+
+/* --------------------------------------------------------------------------
+   WELCOME — now a true fixed structural row between header and messages.
+   -------------------------------------------------------------------------- */
+.vox-reference-center .sv-welcome {
+  position: relative;
+  flex: 0 0 164px;
+  min-height: 164px;
+  margin: 14px 16px 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(250px, 42%);
+  overflow: hidden;
+  border: 1px solid rgba(52, 221, 255, .58);
+  clip-path: polygon(12px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  background:
+    linear-gradient(100deg, rgba(4, 32, 49, .99) 0%, rgba(5, 28, 47, .98) 49%, rgba(18, 20, 68, .97) 100%);
+  box-shadow:
+    inset 0 0 38px rgba(34, 211, 255, .055),
+    0 0 18px rgba(0, 196, 255, .055);
+}
+
+.vox-reference-center .sv-welcome::before,
+.vox-reference-center .sv-welcome::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  width: 64px;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #3ee6ff);
+  box-shadow: 0 0 8px rgba(44, 225, 255, .86);
+}
+
+.vox-reference-center .sv-welcome::before { left: 0; top: 0; }
+.vox-reference-center .sv-welcome::after { right: 0; bottom: 0; transform: rotate(180deg); }
+
+.vox-reference-center .sv-welcome-copy {
+  position: relative;
+  z-index: 4;
+  min-width: 0;
+  padding: 13px 16px 12px;
+}
+
+.vox-reference-center .sv-welcome-eyebrow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #79dff1;
+  font: 600 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.vox-reference-center .sv-welcome-eyebrow strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vox-reference-center .sv-welcome-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #48e8ff;
+  font: 800 9px/1 Inter, sans-serif;
+  border: 1px solid rgba(57, 226, 255, .66);
+  background: rgba(4, 35, 53, .95);
+  clip-path: polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%);
+}
+
+.vox-reference-center .sv-welcome-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vox-reference-center .sv-welcome-app {
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: #031521;
+  background: #42c9eb;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.vox-reference-center .sv-welcome-time {
+  color: #809db0;
+  letter-spacing: 0;
+}
+
+.vox-reference-center .sv-welcome-copy h2 {
+  margin: 5px 0 3px;
+  color: #ffffff;
+  font: 750 19px/22px Inter, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  text-shadow: 0 0 12px rgba(82, 213, 255, .08);
+}
+
+.vox-reference-center .sv-welcome-copy p {
+  max-width: 58ch;
+  margin: 0;
+  color: #a8c2d2;
+  font: 400 10px/14px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-center .sv-welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.vox-reference-center .sv-welcome-actions button {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid rgba(63, 176, 225, .42);
+  border-radius: 4px;
+  color: #ccebf8;
+  background: linear-gradient(180deg, rgba(13, 57, 83, .82), rgba(5, 34, 53, .90));
+  font: 500 10px/1 Inter, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  transition: .16s ease;
+}
+
+.vox-reference-center .sv-welcome-actions button:hover:not(:disabled) {
+  color: #f0fdff;
+  border-color: rgba(58, 222, 255, .72);
+  background: rgba(12, 88, 118, .54);
+}
+
+.vox-reference-center .sv-welcome-actions button.primary {
+  border-color: rgba(46, 229, 255, .78);
+  color: #e9fdff;
+  background: linear-gradient(180deg, rgba(0, 153, 200, .75), rgba(0, 100, 142, .72));
+  box-shadow: 0 0 12px rgba(22, 209, 255, .10);
+}
+
+.vox-reference-center .sv-welcome-actions button:disabled {
+  opacity: .34;
+  cursor: not-allowed;
+}
+
+.vox-reference-center .sv-welcome-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.vox-reference-center .sv-welcome-art {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 48% 42%, rgba(39, 98, 255, .32), transparent 28%),
+    linear-gradient(132deg, #111858 0%, #121453 43%, #19145d 100%);
+}
+
+.vox-reference-center .sv-welcome-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 21% 21%, rgba(159, 220, 255, .75) 0 1px, transparent 2px),
+    radial-gradient(circle at 66% 17%, rgba(171, 129, 255, .62) 0 1px, transparent 2px),
+    radial-gradient(circle at 80% 49%, rgba(114, 218, 255, .55) 0 1px, transparent 2px),
+    radial-gradient(circle at 34% 69%, rgba(180, 146, 255, .45) 0 1px, transparent 2px);
+}
+
+.vox-reference-center .sv-welcome-stars {
+  position: absolute;
+  inset: 0;
+  opacity: .8;
+  background:
+    radial-gradient(circle at 11% 42%, #7eeaff 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 34%, #a578ff 0 1px, transparent 2px),
+    radial-gradient(circle at 91% 18%, #7fe5ff 0 1px, transparent 2px);
+}
+
+.vox-reference-center .sv-welcome-portal {
+  position: absolute;
+  left: 38%;
+  top: 29px;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 4px solid #406cff;
+  box-shadow:
+    0 0 0 2px rgba(164, 61, 255, .48),
+    0 0 18px rgba(78, 88, 255, .85),
+    0 0 30px rgba(110, 46, 255, .42),
+    inset 0 0 17px rgba(15, 187, 255, .35);
+  background: radial-gradient(circle, rgba(2, 24, 49, .76), rgba(5, 13, 37, .97) 62%);
+}
+
+.vox-reference-center .sv-welcome-portal i {
+  position: absolute;
+  left: 17px;
+  top: 13px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3ce4ff;
+  box-shadow: 0 0 8px #3ce4ff;
+}
+
+.vox-reference-center .sv-welcome-ridge {
+  position: absolute;
+  left: -8%;
+  right: -12%;
+  bottom: -24px;
+  height: 82px;
+  transform: skewX(-24deg) rotate(-4deg);
+  transform-origin: center;
+}
+
+.vox-reference-center .sv-welcome-ridge-a {
+  background: linear-gradient(160deg, transparent 0 20%, #132b69 21% 38%, transparent 39% 46%, #162158 47% 65%, transparent 66%);
+  opacity: .95;
+}
+
+.vox-reference-center .sv-welcome-ridge-b {
+  bottom: -42px;
+  background: linear-gradient(160deg, transparent 0 18%, #201a74 19% 33%, transparent 34% 45%, #10285f 46% 61%, transparent 62%);
+  opacity: .78;
+}
+
+.vox-reference-center .sv-welcome-motto {
+  position: absolute;
+  right: 20px;
+  top: 34px;
+  color: #c6e4f7;
+  font: 500 9px/18px Inter, "Segoe UI", sans-serif;
+  letter-spacing: .33em;
+  text-align: left;
+  text-shadow: 0 0 9px rgba(138, 105, 255, .28);
+}
+
+/* --------------------------------------------------------------------------
+   MESSAGE LIST
+   -------------------------------------------------------------------------- */
+.vox-reference-center .sv-message-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 16px 8px;
+}
+
+.vox-reference-center .sv-message {
+  position: relative;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 24px;
+  column-gap: 10px;
+  align-items: start;
+  padding: 9px 5px 8px 4px;
+  border-bottom: 1px solid rgba(71, 151, 181, .12);
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.vox-reference-center .sv-message:hover {
+  border-bottom-color: rgba(71, 185, 220, .20);
+  background: linear-gradient(90deg, rgba(12, 76, 103, .055), transparent 84%);
+}
+
+.vox-reference-center .sv-message.compact {
+  min-height: 35px;
+  padding-top: 3px;
+  padding-bottom: 4px;
+}
+
+.vox-reference-center .sv-message-avatar-column {
+  width: 44px;
+  min-height: 1px;
+}
+
+.vox-reference-center .sv-message-avatar {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-center .sv-message-avatar-inner {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #dbf8ff;
+  font: 700 11px/1 Inter, sans-serif;
+}
+
+.vox-reference-center .sv-message-avatar-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vox-reference-center .sv-message-body {
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.vox-reference-center .sv-message-meta {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.vox-reference-center .sv-message-meta strong {
+  font: 700 13px/18px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-center .sv-message-meta time {
+  color: #728fa3;
+  font: 400 9px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-center .sv-message-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  color: #dbeaf3;
+  font: 400 13px/19px Inter, "Segoe UI", sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.vox-reference-center .sv-message.compact .sv-message-text {
+  padding-top: 3px;
+}
+
+.vox-reference-center .sv-message-lock {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #55e9ad;
+}
+
+.vox-reference-center .sv-message-encrypted {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  color: #7897aa;
+  background: transparent;
+  font: italic 12px/18px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-center .sv-message-encrypted:hover { color: #52dfff; }
+.vox-reference-center .sv-message-encrypted svg { width: 12px; height: 12px; }
+
+.vox-reference-center .sv-message-delete {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  padding: 0;
+  border: 0;
+  color: #7899ac;
+  background: transparent;
+  transition: opacity .15s ease, color .15s ease;
+}
+
+.vox-reference-center .sv-message:hover .sv-message-delete { opacity: 1; }
+.vox-reference-center .sv-message-delete:hover { color: #ff6071; }
+.vox-reference-center .sv-message-delete svg { width: 14px; height: 14px; }
+
+.vox-reference-center .sv-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.vox-reference-center .sv-message-image,
+.vox-reference-center .sv-message-video {
+  max-width: min(420px, 100%);
+  max-height: 260px;
+  object-fit: contain;
+  border: 1px solid rgba(51, 205, 244, .30);
+  border-radius: 4px;
+}
+
+.vox-reference-center .sv-message-file {
+  min-width: 180px;
+  max-width: 320px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid rgba(54, 200, 239, .30);
+  border-radius: 4px;
+  color: #80e6f8;
+  background: rgba(4, 25, 40, .74);
+}
+
+.vox-reference-center .sv-message-file svg { width: 16px; height: 16px; }
+.vox-reference-center .sv-message-file span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.vox-reference-center .sv-message-file small { color: #6f91a5; font-size: 9px; }
+
+.vox-reference-center .sv-message-empty {
+  min-height: 150px;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  text-align: center;
+  color: #7596a9;
+  font: 400 12px/18px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-center .sv-message-empty strong {
+  color: #47dcfa;
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.vox-reference-center .sv-message-empty b { color: #bceffd; }
+
+/* --------------------------------------------------------------------------
+   COMPOSER
+   -------------------------------------------------------------------------- */
+.vox-reference-center .sv-composer {
+  flex: 0 0 auto;
+  margin: 0 15px 12px;
+  padding: 9px 10px 8px;
+  border: 1px solid rgba(44, 211, 252, .42);
+  clip-path: polygon(11px 0, calc(100% - 11px) 0, 100% 11px, 100% calc(100% - 11px), calc(100% - 11px) 100%, 11px 100%, 0 calc(100% - 11px), 0 11px);
+  background:
+    linear-gradient(180deg, rgba(4, 25, 41, .985), rgba(3, 19, 33, .985));
+  box-shadow:
+    inset 0 0 28px rgba(20, 190, 231, .035),
+    0 0 16px rgba(0, 177, 225, .035);
+}
+
+.vox-reference-center .sv-composer-pending {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 0 7px 48px;
+}
+
+.vox-reference-center .sv-composer-pending-item {
+  height: 35px;
+  max-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 7px;
+  border: 1px solid rgba(52, 190, 229, .28);
+  border-radius: 4px;
+  background: rgba(3, 18, 31, .74);
+}
+
+.vox-reference-center .sv-composer-pending-item img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.vox-reference-center .sv-composer-pending-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #9edbea;
+  font-size: 10px;
+}
+
+.vox-reference-center .sv-composer-pending-item button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: #7f9dad;
+  background: transparent;
+}
+
+.vox-reference-center .sv-composer-pending-item button:hover { color: #ff6574; }
+.vox-reference-center .sv-composer-pending-item button svg { width: 12px; height: 12px; }
+
+.vox-reference-center .sv-composer-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 54px;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.vox-reference-center .sv-composer-attach,
+.vox-reference-center .sv-composer-send {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 5px;
+  transition: .16s ease;
+}
+
+.vox-reference-center .sv-composer-attach {
+  border: 1px solid rgba(45, 191, 229, .34);
+  color: #46dff9;
+  background: rgba(3, 28, 45, .80);
+}
+
+.vox-reference-center .sv-composer-attach:hover:not(:disabled) {
+  border-color: rgba(55, 224, 255, .66);
+  background: rgba(7, 62, 82, .50);
+}
+
+.vox-reference-center .sv-composer-attach svg { width: 17px; height: 17px; }
+
+.vox-reference-center .sv-composer-input-wrap {
+  min-width: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px 0 13px;
+  border: 1px solid rgba(48, 163, 205, .32);
+  border-radius: 5px;
+  background: rgba(1, 13, 25, .72);
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.vox-reference-center .sv-composer-input-wrap:focus-within {
+  border-color: rgba(51, 219, 255, .58);
+  box-shadow: inset 0 0 18px rgba(31, 184, 224, .035);
+}
+
+.vox-reference-center .sv-composer-textarea {
+  min-width: 0;
+  flex: 1;
+  min-height: 34px !important;
+  max-height: 82px;
+  padding: 8px 0 5px !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  resize: none !important;
+  color: #d8edf7 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 400 12px/17px Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-center .sv-composer-textarea::placeholder { color: #688798; }
+.vox-reference-center .sv-composer-textarea:focus-visible { box-shadow: none !important; ring: 0 !important; }
+
+.vox-reference-center .sv-composer-inline-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.vox-reference-center .sv-composer-inline-actions button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  color: #89a8b9;
+  background: transparent;
+}
+
+.vox-reference-center .sv-composer-inline-actions button:hover {
+  color: #d8f8ff;
+  background: rgba(40, 167, 207, .10);
+}
+
+.vox-reference-center .sv-composer-inline-actions button svg { width: 15px; height: 15px; }
+.vox-reference-center .sv-composer-inline-actions .sv-composer-gif { font: 700 9px/1 Inter, sans-serif; }
+
+.vox-reference-center .sv-composer-send {
+  border: 1px solid rgba(45, 221, 255, .66);
+  color: #71eaff;
+  background: linear-gradient(145deg, rgba(0, 131, 178, .62), rgba(0, 61, 96, .74));
+  box-shadow: inset 0 0 18px rgba(39, 214, 255, .08), 0 0 12px rgba(0, 194, 244, .08);
+}
+
+.vox-reference-center .sv-composer-send:hover:not(:disabled) {
+  color: #e5fcff;
+  border-color: #4ce8ff;
+  background: linear-gradient(145deg, rgba(0, 162, 211, .78), rgba(0, 81, 119, .82));
+}
+
+.vox-reference-center .sv-composer-send:disabled { opacity: .35; }
+.vox-reference-center .sv-composer-send svg { width: 21px; height: 21px; }
+
+.vox-reference-center .sv-composer-toolbar {
+  min-height: 29px;
+  display: flex;
+  align-items: end;
+  gap: 7px;
+  padding: 5px 2px 0 46px;
+}
+
+.vox-reference-center .sv-composer-toolbar button {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid rgba(58, 166, 202, .28);
+  border-radius: 4px;
+  color: #8faebf;
+  background: rgba(4, 27, 43, .60);
+  font: 500 9px/1 Inter, "Segoe UI", sans-serif;
+  white-space: nowrap;
+}
+
+.vox-reference-center .sv-composer-toolbar button:hover {
+  color: #d8f7ff;
+  border-color: rgba(53, 211, 246, .48);
+}
+
+.vox-reference-center .sv-composer-toolbar button.ai {
+  color: #b69dff;
+  border-color: rgba(135, 93, 246, .38);
+}
+
+.vox-reference-center .sv-composer-toolbar button svg { width: 12px; height: 12px; }
+
+.vox-reference-center .sv-composer-toolbar > span {
+  margin-left: auto;
+  padding: 0 4px 5px 8px;
+  color: #718e9f;
+  font: 500 8px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+/* The compatibility bridge no longer paints the legacy welcome card. Remove the
+   empty gap that the old wrapper used to reserve around it. */
+.vox-reference-center .vox-ref-chat-stage {
+  gap: 0 !important;
+  padding: 0 !important;
+}
+
+.vox-reference-center .vox-ref-chat-stage > .sv-chat-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (max-width: 1180px) {
+  .vox-reference-center .sv-channel-header-copy p { max-width: 42ch; }
+  .vox-reference-center .sv-channel-online { display: none; }
+  .vox-reference-center .sv-channel-divider { display: none; }
+  .vox-reference-center .sv-welcome { grid-template-columns: minmax(0, 62%) minmax(210px, 38%); }
+  .vox-reference-center .sv-welcome-motto { display: none; }
+  .vox-reference-center .sv-composer-toolbar button { padding-inline: 7px; }
+}
+
+@media (max-height: 760px) {
+  .vox-reference-center .sv-welcome {
+    flex-basis: 145px;
+    min-height: 145px;
+    margin-top: 10px;
+  }
+  .vox-reference-center .sv-welcome-copy { padding-top: 10px; }
+  .vox-reference-center .sv-welcome-actions { margin-top: 7px; }
+  .vox-reference-center .sv-composer { margin-bottom: 8px; padding-top: 7px; }
+  .vox-reference-center .sv-message { min-height: 52px; padding-block: 7px; }
+}
