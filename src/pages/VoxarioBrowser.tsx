@@ -1,5 +1,20 @@
 import { useState, useCallback, useRef } from "react";
 import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Radar,
   Radio,
   Server,
@@ -34,6 +49,63 @@ const DOCK_ITEMS = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+type SortableBrowserTabProps = {
+  tab: BrowserTab;
+  isActive: boolean;
+  onActivate: (id: string) => void;
+  onClose: (event: React.MouseEvent, id: string) => void;
+};
+
+function SortableBrowserTab({ tab, isActive, onActivate, onClose }: SortableBrowserTabProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={() => onActivate(tab.id)}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 30 : undefined,
+        opacity: isDragging ? 0.78 : 1,
+      }}
+      className={cn(
+        "group relative flex items-center gap-2 min-w-[120px] max-w-[200px] h-9 px-3 text-xs font-medium transition-[background-color,color,box-shadow,opacity]",
+        "bg-secondary/30 hover:bg-secondary/60 cursor-grab active:cursor-grabbing touch-none select-none",
+        isActive && "bg-secondary/80 text-foreground",
+        isDragging && "bg-secondary/90 shadow-[0_8px_24px_hsl(var(--background)/0.65),0_0_14px_hsl(var(--primary)/0.35)]"
+      )}
+      {...attributes}
+      {...listeners}
+    >
+      <span className="truncate">{tab.title}</span>
+      <span
+        role="button"
+        tabIndex={0}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => onClose(e, tab.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onClose(e as any, tab.id);
+        }}
+        className="ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100 p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors cursor-pointer"
+      >
+        <X className="w-3 h-3" />
+      </span>
+      {isActive && (
+        <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary-glow to-primary shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
+      )}
+    </button>
+  );
+}
+
 function getDesktopBridge(): any {
   if (typeof window === "undefined") return null;
   return (window as any).studioVoxarioDesktop ?? null;
@@ -65,6 +137,11 @@ export default function VoxarioBrowser() {
   const desktop = getDesktopBridge();
   const hasEngine = typeof window !== "undefined" && !!(window as any).process?.versions?.electron
     || !!desktop?.isDesktop;
+  const tabDragSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -125,6 +202,21 @@ export default function VoxarioBrowser() {
     },
     [activeTabId]
   );
+
+  const handleTabDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const draggedId = String(active.id);
+    const targetId = String(over.id);
+
+    setTabs((prev) => {
+      const oldIndex = prev.findIndex((tab) => tab.id === draggedId);
+      const newIndex = prev.findIndex((tab) => tab.id === targetId);
+      if (oldIndex < 0 || newIndex < 0) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  }, []);
 
   const navigateBack = useCallback(() => {
     engines.current[activeTabId]?.goBack();
@@ -244,37 +336,26 @@ export default function VoxarioBrowser() {
           {/* Tabs row */}
           <div className="flex items-center gap-1 px-2 pt-2 pb-1 border-b border-primary/10">
             <div className="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar">
-              {tabs.map((tab) => {
-                const isActive = tab.id === activeTabId;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => activateTab(tab.id)}
-                    className={cn(
-                      "group relative flex items-center gap-2 min-w-[120px] max-w-[200px] h-9 px-3 text-xs font-medium transition-all",
-                      "bg-secondary/30 hover:bg-secondary/60",
-                      isActive && "bg-secondary/80 text-foreground"
-                    )}
-                  >
-                    <span className="truncate">{tab.title}</span>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => closeTab(e, tab.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") closeTab(e as any, tab.id);
-                      }}
-                      className="ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100 p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </span>
-                    {isActive && (
-                      <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary-glow to-primary shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
-                    )}
-                  </button>
-                );
-              })}
+              <DndContext
+                sensors={tabDragSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleTabDragEnd}
+              >
+                <SortableContext
+                  items={tabs.map((tab) => tab.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {tabs.map((tab) => (
+                    <SortableBrowserTab
+                      key={tab.id}
+                      tab={tab}
+                      isActive={tab.id === activeTabId}
+                      onActivate={activateTab}
+                      onClose={closeTab}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
 
             <button
