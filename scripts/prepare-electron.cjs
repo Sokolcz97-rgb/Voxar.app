@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const source = path.join(root, "dist");
 const target = path.join(root, "electron", "dist");
 const nativeBrowser = path.join(root, "electron", "browser.html");
+const mainProcess = path.join(root, "electron", "main.cjs");
 
 if (!fs.existsSync(path.join(source, "index.html"))) {
   throw new Error("Chybí dist/index.html. Nejdříve spusťte npm run build.");
@@ -130,5 +131,64 @@ function patchNativeBrowserTabs() {
   console.log("Nativní VoxarioBrowser: drag & drop tabů připraven pro build.");
 }
 
+// modules.json historicky vznikal pouze vedle Voxar.app.exe. To je nevhodné pro
+// electron-builder/NSIS update, protože instalátor může neznámý soubor odstranit.
+// Nové buildy proto zapisují stav modulu do obou kandidátů: instalace + userData.
+function patchDurableModuleState() {
+  if (!fs.existsSync(mainProcess)) {
+    throw new Error("Chybí electron/main.cjs — stav modulů nelze připravit.");
+  }
+
+  let main = fs.readFileSync(mainProcess, "utf8");
+  const marker = "VOXARIO_MODULE_STATE_DURABLE_V1";
+  if (main.includes(marker)) {
+    console.log("Trvalý stav modulů už je v electron/main.cjs připraven.");
+    return;
+  }
+
+  const oldBlock = `function writeModulesState(state) {
+  let lastErr = null;
+  for (const p of modulesPathCandidates()) {
+    try {
+      fs.writeFileSync(p, JSON.stringify(state, null, 2));
+      return true;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  console.error("modules.json zápis selhal", lastErr);
+  return false;
+}`;
+
+  const newBlock = `function writeModulesState(state) {
+  // ${marker}: stav zapisujeme vedle exe i do userData, aby přežil NSIS update.
+  let wrote = false;
+  let lastErr = null;
+  for (const p of modulesPathCandidates()) {
+    try {
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      fs.writeFileSync(p, JSON.stringify(state, null, 2));
+      wrote = true;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (!wrote) console.error("modules.json zápis selhal", lastErr);
+  return wrote;
+}`;
+
+  if (!main.includes(oldBlock)) {
+    throw new Error("Nelze najít writeModulesState v electron/main.cjs; build se zastavil, aby nevznikl neúplný updater.");
+  }
+
+  main = main.replace(oldBlock, newBlock);
+  fs.writeFileSync(mainProcess, main, "utf8");
+  if (!fs.readFileSync(mainProcess, "utf8").includes(marker)) {
+    throw new Error("Patch trvalého stavu modulů se nepodařilo zapsat.");
+  }
+  console.log("Stav VoxarioBrowser modulu bude ukládán do instalace i userData.");
+}
+
 patchNativeBrowserTabs();
+patchDurableModuleState();
 console.log("Electron renderer připraven v electron/dist");
