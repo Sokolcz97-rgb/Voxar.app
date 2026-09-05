@@ -66,7 +66,7 @@ import AdminConsole from "./pages/AdminConsole.tsx";
 import AdminCosmetics from "./pages/AdminCosmetics.tsx";
 import AdminPurchases from "./pages/AdminPurchases.tsx";
 import AdminBadges from "./pages/AdminBadges.tsx";
-import AppShell from "./pages/app/AppShell.tsx";
+import AppShell from "./pages/app/AppShellReference.tsx";
 import { AIHelper } from "@/components/AIHelper";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";

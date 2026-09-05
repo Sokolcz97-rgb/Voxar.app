@@ -1,0 +1,452 @@
+/* Pixel-polish pass for the supplied StudioVoxario reference. */
+
+.vox-reference-shell {
+  --ref-cyan: #17dbff;
+  --ref-cyan-soft: #8befff;
+  --ref-blue: #0877b8;
+  --ref-purple: #8b49ff;
+  --ref-panel: rgba(4, 23, 38, .93);
+  --ref-panel-2: rgba(5, 31, 49, .9);
+  --ref-line: rgba(38, 215, 255, .42);
+  --ref-muted: #7fa4bb;
+  letter-spacing: 0;
+}
+
+.vox-reference-shell * { scrollbar-width: thin; scrollbar-color: rgba(39,213,255,.32) transparent; }
+.vox-reference-shell *::-webkit-scrollbar { width: 6px; height: 6px; }
+.vox-reference-shell *::-webkit-scrollbar-thumb { background: rgba(39,213,255,.28); border-radius: 99px; }
+
+.vox-reference-shell::before {
+  opacity: .7;
+  background-size: 42px 42px;
+}
+
+.vox-reference-shell::after {
+  left: 54%;
+  top: -118px;
+  width: 520px;
+  height: 520px;
+  opacity: .9;
+  filter: saturate(1.2);
+}
+
+.vox-reference-titlebar {
+  height: 31px;
+  font-size: 11px;
+  padding-left: 10px;
+  background: linear-gradient(90deg, rgba(1,8,15,.96), rgba(2,11,22,.91));
+}
+
+.vox-reference-window-controls { gap: 21px; padding-right: 2px; }
+
+.vox-reference-topbar {
+  height: 90px;
+  grid-template-columns: 322px minmax(600px, 1fr) 410px;
+  background:
+    linear-gradient(90deg, rgba(2,17,29,.97), rgba(3,20,35,.91) 62%, rgba(8,17,40,.94)),
+    radial-gradient(circle at 80% 18%, rgba(116,53,255,.16), transparent 32%);
+}
+
+.vox-reference-brand { gap: 15px; padding-left: 31px; }
+.vox-reference-brand img { width: 50px; height: 50px; }
+.vox-reference-brand-copy strong { font-size: 19px; letter-spacing: .31em; }
+.vox-reference-brand-copy span { font-size: 9px; letter-spacing: .47em; }
+
+.vox-reference-nav { padding-left: 22px; }
+.vox-reference-nav button {
+  min-width: 101px;
+  padding: 10px 16px 7px;
+  gap: 7px;
+  color: #8fb8d0;
+}
+.vox-reference-nav button svg { width: 19px; height: 19px; stroke-width: 1.8; }
+.vox-reference-nav button span { font-size: 12px; }
+.vox-reference-nav button.active {
+  color: #48e5ff;
+  text-shadow: 0 0 10px rgba(37,222,255,.44);
+  background: linear-gradient(to top, rgba(0,181,239,.18), rgba(0,181,239,.02) 65%, transparent);
+}
+
+.vox-reference-tools { padding-right: 20px; }
+.vox-reference-search { width: 250px; height: 38px; border-radius: 4px; }
+.vox-reference-avatar { width: 42px; height: 42px; }
+
+.vox-reference-workspace {
+  height: calc(100vh - 121px);
+  grid-template-columns: 86px 286px minmax(0, 1fr) 318px;
+  gap: 9px;
+  padding: 8px 11px 12px;
+}
+
+.vox-reference-rail,
+.vox-reference-sidebar,
+.vox-reference-center,
+.vox-reference-right {
+  background:
+    linear-gradient(180deg, rgba(4,25,42,.93), rgba(2,14,26,.96)),
+    radial-gradient(circle at 30% 0%, rgba(0,190,255,.05), transparent 46%);
+}
+
+/* Hide duplicate app wordmark from the legacy GuildRail. */
+.vox-reference-rail > div > .flex.items-center.gap-4.shrink-0 { display: none !important; }
+.vox-reference-rail .flex-1.min-w-0 { padding-top: 1px; }
+.vox-reference-rail .guild-logo-stage { width: 58px !important; height: 58px !important; }
+.vox-reference-rail .guild-logo-stage .hex-ring { width: 52px !important; height: 52px !important; }
+.vox-reference-rail .guild-logo-stage .hex-frame {
+  border-radius: 13px !important;
+  clip-path: polygon(23% 0,77% 0,100% 23%,100% 77%,77% 100%,23% 100%,0 77%,0 23%) !important;
+}
+.vox-reference-rail .flex.items-center.gap-2.shrink-0 button {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  clip-path: none !important;
+  border-color: rgba(93,183,224,.35);
+  background: rgba(8,31,50,.7);
+}
+
+.vox-reference-community-card { padding: 10px 11px 0; }
+.vox-reference-community-cover {
+  height: 88px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(36,210,255,.35);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background:
+    radial-gradient(circle at 73% 38%, rgba(42,212,255,.65) 0 2px, transparent 3px),
+    radial-gradient(circle at 75% 40%, transparent 0 28px, rgba(61,92,255,.75) 30px 33px, rgba(215,57,255,.72) 35px 38px, transparent 40px),
+    radial-gradient(circle at 22% 100%, rgba(23,104,156,.54), transparent 42%),
+    linear-gradient(115deg, #041627 0%, #072640 42%, #15175a 75%, #07182a 100%);
+}
+.vox-reference-community-cover::after {
+  content: "";
+  position: absolute;
+  inset: auto -10% -21px 20%;
+  height: 55px;
+  background: linear-gradient(155deg, transparent 0 15%, rgba(16,66,101,.9) 16% 28%, transparent 29% 38%, rgba(31,51,103,.9) 39% 55%, transparent 56%);
+  filter: drop-shadow(0 -7px 12px rgba(43,117,255,.22));
+}
+.vox-reference-community-title-row {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 9px;
+  margin-top: -1px;
+  border: 1px solid rgba(36,210,255,.35);
+  border-top: 0;
+  background: rgba(4,24,39,.96);
+}
+.vox-reference-community-mark {
+  width: 45px;
+  height: 45px;
+  margin-top: -27px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  color: var(--ref-cyan);
+  font-weight: 800;
+  border: 2px solid rgba(31,226,255,.65);
+  background: #052037;
+  clip-path: polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%);
+  box-shadow: 0 0 15px rgba(25,225,255,.28);
+}
+.vox-reference-community-mark img { width: 100%; height: 100%; object-fit: cover; }
+.vox-reference-community-title-row strong { display: block; color: #eef9ff; font-size: 16px; }
+.vox-reference-community-title-row span { display: block; margin-top: 2px; color: #86a6bb; font-size: 11px; }
+
+.vox-reference-server-menu { padding: 8px 10px 5px; display: grid; gap: 3px; }
+.vox-reference-server-menu button {
+  height: 33px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #a0bbcc;
+  background: transparent;
+  font-size: 12px;
+  text-align: left;
+}
+.vox-reference-server-menu button svg { width: 16px; height: 16px; }
+.vox-reference-server-menu button:hover,
+.vox-reference-server-menu button.active {
+  color: #e7f8ff;
+  border-color: rgba(20,224,255,.72);
+  background: linear-gradient(90deg, rgba(0,176,225,.2), rgba(0,95,135,.17));
+  box-shadow: inset 0 0 15px rgba(15,216,255,.08), 0 0 9px rgba(0,203,255,.06);
+}
+.vox-reference-section-label {
+  padding: 8px 15px 5px;
+  color: #54cbe9;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+}
+
+/* Remove the old duplicate ChannelSidebar header + sync strip. */
+.vox-reference-channel-wrap > div > div:first-child { display: none !important; }
+.vox-reference-channel-wrap > div > div:last-of-type:not(.hud-scrollbar) { display: none !important; }
+.vox-reference-channel-wrap .hud-scrollbar { padding: 2px 9px 8px !important; }
+.vox-reference-channel-wrap .space-y-5 { gap: 12px; }
+.vox-reference-channel-wrap .sector-node {
+  min-height: 31px;
+  padding: 6px 10px !important;
+  border-radius: 4px !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-channel-wrap .sector-node.active {
+  border-color: rgba(16,220,255,.78) !important;
+  background: linear-gradient(90deg, rgba(0,167,216,.22), rgba(0,98,133,.18)) !important;
+  box-shadow: inset 0 0 18px rgba(10,198,241,.08);
+}
+
+.vox-reference-self-wrap {
+  margin: 0 9px 9px;
+  border: 1px solid rgba(43,204,244,.32);
+  clip-path: polygon(0 0,calc(100% - 15px) 0,100% 15px,100% 100%,0 100%);
+  background: rgba(4,22,38,.95);
+}
+.vox-reference-self-wrap > div { border: 0 !important; }
+
+/* Center channel panel */
+.vox-reference-center > .flex-1,
+.vox-reference-center > .vox-ref-chat-stage { height: 100%; }
+
+.vox-ref-chat-stage {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 80% 75%, rgba(24,111,160,.045), transparent 35%),
+    linear-gradient(180deg, rgba(2,17,29,.35), rgba(1,13,23,.08));
+}
+.vox-ref-chat-stage > .flex-1 { min-height: 0; }
+
+.vox-reference-center .h-14 {
+  height: 58px !important;
+  padding-inline: 20px !important;
+  border-bottom-color: rgba(44,207,250,.3) !important;
+  background: linear-gradient(90deg, rgba(4,25,40,.92), rgba(5,32,49,.7));
+}
+.vox-reference-center .h-14 > span.font-display {
+  color: #edf8ff !important;
+  font-size: 16px !important;
+  text-transform: none !important;
+  letter-spacing: .02em !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+}
+.vox-reference-center .h-14 > span.font-display::before {
+  content: "#";
+  margin-right: 12px;
+  color: #7fa8bd;
+}
+
+.vox-ref-welcome-banner {
+  position: relative;
+  min-height: 150px;
+  margin: 16px 18px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42%;
+  overflow: hidden;
+  border: 1px solid rgba(49,219,255,.56);
+  clip-path: polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+  background:
+    linear-gradient(90deg, rgba(5,34,51,.98), rgba(5,27,48,.96) 50%, rgba(18,20,68,.94));
+  box-shadow: inset 0 0 35px rgba(29,210,255,.06), 0 0 18px rgba(0,205,255,.05);
+}
+.vox-ref-welcome-banner::before,
+.vox-ref-welcome-banner::after {
+  content: "";
+  position: absolute;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ref-cyan));
+  box-shadow: 0 0 8px rgba(22,220,255,.85);
+}
+.vox-ref-welcome-banner::before { left: 0; top: 0; }
+.vox-ref-welcome-banner::after { right: 0; bottom: 0; transform: rotate(180deg); }
+.vox-ref-welcome-copy { position: relative; z-index: 2; padding: 14px 18px 13px; }
+.vox-ref-welcome-eyebrow { display: flex; align-items: center; gap: 8px; color: #63cfe7; font-size: 10px; letter-spacing: .12em; }
+.vox-ref-welcome-mark {
+  width: 27px; height: 27px; display: grid; place-items: center;
+  font-size: 9px; font-weight: 800; color: var(--ref-cyan);
+  border: 1px solid rgba(37,221,255,.6); background: rgba(4,34,51,.9);
+  clip-path: polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%);
+}
+.vox-ref-app-pill { padding: 1px 4px; border-radius: 3px; background: #28b9e5; color: #041522; font-size: 8px; font-weight: 900; }
+.vox-ref-welcome-time { color: #829eb2; letter-spacing: 0; }
+.vox-ref-welcome-copy h2 { margin: 4px 0 2px; color: #fff; font-size: 16px; font-weight: 750; }
+.vox-ref-welcome-copy p { margin: 0; color: #a8c2d3; font-size: 11px; line-height: 1.45; }
+.vox-ref-welcome-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 11px; }
+.vox-ref-welcome-actions button {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  color: #c8eaf8;
+  font-size: 10px;
+  border: 1px solid rgba(78,156,221,.52);
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(12,55,82,.85), rgba(7,34,54,.88));
+}
+.vox-ref-welcome-actions button svg { width: 12px; height: 12px; }
+.vox-ref-welcome-actions button.primary { color: #7ff4ff; border-color: rgba(22,225,255,.72); background: linear-gradient(180deg, rgba(0,118,154,.85), rgba(0,68,96,.9)); }
+.vox-ref-welcome-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.vox-ref-welcome-visual { position: relative; min-height: 150px; overflow: hidden; }
+.vox-ref-welcome-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 52% 31%, rgba(32,230,255,.75) 0 1px, transparent 2px),
+    radial-gradient(circle at 67% 20%, rgba(150,91,255,.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 35% 26%, rgba(255,255,255,.8) 0 1px, transparent 1.5px),
+    linear-gradient(145deg, #0b1f3c, #10164c 52%, #2b165e 100%);
+}
+.vox-ref-portal {
+  position: absolute;
+  left: 33%; top: 19%; width: 72px; height: 72px; border-radius: 50%;
+  border: 4px solid rgba(65,119,255,.95);
+  box-shadow: 0 0 12px rgba(72,117,255,.9), 0 0 28px rgba(195,65,255,.55), inset 0 0 11px rgba(68,213,255,.75);
+  transform: rotate(-12deg);
+  z-index: 2;
+}
+.vox-ref-mountains {
+  position: absolute;
+  left: -10%; right: -4%; bottom: -5px; height: 68px;
+  background: linear-gradient(155deg, transparent 0 23%, #0b2140 24% 36%, transparent 37% 44%, #102353 45% 58%, transparent 59% 64%, #09182d 65%);
+  filter: drop-shadow(0 -7px 9px rgba(37,89,255,.28));
+  z-index: 3;
+}
+.vox-ref-welcome-motto { position: absolute; z-index: 4; right: 19px; top: 24px; color: #8ecdf0; font-size: 9px; line-height: 1.8; letter-spacing: .33em; }
+
+.vox-reference-center .hud-scrollbar { padding-top: 14px !important; }
+.vox-reference-center .perf-row { padding-block: 1px; }
+.vox-reference-center .rank-ring { width: 43px; height: 43px; }
+.vox-reference-center .rank-inner { width: 39px !important; height: 39px !important; }
+.vox-reference-center .composer-pod {
+  margin: 14px 17px 16px !important;
+  padding: 11px 12px 10px !important;
+  border-color: rgba(28,221,255,.55) !important;
+  background: linear-gradient(180deg, rgba(4,30,47,.97), rgba(3,20,34,.96)) !important;
+}
+.vox-reference-center textarea { font-size: 12px !important; }
+
+/* Right column closer to the reference cards. */
+.vox-reference-right-stack { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 0; }
+.vox-reference-info-card,
+.vox-reference-members-card {
+  margin: 0;
+  border: 1px solid rgba(51,191,241,.38);
+  background: linear-gradient(180deg, rgba(6,31,49,.95), rgba(4,22,38,.95));
+  clip-path: polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+}
+.vox-reference-info-card { padding: 13px 14px; }
+.vox-reference-card-kicker {
+  color: #55cfea;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+.vox-reference-card-kicker::before { content: "⌁  "; color: #1ecff4; }
+.vox-reference-info-card h3 { margin: 0 0 4px; color: #eef9ff; font-size: 16px; }
+.vox-reference-info-card p { margin: 0; color: #94afc2; font-size: 11px; line-height: 1.45; }
+.vox-reference-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 13px; }
+.vox-reference-stat-row > span { display: grid; grid-template-columns: 16px 1fr; column-gap: 5px; align-items: center; }
+.vox-reference-stat-row svg { width: 14px; height: 14px; color: #27d9ff; }
+.vox-reference-stat-row b { font-size: 12px; color: #e7f7ff; }
+.vox-reference-stat-row small { grid-column: 2; color: #6f93aa; font-size: 8px; }
+.vox-reference-online-dot { width: 8px; height: 8px; border-radius: 50%; background: #25e4a4; box-shadow: 0 0 8px rgba(37,228,164,.55); }
+.vox-reference-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.vox-reference-tags span { padding: 4px 7px; border: 1px solid rgba(40,205,247,.52); border-radius: 3px; color: #67dff6; background: rgba(0,111,146,.12); font-size: 8px; }
+.vox-reference-event-card { padding-bottom: 10px; }
+.vox-reference-event-row { display: flex; align-items: center; gap: 10px; padding: 9px; border: 1px solid rgba(89,117,232,.42); background: linear-gradient(90deg, rgba(70,41,139,.34), rgba(5,40,61,.35)); }
+.vox-reference-event-icon { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(126,75,255,.55); background: rgba(87,44,151,.42); clip-path: polygon(20% 0,80% 0,100% 20%,100% 80%,80% 100%,20% 100%,0 80%,0 20%); }
+.vox-reference-event-row strong { display: block; color: #eaf6ff; font-size: 12px; }
+.vox-reference-event-row span { display: block; margin-top: 2px; color: #6db8d4; font-size: 9px; }
+.vox-reference-event-row button { flex: 0 0 auto; height: 29px; padding: 0 10px; border: 1px solid rgba(18,223,255,.68); border-radius: 3px; color: #9af3ff; background: rgba(0,126,166,.36); font-size: 8px; font-weight: 750; text-transform: uppercase; }
+
+.vox-reference-members-card { min-height: 0; flex: 1; padding: 12px 10px; overflow: auto; }
+.vox-ref-active-members { display: grid; gap: 3px; }
+.vox-ref-active-member {
+  width: 100%;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 6px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.vox-ref-active-member:hover { border-left-color: var(--ref-cyan); background: rgba(20,186,226,.055); }
+.vox-ref-member-avatar { position: relative; width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; overflow: visible; border: 2px solid rgba(53,221,255,.65); border-radius: 50%; background: #092236; color: #daf9ff; font-size: 9px; font-weight: 800; box-shadow: 0 0 9px rgba(30,223,255,.17); }
+.vox-ref-member-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.vox-ref-member-avatar i { position: absolute; right: -1px; bottom: 0; width: 9px; height: 9px; border-radius: 50%; border: 2px solid #041623; }
+.vox-ref-member-avatar i.status-online { background: #28e7a3; }
+.vox-ref-member-avatar i.status-idle { background: #efb72f; }
+.vox-ref-member-avatar i.status-dnd { background: #ff556b; }
+.vox-ref-member-avatar i.status-offline { background: #61798a; }
+.vox-ref-member-copy { min-width: 0; flex: 1; }
+.vox-ref-member-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.vox-ref-member-line strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4ae6f9; font-size: 11px; }
+.vox-ref-member-line em { flex: 0 0 auto; padding: 1px 5px; border: 1px solid currentColor; border-radius: 99px; color: #b0d83e; font-size: 7px; font-style: normal; }
+.vox-ref-member-line svg { width: 11px; height: 11px; color: #5fcbef; }
+.vox-ref-member-copy small { display: block; margin-top: 1px; color: #6f92a9; font-size: 9px; }
+.vox-ref-member-message { width: 13px; height: 13px; color: #6f98b0; opacity: 0; transition: .15s ease; }
+.vox-ref-active-member:hover .vox-ref-member-message { opacity: 1; }
+.vox-ref-active-empty { padding: 20px 8px; color: #6f92a9; font-size: 10px; text-align: center; }
+
+.vox-ref-right-section-title { display: flex; align-items: center; justify-content: space-between; padding: 0 3px 7px; color: #53cfe9; font-size: 9px; letter-spacing: .22em; text-transform: uppercase; }
+.vox-ref-right-section-title button { border: 0; background: transparent; color: #4ebbd5; font-size: 8px; letter-spacing: 0; text-transform: none; }
+
+.vox-reference-footer-mark {
+  margin: auto 2px 0;
+  padding: 10px 3px 1px;
+  color: #5a9db8;
+  font-size: 8px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(54,181,225,.18);
+}
+
+.vox-reference-clock {
+  position: absolute;
+  right: 17px;
+  bottom: 15px;
+  z-index: 22;
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  color: #9bc6dd;
+  font-size: 9px;
+  letter-spacing: .05em;
+  pointer-events: none;
+  text-shadow: 0 0 8px rgba(55,189,255,.18);
+}
+
+@media (max-width: 1500px) {
+  .vox-reference-topbar { grid-template-columns: 300px minmax(510px,1fr) 360px; }
+  .vox-reference-nav button { min-width: 86px; }
+  .vox-reference-workspace { grid-template-columns: 80px 268px minmax(0,1fr) 294px; }
+  .vox-ref-welcome-banner { grid-template-columns: minmax(0,1fr) 36%; }
+  .vox-ref-welcome-copy p:nth-of-type(2) { display: none; }
+}
+
+@media (max-width: 1180px) {
+  .vox-ref-welcome-banner { grid-template-columns: 1fr; min-height: 133px; }
+  .vox-ref-welcome-visual { position: absolute; inset: 0 0 0 58%; opacity: .55; }
+  .vox-ref-welcome-copy { max-width: 74%; }
+}
