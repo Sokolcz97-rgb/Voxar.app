@@ -46,12 +46,18 @@ export function CommunitySidebarPanel({
   onBoosts,
 }: Props) {
   return (
-    <div className="sv-sidebar-shell">
-      <section className="sv-community-hero" aria-label={`Komunita ${guild.name}`}>
+    <div className="sv-sidebar-shell sv-sidebar-shell-v3">
+      <div className="sv-sidebar-slogan">„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“</div>
+
+      <section className="sv-community-hero sv-community-hero-v3" aria-label={`Komunita ${guild.name}`}>
         <div className="sv-community-hero-art" aria-hidden="true">
+          <div className="sv-community-hero-stars" />
+          <div className="sv-community-hero-glow" />
           <div className="sv-community-hero-orbit" />
-          <div className="sv-community-hero-ridge" />
+          <div className="sv-community-hero-ridge sv-community-hero-ridge-back" />
+          <div className="sv-community-hero-ridge sv-community-hero-ridge-front" />
         </div>
+
         <div className="sv-community-identity">
           <div className="sv-community-logo">
             {guild.icon_url
