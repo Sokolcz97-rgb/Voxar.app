@@ -1,7 +1,7 @@
-version: 0.0.16
+version: 0.0.17
 files:
-  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.16/StudioVoxarioSetup-0.0.16.exe
-    sha512: 3OoE7eNyv2fAo+ejyQ9D0u0K2Ba3VnNIIm9knGKfZALND8SZJMWnBo2QdWcY/xVjnY9P1xyzo6CzpWilS4sHQw==
-path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.16/StudioVoxarioSetup-0.0.16.exe
-sha512: 3OoE7eNyv2fAo+ejyQ9D0u0K2Ba3VnNIIm9knGKfZALND8SZJMWnBo2QdWcY/xVjnY9P1xyzo6CzpWilS4sHQw==
-releaseDate: '2026-09-05T17:39:17.060Z'
+  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.17/StudioVoxarioSetup-0.0.17.exe
+    sha512: MOY7uw2736m/kLJ1u0xwIQZB7wC6GuNXdfz1LFTQwNM5C7nVamQ0lbgvbNpyQX3TwWHNUEfDodZLcqmqDVC/YQ==
+path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.17/StudioVoxarioSetup-0.0.17.exe
+sha512: MOY7uw2736m/kLJ1u0xwIQZB7wC6GuNXdfz1LFTQwNM5C7nVamQ0lbgvbNpyQX3TwWHNUEfDodZLcqmqDVC/YQ==
+releaseDate: '2026-09-05T17:51:02.852Z'
