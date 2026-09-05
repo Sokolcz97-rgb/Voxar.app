@@ -90,7 +90,8 @@
       "differentialPackage": false,
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
-      "uninstallDisplayName": "StudioVoxario (Voxar.app)"
+      "uninstallDisplayName": "StudioVoxario (Voxar.app)",
+      "include": "assets/installer.nsh"
     }
   }
 }
