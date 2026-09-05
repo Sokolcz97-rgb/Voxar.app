@@ -1,0 +1,472 @@
+/* Pass 6 — intentionally visible changes against the supplied StudioVoxario reference. */
+
+.vox-reference-shell {
+  --p6-cyan: #31ddff;
+  --p6-line: rgba(49, 221, 255, .38);
+  --p6-panel: rgba(4, 23, 38, .96);
+  --p6-panel-soft: rgba(6, 31, 49, .92);
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* The supplied reference is much less pixel-font heavy. Keep the brand display type,
+   but move the actual app UI to a clean sans face. */
+.vox-reference-workspace .font-display,
+.vox-reference-topbar button,
+.vox-reference-topbar input,
+.vox-reference-right,
+.vox-reference-sidebar {
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+/* Richer space header: real blue planet silhouette + star glow instead of the oversized dark disc. */
+.vox-reference-shell::after {
+  left: 66% !important;
+  top: -172px !important;
+  width: 330px !important;
+  height: 330px !important;
+  opacity: .96 !important;
+  border-radius: 50% !important;
+  background:
+    radial-gradient(circle at 37% 31%, rgba(170, 239, 255, .95) 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 41%, rgba(52, 183, 231, .72), rgba(16, 91, 134, .78) 24%, #0a3653 45%, #061d32 64%, rgba(2, 10, 20, 0) 66%) !important;
+  box-shadow: 0 0 64px rgba(39, 195, 255, .28), inset -24px -18px 36px rgba(2, 9, 25, .62) !important;
+  filter: saturate(1.15) !important;
+}
+
+.vox-reference-topbar {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: 280px minmax(520px, 1fr) 330px !important;
+  background:
+    radial-gradient(circle at 70% 18%, rgba(72, 202, 255, .16) 0 1px, transparent 2px),
+    radial-gradient(circle at 83% 30%, rgba(110, 74, 255, .14), transparent 28%),
+    linear-gradient(90deg, rgba(2, 18, 31, .985), rgba(3, 23, 40, .93) 58%, rgba(9, 18, 43, .96)) !important;
+}
+
+.vox-reference-topbar::before {
+  display: none !important;
+}
+
+.vox-reference-topbar::after {
+  right: -28px !important;
+  top: -22px !important;
+  width: 360px !important;
+  height: 150px !important;
+  opacity: .72 !important;
+  background:
+    linear-gradient(132deg, transparent 0 30%, rgba(46, 74, 171, .34) 31% 42%, transparent 43% 48%, rgba(132, 61, 255, .42) 49% 58%, transparent 59% 66%, rgba(23, 162, 228, .26) 67% 73%, transparent 74%) !important;
+  filter: drop-shadow(0 0 18px rgba(119, 76, 255, .24));
+}
+
+.vox-reference-brand {
+  padding-left: 28px !important;
+}
+
+.vox-reference-brand img {
+  width: 46px !important;
+  height: 46px !important;
+  filter: drop-shadow(0 0 10px rgba(38, 221, 255, .32));
+}
+
+.vox-reference-brand-copy strong {
+  font-size: 20px !important;
+  letter-spacing: .29em !important;
+}
+
+.vox-reference-brand-copy span {
+  letter-spacing: .42em !important;
+}
+
+.vox-reference-nav button {
+  min-width: 86px !important;
+  padding-inline: 13px !important;
+}
+
+/* Match the reference proportions at the user's actual desktop window size.
+   Current sidebar was too wide and squeezed the conversation. */
+.vox-reference-workspace {
+  grid-template-columns: 78px 246px minmax(0, 1fr) 282px !important;
+  gap: 9px !important;
+  padding: 9px 9px 11px !important;
+}
+
+@media (min-width: 1540px) {
+  .vox-reference-workspace {
+    grid-template-columns: 88px 288px minmax(0, 1fr) 320px !important;
+    gap: 10px !important;
+    padding-inline: 11px !important;
+  }
+}
+
+.vox-reference-rail,
+.vox-reference-sidebar,
+.vox-reference-center,
+.vox-reference-right {
+  border-color: rgba(41, 208, 247, .36) !important;
+  background:
+    linear-gradient(180deg, rgba(4, 25, 42, .965), rgba(2, 15, 27, .985)),
+    radial-gradient(circle at 32% 0%, rgba(0, 192, 255, .065), transparent 42%) !important;
+  box-shadow: inset 0 0 28px rgba(0, 174, 228, .018) !important;
+}
+
+/* Left community card closer to the tall scenic reference card. */
+.vox-reference-community-card {
+  padding: 10px 10px 0 !important;
+}
+
+.vox-reference-community-cover {
+  height: 102px !important;
+  background:
+    radial-gradient(circle at 73% 39%, transparent 0 28px, rgba(52, 102, 255, .82) 30px 34px, rgba(205, 52, 255, .75) 36px 39px, transparent 41px),
+    radial-gradient(circle at 18% 98%, rgba(17, 114, 170, .64), transparent 42%),
+    linear-gradient(135deg, #06192c 0%, #0a3550 43%, #17175d 74%, #07162a 100%) !important;
+}
+
+.vox-reference-community-cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 26%, rgba(105, 221, 255, .56) 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 18%, rgba(105, 221, 255, .38) 0 1px, transparent 2px),
+    radial-gradient(circle at 86% 22%, rgba(181, 130, 255, .45) 0 1px, transparent 2px);
+  pointer-events: none;
+}
+
+.vox-reference-community-title-row {
+  min-height: 68px !important;
+}
+
+.vox-reference-server-menu {
+  padding-top: 11px !important;
+  gap: 5px !important;
+}
+
+.vox-reference-server-menu button {
+  height: 36px !important;
+  font-size: 13px !important;
+}
+
+.vox-reference-channel-wrap .sector-node {
+  min-height: 36px !important;
+  padding: 7px 11px !important;
+  font-size: 13px !important;
+}
+
+.vox-reference-channel-wrap .sector-node.active {
+  background: linear-gradient(90deg, rgba(0, 184, 235, .24), rgba(0, 90, 126, .22)) !important;
+  box-shadow: inset 3px 0 0 #45e5ff, inset 0 0 18px rgba(9, 207, 246, .10), 0 0 8px rgba(0, 204, 255, .05) !important;
+}
+
+/* Hard reset of the chat header layout. The previous layered CSS still allowed the topic
+   to sit under the title. This uses a simple positioned title/topic block so they cannot overlap. */
+.vox-reference-center .vox-chat-header {
+  height: 68px !important;
+  min-height: 68px !important;
+  padding: 0 16px 0 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  background: linear-gradient(90deg, rgba(5, 31, 48, .97), rgba(5, 29, 47, .78)) !important;
+  border-bottom: 1px solid rgba(47, 214, 252, .38) !important;
+}
+
+.vox-reference-center .vox-chat-header-copy {
+  position: relative !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+  height: 40px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 2px 0 0 30px !important;
+  overflow: hidden !important;
+}
+
+.vox-reference-center .vox-chat-header-copy > svg,
+.vox-reference-center .vox-chat-header-copy > .vox-chat-emoji {
+  position: absolute !important;
+  left: 1px !important;
+  top: 11px !important;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+  color: #eafaff !important;
+}
+
+.vox-reference-center .vox-chat-header-name {
+  display: block !important;
+  height: 20px !important;
+  line-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #f0fbff !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.vox-reference-center .vox-chat-header-topic {
+  display: block !important;
+  height: 16px !important;
+  line-height: 14px !important;
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+  max-width: 68ch !important;
+  color: #8eafc2 !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.vox-reference-center .vox-chat-header-tools {
+  flex: 0 0 auto !important;
+  margin-left: 14px !important;
+  gap: 7px !important;
+}
+
+.vox-reference-center .vox-chat-online {
+  height: 31px !important;
+  font-size: 10px !important;
+}
+
+.vox-reference-center .vox-chat-header-tool {
+  width: 31px !important;
+  height: 31px !important;
+}
+
+/* Welcome panel: larger and more scenic, with a brighter portal and layered mountain silhouettes. */
+.vox-ref-welcome-banner {
+  min-height: 164px !important;
+  margin: 16px 16px 9px !important;
+  grid-template-columns: minmax(0, 1fr) 43% !important;
+  border-color: rgba(48, 224, 255, .64) !important;
+  background: linear-gradient(90deg, rgba(5, 35, 53, .99), rgba(5, 28, 49, .98) 52%, rgba(18, 20, 68, .98)) !important;
+  box-shadow: inset 0 0 42px rgba(34, 210, 255, .07), 0 0 15px rgba(0, 211, 255, .08) !important;
+}
+
+.vox-ref-welcome-copy {
+  padding: 15px 18px 14px !important;
+}
+
+.vox-ref-welcome-copy h2 {
+  margin-top: 6px !important;
+  font-size: 19px !important;
+  line-height: 1.05 !important;
+}
+
+.vox-ref-welcome-copy p {
+  font-size: 11.5px !important;
+  line-height: 1.48 !important;
+}
+
+.vox-ref-welcome-actions button {
+  height: 32px !important;
+  padding-inline: 13px !important;
+  font-size: 10.5px !important;
+}
+
+.vox-ref-welcome-visual {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 47% 36%, rgba(104, 237, 255, .32) 0 2px, transparent 3px),
+    linear-gradient(155deg, #0d164f 0%, #17185f 42%, #0a2545 100%) !important;
+}
+
+.vox-ref-portal {
+  position: absolute !important;
+  width: 92px !important;
+  height: 92px !important;
+  left: 30% !important;
+  top: 26px !important;
+  border-radius: 50% !important;
+  border: 5px solid rgba(91, 111, 255, .9) !important;
+  box-shadow: 0 0 9px #72efff, 0 0 24px rgba(108, 58, 255, .88), inset 0 0 22px rgba(8, 26, 58, .92) !important;
+  background: radial-gradient(circle at 55% 55%, #06213b 0 52%, #071529 64%, transparent 66%) !important;
+}
+
+.vox-ref-mountains {
+  position: absolute !important;
+  left: -8% !important;
+  right: -10% !important;
+  bottom: -6px !important;
+  height: 76px !important;
+  background:
+    linear-gradient(151deg, transparent 0 17%, #122a61 18% 30%, transparent 31% 38%, #17336f 39% 54%, transparent 55% 62%, #0d2754 63% 77%, transparent 78%),
+    linear-gradient(170deg, transparent 0 39%, rgba(17, 51, 102, .96) 40% 59%, transparent 60%) !important;
+  filter: drop-shadow(0 -8px 12px rgba(64, 76, 255, .22));
+}
+
+.vox-ref-welcome-motto {
+  right: 19px !important;
+  top: 24px !important;
+  color: #a9d6ff !important;
+  font-size: 9px !important;
+  line-height: 1.85 !important;
+  letter-spacing: .34em !important;
+}
+
+/* Messages were visibly too small/sparse. Increase avatar scale and body readability like the reference. */
+.vox-reference-center .hud-scrollbar {
+  padding: 10px 18px 8px !important;
+}
+
+.vox-reference-center .hud-scrollbar .perf-row {
+  gap: 12px !important;
+  padding: 8px 3px 10px !important;
+  min-height: 54px !important;
+}
+
+.vox-reference-center .perf-row > .rank-ring {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-center .perf-row .font-sans.font-semibold.text-sm {
+  font-size: 14px !important;
+}
+
+.vox-reference-center .perf-row .font-sans.text-\[15px\] {
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+}
+
+/* Composer is one of the signature pieces of the reference, make it visibly larger and more polished. */
+.vox-reference-center .composer-pod.vox-composer-reference {
+  margin: 9px 16px 14px !important;
+  padding: 9px 11px 8px !important;
+  border-color: rgba(43, 219, 255, .48) !important;
+  background: linear-gradient(180deg, rgba(4, 31, 49, .985), rgba(3, 20, 34, .99)) !important;
+}
+
+.vox-reference-center .vox-composer-attach,
+.vox-reference-center .vox-composer-send,
+.vox-reference-center .vox-composer-input {
+  height: 52px !important;
+}
+
+.vox-reference-center .vox-composer-input textarea {
+  font-size: 12.5px !important;
+}
+
+.vox-reference-center .vox-composer-actions {
+  min-height: 30px !important;
+  margin-top: 7px !important;
+  padding-left: 45px !important;
+}
+
+.vox-reference-center .vox-composer-action {
+  height: 27px !important;
+  padding-inline: 10px !important;
+  border-color: rgba(43, 189, 226, .30) !important;
+  background: rgba(4, 31, 47, .68) !important;
+}
+
+/* Right column in the original reference is denser and more luminous. */
+.vox-reference-right-stack {
+  gap: 10px !important;
+}
+
+.vox-reference-info-card,
+.vox-reference-members-card {
+  border-color: rgba(44, 209, 249, .42) !important;
+  background:
+    linear-gradient(180deg, rgba(6, 31, 50, .96), rgba(4, 23, 39, .96)),
+    radial-gradient(circle at 95% 0%, rgba(77, 71, 255, .06), transparent 45%) !important;
+  box-shadow: inset 0 0 25px rgba(0, 183, 229, .025) !important;
+}
+
+.vox-reference-info-card {
+  padding: 16px 14px !important;
+}
+
+.vox-reference-info-card h3 {
+  font-size: 18px !important;
+  margin-top: 6px !important;
+}
+
+.vox-reference-info-card p {
+  font-size: 11px !important;
+  line-height: 1.48 !important;
+}
+
+.vox-reference-stat-row {
+  margin-top: 13px !important;
+  padding-top: 10px !important;
+}
+
+.vox-reference-tags {
+  margin-top: 12px !important;
+  gap: 6px !important;
+}
+
+.vox-reference-tags span {
+  height: 25px !important;
+  padding-inline: 8px !important;
+}
+
+/* Settings: less empty, more intentional card hierarchy. */
+.vox-reference-shell .hud-settings {
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif !important;
+  background:
+    radial-gradient(circle at 76% 18%, rgba(20, 102, 150, .07), transparent 34%),
+    linear-gradient(180deg, rgba(2, 17, 29, .38), rgba(1, 13, 23, .14)) !important;
+}
+
+.vox-reference-shell .hud-settings > aside {
+  width: 238px !important;
+  background: linear-gradient(180deg, rgba(3, 22, 36, .95), rgba(2, 16, 28, .96)) !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav button {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  font-size: 12.5px !important;
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div {
+  max-width: 980px !important;
+  padding: 27px 38px 42px !important;
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div > .space-y-5 {
+  max-width: 790px !important;
+  padding: 24px 25px 25px !important;
+  border-color: rgba(44, 204, 242, .28) !important;
+  background: linear-gradient(180deg, rgba(5, 31, 49, .82), rgba(3, 21, 35, .60)) !important;
+  box-shadow: inset 0 0 32px rgba(0, 178, 224, .025) !important;
+}
+
+.vox-reference-shell .hud-settings h1 {
+  font-size: 23px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.vox-reference-shell .hud-settings label {
+  font-size: 12px !important;
+  color: #b8d0dd !important;
+}
+
+.vox-reference-shell .hud-settings input,
+.vox-reference-shell .hud-settings textarea {
+  min-height: 40px;
+  font-size: 13px !important;
+  border-radius: 4px !important;
+}
+
+/* Small desktop fallback. */
+@media (max-width: 1180px) {
+  .vox-reference-workspace {
+    grid-template-columns: 72px 222px minmax(0, 1fr) 250px !important;
+  }
+  .vox-reference-center .vox-chat-header-topic { max-width: 44ch !important; }
+  .vox-reference-center .vox-chat-online { display: none !important; }
+  .vox-composer-enter { display: none !important; }
+}
