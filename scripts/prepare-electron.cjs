@@ -192,6 +192,98 @@ function patchDurableModuleState() {
   console.log("Stav VoxarioBrowser modulu bude ukládán do instalace i userData.");
 }
 
+// StudioVoxario Hub je součást desktopového rendereru a nesmí být přepsán
+// zastaralým /launcher deployem z webu. Ostatní části Voxar.app nadále mohou
+// používat online UI s lokálním fallbackem, ale HUB vždy načteme z balíčku.
+function patchDesktopHubToBundledRenderer() {
+  if (!fs.existsSync(mainProcess)) {
+    throw new Error("Chybí electron/main.cjs — StudioVoxario Hub nelze připravit.");
+  }
+
+  let main = fs.readFileSync(mainProcess, "utf8").replace(/\r\n/g, "\n");
+  const marker = "STUDIO_HUB_LOCAL_RENDERER_V1";
+  if (main.includes(marker)) {
+    console.log("StudioVoxario Hub už používá lokální desktop renderer.");
+    return;
+  }
+
+  const oldBlock = `async function loadMainTarget(targetUrl) {
+  try {
+    await mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\\nCache-Control: no-cache\\n" });
+    return true;
+  } catch (remoteError) {
+    console.error("Online UI se nenačetlo, zkouším lokální renderer", remoteError);
+    if (!fs.existsSync(LOCAL_RENDERER)) {
+      await showRendererFailure(targetUrl, remoteError, new Error("dist/index.html není součástí balíčku"));
+      return false;
+    }
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (localError) {
+      await showRendererFailure(targetUrl, remoteError, localError);
+      return false;
+    }
+  }
+}`;
+
+  const newBlock = `async function loadMainTarget(targetUrl) {
+  // ${marker}: HUB načítáme vždy z verze zabalené v desktop aktualizaci.
+  // Tím webový deploy/cache nemůže vrátit starý dvojitý výběr modulů.
+  if (targetUrl === HUB_URL) {
+    if (!fs.existsSync(LOCAL_RENDERER)) {
+      await showRendererFailure(
+        targetUrl,
+        new Error("StudioVoxario Hub používá zabalený desktop renderer"),
+        new Error("dist/index.html není součástí balíčku")
+      );
+      return false;
+    }
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (localError) {
+      await showRendererFailure(
+        targetUrl,
+        new Error("StudioVoxario Hub používá zabalený desktop renderer"),
+        localError
+      );
+      return false;
+    }
+  }
+
+  try {
+    await mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\\nCache-Control: no-cache\\n" });
+    return true;
+  } catch (remoteError) {
+    console.error("Online UI se nenačetlo, zkouším lokální renderer", remoteError);
+    if (!fs.existsSync(LOCAL_RENDERER)) {
+      await showRendererFailure(targetUrl, remoteError, new Error("dist/index.html není součástí balíčku"));
+      return false;
+    }
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (localError) {
+      await showRendererFailure(targetUrl, remoteError, localError);
+      return false;
+    }
+  }
+}`;
+
+  if (!main.includes(oldBlock)) {
+    throw new Error("Nelze najít loadMainTarget v electron/main.cjs; HUB patch nebyl použit.");
+  }
+
+  main = main.replace(oldBlock, newBlock);
+  fs.writeFileSync(mainProcess, main, "utf8");
+  if (!fs.readFileSync(mainProcess, "utf8").includes(marker)) {
+    throw new Error("StudioVoxario Hub patch se nepodařilo zapsat.");
+  }
+  console.log("StudioVoxario Hub bude v desktopu vždy načten z lokálního rendereru.");
+}
+
 patchNativeBrowserTabs();
 patchDurableModuleState();
+patchDesktopHubToBundledRenderer();
 console.log("Electron renderer připraven v electron/dist");
