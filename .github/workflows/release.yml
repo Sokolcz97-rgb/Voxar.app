@@ -97,18 +97,24 @@ jobs:
             electron/release/*.blockmap
           if-no-files-found: error
 
-      # desktop-version.json je POUZE informativní metadata pro web (download stránka).
-      - name: Update website download metadata
+      # desktop-version.json je metadata pro download stránku.
+      # public/latest.yml + public/beta.yml jsou POUZE migrační bootstrap pro
+      # staré instalace, které ještě používají generic feed studiovoxario.com.
+      - name: Update website download metadata and legacy bootstrap feed
         shell: bash
         run: |
           set -euo pipefail
           node scripts/write-desktop-metadata.cjs "${{ steps.appver.outputs.version }}" "${{ github.repository }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/desktop-version.json src/assets/downloads/windows-installer.asset.json
+          git add \
+            public/desktop-version.json \
+            public/latest.yml \
+            public/beta.yml \
+            src/assets/downloads/windows-installer.asset.json
           if git diff --cached --quiet; then
             echo "No metadata changes."
           else
-            git commit -m "ci: update desktop download metadata v${{ steps.appver.outputs.version }} [skip ci]"
+            git commit -m "ci: update desktop metadata and legacy feed v${{ steps.appver.outputs.version }} [skip ci]"
             git push
           fi
