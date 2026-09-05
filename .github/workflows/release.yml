@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+    # Web/Lovable UI se v desktopu načítá z živé /app routy. Kvůli CSS/React
+    # změnám proto nevyrábíme nový 200+ MB instalátor a neotravujeme uživatele
+    # falešnou binární aktualizací. Release běží jen při změně desktop runtime.
+    paths:
+      - 'electron/**'
+      - 'installer/**'
+      - 'scripts/verify-release-artifacts.cjs'
+      - 'scripts/write-desktop-metadata.cjs'
+      - '.github/workflows/release.yml'
   workflow_dispatch:
     inputs:
       bump:

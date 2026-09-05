@@ -1,8 +1,10 @@
-// StudioVoxario desktop updater — standard electron-updater integration.
-// No shell helpers and no custom file replacement. electron-updater
-// downloads into its cache, validates checksums from latest.yml/beta.yml, then
-// starts the NSIS installer and quits the app via quitAndInstall().
-const { app, BrowserWindow, ipcMain, Notification } = require("electron");
+// StudioVoxario desktop updater — electron-updater integration.
+//
+// The updater intentionally has one canonical source (electron-builder's
+// app-update.yml / GitHub provider), one explicit download, and one explicit
+// quitAndInstall step. Keeping those phases separate avoids duplicate checks,
+// duplicate downloads and stale "busy" state after a failed update.
+const { app, BrowserWindow, Notification } = require("electron");
 const { autoUpdater } = require("electron-updater");
 
 const path = require("path");
@@ -11,12 +13,7 @@ const https = require("https");
 const http = require("http");
 const pinning = require("./pinning.cjs");
 
-// Kanonický zdroj aktualizací = publish konfigurace z electron-builderu
-// (app-update.yml uvnitř balíčku, provider github → Sokolcz97-rgb/Voxar.app).
-// STUDIOVOXARIO_UPDATE_FEED je jen testovací override na generic feed.
 const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || null;
-// desktop-version.json zůstává jen informativní metadata pro web (download stránka),
-// updater se podle něj nikdy nerozhoduje.
 const LEGACY_MANIFEST_URL = process.env.STUDIOVOXARIO_UPDATE_URL || "https://studiovoxario.com/desktop-version.json";
 const GITHUB_PUBLISH = { provider: "github", owner: "Sokolcz97-rgb", repo: "Voxar.app" };
 
@@ -24,7 +21,6 @@ let checking = false;
 let installing = false;
 let downloadedVersion = null;
 let latestInfo = null;
-let cancellationToken = null;
 let uiBridge = null;
 let pendingAutoInstall = false;
 
@@ -79,8 +75,19 @@ function broadcast(channel, payload) {
 }
 
 function updateProgress(patch) {
-  diagnostics.progress = { ...diagnostics.progress, ...patch, updatedAt: new Date().toISOString() };
+  diagnostics.progress = {
+    ...diagnostics.progress,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
   broadcast("launcher:progress", diagnostics.progress);
+}
+
+function clearOperationState({ keepStatus = false } = {}) {
+  checking = false;
+  installing = false;
+  pendingAutoInstall = false;
+  if (!keepStatus && diagnostics.status === "downloading") diagnostics.status = "idle";
 }
 
 function getDiagnostics() {
@@ -103,11 +110,14 @@ async function notifyUser({ type = "info", title = "StudioVoxario", message, det
       const res = await uiBridge({ kind: "notice", type, title, message, detail });
       if (res && res.ok) return;
     } catch (error) {
-      log(`UI notice selhalo: ${error.message || error}`);
+      log(`UI notice selhalo: ${error?.message || error}`);
     }
   }
+
   if (Notification.isSupported()) {
-    try { new Notification({ title, body: [message, detail].filter(Boolean).join("\n") }).show(); } catch {}
+    try {
+      new Notification({ title, body: [message, detail].filter(Boolean).join("\n") }).show();
+    } catch {}
   }
 }
 
@@ -117,7 +127,7 @@ async function askUser({ title, message, detail, buttons, defaultId = 0, cancelI
       const res = await uiBridge({ kind: "question", title, message, detail, buttons, defaultId, cancelId });
       if (res && typeof res.response === "number") return res.response;
     } catch (error) {
-      log(`UI prompt selhal: ${error.message || error}`);
+      log(`UI prompt selhal: ${error?.message || error}`);
     }
   }
   return cancelId;
@@ -131,18 +141,26 @@ function fetchJson(url, { bustCache = true } = {}) {
       headers: {
         "User-Agent": "StudioVoxario-Desktop",
         "Cache-Control": "no-cache, no-store, max-age=0",
-        "Pragma": "no-cache",
+        Pragma: "no-cache",
       },
     }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        resolve(fetchJson(res.headers.location, { bustCache: false }));
+        try {
+          const redirected = new URL(res.headers.location, finalUrl).toString();
+          res.resume();
+          resolve(fetchJson(redirected, { bustCache: false }));
+        } catch (error) {
+          reject(error);
+        }
         return;
       }
       if (res.statusCode !== 200) {
+        res.resume();
         reject(new Error(`HTTP ${res.statusCode}`));
         return;
       }
       let body = "";
+      res.setEncoding("utf8");
       res.on("data", (chunk) => { body += chunk; });
       res.on("end", () => {
         try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
@@ -163,11 +181,14 @@ function pickLegacyChannel(manifest, channel = "stable") {
 }
 
 async function fetchManifest() {
-  return fetchJson(LEGACY_MANIFEST_URL, { bustCache: true });
+  const manifest = await fetchJson(LEGACY_MANIFEST_URL, { bustCache: true });
+  return pickLegacyChannel(manifest, diagnostics.channel);
 }
 
 function configureUpdater(channel = "stable") {
   const updaterChannel = normalizeChannel(channel);
+
+  // We always call downloadUpdate() ourselves after a successful check.
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoRunAppAfterInstall = true;
@@ -178,9 +199,9 @@ function configureUpdater(channel = "stable") {
   autoUpdater.channel = updaterChannel;
   autoUpdater.requestHeaders = {
     "Cache-Control": "no-cache, no-store, max-age=0",
-    "Pragma": "no-cache",
+    Pragma: "no-cache",
   };
-  // Bez override používáme feed zabalený electron-builderem (app-update.yml).
+
   if (FEED_URL) {
     autoUpdater.setFeedURL({ provider: "generic", url: FEED_URL, channel: updaterChannel });
     diagnostics.feedUrl = FEED_URL;
@@ -190,6 +211,7 @@ function configureUpdater(channel = "stable") {
   } else {
     diagnostics.feedUrl = `github:${GITHUB_PUBLISH.owner}/${GITHUB_PUBLISH.repo} (app-update.yml)`;
   }
+
   diagnostics.channel = publicChannel(channel);
   diagnostics.currentVersion = app.getVersion();
 }
@@ -221,19 +243,40 @@ function toAvailability(updateInfo, channel = "stable") {
   return payload;
 }
 
-async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
+function rememberUpdateInfo(info) {
+  latestInfo = info || null;
+  diagnostics.updateInfo = info || null;
+  diagnostics.remoteVersion = info?.version || null;
+}
+
+async function runCheck(channel) {
   configureUpdater(channel);
   diagnostics.lastCheckAt = new Date().toISOString();
+  diagnostics.lastError = null;
+  const result = await autoUpdater.checkForUpdates();
+  const info = result?.updateInfo || null;
+  rememberUpdateInfo(info);
+  return { result, info, remote: info?.version || null };
+}
+
+async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
+  if (checking || installing) {
+    return {
+      available: diagnostics.status === "available",
+      current: app.getVersion(),
+      remote: diagnostics.remoteVersion,
+      channel: publicChannel(channel),
+      busy: true,
+    };
+  }
+
+  checking = true;
+  diagnostics.status = "checking";
   try {
-    const result = await autoUpdater.checkForUpdates();
-    const info = result?.updateInfo || null;
-    latestInfo = info;
-    diagnostics.updateInfo = info;
-    diagnostics.remoteVersion = info?.version || null;
-    diagnostics.status = info?.version && isNewer(info.version, app.getVersion()) ? "available" : "up-to-date";
+    const { info, remote } = await runCheck(channel);
+    diagnostics.status = remote && isNewer(remote, app.getVersion()) ? "available" : "up-to-date";
     return toAvailability(info, channel);
   } catch (error) {
-    // Žádný záložní feed — jediný kanonický zdroj je electron-updater.
     diagnostics.status = "error";
     diagnostics.lastError = String(error?.message || error);
     log(`Tichá kontrola aktualizací selhala: ${diagnostics.lastError}`);
@@ -246,32 +289,29 @@ async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
     };
     broadcast("update:availability", payload);
     return payload;
+  } finally {
+    checking = false;
   }
 }
 
 async function checkForUpdates({ silent = true, parentWindow = null, channel = "stable" } = {}) {
   if (checking || installing) return { status: "busy" };
   checking = true;
-  configureUpdater(channel);
   diagnostics.status = "checking";
-  diagnostics.lastError = null;
-  diagnostics.lastCheckAt = new Date().toISOString();
   diagnostics.currentVersion = app.getVersion();
-  log(`Kontrola aktualizací přes electron-updater — ${diagnostics.currentVersion} (${publicChannel(channel)})`);
+  log(`Kontrola aktualizací — ${app.getVersion()} (${publicChannel(channel)})`);
 
   try {
-    const result = await autoUpdater.checkForUpdates();
-    const info = result?.updateInfo || null;
-    latestInfo = info;
-    diagnostics.updateInfo = info;
-    diagnostics.remoteVersion = info?.version || null;
-    const remote = info?.version;
-
+    const { info, remote } = await runCheck(channel);
     if (!remote || !isNewer(remote, app.getVersion())) {
       diagnostics.status = "up-to-date";
       toAvailability(info, channel);
       if (!silent) {
-        await notifyUser({ title: "StudioVoxario", message: "Máte nejnovější verzi", detail: `Aktuální verze: ${app.getVersion()}` });
+        await notifyUser({
+          title: "StudioVoxario",
+          message: "Máte nejnovější verzi",
+          detail: `Aktuální verze: ${app.getVersion()}`,
+        });
       }
       return { status: "up-to-date", current: app.getVersion() };
     }
@@ -282,78 +322,99 @@ async function checkForUpdates({ silent = true, parentWindow = null, channel = "
     const shouldDownload = silent ? false : (await askUser({
       title: "Nová verze StudioVoxario",
       message: `Je k dispozici verze ${remote}`,
-      detail: `Aktuální verze: ${app.getVersion()}\nNová verze: ${remote}\n\n${info.releaseNotes || ""}`.trim(),
+      detail: `Aktuální verze: ${app.getVersion()}\nNová verze: ${remote}\n\n${info?.releaseNotes || ""}`.trim(),
       buttons: ["Stáhnout a nainstalovat", "Později"],
       defaultId: 0,
       cancelId: 1,
     })) === 0;
 
     if (!shouldDownload) return { status: silent ? "available" : "postponed", version: remote };
-    return downloadAndInstall({ parentWindow, channel, source: "manual" });
   } catch (error) {
     diagnostics.status = "error";
     diagnostics.lastError = String(error?.message || error);
     log(`Kontrola aktualizací selhala: ${diagnostics.lastError}`);
     if (!silent) {
-      await notifyUser({ type: "error", title: "Aktualizace selhala", message: "Nepodařilo se zkontrolovat aktualizace", detail: diagnostics.lastError });
+      await notifyUser({
+        type: "error",
+        title: "Aktualizace selhala",
+        message: "Nepodařilo se zkontrolovat aktualizace",
+        detail: diagnostics.lastError,
+      });
     }
     return { status: "error", error: diagnostics.lastError };
   } finally {
     checking = false;
   }
+
+  // The check above is complete; downloadAndInstall performs one fresh canonical
+  // check before the explicit download so we never install stale metadata.
+  return downloadAndInstall({ parentWindow, channel, source: "manual" });
 }
 
 async function downloadAndInstall({ parentWindow = null, channel = "stable", source = "manual" } = {}) {
-  if (installing) return { status: "busy" };
+  if (checking || installing) return { status: "busy" };
   installing = true;
-  configureUpdater(channel);
-  autoUpdater.autoDownload = true;
-  diagnostics.status = "downloading";
+  diagnostics.status = "checking";
   diagnostics.lastError = null;
-  cancellationToken = null;
-
-  updateProgress({
-    phase: "download",
-    label: "Stahuji aktualizaci",
-    received: 0,
-    total: 0,
-    pct: 0,
-    speedBps: 0,
-    etaSec: null,
-    canceled: false,
-    startedAt: new Date().toISOString(),
-  });
+  downloadedVersion = null;
+  pendingAutoInstall = false;
 
   try {
-    pendingAutoInstall = true;
-    const result = await autoUpdater.checkForUpdatesAndNotify({
-      title: "StudioVoxario aktualizace připravena",
-      body: "Verze {version} byla stažena a po ukončení aplikace se nainstaluje.",
-    });
-    if (result?.updateInfo) latestInfo = result.updateInfo;
-    const remote = latestInfo?.version || diagnostics.remoteVersion;
+    const { info, remote } = await runCheck(channel);
     if (!remote || !isNewer(remote, app.getVersion())) {
       diagnostics.status = "up-to-date";
       installing = false;
-      pendingAutoInstall = false;
-      return { status: "up-to-date" };
+      toAvailability(info, channel);
+      return { status: "up-to-date", current: app.getVersion() };
     }
 
-    log(`${source}: stahuji verzi ${remote} přes electron-updater cache.`);
-    if (result?.downloadPromise) await result.downloadPromise;
-    downloadedVersion = remote;
+    diagnostics.status = "downloading";
+    pendingAutoInstall = true;
+    toAvailability(info, channel);
+    updateProgress({
+      phase: "download",
+      label: `Stahuji StudioVoxario ${remote}`,
+      received: 0,
+      total: 0,
+      pct: 0,
+      speedBps: 0,
+      etaSec: null,
+      canceled: false,
+      startedAt: new Date().toISOString(),
+    });
+
+    log(`${source}: stahuji verzi ${remote} přes electron-updater.`);
+    await autoUpdater.downloadUpdate();
+
+    // update-downloaded normally fires before this promise resolves and starts
+    // quitAndInstall. Keep a sane state if the event is delayed by the platform.
+    downloadedVersion = downloadedVersion || remote;
+    if (diagnostics.status === "downloading") diagnostics.status = "downloaded";
     return { status: "installing", version: remote };
   } catch (error) {
-    installing = false;
     pendingAutoInstall = false;
+    installing = false;
     const msg = String(error?.message || error);
     const canceled = /cancel/i.test(msg);
     diagnostics.status = canceled ? "canceled" : "error";
     diagnostics.lastError = canceled ? "Zrušeno uživatelem" : msg;
-    updateProgress({ phase: canceled ? "canceled" : "error", label: canceled ? "Zrušeno" : "Chyba", canceled });
+    updateProgress({
+      phase: canceled ? "canceled" : "error",
+      label: canceled ? "Zrušeno" : "Chyba aktualizace",
+      canceled,
+    });
     log(`${source}: aktualizace selhala — ${diagnostics.lastError}`);
+
     if (!canceled) {
-      await notifyUser({ type: "error", title: "Aktualizace selhala", message: "Stažení nebo instalace se nepodařila", detail: msg });
+      const permissionHint = /EACCES|EPERM|access denied|permission|elevation/i.test(msg)
+        ? "Instalace potřebuje oprávnění k přepsání stávající složky. Potvrďte případné okno Windows."
+        : null;
+      await notifyUser({
+        type: "error",
+        title: "Aktualizace selhala",
+        message: "Stažení nebo instalace se nepodařila",
+        detail: [msg, permissionHint].filter(Boolean).join("\n\n"),
+      });
     }
     return { status: canceled ? "canceled" : "error", error: msg };
   }
@@ -364,31 +425,21 @@ function isQuittingForUpdate() {
 }
 
 async function installUpdateFromRenderer({ parentWindow = null, channel = "stable" } = {}) {
-  const availability = await checkForUpdatesQuiet({ channel });
-  if (!availability.available) return { status: "up-to-date" };
   return downloadAndInstall({ parentWindow, channel, source: "renderer" });
 }
 
 async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
-  // Rollback used to call the legacy installer pipeline. To avoid reintroducing
-  // custom file replacement or shell scripts, rollback now delegates to the
-  // standard updater only when the requested version is the current feed target.
   const info = await checkForUpdatesQuiet({ channel: "stable" });
   if (info.available && (!version || info.remote === version)) {
     return downloadAndInstall({ parentWindow, channel: "stable", source: label });
   }
-  log(`${label}: rollback přes custom installer je vypnutý; electron-updater nepodporuje bezpečný downgrade z legacy manifestu.`);
+  log(`${label}: požadovaná verze není aktuální cíl feedu; bezpečný downgrade se neprovádí.`);
   return { status: "unsupported", version, asset };
 }
 
 function cancelActiveDownload() {
-  try {
-    if (cancellationToken && typeof cancellationToken.cancel === "function") {
-      cancellationToken.cancel();
-      updateProgress({ phase: "canceled", label: "Zrušeno", canceled: true });
-      return true;
-    }
-  } catch {}
+  // electron-updater downloadUpdate() in this flow is intentionally atomic.
+  // Returning false tells the UI there is no half-installed state to cancel.
   return false;
 }
 
@@ -406,20 +457,19 @@ function setupEvents() {
   autoUpdater.on("checking-for-update", () => {
     diagnostics.status = "checking";
   });
+
   autoUpdater.on("update-available", (info) => {
-    latestInfo = info;
+    rememberUpdateInfo(info);
     diagnostics.status = "available";
-    diagnostics.updateInfo = info;
-    diagnostics.remoteVersion = info?.version || null;
     toAvailability(info, diagnostics.channel);
   });
+
   autoUpdater.on("update-not-available", (info) => {
-    latestInfo = info;
+    rememberUpdateInfo(info);
     diagnostics.status = "up-to-date";
-    diagnostics.updateInfo = info;
-    diagnostics.remoteVersion = info?.version || null;
     toAvailability(info, diagnostics.channel);
   });
+
   autoUpdater.on("download-progress", (p) => {
     const total = Number(p.total || 0);
     const received = Number(p.transferred || 0);
@@ -430,51 +480,59 @@ function setupEvents() {
       total,
       pct: total > 0 ? received / total : Math.max(0, Math.min(1, Number(p.percent || 0) / 100)),
       speedBps: Number(p.bytesPerSecond || 0),
-      etaSec: total > 0 && p.bytesPerSecond > 0 ? (total - received) / p.bytesPerSecond : null,
+      etaSec: total > 0 && Number(p.bytesPerSecond || 0) > 0 ? (total - received) / Number(p.bytesPerSecond) : null,
     });
   });
+
   autoUpdater.on("update-downloaded", (info) => {
     downloadedVersion = info?.version || latestInfo?.version || null;
     diagnostics.status = "downloaded";
     diagnostics.updateInfo = info;
     log(`Aktualizace stažena: ${downloadedVersion || "neznámá verze"}`);
+
     if (!pendingAutoInstall) return;
     pendingAutoInstall = false;
-    updateProgress({ phase: "installing", label: `Instaluji StudioVoxario ${downloadedVersion || ""}`.trim(), pct: 1 });
+    updateProgress({
+      phase: "installing",
+      label: `Instaluji StudioVoxario ${downloadedVersion || ""}`.trim(),
+      pct: 1,
+    });
+
     if (uiBridge) {
       uiBridge({
         kind: "installing",
         title: "Instaluji aktualizaci",
         message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
-        detail: "Instalace proběhne na pozadí a aplikace se hned poté sama znovu spustí.",
+        detail: "Aplikace se ukončí, aktualizace přepíše stávající instalaci a potom se Voxar.app znovu spustí.",
         version: downloadedVersion,
       }).catch(() => {});
     }
+
     isQuittingForUpdate();
-    // isSilent = true (bez okna instalátoru), isForceRunAfter = true
-    // (aplikace se po dokončení sama spustí — uživatel nic nerestartuje).
     setTimeout(() => {
       try {
+        // Silent update keeps our custom installer UI out of the automatic path;
+        // allowElevation in package.json lets NSIS request permission if the user
+        // chose a protected custom installation directory.
         autoUpdater.quitAndInstall(true, true);
       } catch (error) {
-        log(`quitAndInstall selhalo: ${error?.message || error}`);
+        installing = false;
+        try { app.isQuittingForUpdate = false; } catch {}
+        diagnostics.status = "error";
+        diagnostics.lastError = String(error?.message || error);
+        updateProgress({ phase: "error", label: "Instalace se nespustila" });
+        log(`quitAndInstall selhalo: ${diagnostics.lastError}`);
       }
-      // Pojistka: kdyby instalátor proces neukončil, aplikace zůstane
-      // použitelná a aktualizace se zkusí znovu při další kontrole.
-      setTimeout(() => {
-        if (diagnostics.status === "installing" || diagnostics.status === "downloaded") {
-          installing = false;
-          try { app.isQuittingForUpdate = false; } catch {}
-          diagnostics.status = "available";
-          log("Instalace neproběhla — aplikace pokračuje v běhu, zkusíme to při další kontrole.");
-        }
-      }, 20000);
-    }, 600);
+    }, 700);
   });
+
   autoUpdater.on("error", (error) => {
+    installing = false;
+    checking = false;
+    pendingAutoInstall = false;
     diagnostics.status = "error";
     diagnostics.lastError = String(error?.message || error);
-    updateProgress({ phase: "error", label: "Chyba" });
+    updateProgress({ phase: "error", label: "Chyba aktualizace" });
     log(`electron-updater chyba: ${diagnostics.lastError}`);
   });
 

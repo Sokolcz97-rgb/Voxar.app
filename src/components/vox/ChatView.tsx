@@ -2,7 +2,25 @@ import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Hash, Send, Trash2, Lock, LockOpen, Paperclip, X, FileDown, Loader2 } from "lucide-react";
+import {
+  AtSign,
+  BarChart3,
+  Bot,
+  FileDown,
+  Gift,
+  Hash,
+  Loader2,
+  Lock,
+  LockOpen,
+  Paperclip,
+  Phone,
+  Pin,
+  Send,
+  Smile,
+  Trash2,
+  UsersRound,
+  X,
+} from "lucide-react";
 import { uploadAttachment, type UploadedAttachment } from "@/lib/uploadAttachment";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,7 +106,6 @@ interface RowProps {
   onNeedKey: () => void;
 }
 
-/** Memoized message row — re-renders only when its own props change. */
 const MessageRow = memo(function MessageRow({
   m, compact, name, ringColor, topRole, avatarUrl, mine, decrypted, onDelete, onNeedKey,
 }: RowProps) {
@@ -124,7 +141,7 @@ const MessageRow = memo(function MessageRow({
             </div>
           ) : (
             <button onClick={onNeedKey} className="text-sm text-muted-foreground/70 italic flex items-center gap-1.5 hover:text-primary">
-              <Lock className="w-3 h-3" /> Zašifrovaný paket — zadej klíč sektoru
+              <Lock className="w-3 h-3" /> Zašifrovaná zpráva — zadej klíč kanálu
             </button>
           )
         ) : (
@@ -138,7 +155,7 @@ const MessageRow = memo(function MessageRow({
         <button
           className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive self-start transition-opacity"
           onClick={() => onDelete(m.id)}
-          title="Smazat paket"
+          title="Smazat zprávu"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -148,7 +165,6 @@ const MessageRow = memo(function MessageRow({
 });
 
 export function ChatView({ channel, members = [] }: { channel: VoxChannel; members?: VoxMember[] }) {
-
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
@@ -259,42 +275,55 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
   }, []);
 
   const openKeyDialog = useCallback(() => setE2eeOpen(true), []);
+  const onlineCount = members.filter((member) => (member.status || "offline") !== "offline").length;
 
+  const appendInput = (value: string) => {
+    setInput((current) => {
+      if (!current) return value;
+      if (/\s$/.test(current)) return `${current}${value}`;
+      return `${current} ${value}`;
+    });
+  };
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
-      <div className="h-14 px-5 flex items-center gap-3 border-b border-primary/15">
-        {channel.emoji
-          ? <span className="text-base leading-none">{channel.emoji}</span>
-          : <Hash className="w-4 h-4 text-primary text-glow" />}
-        <span className="font-display tracking-widest uppercase text-sm text-primary text-glow">{channel.name}</span>
-        {channel.topic && (
-          <span className="hidden md:block max-w-[38ch] truncate pl-3 ml-1 border-l border-primary/20 text-[11px] text-muted-foreground">
-            {channel.topic}
+      <div className="vox-chat-header h-14 border-b border-primary/15">
+        <div className="vox-chat-header-copy">
+          {channel.emoji
+            ? <span className="vox-chat-emoji text-base leading-none">{channel.emoji}</span>
+            : <Hash className="w-4 h-4 text-primary" />}
+          <span className="vox-chat-header-name">{channel.name}</span>
+          <span className="vox-chat-header-topic">
+            {channel.topic || `Místo pro vše, co patří do #${channel.name}. Chat, novinky, nápady i každodenní pokec.`}
           </span>
-        )}
-        <span className="ml-auto text-[10px] font-display tracking-widest uppercase text-muted-foreground">
-          NODE // {messages.length} PKT
-        </span>
-        <button
-          onClick={() => setE2eeOpen(true)}
-          title={hasKey ? "E2E šifrování aktivní" : "Zapnout E2E šifrování"}
-          className={cn(
-            "ml-3 w-7 h-7 hex-frame flex items-center justify-center border transition-all",
-            hasKey
-              ? "border-emerald-400/50 text-emerald-400 bg-emerald-500/10 shadow-[0_0_12px_hsl(160_84%_45%/0.45)]"
-              : "border-primary/30 text-muted-foreground hover:text-primary hover:border-primary/60",
-          )}
-        >
-          {hasKey ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
-        </button>
+        </div>
+
+        <div className="vox-chat-header-tools">
+          <span className="vox-chat-online"><i />{onlineCount} online</span>
+          <button type="button" className="vox-chat-header-tool" title="Připojit se na hlas" onClick={() => toast({ title: "Hlas", description: "Vyber hlasový kanál vlevo a připoj se." })}>
+            <Phone />
+          </button>
+          <button type="button" className="vox-chat-header-tool" title="Připnuté zprávy" onClick={() => toast({ title: "Připnuté zprávy", description: "Připnuté zprávy budou dostupné v další verzi." })}>
+            <Pin />
+          </button>
+          <button type="button" className="vox-chat-header-tool" title="Členové" onClick={() => toast({ title: "Členové komunity", description: `${members.length} členů · ${onlineCount} online` })}>
+            <UsersRound />
+          </button>
+          <button
+            onClick={() => setE2eeOpen(true)}
+            title={hasKey ? "E2E šifrování aktivní" : "Zapnout E2E šifrování"}
+            className={cn("vox-chat-header-tool secure", hasKey && "active")}
+          >
+            {hasKey ? <Lock /> : <LockOpen />}
+          </button>
+        </div>
       </div>
 
       <div className="hud-scrollbar transform-gpu will-change-transform flex-1 overflow-y-auto px-5 py-5 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground text-sm py-16">
-            <div className="font-display tracking-widest uppercase text-xs text-primary/70 mb-2">// STREAM PRÁZDNÝ</div>
-            Vítej v <span className="text-primary font-display tracking-wider">#{channel.name}</span>. Buď první entita, která odešle paket.
+            <div className="font-display tracking-widest uppercase text-xs text-primary/70 mb-2">Začátek kanálu</div>
+            Vítej v <span className="text-primary font-display tracking-wider">#{channel.name}</span>. Buď první, kdo sem napíše.
           </div>
         )}
         {messages.map((m, i) => {
@@ -321,17 +350,16 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
             />
           );
         })}
-
         <div ref={bottomRef} />
       </div>
 
-      <div className="composer-pod mx-4 mb-4 mt-4 px-4 py-3.5">
+      <div className="composer-pod vox-composer-reference">
         {pending.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pending.map((a, i) => (
-              <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[hsl(222_42%_9%)] border border-primary/30 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)]">
+              <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[hsl(222_42%_9%)] border border-primary/30 rounded-sm">
                 {a.kind === "image" && <img loading="lazy" decoding="async" src={a.url} alt="" className="w-8 h-8 object-cover" />}
-                <span className="text-[11px] font-mono truncate max-w-[160px] text-primary/90">{a.name}</span>
+                <span className="text-[11px] font-sans truncate max-w-[160px] text-primary/90">{a.name}</span>
                 <button onClick={() => setPending((p) => p.filter((_, x) => x !== i))} className="text-muted-foreground hover:text-destructive">
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -339,60 +367,70 @@ export function ChatView({ channel, members = [] }: { channel: VoxChannel; membe
             ))}
           </div>
         )}
-        <div className="flex items-end gap-2">
-          <input ref={fileRef} type="file" multiple hidden onChange={(e) => void pickFiles(e.target.files)} />
+
+        <input ref={fileRef} type="file" multiple hidden onChange={(e) => void pickFiles(e.target.files)} />
+        <div className="vox-composer-main">
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            title="Přiložit soubor"
-            className="h-[62px] w-12 shrink-0 flex items-center justify-center bg-black/40 border border-primary/20 text-primary/80 hover:border-primary/60 hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]"
+            title="Připojit soubor"
+            className="vox-composer-attach"
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
           </button>
-          <div className="tx-bar flex-1 flex items-end gap-3 px-5 py-3.5">
-            <span className="font-display text-[10px] tracking-[0.28em] uppercase text-primary/70 pb-2 shrink-0">TX &gt;</span>
+
+          <div className="vox-composer-input">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
-              placeholder={hasKey ? `Zašifrovaný paket do #${channel.name}` : `Vyslat paket do #${channel.name}`}
-              className="min-h-[40px] max-h-40 resize-none bg-transparent border-0 hover:border-0 focus-visible:ring-0 focus-visible:border-0 p-0 font-sans text-sm leading-relaxed"
+              placeholder={hasKey ? `Napsat šifrovanou zprávu do #${channel.name}...` : `Napsat zprávu do #${channel.name}...`}
+              className="resize-none bg-transparent border-0 hover:border-0 focus-visible:ring-0 focus-visible:border-0 p-0 font-sans"
               rows={1}
             />
-            <span className="hidden sm:block pb-2 text-[9px] font-display tracking-[0.28em] uppercase text-muted-foreground/60 shrink-0">
-              ENTER · SEND
-            </span>
+            <button type="button" className="vox-composer-mini" title="Dárek" onClick={() => toast({ title: "Dárky", description: "Dárky a boosty připravujeme." })}><Gift /></button>
+            <button type="button" className="vox-composer-mini" title="GIF" onClick={() => toast({ title: "GIF", description: "GIF vyhledávání připravujeme." })}>GIF</button>
+            <button type="button" className="vox-composer-mini" title="Emoji" onClick={() => appendInput("🙂")}><Smile /></button>
           </div>
+
           <button
             onClick={send}
             disabled={!input.trim() && pending.length === 0}
-            title="Odeslat paket"
-            className="tx-send h-[62px] w-16 shrink-0 flex items-center justify-center text-primary"
+            title="Odeslat zprávu"
+            className="vox-composer-send disabled:opacity-40"
           >
-            <Send className="w-5 h-5 drop-shadow-[0_0_6px_hsl(var(--primary))]" />
+            <Send className="w-5 h-5" />
           </button>
+        </div>
+
+        <div className="vox-composer-actions">
+          <button type="button" className="vox-composer-action" onClick={() => appendInput("@")}><AtSign /> Zmínka</button>
+          <button type="button" className="vox-composer-action" onClick={() => fileRef.current?.click()}><Paperclip /> Připojit soubor</button>
+          <button type="button" className="vox-composer-action" onClick={() => appendInput("📊 Anketa:")}><BarChart3 /> Vytvořit anketu</button>
+          <button type="button" className="vox-composer-action ai" onClick={() => window.dispatchEvent(new CustomEvent("vox:open-ai"))}><Bot /> AI asistent</button>
+          <span className="vox-composer-enter">ENTER pro odeslání</span>
         </div>
       </div>
 
       <Dialog open={e2eeOpen} onOpenChange={setE2eeOpen}>
         <DialogContent className="holo-context-menu max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display uppercase tracking-[0.28em] text-sm text-primary text-glow">
-              // E2E · ŠIFROVÁNÍ
+            <DialogTitle className="font-display uppercase tracking-[0.20em] text-sm text-primary text-glow">
+              E2E šifrování
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Zprávy se šifrují přímo v aplikaci (AES-256-GCM, klíč odvozený z fráze přes PBKDF2).
-            Fráze se neodesílá na server — musí ji znát všichni členové sektoru.
+            Fráze se neodesílá na server — musí ji znát všichni členové kanálu.
           </p>
           <Input
             type="password"
             autoFocus
             value={passInput}
             onChange={(e) => setPassInput(e.target.value)}
-            placeholder="Tajná fráze sektoru"
+            placeholder="Tajná fráze kanálu"
             className="font-mono bg-background/60 border-primary/30"
           />
           <DialogFooter className="gap-2">

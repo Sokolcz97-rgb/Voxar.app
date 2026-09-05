@@ -16,10 +16,7 @@ interface Msg {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-helper`;
 const STORAGE_KEY = "voxapp_ai_chat";
 
-/**
- * Holographic HUD variant of the AI helper for the /app desktop shell.
- * Web (marketing) uses the classic `AIHelper` — keep visuals separate.
- */
+/** Holographic AI helper used only inside the /app desktop shell. */
 export function AIHelperHolo() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -38,6 +35,12 @@ export function AIHelperHolo() {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch { /* ignore */ }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const openFromComposer = () => setOpen(true);
+    window.addEventListener("vox:open-ai", openFromComposer);
+    return () => window.removeEventListener("vox:open-ai", openFromComposer);
+  }, []);
 
   const send = async () => {
     const text = input.trim();
@@ -108,9 +111,7 @@ export function AIHelperHolo() {
           <span className="hex-frame w-8 h-8 bg-primary/12 border border-primary/50 flex items-center justify-center shrink-0">
             <img loading="lazy" decoding="async" src={voxLogo.url} alt="" className="w-5 h-5 object-contain" />
           </span>
-          <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/90 whitespace-nowrap">
-            Studiovoxario AI
-          </span>
+          <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/90 whitespace-nowrap">StudioVoxario AI</span>
         </button>
       )}
 
@@ -124,7 +125,6 @@ export function AIHelperHolo() {
           className="pointer-events-auto absolute bottom-0 right-0 z-[9999] w-[min(420px,calc(100vw-2.5rem))] max-h-[calc(100vh-2.5rem)] h-[min(560px,calc(100vh-2.5rem))] flex flex-col holo-context-menu overflow-hidden origin-bottom-right"
         >
           <div className="relative flex items-center justify-between p-4 border-b border-primary/25 bg-gradient-to-r from-primary/12 via-primary/5 to-transparent">
-
             <div className="absolute top-0 left-0 w-10 h-px bg-primary/70" />
             <div className="absolute top-0 left-0 w-px h-10 bg-primary/70" />
             <div className="flex items-center gap-2.5">
@@ -202,10 +202,9 @@ export function AIHelperHolo() {
           </div>
 
           <div className="border-t border-primary/25 p-3 flex gap-2 items-center bg-[hsl(222_35%_6%/0.6)]">
-            <span className="font-display text-[9px] tracking-[0.28em] uppercase text-primary/70 shrink-0">TX &gt;</span>
             <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
               placeholder={t("ai.askPlaceholder")} disabled={loading}
-              className="text-sm font-mono bg-background/60 border-primary/25 focus-visible:ring-primary/40" />
+              className="text-sm bg-background/60 border-primary/25 focus-visible:ring-primary/40" />
             {loading ? (
               <Button onClick={stopGenerating} size="icon" variant="destructive" className="shrink-0" title={t("ai.stop") || "Zastavit"}>
                 <Square className="h-4 w-4" />
