@@ -3,7 +3,6 @@ import App from "./App.tsx";
 import "./index.css";
 import "./pages/app/community-reference-final.css";
 import "./pages/app/community-reference-layout-fix.css";
-import "./pages/app/community-reference-pass7.css";
 import "./components/vox/reference/community-structured-chat.css";
 import "./components/vox/reference/community-structured-chat-hotfix.css";
 import "./components/vox/reference/community-structured-panels.css";
@@ -13,6 +12,8 @@ import "./components/vox/reference/community-structured-topbar-bridge.css";
 import "./components/vox/reference/community-structured-workspace.css";
 import "./components/vox/reference/community-structured-settings.css";
 import "./components/vox/reference/community-structural-cleanup.css";
+import "./components/vox/reference/community-structural-v2.css";
+import "./components/vox/reference/community-structural-v2-fix.css";
 import "./i18n";
 
 const syncAppTitle = () => {
