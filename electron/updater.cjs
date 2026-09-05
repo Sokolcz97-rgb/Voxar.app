@@ -11,8 +11,14 @@ const https = require("https");
 const http = require("http");
 const pinning = require("./pinning.cjs");
 
-const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || "https://studiovoxario.com/";
+// Kanonický zdroj aktualizací = publish konfigurace z electron-builderu
+// (app-update.yml uvnitř balíčku, provider github → Sokolcz97-rgb/Voxar.app).
+// STUDIOVOXARIO_UPDATE_FEED je jen testovací override na generic feed.
+const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || null;
+// desktop-version.json zůstává jen informativní metadata pro web (download stránka),
+// updater se podle něj nikdy nerozhoduje.
 const LEGACY_MANIFEST_URL = process.env.STUDIOVOXARIO_UPDATE_URL || "https://studiovoxario.com/desktop-version.json";
+const GITHUB_PUBLISH = { provider: "github", owner: "Sokolcz97-rgb", repo: "Voxar.app" };
 
 let checking = false;
 let installing = false;
