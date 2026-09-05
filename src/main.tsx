@@ -3,10 +3,6 @@ import App from "./App.tsx";
 import "./index.css";
 import "./pages/app/community-reference-final.css";
 import "./pages/app/community-reference-layout-fix.css";
-import "./pages/app/community-reference-pass3.css";
-import "./pages/app/community-reference-pass4.css";
-import "./pages/app/community-reference-pass5.css";
-import "./pages/app/community-reference-pass6.css";
 import "./pages/app/community-reference-pass7.css";
 import "./components/vox/reference/community-structured-chat.css";
 import "./components/vox/reference/community-structured-chat-hotfix.css";
@@ -15,6 +11,8 @@ import "./components/vox/reference/community-channel-list.css";
 import "./components/vox/reference/community-structured-shell.css";
 import "./components/vox/reference/community-structured-topbar-bridge.css";
 import "./components/vox/reference/community-structured-workspace.css";
+import "./components/vox/reference/community-structured-settings.css";
+import "./components/vox/reference/community-structural-cleanup.css";
 import "./i18n";
 
 const syncAppTitle = () => {
