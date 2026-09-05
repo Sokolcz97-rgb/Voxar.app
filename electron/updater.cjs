@@ -481,7 +481,10 @@ function setupEvents() {
   try {
     const devConfig = path.join(app.getAppPath(), "dev-app-update.yml");
     if (!app.isPackaged && !fs.existsSync(devConfig)) {
-      fs.writeFileSync(devConfig, `provider: generic\nurl: ${FEED_URL}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`, "utf8");
+      const yml = FEED_URL
+        ? `provider: generic\nurl: ${FEED_URL}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`
+        : `provider: github\nowner: ${GITHUB_PUBLISH.owner}\nrepo: ${GITHUB_PUBLISH.repo}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`;
+      fs.writeFileSync(devConfig, yml, "utf8");
     }
   } catch {}
 }
