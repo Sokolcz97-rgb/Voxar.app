@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import "./pages/app/community-reference-final.css";
 import "./pages/app/community-reference-layout-fix.css";
+import "./pages/app/community-reference-pass3.css";
 import "./i18n";
 
 const syncAppTitle = () => {
