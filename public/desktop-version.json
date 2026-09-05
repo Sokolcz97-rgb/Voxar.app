@@ -1,21 +1,21 @@
 {
   "_comment": "Informativní metadata pro web. Stálý URL alias vždy stáhne nejnovější vlastní Setup; auto-update používá latest.yml.",
-  "version": "0.0.30",
-  "notes": "StudioVoxario 0.0.30",
+  "version": "0.0.31",
+  "notes": "StudioVoxario 0.0.31",
   "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/latest/download/StudioVoxarioSetup.exe",
-  "sha256": "7ed50f395b04ff4741bb96541259b3304463b4aeefcb9facc484f4a209dbcca3",
-  "size": 236657601,
+  "sha256": "aa5c630e5f23d5d2e926feed321748efe9c2f5a97ea68e96b4abead0bc25a77e",
+  "size": 236663547,
   "filename": "StudioVoxarioSetup.exe",
-  "versioned_filename": "StudioVoxarioSetup-0.0.30.exe",
+  "versioned_filename": "StudioVoxarioSetup-0.0.31.exe",
   "channels": {
     "stable": {
-      "version": "0.0.30",
+      "version": "0.0.31",
       "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/latest/download/StudioVoxarioSetup.exe"
     },
     "beta": {
-      "version": "0.0.30",
+      "version": "0.0.31",
       "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/latest/download/StudioVoxarioSetup.exe"
     }
   },
-  "updated_at": "2026-09-05T21:24:32.852Z"
+  "updated_at": "2026-09-05T21:34:21.185Z"
 }
