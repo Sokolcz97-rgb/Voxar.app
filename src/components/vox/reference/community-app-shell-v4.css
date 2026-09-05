@@ -1,0 +1,296 @@
+/* V4 structural shell.
+   Unlike the older visual passes, these rules style markup that AppShellReference
+   actually renders: CommunityTopbar + sv-workspace + the existing sv panels. */
+
+.vox-reference-shell.sv-shell-v4 {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 92px minmax(0, 1fr);
+  overflow: hidden;
+  color: #d9effc;
+  background:
+    radial-gradient(circle at 67% 8%, rgba(19, 129, 185, .08), transparent 30%),
+    linear-gradient(180deg, #020f1b 0%, #01101c 48%, #010b14 100%);
+}
+
+.vox-reference-shell.sv-shell-v4 > .sv-topbar {
+  grid-row: 1;
+  min-width: 0;
+}
+
+.sv-shell-v4 .sv-workspace {
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 78px 272px minmax(0, 1fr) 292px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 8px 10px;
+  overflow: hidden;
+}
+
+.sv-shell-v4 .sv-workspace.is-settings {
+  grid-template-columns: 78px 272px minmax(0, 1fr);
+}
+
+.sv-shell-v4 .sv-workspace-rail,
+.sv-shell-v4 .sv-workspace-sidebar,
+.sv-shell-v4 .sv-workspace-center,
+.sv-shell-v4 .sv-workspace-right {
+  min-width: 0;
+  min-height: 0;
+  width: auto !important;
+  height: 100% !important;
+  margin: 0 !important;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.sv-shell-v4 .sv-workspace-rail {
+  border: 1px solid rgba(47, 204, 245, .34);
+  background:
+    linear-gradient(180deg, rgba(3, 25, 41, .985), rgba(2, 17, 29, .995));
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+
+.sv-shell-v4 .sv-workspace-sidebar {
+  border: 1px solid rgba(47, 204, 245, .38);
+  background: linear-gradient(180deg, rgba(3, 26, 42, .985), rgba(2, 17, 30, .995));
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+
+.sv-shell-v4 .sv-workspace-center {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(42, 211, 250, .31);
+  border-bottom: 1px solid rgba(42, 211, 250, .22);
+  background:
+    radial-gradient(circle at 60% 0%, rgba(35, 154, 208, .035), transparent 26%),
+    linear-gradient(180deg, rgba(2, 18, 31, .985), rgba(1, 13, 23, .995));
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 14px);
+}
+
+.sv-shell-v4 .sv-workspace-center > * {
+  min-height: 0;
+}
+
+.sv-shell-v4 .sv-workspace-right {
+  border: 1px solid rgba(47, 204, 245, .37);
+  background:
+    linear-gradient(180deg, rgba(3, 26, 43, .985), rgba(2, 17, 30, .995));
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 12px);
+}
+
+/* The internals still use their stable compatibility class names, but V4 owns
+   the outer box, so older workspace passes can no longer decide the columns. */
+.sv-shell-v4 .sv-workspace-sidebar.vox-reference-sidebar,
+.sv-shell-v4 .sv-workspace-center.vox-reference-center,
+.sv-shell-v4 .sv-workspace-right.vox-reference-right,
+.sv-shell-v4 .sv-workspace-rail.vox-reference-rail {
+  inset: auto !important;
+  transform: none !important;
+  max-width: none !important;
+}
+
+.sv-shell-v4 .sv-workspace-sidebar > .sv-sidebar-shell,
+.sv-shell-v4 .sv-workspace-right > .sv-right-shell,
+.sv-shell-v4 .sv-workspace-center > .sv-chat-shell {
+  width: 100%;
+  height: 100%;
+}
+
+.sv-shell-v4 .sv-workspace-sidebar > .sv-sidebar-shell {
+  padding-top: 10px;
+}
+
+.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
+  height: 184px;
+}
+
+.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero-art {
+  inset-bottom: 60px;
+}
+
+.sv-shell-v4 .sv-workspace-sidebar .sv-community-quick-menu button {
+  min-height: 37px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-channel-header {
+  flex-basis: 68px;
+  min-height: 68px;
+  padding-left: 20px;
+  padding-right: 16px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-channel-header-title-row h1 {
+  font-size: 17px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-welcome {
+  flex-basis: 174px;
+  min-height: 174px;
+  margin: 14px 16px 10px;
+  grid-template-columns: minmax(0, 57%) minmax(250px, 43%);
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-welcome-copy {
+  padding: 15px 18px 13px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-welcome-copy h2 {
+  font-size: 20px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-message-list {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-message-row {
+  min-height: 58px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-message-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+.sv-shell-v4 .sv-workspace-center .sv-composer-shell {
+  margin: 8px 12px 10px;
+}
+
+.sv-shell-v4 .sv-workspace-right > .sv-right-shell {
+  padding: 10px 10px 10px;
+  gap: 10px;
+}
+
+.sv-shell-v4 .sv-workspace-right .sv-right-card {
+  border-color: rgba(49, 216, 251, .40);
+}
+
+.sv-shell-v4 .sv-workspace-right .sv-right-about {
+  flex-basis: auto;
+}
+
+.sv-shell-v4 .sv-workspace-right .sv-right-members-list {
+  min-height: 0;
+}
+
+.sv-shell-v4 .sv-workspace-clock {
+  position: fixed;
+  z-index: 70;
+  right: 13px;
+  bottom: 8px;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  color: rgba(151, 203, 223, .72);
+  font: 500 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+  pointer-events: none;
+}
+
+.sv-shell-v4 .sv-workspace-clock span:last-child {
+  font-size: 8px;
+  color: rgba(111, 162, 184, .65);
+}
+
+/* New topbar is a real component now, not the legacy inline header. */
+.sv-shell-v4 > .sv-topbar {
+  height: 92px;
+  grid-template-columns: 286px minmax(500px, 1fr) 330px;
+}
+
+.sv-shell-v4 > .sv-topbar .sv-topbar-brand {
+  padding-left: 30px;
+}
+
+.sv-shell-v4 > .sv-topbar .sv-topbar-brand img {
+  width: 46px;
+  height: 46px;
+}
+
+.sv-shell-v4 > .sv-topbar .sv-topbar-brand strong {
+  font-size: 19px;
+  letter-spacing: .26em;
+}
+
+.sv-shell-v4 > .sv-topbar .sv-topbar-nav button {
+  min-width: 87px;
+}
+
+.sv-shell-v4 > .sv-topbar .sv-topbar-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+/* Settings now use all available space instead of reserving an empty right rail. */
+.sv-shell-v4.is-settings-view .sv-workspace-center {
+  grid-column: 3;
+}
+
+.sv-shell-v4.is-settings-view .vox-reference-clock,
+.sv-shell-v4.is-settings-view .sv-workspace-right {
+  display: none !important;
+}
+
+@media (max-width: 1280px) {
+  .sv-shell-v4 .sv-workspace {
+    grid-template-columns: 72px 250px minmax(0, 1fr) 260px;
+    gap: 7px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .sv-shell-v4 .sv-workspace.is-settings {
+    grid-template-columns: 72px 250px minmax(0, 1fr);
+  }
+
+  .sv-shell-v4 > .sv-topbar {
+    grid-template-columns: 265px minmax(460px, 1fr) 300px;
+  }
+
+  .sv-shell-v4 > .sv-topbar .sv-topbar-nav button {
+    min-width: 76px;
+  }
+
+  .sv-shell-v4 > .sv-topbar .sv-topbar-search {
+    width: 210px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .sv-shell-v4 .sv-workspace {
+    grid-template-columns: 68px 232px minmax(0, 1fr) 238px;
+  }
+
+  .sv-shell-v4 .sv-workspace.is-settings {
+    grid-template-columns: 68px 232px minmax(0, 1fr);
+  }
+
+  .sv-shell-v4 > .sv-topbar {
+    grid-template-columns: 240px minmax(410px, 1fr) 270px;
+  }
+
+  .sv-shell-v4 > .sv-topbar .sv-topbar-brand {
+    padding-left: 20px;
+  }
+
+  .sv-shell-v4 > .sv-topbar .sv-topbar-nav button {
+    min-width: 68px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .sv-shell-v4 > .sv-topbar .sv-topbar-search {
+    width: 178px;
+  }
+}

@@ -18,20 +18,10 @@ import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { CallDock } from "@/components/vox/CallDock";
 import { CommunitySidebarPanel } from "@/components/vox/reference/CommunitySidebarPanel";
 import { CommunityRightPanel } from "@/components/vox/reference/CommunityRightPanel";
+import { CommunityTopbar } from "@/components/vox/reference/CommunityTopbar";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
-import {
-  AudioLines,
-  Bell,
-  CalendarDays,
-  Folder,
-  Home,
-  Loader2,
-  MoreHorizontal,
-  Search,
-  ShoppingBag,
-} from "lucide-react";
-import voxLogo from "@/assets/vox-logo.png.asset.json";
+import { Loader2 } from "lucide-react";
 import "./community-reference.css";
 import "./community-reference-polish.css";
 
@@ -380,53 +370,25 @@ export default function AppShellReference() {
   };
 
   return (
-    <div className="vox-reference-shell">
-      <div className="vox-reference-titlebar">
-        <span>◈ &nbsp; Voxar.app — {activeGuild?.name || "StudioVoxario"}</span>
-        <div className="vox-reference-window-controls" aria-hidden="true"><span>−</span><span>□</span><span>×</span></div>
-      </div>
+    <div className={`vox-reference-shell sv-shell-v4${view !== "main" ? " is-settings-view" : ""}`}>
+      <CommunityTopbar
+        displayName={displayName}
+        avatarUrl={profile?.avatar_url}
+        onCommunity={() => setView("main")}
+        onEvents={() => showSoon("Události")}
+        onVoice={() => {
+          if (firstVoiceChannel) selectChannel(firstVoiceChannel);
+          else showSoon("Hlas");
+        }}
+        onFiles={() => showSoon("Soubory")}
+        onStore={() => navigate("/obchod")}
+        onMore={() => navigate("/dashboard")}
+        onNotifications={() => showSoon("Oznámení")}
+        onProfile={() => setView("user-settings")}
+      />
 
-      <header className="vox-reference-topbar">
-        <div className="vox-reference-brand">
-          <img src={voxLogo.url} alt="Voxar.app" />
-          <div className="vox-reference-brand-copy">
-            <strong>VOXAR.APP</strong>
-            <span>STUDIOVOXARIO</span>
-          </div>
-        </div>
-
-        <nav className="vox-reference-nav" aria-label="Hlavní navigace">
-          <button type="button" className="active" onClick={() => setView("main")}><Home /><span>Komunita</span></button>
-          <button type="button" onClick={() => showSoon("Události")}><CalendarDays /><span>Události</span></button>
-          <button
-            type="button"
-            onClick={() => {
-              if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-              else showSoon("Hlas");
-            }}
-          ><AudioLines /><span>Hlas</span></button>
-          <button type="button" onClick={() => showSoon("Soubory")}><Folder /><span>Soubory</span></button>
-          <button type="button" onClick={() => navigate("/obchod")}><ShoppingBag /><span>Obchod</span></button>
-          <button type="button" onClick={() => navigate("/dashboard")}><MoreHorizontal /><span>Více</span></button>
-        </nav>
-
-        <div className="vox-reference-tools">
-          <label className="vox-reference-search">
-            <Search className="w-4 h-4" />
-            <input placeholder="Hledat v komunitě..." aria-label="Hledat v komunitě" />
-            <kbd>Ctrl K</kbd>
-          </label>
-          <button type="button" className="text-sky-200/80 hover:text-cyan-300" onClick={() => showSoon("Oznámení")}>
-            <Bell className="w-5 h-5" />
-          </button>
-          <button type="button" className="vox-reference-avatar" onClick={() => setView("user-settings")} title="Nastavení profilu">
-            {profile?.avatar_url ? <img src={profile.avatar_url} alt={displayName} /> : displayName.slice(0, 2).toUpperCase()}
-          </button>
-        </div>
-      </header>
-
-      <main className="vox-reference-workspace">
-        <aside className="vox-reference-rail">
+      <main className={`sv-workspace${view !== "main" ? " is-settings" : ""}`}>
+        <aside className="sv-workspace-rail vox-reference-rail">
           <GuildRail
             guilds={guilds}
             activeId={activeGuildId}
@@ -436,7 +398,7 @@ export default function AppShellReference() {
           />
         </aside>
 
-        <section className="vox-reference-sidebar">
+        <section className="sv-workspace-sidebar vox-reference-sidebar">
           {activeGuild && activeGuildId ? (
             <CommunitySidebarPanel
               guild={activeGuild}
@@ -470,7 +432,7 @@ export default function AppShellReference() {
           )}
         </section>
 
-        <section className="vox-reference-center">
+        <section className="sv-workspace-center vox-reference-center">
           {activeGuild ? (
             view === "user-settings" ? (
               <AppUserSettings onClose={() => setView("main")} />
@@ -511,27 +473,29 @@ export default function AppShellReference() {
           )}
         </section>
 
-        <aside className="vox-reference-right">
-          {activeGuild && view === "main" ? (
-            <CommunityRightPanel
-              guildName={activeGuild.name}
-              memberCount={members.length}
-              onlineCount={onlineCount}
-              members={members}
-              onJoinVoice={() => {
-                if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-                else showSoon("Hlasový kanál");
-              }}
-              onShowMembers={() => showSoon("Všichni členové")}
-              onMessage={(member) => navigate(`/messages?user=${member.user_id}`)}
-            />
-          ) : (
-            <div className="vox-reference-empty"><span>Nastavení komunity</span></div>
-          )}
-        </aside>
+        {view === "main" && (
+          <aside className="sv-workspace-right vox-reference-right">
+            {activeGuild ? (
+              <CommunityRightPanel
+                guildName={activeGuild.name}
+                memberCount={members.length}
+                onlineCount={onlineCount}
+                members={members}
+                onJoinVoice={() => {
+                  if (firstVoiceChannel) selectChannel(firstVoiceChannel);
+                  else showSoon("Hlasový kanál");
+                }}
+                onShowMembers={() => showSoon("Všichni členové")}
+                onMessage={(member) => navigate(`/messages?user=${member.user_id}`)}
+              />
+            ) : (
+              <div className="vox-reference-empty"><span>Komunita</span></div>
+            )}
+          </aside>
+        )}
       </main>
 
-      <div className="vox-reference-clock">
+      <div className="sv-workspace-clock">
         <span>{now.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}</span>
         <span>{now.toLocaleDateString("cs-CZ")}</span>
       </div>

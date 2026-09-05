@@ -15,6 +15,7 @@ import "./components/vox/reference/community-structural-cleanup.css";
 import "./components/vox/reference/community-structural-v2.css";
 import "./components/vox/reference/community-structural-v2-fix.css";
 import "./components/vox/reference/community-visible-v3.css";
+import "./components/vox/reference/community-app-shell-v4.css";
 import "./i18n";
 
 const syncAppTitle = () => {
