@@ -1,0 +1,53 @@
+.vox-ref-chat-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Keep the real ChatView header at the top, while placing the new welcome panel directly beneath it. */
+.vox-ref-chat-stage > .vox-ref-welcome-banner {
+  position: absolute;
+  z-index: 6;
+  top: 58px;
+  left: 18px;
+  right: 18px;
+  width: auto;
+  margin: 0;
+}
+
+.vox-ref-chat-stage > .flex-1 {
+  height: 100%;
+  min-height: 0;
+}
+
+.vox-ref-chat-stage > .flex-1 > .hud-scrollbar {
+  padding-top: 184px !important;
+}
+
+.vox-ref-chat-stage > .flex-1 > .composer-pod {
+  position: relative;
+  z-index: 7;
+}
+
+/* The reference screenshot uses a clean left channel list without the legacy sub-header. */
+.vox-reference-channel-wrap > div > .px-4.pt-4.pb-3.border-b {
+  display: none !important;
+}
+
+/* Keep dialogs rendered by ChannelSidebar available even though the visual sync strip is hidden. */
+.vox-reference-channel-wrap > div > .px-3.py-1\.5.border-t {
+  display: none !important;
+}
+
+@media (max-height: 760px) {
+  .vox-ref-welcome-banner {
+    min-height: 124px;
+  }
+
+  .vox-ref-welcome-visual {
+    min-height: 124px;
+  }
+
+  .vox-ref-chat-stage > .flex-1 > .hud-scrollbar {
+    padding-top: 152px !important;
+  }
+}
