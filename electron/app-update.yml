@@ -1,0 +1,4 @@
+provider: github
+owner: Sokolcz97-rgb
+repo: Voxar.app
+updaterCacheDirName: studiovoxario-desktop-updater

@@ -70,6 +70,7 @@ jobs:
         run: |
           test -f electron/dist/index.html || { echo "Missing electron/dist/index.html"; exit 1; }
           test -d electron/dist/assets || { echo "Missing electron/dist/assets"; exit 1; }
+          test -f electron/app-update.yml || { echo "Missing electron/app-update.yml"; exit 1; }
 
       - name: Install electron deps
         working-directory: electron
@@ -85,7 +86,14 @@ jobs:
 
       - name: Verify generated update artifacts
         shell: bash
-        run: node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}"
+        run: |
+          node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}"
+          test -f electron/release/win-unpacked/resources/app-update.yml || {
+            echo "Missing packaged resources/app-update.yml — updater would fail at runtime"
+            exit 1
+          }
+          echo "Packaged updater config:"
+          cat electron/release/win-unpacked/resources/app-update.yml
 
       - name: Upload artifacts (CI debug)
         uses: actions/upload-artifact@v4
@@ -95,6 +103,7 @@ jobs:
             electron/release/StudioVoxarioSetup-*.exe
             electron/release/latest.yml
             electron/release/*.blockmap
+            electron/release/win-unpacked/resources/app-update.yml
           if-no-files-found: error
 
       # desktop-version.json je metadata pro download stránku.
