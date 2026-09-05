@@ -1,0 +1,153 @@
+/* Structural cleanup layer loaded after all remaining compatibility styles.
+   It protects the new sv-* layout from older screenshot-pass selectors and
+   tightens the current 1366–1440px desktop view. */
+
+.vox-reference-shell {
+  --sv-clean-cyan: #42dff7;
+  --sv-clean-line: rgba(66, 223, 247, .24);
+}
+
+/* Workspace balance */
+.vox-reference-shell .vox-reference-workspace {
+  grid-template-columns: 76px 258px minmax(0, 1fr) 292px !important;
+  gap: 7px !important;
+  padding: 7px 7px 9px !important;
+}
+
+.vox-reference-shell .vox-reference-sidebar,
+.vox-reference-shell .vox-reference-center,
+.vox-reference-shell .vox-reference-right,
+.vox-reference-shell .vox-reference-rail {
+  border-color: rgba(48, 202, 239, .28) !important;
+}
+
+/* Left community panel */
+.vox-reference-shell .sv-community-sidebar {
+  min-height: 0;
+}
+
+.vox-reference-shell .sv-community-hero {
+  flex: 0 0 auto;
+}
+
+.vox-reference-shell .sv-community-channel-area {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.vox-reference-shell .sv-community-self,
+.vox-reference-shell .vox-reference-self-wrap {
+  flex: 0 0 auto;
+  margin-top: 7px;
+}
+
+/* Chat surface */
+.vox-reference-shell .sv-chat-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.vox-reference-shell .sv-chat-header {
+  flex: 0 0 63px;
+}
+
+.vox-reference-shell .sv-welcome-banner {
+  flex: 0 0 auto;
+}
+
+.vox-reference-shell .sv-message-list {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.vox-reference-shell .sv-composer {
+  flex: 0 0 auto;
+}
+
+/* Right panel: keep footer/signature clear of floating desktop controls. */
+.vox-reference-shell .sv-right-shell-v2 {
+  min-height: 0;
+}
+
+.vox-reference-shell .sv-right-members-v2 {
+  min-height: 0;
+  padding-bottom: 54px !important;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-signature {
+  min-height: 28px;
+  overflow: hidden;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-signature span {
+  white-space: normal;
+}
+
+.vox-reference-shell .sv-right-members-list {
+  overscroll-behavior: contain;
+}
+
+/* Reduce decorative clutter from old shell pseudo-elements. */
+.vox-reference-shell .vox-reference-sidebar::before,
+.vox-reference-shell .vox-reference-sidebar::after,
+.vox-reference-shell .vox-reference-right::before,
+.vox-reference-shell .vox-reference-right::after,
+.vox-reference-shell .vox-reference-center::before,
+.vox-reference-shell .vox-reference-center::after {
+  pointer-events: none !important;
+  opacity: .18 !important;
+}
+
+/* Keep the bottom clock unobtrusive and outside interactive content. */
+.vox-reference-shell .vox-reference-clock {
+  right: 10px !important;
+  bottom: 5px !important;
+  z-index: 24 !important;
+  gap: 2px !important;
+  color: #66899a !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 8px !important;
+  opacity: .72;
+}
+
+/* Cleaner desktop sizing around the user's current window width. */
+@media (min-width: 1280px) and (max-width: 1460px) {
+  .vox-reference-shell .vox-reference-workspace {
+    grid-template-columns: 76px 258px minmax(0, 1fr) 288px !important;
+  }
+
+  .vox-reference-shell .sv-topbar {
+    grid-template-columns: 286px minmax(505px, 1fr) 324px !important;
+  }
+
+  .vox-reference-shell .sv-topbar-nav button {
+    min-width: 80px !important;
+  }
+
+  .vox-reference-shell .sv-topbar-search {
+    width: 225px !important;
+  }
+}
+
+@media (max-height: 820px) {
+  .vox-reference-shell .sv-right-shell-v2 {
+    gap: 7px;
+  }
+
+  .vox-reference-shell .sv-right-about-v2 {
+    padding: 11px 12px 10px !important;
+  }
+
+  .vox-reference-shell .sv-right-stats-v2 {
+    margin: 10px 0 8px !important;
+  }
+
+  .vox-reference-shell .sv-right-now-v2 {
+    padding: 10px !important;
+  }
+
+  .vox-reference-shell .sv-right-members-v2 {
+    padding-top: 10px !important;
+    padding-bottom: 50px !important;
+  }
+}
