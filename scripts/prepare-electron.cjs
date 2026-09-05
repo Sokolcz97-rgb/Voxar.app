@@ -29,7 +29,9 @@ function patchNativeBrowserTabs() {
     throw new Error("Chybí electron/browser.html — nativní VoxarioBrowser nelze připravit.");
   }
 
-  let html = fs.readFileSync(nativeBrowser, "utf8");
+  // Windows checkout může převést soubor na CRLF. Normalizujeme na LF, aby
+  // deterministické build-time kotvy fungovaly stejně na Windows i Linuxu.
+  let html = fs.readFileSync(nativeBrowser, "utf8").replace(/\r\n/g, "\n");
   const marker = "VOXARIO_NATIVE_TAB_DRAG_V1";
   if (html.includes(marker)) {
     console.log("Nativní drag & drop tabů už je v electron/browser.html připraven.");
@@ -139,7 +141,8 @@ function patchDurableModuleState() {
     throw new Error("Chybí electron/main.cjs — stav modulů nelze připravit.");
   }
 
-  let main = fs.readFileSync(mainProcess, "utf8");
+  // Stejná CRLF pojistka jako u browser.html.
+  let main = fs.readFileSync(mainProcess, "utf8").replace(/\r\n/g, "\n");
   const marker = "VOXARIO_MODULE_STATE_DURABLE_V1";
   if (main.includes(marker)) {
     console.log("Trvalý stav modulů už je v electron/main.cjs připraven.");
