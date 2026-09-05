@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 /*
- * Ověří, že electron-builder vygeneroval kompletní electron-updater feed.
- * Použití: node scripts/verify-release-artifacts.cjs [version] [releaseDir]
- *
- * Kontroluje:
- *   - existenci StudioVoxarioSetup-<version>.exe
- *   - existenci latest.yml (a beta.yml, pokud je verze prerelease)
- *   - že version v latest.yml == electron/package.json version
- *   - že path/sha512/size v latest.yml odpovídají skutečnému .exe
+ * Ověří technický electron-updater feed.
+ * Viditelný vlastní instalátor se jmenuje StudioVoxarioSetup-<version>.exe,
+ * ale latest.yml MUSÍ odkazovat na skrytý technický NSIS balíček
+ * StudioVoxarioUpdate-<version>.exe.
  */
 const fs = require("fs");
 const path = require("path");
@@ -29,9 +25,9 @@ const files = fs.readdirSync(releaseDir);
 console.log(`Release dir: ${releaseDir}`);
 console.log(files.map((f) => `  - ${f}`).join("\n"));
 
-const exeName = `StudioVoxarioSetup-${version}.exe`;
+const exeName = `StudioVoxarioUpdate-${version}.exe`;
 const exePath = path.join(releaseDir, exeName);
-if (!fs.existsSync(exePath)) fail(`chybí NSIS instalátor ${exeName}`); else ok(`NSIS instalátor ${exeName}`);
+if (!fs.existsSync(exePath)) fail(`chybí updater NSIS balíček ${exeName}`); else ok(`Updater NSIS balíček ${exeName}`);
 
 const isPrerelease = /-/.test(version);
 const ymlName = isPrerelease ? "beta.yml" : "latest.yml";
@@ -54,8 +50,8 @@ if (!fs.existsSync(ymlPath)) {
   const ymlSha = (yml.match(/^\s*sha512:\s*(.+)$/m) || [])[1]?.trim();
   if (fs.existsSync(exePath) && ymlSha) {
     const actual = crypto.createHash("sha512").update(fs.readFileSync(exePath)).digest("base64");
-    if (actual !== ymlSha) fail(`sha512 v ${ymlName} neodpovídá souboru`);
-    else ok("sha512 checksum souhlasí s .exe");
+    if (actual !== ymlSha) fail(`sha512 v ${ymlName} neodpovídá updater .exe`);
+    else ok("sha512 checksum updateru souhlasí");
   }
 }
 
@@ -64,7 +60,7 @@ if (blockmap) ok(`blockmap ${blockmap}`);
 else console.log("· blockmap nevygenerován (differentialPackage vypnutý) — volitelné");
 
 if (process.exitCode) {
-  console.error("\n✗ Feed není kompletní — release nepublikovat.");
+  console.error("\n✗ Electron-updater feed není kompletní.");
 } else {
   console.log("\n✓ Kompletní electron-updater feed.");
 }
