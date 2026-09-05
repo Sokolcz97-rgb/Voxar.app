@@ -1,0 +1,460 @@
+/* Structural left/right community panels.
+   These sv-* classes own their internal layout and are intentionally isolated
+   from the old screenshot-pass selectors. */
+
+/* --------------------------------------------------------------------------
+   LEFT COMMUNITY SIDEBAR
+   -------------------------------------------------------------------------- */
+.vox-reference-sidebar > .sv-sidebar-shell {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  gap: 0;
+  padding: 12px 10px 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(3, 24, 39, .96), rgba(2, 18, 31, .985));
+}
+
+.vox-reference-sidebar .sv-community-hero {
+  position: relative;
+  height: 194px;
+  overflow: hidden;
+  border: 1px solid rgba(47, 211, 250, .54);
+  border-radius: 4px;
+  background: rgba(4, 29, 46, .9);
+  box-shadow: inset 0 0 28px rgba(39, 196, 236, .035);
+}
+
+.vox-reference-sidebar .sv-community-hero-art {
+  position: absolute;
+  inset: 0 0 63px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 71% 33%, rgba(48, 86, 255, .26), transparent 25%),
+    radial-gradient(circle at 22% 30%, rgba(27, 143, 192, .16), transparent 38%),
+    linear-gradient(145deg, #0a3150 0%, #0b2543 46%, #171451 100%);
+}
+
+.vox-reference-sidebar .sv-community-hero-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .68;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(145, 229, 255, .8) 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 18%, rgba(132, 198, 255, .68) 0 1px, transparent 2px),
+    radial-gradient(circle at 74% 23%, rgba(183, 113, 255, .62) 0 1px, transparent 2px),
+    radial-gradient(circle at 85% 59%, rgba(97, 224, 255, .48) 0 1px, transparent 2px);
+}
+
+.vox-reference-sidebar .sv-community-hero-orbit {
+  position: absolute;
+  right: 25px;
+  top: 14px;
+  width: 67px;
+  height: 67px;
+  border-radius: 50%;
+  border: 6px solid rgba(64, 92, 255, .9);
+  box-shadow:
+    0 0 0 4px rgba(225, 52, 255, .52),
+    0 0 22px rgba(83, 79, 255, .48),
+    inset 0 0 18px rgba(29, 188, 255, .15);
+  background: radial-gradient(circle at 39% 35%, rgba(14, 67, 104, .7), rgba(3, 20, 41, .96) 66%);
+}
+
+.vox-reference-sidebar .sv-community-hero-ridge {
+  position: absolute;
+  left: 8px;
+  right: -38px;
+  bottom: -10px;
+  height: 66px;
+  transform: skewX(-25deg) rotate(-4deg);
+  background:
+    linear-gradient(160deg, transparent 0 12%, #123e6b 13% 31%, transparent 32% 41%, #172b69 42% 63%, transparent 64%);
+  opacity: .82;
+}
+
+.vox-reference-sidebar .sv-community-identity {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 62px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(47, 209, 247, .42);
+  background: linear-gradient(90deg, rgba(3, 25, 42, .98), rgba(3, 20, 36, .94));
+  box-shadow: 0 0 16px rgba(29, 208, 246, .035);
+}
+
+.vox-reference-sidebar .sv-community-logo {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #61e6fb;
+  font: 800 11px/1 Inter, "Segoe UI", sans-serif;
+  border: 1px solid rgba(62, 225, 255, .68);
+  background: rgba(4, 47, 65, .92);
+  clip-path: polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%);
+}
+
+.vox-reference-sidebar .sv-community-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vox-reference-sidebar .sv-community-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.vox-reference-sidebar .sv-community-name-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.vox-reference-sidebar .sv-community-name-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f1fbff;
+  font: 700 14px/18px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-sidebar .sv-community-name-row i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  transform: rotate(45deg);
+  background: #3fe2ff;
+  box-shadow: 0 0 8px rgba(63, 226, 255, .6);
+}
+
+.vox-reference-sidebar .sv-community-copy > span {
+  color: #8faebe;
+  font: 400 10px/1.2 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0 10px;
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav button {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 21px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #9eb8c8;
+  background: transparent;
+  font: 500 12px/1 Inter, "Segoe UI", sans-serif;
+  text-align: left;
+  transition: .15s ease;
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav button:hover {
+  color: #d9f7ff;
+  background: rgba(14, 91, 119, .12);
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav button.active {
+  color: #f5fdff;
+  border-color: rgba(57, 227, 255, .7);
+  background:
+    linear-gradient(90deg, rgba(8, 113, 149, .38), rgba(5, 53, 78, .34));
+  box-shadow:
+    inset 3px 0 0 #37ddff,
+    0 0 13px rgba(42, 221, 255, .055);
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.65;
+}
+
+.vox-reference-sidebar .sv-sidebar-quick-nav .arrow {
+  width: 14px;
+  height: 14px;
+}
+
+.vox-reference-sidebar .sv-sidebar-section-title {
+  padding: 2px 4px 8px;
+  color: #4bdcf4;
+  font: 650 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.vox-reference-sidebar .sv-sidebar-channels {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vox-reference-sidebar .sv-sidebar-channels > * {
+  height: 100%;
+  min-height: 0;
+}
+
+.vox-reference-sidebar .sv-sidebar-call-dock {
+  padding-top: 6px;
+}
+
+.vox-reference-sidebar .sv-sidebar-self {
+  padding-top: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT COMMUNITY PANEL
+   -------------------------------------------------------------------------- */
+.vox-reference-right > .sv-right-shell {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 0;
+}
+
+.vox-reference-right .sv-right-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(45, 203, 241, .34);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(4, 28, 44, .96), rgba(3, 23, 38, .965));
+  box-shadow: inset 0 0 28px rgba(42, 192, 231, .025);
+}
+
+.vox-reference-right .sv-right-about {
+  padding: 14px 14px 12px;
+}
+
+.vox-reference-right .sv-right-card-title {
+  position: relative;
+  padding-left: 13px;
+  color: #52dff6;
+  font: 650 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+}
+
+.vox-reference-right .sv-right-card-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 1px;
+  background: #44dbf6;
+  box-shadow: 0 0 7px rgba(68, 219, 246, .55);
+}
+
+.vox-reference-right .sv-right-about h2 {
+  margin: 11px 0 7px;
+  color: #f3fbff;
+  font: 700 17px/21px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-about p {
+  margin: 0;
+  color: #9ab5c4;
+  font: 400 10px/15px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin: 13px 0 10px;
+}
+
+.vox-reference-right .sv-right-stats > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 16px auto;
+  grid-template-rows: 14px 12px;
+  align-items: center;
+  column-gap: 5px;
+}
+
+.vox-reference-right .sv-right-stats svg,
+.vox-reference-right .sv-right-online-dot {
+  width: 14px;
+  height: 14px;
+  grid-row: 1 / 3;
+  color: #42e1f7;
+}
+
+.vox-reference-right .sv-right-online-dot {
+  width: 8px;
+  height: 8px;
+  align-self: center;
+  justify-self: center;
+  border-radius: 50%;
+  background: #35e5a0;
+  box-shadow: 0 0 9px rgba(53, 229, 160, .7);
+}
+
+.vox-reference-right .sv-right-stats strong {
+  color: #eefbff;
+  font: 700 11px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-stats span {
+  color: #7896a8;
+  font: 400 8px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.vox-reference-right .sv-right-tags span {
+  padding: 4px 8px;
+  border: 1px solid rgba(43, 210, 247, .48);
+  border-radius: 3px;
+  color: #68dff2;
+  background: rgba(5, 57, 76, .18);
+  font: 600 8px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .04em;
+}
+
+.vox-reference-right .sv-right-now {
+  padding: 13px 12px 12px;
+}
+
+.vox-reference-right .sv-right-event {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(91, 101, 236, .45);
+  background: linear-gradient(90deg, rgba(41, 31, 105, .54), rgba(13, 36, 66, .42));
+}
+
+.vox-reference-right .sv-right-event-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #c18cff;
+  background: rgba(76, 48, 150, .42);
+  clip-path: polygon(18% 0,82% 0,100% 18%,100% 82%,82% 100%,18% 100%,0 82%,0 18%);
+}
+
+.vox-reference-right .sv-right-event-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.vox-reference-right .sv-right-event-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.vox-reference-right .sv-right-event-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f1f8ff;
+  font: 650 11px/14px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-event-copy span {
+  color: #7fc8df;
+  font: 400 8px/12px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-event > button {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(43, 219, 255, .72);
+  border-radius: 3px;
+  color: #d7f8ff;
+  background: rgba(0, 104, 143, .36);
+  font: 600 8px/1 Inter, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+}
+
+.vox-reference-right .sv-right-event > button:hover {
+  background: rgba(0, 139, 180, .52);
+}
+
+.vox-reference-right .sv-right-members {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 12px 12px 10px;
+}
+
+.vox-reference-right .sv-right-members-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.vox-reference-right .sv-right-members-head > button {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  color: #65cde2;
+  background: transparent;
+  font: 500 8px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-right .sv-right-members-list {
+  min-height: 0;
+  overflow: hidden auto;
+  padding-right: 2px;
+}
+
+.vox-reference-right .sv-right-signature {
+  margin-top: 8px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(49, 180, 218, .22);
+  color: #668da1;
+  font: 500 7px/11px Inter, "Segoe UI", sans-serif;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1180px) {
+  .vox-reference-sidebar .sv-community-hero { height: 176px; }
+  .vox-reference-right .sv-right-event { grid-template-columns: 38px minmax(0, 1fr); }
+  .vox-reference-right .sv-right-event-icon { width: 38px; height: 38px; }
+  .vox-reference-right .sv-right-event > button { grid-column: 1 / -1; justify-self: stretch; }
+}
+
+@media (max-height: 760px) {
+  .vox-reference-sidebar > .sv-sidebar-shell { padding-top: 8px; }
+  .vox-reference-sidebar .sv-community-hero { height: 166px; }
+  .vox-reference-sidebar .sv-sidebar-quick-nav { padding-block: 8px 7px; }
+  .vox-reference-sidebar .sv-sidebar-quick-nav button { min-height: 33px; }
+  .vox-reference-right .sv-right-about { padding-block: 11px 10px; }
+  .vox-reference-right .sv-right-about p { line-height: 13px; }
+  .vox-reference-right .sv-right-stats { margin-block: 9px 8px; }
+}
