@@ -1,0 +1,137 @@
+/* Temporary host bridge for AppShellReference's existing topbar markup.
+   The visual ownership is moved here so the old screenshot-pass CSS no longer
+   controls sizing/spacing while the component swap is completed incrementally. */
+
+.vox-reference-shell .vox-reference-topbar {
+  position: relative !important;
+  z-index: 30 !important;
+  height: 92px !important;
+  display: grid !important;
+  grid-template-columns: 286px minmax(520px, 1fr) 330px !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+  border-bottom: 1px solid rgba(45, 215, 255, .42) !important;
+  background: linear-gradient(90deg, rgba(2, 17, 29, .99) 0 28%, rgba(3, 24, 42, .94) 58%, rgba(14, 19, 54, .94) 100%) !important;
+  box-shadow: 0 11px 34px rgba(0, 0, 0, .34) !important;
+}
+
+.vox-reference-shell .vox-reference-topbar::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  top: -145px !important;
+  left: 57% !important;
+  width: 315px !important;
+  height: 315px !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  background: radial-gradient(circle at 36% 34%, rgba(66, 196, 255, .94) 0 7%, rgba(10, 119, 173, .78) 8% 26%, #082d4b 46%, #03111e 68%, transparent 69%) !important;
+  box-shadow: 0 0 70px rgba(35, 174, 255, .22) !important;
+  opacity: .9 !important;
+}
+
+.vox-reference-shell .vox-reference-topbar::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  top: -35px !important;
+  right: -55px !important;
+  width: 300px !important;
+  height: 170px !important;
+  pointer-events: none !important;
+  transform: skewX(-34deg) !important;
+  background: linear-gradient(112deg, transparent 0 28%, rgba(48, 81, 225, .22) 29% 42%, transparent 43% 51%, rgba(146, 65, 255, .28) 52% 63%, transparent 64% 72%, rgba(40, 139, 219, .17) 73% 85%, transparent 86%) !important;
+}
+
+.vox-reference-shell .vox-reference-topbar > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.vox-reference-shell .vox-reference-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+  padding: 0 28px !important;
+  border-right: 1px solid rgba(41, 204, 247, .13) !important;
+}
+
+.vox-reference-shell .vox-reference-brand::after { display: none !important; }
+.vox-reference-shell .vox-reference-brand img { width: 43px !important; height: 43px !important; }
+.vox-reference-shell .vox-reference-brand-copy strong { font-size: 18px !important; letter-spacing: .24em !important; }
+.vox-reference-shell .vox-reference-brand-copy span { margin-top: 8px !important; font-size: 8px !important; letter-spacing: .42em !important; }
+
+.vox-reference-shell .vox-reference-nav {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding-left: 0 !important;
+}
+
+.vox-reference-shell .vox-reference-nav button {
+  position: relative !important;
+  min-width: 84px !important;
+  height: 100% !important;
+  gap: 7px !important;
+  padding: 10px 12px 8px !important;
+  border-left: 1px solid rgba(43, 194, 235, .075) !important;
+  color: #91afc1 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.vox-reference-shell .vox-reference-nav button::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  transform: scaleX(0);
+  background: #34dffc;
+  box-shadow: 0 0 12px rgba(52, 223, 252, .72);
+  transition: transform .16s ease;
+}
+
+.vox-reference-shell .vox-reference-nav button:hover,
+.vox-reference-shell .vox-reference-nav button.active {
+  color: #52e4fc !important;
+  background: linear-gradient(180deg, transparent, rgba(27, 179, 220, .13)) !important;
+}
+
+.vox-reference-shell .vox-reference-nav button:hover::after,
+.vox-reference-shell .vox-reference-nav button.active::after { transform: scaleX(1); }
+.vox-reference-shell .vox-reference-nav button svg { width: 20px !important; height: 20px !important; stroke-width: 1.65; }
+.vox-reference-shell .vox-reference-nav button span { font: 500 11px/1 Inter, "Segoe UI", sans-serif !important; }
+
+.vox-reference-shell .vox-reference-tools {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 13px !important;
+  padding: 0 18px 0 12px !important;
+}
+
+.vox-reference-shell .vox-reference-search {
+  width: 235px !important;
+  height: 38px !important;
+  border-radius: 5px !important;
+  border-color: rgba(48, 189, 228, .31) !important;
+  background: rgba(2, 20, 35, .76) !important;
+}
+
+.vox-reference-shell .vox-reference-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-width: 1px !important;
+  box-shadow: 0 0 13px rgba(37, 218, 255, .25), inset 0 0 12px rgba(171, 74, 255, .13) !important;
+}
+
+@media (max-width: 1320px) {
+  .vox-reference-shell .vox-reference-topbar { grid-template-columns: 258px minmax(460px, 1fr) 292px !important; }
+  .vox-reference-shell .vox-reference-brand { padding: 0 20px !important; }
+  .vox-reference-shell .vox-reference-nav button { min-width: 74px !important; padding-inline: 8px !important; }
+  .vox-reference-shell .vox-reference-search { width: 205px !important; }
+}
