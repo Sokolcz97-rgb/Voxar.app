@@ -48,7 +48,6 @@ export default function AppShellReference() {
   const [channels, setChannels] = useState<VoxChannel[]>([]);
   const [activeChannel, setActiveChannel] = useState<VoxChannel | null>(null);
   const [members, setMembers] = useState<VoxMember[]>([]);
-  const [allRoles, setAllRoles] = useState<any[]>([]);
   const [voiceParticipants, setVoiceParticipants] = useState<Record<string, any[]>>({});
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -135,8 +134,6 @@ export default function AppShellReference() {
       ...role,
       permissions: (role.permissions ?? {}) as Record<string, boolean>,
     }));
-    setAllRoles(roleList);
-
     const roleMap = Object.fromEntries(roleList.map((role) => [role.id, role]));
     const rolesByUser: Record<string, any[]> = {};
     ((memberRoles ?? []) as any[]).forEach((memberRole) => {
