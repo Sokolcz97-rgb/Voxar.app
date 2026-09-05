@@ -28,10 +28,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.22.0'
 
       # Kanonická verze desktopu je VÝHRADNĚ electron/package.json.
-      # Root package.json se pro update verzi nepoužívá.
       - name: Bump canonical desktop version (electron/package.json)
         if: github.event_name == 'push' || inputs.bump != 'none'
         shell: bash
@@ -71,20 +70,22 @@ jobs:
           test -f electron/dist/index.html || { echo "Missing electron/dist/index.html"; exit 1; }
           test -d electron/dist/assets || { echo "Missing electron/dist/assets"; exit 1; }
           test -f electron/app-update.yml || { echo "Missing electron/app-update.yml"; exit 1; }
+          test -f electron/assets/installer.nsh || { echo "Missing NSIS migration hook"; exit 1; }
 
       - name: Install electron deps
         working-directory: electron
         run: npm install
 
-      # electron-builder: NSIS target + latest.yml (+ blockmap) + publish na GitHub Release v<version>
-      - name: Build & publish Windows NSIS via electron-builder
+      # Technický update balíček. Uživatel tento instalátor běžně NEVIDÍ.
+      # latest.yml odkazuje právě na StudioVoxarioUpdate-<version>.exe.
+      - name: Build & publish silent NSIS update payload
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EP_GH_IGNORE_TIME: 'true'
         run: npm run release:win
 
-      - name: Verify generated update artifacts
+      - name: Verify electron-updater payload
         shell: bash
         run: |
           node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}"
@@ -95,20 +96,126 @@ jobs:
           echo "Packaged updater config:"
           cat electron/release/win-unpacked/resources/app-update.yml
 
+      # ---------------- VLASTNÍ VISIBLE INSTALLER ----------------
+      # Zachovává původní StudioVoxario HUD/Electron UI. Je to primární .exe,
+      # které se nabízí na webu. Payload bere z electron-builder win-unpacked,
+      # takže obsahuje úplně stejnou aplikaci jako auto-update.
+      - name: Prepare custom installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Copy-Item electron/assets/icon.ico installer/assets/icon.ico -Force
+          $version = "${{ steps.appver.outputs.version }}"
+          $pkgPath = "installer/package.json"
+          $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+          $pkg.version = $version
+          $pkg | ConvertTo-Json -Depth 20 | Set-Content $pkgPath -Encoding UTF8
+          Write-Host "Custom installer version: $version"
+
+      - name: Install custom installer deps
+        working-directory: installer
+        run: npm install
+
+      - name: Build custom StudioVoxario HUD installer runtime
+        working-directory: installer
+        run: node build.cjs
+
+      - name: Build single-file custom Setup EXE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ steps.appver.outputs.version }}"
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
+
+          # 7zSD.sfx = pouze tichý self-extractor. Po rozbalení se spustí
+          # StudioVoxarioInstaller.exe a uživatel vidí výhradně naše vlastní UI.
+          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $extraDir = Join-Path $env:RUNNER_TEMP "lzma-sdk"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
+          if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
+          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
+          & $sevenZip x $extraArchive "-o$extraDir" -y
+          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
+          $sfx = (Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1)
+          if ($null -eq $sfx) { throw "7zSD.sfx not found" }
+
+          $payloadDir = Resolve-Path "installer/dist/StudioVoxarioInstaller-win32-x64"
+          $installerExe = Join-Path $payloadDir "StudioVoxarioInstaller.exe"
+          if (!(Test-Path $installerExe)) { throw "Custom HUD installer runtime missing: $installerExe" }
+
+          $archive = Join-Path $env:RUNNER_TEMP "studiovoxario-custom-installer.7z"
+          if (Test-Path $archive) { Remove-Item $archive -Force }
+          Push-Location $payloadDir
+          try {
+            & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
+            if ($LASTEXITCODE -ne 0) { throw "7z pack failed with code $LASTEXITCODE" }
+          } finally { Pop-Location }
+
+          $cfg = Join-Path $env:RUNNER_TEMP "studiovoxario-sfx-config.txt"
+          $configLines = @(
+            ';!@Install@!UTF-8!',
+            'Title="StudioVoxario"',
+            'RunProgram="StudioVoxarioInstaller.exe"',
+            'GUIMode="2"',
+            ';!@InstallEnd@!'
+          )
+          $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+          [System.IO.File]::WriteAllText($cfg, ($configLines -join "`r`n") + "`r`n", $utf8Bom)
+
+          $outFile = "electron/release/StudioVoxarioSetup-$version.exe"
+          if (Test-Path $outFile) { Remove-Item $outFile -Force }
+          $out = [System.IO.File]::Open($outFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+          try {
+            foreach ($part in @($sfx.FullName, $cfg, $archive)) {
+              $stream = [System.IO.File]::OpenRead($part)
+              try { $stream.CopyTo($out) } finally { $stream.Dispose() }
+            }
+          } finally { $out.Dispose() }
+
+          if (!(Test-Path $outFile)) { throw "Custom Setup EXE was not created" }
+          $size = (Get-Item $outFile).Length
+          $hash = (Get-FileHash $outFile -Algorithm SHA256).Hash.ToLower()
+          Write-Host "Custom Setup: $outFile"
+          Write-Host "Size: $size"
+          Write-Host "SHA256: $hash"
+
+      - name: Upload custom Setup to version release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.appver.outputs.version }}"
+          FILE="electron/release/StudioVoxarioSetup-$VERSION.exe"
+          test -f "$FILE"
+          gh release upload "v$VERSION" "$FILE" --clobber --repo "${{ github.repository }}"
+
+      - name: Verify custom + updater artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.appver.outputs.version }}"
+          test -f "electron/release/StudioVoxarioSetup-$VERSION.exe"
+          test -f "electron/release/StudioVoxarioUpdate-$VERSION.exe"
+          test -f electron/release/latest.yml
+          echo "✓ Custom visible setup + hidden updater payload are both present"
+
       - name: Upload artifacts (CI debug)
         uses: actions/upload-artifact@v4
         with:
           name: StudioVoxario-win-${{ steps.appver.outputs.version }}
           path: |
             electron/release/StudioVoxarioSetup-*.exe
+            electron/release/StudioVoxarioUpdate-*.exe
             electron/release/latest.yml
             electron/release/*.blockmap
             electron/release/win-unpacked/resources/app-update.yml
           if-no-files-found: error
 
-      # desktop-version.json je metadata pro download stránku.
-      # public/latest.yml + public/beta.yml jsou POUZE migrační bootstrap pro
-      # staré instalace, které ještě používají generic feed studiovoxario.com.
+      # desktop-version.json + website pointer odkazují na VLASTNÍ Setup EXE.
+      # public/latest.yml + public/beta.yml jsou migrační feed pro staré klienty
+      # a zůstávají navázané na technický StudioVoxarioUpdate EXE.
       - name: Update website download metadata and legacy bootstrap feed
         shell: bash
         run: |
@@ -124,6 +231,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No metadata changes."
           else
-            git commit -m "ci: update desktop metadata and legacy feed v${{ steps.appver.outputs.version }} [skip ci]"
+            git commit -m "ci: update desktop metadata and custom installer v${{ steps.appver.outputs.version }} [skip ci]"
             git push
           fi
