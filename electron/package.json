@@ -74,18 +74,18 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "artifactName": "StudioVoxarioSetup-${version}.${ext}"
+      "artifactName": "StudioVoxarioUpdate-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowElevation": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false,
       "shortcutName": "Voxar.app",
       "menuCategory": "StudioVoxario",
-      "runAfterFinish": true,
+      "runAfterFinish": false,
       "deleteAppDataOnUninstall": false,
       "differentialPackage": false,
       "installerIcon": "assets/icon.ico",
