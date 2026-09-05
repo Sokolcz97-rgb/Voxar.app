@@ -1,7 +1,7 @@
 {
   "name": "voxar-app-desktop",
   "productName": "Voxar.app",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
   "main": "main.cjs",
@@ -11,12 +11,78 @@
   },
   "devDependencies": {
     "@electron/packager": "^20.0.3",
-    "electron": "^31.7.7"
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
   },
   "scripts": {
     "start": "electron .",
     "verify:renderer": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.html'))throw Error('Missing electron/dist/index.html')\"",
+    "dist:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish never",
+    "release:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish always",
     "pack:win": "npm run verify:renderer && @electron/packager . Voxar.app --platform=win32 --arch=x64 --out=release --overwrite --asar --icon=assets/icon.ico --ignore=^/release",
     "pack:linux": "npm run verify:renderer && @electron/packager . Voxar.app --platform=linux --arch=x64 --out=release --overwrite --asar --ignore=^/release"
+  },
+  "build": {
+    "appId": "com.studiovoxario.voxarapp",
+    "productName": "Voxar.app",
+    "copyright": "Copyright © StudioVoxario",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "settings-preload.cjs",
+      "updater.cjs",
+      "rollback.cjs",
+      "pinning.cjs",
+      "bookmarks.cjs",
+      "browser-settings.cjs",
+      "browser.html",
+      "launcher.html",
+      "settings.html",
+      "package.json",
+      "assets/**/*",
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "generateUpdatesFilesForAllChannels": true,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Sokolcz97-rgb",
+        "repo": "Voxar.app",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "StudioVoxarioSetup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Voxar.app",
+      "menuCategory": "StudioVoxario",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "uninstallDisplayName": "StudioVoxario (Voxar.app)"
+    }
   }
 }

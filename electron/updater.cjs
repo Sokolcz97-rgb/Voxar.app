@@ -11,8 +11,14 @@ const https = require("https");
 const http = require("http");
 const pinning = require("./pinning.cjs");
 
-const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || "https://studiovoxario.com/";
+// Kanonický zdroj aktualizací = publish konfigurace z electron-builderu
+// (app-update.yml uvnitř balíčku, provider github → Sokolcz97-rgb/Voxar.app).
+// STUDIOVOXARIO_UPDATE_FEED je jen testovací override na generic feed.
+const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || null;
+// desktop-version.json zůstává jen informativní metadata pro web (download stránka),
+// updater se podle něj nikdy nerozhoduje.
 const LEGACY_MANIFEST_URL = process.env.STUDIOVOXARIO_UPDATE_URL || "https://studiovoxario.com/desktop-version.json";
+const GITHUB_PUBLISH = { provider: "github", owner: "Sokolcz97-rgb", repo: "Voxar.app" };
 
 let checking = false;
 let installing = false;
@@ -165,7 +171,7 @@ function configureUpdater(channel = "stable") {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoRunAppAfterInstall = true;
-  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowPrerelease = updaterChannel === "beta";
   autoUpdater.allowDowngrade = false;
   autoUpdater.disableWebInstaller = true;
   autoUpdater.disableDifferentialDownload = true;
@@ -174,7 +180,16 @@ function configureUpdater(channel = "stable") {
     "Cache-Control": "no-cache, no-store, max-age=0",
     "Pragma": "no-cache",
   };
-  autoUpdater.setFeedURL({ provider: "generic", url: FEED_URL, channel: updaterChannel });
+  // Bez override používáme feed zabalený electron-builderem (app-update.yml).
+  if (FEED_URL) {
+    autoUpdater.setFeedURL({ provider: "generic", url: FEED_URL, channel: updaterChannel });
+    diagnostics.feedUrl = FEED_URL;
+  } else if (!app.isPackaged) {
+    autoUpdater.setFeedURL({ ...GITHUB_PUBLISH, channel: updaterChannel });
+    diagnostics.feedUrl = `github:${GITHUB_PUBLISH.owner}/${GITHUB_PUBLISH.repo}`;
+  } else {
+    diagnostics.feedUrl = `github:${GITHUB_PUBLISH.owner}/${GITHUB_PUBLISH.repo} (app-update.yml)`;
+  }
   diagnostics.channel = publicChannel(channel);
   diagnostics.currentVersion = app.getVersion();
 }
@@ -218,24 +233,17 @@ async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
     diagnostics.status = info?.version && isNewer(info.version, app.getVersion()) ? "available" : "up-to-date";
     return toAvailability(info, channel);
   } catch (error) {
+    // Žádný záložní feed — jediný kanonický zdroj je electron-updater.
     diagnostics.status = "error";
     diagnostics.lastError = String(error?.message || error);
     log(`Tichá kontrola aktualizací selhala: ${diagnostics.lastError}`);
-    return legacyQuietCheck(channel, error);
-  }
-}
-
-async function legacyQuietCheck(channel, originalError) {
-  try {
-    const raw = await fetchManifest();
-    const manifest = pickLegacyChannel(raw, channel);
-    latestInfo = { version: manifest.version, releaseNotes: manifest.notes || null };
-    diagnostics.remoteVersion = manifest.version || null;
-    diagnostics.updateInfo = latestInfo;
-    diagnostics.status = manifest.version && isNewer(manifest.version, app.getVersion()) ? "available" : "up-to-date";
-    return toAvailability(latestInfo, channel);
-  } catch {
-    const payload = { available: false, error: String(originalError?.message || originalError), current: app.getVersion(), remote: null, channel: publicChannel(channel) };
+    const payload = {
+      available: false,
+      error: diagnostics.lastError,
+      current: app.getVersion(),
+      remote: null,
+      channel: publicChannel(channel),
+    };
     broadcast("update:availability", payload);
     return payload;
   }
@@ -473,7 +481,10 @@ function setupEvents() {
   try {
     const devConfig = path.join(app.getAppPath(), "dev-app-update.yml");
     if (!app.isPackaged && !fs.existsSync(devConfig)) {
-      fs.writeFileSync(devConfig, `provider: generic\nurl: ${FEED_URL}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`, "utf8");
+      const yml = FEED_URL
+        ? `provider: generic\nurl: ${FEED_URL}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`
+        : `provider: github\nowner: ${GITHUB_PUBLISH.owner}\nrepo: ${GITHUB_PUBLISH.repo}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`;
+      fs.writeFileSync(devConfig, yml, "utf8");
     }
   } catch {}
 }
