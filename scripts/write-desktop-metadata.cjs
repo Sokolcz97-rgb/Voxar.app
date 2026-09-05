@@ -4,6 +4,10 @@
  * pro STARÉ instalace (0.0.13 a podobné), které ještě používají generic feed
  * https://studiovoxario.com/latest.yml.
  *
+ * Webový download používá STÁLÝ alias:
+ *   /releases/latest/download/StudioVoxarioSetup.exe
+ * takže kvůli každé nové desktop verzi není nutné znovu publikovat web.
+ *
  * Nové instalace používají výhradně GitHub provider z app-update.yml, který
  * generuje electron-builder (electron/package.json -> build.publish).
  * public/latest.yml a public/beta.yml jsou pouze migrační most, aby starý
@@ -21,10 +25,11 @@ const version = process.argv[2] || require(path.join(root, "electron", "package.
 const repo = process.argv[3] || "Sokolcz97-rgb/Voxar.app";
 const releaseDir = path.resolve(process.argv[4] || path.join(root, "electron", "release"));
 
-const filename = `StudioVoxarioSetup-${version}.exe`;
-const exePath = path.join(releaseDir, filename);
+const versionedFilename = `StudioVoxarioSetup-${version}.exe`;
+const publicFilename = "StudioVoxarioSetup.exe";
+const exePath = path.join(releaseDir, versionedFilename);
 const releaseBaseUrl = `https://github.com/${repo}/releases/download/v${version}/`;
-const url = `${releaseBaseUrl}${filename}`;
+const stableWebUrl = `https://github.com/${repo}/releases/latest/download/${publicFilename}`;
 
 let size = 0;
 let sha256 = "";
@@ -35,16 +40,17 @@ if (fs.existsSync(exePath)) {
 }
 
 const manifest = {
-  _comment: "Informativní metadata pro web. Nové instalace používají latest.yml v GitHub Release.",
+  _comment: "Informativní metadata pro web. Stálý URL alias vždy stáhne nejnovější vlastní Setup; auto-update používá latest.yml.",
   version,
   notes: `StudioVoxario ${version}`,
-  url,
+  url: stableWebUrl,
   sha256,
   size,
-  filename,
+  filename: publicFilename,
+  versioned_filename: versionedFilename,
   channels: {
-    stable: { version, url },
-    beta: { version, url },
+    stable: { version, url: stableWebUrl },
+    beta: { version, url: stableWebUrl },
   },
   updated_at: new Date().toISOString(),
 };
@@ -60,13 +66,15 @@ fs.writeFileSync(
   JSON.stringify(
     {
       version: 1,
-      url,
-      original_filename: filename,
+      app_version: version,
+      url: stableWebUrl,
+      original_filename: publicFilename,
+      versioned_filename: versionedFilename,
       size,
       sha256,
       content_type: "application/x-msdownload",
-      source: "github-release",
-      tag: `v${version}`,
+      source: "github-release-latest",
+      tag: "latest",
       updated_at: new Date().toISOString(),
     },
     null,
@@ -80,7 +88,8 @@ fs.writeFileSync(
 // Staré instalace StudioVoxario/VoxarioBrowseru používaly generic provider
 // s base URL https://studiovoxario.com/. Takový klient vždy hledá /latest.yml
 // (nebo /beta.yml). Vygenerovaný electron-builder feed proto zkopírujeme do
-// Vite public/ a cesty k instalátoru změníme na absolutní GitHub Release URL.
+// Vite public/ a cesty k technickému update instalátoru změníme na absolutní
+// URL konkrétního version releasu.
 //
 // Po první úspěšné migraci už nová instalace čte app-update.yml z balíčku a
 // další aktualizace jdou přímo přes GitHub provider. Webový bootstrap tedy
@@ -109,20 +118,16 @@ function absoluteReleaseAsset(value) {
 
 let legacyYml = fs.readFileSync(sourceLatestYml, "utf8");
 
-// Moderní files[] metadata.
 legacyYml = legacyYml.replace(/^(\s*-\s+url:\s*)(.+)$/gm, (_match, prefix, value) => {
   return `${prefix}${absoluteReleaseAsset(value)}`;
 });
 
-// Legacy top-level path metadata (electron-builder 24 ho stále generuje).
 legacyYml = legacyYml.replace(/^(path:\s*)(.+)$/m, (_match, prefix, value) => {
   return `${prefix}${absoluteReleaseAsset(value)}`;
 });
 
 fs.writeFileSync(path.join(publicDir, "latest.yml"), legacyYml);
-// Staré beta klienty musí mít také platný feed. Do migrace používají stejnou
-// aktuální stabilní verzi; po přechodu už kanál řeší GitHub/app-update.yml.
 fs.writeFileSync(path.join(publicDir, "beta.yml"), legacyYml);
 
-console.log(`✓ Metadata pro ${version} zapsána (${url})`);
+console.log(`✓ Web metadata pro ${version}: ${stableWebUrl}`);
 console.log("✓ Legacy bootstrap feed: public/latest.yml + public/beta.yml");
