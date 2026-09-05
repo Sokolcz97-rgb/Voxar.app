@@ -47,9 +47,10 @@
     WriteRegStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "$R9"
 
     ; Zachovej volbu nainstalovanych modulu pres NSIS update.
-    IfFileExists "$R9\modules.json" 0 +3
+    IfFileExists "$R9\modules.json" 0 sv_modules_backup_done
       CopyFiles /SILENT "$R9\modules.json" "$TEMP\StudioVoxario-modules.json"
       StrCpy $R8 "1"
+    sv_modules_backup_done:
   ${EndIf}
 
   SetRegView 64
@@ -62,18 +63,20 @@
 !macro customInstall
   ; Vrat modules.json, ktery mohl NSIS pri prepisu instalace odstranit.
   ${If} $R8 == "1"
-    IfFileExists "$TEMP\StudioVoxario-modules.json" 0 +3
+    IfFileExists "$TEMP\StudioVoxario-modules.json" 0 sv_modules_restore_done
       CopyFiles /SILENT "$TEMP\StudioVoxario-modules.json" "$INSTDIR\modules.json"
       Delete "$TEMP\StudioVoxario-modules.json"
+    sv_modules_restore_done:
   ${Else}
     ; Oprava pro klienty, kterym uz starsi update modules.json smazal.
     ; Vlastni instalator vytvari Start Menu zkratku jen tehdy, kdyz byl
     ; VoxarioBrowser skutecne zvolen, takze ji muzeme pouzit jako migracni dukaz.
-    IfFileExists "$APPDATA\Microsoft\Windows\Start Menu\Programs\Voxar.app\VoxarioBrowser.lnk" 0 +5
+    IfFileExists "$APPDATA\Microsoft\Windows\Start Menu\Programs\Voxar.app\VoxarioBrowser.lnk" 0 sv_modules_migration_done
       FileOpen $R7 "$INSTDIR\modules.json" w
       FileWrite $R7 '{"browser":{"installed":true}}'
       FileClose $R7
       StrCpy $R8 "1"
+    sv_modules_migration_done:
   ${EndIf}
 
   ${If} ${isUpdated}
