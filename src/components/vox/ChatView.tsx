@@ -13,15 +13,17 @@ import { CommunityChannelHeader } from "./reference/CommunityChannelHeader";
 import { CommunityWelcomeBanner } from "./reference/CommunityWelcomeBanner";
 import { CommunityMessageList } from "./reference/CommunityMessageList";
 import { CommunityComposer } from "./reference/CommunityComposer";
+import { useCommunityChatBridge } from "./reference/communityChatBridge";
 import type { CommunityMessage, CommunityProfileLite } from "./reference/chatTypes";
+import "./reference/community-structured-chat.css";
 
 interface Props {
   channel: VoxChannel;
   members?: VoxMember[];
-  guildName: string;
+  guildName?: string;
   guildIconUrl?: string | null;
-  channels: VoxChannel[];
-  onSelectChannel: (channel: VoxChannel) => void;
+  channels?: VoxChannel[];
+  onSelectChannel?: (channel: VoxChannel) => void;
   onShowRules?: () => void;
 }
 
@@ -35,6 +37,7 @@ export function ChatView({
   onShowRules,
 }: Props) {
   const { user } = useAuth();
+  const shellBridge = useCommunityChatBridge();
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [profiles, setProfiles] = useState<Record<string, CommunityProfileLite>>({});
   const [input, setInput] = useState("");
@@ -46,6 +49,12 @@ export function ChatView({
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const effectiveGuildName = guildName ?? shellBridge?.guildName ?? "StudioVoxario";
+  const effectiveGuildIconUrl = guildIconUrl ?? shellBridge?.guildIconUrl ?? null;
+  const effectiveChannels = channels ?? shellBridge?.channels ?? [channel];
+  const effectiveSelectChannel = onSelectChannel ?? shellBridge?.onSelectChannel ?? (() => undefined);
+  const effectiveShowRules = onShowRules ?? shellBridge?.onShowRules;
 
   const loadProfiles = useCallback(async (ids: string[]) => {
     const uniqueIds = [...new Set(ids)];
@@ -212,11 +221,11 @@ export function ChatView({
       />
 
       <CommunityWelcomeBanner
-        guildName={guildName}
-        guildIconUrl={guildIconUrl}
-        channels={channels}
-        onSelectChannel={onSelectChannel}
-        onShowRules={onShowRules}
+        guildName={effectiveGuildName}
+        guildIconUrl={effectiveGuildIconUrl}
+        channels={effectiveChannels}
+        onSelectChannel={effectiveSelectChannel}
+        onShowRules={effectiveShowRules}
       />
 
       <CommunityMessageList
