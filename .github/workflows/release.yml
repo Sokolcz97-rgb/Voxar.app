@@ -1,16 +1,21 @@
-name: Build StudioVoxario
+name: Build StudioVoxario Desktop
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump for electron/package.json (patch|minor|major|none)'
+        required: false
+        default: 'patch'
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
 
     steps:
@@ -18,210 +23,92 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
-      - name: Automatické zvýšení verze
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          npm version patch -m "Auto-bump version to %s [skip ci]"
-          git push
-          
-      - name: Resolve app version
-        id: appver
-        shell: pwsh
-        run: |
-          $v = (Get-Content electron/package.json -Raw | ConvertFrom-Json).version
-          if (!$v) { throw "Version missing in electron/package.json" }
-          if ($v -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z\.-]+)?$') { throw "Version '$v' is not valid semver (x.y.z)" }
-          Write-Host "App version: $v"
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      # Kanonická verze desktopu je VÝHRADNĚ electron/package.json.
+      # Root package.json se pro update verzi nepoužívá.
+      - name: Bump canonical desktop version (electron/package.json)
+        if: github.event_name == 'push' || inputs.bump != 'none'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUMP="${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'patch' }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm --prefix electron version "$BUMP" --no-git-tag-version
+          VERSION=$(node -p "require('./electron/package.json').version")
+          git add electron/package.json electron/package-lock.json || true
+          git commit -m "ci: desktop v$VERSION [skip ci]" || echo "nothing to commit"
+          git push
+
+      - name: Resolve desktop version
+        id: appver
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./electron/package.json').version")
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid semver: $VERSION"; exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Desktop version: $VERSION"
 
       - name: Install root deps
-        run: npm install
+        run: npm ci || npm install
 
-      - name: Build frontend (Vite)
+      - name: Build frontend (Vite) + prepare renderer
         run: npm run desktop:prepare
 
       - name: Verify packaged renderer
-        shell: pwsh
+        shell: bash
         run: |
-          if (!(Test-Path "electron/dist/index.html")) { throw "Missing electron/dist/index.html" }
-          if (!(Test-Path "electron/dist/assets")) { throw "Missing electron/dist/assets" }
+          test -f electron/dist/index.html || { echo "Missing electron/dist/index.html"; exit 1; }
+          test -d electron/dist/assets || { echo "Missing electron/dist/assets"; exit 1; }
 
       - name: Install electron deps
         working-directory: electron
         run: npm install
 
-      - name: Package Electron app (win32-x64)
-        run: npx --yes @electron/packager electron Voxar.app --platform=win32 --arch=x64 --out=electron-release --overwrite --asar --icon=electron/assets/icon.ico --ignore=^/release
-
-      - name: Prepare installer icon
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path installer/assets | Out-Null
-          Copy-Item electron/assets/icon.ico installer/assets/icon.ico -Force
-
-      - name: Install installer deps
-        working-directory: installer
-        run: npm install
-
-      - name: Build HUD installer .exe (Voxar.app + VoxarioBrowser modul)
-        working-directory: installer
-        run: node build.cjs
-
-
-      - name: Build self-extracting installers (.exe)
-        id: locate
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $version = "${{ steps.appver.outputs.version }}"
-
-          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
-
-          Write-Host "== Download LZMA SDK (SFX modules) =="
-          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
-          $extraDir     = Join-Path $env:RUNNER_TEMP "lzma-sdk"
-          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
-          if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
-          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
-          & $sevenZip x $extraArchive "-o$extraDir" -y
-          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
-          $sfx = (Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1)
-          if ($null -eq $sfx) { throw "7zSD.sfx not found after extracting LZMA SDK" }
-          $sfx = $sfx.FullName
-
-          $outDir = "installer/dist/final"
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-
-          $targets = @(
-            [ordered]@{ key = "app"; payload = "installer/dist/StudioVoxarioInstaller-win32-x64"; exe = "StudioVoxarioInstaller.exe"; title = "StudioVoxario"; out = "StudioVoxarioSetup-$version.exe" }
-          )
-
-
-          $paths = @()
-          foreach ($t in $targets) {
-            Write-Host ("== Building SFX for {0} ==" -f $t.key)
-            $payloadDir = Resolve-Path $t.payload
-            $exe = Join-Path $payloadDir $t.exe
-            if (!(Test-Path $exe)) { throw "Installer payload not found at $exe" }
-
-            $archive = Join-Path $env:RUNNER_TEMP ("payload-" + $t.key + ".7z")
-            if (Test-Path $archive) { Remove-Item $archive -Force }
-            Push-Location $payloadDir
-            try {
-              & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
-              if ($LASTEXITCODE -ne 0) { throw "7z pack failed with code $LASTEXITCODE" }
-            } finally { Pop-Location }
-
-            $cfg = Join-Path $env:RUNNER_TEMP ("config-" + $t.key + ".txt")
-            $configLines = @(
-              ';!@Install@!UTF-8!',
-              ('Title="{0}"' -f $t.title),
-              ('RunProgram="{0}"' -f $t.exe),
-              'GUIMode="2"',
-              ';!@InstallEnd@!'
-            )
-            $utf8Bom = New-Object System.Text.UTF8Encoding($true)
-            [System.IO.File]::WriteAllText($cfg, ($configLines -join "`r`n") + "`r`n", $utf8Bom)
-
-            $renamed = Join-Path $outDir $t.out
-            if (Test-Path $renamed) { Remove-Item $renamed -Force }
-            $out = [System.IO.File]::Open($renamed, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
-            try {
-              foreach ($part in @($sfx, $cfg, $archive)) {
-                $inStream = [System.IO.File]::OpenRead($part)
-                try { $inStream.CopyTo($out) } finally { $inStream.Dispose() }
-              }
-            } finally { $out.Dispose() }
-            if (!(Test-Path $renamed)) { throw "SFX build failed — output missing for $($t.key)" }
-
-            $size = (Get-Item $renamed).Length
-            $hash = (Get-FileHash $renamed -Algorithm SHA256).Hash.ToLower()
-            Write-Host ("== DONE == {0} ({1:N1} MB) sha256={2}" -f $renamed, ($size / 1MB), $hash)
-            $paths += $renamed
-
-            "$($t.key)_path=$renamed"     | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            "$($t.key)_size=$size"        | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            "$($t.key)_sha256=$hash"      | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-            "$($t.key)_filename=$($t.out)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          }
-
-          Write-Host ("== Built installers ==`n" + ($paths -join "`n"))
-
-
-      - name: Create / update GitHub Release
-        id: release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: desktop-latest
-          name: StudioVoxario Desktop (latest)
-          body: |
-            Automatický build z commitu ${{ github.sha }}.
-            Verze: ${{ steps.appver.outputs.version }}
-
-            - `StudioVoxarioSetup-${{ steps.appver.outputs.version }}.exe` — jeden instalátor: Voxar.app + modul VoxarioBrowser (volitelně)
-          files: |
-            installer/dist/final/StudioVoxarioSetup-${{ steps.appver.outputs.version }}.exe
-          prerelease: true
-          make_latest: 'false'
+      # electron-builder: NSIS target + latest.yml (+ blockmap) + publish na GitHub Release v<version>
+      - name: Build & publish Windows NSIS via electron-builder
+        working-directory: electron
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EP_GH_IGNORE_TIME: 'true'
+        run: npm run release:win
 
-      - name: Write installer pointer JSON
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path src/assets/downloads | Out-Null
-          $base = "https://github.com/${{ github.repository }}/releases/download/desktop-latest"
-          $url  = "$base/${{ steps.locate.outputs.app_filename }}"
+      - name: Verify generated update artifacts
+        shell: bash
+        run: node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}"
 
-          $obj = [ordered]@{
-            version           = 1
-            url               = $url
-            original_filename = "${{ steps.locate.outputs.app_filename }}"
-            size              = [int64]"${{ steps.locate.outputs.app_size }}"
-            sha256            = "${{ steps.locate.outputs.app_sha256 }}"
-            content_type      = "application/x-msdownload"
-            source            = "github-release"
-            tag               = "desktop-latest"
-            commit            = "${{ github.sha }}"
-            updated_at        = (Get-Date).ToUniversalTime().ToString("o")
-          }
-          Set-Content -Path src/assets/downloads/windows-installer.asset.json -Value ($obj | ConvertTo-Json -Depth 5) -Encoding UTF8
+      - name: Upload artifacts (CI debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudioVoxario-win-${{ steps.appver.outputs.version }}
+          path: |
+            electron/release/StudioVoxarioSetup-*.exe
+            electron/release/latest.yml
+            electron/release/*.blockmap
+          if-no-files-found: error
 
-          New-Item -ItemType Directory -Force -Path public | Out-Null
-          $manifest = [ordered]@{
-            version    = "${{ steps.appver.outputs.version }}"
-            notes      = "Automaticky vydaná verze ${{ steps.appver.outputs.version }}."
-            url        = $url
-            sha256     = "${{ steps.locate.outputs.app_sha256 }}"
-            size       = [int64]"${{ steps.locate.outputs.app_size }}"
-            filename   = "${{ steps.locate.outputs.app_filename }}"
-            channels   = [ordered]@{
-              stable = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
-              beta   = [ordered]@{ version = "${{ steps.appver.outputs.version }}"; url = $url }
-            }
-            updated_at = (Get-Date).ToUniversalTime().ToString("o")
-          }
-          Set-Content -Path public/desktop-version.json -Value ($manifest | ConvertTo-Json -Depth 6) -Encoding UTF8
-
-      - name: Commit updated pointer
+      # desktop-version.json je POUZE informativní metadata pro web (download stránka).
+      - name: Update website download metadata
         shell: bash
         run: |
+          set -euo pipefail
+          node scripts/write-desktop-metadata.cjs "${{ steps.appver.outputs.version }}" "${{ github.repository }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/assets/downloads/windows-installer.asset.json public/desktop-version.json
-
+          git add public/desktop-version.json src/assets/downloads/windows-installer.asset.json
           if git diff --cached --quiet; then
-            echo "No pointer changes to commit."
+            echo "No metadata changes."
           else
-            git commit -m "ci: update Windows installer pointers [skip ci]"
+            git commit -m "ci: update desktop download metadata v${{ steps.appver.outputs.version }} [skip ci]"
             git push
           fi
