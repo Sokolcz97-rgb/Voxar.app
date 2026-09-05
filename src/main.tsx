@@ -14,6 +14,7 @@ import "./components/vox/reference/community-structured-panels.css";
 import "./components/vox/reference/community-channel-list.css";
 import "./components/vox/reference/community-structured-shell.css";
 import "./components/vox/reference/community-structured-topbar-bridge.css";
+import "./components/vox/reference/community-structured-workspace.css";
 import "./i18n";
 
 const syncAppTitle = () => {
