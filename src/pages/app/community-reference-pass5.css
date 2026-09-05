@@ -1,0 +1,186 @@
+/* Screenshot pass 5 — fixes visible overlap and tightens the desktop community shell. */
+
+/* Channel header: keep the topic in its own row and never let it run under the tools. */
+.vox-reference-center .vox-chat-header {
+  height: 60px !important;
+  min-height: 60px !important;
+  overflow: hidden;
+}
+
+.vox-reference-center .vox-chat-header-copy {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow: hidden;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  grid-template-rows: 21px 14px !important;
+  column-gap: 10px !important;
+  row-gap: 1px !important;
+  align-content: center !important;
+  align-items: center !important;
+}
+
+.vox-reference-center .vox-chat-header-copy > svg,
+.vox-reference-center .vox-chat-header-copy > .vox-chat-emoji {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  align-self: center !important;
+  justify-self: center !important;
+  margin: 0 !important;
+}
+
+.vox-reference-center .vox-chat-header-name {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  align-self: end !important;
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 18px !important;
+}
+
+.vox-reference-center .vox-chat-header-topic {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  align-self: start !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 12px !important;
+  font-size: 9px !important;
+}
+
+.vox-reference-center .vox-chat-header-tools {
+  flex: 0 0 auto !important;
+  margin-left: 10px !important;
+  gap: 5px !important;
+}
+
+.vox-reference-center .vox-chat-online {
+  flex: 0 0 auto;
+  padding: 0 7px !important;
+}
+
+@media (max-width: 1120px) {
+  .vox-reference-center .vox-chat-header-topic { display: none !important; }
+  .vox-reference-center .vox-chat-header-copy { grid-template-rows: 24px !important; }
+  .vox-reference-center .vox-chat-header-name { align-self: center !important; }
+  .vox-reference-center .vox-chat-online { display: none !important; }
+}
+
+/* Composer: slightly calmer spacing and clearer secondary actions. */
+.vox-reference-center .composer-pod.vox-composer-reference {
+  margin-top: 10px !important;
+  padding: 8px 10px 7px !important;
+}
+
+.vox-reference-center .vox-composer-input textarea {
+  line-height: 1.35 !important;
+  padding-top: 7px !important;
+}
+
+.vox-reference-center .vox-composer-actions {
+  padding-left: 45px !important;
+  gap: 7px !important;
+}
+
+.vox-reference-center .vox-composer-action {
+  min-width: 0;
+  font-size: 9.5px !important;
+  color: #91afbf !important;
+}
+
+.vox-reference-center .vox-composer-action.ai {
+  color: #b39cff !important;
+}
+
+.vox-reference-center .vox-composer-enter {
+  font-size: 9px !important;
+  letter-spacing: .035em !important;
+  opacity: .82;
+  white-space: nowrap;
+}
+
+/* Bottom identity panel: preserve the full display name by making controls more compact. */
+.vox-self-panel .vox-self-panel-row {
+  gap: 5px !important;
+  padding-left: 7px !important;
+  padding-right: 6px !important;
+}
+
+.vox-self-panel .vox-self-panel-identity {
+  gap: 8px !important;
+  padding-left: 0 !important;
+  min-width: 0 !important;
+}
+
+.vox-self-panel .vox-self-action {
+  width: 27px !important;
+  height: 27px !important;
+  min-width: 27px !important;
+  padding: 0 !important;
+}
+
+.vox-self-panel .vox-self-action svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.vox-self-panel .vox-self-panel-name {
+  font-size: 12.5px !important;
+  letter-spacing: 0 !important;
+}
+
+/* User settings: use more of the available center area while retaining the focused card. */
+.vox-reference-shell .hud-settings > aside {
+  width: 230px !important;
+  padding: 15px 14px !important;
+}
+
+.vox-reference-shell .hud-settings > aside nav button {
+  letter-spacing: .06em !important;
+  text-transform: none !important;
+  font-size: 12px !important;
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div {
+  max-width: 900px !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding: 24px 34px 36px !important;
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div > .space-y-5 {
+  max-width: 760px !important;
+  padding: 20px 22px 22px !important;
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div > .flex.items-center.justify-between {
+  margin-bottom: 20px !important;
+}
+
+.vox-reference-shell .hud-settings input,
+.vox-reference-shell .hud-settings textarea {
+  background: rgba(2, 18, 30, .58) !important;
+  border-color: rgba(40, 188, 228, .28) !important;
+}
+
+.vox-reference-shell .hud-settings input:focus,
+.vox-reference-shell .hud-settings textarea:focus {
+  border-color: rgba(45, 222, 255, .58) !important;
+  box-shadow: 0 0 0 1px rgba(45, 222, 255, .12) !important;
+}
+
+/* Keep the center/right borders visually crisp at the exact desktop size from the screenshots. */
+@media (min-width: 1320px) {
+  .vox-reference-center { border-right-color: rgba(37, 190, 230, .28) !important; }
+  .vox-reference-right { border-left-color: rgba(37, 190, 230, .24) !important; }
+}
