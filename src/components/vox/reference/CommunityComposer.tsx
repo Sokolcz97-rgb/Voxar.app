@@ -1,5 +1,5 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
-import { AtSign, BarChart3, Bot, Gift, Loader2, Paperclip, Send, Smile, X } from "lucide-react";
+import { AtSign, BarChart3, Bot, Gift, Loader2, Paperclip, Plus, Send, Smile, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import type { UploadedAttachment } from "@/lib/uploadAttachment";
@@ -40,7 +40,7 @@ export function CommunityComposer({
   const canSend = !!input.trim() || pending.length > 0;
 
   return (
-    <footer className="sv-composer">
+    <footer className="sv-composer sv-composer-v3">
       {pending.length > 0 && (
         <div className="sv-composer-pending">
           {pending.map((attachment, index) => (
@@ -70,12 +70,12 @@ export function CommunityComposer({
       <div className="sv-composer-row">
         <button
           type="button"
-          className="sv-composer-attach"
+          className="sv-composer-attach sv-composer-plus"
           disabled={uploading}
-          title="Připojit soubor"
+          title="Přidat obsah"
           onClick={() => fileRef.current?.click()}
         >
-          {uploading ? <Loader2 className="animate-spin" /> : <Paperclip />}
+          {uploading ? <Loader2 className="animate-spin" /> : <Plus />}
         </button>
 
         <div className="sv-composer-input-wrap">
