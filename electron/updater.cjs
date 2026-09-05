@@ -233,24 +233,17 @@ async function checkForUpdatesQuiet({ channel = "stable" } = {}) {
     diagnostics.status = info?.version && isNewer(info.version, app.getVersion()) ? "available" : "up-to-date";
     return toAvailability(info, channel);
   } catch (error) {
+    // Žádný záložní feed — jediný kanonický zdroj je electron-updater.
     diagnostics.status = "error";
     diagnostics.lastError = String(error?.message || error);
     log(`Tichá kontrola aktualizací selhala: ${diagnostics.lastError}`);
-    return legacyQuietCheck(channel, error);
-  }
-}
-
-async function legacyQuietCheck(channel, originalError) {
-  try {
-    const raw = await fetchManifest();
-    const manifest = pickLegacyChannel(raw, channel);
-    latestInfo = { version: manifest.version, releaseNotes: manifest.notes || null };
-    diagnostics.remoteVersion = manifest.version || null;
-    diagnostics.updateInfo = latestInfo;
-    diagnostics.status = manifest.version && isNewer(manifest.version, app.getVersion()) ? "available" : "up-to-date";
-    return toAvailability(latestInfo, channel);
-  } catch {
-    const payload = { available: false, error: String(originalError?.message || originalError), current: app.getVersion(), remote: null, channel: publicChannel(channel) };
+    const payload = {
+      available: false,
+      error: diagnostics.lastError,
+      current: app.getVersion(),
+      remote: null,
+      channel: publicChannel(channel),
+    };
     broadcast("update:availability", payload);
     return payload;
   }
