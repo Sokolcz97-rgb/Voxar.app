@@ -1,0 +1,343 @@
+/* Final screenshot-driven pass. All rules are scoped to the Voxar community shell. */
+
+.vox-reference-shell {
+  --ref-final-line: rgba(31, 210, 255, .30);
+  --ref-final-panel: rgba(3, 18, 31, .94);
+  --ref-final-panel-soft: rgba(6, 28, 45, .88);
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  background:
+    radial-gradient(circle at 66% -4%, rgba(23, 155, 224, .17), transparent 26%),
+    radial-gradient(circle at 91% 3%, rgba(116, 55, 239, .14), transparent 22%),
+    linear-gradient(140deg, #020910 0%, #03121d 48%, #020914 100%) !important;
+}
+
+.vox-reference-shell button,
+.vox-reference-shell input,
+.vox-reference-shell textarea,
+.vox-reference-shell .font-display,
+.vox-reference-shell .font-body,
+.vox-reference-shell .font-mono {
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+}
+
+/* The desktop shell already has a native Windows title bar. Hide the duplicate web title strip. */
+.vox-reference-titlebar { display: none !important; }
+
+.vox-reference-topbar {
+  height: 92px !important;
+  grid-template-columns: 305px minmax(560px, 1fr) 355px !important;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(2, 16, 27, .96), rgba(3, 21, 36, .83) 58%, rgba(9, 14, 37, .88)) !important;
+}
+
+.vox-reference-topbar::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  width: 390px;
+  height: 390px;
+  border-radius: 50%;
+  left: 55%;
+  top: -295px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(circle at 44% 43%, rgba(105, 218, 255, .35) 0 1px, transparent 2px),
+    radial-gradient(circle at 46% 46%, #135277 0 16%, #0a3151 35%, #041a2d 58%, rgba(2, 10, 20, .2) 66%, transparent 67%);
+  box-shadow: 0 0 65px rgba(33, 182, 255, .16);
+  opacity: .84;
+}
+
+.vox-reference-topbar::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  right: -75px;
+  top: -12px;
+  width: 420px;
+  height: 135px;
+  opacity: .34;
+  background:
+    linear-gradient(118deg, transparent 0 37%, rgba(79, 66, 242, .55) 38% 40%, transparent 41% 47%, rgba(157, 54, 255, .45) 48% 50%, transparent 51% 59%, rgba(36, 189, 255, .28) 60% 61%, transparent 62%);
+  transform: skewX(-8deg);
+}
+
+.vox-reference-brand,
+.vox-reference-nav,
+.vox-reference-tools { position: relative; z-index: 1; }
+
+.vox-reference-brand { padding-left: 28px !important; gap: 13px !important; }
+.vox-reference-brand img { width: 47px !important; height: 47px !important; }
+.vox-reference-brand-copy strong {
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: .28em !important;
+}
+.vox-reference-brand-copy span {
+  font-size: 9px !important;
+  letter-spacing: .39em !important;
+}
+
+.vox-reference-nav { padding-left: 20px !important; }
+.vox-reference-nav button {
+  min-width: 94px !important;
+  gap: 6px !important;
+  color: #9bb8ca !important;
+}
+.vox-reference-nav button span {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-nav button.active {
+  color: #4ce6ff !important;
+  background: linear-gradient(to top, rgba(0, 178, 229, .17), rgba(0, 178, 229, .025) 68%, transparent) !important;
+}
+
+.vox-reference-tools { gap: 15px !important; padding-right: 18px !important; }
+.vox-reference-search {
+  width: 242px !important;
+  height: 38px !important;
+  border-color: rgba(43, 182, 223, .30) !important;
+  background: rgba(3, 21, 36, .72) !important;
+}
+.vox-reference-search input { font-size: 12px !important; }
+
+.vox-reference-workspace {
+  height: calc(100vh - 92px) !important;
+  grid-template-columns: 88px 286px minmax(0, 1fr) 306px !important;
+  gap: 10px !important;
+  padding: 8px 10px 10px !important;
+}
+
+.vox-reference-rail,
+.vox-reference-sidebar,
+.vox-reference-center,
+.vox-reference-right {
+  border-color: var(--ref-final-line) !important;
+  background:
+    linear-gradient(180deg, rgba(4, 24, 40, .91), rgba(2, 14, 25, .96)) !important;
+  box-shadow: inset 0 0 32px rgba(0, 172, 225, .025), 0 0 16px rgba(0,0,0,.20) !important;
+}
+
+/* Left community card: lighter, cleaner and closer to the reference artwork. */
+.vox-reference-community-card {
+  margin: 12px 10px 8px !important;
+  padding: 0 !important;
+  border-color: rgba(32, 211, 255, .38) !important;
+  border-radius: 5px !important;
+}
+.vox-reference-community-cover {
+  height: 86px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(37, 204, 245, .20) !important;
+  border-radius: 0 !important;
+  background:
+    radial-gradient(circle at 69% 43%, transparent 0 28px, rgba(68, 95, 255, .92) 30px 34px, rgba(183, 55, 255, .82) 36px 39px, transparent 41px),
+    radial-gradient(circle at 35% 94%, rgba(24, 123, 174, .35), transparent 35%),
+    linear-gradient(135deg, #071a2c 0%, #0b2d47 43%, #151853 75%, #071421 100%) !important;
+}
+.vox-reference-community-cover::after {
+  height: 58px !important;
+  bottom: -12px !important;
+  opacity: .90;
+}
+.vox-reference-community-title-row {
+  min-height: 66px !important;
+  padding: 8px 12px 10px !important;
+  background: rgba(4, 22, 37, .97) !important;
+}
+.vox-reference-community-mark {
+  width: 42px !important;
+  height: 42px !important;
+  margin-top: -31px !important;
+}
+.vox-reference-community-title-row strong {
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-community-title-row span { font-size: 11px !important; }
+
+.vox-reference-server-menu { padding: 7px 10px 7px !important; }
+.vox-reference-server-menu button {
+  height: 35px !important;
+  font-size: 13px !important;
+  font-weight: 450 !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-server-menu button.active {
+  border-color: rgba(20, 218, 255, .72) !important;
+  background: linear-gradient(90deg, rgba(0, 177, 225, .17), rgba(0, 87, 122, .12)) !important;
+  box-shadow: inset 3px 0 0 #21dcff, inset 0 0 14px rgba(15, 216, 255, .04) !important;
+}
+
+.vox-reference-section-label {
+  padding: 7px 15px 5px !important;
+  font-size: 9px !important;
+  letter-spacing: .25em !important;
+}
+
+.vox-reference-channel-wrap .hud-scrollbar { padding: 3px 9px 8px !important; }
+.vox-reference-channel-wrap .font-display { letter-spacing: .02em !important; }
+.vox-reference-channel-wrap .sector-node {
+  min-height: 35px !important;
+  padding: 7px 10px !important;
+  font-size: 14px !important;
+  border-radius: 4px !important;
+}
+.vox-reference-channel-wrap .sector-node > span.truncate {
+  text-transform: none !important;
+  font-size: 14px !important;
+  font-weight: 450 !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-channel-wrap .sector-node.active {
+  color: #e9faff !important;
+  border-color: rgba(21, 222, 255, .74) !important;
+  background: linear-gradient(90deg, rgba(0, 173, 221, .18), rgba(0, 80, 111, .13)) !important;
+}
+
+.vox-reference-self-wrap { margin: 0 9px 9px !important; }
+.vox-reference-self-wrap .font-display { letter-spacing: 0 !important; }
+.vox-reference-self-wrap .text-sm { font-size: 13px !important; }
+.vox-reference-self-wrap button { width: 30px !important; height: 30px !important; }
+
+/* Chat header: remove the old NODE/PKT telemetry, which is not in the target design. */
+.vox-reference-center .h-14 {
+  height: 58px !important;
+  padding-inline: 20px !important;
+  background: linear-gradient(90deg, rgba(4, 26, 42, .92), rgba(5, 32, 49, .72)) !important;
+}
+.vox-reference-center .h-14 > span.font-display {
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  color: #edf8ff !important;
+}
+.vox-reference-center .h-14 > span.ml-auto { display: none !important; }
+.vox-reference-center .h-14 > button { margin-left: auto !important; }
+
+.vox-ref-welcome-banner {
+  min-height: 151px !important;
+  margin: 15px 18px 0 !important;
+  grid-template-columns: minmax(0, 1fr) 42% !important;
+  border-color: rgba(50, 217, 255, .46) !important;
+  background: linear-gradient(90deg, rgba(5, 33, 51, .98), rgba(5, 27, 47, .96) 51%, rgba(16, 21, 67, .94)) !important;
+}
+.vox-ref-welcome-copy { padding: 14px 18px 13px !important; }
+.vox-ref-welcome-copy h2 {
+  font-size: 17px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+.vox-ref-welcome-copy p { font-size: 11px !important; color: #a8bdca !important; }
+.vox-ref-welcome-actions button {
+  font-size: 10px !important;
+  border-radius: 4px !important;
+}
+
+.vox-reference-center .hud-scrollbar {
+  padding: 14px 20px 8px !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+}
+.vox-reference-center .perf-row { gap: 10px !important; padding-block: 2px !important; }
+.vox-reference-center .perf-row .font-sans { font-family: Inter, "Segoe UI", sans-serif !important; }
+.vox-reference-center .perf-row .text-sm { font-size: 14px !important; }
+.vox-reference-center .perf-row [class*="text-[15px]"] { font-size: 14px !important; line-height: 1.45 !important; }
+.vox-reference-center .rank-ring { width: 42px !important; height: 42px !important; }
+.vox-reference-center .rank-inner { width: 38px !important; height: 38px !important; }
+
+/* Composer: reduce the oversized HUD look and match the compact reference input. */
+.vox-reference-center .composer-pod {
+  margin: 11px 17px 15px !important;
+  padding: 10px 11px !important;
+  border-radius: 5px !important;
+  border-color: rgba(29, 214, 255, .42) !important;
+  background: rgba(3, 24, 39, .96) !important;
+}
+.vox-reference-center .composer-pod > .flex { align-items: stretch !important; }
+.vox-reference-center .composer-pod button[title="Přiložit soubor"] {
+  width: 44px !important;
+  height: 54px !important;
+  border-radius: 4px !important;
+  clip-path: none !important;
+  background: rgba(4, 28, 43, .86) !important;
+}
+.vox-reference-center .tx-bar {
+  min-height: 54px !important;
+  padding: 10px 14px !important;
+  border-radius: 5px !important;
+  background: rgba(3, 18, 31, .78) !important;
+}
+.vox-reference-center .tx-bar > span:first-child {
+  font-size: 9px !important;
+  letter-spacing: .16em !important;
+}
+.vox-reference-center .tx-bar > span:last-child {
+  font-size: 8px !important;
+  letter-spacing: .13em !important;
+}
+.vox-reference-center .tx-send {
+  width: 58px !important;
+  height: 54px !important;
+  border-radius: 5px !important;
+}
+.vox-reference-center textarea {
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+}
+
+/* Right column: cleaner typography, a touch more breathing room, less empty sci-fi telemetry. */
+.vox-reference-right-stack { gap: 10px !important; }
+.vox-reference-info-card,
+.vox-reference-members-card {
+  border-color: rgba(47, 189, 236, .32) !important;
+  background: linear-gradient(180deg, rgba(5, 28, 45, .94), rgba(3, 20, 34, .95)) !important;
+}
+.vox-reference-info-card { padding: 14px !important; }
+.vox-reference-card-kicker {
+  font-size: 9px !important;
+  letter-spacing: .22em !important;
+}
+.vox-reference-info-card h3 {
+  font-size: 17px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+.vox-reference-info-card p { font-size: 11px !important; line-height: 1.45 !important; }
+.vox-reference-event-row strong { font-size: 12px !important; font-weight: 600 !important; }
+.vox-reference-event-row span { font-size: 9px !important; }
+.vox-ref-member-line strong { font-size: 12px !important; font-weight: 600 !important; }
+.vox-ref-member-copy small { font-size: 9px !important; }
+.vox-reference-footer-mark {
+  font-size: 8px !important;
+  letter-spacing: .18em !important;
+}
+
+.vox-reference-clock {
+  right: 17px !important;
+  bottom: 9px !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 9px !important;
+}
+
+@media (max-width: 1500px) {
+  .vox-reference-topbar { grid-template-columns: 300px minmax(520px, 1fr) 340px !important; }
+  .vox-reference-nav button { min-width: 82px !important; }
+  .vox-reference-workspace { grid-template-columns: 78px 268px minmax(0, 1fr) 294px !important; }
+}
+
+@media (max-width: 1180px) {
+  .vox-reference-topbar { grid-template-columns: 255px minmax(410px, 1fr) 245px !important; }
+  .vox-reference-brand { padding-left: 19px !important; }
+  .vox-reference-brand-copy strong { font-size: 15px !important; }
+  .vox-reference-nav button { min-width: 67px !important; padding-inline: 8px !important; }
+  .vox-reference-search { display: none !important; }
+  .vox-reference-workspace { grid-template-columns: 72px 238px minmax(0, 1fr) !important; }
+  .vox-reference-right { display: none !important; }
+}
