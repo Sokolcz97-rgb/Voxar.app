@@ -1,7 +1,7 @@
 {
   "name": "voxar-app-desktop",
   "productName": "Voxar.app",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
   "main": "main.cjs",
@@ -62,7 +62,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/icon.ico",
