@@ -1,0 +1,373 @@
+/* Structural channel list for the left community panel.
+   This intentionally replaces the legacy ChannelSidebar blueprint UI. */
+
+.vox-reference-sidebar .sv-channel-list {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-top: 1px solid rgba(42, 205, 239, .12);
+}
+
+.vox-reference-sidebar .sv-channel-list-tools {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 4px 7px;
+}
+
+.vox-reference-sidebar .sv-channel-list-tools > span {
+  color: rgba(111, 202, 223, .72);
+  font: 600 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.vox-reference-sidebar .sv-channel-list-tools > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vox-reference-sidebar .sv-channel-list-tools button,
+.vox-reference-sidebar .sv-channel-group-actions button,
+.vox-reference-sidebar .sv-channel-edit {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(56, 211, 245, .25);
+  border-radius: 3px;
+  color: #77bfd0;
+  background: rgba(4, 40, 56, .34);
+  transition: .14s ease;
+}
+
+.vox-reference-sidebar .sv-channel-list-tools button:hover,
+.vox-reference-sidebar .sv-channel-group-actions button:hover,
+.vox-reference-sidebar .sv-channel-edit:hover {
+  color: #c9f8ff;
+  border-color: rgba(55, 226, 255, .68);
+  background: rgba(8, 105, 133, .32);
+}
+
+.vox-reference-sidebar .sv-channel-list-tools svg,
+.vox-reference-sidebar .sv-channel-group-actions svg,
+.vox-reference-sidebar .sv-channel-edit svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.7;
+}
+
+.vox-reference-sidebar .sv-channel-list-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 2px 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(44, 197, 231, .55) transparent;
+}
+
+.vox-reference-sidebar .sv-channel-list-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vox-reference-sidebar .sv-channel-list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  background: rgba(44, 197, 231, .5);
+}
+
+.vox-reference-sidebar .sv-channel-group + .sv-channel-group {
+  margin-top: 12px;
+}
+
+.vox-reference-sidebar .sv-channel-group-head {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 4px 4px;
+}
+
+.vox-reference-sidebar .sv-channel-group-toggle {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+  border: 0;
+  color: #61ccdf;
+  background: transparent;
+  text-align: left;
+  font: 650 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.vox-reference-sidebar .sv-channel-group-toggle:hover {
+  color: #9beeff;
+}
+
+.vox-reference-sidebar .sv-channel-group-toggle svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.vox-reference-sidebar .sv-channel-group-toggle > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vox-reference-sidebar .sv-channel-group-emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.vox-reference-sidebar .sv-channel-group-actions {
+  display: flex;
+  gap: 4px;
+  opacity: .65;
+}
+
+.vox-reference-sidebar .sv-channel-group:hover .sv-channel-group-actions {
+  opacity: 1;
+}
+
+.vox-reference-sidebar .sv-channel-group-actions button {
+  width: 22px;
+  height: 22px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.vox-reference-sidebar .sv-channel-group-items {
+  display: grid;
+  gap: 5px;
+}
+
+.vox-reference-sidebar .sv-channel-item-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.vox-reference-sidebar .sv-channel-item {
+  width: 100%;
+  min-height: 39px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 36px 0 10px;
+  border: 1px solid rgba(32, 118, 147, .22);
+  border-radius: 4px;
+  color: #a7bdc8;
+  background: rgba(1, 20, 32, .46);
+  text-align: left;
+  transition: .14s ease;
+}
+
+.vox-reference-sidebar .sv-channel-item:hover {
+  color: #e8faff;
+  border-color: rgba(45, 187, 221, .4);
+  background: rgba(5, 48, 66, .5);
+}
+
+.vox-reference-sidebar .sv-channel-item.active {
+  color: #f5fdff;
+  border-color: rgba(48, 227, 255, .78);
+  background:
+    linear-gradient(90deg, rgba(10, 120, 153, .48), rgba(6, 43, 72, .52));
+  box-shadow:
+    inset 3px 0 0 #4a37ff,
+    0 0 14px rgba(35, 220, 255, .08);
+}
+
+.vox-reference-sidebar .sv-channel-item-icon {
+  width: 22px;
+  display: grid;
+  place-items: center;
+  color: #b9dbe4;
+  font-size: 14px;
+}
+
+.vox-reference-sidebar .sv-channel-item.active .sv-channel-item-icon {
+  color: #ffffff;
+}
+
+.vox-reference-sidebar .sv-channel-item-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+}
+
+.vox-reference-sidebar .sv-channel-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 550 12px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-sidebar .sv-channel-voice-count {
+  min-width: 20px;
+  padding: 3px 6px;
+  border: 1px solid rgba(56, 211, 245, .28);
+  border-radius: 999px;
+  color: #8ddced;
+  background: rgba(4, 49, 67, .6);
+  font: 700 8px/1 Inter, "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+.vox-reference-sidebar .sv-channel-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #33e7ff;
+  box-shadow: 0 0 8px rgba(51, 231, 255, .9);
+}
+
+.vox-reference-sidebar .sv-channel-edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 27px;
+  height: 27px;
+  opacity: 0;
+  z-index: 2;
+}
+
+.vox-reference-sidebar .sv-channel-item-wrap:hover > .sv-channel-edit {
+  opacity: 1;
+}
+
+.vox-reference-sidebar .sv-channel-voice-users {
+  display: grid;
+  gap: 2px;
+  margin: 3px 0 3px 18px;
+  padding: 3px 0 3px 12px;
+  border-left: 1px solid rgba(49, 205, 238, .25);
+}
+
+.vox-reference-sidebar .sv-channel-voice-users > div {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: #91a9b5;
+  font: 500 10px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-sidebar .sv-channel-voice-users > div > span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vox-reference-sidebar .sv-channel-voice-status {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #38e3a1;
+  box-shadow: 0 0 6px rgba(56, 227, 161, .7);
+}
+
+.vox-reference-sidebar .sv-channel-voice-users .muted .sv-channel-voice-status {
+  background: #ff5d6c;
+  box-shadow: 0 0 6px rgba(255, 93, 108, .5);
+}
+
+.vox-reference-sidebar .sv-channel-voice-users small {
+  margin-left: auto;
+  color: #ff7180;
+  font: 700 7px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+}
+
+.vox-reference-sidebar .sv-channel-new-section {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+  border: 1px dashed rgba(49, 201, 234, .34);
+  border-radius: 3px;
+  color: #55c9df;
+  background: rgba(3, 34, 48, .2);
+  font: 600 9px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.vox-reference-sidebar .sv-channel-new-section:hover {
+  color: #bdf7ff;
+  border-color: rgba(53, 225, 255, .7);
+  background: rgba(5, 79, 99, .25);
+}
+
+.vox-reference-sidebar .sv-channel-new-section svg {
+  width: 13px;
+  height: 13px;
+}
+
+.vox-reference-sidebar .sv-channel-list-empty {
+  display: grid;
+  gap: 10px;
+  padding: 15px 8px;
+  color: #829eac;
+  font: 500 10px/1.4 Inter, "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+.vox-reference-sidebar .sv-channel-list-empty button {
+  justify-self: center;
+  padding: 7px 10px;
+  border: 1px solid rgba(46, 213, 247, .45);
+  border-radius: 3px;
+  color: #bbf5ff;
+  background: rgba(4, 84, 108, .28);
+  font: 600 9px/1 Inter, "Segoe UI", sans-serif;
+}
+
+/* Give the structural channel area enough visual room. The hero/nav remain fixed,
+   while only the channel list scrolls when a community contains many channels. */
+.vox-reference-sidebar > .sv-sidebar-shell {
+  grid-template-rows: auto auto auto minmax(180px, 1fr) auto auto;
+}
+
+.vox-reference-sidebar .sv-sidebar-channels {
+  min-height: 180px;
+  overflow: hidden;
+}
+
+@media (max-height: 760px) {
+  .vox-reference-sidebar .sv-community-hero {
+    height: 160px;
+  }
+
+  .vox-reference-sidebar .sv-sidebar-quick-nav button {
+    min-height: 34px;
+  }
+
+  .vox-reference-sidebar > .sv-sidebar-shell {
+    grid-template-rows: auto auto auto minmax(150px, 1fr) auto auto;
+  }
+
+  .vox-reference-sidebar .sv-sidebar-channels {
+    min-height: 150px;
+  }
+}

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { CalendarDays, ChevronRight, Gem, Home, UsersRound } from "lucide-react";
-import { ChannelSidebar, type VoxChannel } from "../ChannelSidebar";
+import type { VoxChannel } from "../ChannelSidebar";
 import type { VoxGuild } from "../GuildRail";
+import { CommunityChannelList } from "./CommunityChannelList";
 
 interface Props {
   guild: VoxGuild;
@@ -79,9 +80,8 @@ export function CommunitySidebarPanel({
       <div className="sv-sidebar-section-title">Komunikační zóna</div>
 
       <div className="sv-sidebar-channels">
-        <ChannelSidebar
+        <CommunityChannelList
           guildId={guildId}
-          guildName={guild.name}
           inviteCode={inviteCode}
           channels={channels}
           categoryEmojis={categoryEmojis}
