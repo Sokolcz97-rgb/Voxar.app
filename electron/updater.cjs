@@ -171,7 +171,7 @@ function configureUpdater(channel = "stable") {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoRunAppAfterInstall = true;
-  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowPrerelease = updaterChannel === "beta";
   autoUpdater.allowDowngrade = false;
   autoUpdater.disableWebInstaller = true;
   autoUpdater.disableDifferentialDownload = true;
@@ -180,7 +180,16 @@ function configureUpdater(channel = "stable") {
     "Cache-Control": "no-cache, no-store, max-age=0",
     "Pragma": "no-cache",
   };
-  autoUpdater.setFeedURL({ provider: "generic", url: FEED_URL, channel: updaterChannel });
+  // Bez override používáme feed zabalený electron-builderem (app-update.yml).
+  if (FEED_URL) {
+    autoUpdater.setFeedURL({ provider: "generic", url: FEED_URL, channel: updaterChannel });
+    diagnostics.feedUrl = FEED_URL;
+  } else if (!app.isPackaged) {
+    autoUpdater.setFeedURL({ ...GITHUB_PUBLISH, channel: updaterChannel });
+    diagnostics.feedUrl = `github:${GITHUB_PUBLISH.owner}/${GITHUB_PUBLISH.repo}`;
+  } else {
+    diagnostics.feedUrl = `github:${GITHUB_PUBLISH.owner}/${GITHUB_PUBLISH.repo} (app-update.yml)`;
+  }
   diagnostics.channel = publicChannel(channel);
   diagnostics.currentVersion = app.getVersion();
 }
