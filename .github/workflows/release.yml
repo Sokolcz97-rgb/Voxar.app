@@ -71,6 +71,13 @@ jobs:
           test -d electron/dist/assets || { echo "Missing electron/dist/assets"; exit 1; }
           test -f electron/app-update.yml || { echo "Missing electron/app-update.yml"; exit 1; }
           test -f electron/assets/installer.nsh || { echo "Missing NSIS migration hook"; exit 1; }
+          grep -q "VOXARIO_NATIVE_TAB_DRAG_V1" electron/browser.html || {
+            echo "Native VoxarioBrowser drag patch was not applied"; exit 1;
+          }
+          grep -q "VOXARIO_MODULE_STATE_DURABLE_V1" electron/main.cjs || {
+            echo "Durable VoxarioBrowser module-state patch was not applied"; exit 1;
+          }
+          echo "✓ Native browser UI + durable module state are prepared for packaging"
 
       - name: Install electron deps
         working-directory: electron
