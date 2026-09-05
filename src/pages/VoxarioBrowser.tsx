@@ -1,20 +1,5 @@
 import { useState, useCallback, useRef } from "react";
 import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  horizontalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
   Radar,
   Radio,
   Server,
@@ -49,47 +34,49 @@ const DOCK_ITEMS = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-type SortableBrowserTabProps = {
+type BrowserTabButtonProps = {
   tab: BrowserTab;
   isActive: boolean;
+  isDragging: boolean;
   onActivate: (id: string) => void;
   onClose: (event: React.MouseEvent, id: string) => void;
+  onPointerDown: (event: React.PointerEvent<HTMLButtonElement>, id: string) => void;
+  onPointerMove: (event: React.PointerEvent<HTMLButtonElement>, id: string) => void;
+  onPointerUp: (event: React.PointerEvent<HTMLButtonElement>, id: string) => void;
 };
 
-function SortableBrowserTab({ tab, isActive, onActivate, onClose }: SortableBrowserTabProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: tab.id });
-
+function BrowserTabButton({
+  tab,
+  isActive,
+  isDragging,
+  onActivate,
+  onClose,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+}: BrowserTabButtonProps) {
   return (
     <button
-      ref={setNodeRef}
       type="button"
+      data-browser-tab-id={tab.id}
       onClick={() => onActivate(tab.id)}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        zIndex: isDragging ? 30 : undefined,
-        opacity: isDragging ? 0.78 : 1,
-      }}
+      onPointerDown={(event) => onPointerDown(event, tab.id)}
+      onPointerMove={(event) => onPointerMove(event, tab.id)}
+      onPointerUp={(event) => onPointerUp(event, tab.id)}
+      onPointerCancel={(event) => onPointerUp(event, tab.id)}
       className={cn(
-        "group relative flex items-center gap-2 min-w-[120px] max-w-[200px] h-9 px-3 text-xs font-medium transition-[background-color,color,box-shadow,opacity]",
-        "bg-secondary/30 hover:bg-secondary/60 cursor-grab active:cursor-grabbing touch-none select-none",
+        "group relative flex items-center gap-2 min-w-[120px] max-w-[200px] h-9 px-3 text-xs font-medium",
+        "transition-[background-color,color,box-shadow,opacity] bg-secondary/30 hover:bg-secondary/60",
+        "cursor-grab active:cursor-grabbing touch-none select-none",
         isActive && "bg-secondary/80 text-foreground",
-        isDragging && "bg-secondary/90 shadow-[0_8px_24px_hsl(var(--background)/0.65),0_0_14px_hsl(var(--primary)/0.35)]"
+        isDragging && "bg-secondary/90 opacity-80 shadow-[0_8px_24px_hsl(var(--background)/0.65),0_0_14px_hsl(var(--primary)/0.35)] z-30"
       )}
-      {...attributes}
-      {...listeners}
     >
-      <span className="truncate">{tab.title}</span>
+      <span className="truncate pointer-events-none">{tab.title}</span>
       <span
         role="button"
         tabIndex={0}
+        data-tab-close
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => onClose(e, tab.id)}
         onKeyDown={(e) => {
@@ -100,7 +87,7 @@ function SortableBrowserTab({ tab, isActive, onActivate, onClose }: SortableBrow
         <X className="w-3 h-3" />
       </span>
       {isActive && (
-        <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary-glow to-primary shadow-[0_0_10px_hsl(var(--primary)/0.9)]" />
+        <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary-glow to-primary shadow-[0_0_10px_hsl(var(--primary)/0.9)] pointer-events-none" />
       )}
     </button>
   );
@@ -114,7 +101,6 @@ function getDesktopBridge(): any {
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
-
 
 function normalizeUrl(input: string) {
   const trimmed = input.trim();
@@ -132,19 +118,22 @@ export default function VoxarioBrowser() {
   const [urlInput, setUrlInput] = useState<string>(INITIAL_TABS[0].url);
   const [activeDock, setActiveDock] = useState<string | null>(null);
   const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, loading: false });
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const engines = useRef<Record<string, WebviewHandle | null>>({});
+  const tabDragRef = useRef<{
+    id: string;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    dragging: boolean;
+  } | null>(null);
+  const ignoreNextTabClickRef = useRef<string | null>(null);
   const desktop = getDesktopBridge();
   const hasEngine = typeof window !== "undefined" && !!(window as any).process?.versions?.electron
     || !!desktop?.isDesktop;
-  const tabDragSensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
-    })
-  );
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
-
 
   const updateActiveTabUrl = useCallback(
     (url: string) => {
@@ -167,6 +156,10 @@ export default function VoxarioBrowser() {
 
   const activateTab = useCallback(
     (id: string) => {
+      if (ignoreNextTabClickRef.current === id) {
+        ignoreNextTabClickRef.current = null;
+        return;
+      }
       setActiveTabId(id);
       const tab = tabs.find((t) => t.id === id);
       if (tab) setUrlInput(tab.url);
@@ -203,20 +196,77 @@ export default function VoxarioBrowser() {
     [activeTabId]
   );
 
-  const handleTabDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  const handleTabPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+      if (event.button !== 0) return;
+      const target = event.target as HTMLElement;
+      if (target.closest("[data-tab-close]")) return;
 
-    const draggedId = String(active.id);
-    const targetId = String(over.id);
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      tabDragRef.current = {
+        id,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: false,
+      };
+    },
+    []
+  );
 
-    setTabs((prev) => {
-      const oldIndex = prev.findIndex((tab) => tab.id === draggedId);
-      const newIndex = prev.findIndex((tab) => tab.id === targetId);
-      if (oldIndex < 0 || newIndex < 0) return prev;
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }, []);
+  const handleTabPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+      const drag = tabDragRef.current;
+      if (!drag || drag.id !== id || drag.pointerId !== event.pointerId) return;
+
+      if (!drag.dragging) {
+        const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+        if (distance < 5) return;
+        drag.dragging = true;
+        setDraggedTabId(id);
+      }
+
+      event.preventDefault();
+
+      const hovered = document
+        .elementFromPoint(event.clientX, event.clientY)
+        ?.closest<HTMLElement>("[data-browser-tab-id]");
+      const targetId = hovered?.dataset.browserTabId;
+      if (!targetId || targetId === id) return;
+
+      setTabs((prev) => {
+        const oldIndex = prev.findIndex((tab) => tab.id === id);
+        const newIndex = prev.findIndex((tab) => tab.id === targetId);
+        if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return prev;
+
+        const next = [...prev];
+        const [moved] = next.splice(oldIndex, 1);
+        next.splice(newIndex, 0, moved);
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleTabPointerUp = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+      const drag = tabDragRef.current;
+      if (!drag || drag.id !== id || drag.pointerId !== event.pointerId) return;
+
+      if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
+      }
+
+      if (drag.dragging) {
+        ignoreNextTabClickRef.current = id;
+        event.preventDefault();
+      }
+
+      tabDragRef.current = null;
+      setDraggedTabId(null);
+    },
+    []
+  );
 
   const navigateBack = useCallback(() => {
     engines.current[activeTabId]?.goBack();
@@ -241,7 +291,6 @@ export default function VoxarioBrowser() {
     if (bridge?.openModule) bridge.openModule("app");
     else window.location.assign("/app");
   }, []);
-
 
   const handleDockClick = useCallback(
     (id: string) => {
@@ -322,7 +371,6 @@ export default function VoxarioBrowser() {
             <LogOut className="w-[18px] h-[18px]" />
           </button>
 
-
           <div className="font-display text-[9px] tracking-[0.3em] text-muted-foreground/60 uppercase rotate-180 [writing-mode:vertical-rl]">
             Voxario
           </div>
@@ -336,26 +384,19 @@ export default function VoxarioBrowser() {
           {/* Tabs row */}
           <div className="flex items-center gap-1 px-2 pt-2 pb-1 border-b border-primary/10">
             <div className="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar">
-              <DndContext
-                sensors={tabDragSensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleTabDragEnd}
-              >
-                <SortableContext
-                  items={tabs.map((tab) => tab.id)}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  {tabs.map((tab) => (
-                    <SortableBrowserTab
-                      key={tab.id}
-                      tab={tab}
-                      isActive={tab.id === activeTabId}
-                      onActivate={activateTab}
-                      onClose={closeTab}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+              {tabs.map((tab) => (
+                <BrowserTabButton
+                  key={tab.id}
+                  tab={tab}
+                  isActive={tab.id === activeTabId}
+                  isDragging={tab.id === draggedTabId}
+                  onActivate={activateTab}
+                  onClose={closeTab}
+                  onPointerDown={handleTabPointerDown}
+                  onPointerMove={handleTabPointerMove}
+                  onPointerUp={handleTabPointerUp}
+                />
+              ))}
             </div>
 
             <button
@@ -455,7 +496,6 @@ export default function VoxarioBrowser() {
               </div>
             </div>
           )}
-
 
           {/* Decorative HUD grid lines inside viewport */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
