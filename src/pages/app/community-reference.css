@@ -1,3 +1,5 @@
+@import "./community-reference-panels.css";
+
 /* StudioVoxario community shell inspired by the supplied reference screenshot.
    Scoped under .vox-reference-shell so the marketing site and admin UI stay untouched. */
 
