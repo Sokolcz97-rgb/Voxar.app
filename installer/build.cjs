@@ -70,7 +70,6 @@ async function main() {
       "--icon=assets/icon.ico",
       "--extra-resource=resources/app.7z",
       "--extra-resource=resources/7za.exe",
-      "--ignore=^/dist($|/)",
     ],
     { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );
