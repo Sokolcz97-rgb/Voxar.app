@@ -1,20 +1,20 @@
 {
   "_comment": "Informativní metadata pro web. Nové instalace používají latest.yml v GitHub Release.",
-  "version": "0.0.17",
-  "notes": "StudioVoxario 0.0.17",
-  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.17/StudioVoxarioSetup-0.0.17.exe",
-  "sha256": "79b75f154b5af00149d178e26d5cbd3de5dae88499a5f36d7b85d93d344ede97",
-  "size": 77632473,
-  "filename": "StudioVoxarioSetup-0.0.17.exe",
+  "version": "0.0.18",
+  "notes": "StudioVoxario 0.0.18",
+  "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.18/StudioVoxarioSetup-0.0.18.exe",
+  "sha256": "643d9f6f9dc93c3893fbb655136e32fd64759600d3f0f8a5ffd74a507704b37a",
+  "size": 236645818,
+  "filename": "StudioVoxarioSetup-0.0.18.exe",
   "channels": {
     "stable": {
-      "version": "0.0.17",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.17/StudioVoxarioSetup-0.0.17.exe"
+      "version": "0.0.18",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.18/StudioVoxarioSetup-0.0.18.exe"
     },
     "beta": {
-      "version": "0.0.17",
-      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.17/StudioVoxarioSetup-0.0.17.exe"
+      "version": "0.0.18",
+      "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.18/StudioVoxarioSetup-0.0.18.exe"
     }
   },
-  "updated_at": "2026-09-05T17:51:08.358Z"
+  "updated_at": "2026-09-05T18:09:56.857Z"
 }
