@@ -188,8 +188,17 @@ jobs:
           set -euo pipefail
           VERSION="${{ steps.appver.outputs.version }}"
           FILE="electron/release/StudioVoxarioSetup-$VERSION.exe"
+          STABLE_FILE="electron/release/StudioVoxarioSetup.exe"
           test -f "$FILE"
+
+          # Versionovaný soubor zůstává kvůli historii a ručnímu dohledání releasu.
           gh release upload "v$VERSION" "$FILE" --clobber --repo "${{ github.repository }}"
+
+          # Stejný binární soubor nahrajeme do téhož releasu také pod STÁLÝM názvem.
+          # Web pak může navždy používat /releases/latest/download/StudioVoxarioSetup.exe
+          # a kvůli každé desktop verzi se nemusí znovu publikovat Lovable web.
+          cp "$FILE" "$STABLE_FILE"
+          gh release upload "v$VERSION" "$STABLE_FILE" --clobber --repo "${{ github.repository }}"
 
       - name: Verify custom + updater artifacts
         shell: bash
@@ -197,9 +206,10 @@ jobs:
           set -euo pipefail
           VERSION="${{ steps.appver.outputs.version }}"
           test -f "electron/release/StudioVoxarioSetup-$VERSION.exe"
+          test -f "electron/release/StudioVoxarioSetup.exe"
           test -f "electron/release/StudioVoxarioUpdate-$VERSION.exe"
           test -f electron/release/latest.yml
-          echo "✓ Custom visible setup + hidden updater payload are both present"
+          echo "✓ Custom visible setup + stable web alias + hidden updater payload are present"
 
       - name: Upload artifacts (CI debug)
         uses: actions/upload-artifact@v4
@@ -207,6 +217,7 @@ jobs:
           name: StudioVoxario-win-${{ steps.appver.outputs.version }}
           path: |
             electron/release/StudioVoxarioSetup-*.exe
+            electron/release/StudioVoxarioSetup.exe
             electron/release/StudioVoxarioUpdate-*.exe
             electron/release/latest.yml
             electron/release/*.blockmap
