@@ -1,10 +1,33 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import "./pages/app/community-reference-layout-fix.css";
 import "./pages/app/community-reference-final.css";
+import "./pages/app/community-reference-layout-fix.css";
 import "./i18n";
 
-document.title = "Voxar.app — StudioVoxario";
+const syncAppTitle = () => {
+  if (window.location.pathname.startsWith("/app")) {
+    const desired = "Voxar.app — StudioVoxario";
+    if (document.title !== desired) document.title = desired;
+  }
+};
+
+syncAppTitle();
+window.addEventListener("popstate", syncAppTitle);
+
+const originalPushState = history.pushState.bind(history);
+history.pushState = ((...args: Parameters<History["pushState"]>) => {
+  originalPushState(...args);
+  queueMicrotask(syncAppTitle);
+}) as History["pushState"];
+
+const originalReplaceState = history.replaceState.bind(history);
+history.replaceState = ((...args: Parameters<History["replaceState"]>) => {
+  originalReplaceState(...args);
+  queueMicrotask(syncAppTitle);
+}) as History["replaceState"];
+
+const titleObserver = new MutationObserver(syncAppTitle);
+titleObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
 
 createRoot(document.getElementById("root")!).render(<App />);
