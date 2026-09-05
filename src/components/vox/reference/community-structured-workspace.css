@@ -1,0 +1,496 @@
+/* Final structural workspace pass.
+   This file owns only the new sv-* shell/panel classes and viewport proportions. */
+
+.vox-reference-shell .vox-reference-workspace {
+  grid-template-columns: 76px 266px minmax(0, 1fr) 296px !important;
+  gap: 7px !important;
+  padding: 7px 7px 9px !important;
+}
+
+.vox-reference-shell .vox-reference-center,
+.vox-reference-shell .vox-reference-sidebar,
+.vox-reference-shell .vox-reference-right,
+.vox-reference-shell .vox-reference-rail {
+  min-width: 0;
+}
+
+.vox-reference-shell .vox-reference-center {
+  overflow: hidden;
+  border-color: rgba(45, 207, 247, .28) !important;
+  background: linear-gradient(180deg, rgba(2, 17, 29, .975), rgba(1, 12, 22, .99)) !important;
+}
+
+.vox-reference-shell .vox-reference-right {
+  overflow: hidden;
+  border-color: rgba(45, 207, 247, .3) !important;
+  background: linear-gradient(180deg, rgba(3, 22, 37, .98), rgba(2, 16, 29, .99)) !important;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL V2
+   -------------------------------------------------------------------------- */
+.vox-reference-shell .sv-right-shell-v2 {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.vox-reference-shell .sv-right-shell-v2 .sv-right-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(53, 211, 248, .32);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(5, 31, 48, .97), rgba(2, 21, 35, .985));
+  box-shadow:
+    inset 0 1px 0 rgba(126, 236, 255, .035),
+    inset 0 0 30px rgba(29, 193, 230, .018);
+}
+
+.vox-reference-shell .sv-right-shell-v2 .sv-right-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -44px -54px auto;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  border: 1px solid rgba(112, 61, 255, .12);
+  transform: rotate(45deg);
+}
+
+.vox-reference-shell .sv-right-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vox-reference-shell .sv-right-head-icon {
+  width: 14px;
+  height: 14px;
+  color: rgba(91, 223, 249, .48);
+}
+
+.vox-reference-shell .sv-right-community-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 11px 0 7px;
+}
+
+.vox-reference-shell .sv-right-community-heading h2 {
+  min-width: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f2fbff;
+  font: 750 17px/20px Inter, "Segoe UI", sans-serif;
+  letter-spacing: -.01em;
+}
+
+.vox-reference-shell .sv-right-verified {
+  color: #43def8;
+  font-size: 9px;
+  text-shadow: 0 0 8px rgba(67, 222, 248, .55);
+}
+
+.vox-reference-shell .sv-right-about-v2 {
+  padding: 14px 14px 13px;
+}
+
+.vox-reference-shell .sv-right-about-v2 > p {
+  margin: 0;
+  color: #91aebd;
+  font: 400 10px/15px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-stats-v2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 14px 0 10px;
+}
+
+.vox-reference-shell .sv-right-stats-v2 > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 7px 6px;
+  border: 1px solid rgba(48, 188, 226, .12);
+  background: rgba(5, 43, 61, .18);
+}
+
+.vox-reference-shell .sv-right-stats-v2 svg {
+  width: 15px;
+  height: 15px;
+  color: #48dff7;
+  stroke-width: 1.65;
+}
+
+.vox-reference-shell .sv-right-stats-v2 .sv-right-online-dot {
+  width: 8px;
+  height: 8px;
+  justify-self: center;
+  border-radius: 50%;
+  background: #39e8a0;
+  box-shadow: 0 0 8px rgba(57, 232, 160, .65);
+}
+
+.vox-reference-shell .sv-right-stat-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.vox-reference-shell .sv-right-stat-copy strong {
+  color: #eefbff;
+  font: 700 11px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-stat-copy small {
+  color: #6f8fa2;
+  font: 500 7px/1 Inter, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.vox-reference-shell .sv-right-presence-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 10px;
+  color: #718fa0;
+  font: 500 8px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-presence-strip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vox-reference-shell .sv-right-presence-strip i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #516b78;
+}
+
+.vox-reference-shell .sv-right-presence-strip i.online {
+  background: #39e8a0;
+  box-shadow: 0 0 6px rgba(57, 232, 160, .55);
+}
+
+.vox-reference-shell .sv-right-about-v2 .sv-right-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.vox-reference-shell .sv-right-about-v2 .sv-right-tags span {
+  padding: 4px 7px;
+  border: 1px solid rgba(48, 207, 242, .42);
+  border-radius: 3px;
+  color: #6fe0f3;
+  background: rgba(7, 62, 80, .18);
+  font: 650 7px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .05em;
+}
+
+.vox-reference-shell .sv-right-now-v2 {
+  padding: 13px 12px 12px;
+}
+
+.vox-reference-shell .sv-right-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  color: #6ea9ba;
+  background: transparent;
+  font: 500 8px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-link-button:hover { color: #55def5; }
+.vox-reference-shell .sv-right-link-button svg { width: 11px; height: 11px; }
+
+.vox-reference-shell .sv-right-event-v2 {
+  grid-template-columns: 46px minmax(0, 1fr) auto !important;
+  gap: 9px !important;
+  margin-top: 10px !important;
+  padding: 10px !important;
+  border-color: rgba(94, 111, 245, .42) !important;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(115, 57, 225, .17), transparent 34%),
+    linear-gradient(90deg, rgba(41, 30, 104, .54), rgba(10, 39, 66, .46)) !important;
+}
+
+.vox-reference-shell .sv-right-event-v2 .sv-right-event-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.vox-reference-shell .sv-right-live-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #76dcef !important;
+  font: 650 7px/1 Inter, "Segoe UI", sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.vox-reference-shell .sv-right-live-line svg {
+  width: 9px;
+  height: 9px;
+  color: #38e69e;
+}
+
+.vox-reference-shell .sv-right-event-v2 .sv-right-event-copy {
+  gap: 4px;
+}
+
+.vox-reference-shell .sv-right-event-v2 .sv-right-event-copy strong {
+  color: #f2f9ff;
+  font: 650 10px/13px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-event-v2 .sv-right-event-copy > span:last-child {
+  color: #78b9cf;
+  font: 400 7px/10px Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-event-v2 > button:last-child {
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid rgba(47, 219, 255, .75);
+  border-radius: 3px;
+  color: #e1fbff;
+  background: rgba(0, 102, 141, .34);
+  font: 650 7px/1 Inter, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+}
+
+.vox-reference-shell .sv-right-event-v2 > button:last-child:hover {
+  background: rgba(0, 143, 184, .48);
+}
+
+.vox-reference-shell .sv-right-members-v2 {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 12px 12px 10px;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-members-head {
+  align-items: flex-start;
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgba(44, 190, 226, .1);
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-members-head > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.vox-reference-shell .sv-right-members-subtitle {
+  padding-left: 13px;
+  color: #627f90;
+  font: 400 8px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-members-head > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  color: #6c94a6;
+  background: transparent;
+  font: 500 7px/1 Inter, "Segoe UI", sans-serif;
+  white-space: nowrap;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-members-head > button:hover { color: #55def5; }
+.vox-reference-shell .sv-right-members-v2 .sv-right-members-head > button svg { width: 10px; height: 10px; }
+
+.vox-reference-shell .sv-right-members-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 0 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(48, 190, 225, .28) transparent;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-active-members {
+  display: grid;
+  gap: 3px;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-active-member {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-active-member:hover {
+  border-color: rgba(48, 201, 237, .12);
+  background: rgba(11, 73, 94, .14);
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-avatar {
+  width: 34px;
+  height: 34px;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-copy {
+  min-width: 0;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-line strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #dff9ff;
+  font: 650 10px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-line em {
+  flex: 0 0 auto;
+  max-width: 66px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 600 6px/1 Inter, "Segoe UI", sans-serif;
+  font-style: normal;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-copy small {
+  display: block;
+  margin-top: 4px;
+  color: #678798;
+  font: 400 7px/1 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-member-message {
+  width: 14px;
+  height: 14px;
+  color: #5e8596;
+  opacity: 0;
+  transition: opacity .15s ease, color .15s ease;
+}
+
+.vox-reference-shell .sv-right-members-v2 .vox-ref-active-member:hover .vox-ref-member-message {
+  opacity: 1;
+  color: #58def5;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-signature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(49, 191, 226, .14);
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-signature span {
+  min-width: 0;
+  color: #668797;
+  font: 400 7px/1.25 Inter, "Segoe UI", sans-serif;
+}
+
+.vox-reference-shell .sv-right-members-v2 .sv-right-signature strong {
+  flex: 0 0 auto;
+  color: #55dff5;
+  font: 650 7px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .15em;
+}
+
+/* --------------------------------------------------------------------------
+   CHAT + SIDEBAR SPACING NORMALIZATION
+   -------------------------------------------------------------------------- */
+.vox-reference-shell .sv-sidebar-shell {
+  padding: 10px 8px 8px !important;
+}
+
+.vox-reference-shell .sv-community-hero {
+  height: 194px !important;
+}
+
+.vox-reference-shell .sv-sidebar-quick-nav {
+  padding: 10px 0 8px !important;
+}
+
+.vox-reference-shell .sv-sidebar-section-title {
+  padding-bottom: 7px !important;
+}
+
+.vox-reference-shell .sv-channel-list-shell {
+  min-height: 0;
+}
+
+.vox-reference-shell .sv-chat-shell {
+  border-left: 0;
+  border-right: 0;
+}
+
+/* At lower heights, preserve the channel list and composer before decorative space. */
+@media (max-height: 800px) {
+  .vox-reference-shell .sv-community-hero { height: 168px !important; }
+  .vox-reference-shell .sv-community-hero-art { inset-bottom: 58px; }
+  .vox-reference-shell .sv-sidebar-quick-nav button { min-height: 34px; }
+  .vox-reference-shell .sv-right-about-v2 { padding-block: 11px; }
+  .vox-reference-shell .sv-right-stats-v2 { margin-block: 10px 8px; }
+  .vox-reference-shell .sv-right-now-v2 { padding-block: 10px; }
+}
+
+@media (max-width: 1280px) {
+  .vox-reference-shell .vox-reference-workspace {
+    grid-template-columns: 72px 246px minmax(0, 1fr) 270px !important;
+    gap: 6px !important;
+  }
+
+  .vox-reference-shell .sv-right-about-v2 { padding-inline: 11px; }
+  .vox-reference-shell .sv-right-stats-v2 { gap: 4px; }
+  .vox-reference-shell .sv-right-stats-v2 > div { padding-inline: 4px; }
+}
+
+@media (max-width: 1120px) {
+  .vox-reference-shell .vox-reference-workspace {
+    grid-template-columns: 68px 230px minmax(0, 1fr) 250px !important;
+  }
+
+  .vox-reference-shell .sv-right-presence-strip { display: none; }
+  .vox-reference-shell .sv-right-event-v2 { grid-template-columns: 42px minmax(0, 1fr) !important; }
+  .vox-reference-shell .sv-right-event-v2 > button:last-child {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
