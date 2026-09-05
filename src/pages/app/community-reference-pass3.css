@@ -1,0 +1,226 @@
+/* Third screenshot-driven polish pass.
+   This file intentionally loads last so it only corrects the live desktop render. */
+
+/* The old shell-wide planet and the topbar planet were stacking on top of each other.
+   Keep one smaller, brighter planet in roughly the same place as the reference art. */
+.vox-reference-shell::after {
+  display: none !important;
+}
+
+.vox-reference-topbar::before {
+  width: 285px !important;
+  height: 285px !important;
+  left: 72% !important;
+  top: -190px !important;
+  opacity: .92 !important;
+  background:
+    radial-gradient(circle at 38% 34%, rgba(178, 238, 255, .82) 0 1px, transparent 2px),
+    radial-gradient(circle at 43% 44%, #1b6b93 0 14%, #0d4268 34%, #06263f 56%, rgba(2, 13, 24, .2) 67%, transparent 68%) !important;
+  box-shadow: 0 0 55px rgba(36, 187, 255, .24) !important;
+}
+
+/* Small quote from the reference, above the community card. */
+.vox-reference-sidebar::before {
+  content: "„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“";
+  flex: 0 0 auto;
+  display: block;
+  padding: 10px 17px 1px;
+  color: #66bfd9;
+  font-size: 8px;
+  line-height: 1.45;
+  font-weight: 650;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+/*
+ * The welcome card used to float above the scroll area. That looked correct at first,
+ * but messages could scroll behind it and avatars remained visible at the left edge.
+ * Turn the chat stage into a real grid instead: header -> welcome -> messages -> composer.
+ */
+.vox-ref-chat-stage {
+  display: grid !important;
+  grid-template-rows: 58px auto minmax(0, 1fr) auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.vox-ref-chat-stage > .flex-1 {
+  display: contents !important;
+}
+
+.vox-ref-chat-stage > .flex-1 > .h-14 {
+  grid-row: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 4;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner {
+  grid-row: 2;
+  position: relative !important;
+  z-index: 3 !important;
+  inset: auto !important;
+  width: auto !important;
+  height: 154px !important;
+  min-height: 154px !important;
+  margin: 14px 18px 0 !important;
+  grid-template-columns: minmax(0, 62%) minmax(0, 38%) !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-visual {
+  min-height: 154px !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-copy {
+  padding: 11px 15px 10px !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-copy p {
+  display: block !important;
+  max-width: 52ch !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-copy p + p {
+  margin-top: 1px !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-actions {
+  margin-top: 8px !important;
+  gap: 7px !important;
+  flex-wrap: nowrap !important;
+}
+
+.vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-actions button {
+  height: 28px !important;
+  padding-inline: 9px !important;
+  font-size: 9px !important;
+  white-space: nowrap;
+}
+
+.vox-ref-chat-stage > .flex-1 > .hud-scrollbar {
+  grid-row: 3;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 14px 20px 8px !important;
+}
+
+.vox-ref-chat-stage > .flex-1 > .composer-pod {
+  grid-row: 4;
+  position: relative;
+  z-index: 4;
+}
+
+/* Channel header: restore the secondary line visible in the reference. */
+@media (min-width: 1280px) {
+  .vox-ref-chat-stage > .flex-1 > .h-14 > span.font-display {
+    transform: translateY(-7px);
+  }
+
+  .vox-ref-chat-stage > .flex-1 > .h-14::after {
+    content: "Místo pro vše, co k nám patří. Chat, novinky, nápady i každodenní pokec.";
+    position: absolute;
+    left: 76px;
+    top: 32px;
+    right: 86px;
+    overflow: hidden;
+    color: #789bad;
+    font-size: 9px;
+    line-height: 1.2;
+    font-weight: 450;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+
+/* Slightly richer message rhythm, closer to the reference list. */
+.vox-ref-chat-stage > .flex-1 > .hud-scrollbar .perf-row {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+.vox-ref-chat-stage > .flex-1 > .hud-scrollbar .perf-row + .perf-row:not(.pl-12) {
+  border-top: 1px solid rgba(50, 154, 194, .09);
+  padding-top: 9px !important;
+}
+
+/* Give the right cards the brighter cyan edge seen in the reference without making them neon-heavy. */
+.vox-reference-right .vox-reference-info-card,
+.vox-reference-right .vox-reference-members-card {
+  border-color: rgba(38, 198, 241, .37) !important;
+  box-shadow: inset 0 0 22px rgba(0, 181, 229, .025) !important;
+}
+
+.vox-reference-right .vox-reference-card-kicker,
+.vox-reference-right .vox-ref-right-section-title {
+  color: #69d8ef !important;
+}
+
+/* User settings: keep the cleaner layout from pass 2, but group the editable area into a proper panel. */
+.vox-reference-shell .hud-settings > .flex-1 > div > .space-y-5 {
+  padding: 20px 22px 22px;
+  border: 1px solid rgba(43, 193, 232, .18);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(4, 24, 39, .54), rgba(2, 17, 29, .32));
+}
+
+.vox-reference-shell .hud-settings > .flex-1 > div > .space-y-5 > div {
+  max-width: 100%;
+}
+
+.vox-reference-shell .hud-settings textarea {
+  min-height: 88px;
+}
+
+/* The floating AI launcher is useful in chat, but it is distracting over profile/settings. */
+.vox-reference-shell:has(.hud-settings) ~ .fixed.bottom-6.right-6.z-\[9999\] {
+  display: none !important;
+}
+
+/* Keep the clock readable when the right-side helper is visible. */
+.vox-reference-clock {
+  right: 16px !important;
+  bottom: 4px !important;
+  z-index: 65 !important;
+}
+
+@media (max-width: 1500px) {
+  .vox-reference-workspace {
+    grid-template-columns: 76px 258px minmax(0, 1fr) 284px !important;
+  }
+
+  .vox-ref-chat-stage > .vox-ref-welcome-banner {
+    height: 150px !important;
+    min-height: 150px !important;
+    margin-inline: 16px !important;
+  }
+
+  .vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-visual {
+    min-height: 150px !important;
+  }
+}
+
+@media (max-height: 760px) {
+  .vox-ref-chat-stage {
+    grid-template-rows: 58px auto minmax(0, 1fr) auto !important;
+  }
+
+  .vox-ref-chat-stage > .vox-ref-welcome-banner {
+    height: 130px !important;
+    min-height: 130px !important;
+    margin-top: 10px !important;
+  }
+
+  .vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-visual {
+    min-height: 130px !important;
+  }
+
+  .vox-ref-chat-stage > .vox-ref-welcome-banner .vox-ref-welcome-copy p + p {
+    display: none !important;
+  }
+}
