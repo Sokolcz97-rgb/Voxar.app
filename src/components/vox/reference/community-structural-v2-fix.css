@@ -1,0 +1,209 @@
+/* Selector bridge for the current structural component class names. */
+
+/* Guild rail */
+.vox-reference-shell .sv-guild-rail-item {
+  width: 64px !important;
+  height: 64px !important;
+}
+
+.vox-reference-shell .sv-guild-rail-item .sv-guild-frame,
+.vox-reference-shell .sv-guild-rail-item .sv-guild-icon {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.vox-reference-shell .sv-guild-rail-item.active .sv-guild-active-mark {
+  width: 4px !important;
+  height: 42px !important;
+  background: #36e5ff !important;
+  box-shadow: 0 0 12px rgba(54, 229, 255, .48) !important;
+}
+
+.vox-reference-shell .sv-guild-rail-actions button {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  border-color: rgba(54, 208, 244, .34) !important;
+  background: rgba(6, 33, 51, .92) !important;
+}
+
+/* Sidebar hero */
+.vox-reference-shell .sv-community-hero-art {
+  bottom: 70px !important;
+}
+
+/* Channel list uses sv-channel-item, not old row names. */
+.vox-reference-shell .sv-channel-list-tools {
+  min-height: 34px !important;
+  padding: 0 5px 7px !important;
+}
+
+.vox-reference-shell .sv-channel-group-head {
+  min-height: 31px !important;
+}
+
+.vox-reference-shell .sv-channel-item {
+  min-height: 41px !important;
+  margin: 3px 0 !important;
+  padding: 0 11px !important;
+  border: 1px solid rgba(57, 173, 207, .15) !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+}
+
+.vox-reference-shell .sv-channel-item.active {
+  border-color: rgba(54, 229, 255, .72) !important;
+  background: linear-gradient(90deg, rgba(0, 195, 239, .24), rgba(7, 72, 101, .34)) !important;
+  box-shadow: inset 4px 0 0 #36e5ff, inset 0 0 22px rgba(46, 218, 255, .07), 0 0 12px rgba(0, 204, 255, .04) !important;
+}
+
+.vox-reference-shell .sv-channel-item-icon {
+  width: 21px !important;
+  font-size: 15px !important;
+}
+
+.vox-reference-shell .sv-channel-item-name {
+  font-size: 13px !important;
+}
+
+/* Welcome banner current classes. */
+.vox-reference-shell .sv-welcome {
+  min-height: 168px !important;
+  margin: 14px 14px 8px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 43% !important;
+  border: 1px solid rgba(54, 228, 255, .62) !important;
+  background: linear-gradient(90deg, #06253a 0 55%, #15155b 100%) !important;
+  box-shadow: inset 0 0 42px rgba(26, 203, 242, .055), 0 0 18px rgba(0, 205, 255, .05) !important;
+}
+
+.vox-reference-shell .sv-welcome-copy {
+  padding: 17px 19px !important;
+}
+
+.vox-reference-shell .sv-welcome-copy h2 {
+  margin: 7px 0 5px !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+}
+
+.vox-reference-shell .sv-welcome-copy p {
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+.vox-reference-shell .sv-welcome-actions {
+  gap: 8px !important;
+  margin-top: 11px !important;
+}
+
+.vox-reference-shell .sv-welcome-actions button {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 10px !important;
+}
+
+.vox-reference-shell .sv-welcome-art {
+  background:
+    radial-gradient(circle at 55% 44%, rgba(61, 106, 255, .24), transparent 26%),
+    linear-gradient(145deg, #171d64, #111653) !important;
+}
+
+.vox-reference-shell .sv-welcome-portal {
+  width: 98px !important;
+  height: 98px !important;
+}
+
+.vox-reference-shell .sv-welcome-motto {
+  right: 18px !important;
+  font-size: 10px !important;
+  line-height: 1.75 !important;
+  letter-spacing: .24em !important;
+}
+
+/* Message list current class names. */
+.vox-reference-shell .sv-message-list {
+  padding: 6px 14px 8px !important;
+}
+
+.vox-reference-shell .sv-message {
+  min-height: 54px !important;
+  padding: 8px 7px !important;
+  border-bottom: 1px solid rgba(73, 161, 192, .095) !important;
+}
+
+.vox-reference-shell .sv-message.compact {
+  min-height: 34px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+.vox-reference-shell .sv-message-avatar {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-shell .sv-message-meta strong {
+  font-size: 13px !important;
+}
+
+.vox-reference-shell .sv-message-text {
+  font-size: 12px !important;
+  line-height: 1.42 !important;
+}
+
+/* Composer current class names. */
+.vox-reference-shell .sv-composer {
+  min-height: 100px !important;
+  padding: 10px 11px 9px !important;
+}
+
+.vox-reference-shell .sv-composer-row {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) 56px !important;
+  gap: 8px !important;
+  min-height: 56px !important;
+}
+
+.vox-reference-shell .sv-composer-attach,
+.vox-reference-shell .sv-composer-send {
+  width: 48px !important;
+  height: 56px !important;
+}
+
+.vox-reference-shell .sv-composer-send {
+  width: 56px !important;
+}
+
+.vox-reference-shell .sv-composer-input-wrap {
+  min-height: 56px !important;
+  border-color: rgba(48, 203, 240, .38) !important;
+  background: rgba(2, 17, 30, .84) !important;
+}
+
+.vox-reference-shell .sv-composer-toolbar {
+  min-height: 29px !important;
+  gap: 7px !important;
+  padding-top: 7px !important;
+}
+
+.vox-reference-shell .sv-composer-toolbar button {
+  min-height: 25px !important;
+  padding: 0 10px !important;
+}
+
+/* At 1366–1440 widths, keep a visibly generous center without starving sidebars. */
+@media (min-width: 1280px) and (max-width: 1460px) {
+  .vox-reference-shell .vox-reference-workspace {
+    grid-template-columns: 82px 274px minmax(0, 1fr) 298px !important;
+    gap: 8px !important;
+  }
+
+  .vox-reference-shell .sv-community-hero {
+    height: 206px !important;
+  }
+
+  .vox-reference-shell .sv-welcome {
+    min-height: 158px !important;
+  }
+}
