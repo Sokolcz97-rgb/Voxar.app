@@ -1,0 +1,210 @@
+/* V20 LEGIBILITY — deliberately pull the interface away from tiny HUD text and toward the supplied reference's human-readable hierarchy. */
+
+.vox-reference-shell.sv-shell-v4 {
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.sv-topbar-nav button,
+.sv-topbar-search,
+.sv-sidebar-quick-nav button,
+.sv-channel-item-name,
+.sv-community-copy,
+.sv-welcome p,
+.sv-welcome-actions button,
+.sv-channel-header-copy p,
+.sv-channel-online,
+.sv-message-text,
+.sv-message-meta time,
+.sv-composer-textarea,
+.sv-right-about > p,
+.sv-right-event-copy,
+.vox-ref-member-activity,
+.vox-self-panel-status {
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
+}
+
+.sv-brand-copy,
+.sv-channel-header-title-row,
+.sv-welcome h2,
+.sv-welcome-eyebrow,
+.sv-right-card-title,
+.sv-channel-group-toggle,
+.sv-sidebar-section-title,
+.sv-composer-toolbar,
+.sv-composer-mode,
+.sv-topbar-motto {
+  font-family: "Orbitron", "Rajdhani", Inter, sans-serif !important;
+}
+
+/* Remove/soften debug-like micro labels that visually compete with real content. */
+.sv-channel-node-label,
+.sv-sidebar-section-title::after,
+.sv-channel-list-tools > small,
+.sv-right-community-code,
+.sv-right-presence-summary strong,
+.sv-composer-mode {
+  opacity: .38 !important;
+}
+
+.sv-sidebar-slogan span {
+  font-family: "Orbitron", "Rajdhani", Inter, sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* Bring real content forward. */
+.sv-community-copy strong,
+.sv-channel-item-name,
+.sv-message-meta strong,
+.vox-ref-member-line strong,
+.vox-self-panel-name {
+  font-weight: 650 !important;
+}
+
+.sv-message-text,
+.sv-welcome p,
+.sv-right-about > p {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sv-message-list,
+.sv-sidebar-channels,
+.sv-right-members-list {
+  scrollbar-color: rgba(62, 211, 243, .45) rgba(2, 18, 29, .3);
+}
+
+/* Reference-like cyan + violet highlight line language. */
+.sv-workspace-sidebar::before,
+.sv-workspace-center::before,
+.sv-workspace-right::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 20;
+  background: linear-gradient(90deg, #50eaff, rgba(80,234,255,.2) 64%, rgba(121,77,255,.55), transparent);
+}
+
+.sv-workspace-sidebar,
+.sv-workspace-center,
+.sv-workspace-right {
+  position: relative !important;
+}
+
+/* Make the active state feel like the screenshot rather than an admin panel. */
+.sv-sidebar-quick-nav button.active,
+.sv-channel-item.active {
+  text-shadow: 0 0 8px rgba(65, 231, 255, .18) !important;
+}
+
+.sv-channel-item.active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  background: linear-gradient(180deg, #5e46ff, #39eaff);
+  box-shadow: 0 0 9px rgba(69, 224, 255, .6);
+}
+
+.sv-channel-item { position: relative !important; }
+
+/* Make right column more like a product UI card stack, not a debug HUD. */
+.sv-right-card-head,
+.sv-right-members-head {
+  border-bottom: 1px solid rgba(69, 215, 246, .09);
+}
+
+.sv-right-about,
+.sv-right-now,
+.sv-right-members {
+  overflow: hidden !important;
+}
+
+.sv-right-about::after,
+.sv-right-now::after {
+  content: "";
+  position: absolute;
+  right: -26px;
+  bottom: -26px;
+  width: 96px;
+  height: 96px;
+  border: 1px solid rgba(99, 83, 255, .11);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.sv-right-community-heading h2 {
+  letter-spacing: .01em !important;
+}
+
+.sv-right-event-join {
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-weight: 650 !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase;
+}
+
+.vox-ref-active-member {
+  border-left: 2px solid transparent;
+}
+
+.vox-ref-active-member.status-online:hover {
+  border-left-color: #51efb7 !important;
+  background: linear-gradient(90deg, rgba(50, 178, 142, .08), transparent 80%) !important;
+}
+
+.vox-ref-active-member.status-offline:hover {
+  border-left-color: rgba(78, 218, 247, .5) !important;
+  background: linear-gradient(90deg, rgba(58, 161, 192, .07), transparent 80%) !important;
+}
+
+/* Welcome copy should read as the visual anchor. */
+.sv-welcome-copy {
+  box-shadow: 22px 0 30px rgba(2, 17, 31, .22);
+}
+
+.sv-welcome h2,
+.sv-channel-header-title-row h1,
+.sv-right-community-heading h2 {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Composer is visually important in the target. */
+.sv-composer-textarea::placeholder {
+  color: #6f8d99 !important;
+  opacity: 1 !important;
+}
+
+.sv-composer-toolbar button:hover {
+  color: #d7f8ff !important;
+  border-color: rgba(77, 229, 255, .46) !important;
+  background: rgba(13, 69, 91, .18) !important;
+}
+
+.sv-composer-send:disabled {
+  opacity: .48 !important;
+}
+
+/* Current-window correction: keep the reference feeling roomy without shrinking labels into unreadability. */
+@media (max-width: 1450px) {
+  .sv-sidebar-quick-nav button { font-size: 12px !important; }
+  .sv-channel-item-name { font-size: 11px !important; }
+  .sv-right-community-heading h2 { font-size: 17px !important; }
+  .sv-right-about > p { font-size: 9px !important; }
+  .vox-ref-member-line strong { font-size: 10px !important; }
+  .vox-ref-member-activity small { font-size: 6.2px !important; }
+}
+
+@media (min-width: 1600px) {
+  .sv-sidebar-quick-nav button { font-size: 13.5px !important; }
+  .sv-channel-item-name { font-size: 12.5px !important; }
+  .sv-right-community-heading h2 { font-size: 21px !important; }
+  .sv-right-about > p { font-size: 10.5px !important; }
+  .vox-ref-member-line strong { font-size: 11.5px !important; }
+  .vox-ref-member-activity small { font-size: 7px !important; }
+}
