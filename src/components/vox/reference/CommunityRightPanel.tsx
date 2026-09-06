@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound, Zap } from "lucide-react";
+import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "lucide-react";
 import type { VoxMember } from "../MemberList";
 import { ReferenceActiveMembers } from "../ReferenceActiveMembers";
 
@@ -23,7 +23,6 @@ export function CommunityRightPanel({
 }: Props) {
   const previewMembers = members.slice(0, 4);
   const extraCount = Math.max(memberCount - previewMembers.length, 0);
-  const offlineCount = Math.max(memberCount - onlineCount, 0);
 
   return (
     <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19">
@@ -38,10 +37,7 @@ export function CommunityRightPanel({
         </div>
 
         <div className="sv-right-community-heading">
-          <div>
-            <h2>{guildName}</h2>
-            <span className="sv-right-community-code">COMMUNITY NODE // 01</span>
-          </div>
+          <h2>{guildName}</h2>
           <span className="sv-right-verified" title="Ověřená komunita">◆</span>
         </div>
         <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele.</p>
@@ -59,12 +55,6 @@ export function CommunityRightPanel({
             <CalendarDays />
             <span className="sv-right-stat-copy"><strong>6</strong><small>událostí</small></span>
           </div>
-        </div>
-
-        <div className="sv-right-presence-summary">
-          <span><i className="online" />{onlineCount} online</span>
-          <span><i />{offlineCount} offline</span>
-          <strong><Zap /> LIVE HUB</strong>
         </div>
 
         <div className="sv-right-tags">
@@ -89,7 +79,6 @@ export function CommunityRightPanel({
             <span className="sv-right-event-live">LIVE</span>
           </div>
           <div className="sv-right-event-copy">
-            <span className="sv-right-event-kicker">Dnes · komunitní event</span>
             <strong>Páteční herní večer</strong>
             <span>Dnes 20:00 · Hlasový kanál</span>
             <div className="sv-right-event-people" aria-label="Účastníci události">
@@ -102,10 +91,6 @@ export function CommunityRightPanel({
               ))}
               {extraCount > 0 && <span className="sv-right-event-more">+{extraCount}</span>}
             </div>
-          </div>
-          <div className="sv-right-event-time" aria-hidden="true">
-            <strong>20:00</strong>
-            <span>HLAS</span>
           </div>
           <button type="button" className="sv-right-event-join" onClick={onJoinVoice}>Připojit se</button>
         </div>
