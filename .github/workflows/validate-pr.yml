@@ -29,7 +29,7 @@ jobs:
         run: node --check electron/rtmp.cjs
 
       - name: Run focused community tests
-        run: npm test -- src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx
+        run: npm test -- src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx src/contexts/VoiceCallContext.test.tsx
 
       - name: Build web app
         run: npm run build
