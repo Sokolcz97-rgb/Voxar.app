@@ -53,10 +53,17 @@ export function CommunityTopbar({
   };
 
   return (
-    <header className="sv-topbar sv-topbar-v17">
+    <header className="sv-topbar sv-topbar-v17 sv-topbar-v18">
       <div className="sv-topbar-scene" aria-hidden="true">
+        <span className="sv-topbar-stars sv-topbar-stars-a" />
+        <span className="sv-topbar-stars sv-topbar-stars-b" />
         <span className="sv-topbar-horizon" />
-        <span className="sv-topbar-planet"><i /><b /></span>
+        <span className="sv-topbar-ridge sv-topbar-ridge-back" />
+        <span className="sv-topbar-ridge sv-topbar-ridge-front" />
+        <span className="sv-topbar-planet"><i /><b /><em /></span>
+        <span className="sv-topbar-planet-glow" />
+        <span className="sv-topbar-beam sv-topbar-beam-a" />
+        <span className="sv-topbar-beam sv-topbar-beam-b" />
         <span className="sv-topbar-comet sv-topbar-comet-a" />
         <span className="sv-topbar-comet sv-topbar-comet-b" />
         <span className="sv-topbar-grid" />
@@ -67,6 +74,7 @@ export function CommunityTopbar({
           <i className="sv-brand-wing sv-brand-wing-left" />
           <i className="sv-brand-wing sv-brand-wing-right" />
           <b className="sv-brand-core" />
+          <em className="sv-brand-spark" />
         </span>
         <div className="sv-brand-copy">
           <strong>VOXAR.APP</strong>
@@ -82,6 +90,7 @@ export function CommunityTopbar({
             className={key === "community" ? "active" : undefined}
             onClick={actions[key]}
           >
+            <span className="sv-topbar-nav-glow" aria-hidden="true" />
             <Icon />
             <span>{label}</span>
           </button>
@@ -115,6 +124,7 @@ export function CommunityTopbar({
           {avatarUrl
             ? <img src={avatarUrl} alt={displayName} />
             : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
+          <i className="sv-topbar-avatar-ring" aria-hidden="true" />
         </button>
 
         <div className="sv-topbar-motto" aria-hidden="true">
