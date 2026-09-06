@@ -23,6 +23,11 @@ interface Props {
   onMore: () => void;
   onNotifications: () => void;
   onProfile: () => void;
+  activeGuildId?: string | null;
+  isGuildAdmin?: boolean;
+  onOpenChannel?: (channelId: string) => void;
+  utilityMode?: UtilityMode | null;
+  onUtilityModeChange?: (mode: UtilityMode | null) => void;
 }
 
 const navItems = [
@@ -45,8 +50,19 @@ export function CommunityTopbar({
   onMore,
   onNotifications,
   onProfile,
+  activeGuildId,
+  isGuildAdmin = false,
+  onOpenChannel,
+  utilityMode,
+  onUtilityModeChange,
 }: Props) {
-  const [utility, setUtility] = useState<UtilityMode | null>(null);
+  const [internalUtility, setInternalUtility] = useState<UtilityMode | null>(null);
+  const controlled = utilityMode !== undefined;
+  const utility = controlled ? utilityMode : internalUtility;
+  const setUtility = (next: UtilityMode | null) => {
+    if (!controlled) setInternalUtility(next);
+    onUtilityModeChange?.(next);
+  };
 
   const activate = (key: NavKey) => {
     if (key === "community") {
@@ -158,7 +174,18 @@ export function CommunityTopbar({
         </div>
       </header>
 
-      {utility && <CommunityUtilityOverlay mode={utility} onClose={() => setUtility(null)} />}
+      {utility && (
+        <CommunityUtilityOverlay
+          mode={utility}
+          onClose={() => setUtility(null)}
+          guildId={activeGuildId}
+          isGuildAdmin={isGuildAdmin}
+          onOpenChannel={(channelId) => {
+            setUtility(null);
+            onOpenChannel?.(channelId);
+          }}
+        />
+      )}
     </>
   );
 }
