@@ -29,7 +29,6 @@ export function CommunityWelcomeBanner({
       <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-bottom" aria-hidden="true" />
-      <span className="sv-welcome-sidebar-mark" aria-hidden="true">SV // HUB</span>
 
       <div className="sv-welcome-copy">
         <div className="sv-welcome-eyebrow">
@@ -43,7 +42,6 @@ export function CommunityWelcomeBanner({
           <span className="sv-welcome-time" title="Aktuální čas">{currentTime}</span>
         </div>
 
-        <div className="sv-welcome-kicker">COMMUNITY UPLINK // ONLINE</div>
         <h2>Vítej v komunitě!</h2>
         <p>Jsme rádi, že jsi tady. Voxar.app je místo pro hráče, tvůrce a přátele.</p>
         <p>Respektuj ostatní, užívej si atmosféru a tvoř s námi něco většího.</p>
