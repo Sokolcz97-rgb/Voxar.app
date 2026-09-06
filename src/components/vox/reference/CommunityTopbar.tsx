@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { CommunityUtilityOverlay, type UtilityMode } from "./CommunityUtilityOverlay";
 import { subscribeVoxUtility } from "@/lib/voxCommunityBridge";
+import { useVoxNotifications } from "@/hooks/useVoxNotifications";
 
 interface Props {
   displayName: string;
@@ -49,7 +50,6 @@ export function CommunityTopbar({
   onCommunity,
   onVoice,
   onMore,
-  onNotifications,
   onProfile,
   activeGuildId,
   isGuildAdmin,
@@ -58,6 +58,7 @@ export function CommunityTopbar({
   onUtilityModeChange,
 }: Props) {
   const [internalUtility, setInternalUtility] = useState<UtilityMode | null>(null);
+  const { unreadCount } = useVoxNotifications(100);
   const controlled = utilityMode !== undefined;
   const utility = controlled ? utilityMode : internalUtility;
 
@@ -91,10 +92,15 @@ export function CommunityTopbar({
     setUtility(key);
   };
 
-  const activeKey: NavKey | "members" = utility ?? "community";
+  const activeKey = utility ?? "community";
   const utilityLabel = utility === "members"
     ? "Členové"
-    : navItems.find((item) => item.key === activeKey)?.label ?? "Voxar";
+    : utility === "notifications"
+      ? "Oznámení"
+      : navItems.find((item) => item.key === activeKey)?.label ?? "Voxar";
+  const notificationLabel = unreadCount > 0
+    ? `Oznámení, ${unreadCount} nepřečtených`
+    : "Oznámení";
 
   return (
     <>
@@ -159,9 +165,20 @@ export function CommunityTopbar({
             <kbd>Ctrl K</kbd>
           </label>
 
-          <button type="button" className="sv-topbar-icon-button" onClick={onNotifications} aria-label="Oznámení">
+          <button
+            type="button"
+            className={`sv-topbar-icon-button sv-notification-trigger${utility === "notifications" ? " active" : ""}`}
+            onClick={() => setUtility(utility === "notifications" ? null : "notifications")}
+            aria-label={notificationLabel}
+            aria-expanded={utility === "notifications"}
+            title={notificationLabel}
+          >
             <Bell />
-            <i aria-hidden="true" />
+            {unreadCount > 0 && (
+              <span className="sv-topbar-notification-badge" aria-hidden="true">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </button>
 
           <div className="sv-topbar-profile-cluster">
