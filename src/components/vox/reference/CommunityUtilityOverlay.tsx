@@ -13,9 +13,10 @@ import "./community-events-v26.css";
 import "./community-members-v27.css";
 import "./community-notifications-v28.css";
 
-export type UtilityMode = "events" | "members" | "notifications" | "files" | "store" | "remove-bg";
+export type UtilityMode = "events" | "broadcast" | "members" | "notifications" | "files" | "store" | "remove-bg";
 
 const meta = {
+  broadcast: { label: "Vysílací studio · RTMP", icon: CalendarDays },
   events: { label: "Události & vysílání", icon: CalendarDays },
   members: { label: "Členové komunity", icon: UsersRound },
   notifications: { label: "Centrum oznámení", icon: BellRing },
@@ -94,7 +95,7 @@ export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, 
       </header>
       <div className="sv-utility-scroll">
         <UtilityPanelBoundary resetKey={mode}>
-          {mode === "events" && <CommunityEventsStudio guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
+          {(mode === "events" || mode === "broadcast") && <CommunityEventsStudio initialTab={mode === "broadcast" ? "broadcast" : "events"} guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
           {mode === "members" && <CommunityMembers guildId={resolvedGuildId} />}
           {mode === "notifications" && <CommunityNotifications />}
           {mode === "files" && <CommunityFiles />}

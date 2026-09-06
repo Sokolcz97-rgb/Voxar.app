@@ -21,6 +21,7 @@ import { CommunityRightPanel } from "@/components/vox/reference/CommunityRightPa
 import { CommunityTopbar } from "@/components/vox/reference/CommunityTopbar";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
+import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import { Loader2 } from "lucide-react";
 import "./community-reference.css";
 import "./community-reference-polish.css";
@@ -39,6 +40,7 @@ export default function AppShellReference() {
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
+  const [mobileChannelsOpen, setMobileChannelsOpen] = useState(false);
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
   const [now, setNow] = useState(() => new Date());
 
@@ -363,30 +365,41 @@ export default function AppShellReference() {
 
   const onlineCount = members.filter((member) => (member.status || "offline") !== "offline").length;
   const firstVoiceChannel = channels.find((channel) => channel.type === "voice");
-  const showSoon = (title: string) => toast({ title, description: "Tahle část rozhraní se ještě dopojí na vlastní data." });
+  const missingVoice = () => toast({ title: "Hlasový kanál není vytvořený", description: isAdmin ? "V seznamu kanálů jej můžeš přidat tlačítkem +." : "Požádej správce komunity o vytvoření hlasového kanálu." });
+  const goHome = () => {
+    const home = channels.find((c) => c.type === "text" && ["obecné", "general"].includes(c.name.toLowerCase())) ?? channels.find((c) => c.type === "text");
+    if (home) setActiveChannel(home);
+    setView("main");
+    openVoxUtility(null);
+  };
   const selectChannel = (channel: VoxChannel) => {
+    setMobileChannelsOpen(false);
     setActiveChannel(channel);
     setView("main");
   };
 
   return (
-    <div className={`vox-reference-shell sv-shell-v4${view !== "main" ? " is-settings-view" : ""}`}>
+    <div id="voxar-community" className={`vox-reference-shell sv-shell-v4 sv-refined${mobileChannelsOpen ? " mobile-nav-open" : ""}${view !== "main" ? " is-settings-view" : ""}`}>
       <CommunityTopbar
         displayName={displayName}
         avatarUrl={profile?.avatar_url}
-        onCommunity={() => setView("main")}
-        onEvents={() => showSoon("Události")}
+        onCommunity={goHome}
+        activeGuildId={activeGuildId}
+        isGuildAdmin={isAdmin}
+        onOpenChannel={(id) => { const target = channels.find(c => c.id === id); if (target) selectChannel(target); }}
+        onEvents={() => openVoxUtility("events")}
         onVoice={() => {
           if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-          else showSoon("Hlas");
+          else missingVoice();
         }}
-        onFiles={() => showSoon("Soubory")}
+        onFiles={() => openVoxUtility("files")}
         onStore={() => navigate("/obchod")}
         onMore={() => navigate("/dashboard")}
-        onNotifications={() => showSoon("Oznámení")}
+        onNotifications={() => openVoxUtility("notifications")}
         onProfile={() => setView("user-settings")}
       />
 
+      <button type="button" className="sv-mobile-channel-toggle" aria-expanded={mobileChannelsOpen} onClick={() => setMobileChannelsOpen(open => !open)}>{mobileChannelsOpen ? "Zavřít seznam kanálů" : "Komunity a kanály"}</button>
       <main className={`sv-workspace${view !== "main" ? " is-settings" : ""}`}>
         <aside className="sv-workspace-rail vox-reference-rail">
           <GuildRail
@@ -415,9 +428,9 @@ export default function AppShellReference() {
               onCreateChannel={openCreateChannel}
               onOpenServerSettings={() => setView("server-settings")}
               onCategoriesChanged={() => { void loadCategories(); }}
-              onHome={() => setView("main")}
-              onEvents={() => showSoon("Události")}
-              onMembers={() => showSoon("Členové")}
+              onHome={goHome}
+              onEvents={() => openVoxUtility("events")}
+              onMembers={() => openVoxUtility("members")}
               onBoosts={() => navigate("/obchod")}
             />
           ) : (
@@ -451,16 +464,14 @@ export default function AppShellReference() {
             ) : activeChannel ? (
               activeChannel.type === "text" ? (
                 <ChatView
+                  key={activeChannel.id}
                   channel={activeChannel}
                   members={members}
                   guildName={activeGuild.name}
                   guildIconUrl={activeGuild.icon_url}
                   channels={channels}
                   onSelectChannel={selectChannel}
-                  onShowRules={() => toast({
-                    title: "Pravidla komunity",
-                    description: "Pravidla můžeš připojit na vlastní stránku nebo kanál.",
-                  })}
+                  onShowRules={isAdmin ? () => openCreateChannel("text", "Informace") : undefined}
                 />
               ) : (
                 <VoiceView channel={activeChannel} />
@@ -477,16 +488,17 @@ export default function AppShellReference() {
           <aside className="sv-workspace-right vox-reference-right">
             {activeGuild ? (
               <CommunityRightPanel
+                guildId={activeGuildId ?? undefined}
                 guildName={activeGuild.name}
                 memberCount={members.length}
                 onlineCount={onlineCount}
                 members={members}
                 onJoinVoice={() => {
                   if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-                  else showSoon("Hlasový kanál");
+                  else missingVoice();
                 }}
-                onShowMembers={() => showSoon("Všichni členové")}
-                onMessage={(member) => navigate(`/messages?user=${member.user_id}`)}
+                onShowMembers={() => openVoxUtility("members")}
+                onMessage={(member) => member.user_id === user.id ? setView("user-settings") : navigate(`/messages?user=${member.user_id}`)}
               />
             ) : (
               <div className="vox-reference-empty"><span>Komunita</span></div>

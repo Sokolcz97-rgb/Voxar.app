@@ -83,6 +83,11 @@ const CommunityMessageRow = memo(function CommunityMessageRow({
   const cosmeticRing = useCosmeticRing(message.author_id);
   const renderedContent = isEncrypted(message.content) ? decrypted : message.content;
   const [reactionOpen, setReactionOpen] = useState(false);
+  const pollLines = renderedContent?.includes("📊 ANKETA: ") ? renderedContent.slice(renderedContent.indexOf("📊 ANKETA: ")).split("\n") : [];
+  const pollOptions = pollLines.slice(1).map(line => {
+    const split = line.indexOf(" ");
+    return { emoji: line.slice(0, split), label: line.slice(split + 1) };
+  }).filter(option => ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"].includes(option.emoji));
   const reactionSummary = useMemo(() => {
     const grouped = new Map<string, { count: number; mine: boolean }>();
     reactions.forEach((reaction) => {
@@ -126,6 +131,14 @@ const CommunityMessageRow = memo(function CommunityMessageRow({
             <span>{renderedContent}</span>
           </div>
         ) : null}
+
+        {pollOptions.length >= 2 && <div className="sv-poll-options" aria-label="Hlasovat v anketě (více odpovědí)">
+          {pollOptions.map(option => {
+            const votes = reactions.filter(r => r.emoji === option.emoji);
+            const active = votes.some(r => r.user_id === userId);
+            return <button key={option.emoji} type="button" aria-pressed={active} className={active ? "active" : ""} onClick={() => void onToggleReaction(message.id, option.emoji, active)}>{option.label}<span>{votes.length} hlasů</span></button>;
+          })}
+        </div>}
 
         {Array.isArray(message.attachments) && message.attachments.length > 0 && <AttachmentList items={message.attachments} />}
 
