@@ -3263,6 +3263,101 @@ export type Database = {
           },
         ]
       }
+      vox_message_pins: {
+        Row: {
+          channel_id: string
+          created_at: string
+          guild_id: string
+          message_id: string
+          pinned_by: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          guild_id: string
+          message_id: string
+          pinned_by?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          guild_id?: string
+          message_id?: string
+          pinned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_message_pins_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vox_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_message_pins_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_message_pins_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "vox_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_message_reactions: {
+        Row: {
+          channel_id: string
+          created_at: string
+          emoji: string
+          guild_id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          emoji: string
+          guild_id: string
+          message_id: string
+          user_id?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          emoji?: string
+          guild_id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_message_reactions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vox_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_message_reactions_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "vox_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vox_messages: {
         Row: {
           attachments: Json
