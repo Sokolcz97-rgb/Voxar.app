@@ -4,10 +4,11 @@
   "version": "0.0.32",
   "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
-  "main": "main.cjs",
+  "main": "bootstrap.cjs",
   "private": true,
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
     "@electron/packager": "^20.0.3",
@@ -31,6 +32,8 @@
       "buildResources": "assets"
     },
     "files": [
+      "bootstrap.cjs",
+      "rtmp.cjs",
       "main.cjs",
       "preload.cjs",
       "settings-preload.cjs",
@@ -54,6 +57,9 @@
       }
     ],
     "asar": true,
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**/*"
+    ],
     "compression": "maximum",
     "generateUpdatesFilesForAllChannels": true,
     "publish": [
