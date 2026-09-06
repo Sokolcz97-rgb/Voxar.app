@@ -39,7 +39,46 @@
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-sidebar-channels,
-.vox-reference-shell.sv-shell-v4 .sv-right-members-list,
 .vox-reference-shell.sv-shell-v4 .sv-message-list {
   scrollbar-gutter:stable;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list {
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  scrollbar-gutter:auto !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event,
+.vox-reference-shell.sv-shell-v4 .sv-right-now,
+.vox-reference-shell.sv-shell-v4 .sv-right-about,
+.vox-reference-shell.sv-shell-v4 .sv-right-members {
+  overflow:hidden !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy,
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading > div,
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-copy {
+  min-width:0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span,
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-line strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art {
+  min-width:0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions {
+  max-width:100% !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button {
+  min-width:0 !important;
 }
