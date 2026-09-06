@@ -24,7 +24,7 @@ type Props = {
   onOpenChannel?: (channelId: string) => void;
 };
 
-export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin = false, onOpenChannel }: Props) {
+export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, onOpenChannel }: Props) {
   const Icon = meta[mode].icon;
   return (
     <section className="sv-utility-overlay" aria-label={meta[mode].label}>
