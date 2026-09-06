@@ -1,11 +1,17 @@
-import { memo, type RefObject } from "react";
-import { FileDown, Lock, Trash2 } from "lucide-react";
+import { memo, useMemo, useState, type RefObject } from "react";
+import { FileDown, Lock, Pin, PinOff, SmilePlus, Trash2 } from "lucide-react";
 import { useCosmeticRing } from "@/hooks/useCosmeticRing";
 import { cn } from "@/lib/utils";
 import { isEncrypted } from "@/lib/e2ee";
 import { RoleBadge } from "../VoxRolesPanel";
 import type { VoxMember } from "../MemberList";
 import type { CommunityAttachment, CommunityMessage, CommunityProfileLite } from "./chatTypes";
+
+export type CommunityReaction = {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+};
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -19,25 +25,12 @@ function AttachmentList({ items }: { items: CommunityAttachment[] }) {
       {items.map((attachment, index) =>
         attachment.kind === "image" ? (
           <a key={index} href={attachment.url} target="_blank" rel="noreferrer" className="sv-message-image-link">
-            <img
-              decoding="async"
-              src={attachment.url}
-              alt={attachment.name}
-              loading="lazy"
-              className="sv-message-image"
-            />
+            <img decoding="async" src={attachment.url} alt={attachment.name} loading="lazy" className="sv-message-image" />
           </a>
         ) : attachment.kind === "video" ? (
           <video key={index} src={attachment.url} controls className="sv-message-video" />
         ) : (
-          <a
-            key={index}
-            href={attachment.url}
-            target="_blank"
-            rel="noreferrer"
-            download={attachment.name}
-            className="sv-message-file"
-          >
+          <a key={index} href={attachment.url} target="_blank" rel="noreferrer" download={attachment.name} className="sv-message-file">
             <FileDown />
             <span>{attachment.name}</span>
             <small>{formatSize(attachment.size)}</small>
@@ -56,10 +49,18 @@ interface RowProps {
   topRole: any;
   avatarUrl: string | null;
   mine: boolean;
+  canPin: boolean;
+  pinned: boolean;
+  reactions: CommunityReaction[];
+  userId?: string;
   decrypted: string | null | undefined;
   onDelete: (id: string) => void;
   onNeedKey: () => void;
+  onTogglePin: (message: CommunityMessage, pinned: boolean) => void | Promise<void>;
+  onToggleReaction: (messageId: string, emoji: string, active: boolean) => void | Promise<void>;
 }
+
+const QUICK_REACTIONS = ["👍", "🔥", "❤️", "😂", "🎮", "🚀"];
 
 const CommunityMessageRow = memo(function CommunityMessageRow({
   message,
@@ -69,25 +70,37 @@ const CommunityMessageRow = memo(function CommunityMessageRow({
   topRole,
   avatarUrl,
   mine,
+  canPin,
+  pinned,
+  reactions,
+  userId,
   decrypted,
   onDelete,
   onNeedKey,
+  onTogglePin,
+  onToggleReaction,
 }: RowProps) {
   const cosmeticRing = useCosmeticRing(message.author_id);
   const renderedContent = isEncrypted(message.content) ? decrypted : message.content;
+  const [reactionOpen, setReactionOpen] = useState(false);
+  const reactionSummary = useMemo(() => {
+    const grouped = new Map<string, { count: number; mine: boolean }>();
+    reactions.forEach((reaction) => {
+      const current = grouped.get(reaction.emoji) ?? { count: 0, mine: false };
+      current.count += 1;
+      current.mine = current.mine || reaction.user_id === userId;
+      grouped.set(reaction.emoji, current);
+    });
+    return [...grouped.entries()];
+  }, [reactions, userId]);
 
   return (
-    <article className={cn("sv-message group", compact && "compact")}>
+    <article className={cn("sv-message group", compact && "compact", pinned && "is-pinned")}>
       <div className="sv-message-avatar-column">
         {!compact && (
-          <div
-            className={cn("rank-ring sv-message-avatar", cosmeticRing)}
-            style={{ ["--rank-color" as any]: ringColor }}
-          >
+          <div className={cn("rank-ring sv-message-avatar", cosmeticRing)} style={{ ["--rank-color" as any]: ringColor }}>
             <div className="rank-inner sv-message-avatar-inner">
-              {avatarUrl
-                ? <img loading="lazy" decoding="async" src={avatarUrl} alt={name} />
-                : name.slice(0, 2).toUpperCase()}
+              {avatarUrl ? <img loading="lazy" decoding="async" src={avatarUrl} alt={name} /> : name.slice(0, 2).toUpperCase()}
             </div>
           </div>
         )}
@@ -99,6 +112,7 @@ const CommunityMessageRow = memo(function CommunityMessageRow({
             <strong style={{ color: ringColor, textShadow: `0 0 8px ${ringColor}55` }}>{name}</strong>
             {topRole && <RoleBadge role={topRole} />}
             <time>{new Date(message.created_at).toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" })}</time>
+            {pinned && <span className="sv-message-pinned-label"><Pin /> Připnuto</span>}
           </div>
         )}
 
@@ -113,21 +127,69 @@ const CommunityMessageRow = memo(function CommunityMessageRow({
           </div>
         ) : null}
 
-        {Array.isArray(message.attachments) && message.attachments.length > 0 && (
-          <AttachmentList items={message.attachments} />
+        {Array.isArray(message.attachments) && message.attachments.length > 0 && <AttachmentList items={message.attachments} />}
+
+        {reactionSummary.length > 0 && (
+          <div className="sv-message-reactions" aria-label="Reakce">
+            {reactionSummary.map(([emoji, summary]) => (
+              <button
+                key={emoji}
+                type="button"
+                className={summary.mine ? "active" : undefined}
+                onClick={() => void onToggleReaction(message.id, emoji, summary.mine)}
+                title={summary.mine ? `Odebrat reakci ${emoji}` : `Reagovat ${emoji}`}
+              >
+                <span>{emoji}</span><b>{summary.count}</b>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {mine && (
-        <button
-          type="button"
-          className="sv-message-delete"
-          onClick={() => onDelete(message.id)}
-          title="Smazat zprávu"
-        >
-          <Trash2 />
-        </button>
-      )}
+      <div className="sv-message-actions">
+        <div className="sv-message-reaction-picker-wrap">
+          <button type="button" className="sv-message-action" onClick={() => setReactionOpen((value) => !value)} title="Přidat reakci">
+            <SmilePlus />
+          </button>
+          {reactionOpen && (
+            <div className="sv-message-reaction-picker">
+              {QUICK_REACTIONS.map((emoji) => {
+                const active = reactions.some((reaction) => reaction.emoji === emoji && reaction.user_id === userId);
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className={active ? "active" : undefined}
+                    onClick={() => {
+                      void onToggleReaction(message.id, emoji, active);
+                      setReactionOpen(false);
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {canPin && (
+          <button
+            type="button"
+            className={cn("sv-message-action", pinned && "active")}
+            onClick={() => void onTogglePin(message, pinned)}
+            title={pinned ? "Odepnout zprávu" : "Připnout zprávu"}
+          >
+            {pinned ? <PinOff /> : <Pin />}
+          </button>
+        )}
+
+        {mine && (
+          <button type="button" className="sv-message-delete" onClick={() => onDelete(message.id)} title="Smazat zprávu">
+            <Trash2 />
+          </button>
+        )}
+      </div>
     </article>
   );
 });
@@ -138,8 +200,13 @@ interface Props {
   members: VoxMember[];
   userId?: string;
   decrypted: Record<string, string | null>;
+  reactions: CommunityReaction[];
+  pinnedMessageIds: Set<string>;
+  canManageMessages: boolean;
   onDelete: (id: string) => void;
   onNeedKey: () => void;
+  onTogglePin: (message: CommunityMessage, pinned: boolean) => void | Promise<void>;
+  onToggleReaction: (messageId: string, emoji: string, active: boolean) => void | Promise<void>;
   bottomRef: RefObject<HTMLDivElement>;
   channelName: string;
 }
@@ -150,8 +217,13 @@ export function CommunityMessageList({
   members,
   userId,
   decrypted,
+  reactions,
+  pinnedMessageIds,
+  canManageMessages,
   onDelete,
   onNeedKey,
+  onTogglePin,
+  onToggleReaction,
   bottomRef,
   channelName,
 }: Props) {
@@ -173,6 +245,7 @@ export function CommunityMessageList({
         const member = members.find((item) => item.user_id === message.author_id);
         const topRole = member?.roles?.[0] ?? null;
         const name = member?.nickname || profile?.display_name || message.author_id.slice(0, 8);
+        const mine = message.author_id === userId;
 
         return (
           <CommunityMessageRow
@@ -183,10 +256,16 @@ export function CommunityMessageList({
             ringColor={topRole?.color || "hsl(var(--primary))"}
             topRole={topRole}
             avatarUrl={profile?.avatar_url ?? null}
-            mine={message.author_id === userId}
+            mine={mine}
+            canPin={mine || canManageMessages}
+            pinned={pinnedMessageIds.has(message.id)}
+            reactions={reactions.filter((reaction) => reaction.message_id === message.id)}
+            userId={userId}
             decrypted={decrypted[message.id]}
             onDelete={onDelete}
             onNeedKey={onNeedKey}
+            onTogglePin={onTogglePin}
+            onToggleReaction={onToggleReaction}
           />
         );
       })}
