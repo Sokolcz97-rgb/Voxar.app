@@ -13,6 +13,7 @@ import "./components/vox/reference/community-panel-recovery-v6.css";
 import "./components/vox/reference/community-polish-v7.css";
 import "./components/vox/reference/community-topbar-polish-v10.css";
 import "./components/vox/reference/community-reference-convergence-v14.css";
+import "./components/vox/reference/community-reference-lock-v15.css";
 import "./i18n";
 
 const syncAppTitle = () => {
