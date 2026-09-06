@@ -2,7 +2,7 @@ import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "luci
 import type { VoxMember } from "../MemberList";
 import { ReferenceActiveMembers } from "../ReferenceActiveMembers";
 import { useCommunityEvents } from "@/hooks/useCommunityEvents";
-import { openVoxChannel, openVoxUtility } from "@/lib/voxCommunityBridge";
+import { getVoxCommunityContext, openVoxChannel, openVoxUtility } from "@/lib/voxCommunityBridge";
 
 interface Props {
   guildId?: string;
@@ -33,7 +33,8 @@ export function CommunityRightPanel({
   onOpenChannel,
   onMessage,
 }: Props) {
-  const { activeEvents, upcomingEvent } = useCommunityEvents(guildId);
+  const resolvedGuildId = guildId ?? getVoxCommunityContext().guildId ?? undefined;
+  const { activeEvents, upcomingEvent } = useCommunityEvents(resolvedGuildId);
   const previewAttendees = upcomingEvent?.attendees.filter((attendee) => attendee.status === "going").slice(0, 3) ?? [];
   const goingCount = upcomingEvent?.rsvp.going ?? 0;
   const extraCount = Math.max(goingCount - previewAttendees.length, 0);
@@ -94,11 +95,7 @@ export function CommunityRightPanel({
                 {extraCount > 0 && <span className="sv-right-event-more">+{extraCount}</span>}
               </div>
             </div>
-            <button
-              type="button"
-              className="sv-right-event-join"
-              onClick={() => upcomingEvent.channel_id ? openChannel(upcomingEvent.channel_id) : showEvents()}
-            >
+            <button type="button" className="sv-right-event-join" onClick={() => upcomingEvent.channel_id ? openChannel(upcomingEvent.channel_id) : showEvents()}>
               {upcomingEvent.channel_id ? "Otevřít" : "Detail"}
             </button>
           </div>

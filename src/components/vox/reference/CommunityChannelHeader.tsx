@@ -1,5 +1,4 @@
 import { Hash, Lock, LockOpen, MessageCircle, Phone, Pin, UsersRound } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { VoxChannel } from "../ChannelSidebar";
 
@@ -9,6 +8,9 @@ interface Props {
   memberCount: number;
   hasKey: boolean;
   onOpenEncryption: () => void;
+  onJoinVoice: () => void;
+  onOpenPins: () => void;
+  onOpenMembers: () => void;
 }
 
 export function CommunityChannelHeader({
@@ -17,6 +19,9 @@ export function CommunityChannelHeader({
   memberCount,
   hasKey,
   onOpenEncryption,
+  onJoinVoice,
+  onOpenPins,
+  onOpenMembers,
 }: Props) {
   const topic = channel.topic || `Místo pro vše, co patří do #${channel.name}. Chat, novinky, nápady i každodenní pokec.`;
 
@@ -43,25 +48,13 @@ export function CommunityChannelHeader({
       <div className="sv-channel-header-actions">
         <span className="sv-channel-online"><i />{onlineCount} online</span>
         <span className="sv-channel-divider" aria-hidden="true" />
-        <button
-          type="button"
-          title="Připojit se na hlas"
-          onClick={() => toast({ title: "Hlas", description: "Vyber hlasový kanál vlevo a připoj se." })}
-        >
+        <button type="button" title="Připojit se na hlas" onClick={onJoinVoice}>
           <Phone />
         </button>
-        <button
-          type="button"
-          title="Připnuté zprávy"
-          onClick={() => toast({ title: "Připnuté zprávy", description: "Připnuté zprávy budou dostupné v další verzi." })}
-        >
+        <button type="button" title="Připnuté zprávy" onClick={onOpenPins}>
           <Pin />
         </button>
-        <button
-          type="button"
-          title="Členové"
-          onClick={() => toast({ title: "Členové komunity", description: `${memberCount} členů · ${onlineCount} online` })}
-        >
+        <button type="button" title={`Členové · ${memberCount} členů · ${onlineCount} online`} onClick={onOpenMembers}>
           <UsersRound />
         </button>
         <button

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AudioLines,
   Bell,
@@ -11,6 +11,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { CommunityUtilityOverlay, type UtilityMode } from "./CommunityUtilityOverlay";
+import { CommunitySearchPopover } from "./CommunitySearchPopover";
 import { subscribeVoxUtility } from "@/lib/voxCommunityBridge";
 import { useVoxNotifications } from "@/hooks/useVoxNotifications";
 
@@ -58,6 +59,9 @@ export function CommunityTopbar({
   onUtilityModeChange,
 }: Props) {
   const [internalUtility, setInternalUtility] = useState<UtilityMode | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const { unreadCount } = useVoxNotifications(100);
   const controlled = utilityMode !== undefined;
   const utility = controlled ? utilityMode : internalUtility;
@@ -73,7 +77,24 @@ export function CommunityTopbar({
     onUtilityModeChange?.(next);
   }), [controlled, onUtilityModeChange]);
 
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+        setSearchOpen(true);
+      }
+      if (event.key === "Escape" && searchOpen) {
+        setSearchOpen(false);
+        searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, [searchOpen]);
+
   const activate = (key: NavKey) => {
+    setSearchOpen(false);
     if (key === "community") {
       setUtility(null);
       onCommunity();
@@ -93,18 +114,11 @@ export function CommunityTopbar({
   };
 
   const activeKey = utility ?? "community";
-  const utilityLabel = utility === "members"
-    ? "Členové"
-    : utility === "notifications"
-      ? "Oznámení"
-      : navItems.find((item) => item.key === activeKey)?.label ?? "Voxar";
-  const notificationLabel = unreadCount > 0
-    ? `Oznámení, ${unreadCount} nepřečtených`
-    : "Oznámení";
+  const notificationLabel = unreadCount > 0 ? `Oznámení, ${unreadCount} nepřečtených` : "Oznámení";
 
   return (
     <>
-      <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19 sv-topbar-v24 sv-topbar-v25">
+      <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19 sv-topbar-v24 sv-topbar-v25 sv-topbar-v29">
         <div className="sv-topbar-scene" aria-hidden="true">
           <img className="sv-topbar-scene-image" src="/vox/reference/topbar-space-v24.svg" alt="" />
           <span className="sv-topbar-deep-space" />
@@ -143,13 +157,7 @@ export function CommunityTopbar({
 
         <nav className="sv-topbar-nav" aria-label="Hlavní navigace">
           {navItems.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              type="button"
-              data-label={label}
-              className={activeKey === key ? "active" : undefined}
-              onClick={() => activate(key)}
-            >
+            <button key={key} type="button" data-label={label} className={activeKey === key ? "active" : undefined} onClick={() => activate(key)}>
               <span className="sv-topbar-nav-glow" aria-hidden="true" />
               <span className="sv-topbar-nav-notch" aria-hidden="true" />
               <Icon />
@@ -159,37 +167,47 @@ export function CommunityTopbar({
         </nav>
 
         <div className="sv-topbar-tools">
-          <label className="sv-topbar-search">
-            <Search />
-            <input placeholder={utility ? `Hledat: ${utilityLabel}…` : "Hledat v komunitě..."} aria-label="Hledat ve Voxar.app" />
-            <kbd>Ctrl K</kbd>
-          </label>
+          <div className="sv-topbar-search-wrap">
+            <label className="sv-topbar-search">
+              <Search />
+              <input
+                ref={searchRef}
+                value={searchQuery}
+                placeholder="Hledat v komunitě..."
+                aria-label="Hledat ve Voxar.app"
+                onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true); }}
+                onFocus={() => setSearchOpen(true)}
+                onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
+              />
+              <kbd>Ctrl K</kbd>
+            </label>
+            <CommunitySearchPopover
+              guildId={activeGuildId}
+              query={searchQuery}
+              open={searchOpen}
+              onClose={() => setSearchOpen(false)}
+              onOpenChannel={(channelId) => {
+                setUtility(null);
+                onOpenChannel?.(channelId);
+              }}
+            />
+          </div>
 
           <button
             type="button"
             className={`sv-topbar-icon-button sv-notification-trigger${utility === "notifications" ? " active" : ""}`}
-            onClick={() => setUtility(utility === "notifications" ? null : "notifications")}
+            onClick={() => { setSearchOpen(false); setUtility(utility === "notifications" ? null : "notifications"); }}
             aria-label={notificationLabel}
             aria-expanded={utility === "notifications"}
             title={notificationLabel}
           >
             <Bell />
-            {unreadCount > 0 && (
-              <span className="sv-topbar-notification-badge" aria-hidden="true">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
+            {unreadCount > 0 && <span className="sv-topbar-notification-badge" aria-hidden="true">{unreadCount > 99 ? "99+" : unreadCount}</span>}
           </button>
 
           <div className="sv-topbar-profile-cluster">
             <span className="sv-topbar-presence-label" aria-hidden="true">LIVE</span>
-            <button
-              type="button"
-              className="sv-topbar-avatar"
-              onClick={onProfile}
-              title="Nastavení profilu"
-              aria-label={`Profil ${displayName}`}
-            >
+            <button type="button" className="sv-topbar-avatar" onClick={onProfile} title="Nastavení profilu" aria-label={`Profil ${displayName}`}>
               {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
               <i className="sv-topbar-avatar-ring" aria-hidden="true" />
               <b className="sv-topbar-avatar-dot" aria-hidden="true" />
