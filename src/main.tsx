@@ -16,6 +16,7 @@ import "./components/vox/reference/community-reference-convergence-v14.css";
 import "./components/vox/reference/community-reference-lock-v15.css";
 import "./components/vox/reference/community-reference-pass-v16.css";
 import "./components/vox/reference/community-reference-bundle-v17.css";
+import "./components/vox/reference/community-reference-megapass-v18.css";
 import "./i18n";
 
 const syncAppTitle = () => {
