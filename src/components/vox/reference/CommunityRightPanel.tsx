@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "lucide-react";
+import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound, Zap } from "lucide-react";
 import type { VoxMember } from "../MemberList";
 import { ReferenceActiveMembers } from "../ReferenceActiveMembers";
 
@@ -26,18 +26,22 @@ export function CommunityRightPanel({
   const offlineCount = Math.max(memberCount - onlineCount, 0);
 
   return (
-    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18">
-      <section className="sv-right-card sv-right-about sv-right-about-v3 sv-right-about-v18">
+    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19">
+      <section className="sv-right-card sv-right-about sv-right-about-v3 sv-right-about-v18 sv-right-about-v19">
         <span className="sv-right-card-cut" aria-hidden="true" />
         <span className="sv-right-card-grid" aria-hidden="true" />
         <span className="sv-right-card-orbit" aria-hidden="true" />
+        <span className="sv-right-card-beacon" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">O komunitě</div>
           <Sparkles className="sv-right-head-icon" aria-hidden="true" />
         </div>
 
         <div className="sv-right-community-heading">
-          <h2>{guildName}</h2>
+          <div>
+            <h2>{guildName}</h2>
+            <span className="sv-right-community-code">COMMUNITY NODE // 01</span>
+          </div>
           <span className="sv-right-verified" title="Ověřená komunita">◆</span>
         </div>
         <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele.</p>
@@ -60,6 +64,7 @@ export function CommunityRightPanel({
         <div className="sv-right-presence-summary">
           <span><i className="online" />{onlineCount} online</span>
           <span><i />{offlineCount} offline</span>
+          <strong><Zap /> LIVE HUB</strong>
         </div>
 
         <div className="sv-right-tags">
@@ -67,9 +72,10 @@ export function CommunityRightPanel({
         </div>
       </section>
 
-      <section className="sv-right-card sv-right-now sv-right-now-v3 sv-right-now-v18">
+      <section className="sv-right-card sv-right-now sv-right-now-v3 sv-right-now-v18 sv-right-now-v19">
         <span className="sv-right-card-cut" aria-hidden="true" />
         <span className="sv-right-now-scan" aria-hidden="true" />
+        <span className="sv-right-now-beam" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">Právě se děje</div>
           <button type="button" className="sv-right-link-button" onClick={onJoinVoice}>
@@ -77,7 +83,7 @@ export function CommunityRightPanel({
           </button>
         </div>
 
-        <div className="sv-right-event sv-right-event-v3 sv-right-event-v18">
+        <div className="sv-right-event sv-right-event-v3 sv-right-event-v18 sv-right-event-v19">
           <div className="sv-right-event-icon">
             <Gamepad2 />
             <span className="sv-right-event-live">LIVE</span>
@@ -97,18 +103,24 @@ export function CommunityRightPanel({
               {extraCount > 0 && <span className="sv-right-event-more">+{extraCount}</span>}
             </div>
           </div>
+          <div className="sv-right-event-time" aria-hidden="true">
+            <strong>20:00</strong>
+            <span>HLAS</span>
+          </div>
           <button type="button" className="sv-right-event-join" onClick={onJoinVoice}>Připojit se</button>
         </div>
       </section>
 
-      <section className="sv-right-card sv-right-members sv-right-members-v3 sv-right-members-v18">
+      <section className="sv-right-card sv-right-members sv-right-members-v3 sv-right-members-v18 sv-right-members-v19">
         <span className="sv-right-members-line" aria-hidden="true" />
+        <span className="sv-right-members-grid" aria-hidden="true" />
         <div className="sv-right-members-head">
-          <div className="sv-right-card-title">Aktivní členové</div>
+          <div>
+            <div className="sv-right-card-title">Aktivní členové</div>
+            <small>{onlineCount} online právě teď</small>
+          </div>
           <button type="button" onClick={onShowMembers}>Zobrazit vše <ChevronRight /></button>
         </div>
-
-        <div className="sv-right-members-subline">{onlineCount} online právě teď</div>
 
         <div className="sv-right-members-list">
           <ReferenceActiveMembers members={members} onMessage={onMessage} />
