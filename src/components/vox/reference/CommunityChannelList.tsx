@@ -76,9 +76,10 @@ export function CommunityChannelList({
   };
 
   return (
-    <div className="sv-channel-list">
+    <div className="sv-channel-list sv-channel-list-v19">
       <div className="sv-channel-list-tools">
         <span>Kanály komunity</span>
+        <small aria-hidden="true">UPLINK</small>
         <div>
           {inviteCode && (
             <button type="button" onClick={() => void copyInvite()} title="Kopírovat pozvánku">
@@ -107,6 +108,9 @@ export function CommunityChannelList({
             const isCollapsed = !!collapsed[category];
             const categoryEmoji = categoryEmojis[category] ?? null;
             const defaultType = items[0]?.type ?? "text";
+            const liveVoiceCount = items
+              .filter((item) => item.type === "voice")
+              .reduce((sum, item) => sum + (voiceParticipants[item.id]?.length ?? 0), 0);
 
             return (
               <section className="sv-channel-group" key={category}>
@@ -119,6 +123,8 @@ export function CommunityChannelList({
                     {isCollapsed ? <ChevronRight /> : <ChevronDown />}
                     {categoryEmoji ? <span className="sv-channel-group-emoji">{categoryEmoji}</span> : null}
                     <span>{category}</span>
+                    <small className="sv-channel-group-count">{String(items.length).padStart(2, "0")}</small>
+                    {liveVoiceCount > 0 && <small className="sv-channel-group-live">{liveVoiceCount} LIVE</small>}
                   </button>
 
                   {isAdmin && (
