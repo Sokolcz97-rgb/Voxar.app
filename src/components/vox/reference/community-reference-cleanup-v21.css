@@ -6,7 +6,8 @@
 .vox-reference-shell.sv-shell-v4 .sv-right-presence-summary > strong,
 .vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan-node,
 .vox-reference-shell.sv-shell-v4 .sv-community-hero-badge,
-.vox-reference-shell.sv-shell-v4 .sv-composer-mode {
+.vox-reference-shell.sv-shell-v4 .sv-composer-mode,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-time {
   display:none !important;
 }
 
@@ -54,6 +55,10 @@
 .vox-reference-shell.sv-shell-v4 .sv-right-about,
 .vox-reference-shell.sv-shell-v4 .sv-right-members {
   overflow:hidden !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event {
+  grid-template-columns:44px minmax(0,1fr) 66px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-right-event-copy,
