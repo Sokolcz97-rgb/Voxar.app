@@ -1,0 +1,145 @@
+/* Voxar V29 — final reference convergence + interaction polish.
+   This is the last visual authority for the community shell. It deliberately
+   reduces the accumulated HUD clutter and locks the layout closer to the
+   supplied StudioVoxario reference while keeping real data and real controls. */
+
+.vox-reference-shell.sv-shell-v4{
+  --v29-cyan:#46ecff;
+  --v29-cyan-soft:#25bfe4;
+  --v29-blue:#0d8fd4;
+  --v29-violet:#7657ff;
+  --v29-purple:#a35dff;
+  --v29-bg:#010811;
+  --v29-panel:#031522;
+  --v29-panel-hi:#06273b;
+  --v29-line:rgba(70,236,255,.52);
+  --v29-line-soft:rgba(70,236,255,.19);
+  --v29-text:#e8f6fb;
+  --v29-muted:#8fadb8;
+  background:#010811!important;
+}
+
+/* --- TOP BAR: reference proportions, stronger scenic horizon --- */
+.vox-reference-shell.sv-shell-v4>.sv-topbar.sv-topbar-v24.sv-topbar-v25.sv-topbar-v29{
+  height:118px!important;
+  min-height:118px!important;
+  grid-template-columns:262px 590px minmax(0,1fr)!important;
+  border-bottom:1px solid rgba(67,231,255,.72)!important;
+  background:#03131f!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.48),inset 0 -1px rgba(86,237,255,.12)!important;
+}
+.sv-topbar-v29 .sv-topbar-scene-image{object-position:center 48%!important;opacity:1!important;filter:saturate(1.08) contrast(1.04)!important}
+.sv-topbar-v29 .sv-topbar-brand{height:118px!important;padding:0 20px 0 25px!important;gap:14px!important;background:linear-gradient(90deg,rgba(1,12,21,.99),rgba(2,18,31,.94) 86%,rgba(2,25,40,.12))!important}
+.sv-topbar-v29 .sv-brand-symbol{width:60px!important;height:64px!important}
+.sv-topbar-v29 .sv-brand-copy strong{font-size:21px!important;letter-spacing:.18em!important}
+.sv-topbar-v29 .sv-brand-copy span{margin-top:7px!important;font-size:7.5px!important;letter-spacing:.40em!important}
+.sv-topbar-v29 .sv-topbar-nav{height:118px!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;background:linear-gradient(90deg,rgba(1,13,22,.16),rgba(1,15,27,.30))!important}
+.sv-topbar-v29 .sv-topbar-nav button{height:118px!important;min-height:118px!important;padding:19px 3px 12px!important;gap:8px!important;font-size:10.5px!important;color:#b3c9d2!important;background:rgba(0,9,16,.16)!important;border-left:1px solid rgba(74,176,202,.075)!important}
+.sv-topbar-v29 .sv-topbar-nav button>svg{width:22px!important;height:22px!important;stroke-width:1.7!important}
+.sv-topbar-v29 .sv-topbar-nav button[data-label="Odstranit pozadí"]>span:last-child{font-size:8.4px!important;line-height:1.15!important;max-width:74px!important;text-align:center!important}
+.sv-topbar-v29 .sv-topbar-nav button.active{color:#72f5ff!important;background:linear-gradient(180deg,rgba(9,64,85,.45),rgba(5,73,95,.72))!important;box-shadow:inset 0 -3px #49efff,inset 0 0 31px rgba(54,225,255,.09)!important}
+.sv-topbar-v29 .sv-topbar-nav button:hover{color:#defaff!important;background:rgba(9,53,72,.35)!important}
+.sv-topbar-v29 .sv-topbar-tools{height:118px!important;gap:11px!important;padding:0 14px 0 12px!important;overflow:visible!important}
+.sv-topbar-v29 .sv-topbar-search-wrap{position:relative!important;width:232px!important;flex:0 0 232px!important}
+.sv-topbar-v29 .sv-topbar-search{width:232px!important;height:43px!important;border-radius:3px!important;background:rgba(2,18,31,.9)!important;border-color:rgba(66,210,239,.44)!important}
+.sv-topbar-v29 .sv-topbar-search:focus-within{border-color:rgba(79,235,255,.78)!important;box-shadow:0 0 0 1px rgba(68,232,255,.12),0 0 20px rgba(47,203,232,.08)!important}
+.sv-topbar-v29 .sv-topbar-search input{font-size:11px!important}
+.sv-topbar-v29 .sv-topbar-icon-button{width:39px!important;height:39px!important}
+.sv-topbar-v29 .sv-topbar-avatar{width:47px!important;height:47px!important}
+.sv-topbar-v29 .sv-topbar-motto{width:58px!important;font-size:6.5px!important;letter-spacing:.22em!important;line-height:1.35!important}
+
+/* Functional search dropdown */
+.sv-community-search-popover{position:absolute;z-index:180;top:51px;right:0;width:430px;max-height:min(560px,calc(100vh - 145px));overflow:auto;padding:8px;border:1px solid rgba(70,234,255,.52);background:linear-gradient(150deg,rgba(3,22,35,.99),rgba(3,15,27,.995) 58%,rgba(17,13,43,.99));box-shadow:0 22px 55px rgba(0,0,0,.6),0 0 24px rgba(46,220,255,.08);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.sv-community-search-head{display:grid;grid-template-columns:32px 1fr 24px;gap:9px;align-items:center;padding:10px 9px 12px;border-bottom:1px solid rgba(74,211,239,.18)}
+.sv-community-search-head>svg{width:18px;color:#55ecff}.sv-community-search-head>div{display:flex;flex-direction:column;gap:3px}.sv-community-search-head strong{font-size:11px;color:#e8faff}.sv-community-search-head span{font-size:9px;color:#7196a2}
+.sv-community-search-popover section{padding:8px 0 2px}.sv-community-search-popover h4{margin:0 8px 5px;font:700 8px/1.4 Orbitron,Inter,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#58eaff}
+.sv-community-search-popover section>button{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr);gap:9px;align-items:center;padding:8px;border:0;border-top:1px solid rgba(75,166,190,.08);background:transparent;color:#b8d0d7;text-align:left}
+.sv-community-search-popover section>button:hover{background:linear-gradient(90deg,rgba(13,82,103,.42),rgba(18,29,60,.22));color:#f0fdff}.sv-community-search-popover section>button>svg{width:17px;color:#51cfe9}.sv-community-search-popover section>button>span:last-child{min-width:0;display:flex;flex-direction:column;gap:3px}.sv-community-search-popover section>button strong{font-size:10.5px}.sv-community-search-popover section>button small{font-size:8.8px;color:#7199a5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-search-avatar{width:28px;height:28px;border-radius:50%;overflow:hidden;border:1px solid rgba(74,226,250,.5);display:grid;place-items:center;font-size:8px;color:#75ecff}.sv-search-avatar img{width:100%;height:100%;object-fit:cover}.sv-community-search-empty{padding:24px 12px;text-align:center;color:#6d929e;font-size:10px}
+
+/* --- WORKSPACE: restore reference balance (more center width) --- */
+.vox-reference-shell.sv-shell-v4>.sv-workspace{
+  height:calc(100vh - 118px)!important;
+  grid-template-columns:80px 246px minmax(0,1fr) 268px!important;
+  gap:7px!important;
+  padding:7px!important;
+  background:radial-gradient(circle at 52% 0,rgba(16,102,139,.08),transparent 32%),linear-gradient(180deg,#020c14,#01070d)!important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace>.sv-workspace-rail,
+.vox-reference-shell.sv-shell-v4 .sv-workspace>.sv-workspace-sidebar,
+.vox-reference-shell.sv-shell-v4 .sv-workspace>.sv-workspace-center,
+.vox-reference-shell.sv-shell-v4 .sv-workspace>.sv-workspace-right{border-color:rgba(63,213,242,.34)!important;background:linear-gradient(180deg,rgba(3,20,32,.98),rgba(2,13,22,.99))!important;box-shadow:inset 0 0 32px rgba(34,190,224,.022),0 0 14px rgba(0,0,0,.18)!important}
+
+/* --- Guild rail --- */
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail{padding:11px 6px 10px!important;gap:10px!important;background:linear-gradient(180deg,#041a29,#020c15)!important}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-primary{width:60px!important;height:66px!important}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-create,.vox-reference-shell.sv-shell-v4 .sv-guild-rail-item,.vox-reference-shell.sv-shell-v4 .sv-guild-rail-join{width:48px!important;height:48px!important;background:linear-gradient(145deg,#071e32,#07152a)!important}
+
+/* --- Left sidebar: less empty HUD, closer reference hierarchy --- */
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-shell-v24{padding:0 9px!important;background:linear-gradient(180deg,#031726,#02111d)!important}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan{height:31px!important;padding:6px 4px 0!important;font-size:7.6px!important;line-height:1.35!important;letter-spacing:.18em!important;color:#8fd5e3!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24{height:176px!important;min-height:176px!important;margin:0 0 9px!important;border-color:rgba(67,226,252,.56)!important;background:#041321!important;overflow:hidden!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-art{height:118px!important;opacity:1!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-image{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 50%!important;filter:saturate(1.12) contrast(1.05)!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-stars,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-nebula,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-aurora,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-orbit,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-moon,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-ridge,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-city{opacity:0!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-identity{height:63px!important;padding:8px 10px!important;background:linear-gradient(90deg,rgba(2,20,33,.97),rgba(6,22,42,.94) 68%,rgba(35,20,74,.9))!important;border-top:1px solid rgba(77,218,244,.28)!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-logo{width:43px!important;height:43px!important}
+.vox-reference-shell.sv-shell-v4 .sv-community-name-row strong{font-size:13px!important}.vox-reference-shell.sv-shell-v4 .sv-community-copy>span{font-size:9px!important;color:#90aeb8!important}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav{gap:2px!important;margin-bottom:10px!important}.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button{height:40px!important;min-height:40px!important;padding:0 10px!important;font-size:12px!important;color:#b4ccd4!important}.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button svg{width:17px!important;height:17px!important}.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button.active{background:linear-gradient(90deg,rgba(8,74,95,.88),rgba(5,47,70,.88))!important;border-color:#47eaff!important;color:#f1fdff!important;box-shadow:inset 3px 0 #42efff,inset 0 0 22px rgba(59,227,255,.05)!important}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title{height:31px!important;margin:0 0 5px!important;font-size:8px!important;letter-spacing:.22em!important;color:#5de8fb!important}
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools{height:34px!important}.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools>span{font-size:7.5px!important;letter-spacing:.18em!important}.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools>small{display:none!important}
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-head{min-height:31px!important}.vox-reference-shell.sv-shell-v4 .sv-channel-group-toggle{font-size:8px!important;letter-spacing:.14em!important}.vox-reference-shell.sv-shell-v4 .sv-channel-group-count{opacity:.35!important}.vox-reference-shell.sv-shell-v4 .sv-channel-item{height:38px!important;min-height:38px!important;padding:0 10px!important;border:1px solid rgba(56,152,177,.12)!important;background:rgba(2,14,23,.5)!important}.vox-reference-shell.sv-shell-v4 .sv-channel-item-name{font-size:11.5px!important}.vox-reference-shell.sv-shell-v4 .sv-channel-item.active{border-color:#43eaff!important;background:linear-gradient(90deg,rgba(12,83,106,.82),rgba(4,54,76,.72))!important;box-shadow:inset 3px 0 #7b55ff,inset 0 0 24px rgba(62,229,255,.07)!important}.vox-reference-shell.sv-shell-v4 .sv-channel-active-dot{width:7px!important;height:7px!important;background:#60f4ff!important;box-shadow:0 0 9px #55efff!important}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self{min-height:61px!important}
+
+/* --- Center header + welcome --- */
+.vox-reference-shell.sv-shell-v4 .sv-channel-header{height:61px!important;min-height:61px!important;padding:0 14px!important;background:linear-gradient(90deg,#061b2c,#071d31 67%,#07182b)!important;border-bottom-color:rgba(71,217,246,.35)!important}
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon{width:32px!important;height:32px!important}.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row h1{font-size:17px!important;letter-spacing:.01em!important}.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy p{font-size:9.5px!important;color:#85a6b1!important}.vox-reference-shell.sv-shell-v4 .sv-channel-online{font-size:9px!important}.vox-reference-shell.sv-shell-v4 .sv-channel-header-actions button{width:36px!important;height:36px!important}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-v24{height:166px!important;min-height:166px!important;margin:14px 15px 9px!important;grid-template-columns:47% 53%!important;border-color:rgba(75,226,255,.58)!important;background:#061525!important;box-shadow:0 0 0 1px rgba(75,102,255,.18),inset 0 0 32px rgba(67,221,255,.025)!important}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy{padding:14px 15px 12px 17px!important;background:linear-gradient(110deg,rgba(5,27,43,.98),rgba(5,30,48,.94) 76%,rgba(7,31,51,.76))!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-eyebrow{height:28px!important;gap:7px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-mark{width:27px!important;height:27px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-eyebrow strong{font-size:8.5px!important;letter-spacing:.16em!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-time{font-size:7px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2{margin:4px 0 3px!important;font-size:20px!important;line-height:1.05!important;letter-spacing:-.015em!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-copy p{margin:0 0 2px!important;font-size:9.2px!important;line-height:1.35!important;color:#a8bec7!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-actions{margin-top:9px!important;gap:7px!important;flex-wrap:nowrap!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button{height:34px!important;padding:0 10px!important;font-size:8.5px!important;white-space:nowrap!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button svg{width:13px!important;height:13px!important}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art{overflow:hidden!important;background:#09152f!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-scene-image{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 48%!important;opacity:1!important;filter:saturate(1.12) contrast(1.06)!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-stars,.vox-reference-shell.sv-shell-v4 .sv-welcome-starfield,.vox-reference-shell.sv-shell-v4 .sv-welcome-clouds,.vox-reference-shell.sv-shell-v4 .sv-welcome-nebula,.vox-reference-shell.sv-shell-v4 .sv-welcome-aurora,.vox-reference-shell.sv-shell-v4 .sv-welcome-planet-shadow,.vox-reference-shell.sv-shell-v4 .sv-welcome-beam,.vox-reference-shell.sv-shell-v4 .sv-welcome-gateway,.vox-reference-shell.sv-shell-v4 .sv-welcome-portal,.vox-reference-shell.sv-shell-v4 .sv-welcome-spires,.vox-reference-shell.sv-shell-v4 .sv-welcome-cityline,.vox-reference-shell.sv-shell-v4 .sv-welcome-city-glow,.vox-reference-shell.sv-shell-v4 .sv-welcome-ridge,.vox-reference-shell.sv-shell-v4 .sv-welcome-reflection,.vox-reference-shell.sv-shell-v4 .sv-welcome-lightline,.vox-reference-shell.sv-shell-v4 .sv-welcome-scan{opacity:0!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-motto{right:12px!important;top:39px!important;font-size:8.5px!important;line-height:1.65!important;letter-spacing:.27em!important;color:#d6f5ff!important;text-shadow:0 0 10px rgba(60,230,255,.18)!important}
+
+/* --- Messages: readable feed and real reaction pills --- */
+.vox-reference-shell.sv-shell-v4 .sv-message-list{padding:0 15px 8px!important;scrollbar-width:thin!important}.vox-reference-shell.sv-shell-v4 .sv-message{min-height:70px!important;padding:7px 7px 7px 2px!important;grid-template-columns:52px minmax(0,1fr) auto!important;border-bottom:1px solid rgba(61,150,178,.13)!important;background:transparent!important}.vox-reference-shell.sv-shell-v4 .sv-message.compact{min-height:37px!important;padding-top:2px!important;padding-bottom:2px!important}.vox-reference-shell.sv-shell-v4 .sv-message:hover{background:linear-gradient(90deg,rgba(6,34,48,.4),rgba(4,18,29,.14))!important}.vox-reference-shell.sv-shell-v4 .sv-message.is-pinned{background:linear-gradient(90deg,rgba(10,57,72,.30),rgba(31,22,66,.18))!important;box-shadow:inset 2px 0 rgba(81,227,255,.48)!important}.vox-reference-shell.sv-shell-v4 .sv-message-avatar{width:45px!important;height:45px!important}.vox-reference-shell.sv-shell-v4 .sv-message-meta{gap:8px!important;min-height:22px!important}.vox-reference-shell.sv-shell-v4 .sv-message-meta>strong{font-size:13.5px!important}.vox-reference-shell.sv-shell-v4 .sv-message-meta time{font-size:8px!important;color:#648b98!important}.vox-reference-shell.sv-shell-v4 .sv-message-text{font-size:11.5px!important;line-height:1.45!important;color:#d6e7ec!important}.sv-message-pinned-label{display:inline-flex!important;align-items:center!important;gap:4px!important;height:18px!important;padding:0 6px!important;border:1px solid rgba(80,224,246,.26)!important;background:rgba(8,58,73,.24)!important;color:#63dff1!important;font-size:7px!important;text-transform:uppercase!important;letter-spacing:.08em!important}.sv-message-pinned-label svg{width:10px!important;height:10px!important}
+.sv-message-actions{position:relative;display:flex;align-items:center;gap:4px;align-self:start;margin-top:2px;opacity:0;transition:opacity .14s ease}.sv-message:hover .sv-message-actions,.sv-message:focus-within .sv-message-actions{opacity:1}.sv-message-action,.sv-message-delete{position:relative!important;display:grid!important;place-items:center!important;width:28px!important;height:28px!important;border:1px solid rgba(83,167,190,.2)!important;background:rgba(2,17,28,.88)!important;color:#6f98a4!important;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)!important}.sv-message-action svg,.sv-message-delete svg{width:13px!important;height:13px!important}.sv-message-action:hover,.sv-message-action.active{color:#5defff!important;border-color:rgba(79,231,255,.55)!important;background:rgba(7,59,76,.72)!important}.sv-message-delete:hover{color:#ff9aa7!important;border-color:rgba(255,101,119,.45)!important}
+.sv-message-reaction-picker-wrap{position:relative}.sv-message-reaction-picker{position:absolute;z-index:24;right:0;top:31px;display:flex;gap:3px;padding:5px;border:1px solid rgba(74,217,244,.36);background:#041724;box-shadow:0 12px 26px rgba(0,0,0,.45)}.sv-message-reaction-picker button{display:grid;place-items:center;width:28px;height:28px;border:1px solid transparent;background:transparent;font-size:15px}.sv-message-reaction-picker button:hover,.sv-message-reaction-picker button.active{border-color:rgba(86,232,255,.45);background:rgba(19,72,91,.55)}
+.sv-message-reactions{display:flex;align-items:center;gap:5px;margin-top:6px}.sv-message-reactions button{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border:1px solid rgba(75,173,199,.24);border-radius:12px;background:rgba(3,24,37,.78);color:#9dbbc4;font-size:11px}.sv-message-reactions button b{font-size:8px;color:#7fa3ad}.sv-message-reactions button:hover,.sv-message-reactions button.active{border-color:rgba(68,228,255,.6);background:rgba(8,69,87,.62);color:#e9fdff}.sv-message-reactions button.active b{color:#62ecff}
+
+/* --- Composer: reference proportions, less debug-HUD feel --- */
+.vox-reference-shell.sv-shell-v4 .sv-composer{min-height:108px!important;margin:0 14px 8px!important;padding:10px 10px 7px!important;background:linear-gradient(120deg,rgba(5,28,44,.97),rgba(4,20,34,.98) 70%,rgba(17,16,48,.9))!important;border-color:rgba(65,225,253,.58)!important}.vox-reference-shell.sv-shell-v4 .sv-composer-row{height:50px!important;gap:7px!important}.vox-reference-shell.sv-shell-v4 .sv-composer-plus{width:49px!important;height:49px!important}.vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap{height:49px!important;background:rgba(1,14,24,.72)!important;border-color:rgba(66,182,211,.26)!important}.vox-reference-shell.sv-shell-v4 .sv-composer-textarea{height:47px!important;min-height:47px!important;padding:13px 126px 10px 13px!important;font-size:11px!important}.vox-reference-shell.sv-shell-v4 .sv-composer-send{width:52px!important;height:49px!important;background:linear-gradient(145deg,rgba(12,104,130,.74),rgba(8,49,74,.92))!important}.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar{height:31px!important;margin-top:6px!important;gap:5px!important}.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar button{height:28px!important;padding:0 9px!important;font-size:8px!important}.vox-reference-shell.sv-shell-v4 .sv-composer-enter-hint{margin-left:auto!important;font-size:7px!important;letter-spacing:.16em!important;color:#718f9a!important}
+
+/* --- Right reference column --- */
+.vox-reference-shell.sv-shell-v4 .sv-right-shell-v24{padding:0!important;gap:8px!important;background:transparent!important}.vox-reference-shell.sv-shell-v4 .sv-right-card{border-color:rgba(65,211,241,.36)!important;background:linear-gradient(150deg,rgba(4,24,38,.98),rgba(3,18,31,.98) 67%,rgba(12,17,43,.96))!important}.vox-reference-shell.sv-shell-v4 .sv-right-about{min-height:216px!important;padding:12px 13px!important}.vox-reference-shell.sv-shell-v4 .sv-right-card-head{height:28px!important}.vox-reference-shell.sv-shell-v4 .sv-right-card-title{font-size:8px!important;letter-spacing:.2em!important}.vox-reference-shell.sv-shell-v4 .sv-right-community-heading h2{font-size:17px!important;margin:7px 0 5px!important}.vox-reference-shell.sv-shell-v4 .sv-right-about>p{font-size:9.5px!important;line-height:1.42!important;color:#9bb4bd!important}.vox-reference-shell.sv-shell-v4 .sv-right-stats{height:53px!important;margin-top:10px!important}.vox-reference-shell.sv-shell-v4 .sv-right-stats>div{padding:0 6px!important}.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy strong{font-size:13px!important}.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy small{font-size:6.5px!important}.vox-reference-shell.sv-shell-v4 .sv-right-tags{gap:4px!important;margin-top:10px!important}.vox-reference-shell.sv-shell-v4 .sv-right-tags span{height:25px!important;padding:0 7px!important;font-size:7px!important}
+.vox-reference-shell.sv-shell-v4 .sv-right-now{min-height:142px!important;padding:10px 11px!important}.vox-reference-shell.sv-shell-v4 .sv-right-event{min-height:88px!important;grid-template-columns:45px minmax(0,1fr) 62px!important;gap:9px!important;padding:8px!important}.vox-reference-shell.sv-shell-v4 .sv-right-event-icon{width:43px!important;height:43px!important}.vox-reference-shell.sv-shell-v4 .sv-right-event-copy>strong{font-size:10.5px!important}.vox-reference-shell.sv-shell-v4 .sv-right-event-copy>span{font-size:7.5px!important}.vox-reference-shell.sv-shell-v4 .sv-right-event-join{width:60px!important;height:31px!important;font-size:7px!important}
+.vox-reference-shell.sv-shell-v4 .sv-right-members{min-height:0!important;flex:1 1 auto!important;padding:10px 11px 0!important}.vox-reference-shell.sv-shell-v4 .sv-right-members-list{overflow:auto!important}.vox-reference-shell.sv-shell-v4 .sv-right-signature{min-height:54px!important;padding:10px 7px!important}.vox-reference-shell.sv-shell-v4 .sv-right-signature span{font-size:7px!important;letter-spacing:.12em!important}.vox-reference-shell.sv-shell-v4 .sv-right-signature strong{font-size:7px!important;letter-spacing:.2em!important}
+
+/* --- Pin dialog --- */
+.sv-pins-dialog{border-color:rgba(70,230,255,.52)!important;background:linear-gradient(145deg,#041927,#07172b)!important}.sv-pins-list{max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:7px}.sv-pins-empty{padding:30px 14px;text-align:center;color:#7196a2;font-size:10px}.sv-pin-row{display:grid;grid-template-columns:1fr auto;gap:5px 12px;padding:10px 11px;border:1px solid rgba(68,182,210,.2);background:rgba(2,17,29,.78)}.sv-pin-row>div{display:flex;gap:8px;align-items:baseline}.sv-pin-row strong{font-size:10px;color:#dff8fc}.sv-pin-row small{font-size:7px;color:#648995}.sv-pin-row p{grid-column:1/2;margin:0;color:#92afb8;font-size:9.5px;white-space:pre-wrap}.sv-pin-row>button{grid-row:1/3;grid-column:2;align-self:center;height:30px;padding:0 9px;border:1px solid rgba(76,220,246,.34);background:rgba(7,57,74,.45);color:#7cecff;font-size:8px}
+
+/* --- Utility overlay visually belongs to the same product --- */
+.sv-utility-overlay{left:87px!important;right:7px!important;top:125px!important;bottom:7px!important;border-color:rgba(70,229,255,.48)!important;background:linear-gradient(145deg,rgba(3,21,34,.995),rgba(3,16,28,.995) 58%,rgba(13,15,42,.99))!important}.sv-utility-overlay-head{height:52px!important;background:linear-gradient(90deg,rgba(5,32,48,.98),rgba(5,28,45,.88),rgba(25,17,58,.62))!important}.sv-utility-scroll{height:calc(100% - 52px)!important}
+
+@media(min-width:1600px){
+  .vox-reference-shell.sv-shell-v4>.sv-topbar.sv-topbar-v24.sv-topbar-v25.sv-topbar-v29{height:124px!important;min-height:124px!important;grid-template-columns:318px 650px minmax(0,1fr)!important}
+  .sv-topbar-v29 .sv-topbar-brand,.sv-topbar-v29 .sv-topbar-nav,.sv-topbar-v29 .sv-topbar-nav button,.sv-topbar-v29 .sv-topbar-tools{height:124px!important;min-height:124px!important}
+  .vox-reference-shell.sv-shell-v4>.sv-workspace{height:calc(100vh - 124px)!important;grid-template-columns:92px 286px minmax(0,1fr) 314px!important;gap:8px!important;padding:8px!important}
+  .vox-reference-shell.sv-shell-v4 .sv-community-hero-v24{height:202px!important;min-height:202px!important}.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-art{height:137px!important}
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-v24{height:176px!important;min-height:176px!important;margin:16px 17px 10px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2{font-size:22px!important}.vox-reference-shell.sv-shell-v4 .sv-message{min-height:76px!important}.vox-reference-shell.sv-shell-v4 .sv-message-avatar{width:49px!important;height:49px!important}
+  .sv-utility-overlay{left:100px!important;top:132px!important}
+}
+
+@media(max-width:1240px){
+  .vox-reference-shell.sv-shell-v4>.sv-topbar.sv-topbar-v24.sv-topbar-v25.sv-topbar-v29{grid-template-columns:220px 560px minmax(0,1fr)!important}
+  .sv-topbar-v29 .sv-topbar-brand{padding-left:15px!important;padding-right:10px!important}.sv-topbar-v29 .sv-brand-symbol{width:50px!important}.sv-topbar-v29 .sv-brand-copy strong{font-size:16px!important}.sv-topbar-v29 .sv-topbar-search-wrap,.sv-topbar-v29 .sv-topbar-search{width:180px!important;flex-basis:180px!important}.sv-topbar-v29 .sv-topbar-motto{display:none!important}
+  .vox-reference-shell.sv-shell-v4>.sv-workspace{grid-template-columns:72px 224px minmax(0,1fr) 238px!important;gap:6px!important;padding:6px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-v24{grid-template-columns:50% 50%!important;margin-left:10px!important;margin-right:10px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-copy{padding-left:12px!important;padding-right:10px!important}.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button{padding:0 7px!important;font-size:7.8px!important}.vox-reference-shell.sv-shell-v4 .sv-composer{margin-left:10px!important;margin-right:10px!important}.sv-utility-overlay{left:78px!important}
+}
+
+@media(max-width:1030px){
+  .vox-reference-shell.sv-shell-v4>.sv-topbar.sv-topbar-v24.sv-topbar-v25.sv-topbar-v29{grid-template-columns:180px minmax(470px,1fr) 190px!important}.sv-topbar-v29 .sv-brand-symbol{display:none!important}.sv-topbar-v29 .sv-topbar-nav button>span:last-child{font-size:7px!important}.sv-topbar-v29 .sv-topbar-search-wrap{display:none!important}.vox-reference-shell.sv-shell-v4>.sv-workspace{grid-template-columns:66px 210px minmax(0,1fr) 220px!important}
+}
