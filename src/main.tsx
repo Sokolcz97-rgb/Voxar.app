@@ -1,21 +1,14 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import "./pages/app/community-reference-final.css";
-import "./pages/app/community-reference-layout-fix.css";
 import "./components/vox/reference/community-structured-chat.css";
 import "./components/vox/reference/community-structured-chat-hotfix.css";
 import "./components/vox/reference/community-structured-panels.css";
 import "./components/vox/reference/community-channel-list.css";
 import "./components/vox/reference/community-structured-shell.css";
-import "./components/vox/reference/community-structured-topbar-bridge.css";
-import "./components/vox/reference/community-structured-workspace.css";
 import "./components/vox/reference/community-structured-settings.css";
-import "./components/vox/reference/community-structural-cleanup.css";
-import "./components/vox/reference/community-structural-v2.css";
-import "./components/vox/reference/community-structural-v2-fix.css";
-import "./components/vox/reference/community-visible-v3.css";
 import "./components/vox/reference/community-app-shell-v4.css";
+import "./components/vox/reference/community-app-shell-v5.css";
 import "./i18n";
 
 const syncAppTitle = () => {
