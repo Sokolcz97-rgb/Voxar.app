@@ -192,36 +192,42 @@
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message-list {
-  padding-inline: 12px !important;
+  padding-inline: 14px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message {
-  min-height: 54px !important;
-  padding-block: 6px !important;
+  min-height: 56px !important;
+  padding-block: 7px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message.compact {
-  min-height: 29px !important;
-  padding-top: 3px !important;
-  padding-bottom: 3px !important;
+  min-height: 31px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message-avatar,
 .vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner {
-  width: 42px !important;
-  height: 42px !important;
+  width: 44px !important;
+  height: 44px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message-avatar-column {
-  width: 50px !important;
+  width: 52px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-message-meta strong {
   font-size: 13px !important;
 }
 
+.vox-reference-shell.sv-shell-v4 .sv-message-meta time {
+  font-size: 9px !important;
+  opacity: .86;
+}
+
 .vox-reference-shell.sv-shell-v4 .sv-message-text {
-  font-size: 11px !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-composer-v3 {
@@ -232,21 +238,22 @@
 .vox-reference-shell.sv-shell-v4 .sv-composer-plus,
 .vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap,
 .vox-reference-shell.sv-shell-v4 .sv-composer-send {
-  min-height: 46px !important;
-  height: 46px !important;
+  min-height: 48px !important;
+  height: 48px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-composer-plus {
-  width: 46px !important;
+  width: 48px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-composer-send {
-  width: 50px !important;
+  width: 52px !important;
 }
 
 .vox-reference-shell.sv-shell-v4 .sv-composer-textarea {
-  min-height: 46px !important;
-  padding-top: 14px !important;
+  min-height: 48px !important;
+  padding-top: 15px !important;
+  font-size: 12px !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -386,6 +393,18 @@
   }
   .vox-reference-shell.sv-shell-v4 .sv-channel-item {
     min-height: 35px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-message {
+    min-height: 53px !important;
+    padding-block: 6px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar,
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar-column {
+    width: 50px !important;
   }
   .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
     grid-template-columns: 46px minmax(0, 1fr) auto !important;
