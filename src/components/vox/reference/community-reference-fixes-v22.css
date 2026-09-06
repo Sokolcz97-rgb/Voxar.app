@@ -1,0 +1,202 @@
+/* V22 DOM-alignment fixes. These selectors target the current component markup directly. */
+
+/* Composer no longer has a channel chip: give the textarea the full dock width. */
+.vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap {
+  display:flex !important;
+  align-items:center !important;
+  position:relative !important;
+  padding-left:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-composer-textarea {
+  flex:1 1 auto !important;
+  width:100% !important;
+  padding-left:16px !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-composer-inline-actions {
+  flex:0 0 auto !important;
+  padding-right:7px !important;
+}
+
+/* Current message markup uses .sv-message rather than legacy .sv-message-row. */
+.vox-reference-shell.sv-shell-v4 .sv-message {
+  position:relative !important;
+  min-height:64px !important;
+  padding:7px 8px !important;
+  margin:0 !important;
+  border-bottom:1px solid rgba(72,132,157,.17) !important;
+  transition:background .16s ease,border-color .16s ease !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message:hover {
+  background:linear-gradient(90deg,rgba(17,78,101,.11),rgba(7,34,51,.045)) !important;
+  border-bottom-color:rgba(72,175,202,.23) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message.compact {
+  min-height:34px !important;
+  padding-top:2px !important;
+  padding-bottom:4px !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message.compact .sv-message-avatar-column {
+  min-height:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message-text {
+  font-size:12px !important;
+  line-height:1.43 !important;
+  color:#d7e6eb !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message-meta strong {
+  font-size:14px !important;
+  line-height:1.2 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message-meta time {
+  font-size:8px !important;
+  color:#7895a1 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message-delete {
+  width:28px !important;
+  height:28px !important;
+  top:8px !important;
+  right:7px !important;
+  opacity:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message:hover .sv-message-delete { opacity:.72 !important; }
+
+/* Identity card is now intentionally simple like the reference. */
+.vox-reference-shell.sv-shell-v4 .sv-community-copy {
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  min-width:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-community-name-row { margin-bottom:3px !important; }
+
+/* Keep right column content inside its cards at the real app height. */
+.vox-reference-shell.sv-shell-v4 .sv-right-about,
+.vox-reference-shell.sv-shell-v4 .sv-right-now,
+.vox-reference-shell.sv-shell-v4 .sv-right-members {
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-about .sv-right-tags {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-about .sv-right-tags span {
+  min-width:0 !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy {
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  min-width:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span {
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-event-join {
+  white-space:nowrap !important;
+}
+
+/* Target-like cyan frame accents. */
+.vox-reference-shell.sv-shell-v4 .sv-channel-header::before,
+.vox-reference-shell.sv-shell-v4 .sv-welcome::before,
+.vox-reference-shell.sv-shell-v4 .sv-composer::before,
+.vox-reference-shell.sv-shell-v4 .sv-right-card::before {
+  content:"";
+  position:absolute;
+  left:14px;
+  top:-1px;
+  width:42px;
+  height:2px;
+  background:#46eaff;
+  box-shadow:0 0 9px rgba(70,234,255,.5);
+  pointer-events:none;
+  z-index:8;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome::after,
+.vox-reference-shell.sv-shell-v4 .sv-composer::after {
+  content:"";
+  position:absolute;
+  right:10px;
+  bottom:-1px;
+  width:58px;
+  height:2px;
+  background:linear-gradient(90deg,#43eaff,#8054ff);
+  box-shadow:0 0 9px rgba(80,208,255,.45);
+  pointer-events:none;
+  z-index:8;
+}
+
+/* Banner art: make the landscape visibly richer than the previous flat portal. */
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art::before {
+  content:"";
+  position:absolute;
+  left:-8%;
+  right:-4%;
+  bottom:0;
+  height:48%;
+  clip-path:polygon(0 100%,0 71%,8% 66%,13% 49%,20% 59%,26% 37%,32% 54%,38% 27%,45% 51%,52% 34%,59% 60%,67% 25%,72% 46%,78% 18%,84% 51%,90% 39%,96% 65%,100% 57%,100% 100%);
+  background:
+    linear-gradient(180deg,rgba(23,35,87,.96),rgba(3,16,31,.99) 72%),
+    linear-gradient(90deg,#142760,#071b32);
+  box-shadow:inset 0 3px rgba(75,111,255,.16);
+  filter:drop-shadow(0 -7px 14px rgba(85,74,255,.18));
+  z-index:3;
+  pointer-events:none;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art::after {
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:24%;
+  background:
+    linear-gradient(176deg,transparent 0 42%,rgba(51,221,255,.18) 43% 44%,transparent 45%),
+    linear-gradient(184deg,transparent 0 47%,rgba(124,70,255,.28) 48% 50%,transparent 51%),
+    linear-gradient(180deg,rgba(8,28,50,.18),rgba(1,11,22,.88));
+  z-index:4;
+  pointer-events:none;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-portal,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-motto,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-lightline,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-reflection {
+  z-index:6 !important;
+}
+
+/* Topbar should read as a scene, not a debug texture. */
+.vox-reference-shell.sv-shell-v4 .sv-topbar-constellation { opacity:.28 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-topbar-stars { opacity:.46 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-topbar-beam { opacity:.16 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-topbar-tools { z-index:9 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-topbar-brand,
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav { z-index:9 !important; }
+
+/* Give the right card footer the clipped purple/cyan feel visible in the reference. */
+.vox-reference-shell.sv-shell-v4 .sv-right-signature {
+  position:relative !important;
+  background:linear-gradient(90deg,rgba(3,24,38,.72),rgba(13,17,45,.82)) !important;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-signature::after {
+  content:"";
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:54px;
+  height:8px;
+  background:linear-gradient(90deg,transparent,#6f4cff);
+  opacity:.55;
+}
+
+@media (max-width:1450px) {
+  .vox-reference-shell.sv-shell-v4 .sv-message { min-height:60px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar { width:43px !important; height:43px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-meta strong { font-size:13px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-text { font-size:11.5px !important; }
+}
