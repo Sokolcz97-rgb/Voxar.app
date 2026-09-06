@@ -26,7 +26,7 @@ export function SelfPanel({
   const cosmeticRing = useCosmeticRing(user?.id);
   const showSpeaking = speaking && !muted;
   const subtitle = connectedChannelName
-    ? (showSpeaking ? "Speaking" : connectedChannelName)
+    ? (showSpeaking ? "Mluví" : connectedChannelName)
     : status;
 
   return (
@@ -45,15 +45,25 @@ export function SelfPanel({
       )}
       <div className="vox-self-panel-row h-16 px-2 flex items-center gap-1.5">
         <div className="vox-self-panel-identity flex items-center gap-2 flex-1 min-w-0 px-0.5">
-          <div
-            className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring", cosmeticRing)}
-            style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
-          >
-            <div className="rank-inner w-9 h-9 flex items-center justify-center text-xs font-display font-bold">
-              {avatarUrl
-                ? <img loading="lazy" decoding="async" src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-                : displayName.slice(0, 2).toUpperCase()}
+          <div className="relative shrink-0">
+            <div
+              className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring", cosmeticRing)}
+              style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
+            >
+              <div className="rank-inner w-9 h-9 flex items-center justify-center text-xs font-display font-bold">
+                {avatarUrl
+                  ? <img loading="lazy" decoding="async" src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                  : displayName.slice(0, 2).toUpperCase()}
+              </div>
             </div>
+            <span
+              className={cn(
+                "absolute -right-0.5 bottom-0 w-2.5 h-2.5 rounded-full border-2 border-[#031827] shadow-[0_0_7px_rgba(52,226,168,0.55)]",
+                showSpeaking ? "bg-emerald-300 animate-pulse" : "bg-emerald-400",
+              )}
+              aria-label={showSpeaking ? "Mluví" : status}
+              title={showSpeaking ? "Mluví" : status}
+            />
           </div>
 
           <div className="vox-self-panel-copy min-w-0 flex-1">
