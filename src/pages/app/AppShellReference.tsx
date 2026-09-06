@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +50,7 @@ export default function AppShellReference() {
   const [createChannelType, setCreateChannelType] = useState<"text" | "voice">("text");
   const [createChannelCategory, setCreateChannelCategory] = useState<string | null>(null);
   const [categoryRows, setCategoryRows] = useState<Array<{ name: string; emoji: string | null }>>([]);
+  const guildLoadEpochRef = useRef(0);
 
   const { channel: voiceChannel, api: voiceApi, leaveChannel } = useVoiceCall();
   const voiceConn = voiceApi.connected ? { channel: voiceChannel, api: voiceApi as any } : null;
@@ -81,6 +82,13 @@ export default function AppShellReference() {
     if (!ids.length) {
       setGuilds([]);
       setActiveGuildId(null);
+      setChannels([]);
+      setMembers([]);
+      setActiveChannel(null);
+      setVoiceParticipants({});
+      setInviteCode(null);
+      setCategoryRows([]);
+      setIsAdmin(false);
       return;
     }
 
@@ -152,22 +160,14 @@ export default function AppShellReference() {
     }));
   };
 
-  const loadGuildMembers = async () => {
-    if (!activeGuildId) return;
-    const { data } = await supabase
-      .from("vox_guild_members")
-      .select("user_id, nickname, role")
-      .eq("guild_id", activeGuildId);
-    setMembers(await buildMembers(activeGuildId, data ?? []));
-  };
-
   const refreshVoice = async () => {
+    const epoch = guildLoadEpochRef.current;
     const channelIds = channels
       .filter((channel) => channel.type === "voice")
       .map((channel) => channel.id);
 
     if (!channelIds.length) {
-      setVoiceParticipants({});
+      if (guildLoadEpochRef.current === epoch) setVoiceParticipants({});
       return;
     }
 
@@ -176,6 +176,7 @@ export default function AppShellReference() {
       .select("channel_id, user_id, is_muted, is_deafened")
       .in("channel_id", channelIds);
 
+    if (guildLoadEpochRef.current !== epoch) return;
     const names = Object.fromEntries(
       members.map((member) => [
         member.user_id,
@@ -192,16 +193,32 @@ export default function AppShellReference() {
         is_deafened: participant.is_deafened,
       });
     });
-    setVoiceParticipants(map);
+    if (guildLoadEpochRef.current === epoch) setVoiceParticipants(map);
   };
 
   useEffect(() => {
+    const epoch = ++guildLoadEpochRef.current;
+    const isCurrent = () => guildLoadEpochRef.current === epoch;
+
     if (!activeGuildId || !user) {
       setChannels([]);
       setMembers([]);
       setActiveChannel(null);
+      setVoiceParticipants({});
+      setInviteCode(null);
+      setCategoryRows([]);
+      setIsAdmin(false);
       return;
     }
+
+    const refreshMembers = async () => {
+      const { data } = await supabase
+        .from("vox_guild_members")
+        .select("user_id, nickname, role")
+        .eq("guild_id", activeGuildId);
+      const nextMembers = await buildMembers(activeGuildId, data ?? []);
+      if (isCurrent()) setMembers(nextMembers);
+    };
 
     (async () => {
       const [{ data: channelRows }, { data: membershipRows }, { data: guildRow }] = await Promise.all([
@@ -210,6 +227,7 @@ export default function AppShellReference() {
         supabase.from("vox_guilds").select("invite_code, owner_id").eq("id", activeGuildId).maybeSingle(),
       ]);
 
+      if (!isCurrent()) return;
       setChannels((channelRows ?? []) as VoxChannel[]);
       setActiveChannel((current) => {
         if (current && channelRows?.some((channel: any) => channel.id === current.id && channel.guild_id === activeGuildId)) {
@@ -221,7 +239,8 @@ export default function AppShellReference() {
 
       const selfMembership = membershipRows?.find((membership: any) => membership.user_id === user.id);
       setIsAdmin(selfMembership?.role === "owner" || selfMembership?.role === "mod");
-      setMembers(await buildMembers(activeGuildId, membershipRows ?? []));
+      const nextMembers = await buildMembers(activeGuildId, membershipRows ?? []);
+      if (isCurrent()) setMembers(nextMembers);
     })();
 
     const metaChannel = supabase.channel(`vox_meta_${activeGuildId}`)
@@ -234,23 +253,23 @@ export default function AppShellReference() {
             .select("*")
             .eq("guild_id", activeGuildId)
             .order("position");
-          setChannels((data ?? []) as VoxChannel[]);
+          if (isCurrent()) setChannels((data ?? []) as VoxChannel[]);
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "vox_guild_members", filter: `guild_id=eq.${activeGuildId}` },
-        () => { void loadGuildMembers(); },
+        () => { void refreshMembers(); },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "vox_roles", filter: `guild_id=eq.${activeGuildId}` },
-        () => { void loadGuildMembers(); },
+        () => { void refreshMembers(); },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "vox_member_roles", filter: `guild_id=eq.${activeGuildId}` },
-        () => { void loadGuildMembers(); },
+        () => { void refreshMembers(); },
       )
       .subscribe();
 
@@ -258,13 +277,14 @@ export default function AppShellReference() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "vox_voice_participants" },
-        () => { void refreshVoice(); },
+        () => { if (isCurrent()) void refreshVoice(); },
       )
       .subscribe();
 
     void refreshVoice();
 
     return () => {
+      if (guildLoadEpochRef.current === epoch) guildLoadEpochRef.current += 1;
       supabase.removeChannel(metaChannel);
       supabase.removeChannel(voiceMetaChannel);
     };
@@ -278,12 +298,14 @@ export default function AppShellReference() {
       return;
     }
 
+    const epoch = guildLoadEpochRef.current;
+    const requestedGuildId = activeGuildId;
     const { data } = await supabase
       .from("vox_categories")
       .select("name, emoji")
-      .eq("guild_id", activeGuildId)
+      .eq("guild_id", requestedGuildId)
       .order("position");
-    setCategoryRows((data ?? []) as any[]);
+    if (guildLoadEpochRef.current === epoch) setCategoryRows((data ?? []) as any[]);
   };
 
   useEffect(() => { void loadCategories(); }, [activeGuildId]);
@@ -347,6 +369,33 @@ export default function AppShellReference() {
     && !voiceConn.api.muted
   );
 
+  const openUserSettings = () => {
+    setMobileChannelsOpen(false);
+    openVoxUtility(null);
+    setView("user-settings");
+  };
+  const openServerSettings = () => {
+    setMobileChannelsOpen(false);
+    openVoxUtility(null);
+    setView("server-settings");
+  };
+  const selectGuild = (id: string) => {
+    setMobileChannelsOpen(false);
+    openVoxUtility(null);
+    if (id !== activeGuildId) {
+      guildLoadEpochRef.current += 1;
+      setActiveChannel(null);
+      setChannels([]);
+      setMembers([]);
+      setVoiceParticipants({});
+      setInviteCode(null);
+      setCategoryRows([]);
+      setIsAdmin(false);
+      setActiveGuildId(id);
+    }
+    setView("main");
+  };
+
   const selfPanel = (
     <SelfPanel
       displayName={displayName}
@@ -359,7 +408,7 @@ export default function AppShellReference() {
       onToggleMute={() => voiceConn?.api?.toggleMute?.()}
       onToggleDeafen={() => voiceConn?.api?.toggleDeafen?.()}
       onLeaveVoice={() => void leaveChannel()}
-      onOpenSettings={() => setView("user-settings")}
+      onOpenSettings={openUserSettings}
     />
   );
 
@@ -396,7 +445,7 @@ export default function AppShellReference() {
         onStore={() => navigate("/obchod")}
         onMore={() => navigate("/dashboard")}
         onNotifications={() => openVoxUtility("notifications")}
-        onProfile={() => setView("user-settings")}
+        onProfile={openUserSettings}
       />
 
       <button type="button" className="sv-mobile-channel-toggle" aria-expanded={mobileChannelsOpen} onClick={() => setMobileChannelsOpen(open => !open)}>{mobileChannelsOpen ? "Zavřít seznam kanálů" : "Komunity a kanály"}</button>
@@ -405,7 +454,7 @@ export default function AppShellReference() {
           <GuildRail
             guilds={guilds}
             activeId={activeGuildId}
-            onSelect={(id) => { setActiveGuildId(id); setView("main"); }}
+            onSelect={selectGuild}
             onCreate={() => setCreateOpen(true)}
             onJoin={() => setJoinOpen(true)}
           />
@@ -426,7 +475,7 @@ export default function AppShellReference() {
               callDock={voiceConn ? <CallDock compact /> : undefined}
               onSelectChannel={selectChannel}
               onCreateChannel={openCreateChannel}
-              onOpenServerSettings={() => setView("server-settings")}
+              onOpenServerSettings={openServerSettings}
               onCategoriesChanged={() => { void loadCategories(); }}
               onHome={goHome}
               onEvents={() => openVoxUtility("events")}
@@ -498,7 +547,7 @@ export default function AppShellReference() {
                   else missingVoice();
                 }}
                 onShowMembers={() => openVoxUtility("members")}
-                onMessage={(member) => member.user_id === user.id ? setView("user-settings") : navigate(`/messages?user=${member.user_id}`)}
+                onMessage={(member) => member.user_id === user.id ? openUserSettings() : navigate(`/messages?user=${member.user_id}`)}
               />
             ) : (
               <div className="vox-reference-empty"><span>Komunita</span></div>
@@ -515,12 +564,12 @@ export default function AppShellReference() {
       <CreateGuildDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={async (id) => { await loadGuilds(); setActiveGuildId(id); }}
+        onCreated={async (id) => { await loadGuilds(); selectGuild(id); }}
       />
       <JoinGuildDialog
         open={joinOpen}
         onOpenChange={setJoinOpen}
-        onJoined={async (id) => { await loadGuilds(); setActiveGuildId(id); }}
+        onJoined={async (id) => { await loadGuilds(); selectGuild(id); }}
       />
       <CreateChannelDialog
         open={createChannelOpen}
