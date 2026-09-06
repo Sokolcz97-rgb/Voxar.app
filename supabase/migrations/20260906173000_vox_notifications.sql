@@ -89,7 +89,7 @@ begin
     )
   from public.vox_guild_members membership
   where membership.guild_id = new.guild_id
-    and membership.user_id <> auth.uid();
+    and membership.user_id is distinct from auth.uid();
 
   return new;
 end;
