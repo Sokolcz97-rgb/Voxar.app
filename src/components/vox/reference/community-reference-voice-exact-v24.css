@@ -1,0 +1,261 @@
+/* V24 VOICE — stable voice layout matching the reference family. */
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative {
+  position:relative !important;
+  isolation:isolate !important;
+  overflow:hidden !important;
+  background:#02101b url('/vox/reference/voice-world-v24.svg') center bottom / cover no-repeat !important;
+}
+
+/* suppress legacy engineering/radar overlays from earlier passes */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::before,
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after { display:none !important; }
+
+/* voice header */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 {
+  position:relative !important;
+  z-index:5 !important;
+  flex:0 0 69px !important;
+  min-height:69px !important;
+  height:69px !important;
+  padding:0 18px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:11px !important;
+  border-bottom:1px solid rgba(62,221,250,.50) !important;
+  background:linear-gradient(90deg,rgba(5,35,55,.98),rgba(3,23,38,.97)) !important;
+  box-shadow:inset 0 -13px 22px rgba(0,8,14,.12) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12::before {
+  content:"" !important;
+  position:absolute !important;
+  left:16px !important;
+  top:0 !important;
+  width:52px !important;
+  height:2px !important;
+  background:#45eaff !important;
+  box-shadow:0 0 9px rgba(69,234,255,.5) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12::after { display:none !important; }
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 svg {
+  width:23px !important;
+  height:23px !important;
+  color:#55eaff !important;
+  filter:drop-shadow(0 0 8px rgba(64,232,255,.38)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:nth-child(2) {
+  font-family:Orbitron,Inter,sans-serif !important;
+  font-size:19px !important;
+  line-height:1 !important;
+  letter-spacing:.16em !important;
+  color:#f0f8fb !important;
+  text-shadow:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:last-child {
+  margin-left:auto !important;
+  font-size:0 !important;
+  color:transparent !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:last-child::after {
+  content:"Hlasový kanál" !important;
+  display:inline-block !important;
+  font-family:Inter,"Segoe UI",sans-serif !important;
+  font-size:10px !important;
+  letter-spacing:.08em !important;
+  text-transform:none !important;
+  color:#8daab5 !important;
+}
+
+/* roster */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .shrink-0.border-b {
+  position:relative !important;
+  z-index:4 !important;
+  padding:8px 12px !important;
+  border-bottom:1px solid rgba(62,196,226,.20) !important;
+  background:rgba(2,18,30,.90) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .shrink-0.border-b .font-display { font-family:Inter,"Segoe UI",sans-serif !important; letter-spacing:.05em !important; }
+
+/* stage */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .flex-1.overflow-y-auto {
+  position:relative !important;
+  z-index:2 !important;
+  padding:16px 18px 18px !important;
+  background:linear-gradient(180deg,rgba(1,12,21,.06),rgba(1,8,14,.16)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .flex-1.overflow-y-auto::before {
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  background:radial-gradient(circle at 50% 48%,rgba(40,190,226,.09),transparent 27%) !important;
+  z-index:-1 !important;
+}
+
+/* empty state */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 {
+  position:relative !important;
+  z-index:3 !important;
+  min-height:440px !important;
+  gap:15px !important;
+  transform:translateY(-8px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before {
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:330px !important;
+  height:330px !important;
+  transform:translate(-50%,-54%) !important;
+  border-radius:50% !important;
+  border:1px solid rgba(62,220,249,.09) !important;
+  box-shadow:0 0 0 48px rgba(40,130,171,.025),0 0 0 95px rgba(94,67,220,.018),0 0 68px rgba(52,201,236,.05) !important;
+  pointer-events:none !important;
+  z-index:-1 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::after {
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:250px !important;
+  height:250px !important;
+  transform:translate(-50%,-55%) !important;
+  border-radius:50% !important;
+  border:1px solid rgba(71,218,246,.10) !important;
+  background:radial-gradient(circle,rgba(31,156,196,.06),transparent 64%) !important;
+  pointer-events:none !important;
+  z-index:-1 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24 {
+  position:relative !important;
+  width:106px !important;
+  height:106px !important;
+  flex:0 0 106px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:50% !important;
+  clip-path:none !important;
+  border:1px solid rgba(70,230,255,.74) !important;
+  background:radial-gradient(circle at 50% 46%,rgba(23,116,150,.75),rgba(3,31,48,.95) 66%,rgba(1,15,25,.99)) !important;
+  box-shadow:0 0 0 1px rgba(89,226,255,.08),0 0 32px rgba(49,209,244,.16),inset 0 0 28px rgba(48,216,249,.10) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24::before {
+  content:"" !important;
+  position:absolute !important;
+  inset:-25px !important;
+  border-radius:50% !important;
+  border:1px solid rgba(60,208,238,.14) !important;
+  clip-path:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24::after {
+  content:"" !important;
+  position:absolute !important;
+  inset:-52px !important;
+  border-radius:50% !important;
+  border:1px solid rgba(99,83,255,.09) !important;
+  clip-path:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24 svg {
+  width:44px !important;
+  height:44px !important;
+  color:#57efff !important;
+  filter:drop-shadow(0 0 12px rgba(73,235,255,.55)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 {
+  margin-top:12px !important;
+  font-family:Orbitron,Inter,sans-serif !important;
+  font-size:20px !important;
+  line-height:1.1 !important;
+  letter-spacing:.14em !important;
+  color:#78edff !important;
+  text-shadow:0 0 10px rgba(67,222,249,.18) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 p {
+  margin-top:4px !important;
+  font-size:11px !important;
+  line-height:1.35 !important;
+  letter-spacing:0 !important;
+  color:#98b2bc !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 p b { color:#d9e7ec !important; font-weight:600 !important; }
+
+/* participant pods */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .holo-pod {
+  width:150px !important;
+  padding:13px !important;
+  border-color:rgba(67,213,244,.30) !important;
+  background:linear-gradient(180deg,rgba(5,34,52,.91),rgba(3,20,32,.97)) !important;
+  box-shadow:inset 0 0 18px rgba(54,208,239,.03) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center .holo-pod .rank-ring { width:64px !important; height:64px !important; }
+
+/* bottom voice controls */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t {
+  position:relative !important;
+  z-index:5 !important;
+  flex:0 0 91px !important;
+  min-height:91px !important;
+  border-top:1px solid rgba(63,204,235,.28) !important;
+  background:linear-gradient(180deg,rgba(3,19,31,.92),rgba(1,11,19,.99)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t > .p-4 {
+  min-height:91px !important;
+  height:91px !important;
+  padding:15px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t button.group {
+  position:relative !important;
+  min-width:270px !important;
+  width:270px !important;
+  min-height:54px !important;
+  height:54px !important;
+  padding:0 28px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  border:1px solid #44e8ff !important;
+  border-radius:0 !important;
+  color:transparent !important;
+  background:linear-gradient(180deg,#08758e,#06465e) !important;
+  box-shadow:0 0 22px rgba(53,224,252,.17),inset 0 0 22px rgba(73,235,255,.10) !important;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t button.group::after {
+  content:"PŘIPOJIT SE" !important;
+  display:inline-block !important;
+  font-family:Orbitron,Inter,sans-serif !important;
+  font-size:12px !important;
+  letter-spacing:.20em !important;
+  color:#f3feff !important;
+  text-shadow:0 0 8px rgba(76,233,255,.28) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t button.group svg {
+  width:20px !important;
+  height:20px !important;
+  color:#66efff !important;
+  stroke:currentColor !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t button.group:hover { background:linear-gradient(180deg,#0b8ca7,#07566f) !important; box-shadow:0 0 28px rgba(55,226,252,.25),inset 0 0 25px rgba(74,235,255,.13) !important; }
+
+@media (max-width:1450px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before { width:300px !important; height:300px !important; box-shadow:0 0 0 44px rgba(40,130,171,.022),0 0 0 86px rgba(94,67,220,.016),0 0 58px rgba(52,201,236,.045) !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24 { width:98px !important; height:98px !important; flex-basis:98px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 { font-size:18px !important; }
+}
+
+@media (min-width:1600px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 { height:75px !important; min-height:75px !important; flex-basis:75px !important; padding:0 22px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:nth-child(2) { font-size:21px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before { width:380px !important; height:380px !important; box-shadow:0 0 0 58px rgba(40,130,171,.026),0 0 0 112px rgba(94,67,220,.019),0 0 84px rgba(52,201,236,.055) !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24 { width:116px !important; height:116px !important; flex-basis:116px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .hex-frame.w-24.h-24 svg { width:48px !important; height:48px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 { font-size:22px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .border-t button.group { width:310px !important; min-width:310px !important; height:60px !important; min-height:60px !important; }
+}
