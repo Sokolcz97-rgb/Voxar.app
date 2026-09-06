@@ -1,4 +1,4 @@
-export type VoxUtilityMode = "events" | "members" | "files" | "store" | "remove-bg";
+export type VoxUtilityMode = "events" | "members" | "notifications" | "files" | "store" | "remove-bg";
 export type VoxCommunityContext = { guildId: string | null; isAdmin: boolean };
 
 const CONTEXT_EVENT = "voxar:community-context";
