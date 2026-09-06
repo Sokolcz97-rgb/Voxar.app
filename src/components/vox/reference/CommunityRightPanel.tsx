@@ -21,14 +21,16 @@ export function CommunityRightPanel({
   onShowMembers,
   onMessage,
 }: Props) {
-  const previewMembers = members.slice(0, 3);
+  const previewMembers = members.slice(0, 4);
   const extraCount = Math.max(memberCount - previewMembers.length, 0);
   const offlineCount = Math.max(memberCount - onlineCount, 0);
 
   return (
-    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17">
-      <section className="sv-right-card sv-right-about sv-right-about-v3">
+    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18">
+      <section className="sv-right-card sv-right-about sv-right-about-v3 sv-right-about-v18">
         <span className="sv-right-card-cut" aria-hidden="true" />
+        <span className="sv-right-card-grid" aria-hidden="true" />
+        <span className="sv-right-card-orbit" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">O komunitě</div>
           <Sparkles className="sv-right-head-icon" aria-hidden="true" />
@@ -65,8 +67,9 @@ export function CommunityRightPanel({
         </div>
       </section>
 
-      <section className="sv-right-card sv-right-now sv-right-now-v3">
+      <section className="sv-right-card sv-right-now sv-right-now-v3 sv-right-now-v18">
         <span className="sv-right-card-cut" aria-hidden="true" />
+        <span className="sv-right-now-scan" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">Právě se děje</div>
           <button type="button" className="sv-right-link-button" onClick={onJoinVoice}>
@@ -74,13 +77,13 @@ export function CommunityRightPanel({
           </button>
         </div>
 
-        <div className="sv-right-event sv-right-event-v3">
+        <div className="sv-right-event sv-right-event-v3 sv-right-event-v18">
           <div className="sv-right-event-icon">
             <Gamepad2 />
             <span className="sv-right-event-live">LIVE</span>
           </div>
           <div className="sv-right-event-copy">
-            <span className="sv-right-event-kicker">Dnes · herní večer</span>
+            <span className="sv-right-event-kicker">Dnes · komunitní event</span>
             <strong>Páteční herní večer</strong>
             <span>Dnes 20:00 · Hlasový kanál</span>
             <div className="sv-right-event-people" aria-label="Účastníci události">
@@ -94,11 +97,12 @@ export function CommunityRightPanel({
               {extraCount > 0 && <span className="sv-right-event-more">+{extraCount}</span>}
             </div>
           </div>
-          <button type="button" onClick={onJoinVoice}>Připojit se</button>
+          <button type="button" className="sv-right-event-join" onClick={onJoinVoice}>Připojit se</button>
         </div>
       </section>
 
-      <section className="sv-right-card sv-right-members sv-right-members-v3">
+      <section className="sv-right-card sv-right-members sv-right-members-v3 sv-right-members-v18">
+        <span className="sv-right-members-line" aria-hidden="true" />
         <div className="sv-right-members-head">
           <div className="sv-right-card-title">Aktivní členové</div>
           <button type="button" onClick={onShowMembers}>Zobrazit vše <ChevronRight /></button>
