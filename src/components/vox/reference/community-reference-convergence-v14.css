@@ -1,0 +1,340 @@
+/* V14 reference convergence.
+   A visibly stronger pass against the original StudioVoxario mockup, applied only
+   to the current structural sv-* markup. */
+
+/* --------------------------------------------------------------------------
+   GLOBAL TYPOGRAPHY / PANEL DEPTH
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4,
+.vox-reference-shell.sv-shell-v4 button,
+.vox-reference-shell.sv-shell-v4 input,
+.vox-reference-shell.sv-shell-v4 textarea {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar,
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center,
+.vox-reference-shell.sv-shell-v4 .sv-workspace-right {
+  box-shadow:
+    inset 0 1px 0 rgba(94, 226, 255, .035),
+    inset 0 0 34px rgba(25, 155, 208, .025),
+    0 8px 24px rgba(0, 0, 0, .16);
+}
+
+/* --------------------------------------------------------------------------
+   TOPBAR — move the planet to the right like the original mockup and make the
+   active section read as a deliberate navigation tile rather than a thin line.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 > .sv-topbar {
+  height: 92px !important;
+  min-height: 92px !important;
+  grid-template-columns: 286px minmax(520px, 1fr) 330px !important;
+  background:
+    radial-gradient(circle at 77% 36%, rgba(25, 151, 208, .12), transparent 20%),
+    linear-gradient(90deg, rgba(2, 17, 29, .995) 0 34%, rgba(3, 26, 45, .965) 64%, rgba(13, 18, 51, .98) 100%) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 > .sv-topbar::before {
+  left: auto !important;
+  right: 250px !important;
+  top: -90px !important;
+  width: 235px !important;
+  height: 235px !important;
+  opacity: .96 !important;
+  background:
+    radial-gradient(circle at 35% 32%, rgba(112, 224, 255, .98) 0 4%, transparent 5%),
+    radial-gradient(circle at 43% 39%, rgba(29, 159, 218, .80) 0 22%, rgba(7, 82, 128, .92) 23% 43%, rgba(3, 31, 56, .98) 62%, rgba(1, 12, 24, .98) 68%, transparent 69%) !important;
+  box-shadow:
+    0 0 0 1px rgba(70, 201, 255, .12),
+    0 0 46px rgba(35, 174, 255, .24) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 > .sv-topbar::after {
+  top: -25px !important;
+  right: -14px !important;
+  width: 330px !important;
+  height: 150px !important;
+  opacity: .92 !important;
+  background:
+    linear-gradient(112deg, transparent 0 24%, rgba(40, 104, 225, .24) 25% 39%, transparent 40% 48%, rgba(154, 66, 255, .36) 49% 61%, transparent 62% 69%, rgba(39, 151, 230, .20) 70% 83%, transparent 84%) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav button {
+  min-width: 86px !important;
+  min-height: 72px !important;
+  position: relative;
+  border-left: 1px solid rgba(47, 177, 216, .05);
+  border-right: 1px solid rgba(47, 177, 216, .05);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav button.active {
+  color: #59e7ff !important;
+  background:
+    linear-gradient(180deg, rgba(24, 125, 165, .05), rgba(0, 184, 232, .17)) !important;
+  box-shadow:
+    inset 0 -2px 0 #3be4ff,
+    inset 0 -18px 28px rgba(0, 179, 229, .08),
+    0 0 22px rgba(31, 213, 255, .05);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav button.active::after {
+  height: 2px !important;
+  left: 11px !important;
+  right: 11px !important;
+  background: #4ce8ff !important;
+  box-shadow: 0 0 11px rgba(76, 232, 255, .72);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-search {
+  border-color: rgba(67, 212, 246, .42) !important;
+  background: linear-gradient(180deg, rgba(3, 27, 45, .92), rgba(2, 18, 33, .94)) !important;
+  box-shadow: inset 0 0 20px rgba(33, 175, 220, .035);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-avatar {
+  box-shadow: 0 0 0 1px rgba(66, 224, 255, .50), 0 0 17px rgba(41, 211, 255, .22) !important;
+}
+
+/* --------------------------------------------------------------------------
+   LEFT SIDEBAR — tighter scenic hero, stronger nav hierarchy and more room for
+   channels. This is intentionally more obvious than the overnight micro-passes.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
+  height: 172px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero-art {
+  bottom: 58px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-community-identity {
+  min-height: 58px !important;
+  border-color: rgba(59, 223, 255, .52) !important;
+  background: linear-gradient(90deg, rgba(3, 27, 45, .985), rgba(3, 19, 34, .98)) !important;
+  box-shadow: inset 0 0 20px rgba(31, 192, 234, .035);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav {
+  gap: 3px !important;
+  padding-block: 8px 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
+  min-height: 38px !important;
+  border-radius: 4px !important;
+  color: #a8c3d1 !important;
+  font-size: 12px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button.active {
+  color: #ecfbff !important;
+  border-color: rgba(49, 225, 255, .72) !important;
+  background: linear-gradient(90deg, rgba(0, 153, 200, .24), rgba(4, 55, 79, .34)) !important;
+  box-shadow: inset 3px 0 0 #3ee8ff, 0 0 13px rgba(36, 216, 255, .06);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title {
+  margin-top: 2px;
+  color: #63cfe8 !important;
+  font-size: 8px !important;
+  letter-spacing: .22em !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels {
+  min-height: 230px !important;
+  padding-inline: 3px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-head {
+  color: #75cce0 !important;
+  font-size: 8px !important;
+  letter-spacing: .12em !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-item {
+  min-height: 40px !important;
+  margin-block: 2px !important;
+  border-radius: 4px !important;
+  color: #9bb7c6 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-item.active {
+  color: #eefcff !important;
+  border-color: rgba(48, 225, 255, .75) !important;
+  background: linear-gradient(90deg, rgba(9, 113, 149, .68), rgba(4, 49, 72, .68)) !important;
+  box-shadow:
+    inset 3px 0 0 #8d55ff,
+    inset 0 0 18px rgba(25, 200, 242, .06),
+    0 0 12px rgba(31, 215, 255, .07) !important;
+}
+
+/* --------------------------------------------------------------------------
+   CHAT — soften the spreadsheet-like row dividers and make conversations feel
+   like the original mockup, with more readable hover grouping.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-channel-header {
+  background:
+    linear-gradient(90deg, rgba(5, 32, 50, .995), rgba(4, 25, 41, .97) 66%, rgba(5, 30, 46, .98)) !important;
+  box-shadow: inset 0 -15px 28px rgba(0, 148, 196, .018);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-list {
+  padding: 5px 13px 9px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message {
+  margin: 1px 0;
+  padding-inline: 8px !important;
+  border-bottom-color: rgba(69, 142, 169, .055) !important;
+  border-radius: 5px;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message:hover {
+  border-bottom-color: transparent !important;
+  background:
+    linear-gradient(90deg, rgba(12, 80, 106, .105), rgba(8, 49, 69, .03) 72%, transparent) !important;
+  box-shadow: inset 2px 0 0 rgba(55, 220, 251, .24);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-meta strong {
+  font-size: 13.5px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-text {
+  color: #e1edf4 !important;
+  font-size: 12.5px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-v3 {
+  border-color: rgba(50, 221, 255, .56) !important;
+  background:
+    radial-gradient(circle at 82% 30%, rgba(68, 91, 255, .045), transparent 28%),
+    linear-gradient(180deg, rgba(4, 30, 47, .99), rgba(2, 19, 33, .995)) !important;
+  box-shadow: inset 0 0 28px rgba(32, 198, 235, .035), 0 0 15px rgba(0, 191, 238, .04) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus,
+.vox-reference-shell.sv-shell-v4 .sv-composer-send {
+  border-color: rgba(51, 208, 245, .38) !important;
+  background: rgba(5, 43, 63, .72) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-send:hover {
+  color: #72efff !important;
+  background: rgba(4, 81, 108, .84) !important;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL — increase readability and visual hierarchy. The cards now read
+   as three deliberate modules instead of a single flat column.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-right > .sv-right-shell {
+  padding: 9px !important;
+  gap: 10px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about-v3,
+.vox-reference-shell.sv-shell-v4 .sv-right-now-v3,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-v3 {
+  border-color: rgba(53, 215, 249, .48) !important;
+  background:
+    radial-gradient(circle at 88% 4%, rgba(71, 69, 255, .055), transparent 26%),
+    linear-gradient(180deg, rgba(5, 32, 50, .99), rgba(3, 21, 36, .995)) !important;
+  box-shadow: inset 0 0 26px rgba(35, 193, 231, .025);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-card-title {
+  color: #62ddf3 !important;
+  font-size: 9px !important;
+  letter-spacing: .21em !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about h2 {
+  font-size: 17px !important;
+  line-height: 20px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about p {
+  color: #a1b9c7 !important;
+  font-size: 10px !important;
+  line-height: 14px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 {
+  border-color: rgba(52, 195, 231, .26) !important;
+  background: rgba(2, 21, 34, .28);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div {
+  min-height: 44px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy strong {
+  font-size: 11px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy small {
+  font-size: 7.5px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-tags span {
+  padding: 4px 7px !important;
+  font-size: 8px !important;
+  border-color: rgba(45, 209, 246, .48) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
+  border-color: rgba(105, 107, 255, .50) !important;
+  background:
+    radial-gradient(circle at 17% 35%, rgba(131, 76, 255, .25), transparent 28%),
+    linear-gradient(105deg, rgba(54, 35, 119, .62), rgba(8, 42, 67, .60)) !important;
+  box-shadow: inset 0 0 18px rgba(114, 70, 255, .035);
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-member {
+  min-height: 44px !important;
+  border-bottom-color: rgba(55, 163, 191, .055) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-member:hover {
+  background: rgba(12, 77, 101, .16) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-line strong {
+  font-size: 11.5px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-signature {
+  color: #6ca5b9 !important;
+  letter-spacing: .16em !important;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive balance for the user's current desktop-width screenshots.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1440px) {
+  .vox-reference-shell.sv-shell-v4 > .sv-topbar {
+    grid-template-columns: 270px minmax(480px, 1fr) 310px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 > .sv-topbar::before {
+    right: 220px !important;
+    width: 220px !important;
+    height: 220px !important;
+    top: -82px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-workspace {
+    grid-template-columns: 80px 268px minmax(0, 1fr) 286px !important;
+  }
+}
+
+@media (max-height: 860px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
+    height: 160px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-sidebar-channels {
+    min-height: 200px !important;
+  }
+}
