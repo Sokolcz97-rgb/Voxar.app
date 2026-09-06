@@ -91,7 +91,10 @@ export function CommunityTopbar({
     setUtility(key);
   };
 
-  const activeKey: NavKey = utility ?? "community";
+  const activeKey: NavKey | "members" = utility ?? "community";
+  const utilityLabel = utility === "members"
+    ? "Členové"
+    : navItems.find((item) => item.key === activeKey)?.label ?? "Voxar";
 
   return (
     <>
@@ -152,7 +155,7 @@ export function CommunityTopbar({
         <div className="sv-topbar-tools">
           <label className="sv-topbar-search">
             <Search />
-            <input placeholder={utility ? `Hledat: ${navItems.find((item) => item.key === activeKey)?.label ?? "Voxar"}…` : "Hledat v komunitě..."} aria-label="Hledat ve Voxar.app" />
+            <input placeholder={utility ? `Hledat: ${utilityLabel}…` : "Hledat v komunitě..."} aria-label="Hledat ve Voxar.app" />
             <kbd>Ctrl K</kbd>
           </label>
 

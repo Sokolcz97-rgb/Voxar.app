@@ -30,7 +30,6 @@ export function CommunityRightPanel({
   onlineCount,
   members,
   onShowEvents,
-  onShowMembers,
   onOpenChannel,
   onMessage,
 }: Props) {
@@ -117,7 +116,7 @@ export function CommunityRightPanel({
         <span className="sv-right-members-grid" aria-hidden="true" />
         <div className="sv-right-members-head">
           <div><div className="sv-right-card-title">Aktivní členové</div></div>
-          <button type="button" onClick={onShowMembers}>Zobrazit vše <ChevronRight /></button>
+          <button type="button" onClick={() => openVoxUtility("members")}>Zobrazit vše <ChevronRight /></button>
         </div>
 
         <div className="sv-right-members-list"><ReferenceActiveMembers members={members} onMessage={onMessage} /></div>
