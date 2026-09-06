@@ -8,7 +8,6 @@ import {
   Search,
   ShoppingBag,
 } from "lucide-react";
-import voxLogo from "@/assets/vox-logo.png.asset.json";
 
 interface Props {
   displayName: string;
@@ -56,8 +55,12 @@ export function CommunityTopbar({
   return (
     <header className="sv-topbar">
       <div className="sv-topbar-brand">
-        <img src={voxLogo.url} alt="Voxar.app" />
-        <div>
+        <span className="sv-brand-symbol" aria-hidden="true">
+          <i className="sv-brand-wing sv-brand-wing-left" />
+          <i className="sv-brand-wing sv-brand-wing-right" />
+          <b className="sv-brand-core" />
+        </span>
+        <div className="sv-brand-copy">
           <strong>VOXAR.APP</strong>
           <span>STUDIOVOXARIO</span>
         </div>
