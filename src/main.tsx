@@ -18,6 +18,9 @@ import "./components/vox/reference/community-reference-pass-v16.css";
 import "./components/vox/reference/community-reference-bundle-v17.css";
 import "./components/vox/reference/community-reference-megapass-v18.css";
 import "./components/vox/reference/community-reference-megapass-v18-extra.css";
+import "./components/vox/reference/community-reference-final-v19.css";
+import "./components/vox/reference/community-reference-voice-v19.css";
+import "./components/vox/reference/community-reference-final-v19-extra.css";
 import "./i18n";
 
 const syncAppTitle = () => {

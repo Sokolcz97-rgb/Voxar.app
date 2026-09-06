@@ -53,19 +53,27 @@ export function CommunityTopbar({
   };
 
   return (
-    <header className="sv-topbar sv-topbar-v17 sv-topbar-v18">
+    <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19">
       <div className="sv-topbar-scene" aria-hidden="true">
+        <span className="sv-topbar-deep-space" />
         <span className="sv-topbar-stars sv-topbar-stars-a" />
         <span className="sv-topbar-stars sv-topbar-stars-b" />
+        <span className="sv-topbar-constellation">
+          <i /><i /><i /><i /><i />
+        </span>
         <span className="sv-topbar-horizon" />
         <span className="sv-topbar-ridge sv-topbar-ridge-back" />
         <span className="sv-topbar-ridge sv-topbar-ridge-front" />
+        <span className="sv-topbar-skyline" />
         <span className="sv-topbar-planet"><i /><b /><em /></span>
         <span className="sv-topbar-planet-glow" />
+        <span className="sv-topbar-orbit sv-topbar-orbit-a" />
+        <span className="sv-topbar-orbit sv-topbar-orbit-b" />
         <span className="sv-topbar-beam sv-topbar-beam-a" />
         <span className="sv-topbar-beam sv-topbar-beam-b" />
         <span className="sv-topbar-comet sv-topbar-comet-a" />
         <span className="sv-topbar-comet sv-topbar-comet-b" />
+        <span className="sv-topbar-scan" />
         <span className="sv-topbar-grid" />
       </div>
 
@@ -75,6 +83,7 @@ export function CommunityTopbar({
           <i className="sv-brand-wing sv-brand-wing-right" />
           <b className="sv-brand-core" />
           <em className="sv-brand-spark" />
+          <span className="sv-brand-inner-cut" />
         </span>
         <div className="sv-brand-copy">
           <strong>VOXAR.APP</strong>
@@ -87,10 +96,12 @@ export function CommunityTopbar({
           <button
             key={key}
             type="button"
+            data-label={label}
             className={key === "community" ? "active" : undefined}
             onClick={actions[key]}
           >
             <span className="sv-topbar-nav-glow" aria-hidden="true" />
+            <span className="sv-topbar-nav-notch" aria-hidden="true" />
             <Icon />
             <span>{label}</span>
           </button>
@@ -114,18 +125,22 @@ export function CommunityTopbar({
           <i aria-hidden="true" />
         </button>
 
-        <button
-          type="button"
-          className="sv-topbar-avatar"
-          onClick={onProfile}
-          title="Nastavení profilu"
-          aria-label={`Profil ${displayName}`}
-        >
-          {avatarUrl
-            ? <img src={avatarUrl} alt={displayName} />
-            : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
-          <i className="sv-topbar-avatar-ring" aria-hidden="true" />
-        </button>
+        <div className="sv-topbar-profile-cluster">
+          <span className="sv-topbar-presence-label" aria-hidden="true">LIVE</span>
+          <button
+            type="button"
+            className="sv-topbar-avatar"
+            onClick={onProfile}
+            title="Nastavení profilu"
+            aria-label={`Profil ${displayName}`}
+          >
+            {avatarUrl
+              ? <img src={avatarUrl} alt={displayName} />
+              : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
+            <i className="sv-topbar-avatar-ring" aria-hidden="true" />
+            <b className="sv-topbar-avatar-dot" aria-hidden="true" />
+          </button>
+        </div>
 
         <div className="sv-topbar-motto" aria-hidden="true">
           <span>People</span>

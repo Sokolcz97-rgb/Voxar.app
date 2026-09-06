@@ -30,9 +30,10 @@ export function SelfPanel({
     : status;
 
   return (
-    <div className="vox-self-panel border-t border-primary/15 bg-transparent">
+    <div className="vox-self-panel vox-self-panel-v19 border-t border-primary/15 bg-transparent">
+      <span className="vox-self-panel-edge" aria-hidden="true" />
       {connectedChannelName && (
-        <div className="px-3 py-1.5 border-b border-primary/15 flex items-center gap-2 bg-emerald-500/10">
+        <div className="vox-self-call-state px-3 py-1.5 border-b border-primary/15 flex items-center gap-2 bg-emerald-500/10">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_hsl(160_84%_45%)]" />
           <div className="flex-1 min-w-0">
             <div className="text-[10px] text-emerald-400 font-display font-semibold uppercase tracking-[0.22em]">Hlas připojen</div>
@@ -45,7 +46,7 @@ export function SelfPanel({
       )}
       <div className="vox-self-panel-row h-16 px-2 flex items-center gap-1.5">
         <div className="vox-self-panel-identity flex items-center gap-2 flex-1 min-w-0 px-0.5">
-          <div className="relative shrink-0">
+          <div className="vox-self-avatar-wrap relative shrink-0">
             <div
               className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring", cosmeticRing)}
               style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
@@ -68,10 +69,11 @@ export function SelfPanel({
 
           <div className="vox-self-panel-copy min-w-0 flex-1">
             <div className="vox-self-panel-name text-[13px] font-display font-semibold truncate text-glow">{displayName}</div>
-            <div className="text-[10px] text-muted-foreground truncate flex items-center gap-1.5">
+            <div className="vox-self-panel-status text-[10px] text-muted-foreground truncate flex items-center gap-1.5">
               {showSpeaking && <span className="holo-eq"><span/><span/><span/><span/></span>}
               <span className={cn("truncate", showSpeaking && "text-emerald-400")}>{subtitle}</span>
             </div>
+            {!connectedChannelName && <div className="vox-self-panel-tagline">Tvoříme další zážitek.</div>}
           </div>
         </div>
         <div className="vox-self-panel-actions flex items-center gap-0.5 shrink-0">

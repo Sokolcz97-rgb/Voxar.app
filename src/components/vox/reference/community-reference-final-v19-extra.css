@@ -1,0 +1,196 @@
+/* V19 extra — correction and micro-detail layer. */
+
+/* Guild rail: target the real current class names. */
+.sv-guild-rail-v18 .sv-guild-rail-primary {
+  width:64px !important;
+  min-height:78px !important;
+  padding:7px 4px 8px !important;
+  display:grid !important;
+  place-items:center;
+  position:relative;
+  border:0 !important;
+  border-bottom:1px solid rgba(67,207,241,.14) !important;
+  background:transparent !important;
+}
+.sv-guild-rail-v18 .sv-guild-rail-primary::before {
+  content:"";
+  position:absolute;
+  left:-8px;
+  top:11px;
+  width:3px;
+  height:38px;
+  background:#4feaff;
+  box-shadow:0 0 11px rgba(79,234,255,.82);
+}
+.sv-guild-rail-v18 .sv-guild-rail-primary .sv-guild-frame {
+  width:56px !important;
+  height:56px !important;
+  filter:drop-shadow(0 0 12px rgba(62,222,255,.18));
+}
+.sv-guild-rail-v18 .sv-guild-primary-pulse {
+  position:absolute !important;
+  right:0 !important;
+  top:21px !important;
+  width:7px !important;
+  height:7px !important;
+  border-radius:50%;
+  background:#53f0ba !important;
+  box-shadow:0 0 9px rgba(83,240,186,.9) !important;
+}
+.sv-guild-rail-v18 .sv-guild-primary-mark { display:none !important; }
+.sv-guild-rail-v18 .sv-guild-rail-separator {
+  width:52px !important;
+  height:1px !important;
+  margin:0 0 10px !important;
+  background:linear-gradient(90deg,transparent,rgba(64,200,235,.28),transparent) !important;
+}
+.sv-guild-rail-v18 .sv-guild-rail-list { gap:10px !important; }
+.sv-guild-rail-v18 .sv-guild-rail-item { width:52px !important; height:52px !important; flex:0 0 52px !important; }
+.sv-guild-rail-v18 .sv-guild-rail-item .sv-guild-frame { width:48px !important; height:48px !important; }
+
+/* Channel counts and truthful live state. */
+.sv-channel-list-v19 .sv-channel-list-tools { gap:6px; }
+.sv-channel-list-v19 .sv-channel-list-tools > small {
+  margin-right:auto;
+  color:#386b7b;
+  font-size:5px;
+  letter-spacing:.18em;
+}
+.sv-channel-list-v19 .sv-channel-group-toggle { min-width:0; }
+.sv-channel-list-v19 .sv-channel-group-toggle > span:not(.sv-channel-group-emoji) { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sv-channel-list-v19 .sv-channel-group-count {
+  margin-left:auto;
+  color:#476f7f;
+  font-size:5.5px;
+  letter-spacing:.08em;
+  font-weight:500;
+}
+.sv-channel-list-v19 .sv-channel-group-live {
+  margin-left:5px;
+  padding:1px 4px;
+  border:1px solid rgba(73,236,187,.26);
+  color:#69e8bd;
+  background:rgba(20,92,72,.13);
+  font-size:4.8px;
+  letter-spacing:.08em;
+  font-weight:600;
+}
+.sv-channel-list-v19 .sv-channel-voice-count {
+  min-width:22px !important;
+  height:17px !important;
+  display:grid !important;
+  place-items:center;
+  border:1px solid rgba(58,211,244,.3);
+  color:#6fdff1 !important;
+  background:rgba(8,61,82,.35);
+  font-size:6px !important;
+}
+.sv-channel-list-v19 .sv-channel-voice-users {
+  margin:2px 0 5px 22px !important;
+  padding:3px 7px !important;
+  border-left:1px solid rgba(57,205,239,.16);
+}
+.sv-channel-list-v19 .sv-channel-voice-users > div { min-height:22px !important; font-size:8px !important; }
+
+/* Panel corner and separator polish. */
+.sv-workspace > .sv-workspace-sidebar,
+.sv-workspace > .sv-workspace-center,
+.sv-workspace > .sv-workspace-right,
+.sv-workspace > .sv-workspace-rail { position:relative; }
+.sv-workspace > .sv-workspace-sidebar::before,
+.sv-workspace > .sv-workspace-center::before,
+.sv-workspace > .sv-workspace-right::before {
+  content:"";
+  position:absolute;
+  z-index:40;
+  pointer-events:none;
+  left:10px;
+  top:-1px;
+  width:68px;
+  height:1px;
+  background:linear-gradient(90deg,#4ce9ff,transparent);
+  box-shadow:0 0 9px rgba(76,233,255,.42);
+}
+.sv-workspace > .sv-workspace-right::before { left:auto; right:10px; background:linear-gradient(90deg,transparent,#8552ff); box-shadow:0 0 8px rgba(133,82,255,.42); }
+
+/* Focus and interaction polish. */
+.sv-topbar-v19 .sv-topbar-search:focus-within {
+  border-color:#58eaff !important;
+  box-shadow:0 0 0 1px rgba(88,234,255,.08),0 0 20px rgba(42,209,245,.13),inset 0 0 18px rgba(29,190,231,.08) !important;
+}
+.sv-topbar-v19 .sv-topbar-search:focus-within kbd { color:#83efff !important; border-color:rgba(86,225,255,.5) !important; }
+.sv-topbar-v19 .sv-topbar-icon-button:hover { color:#74edff !important; background:rgba(17,82,107,.28) !important; }
+.sv-topbar-v19 .sv-topbar-avatar:hover { transform:translateY(-1px); box-shadow:0 0 20px rgba(66,229,255,.36),0 0 30px rgba(132,73,255,.16) !important; }
+
+/* Stronger cyan/violet framing on target areas. */
+.sv-community-hero-v19 .sv-community-hero-frame-a,
+.sv-welcome-v19 .sv-welcome-corner-left,
+.sv-composer-v19 .sv-composer-corner-tl { filter:drop-shadow(0 0 6px rgba(70,231,255,.55)); }
+.sv-community-hero-v19 .sv-community-hero-frame-b,
+.sv-welcome-v19 .sv-welcome-corner-right,
+.sv-composer-v19 .sv-composer-corner-br { filter:drop-shadow(0 0 6px rgba(127,76,255,.52)); }
+
+/* Scrollbars are thinner and more deliberate. */
+.sv-message-list::-webkit-scrollbar,
+.sv-channel-list-scroll::-webkit-scrollbar,
+.sv-right-members-list::-webkit-scrollbar { width:5px !important; }
+.sv-message-list::-webkit-scrollbar-track,
+.sv-channel-list-scroll::-webkit-scrollbar-track,
+.sv-right-members-list::-webkit-scrollbar-track { background:rgba(2,16,27,.55) !important; }
+.sv-message-list::-webkit-scrollbar-thumb,
+.sv-channel-list-scroll::-webkit-scrollbar-thumb,
+.sv-right-members-list::-webkit-scrollbar-thumb {
+  background:linear-gradient(180deg,rgba(62,226,255,.58),rgba(69,96,205,.5)) !important;
+  border-radius:0 !important;
+}
+
+/* Right column keeps members near the top instead of sinking visually. */
+.sv-right-members-v19 .sv-right-members-list { min-height:0 !important; overflow:auto !important; }
+.sv-right-members-v19 .vox-ref-active-members-v18 { align-content:start; }
+.sv-right-members-v19 .vox-ref-active-empty { margin:12px 2px !important; padding:15px !important; border:1px dashed rgba(58,197,232,.2); color:#618494; font-size:8px; }
+
+/* Welcome scene extra depth. */
+.sv-welcome-v19 .sv-welcome-art::before {
+  content:"";
+  position:absolute;
+  left:-20%;
+  bottom:-48px;
+  width:150%;
+  height:88px;
+  transform:rotate(-4deg);
+  background:linear-gradient(180deg,rgba(31,46,129,.08),rgba(2,8,29,.82));
+  border-top:1px solid rgba(70,151,255,.15);
+}
+.sv-welcome-v19 .sv-welcome-art::after {
+  content:"";
+  position:absolute;
+  left:4%;
+  right:3%;
+  bottom:9px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#3ee6ff 22%,#545cff 62%,#c44bff 82%,transparent);
+  box-shadow:0 0 12px rgba(64,222,255,.48);
+}
+
+/* Message author grouping feels closer to the target capture. */
+.sv-message:not(.compact) + .sv-message.compact { border-top-color:transparent !important; }
+.sv-message.compact .sv-message-avatar-column { opacity:.5; }
+.sv-message.compact .sv-message-body { padding-left:0 !important; }
+.sv-message .sv-message-meta .role-badge,
+.sv-message .sv-message-meta [class*="role"] { transform:scale(.92); transform-origin:left center; }
+
+/* Composer micro HUD. */
+.sv-composer-v19 .sv-composer-channel-chip::before { content:"TX >"; margin-right:6px; color:#7e5aff; font-size:5px; letter-spacing:.12em; }
+.sv-composer-v19 .sv-composer-toolbar::before { content:""; width:23px; height:1px; margin-right:2px; background:linear-gradient(90deg,#47e9ff,transparent); }
+
+/* Tiny responsive safety for the current Electron window. */
+@media (max-width: 1400px) and (max-height: 900px) {
+  .sv-sidebar-shell-v19 .sv-sidebar-slogan { min-height:29px !important; }
+  .sv-community-hero-v19 { height:176px !important; min-height:176px !important; }
+  .sv-sidebar-shell-v19 .sv-sidebar-quick-nav button { min-height:38px !important; }
+  .sv-welcome-v19 { height:174px !important; min-height:174px !important; }
+  .sv-right-shell-v19 { grid-template-rows:205px 151px minmax(0,1fr) !important; }
+  .vox-ref-active-members-v18 .vox-ref-active-member { min-height:44px !important; }
+  .sv-composer-v19 { min-height:103px !important; }
+  .sv-composer-v19 .sv-composer-row { min-height:53px !important; }
+}
