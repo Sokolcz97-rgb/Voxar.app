@@ -24,11 +24,12 @@ export function CommunityWelcomeBanner({
   const currentTime = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18" aria-label="Vítej v komunitě">
+    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19" aria-label="Vítej v komunitě">
       <span className="sv-welcome-corner sv-welcome-corner-left" aria-hidden="true" />
       <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-bottom" aria-hidden="true" />
+      <span className="sv-welcome-sidebar-mark" aria-hidden="true">SV // HUB</span>
 
       <div className="sv-welcome-copy">
         <div className="sv-welcome-eyebrow">
@@ -42,6 +43,7 @@ export function CommunityWelcomeBanner({
           <span className="sv-welcome-time" title="Aktuální čas">{currentTime}</span>
         </div>
 
+        <div className="sv-welcome-kicker">COMMUNITY UPLINK // ONLINE</div>
         <h2>Vítej v komunitě!</h2>
         <p>Jsme rádi, že jsi tady. Voxar.app je místo pro hráče, tvůrce a přátele.</p>
         <p>Respektuj ostatní, užívej si atmosféru a tvoř s námi něco většího.</p>
@@ -76,17 +78,23 @@ export function CommunityWelcomeBanner({
       <div className="sv-welcome-art" aria-hidden="true">
         <div className="sv-welcome-stars" />
         <div className="sv-welcome-starfield" />
+        <div className="sv-welcome-clouds" />
         <div className="sv-welcome-nebula" />
         <div className="sv-welcome-aurora" />
-        <div className="sv-welcome-beam" />
-        <div className="sv-welcome-portal"><i /><b /><em /></div>
+        <div className="sv-welcome-planet-shadow" />
+        <div className="sv-welcome-beam sv-welcome-beam-a" />
+        <div className="sv-welcome-beam sv-welcome-beam-b" />
+        <div className="sv-welcome-gateway" />
+        <div className="sv-welcome-portal"><i /><b /><em /><span /></div>
         <div className="sv-welcome-spires sv-welcome-spires-back" />
         <div className="sv-welcome-spires sv-welcome-spires-front" />
         <div className="sv-welcome-cityline" />
+        <div className="sv-welcome-city-glow" />
         <div className="sv-welcome-ridge sv-welcome-ridge-a" />
         <div className="sv-welcome-ridge sv-welcome-ridge-b" />
         <div className="sv-welcome-reflection" />
         <div className="sv-welcome-lightline" />
+        <div className="sv-welcome-scan" />
         <div className="sv-welcome-motto">GOOD<br />PEOPLE<br />BETTER<br />WORLDS</div>
       </div>
     </section>
