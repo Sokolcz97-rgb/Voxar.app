@@ -98,15 +98,27 @@ on public.vox_events for select
 to authenticated
 using (public.is_vox_member(guild_id, auth.uid()));
 
-drop policy if exists "vox events manageable by guild managers" on public.vox_events;
-create policy "vox events manageable by guild managers"
-on public.vox_events for all
+drop policy if exists "vox events insert by guild managers" on public.vox_events;
+create policy "vox events insert by guild managers"
+on public.vox_events for insert
 to authenticated
-using (public.can_manage_vox_events(guild_id, auth.uid()))
 with check (
   public.can_manage_vox_events(guild_id, auth.uid())
   and created_by = auth.uid()
 );
+
+drop policy if exists "vox events update by guild managers" on public.vox_events;
+create policy "vox events update by guild managers"
+on public.vox_events for update
+to authenticated
+using (public.can_manage_vox_events(guild_id, auth.uid()))
+with check (public.can_manage_vox_events(guild_id, auth.uid()));
+
+drop policy if exists "vox events delete by guild managers" on public.vox_events;
+create policy "vox events delete by guild managers"
+on public.vox_events for delete
+to authenticated
+using (public.can_manage_vox_events(guild_id, auth.uid()));
 
 drop policy if exists "vox event attendees readable by event guild" on public.vox_event_attendees;
 create policy "vox event attendees readable by event guild"
