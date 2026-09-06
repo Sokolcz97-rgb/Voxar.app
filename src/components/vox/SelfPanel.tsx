@@ -43,8 +43,8 @@ export function SelfPanel({
           </Button>
         </div>
       )}
-      <div className="vox-self-panel-row h-16 px-2 flex items-center gap-2">
-        <div className="vox-self-panel-identity flex items-center gap-2.5 flex-1 min-w-0 px-1">
+      <div className="vox-self-panel-row h-16 px-2 flex items-center gap-1.5">
+        <div className="vox-self-panel-identity flex items-center gap-2 flex-1 min-w-0 px-0.5">
           <div
             className={cn("rank-ring shrink-0", showSpeaking && "speaking-ring", cosmeticRing)}
             style={{ ["--rank-color" as any]: "hsl(184 100% 54%)" }}
@@ -56,23 +56,25 @@ export function SelfPanel({
             </div>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="vox-self-panel-name text-sm font-display font-semibold truncate text-glow">{displayName}</div>
-            <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+          <div className="vox-self-panel-copy min-w-0 flex-1">
+            <div className="vox-self-panel-name text-[13px] font-display font-semibold truncate text-glow">{displayName}</div>
+            <div className="text-[10px] text-muted-foreground truncate flex items-center gap-1.5">
               {showSpeaking && <span className="holo-eq"><span/><span/><span/><span/></span>}
               <span className={cn("truncate", showSpeaking && "text-emerald-400")}>{subtitle}</span>
             </div>
           </div>
         </div>
-        <Button size="icon" variant="ghost" className={cn("vox-self-action h-8 w-8 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", muted && "text-destructive")} onClick={onToggleMute} title={muted ? "Zapnout mikrofon" : "Ztlumit mikrofon"}>
-          {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        </Button>
-        <Button size="icon" variant="ghost" className={cn("vox-self-action h-8 w-8 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", deafened && "text-destructive")} onClick={onToggleDeafen} title={deafened ? "Zapnout zvuk" : "Vypnout zvuk"}>
-          {deafened ? <HeadphoneOff className="w-4 h-4" /> : <Headphones className="w-4 h-4" />}
-        </Button>
-        <Button size="icon" variant="ghost" className="vox-self-action h-8 w-8 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]" onClick={onOpenSettings} title="Nastavení">
-          <Settings className="w-4 h-4" />
-        </Button>
+        <div className="vox-self-panel-actions flex items-center gap-0.5 shrink-0">
+          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", muted && "text-destructive")} onClick={onToggleMute} title={muted ? "Zapnout mikrofon" : "Ztlumit mikrofon"}>
+            {muted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+          </Button>
+          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", deafened && "text-destructive")} onClick={onToggleDeafen} title={deafened ? "Zapnout zvuk" : "Vypnout zvuk"}>
+            {deafened ? <HeadphoneOff className="w-3.5 h-3.5" /> : <Headphones className="w-3.5 h-3.5" />}
+          </Button>
+          <Button size="icon" variant="ghost" className="vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]" onClick={onOpenSettings} title="Nastavení">
+            <Settings className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
