@@ -85,16 +85,17 @@ export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, 
   const bridged = getVoxCommunityContext();
   const resolvedGuildId = guildId === undefined ? bridged.guildId : guildId;
   const resolvedAdmin = isGuildAdmin === undefined ? bridged.isAdmin : isGuildAdmin;
+  const boundaryKey = `${mode}:${resolvedGuildId ?? "none"}:${resolvedAdmin ? "admin" : "member"}`;
 
   return (
-    <section className="sv-utility-overlay" aria-label={entry.label}>
+    <section className="sv-utility-overlay" aria-label={entry.label} role="dialog" aria-modal="true">
       <div className="sv-utility-chrome" aria-hidden="true"><i /><i /><i /><span /></div>
       <header className="sv-utility-overlay-head">
         <div><Icon /><span>{entry.label}</span><small>VOXAR.APP / STUDIOVOXARIO</small></div>
         <button type="button" onClick={onClose} aria-label="Zavřít"><X /></button>
       </header>
       <div className="sv-utility-scroll">
-        <UtilityPanelBoundary resetKey={mode}>
+        <UtilityPanelBoundary resetKey={boundaryKey}>
           {(mode === "events" || mode === "broadcast") && <CommunityEventsStudio initialTab={mode === "broadcast" ? "broadcast" : "events"} guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
           {mode === "members" && <CommunityMembers guildId={resolvedGuildId} />}
           {mode === "notifications" && <CommunityNotifications />}

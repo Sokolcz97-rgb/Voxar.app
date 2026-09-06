@@ -154,6 +154,7 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
   const captureRef = useRef<MediaStream | null>(null);
   const micRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef<number | null>(null);
+  const stopInFlightRef = useRef(false);
 
   const {
     activeEvents,
@@ -166,6 +167,37 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
   } = useCommunityEvents(guildId);
 
   const desktop = (window as any).studioVoxarioDesktop;
+
+  const cleanupLocalBroadcast = () => {
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onerror = null;
+      if (recorder.state !== "inactive") {
+        try { recorder.stop(); } catch {}
+      }
+    }
+
+    const capture = captureRef.current;
+    const mic = micRef.current;
+    captureRef.current = null;
+    micRef.current = null;
+    startedAtRef.current = null;
+
+    for (const stream of [capture, mic]) {
+      stream?.getTracks().forEach((track) => {
+        track.onended = null;
+        try { track.stop(); } catch {}
+      });
+    }
+
+    const context = (capture as any)?.__voxAudioContext;
+    try {
+      const closePromise = context?.close?.();
+      closePromise?.catch?.(() => undefined);
+    } catch {}
+  };
 
   useEffect(() => {
     void loadBroadcastSettings().then(setSettings);
@@ -180,13 +212,25 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
     if (desktop?.broadcastAvailable) {
       void desktop.broadcastAvailable().then((result: any) => setNativeReady(!!result?.available));
     }
-    const offState = desktop?.onBroadcastState?.((state: any) => setLive(!!state?.active));
+    const offState = desktop?.onBroadcastState?.((state: any) => {
+      const active = !!state?.active;
+      if (!active && recorderRef.current) cleanupLocalBroadcast();
+      setLive(active);
+    });
     const offLog = desktop?.onBroadcastLog?.((entry: any) => {
       const text = String(entry?.text || "").trim();
       if (text) setLastLog(text.split("\n").at(-1) || text);
     });
     return () => { offState?.(); offLog?.(); };
   }, [user]);
+
+  useEffect(() => () => {
+    cleanupLocalBroadcast();
+    try {
+      const request = desktop?.broadcastStop?.();
+      request?.catch?.(() => undefined);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (!guildId) { setChannels([]); return; }
@@ -239,19 +283,27 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
   };
 
   const stop = async () => {
-    try { recorderRef.current?.stop(); } catch {}
-    recorderRef.current = null;
-    for (const stream of [captureRef.current, micRef.current]) {
-      stream?.getTracks().forEach((track) => track.stop());
+    if (stopInFlightRef.current) return;
+    stopInFlightRef.current = true;
+    cleanupLocalBroadcast();
+    let stopError: Error | null = null;
+    try {
+      if (desktop?.broadcastStop) {
+        const result = await desktop.broadcastStop();
+        if (result?.ok === false) throw new Error(result?.error || "RTMP službu se nepodařilo ukončit.");
+      }
+    } catch (error) {
+      stopError = error instanceof Error ? error : new Error(String(error));
+    } finally {
+      stopInFlightRef.current = false;
+      setLive(false);
     }
-    const context = (captureRef.current as any)?.__voxAudioContext;
-    try { await context?.close?.(); } catch {}
-    captureRef.current = null;
-    micRef.current = null;
-    startedAtRef.current = null;
-    if (desktop?.broadcastStop) await desktop.broadcastStop();
-    setLive(false);
-    toast({ title: "Vysílání ukončeno" });
+
+    if (stopError) {
+      toast({ title: "Lokální vysílání bylo zastaveno", description: `FFmpeg hlásí chybu při ukončení: ${stopError.message}`, variant: "destructive" });
+    } else {
+      toast({ title: "Vysílání ukončeno" });
+    }
   };
 
   const start = async () => {
@@ -268,6 +320,7 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
       return;
     }
 
+    cleanupLocalBroadcast();
     setStarting(true);
     try {
       if (sourceId && desktop.selectCaptureSource) await desktop.selectCaptureSource(sourceId);
@@ -278,6 +331,13 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
       const combined = makeCombinedStream(display, mic);
       captureRef.current = combined;
       micRef.current = mic;
+
+      const videoTrack = combined.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
+          if (captureRef.current) void stop();
+        };
+      }
 
       const result = await desktop.broadcastStart({
         destinations: selected.map((destination) => ({ platform: destination.platform, url: buildRtmpUrl(destination) })),
@@ -291,21 +351,27 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
       const recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: settings.videoBitrate * 1000 } : undefined);
       recorder.ondataavailable = async (event) => {
         if (!event.data?.size) return;
-        const chunk = await event.data.arrayBuffer();
-        desktop.broadcastWriteChunk(chunk);
+        try {
+          const chunk = await event.data.arrayBuffer();
+          desktop.broadcastWriteChunk(chunk);
+        } catch (error) {
+          setLastLog(`Odesílání RTMP dat selhalo: ${error instanceof Error ? error.message : String(error)}`);
+          void stop();
+        }
       };
-      recorder.onerror = () => void stop();
+      recorder.onerror = () => {
+        setLastLog("MediaRecorder nahlásil chybu. Vysílání bylo bezpečně zastaveno.");
+        void stop();
+      };
       recorderRef.current = recorder;
       startedAtRef.current = Date.now();
       recorder.start(500);
       setLive(true);
       toast({ title: "RTMP vysílání spuštěno", description: `Cíle: ${selected.map((item) => item.label).join(", ")}` });
     } catch (error) {
+      cleanupLocalBroadcast();
       await desktop?.broadcastStop?.().catch?.(() => undefined);
-      captureRef.current?.getTracks().forEach((track) => track.stop());
-      micRef.current?.getTracks().forEach((track) => track.stop());
-      captureRef.current = null;
-      micRef.current = null;
+      setLive(false);
       toast({ title: "Vysílání se nepodařilo spustit", description: (error as Error).message, variant: "destructive" });
     } finally {
       setStarting(false);
@@ -506,7 +572,7 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
             <button className={`sv-audio-option${settings.includeSystemAudio ? " active" : ""}`} onClick={() => setSettings((current) => ({ ...current, includeSystemAudio: !current.includeSystemAudio }))}><VolumeBadge />Zvuk systému<span>{settings.includeSystemAudio ? "ON" : "OFF"}</span></button>
             <div className="sv-selected-targets"><span>AKTIVNÍ CÍLE</span>{selected.length ? selected.map((item) => <b key={item.platform}>{item.label}</b>) : <small>Žádný kompletní RTMP cíl.</small>}</div>
             {lastLog && <div className="sv-broadcast-log">{lastLog}</div>}
-            {live ? <button className="sv-broadcast-stop" onClick={stop}><Square />Ukončit vysílání</button> : <button className="sv-broadcast-start" disabled={starting || !selected.length} onClick={start}>{starting ? <Loader2 className="animate-spin" /> : <Radio />}Spustit RTMP</button>}
+            {live ? <button className="sv-broadcast-stop" onClick={() => void stop()}><Square />Ukončit vysílání</button> : <button className="sv-broadcast-start" disabled={starting || !selected.length} onClick={() => void start()}>{starting ? <Loader2 className="animate-spin" /> : <Radio />}Spustit RTMP</button>}
             <p className="sv-broadcast-note">Desktop Voxar.app používá lokálně přibalený FFmpeg. Stream keys se neposílají do Supabase.</p>
           </aside>
         </div>

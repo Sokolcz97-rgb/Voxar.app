@@ -42,6 +42,7 @@ const navItems = [
   { key: "more", label: "Více", icon: MoreHorizontal },
 ] as const;
 
+const moreUtilityModes = new Set<UtilityMode>(["broadcast", "remove-bg", "members"]);
 type NavKey = (typeof navItems)[number]["key"];
 
 export function CommunityTopbar({
@@ -70,6 +71,12 @@ export function CommunityTopbar({
     onUtilityModeChange?.(next);
   };
 
+  const closeTransientUi = () => {
+    setSearchOpen(false);
+    searchRef.current?.blur();
+    setUtility(null);
+  };
+
   useEffect(() => subscribeVoxUtility((mode) => {
     const next = mode as UtilityMode | null;
     if (!controlled) setInternalUtility(next);
@@ -82,15 +89,24 @@ export function CommunityTopbar({
         event.preventDefault();
         searchRef.current?.focus();
         setSearchOpen(true);
+        return;
       }
-      if (event.key === "Escape" && searchOpen) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (searchOpen) {
+        event.preventDefault();
         setSearchOpen(false);
         searchRef.current?.blur();
+        return;
+      }
+      if (utility) {
+        event.preventDefault();
+        if (!controlled) setInternalUtility(null);
+        onUtilityModeChange?.(null);
       }
     };
     window.addEventListener("keydown", focusSearch);
     return () => window.removeEventListener("keydown", focusSearch);
-  }, [searchOpen]);
+  }, [searchOpen, utility, controlled, onUtilityModeChange]);
 
   const activate = (key: NavKey) => {
     setSearchOpen(false);
@@ -105,14 +121,14 @@ export function CommunityTopbar({
       return;
     }
     if (key === "more") {
-      setUtility(null);
+      closeTransientUi();
       onMore();
       return;
     }
     setUtility(key);
   };
 
-  const activeKey = utility ?? "community";
+  const activeKey: NavKey = utility && moreUtilityModes.has(utility) ? "more" : (utility as NavKey | null) ?? "community";
   const notificationLabel = unreadCount > 0 ? `Oznámení, ${unreadCount} nepřečtených` : "Oznámení";
 
   return (
@@ -157,12 +173,12 @@ export function CommunityTopbar({
         <nav className="sv-topbar-nav" aria-label="Hlavní navigace">
           {navItems.map(({ key, label, icon: Icon }) => (
             key === "more" ? <DropdownMenu key={key}>
-              <DropdownMenuTrigger asChild><button type="button" data-label={label} aria-label="Další nástroje"><Icon /><span>{label}</span></button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><button type="button" data-label={label} aria-label="Další nástroje" aria-current={activeKey === "more" ? "page" : undefined} className={activeKey === "more" ? "active" : undefined}><Icon /><span>{label}</span></button></DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem onSelect={() => setUtility("broadcast")}>Vysílací studio (RTMP)</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setUtility("remove-bg")}>Odstranit pozadí obrázku</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setUtility("members")}>Členové komunity</DropdownMenuItem>
-                <DropdownMenuItem onSelect={onMore}>Otevřít dashboard</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("broadcast"); }}>Vysílací studio (RTMP)</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("remove-bg"); }}>Odstranit pozadí obrázku</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("members"); }}>Členové komunity</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { closeTransientUi(); onMore(); }}>Otevřít dashboard</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu> : <button key={key} type="button" data-label={label} aria-current={activeKey === key ? "page" : undefined} className={activeKey === key ? "active" : undefined} onClick={() => activate(key)}>
               <span className="sv-topbar-nav-glow" aria-hidden="true" />
@@ -214,7 +230,7 @@ export function CommunityTopbar({
 
           <div className="sv-topbar-profile-cluster">
             <span className="sv-topbar-presence-label" aria-hidden="true">LIVE</span>
-            <button type="button" className="sv-topbar-avatar" onClick={onProfile} title="Nastavení profilu" aria-label={`Profil ${displayName}`}>
+            <button type="button" className="sv-topbar-avatar" onClick={() => { closeTransientUi(); onProfile(); }} title="Nastavení profilu" aria-label={`Profil ${displayName}`}>
               {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
               <i className="sv-topbar-avatar-ring" aria-hidden="true" />
               <b className="sv-topbar-avatar-dot" aria-hidden="true" />
