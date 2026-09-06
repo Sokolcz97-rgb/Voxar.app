@@ -3,6 +3,7 @@ import { CommunityBackgroundRemoval } from "./CommunityBackgroundRemoval";
 import { CommunityEventsStudio } from "./CommunityEventsStudio";
 import { CommunityFiles } from "./CommunityFiles";
 import { CommunityShop } from "./CommunityShop";
+import { getVoxCommunityContext, openVoxChannel } from "@/lib/voxCommunityBridge";
 import "./community-suite-v25.css";
 import "./community-topbar-v25.css";
 import "./community-events-v26.css";
@@ -26,6 +27,9 @@ type Props = {
 
 export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, onOpenChannel }: Props) {
   const Icon = meta[mode].icon;
+  const bridged = getVoxCommunityContext();
+  const resolvedGuildId = guildId === undefined ? bridged.guildId : guildId;
+  const resolvedAdmin = isGuildAdmin === undefined ? bridged.isAdmin : isGuildAdmin;
   return (
     <section className="sv-utility-overlay" aria-label={meta[mode].label}>
       <div className="sv-utility-chrome" aria-hidden="true"><i /><i /><i /><span /></div>
@@ -34,7 +38,7 @@ export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, 
         <button type="button" onClick={onClose} aria-label="Zavřít"><X /></button>
       </header>
       <div className="sv-utility-scroll">
-        {mode === "events" && <CommunityEventsStudio guildId={guildId} isAdmin={isGuildAdmin} onOpenChannel={onOpenChannel} />}
+        {mode === "events" && <CommunityEventsStudio guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
         {mode === "files" && <CommunityFiles />}
         {mode === "store" && <CommunityShop />}
         {mode === "remove-bg" && <CommunityBackgroundRemoval />}
