@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 180" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#03131f"/><stop offset=".5" stop-color="#03253a"/><stop offset="1" stop-color="#15113f"/></linearGradient>
+ <radialGradient id="planet" cx="38%" cy="34%" r="70%"><stop stop-color="#168cc0"/><stop offset=".43" stop-color="#0875aa"/><stop offset=".72" stop-color="#043c67"/><stop offset="1" stop-color="#01121f"/></radialGradient>
+ <linearGradient id="ridge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#06334d"/><stop offset="1" stop-color="#010b13"/></linearGradient>
+ <linearGradient id="purple" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#4322a4" stop-opacity="0"/><stop offset=".5" stop-color="#824cff" stop-opacity=".75"/><stop offset="1" stop-color="#33dfff" stop-opacity=".25"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1600" height="180" fill="url(#bg)"/>
+<g fill="#75e8ff" opacity=".58">
+ <circle cx="566" cy="24" r="1.4"/><circle cx="618" cy="74" r="1"/><circle cx="739" cy="39" r="1.2"/><circle cx="819" cy="18" r="1.1"/><circle cx="857" cy="62" r="1.5"/><circle cx="1084" cy="25" r="1.1"/><circle cx="1182" cy="50" r="1.2"/><circle cx="1264" cy="24" r="1.4"/><circle cx="1390" cy="64" r="1"/><circle cx="1510" cy="36" r="1.5"/>
+</g>
+<circle cx="1074" cy="48" r="167" fill="#0a3754" opacity=".35" filter="url(#glow)"/>
+<circle cx="1074" cy="48" r="150" fill="url(#planet)" stroke="#5ce9ff" stroke-opacity=".24"/>
+<path d="M950 62c55-24 166-34 244-16-35 9-63 27-95 31-49 6-99 2-149-15z" fill="#3fbbe2" opacity=".11"/>
+<path d="M945 82c90 8 157-6 247-33" fill="none" stroke="#67dcff" stroke-opacity=".16" stroke-width="5"/>
+<path d="M890 164 940 104 976 128 1012 78 1040 121 1086 59 1118 115 1152 86 1194 133 1236 101 1290 164Z" fill="url(#ridge)"/>
+<path d="M1220 164 1282 101 1314 125 1355 72 1384 120 1424 86 1460 134 1502 92 1548 123 1600 78V180h-380z" fill="#08102e"/>
+<path d="M1190 148 1295 46 1600 36V62l-278 92z" fill="url(#purple)" opacity=".5"/>
+<path d="M1250 162 1376 35 1600 16V41l-308 132z" fill="url(#purple)" opacity=".32"/>
+<path d="M430 178H1600" stroke="#48e9ff" stroke-opacity=".35"/>
+<path d="M790 104 1260 31" stroke="#5bf0ff" stroke-opacity=".12"/><path d="M830 120 1310 42" stroke="#8b5cff" stroke-opacity=".18"/><path d="M860 138 1350 52" stroke="#53dbff" stroke-opacity=".08"/>
+</svg>
