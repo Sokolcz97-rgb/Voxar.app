@@ -161,12 +161,13 @@ export default function AppShellReference() {
   };
 
   const refreshVoice = async () => {
+    const epoch = guildLoadEpochRef.current;
     const channelIds = channels
       .filter((channel) => channel.type === "voice")
       .map((channel) => channel.id);
 
     if (!channelIds.length) {
-      setVoiceParticipants({});
+      if (guildLoadEpochRef.current === epoch) setVoiceParticipants({});
       return;
     }
 
@@ -175,6 +176,7 @@ export default function AppShellReference() {
       .select("channel_id, user_id, is_muted, is_deafened")
       .in("channel_id", channelIds);
 
+    if (guildLoadEpochRef.current !== epoch) return;
     const names = Object.fromEntries(
       members.map((member) => [
         member.user_id,
@@ -191,7 +193,7 @@ export default function AppShellReference() {
         is_deafened: participant.is_deafened,
       });
     });
-    setVoiceParticipants(map);
+    if (guildLoadEpochRef.current === epoch) setVoiceParticipants(map);
   };
 
   useEffect(() => {
@@ -296,13 +298,14 @@ export default function AppShellReference() {
       return;
     }
 
+    const epoch = guildLoadEpochRef.current;
     const requestedGuildId = activeGuildId;
     const { data } = await supabase
       .from("vox_categories")
       .select("name, emoji")
       .eq("guild_id", requestedGuildId)
       .order("position");
-    if (requestedGuildId === activeGuildId) setCategoryRows((data ?? []) as any[]);
+    if (guildLoadEpochRef.current === epoch) setCategoryRows((data ?? []) as any[]);
   };
 
   useEffect(() => { void loadCategories(); }, [activeGuildId]);
