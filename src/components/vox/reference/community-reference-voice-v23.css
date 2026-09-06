@@ -1,0 +1,319 @@
+/* V23 VOICE — replace the oversized technical radar screen with a polished community voice state.
+   No call/WebRTC behavior is changed. Only the current voice-stage DOM is restyled. */
+
+/* Root stage */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage.sv-voice-stage-v17 {
+  position:relative !important;
+  overflow:hidden !important;
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(30,156,207,.075),transparent 28%),
+    radial-gradient(ellipse at 63% 29%,rgba(112,63,255,.055),transparent 24%),
+    linear-gradient(180deg,#021522 0,#010c15 58%,#010910 100%) !important;
+}
+
+/* Make the technical grid almost invisible. */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::before,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage.sv-voice-stage-v17::before {
+  inset:62px 0 88px !important;
+  opacity:.028 !important;
+  background-image:
+    linear-gradient(rgba(70,220,250,.15) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(70,220,250,.10) 1px,transparent 1px) !important;
+  background-size:82px 82px !important;
+  mask-image:radial-gradient(ellipse at 50% 46%,#000 0 46%,transparent 82%) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage.sv-voice-stage-v17::after {
+  width:390px !important;
+  height:390px !important;
+  top:47% !important;
+  opacity:.34 !important;
+  background:
+    radial-gradient(circle,transparent 0 18%,rgba(73,225,255,.08) 18.3% 18.8%,transparent 19.2% 31%,rgba(66,163,246,.055) 31.3% 31.8%,transparent 32.2% 44%,rgba(111,76,255,.045) 44.3% 44.8%,transparent 45.2%),
+    radial-gradient(circle at 50% 50%,rgba(28,163,207,.08),transparent 62%) !important;
+  filter:drop-shadow(0 0 34px rgba(45,190,232,.06)) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Voice header — use the same scale and hierarchy as a normal text channel.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child {
+  position:relative !important;
+  height:64px !important;
+  min-height:64px !important;
+  padding:0 18px !important;
+  gap:10px !important;
+  border-bottom:1px solid rgba(67,221,251,.46) !important;
+  background:linear-gradient(90deg,rgba(3,31,49,.99),rgba(3,20,34,.99)) !important;
+  box-shadow:inset 0 -14px 26px rgba(1,10,18,.12) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12::before,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child::before {
+  content:"" !important;
+  position:absolute !important;
+  left:14px !important;
+  top:-1px !important;
+  width:44px !important;
+  height:2px !important;
+  background:#47eaff !important;
+  box-shadow:0 0 9px rgba(71,234,255,.48) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12::after,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child::after {
+  display:none !important;
+  content:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 svg,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child svg {
+  width:20px !important;
+  height:20px !important;
+  color:#55ecff !important;
+  filter:drop-shadow(0 0 7px rgba(77,234,255,.32)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:nth-child(2),
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child > span:first-child,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child > span:nth-child(2) {
+  font-family:Inter,"Segoe UI",system-ui,sans-serif !important;
+  font-size:18px !important;
+  font-weight:600 !important;
+  letter-spacing:.08em !important;
+  color:#e8faff !important;
+}
+
+/* Hide the VOICE LINK // ENTITY / SIGNAL READY engineering labels. */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:last-child,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:first-child > span:last-child {
+  display:none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Empty stage — intentional focal point instead of an empty radar wall.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .flex-1.overflow-y-auto,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) {
+  position:relative !important;
+  padding:24px !important;
+  overflow:hidden !important;
+  background:
+    radial-gradient(ellipse at 50% 49%,rgba(37,177,220,.07),transparent 26%),
+    linear-gradient(180deg,rgba(2,20,33,.38),rgba(1,10,18,.52)) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) > .h-full {
+  position:relative !important;
+  gap:12px !important;
+  transform:translateY(-6px) !important;
+  z-index:3 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2)::before {
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:286px !important;
+  height:286px !important;
+  transform:translate(-50%,-52%) !important;
+  border:1px solid rgba(59,216,247,.065) !important;
+  border-radius:50% !important;
+  background:
+    radial-gradient(circle,rgba(24,153,198,.055),transparent 46%),
+    radial-gradient(circle,transparent 0 34%,rgba(72,220,249,.055) 34.4% 34.8%,transparent 35.2% 49%,rgba(116,78,255,.04) 49.4% 49.8%,transparent 50.2%) !important;
+  box-shadow:
+    0 0 0 45px rgba(39,113,155,.014),
+    0 0 0 88px rgba(89,69,187,.009),
+    0 0 64px rgba(43,180,221,.035) !important;
+  pointer-events:none !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::after,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2)::after {
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:188px !important;
+  height:188px !important;
+  transform:translate(-50%,-52%) !important;
+  border-radius:50% !important;
+  background:radial-gradient(circle,rgba(24,164,208,.08),transparent 63%) !important;
+  pointer-events:none !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame {
+  width:106px !important;
+  height:106px !important;
+  border-radius:50% !important;
+  clip-path:none !important;
+  border:1px solid rgba(69,226,255,.68) !important;
+  background:
+    radial-gradient(circle at 48% 45%,rgba(18,109,140,.66),rgba(4,36,54,.94) 62%,rgba(1,15,26,.99)) !important;
+  box-shadow:
+    0 0 0 1px rgba(96,229,255,.07),
+    0 0 30px rgba(47,202,239,.12),
+    inset 0 0 28px rgba(47,213,248,.07) !important;
+  z-index:5 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24::before,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame::before {
+  inset:-20px !important;
+  border-radius:50% !important;
+  border:1px solid rgba(61,207,239,.10) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24::after,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame::after {
+  inset:-42px !important;
+  border-radius:50% !important;
+  border:1px solid rgba(104,82,255,.07) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24 svg,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame svg {
+  width:45px !important;
+  height:45px !important;
+  color:#4cecff !important;
+  filter:drop-shadow(0 0 11px rgba(74,232,255,.42)) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) h3,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) strong {
+  margin-top:12px !important;
+  font-family:Inter,"Segoe UI",system-ui,sans-serif !important;
+  font-size:18px !important;
+  font-weight:600 !important;
+  letter-spacing:.12em !important;
+  color:#64efff !important;
+  text-shadow:0 0 12px rgba(70,225,255,.12) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 p,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) p,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) > span {
+  font-size:11px !important;
+  line-height:1.42 !important;
+  letter-spacing:0 !important;
+  color:#93adb7 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Participant roster when the room is populated.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .shrink-0.border-b {
+  padding:10px 14px !important;
+  border-bottom-color:rgba(67,211,241,.20) !important;
+  background:linear-gradient(90deg,rgba(3,28,43,.90),rgba(2,17,29,.93)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .holo-pod {
+  width:158px !important;
+  padding:13px !important;
+  border-color:rgba(69,214,245,.30) !important;
+  background:linear-gradient(180deg,rgba(5,36,55,.86),rgba(3,20,32,.96)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .holo-pod .rank-ring {
+  width:66px !important;
+  height:66px !important;
+}
+
+/* --------------------------------------------------------------------------
+   Connect dock — remove engineering copy and make it a normal polished CTA.
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3) {
+  position:relative !important;
+  min-height:90px !important;
+  border-top:1px solid rgba(62,211,242,.27) !important;
+  background:linear-gradient(180deg,rgba(2,17,29,.93),rgba(1,10,18,.998)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child::before,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3)::before {
+  display:none !important;
+  content:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child > .p-4 {
+  min-height:90px !important;
+  padding:18px !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3) button {
+  position:relative !important;
+  min-width:238px !important;
+  width:238px !important;
+  min-height:48px !important;
+  height:48px !important;
+  padding:0 24px !important;
+  border:1px solid rgba(66,226,255,.72) !important;
+  color:#eafcff !important;
+  background:linear-gradient(180deg,rgba(7,83,111,.92),rgba(3,43,63,.98)) !important;
+  box-shadow:inset 0 0 22px rgba(57,218,250,.055),0 0 18px rgba(0,0,0,.18) !important;
+  font-size:0 !important;
+  letter-spacing:0 !important;
+  overflow:hidden !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group::after,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3) button::after {
+  content:"PŘIPOJIT SE" !important;
+  font-family:Inter,"Segoe UI",system-ui,sans-serif !important;
+  font-size:10px !important;
+  font-weight:600 !important;
+  letter-spacing:.16em !important;
+  color:#eafcff !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group svg,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3) button svg {
+  width:17px !important;
+  height:17px !important;
+  margin-right:9px !important;
+  color:#50ecff !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group:hover,
+.vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(3) button:hover {
+  border-color:#65efff !important;
+  background:linear-gradient(180deg,rgba(8,109,141,.96),rgba(3,57,78,.99)) !important;
+  box-shadow:0 0 22px rgba(55,218,251,.14),inset 0 0 22px rgba(55,218,251,.07) !important;
+}
+
+@media (max-width:1450px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage.sv-voice-stage-v17::after {
+    width:330px !important;
+    height:330px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2)::before {
+    width:250px !important;
+    height:250px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame {
+    width:98px !important;
+    height:98px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) h3,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) strong {
+    font-size:17px !important;
+  }
+}
+
+@media (min-width:1600px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage.sv-voice-stage-v17::after {
+    width:440px !important;
+    height:440px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2)::before {
+    width:320px !important;
+    height:320px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24,
+  .vox-reference-shell.sv-shell-v4 .sv-voice-stage-v17 > div:nth-child(2) .hex-frame {
+    width:114px !important;
+    height:114px !important;
+  }
+}

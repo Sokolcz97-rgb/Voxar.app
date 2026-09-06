@@ -29,6 +29,8 @@ import "./components/vox/reference/community-reference-convergence-v21.css";
 import "./components/vox/reference/community-reference-cleanup-v21.css";
 import "./components/vox/reference/community-reference-convergence-v22.css";
 import "./components/vox/reference/community-reference-fixes-v22.css";
+import "./components/vox/reference/community-reference-convergence-v23.css";
+import "./components/vox/reference/community-reference-voice-v23.css";
 import "./i18n";
 
 const syncAppTitle = () => {
