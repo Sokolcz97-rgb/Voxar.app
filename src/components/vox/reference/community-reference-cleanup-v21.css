@@ -1,0 +1,89 @@
+/* V21 cleanup: remove development-style micro labels and preserve hierarchy from the visual reference. */
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-kind,
+.vox-reference-shell.sv-shell-v4 .sv-channel-node-label,
+.vox-reference-shell.sv-shell-v4 .sv-right-community-code,
+.vox-reference-shell.sv-shell-v4 .sv-right-presence-summary > strong,
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan-node,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-badge,
+.vox-reference-shell.sv-shell-v4 .sv-composer-mode,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-time {
+  display:none !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan,
+.vox-reference-shell.sv-shell-v4 .sv-channel-header,
+.vox-reference-shell.sv-shell-v4 .sv-welcome,
+.vox-reference-shell.sv-shell-v4 .sv-right-card {
+  isolation:isolate;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button {
+  color:#75cddd !important;
+  opacity:.9 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button:hover,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button:hover {
+  color:#62ebff !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-card-cut { opacity:.72 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-edge-top,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-edge-bottom { opacity:.9 !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-message-meta .role-badge,
+.vox-reference-shell.sv-shell-v4 .sv-message-meta [class*="role"] {
+  transform:scale(.96);
+  transform-origin:left center;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels,
+.vox-reference-shell.sv-shell-v4 .sv-message-list {
+  scrollbar-gutter:stable;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list {
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  scrollbar-gutter:auto !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event,
+.vox-reference-shell.sv-shell-v4 .sv-right-now,
+.vox-reference-shell.sv-shell-v4 .sv-right-about,
+.vox-reference-shell.sv-shell-v4 .sv-right-members {
+  overflow:hidden !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event {
+  grid-template-columns:44px minmax(0,1fr) 66px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy,
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading > div,
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-copy {
+  min-width:0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span,
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-line strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art {
+  min-width:0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions {
+  max-width:100% !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button {
+  min-width:0 !important;
+}
