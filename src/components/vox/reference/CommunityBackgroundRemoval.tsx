@@ -8,47 +8,66 @@ export function CommunityBackgroundRemoval() {
   const [file, setFile] = useState<File | null>(null);
   const [working, setWorking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sourceObjectUrlRef = useRef<string | null>(null);
+  const resultObjectUrlRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => () => {
-    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-    if (resultUrl) URL.revokeObjectURL(resultUrl);
-  }, [sourceUrl, resultUrl]);
+    mountedRef.current = false;
+    if (sourceObjectUrlRef.current) URL.revokeObjectURL(sourceObjectUrlRef.current);
+    if (resultObjectUrlRef.current) URL.revokeObjectURL(resultObjectUrlRef.current);
+  }, []);
+
+  const replaceSourceUrl = (next: string | null) => {
+    const previous = sourceObjectUrlRef.current;
+    if (previous && previous !== next) URL.revokeObjectURL(previous);
+    sourceObjectUrlRef.current = next;
+    setSourceUrl(next);
+  };
+
+  const replaceResultUrl = (next: string | null) => {
+    const previous = resultObjectUrlRef.current;
+    if (previous && previous !== next) URL.revokeObjectURL(previous);
+    resultObjectUrlRef.current = next;
+    setResultUrl(next);
+  };
 
   const choose = (next: File | null) => {
-    if (!next) return;
+    if (!next || working) return;
     if (!next.type.startsWith("image/")) return toast.error("Vyber obrázek PNG, JPG nebo WEBP.");
-    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-    if (resultUrl) URL.revokeObjectURL(resultUrl);
     setFile(next);
-    setSourceUrl(URL.createObjectURL(next));
-    setResultUrl(null);
+    replaceSourceUrl(URL.createObjectURL(next));
+    replaceResultUrl(null);
   };
 
   const reset = () => {
-    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-    if (resultUrl) URL.revokeObjectURL(resultUrl);
-    setSourceUrl(null);
-    setResultUrl(null);
+    if (working) return;
+    replaceSourceUrl(null);
+    replaceResultUrl(null);
     setFile(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
   const remove = async () => {
-    if (!file) return;
+    if (!file || working) return;
     setWorking(true);
     try {
       const { removeBackground } = await import("@imgly/background-removal");
       const output = await removeBackground(file, {
         output: { format: "image/png", quality: 1 },
       });
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-      setResultUrl(URL.createObjectURL(output));
+      const nextResultUrl = URL.createObjectURL(output);
+      if (!mountedRef.current) {
+        URL.revokeObjectURL(nextResultUrl);
+        return;
+      }
+      replaceResultUrl(nextResultUrl);
       toast.success("Pozadí bylo odstraněno.");
     } catch (error) {
       console.error(error);
-      toast.error(`Odstranění pozadí selhalo: ${error instanceof Error ? error.message : "neznámá chyba"}`);
+      if (mountedRef.current) toast.error(`Odstranění pozadí selhalo: ${error instanceof Error ? error.message : "neznámá chyba"}`);
     } finally {
-      setWorking(false);
+      if (mountedRef.current) setWorking(false);
     }
   };
 
@@ -62,11 +81,11 @@ export function CommunityBackgroundRemoval() {
           <h2>Odstranit pozadí</h2>
           <p>Lokální nástroj pro transparentní PNG. Obrázek zpracovává přímo tvoje zařízení.</p>
         </div>
-        {file && <button type="button" className="sv-hud-button secondary" onClick={reset}><RotateCcw /> Nový obrázek</button>}
+        {file && <button type="button" className="sv-hud-button secondary" disabled={working} onClick={reset}><RotateCcw /> Nový obrázek</button>}
       </div>
 
       {!sourceUrl ? (
-        <button type="button" className="sv-bg-drop" onClick={() => inputRef.current?.click()}>
+        <button type="button" className="sv-bg-drop" disabled={working} onClick={() => inputRef.current?.click()}>
           <span className="sv-bg-orb"><ImagePlus /></span>
           <strong>Vyber obrázek</strong>
           <span>PNG · JPG · WEBP</span>
