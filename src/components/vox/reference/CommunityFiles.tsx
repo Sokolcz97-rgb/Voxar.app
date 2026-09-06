@@ -90,7 +90,8 @@ export function CommunityFiles() {
   };
 
   const remove = async (item: StoredFile) => {
-    if (!confirm(`Smazat soubor „${item.name.replace(/^\d+-[a-z0-9]+-/, "“)}“?`)) return;
+    const originalName = item.name.replace(/^\d+-[a-z0-9]+-/, "");
+    if (!confirm(`Smazat soubor „${originalName}“?`)) return;
     const { error } = await supabase.storage.from(BUCKET).remove([`${prefix}/${item.name}`]);
     if (error) return toast.error(error.message);
     setFiles((current) => current.filter((file) => file.name !== item.name));
