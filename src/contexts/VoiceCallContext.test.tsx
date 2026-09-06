@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 const voiceMock = vi.hoisted(() => ({
-  join: vi.fn<() => Promise<void>>(),
+  join: vi.fn<(channelId: string | null) => Promise<void>>(),
   leave: vi.fn<() => Promise<void>>(async () => undefined),
 }));
 
@@ -20,7 +20,7 @@ vi.mock("@/hooks/useVoxVoice", () => ({
     remotes: {},
     selfLevel: 0,
     presentIds: new Set<string>(),
-    join: () => voiceMock.join(channelId as never),
+    join: () => voiceMock.join(channelId),
     leave: voiceMock.leave,
     toggleMute: vi.fn(),
     toggleDeafen: vi.fn(),
@@ -35,7 +35,7 @@ vi.mock("@/hooks/useVoxVoice", () => ({
 }));
 
 vi.mock("@livekit/components-react", () => ({
-  RoomContext: { Provider: ({ children }: { children: React.ReactNode }) => <>{children}</> },
+  RoomContext: { Provider: ({ children }: { children: ReactNode }) => <>{children}</> },
   RoomAudioRenderer: () => null,
 }));
 
