@@ -67,7 +67,10 @@ export function CommunityRightPanel({
         </div>
 
         <div className="sv-right-event sv-right-event-v3">
-          <div className="sv-right-event-icon"><Gamepad2 /></div>
+          <div className="sv-right-event-icon">
+            <Gamepad2 />
+            <span className="sv-right-event-live">LIVE</span>
+          </div>
           <div className="sv-right-event-copy">
             <strong>Páteční herní večer</strong>
             <span>Dnes 20:00 · Hlasový kanál</span>
