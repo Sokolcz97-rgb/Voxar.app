@@ -11,23 +11,33 @@ interface Props {
 }
 
 export function CommunityGuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
+  const otherGuilds = guilds.filter((guild) => guild.id !== activeId);
+
   return (
     <div className="sv-guild-rail" aria-label="Komunity">
       <div className="sv-guild-rail-home" aria-hidden="true">
         <span className="sv-guild-home-hex"><b>SV</b></span>
       </div>
-      <div className="sv-guild-rail-divider" />
+
+      <button
+        type="button"
+        className="sv-guild-rail-create"
+        onClick={onCreate}
+        title="Vytvořit komunitu"
+        aria-label="Vytvořit komunitu"
+      >
+        <Plus />
+      </button>
 
       <div className="sv-guild-rail-list">
-        {guilds.map((guild) => {
-          const active = guild.id === activeId;
+        {otherGuilds.map((guild) => {
           const initials = guild.name.slice(0, 2).toUpperCase();
 
           return (
             <button
               key={guild.id}
               type="button"
-              className={`sv-guild-rail-item${active ? " active" : ""}`}
+              className="sv-guild-rail-item"
               onClick={() => onSelect(guild.id)}
               title={guild.name}
               aria-label={guild.name}
@@ -45,14 +55,16 @@ export function CommunityGuildRail({ guilds, activeId, onSelect, onCreate, onJoi
         })}
       </div>
 
-      <div className="sv-guild-rail-actions">
-        <button type="button" onClick={onCreate} title="Vytvořit komunitu" aria-label="Vytvořit komunitu">
-          <Plus />
-        </button>
-        <button type="button" onClick={onJoin} title="Připojit se ke komunitě" aria-label="Připojit se ke komunitě">
-          <LogIn />
-        </button>
-      </div>
+      <button
+        type="button"
+        className="sv-guild-rail-join"
+        onClick={onJoin}
+        title="Připojit se ke komunitě"
+        aria-label="Připojit se ke komunitě"
+      >
+        <LogIn />
+      </button>
+
       <div className="sv-guild-rail-spacer" aria-hidden="true" />
     </div>
   );
