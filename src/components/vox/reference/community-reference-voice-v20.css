@@ -1,0 +1,223 @@
+/* V20 VOICE — richer voice channel scene while keeping the existing WebRTC/Supabase logic untouched. */
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(32, 155, 199, .105), transparent 26%),
+    radial-gradient(circle at 65% 25%, rgba(93, 67, 255, .04), transparent 22%),
+    linear-gradient(180deg, rgba(2, 19, 31, .995), rgba(1, 10, 18, .998)) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::before {
+  inset: 64px 0 84px !important;
+  opacity: .13 !important;
+  background-image:
+    linear-gradient(rgba(72,218,248,.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(72,218,248,.13) 1px, transparent 1px) !important;
+  background-size: 68px 68px !important;
+  mask-image: radial-gradient(circle at 50% 50%, #000 0 64%, transparent 92%);
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after {
+  width: 520px !important;
+  height: 520px !important;
+  top: 48% !important;
+  opacity: .52 !important;
+  background:
+    radial-gradient(circle, transparent 0 14%, rgba(78, 227, 255, .07) 14.2% 14.6%, transparent 14.9% 24%, rgba(67, 165, 255, .055) 24.2% 24.6%, transparent 24.9% 34%, rgba(99, 86, 255, .05) 34.2% 34.6%, transparent 34.9% 45%, rgba(121, 76, 255, .035) 45.2% 45.5%, transparent 45.8%),
+    radial-gradient(circle at 50% 50%, rgba(29,165,205,.075), transparent 61%) !important;
+  filter: drop-shadow(0 0 34px rgba(44, 188, 231, .05));
+}
+
+/* header */
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 {
+  height: 64px !important;
+  min-height: 64px !important;
+  padding: 0 20px !important;
+  gap: 10px !important;
+  border-bottom: 1px solid rgba(67, 221, 251, .43) !important;
+  background:
+    linear-gradient(90deg, rgba(3,31,49,.985), rgba(3,21,36,.99)) !important;
+  box-shadow: inset 0 -12px 24px rgba(1,10,18,.16) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12::after {
+  content: "SIGNAL READY";
+  position: absolute;
+  right: 23px;
+  bottom: 5px;
+  font-size: 5px;
+  letter-spacing: .22em;
+  color: #4f8798;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 svg {
+  width: 18px !important;
+  height: 18px !important;
+  filter: drop-shadow(0 0 7px rgba(78, 235, 255, .42));
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:nth-child(2) {
+  font-size: 16px !important;
+  letter-spacing: .24em !important;
+  color: #5deaff !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .h-12 > span:last-child {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  font-size: 7px !important;
+  letter-spacing: .21em !important;
+  color: #8aa1ad !important;
+}
+
+/* empty/content stage */
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .flex-1.overflow-y-auto {
+  padding: 22px !important;
+  background:
+    linear-gradient(90deg, transparent 49.9%, rgba(70, 217, 248, .035) 50%, transparent 50.1%),
+    linear-gradient(180deg, transparent 49.9%, rgba(70, 217, 248, .035) 50%, transparent 50.1%),
+    radial-gradient(circle at 50% 47%, rgba(35,172,213,.045), transparent 34%) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 {
+  gap: 13px !important;
+  transform: translateY(-4px);
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before {
+  width: 370px !important;
+  height: 370px !important;
+  border-color: rgba(59, 216, 247, .07) !important;
+  box-shadow:
+    0 0 0 54px rgba(44,105,151,.018),
+    0 0 0 108px rgba(85,65,199,.012),
+    0 0 90px rgba(44, 181, 219, .035) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::after {
+  width: 250px !important;
+  height: 250px !important;
+  background:
+    radial-gradient(circle, rgba(29,160,202,.09), transparent 60%) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24 {
+  width: 118px !important;
+  height: 118px !important;
+  border: 1px solid rgba(65, 226, 255, .7) !important;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(17, 103, 132, .62), rgba(3,29,46,.9) 64%, rgba(1,16,27,.99)) !important;
+  box-shadow:
+    0 0 0 1px rgba(95,229,255,.08),
+    0 0 38px rgba(49,205,242,.14),
+    inset 0 0 32px rgba(48,215,250,.08) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24::before {
+  inset: -25px !important;
+  border-color: rgba(62,207,239,.14) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24::after {
+  inset: -53px !important;
+  border-color: rgba(94,91,255,.09) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24 svg {
+  width: 47px !important;
+  height: 47px !important;
+  filter: drop-shadow(0 0 12px rgba(73,233,255,.52)) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 {
+  margin-top: 7px !important;
+  font-size: 16px !important;
+  letter-spacing: .24em !important;
+  color: #59ecff !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 p {
+  font-size: 10px !important;
+  letter-spacing: .01em !important;
+  color: #92adb8 !important;
+}
+
+/* roster when people are present */
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > .shrink-0.border-b {
+  padding: 8px 12px !important;
+  border-bottom-color: rgba(67, 211, 241, .2) !important;
+  background: linear-gradient(90deg, rgba(3, 25, 39, .88), rgba(2, 16, 27, .91)) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .holo-pod {
+  width: 148px !important;
+  padding: 12px !important;
+  border-color: rgba(69, 214, 245, .27) !important;
+  background: linear-gradient(180deg, rgba(5, 34, 52, .84), rgba(3, 20, 32, .95)) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .holo-pod .rank-ring {
+  width: 62px !important;
+  height: 62px !important;
+}
+
+/* bottom connect dock */
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child {
+  min-height: 84px !important;
+  border-top-color: rgba(62,211,242,.24) !important;
+  background:
+    linear-gradient(180deg, rgba(2,16,27,.91), rgba(1,11,19,.995)) !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child::before {
+  content: "VOICE UPLINK // STUDIOVOXARIO";
+  position: absolute;
+  left: 18px;
+  top: 8px;
+  font-size: 5px;
+  letter-spacing: .2em;
+  color: #507c8b;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child > .p-4 {
+  min-height: 84px !important;
+  padding: 15px 16px 10px !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group {
+  min-width: 262px !important;
+  min-height: 50px !important;
+  padding: 0 30px !important;
+  border-color: rgba(63,221,252,.72) !important;
+  color: #65eaff !important;
+  background:
+    linear-gradient(180deg, rgba(8, 56, 79, .84), rgba(2, 28, 43, .96)) !important;
+  box-shadow:
+    inset 0 0 24px rgba(57,218,250,.045),
+    0 0 18px rgba(0,0,0,.2) !important;
+  font-size: 9px !important;
+  letter-spacing: .29em !important;
+}
+
+.sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative > div:last-child button.group:hover {
+  border-color: #5fefff !important;
+  background: linear-gradient(180deg, rgba(11, 84, 111, .92), rgba(3, 40, 59, .98)) !important;
+  box-shadow: 0 0 24px rgba(55,218,251,.18), inset 0 0 22px rgba(55,218,251,.07) !important;
+}
+
+@media (max-width: 1450px) {
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after { width: 470px !important; height: 470px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before { width: 330px !important; height: 330px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24 { width: 108px !important; height: 108px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 { font-size: 15px !important; }
+}
+
+@media (min-width: 1600px) {
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative::after { width: 600px !important; height: 600px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4::before { width: 410px !important; height: 410px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .hex-frame.w-24.h-24 { width: 132px !important; height: 132px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 h3 { font-size: 18px !important; }
+  .sv-workspace-center > .flex-1.flex.flex-col.min-h-0.relative .h-full.flex.flex-col.items-center.justify-center.text-center.gap-4 p { font-size: 11px !important; }
+}
