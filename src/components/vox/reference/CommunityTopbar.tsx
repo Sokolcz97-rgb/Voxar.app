@@ -105,6 +105,13 @@ export function CommunityTopbar({
             ? <img src={avatarUrl} alt={displayName} />
             : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
         </button>
+
+        <div className="sv-topbar-motto" aria-hidden="true">
+          <span>People</span>
+          <span>Ideas</span>
+          <span>Games</span>
+          <span>Together</span>
+        </div>
       </div>
     </header>
   );
