@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Hash, Loader2, MessageCircle, Search, UsersRound } from "lucide-react";
+import { Hash, Loader2, MessageCircle, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { openVoxUtility } from "@/lib/voxCommunityBridge";
+import { getVoxCommunityContext, openVoxChannel, openVoxUtility } from "@/lib/voxCommunityBridge";
 
 const db = supabase as any;
 
@@ -23,9 +23,11 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
   const [messages, setMessages] = useState<MessageResult[]>([]);
   const [members, setMembers] = useState<MemberResult[]>([]);
   const trimmed = query.trim();
+  const resolvedGuildId = guildId ?? getVoxCommunityContext().guildId;
+  const openChannel = onOpenChannel ?? openVoxChannel;
 
   useEffect(() => {
-    if (!open || !guildId || trimmed.length < 2) {
+    if (!open || !resolvedGuildId || trimmed.length < 2) {
       setChannels([]);
       setMessages([]);
       setMembers([]);
@@ -38,8 +40,8 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
       setLoading(true);
       try {
         const [{ data: guildChannels }, { data: memberships }] = await Promise.all([
-          db.from("vox_channels").select("id,name,type,topic").eq("guild_id", guildId).order("position"),
-          db.from("vox_guild_members").select("user_id").eq("guild_id", guildId),
+          db.from("vox_channels").select("id,name,type,topic").eq("guild_id", resolvedGuildId).order("position"),
+          db.from("vox_guild_members").select("user_id").eq("guild_id", resolvedGuildId),
         ]);
         if (cancelled) return;
 
@@ -51,12 +53,13 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
         const channelIds = allChannels.map((channel) => channel.id);
         const memberIds = (memberships ?? []).map((row: any) => row.user_id);
 
+        const escaped = trimmed.replace(/[%_]/g, "\\$&");
         const [messageResponse, profileResponse] = await Promise.all([
           channelIds.length
             ? db.from("vox_messages")
                 .select("id,channel_id,content,created_at")
                 .in("channel_id", channelIds)
-                .ilike("content", `%${trimmed.replace(/[%_]/g, "\\$&")}%`)
+                .ilike("content", `%${escaped}%`)
                 .order("created_at", { ascending: false })
                 .limit(8)
             : Promise.resolve({ data: [] }),
@@ -64,7 +67,7 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
             ? db.from("profiles")
                 .select("user_id,display_name,avatar_url")
                 .in("user_id", memberIds)
-                .ilike("display_name", `%${trimmed.replace(/[%_]/g, "\\$&")}%`)
+                .ilike("display_name", `%${escaped}%`)
                 .limit(6)
             : Promise.resolve({ data: [] }),
         ]);
@@ -90,7 +93,7 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [guildId, open, trimmed]);
+  }, [resolvedGuildId, open, trimmed]);
 
   const channelMap = useMemo(() => Object.fromEntries(channels.map((channel) => [channel.id, channel.name])), [channels]);
   const total = channels.length + messages.length + members.length;
@@ -104,15 +107,13 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
         {loading && <Loader2 className="animate-spin" />}
       </div>
 
-      {trimmed.length >= 2 && !loading && total === 0 && (
-        <div className="sv-community-search-empty">Nic jsme nenašli.</div>
-      )}
+      {trimmed.length >= 2 && !loading && total === 0 && <div className="sv-community-search-empty">Nic jsme nenašli.</div>}
 
       {channels.length > 0 && (
         <section>
           <h4>Kanály</h4>
           {channels.map((channel) => (
-            <button key={channel.id} type="button" onClick={() => { onOpenChannel?.(channel.id); onClose(); }}>
+            <button key={channel.id} type="button" onClick={() => { openChannel(channel.id); onClose(); }}>
               <Hash /><span><strong>{channel.name}</strong><small>{channel.topic || (channel.type === "voice" ? "Hlasový kanál" : "Textový kanál")}</small></span>
             </button>
           ))}
@@ -135,7 +136,7 @@ export function CommunitySearchPopover({ guildId, query, open, onClose, onOpenCh
         <section>
           <h4>Zprávy</h4>
           {messages.map((message) => (
-            <button key={message.id} type="button" onClick={() => { onOpenChannel?.(message.channel_id); onClose(); }}>
+            <button key={message.id} type="button" onClick={() => { openChannel(message.channel_id); onClose(); }}>
               <MessageCircle /><span><strong>#{channelMap[message.channel_id] || "kanál"}</strong><small>{message.content.slice(0, 110)}</small></span>
             </button>
           ))}
