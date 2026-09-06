@@ -1,7 +1,7 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { AtSign, BarChart3, Bot, Gift, Loader2, Paperclip, Plus, Send, Smile, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
+import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import type { UploadedAttachment } from "@/lib/uploadAttachment";
 
 interface Props {
@@ -37,6 +37,27 @@ export function CommunityComposer({
     });
   };
 
+  const insertGif = () => {
+    const url = window.prompt("Vlož odkaz na GIF (https://…)", "https://");
+    if (!url?.trim()) return;
+    appendInput(url.trim());
+  };
+
+  const createPoll = () => {
+    const question = window.prompt("Otázka ankety");
+    if (!question?.trim()) return;
+    const rawOptions = window.prompt("Možnosti odděl čárkou", "Ano, Ne");
+    const options = (rawOptions ?? "")
+      .split(",")
+      .map((option) => option.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    const lines = options.length
+      ? options.map((option, index) => `${["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"][index]} ${option}`)
+      : ["👍 Ano", "👎 Ne"];
+    appendInput(`📊 ANKETA: ${question.trim()}\n${lines.join("\n")}`);
+  };
+
   const canSend = !!input.trim() || pending.length > 0;
 
   return (
@@ -54,11 +75,7 @@ export function CommunityComposer({
             <div key={`${attachment.url}-${index}`} className="sv-composer-pending-item">
               {attachment.kind === "image" && <img src={attachment.url} alt="" />}
               <span>{attachment.name}</span>
-              <button
-                type="button"
-                title="Odebrat přílohu"
-                onClick={() => setPending((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-              >
+              <button type="button" title="Odebrat přílohu" onClick={() => setPending((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
                 <X />
               </button>
             </div>
@@ -66,13 +83,7 @@ export function CommunityComposer({
         </div>
       )}
 
-      <input
-        ref={fileRef}
-        type="file"
-        multiple
-        hidden
-        onChange={(event) => void onPickFiles(event.target.files)}
-      />
+      <input ref={fileRef} type="file" multiple hidden onChange={(event) => void onPickFiles(event.target.files)} />
 
       <div className="sv-composer-row">
         <button
@@ -95,42 +106,21 @@ export function CommunityComposer({
                 void onSend();
               }
             }}
-            placeholder={hasKey
-              ? `Napsat šifrovanou zprávu do #${channelName}...`
-              : `Napsat zprávu do #${channelName}...`}
+            placeholder={hasKey ? `Napsat šifrovanou zprávu do #${channelName}...` : `Napsat zprávu do #${channelName}...`}
             className="sv-composer-textarea resize-none"
             rows={1}
           />
 
           <div className="sv-composer-inline-actions">
-            <button
-              type="button"
-              title="Dárek"
-              onClick={() => toast({ title: "Dárky", description: "Dárky a boosty připravujeme." })}
-            >
+            <button type="button" title="Dárky, boosty a rámečky" onClick={() => openVoxUtility("store")}>
               <Gift />
             </button>
-            <button
-              type="button"
-              className="sv-composer-gif"
-              title="GIF"
-              onClick={() => toast({ title: "GIF", description: "GIF vyhledávání připravujeme." })}
-            >
-              GIF
-            </button>
-            <button type="button" title="Emoji" onClick={() => appendInput("🙂")}>
-              <Smile />
-            </button>
+            <button type="button" className="sv-composer-gif" title="Vložit GIF" onClick={insertGif}>GIF</button>
+            <button type="button" title="Emoji" onClick={() => appendInput("🙂")}><Smile /></button>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="sv-composer-send"
-          disabled={!canSend}
-          title="Odeslat zprávu"
-          onClick={() => void onSend()}
-        >
+        <button type="button" className="sv-composer-send" disabled={!canSend} title="Odeslat zprávu" onClick={() => void onSend()}>
           <Send />
         </button>
       </div>
@@ -138,12 +128,8 @@ export function CommunityComposer({
       <div className="sv-composer-toolbar">
         <button type="button" onClick={() => appendInput("@")}><AtSign />Zmínka</button>
         <button type="button" onClick={() => fileRef.current?.click()}><Paperclip />Připojit soubor</button>
-        <button type="button" onClick={() => appendInput("📊 Anketa:")}><BarChart3 />Vytvořit anketu</button>
-        <button
-          type="button"
-          className="ai"
-          onClick={() => window.dispatchEvent(new CustomEvent("vox:open-ai"))}
-        >
+        <button type="button" onClick={createPoll}><BarChart3 />Vytvořit anketu</button>
+        <button type="button" className="ai" onClick={() => window.dispatchEvent(new CustomEvent("vox:open-ai"))}>
           <Bot />AI asistent
         </button>
         <span className="sv-composer-enter-hint">{hasKey ? "E2E · " : ""}ENTER pro odeslání</span>
