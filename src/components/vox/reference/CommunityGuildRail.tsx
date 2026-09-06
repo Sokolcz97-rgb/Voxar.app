@@ -13,6 +13,11 @@ interface Props {
 export function CommunityGuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Props) {
   return (
     <div className="sv-guild-rail" aria-label="Komunity">
+      <div className="sv-guild-rail-home" aria-hidden="true">
+        <span className="sv-guild-home-hex"><b>SV</b></span>
+      </div>
+      <div className="sv-guild-rail-divider" />
+
       <div className="sv-guild-rail-list">
         {guilds.map((guild) => {
           const active = guild.id === activeId;
@@ -48,6 +53,7 @@ export function CommunityGuildRail({ guilds, activeId, onSelect, onCreate, onJoi
           <LogIn />
         </button>
       </div>
+      <div className="sv-guild-rail-spacer" aria-hidden="true" />
     </div>
   );
 }
