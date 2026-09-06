@@ -2,15 +2,16 @@ import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "luci
 import type { VoxMember } from "../MemberList";
 import { ReferenceActiveMembers } from "../ReferenceActiveMembers";
 import { useCommunityEvents } from "@/hooks/useCommunityEvents";
+import { openVoxChannel, openVoxUtility } from "@/lib/voxCommunityBridge";
 
 interface Props {
-  guildId: string;
+  guildId?: string;
   guildName: string;
   memberCount: number;
   onlineCount: number;
   members: VoxMember[];
   onJoinVoice: () => void;
-  onShowEvents: () => void;
+  onShowEvents?: () => void;
   onShowMembers: () => void;
   onOpenChannel?: (channelId: string) => void;
   onMessage: (member: VoxMember) => void;
@@ -28,7 +29,6 @@ export function CommunityRightPanel({
   memberCount,
   onlineCount,
   members,
-  onJoinVoice,
   onShowEvents,
   onShowMembers,
   onOpenChannel,
@@ -38,6 +38,8 @@ export function CommunityRightPanel({
   const previewAttendees = upcomingEvent?.attendees.filter((attendee) => attendee.status === "going").slice(0, 3) ?? [];
   const goingCount = upcomingEvent?.rsvp.going ?? 0;
   const extraCount = Math.max(goingCount - previewAttendees.length, 0);
+  const showEvents = onShowEvents ?? (() => openVoxUtility("events"));
+  const openChannel = onOpenChannel ?? openVoxChannel;
 
   return (
     <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19 sv-right-shell-v24">
@@ -74,7 +76,7 @@ export function CommunityRightPanel({
         <span className="sv-right-now-beam" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">Nejbližší událost</div>
-          <button type="button" className="sv-right-link-button" onClick={onShowEvents}>Zobrazit vše <ChevronRight /></button>
+          <button type="button" className="sv-right-link-button" onClick={showEvents}>Zobrazit vše <ChevronRight /></button>
         </div>
 
         {upcomingEvent ? (
@@ -96,7 +98,7 @@ export function CommunityRightPanel({
             <button
               type="button"
               className="sv-right-event-join"
-              onClick={() => upcomingEvent.channel_id && onOpenChannel ? onOpenChannel(upcomingEvent.channel_id) : onShowEvents()}
+              onClick={() => upcomingEvent.channel_id ? openChannel(upcomingEvent.channel_id) : showEvents()}
             >
               {upcomingEvent.channel_id ? "Otevřít" : "Detail"}
             </button>
@@ -105,7 +107,7 @@ export function CommunityRightPanel({
           <div className="sv-right-event sv-right-event-v3 sv-right-event-v18 sv-right-event-v19 is-empty">
             <div className="sv-right-event-icon"><CalendarDays /></div>
             <div className="sv-right-event-copy"><strong>Zatím nic naplánováno</strong><span>Nové komunitní akce se objeví automaticky.</span></div>
-            <button type="button" className="sv-right-event-join" onClick={onShowEvents}>Události</button>
+            <button type="button" className="sv-right-event-join" onClick={showEvents}>Události</button>
           </div>
         )}
       </section>
