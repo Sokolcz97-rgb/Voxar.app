@@ -4,414 +4,95 @@
 /* --------------------------------------------------------------------------
    LEFT SIDEBAR / SELF PANEL
    -------------------------------------------------------------------------- */
-.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
-  height: 188px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero-art {
-  bottom: 62px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan {
-  min-height: 30px !important;
-  padding: 0 5px 7px !important;
-  color: #83dff0 !important;
-  font-size: 8px !important;
-  line-height: 1.45 !important;
-  letter-spacing: .19em !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav {
-  padding: 9px 0 7px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
-  min-height: 35px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title {
-  padding-bottom: 6px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels {
-  min-height: 180px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools {
-  min-height: 31px !important;
-  padding-block: 4px 6px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools button {
-  width: 25px !important;
-  height: 25px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-group + .sv-channel-group {
-  margin-top: 9px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-group-head {
-  min-height: 25px !important;
-  padding-bottom: 3px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-group-items {
-  gap: 4px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-item {
-  min-height: 37px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-sidebar-self {
-  padding-top: 6px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel {
-  min-width: 0;
-  border: 1px solid rgba(48, 203, 239, .20) !important;
-  border-top-color: rgba(48, 218, 251, .30) !important;
-  background: linear-gradient(180deg, rgba(3, 24, 39, .96), rgba(2, 17, 29, .99)) !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-row {
-  min-width: 0;
-  height: 58px !important;
-  padding-inline: 7px !important;
-  gap: 5px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity {
-  min-width: 0 !important;
-  gap: 7px !important;
-  padding-inline: 0 !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-ring {
-  width: 39px !important;
-  height: 39px !important;
-  flex: 0 0 39px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-inner {
-  width: 35px !important;
-  height: 35px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-copy {
-  min-width: 58px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-name {
-  max-width: none !important;
-  color: #ecfaff !important;
-  font-family: Inter, "Segoe UI", sans-serif !important;
-  font-size: 12px !important;
-  line-height: 15px !important;
-  text-shadow: none !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions {
-  gap: 1px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action {
-  width: 25px !important;
-  height: 25px !important;
-  min-width: 25px !important;
-  padding: 0 !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action svg {
-  width: 13px !important;
-  height: 13px !important;
-}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero { height: 188px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero-art { bottom: 62px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan { min-height: 30px !important; padding: 0 5px 7px !important; color: #83dff0 !important; font-size: 8px !important; line-height: 1.45 !important; letter-spacing: .19em !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav { padding: 9px 0 7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button { min-height: 35px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title { padding-bottom: 7px !important; color: #9ac5d6 !important; font-size: 8px !important; letter-spacing: .13em !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels { min-height: 180px !important; padding-inline: 7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools { min-height: 31px !important; padding-block: 4px 6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools button { width: 25px !important; height: 25px !important; border-radius: 6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group + .sv-channel-group { margin-top: 10px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-head { min-height: 25px !important; padding: 0 5px 3px !important; color: #7598aa !important; font-size: 8px !important; letter-spacing: .08em !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-items { gap: 4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item { min-height: 37px !important; padding-inline: 9px !important; border: 1px solid transparent; border-radius: 7px !important; transition: background .14s ease, border-color .14s ease, color .14s ease; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item:hover { border-color: rgba(65, 190, 222, .12); background: rgba(15, 70, 91, .22) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item.active { border-color: rgba(64, 219, 245, .28) !important; background: linear-gradient(90deg, rgba(21, 121, 150, .38), rgba(8, 48, 68, .32)) !important; box-shadow: inset 2px 0 0 rgba(83, 229, 249, .82); }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item.active svg { color: #8ff0ff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self { padding-top: 6px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel { min-width: 0; border: 1px solid rgba(48, 203, 239, .20) !important; border-top-color: rgba(48, 218, 251, .30) !important; background: linear-gradient(180deg, rgba(3, 24, 39, .96), rgba(2, 17, 29, .99)) !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-row { min-width: 0; height: 58px !important; padding-inline: 7px !important; gap: 5px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity { min-width: 0 !important; gap: 7px !important; padding-inline: 0 !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-ring { width: 39px !important; height: 39px !important; flex: 0 0 39px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-inner { width: 35px !important; height: 35px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-copy { min-width: 58px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-name { max-width: none !important; color: #ecfaff !important; font-family: Inter, "Segoe UI", sans-serif !important; font-size: 12px !important; line-height: 15px !important; text-shadow: none !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions { gap: 1px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action { width: 25px !important; height: 25px !important; min-width: 25px !important; padding: 0 !important; }
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action svg { width: 13px !important; height: 13px !important; }
 
 /* --------------------------------------------------------------------------
    CHANNEL HEADER / CHAT
    -------------------------------------------------------------------------- */
-.vox-reference-shell.sv-shell-v4 .sv-channel-header {
-  flex-basis: 62px !important;
-  min-height: 62px !important;
-  padding-inline: 18px 14px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-header-main {
-  min-width: 0;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon {
-  width: 25px !important;
-  height: 25px !important;
-  flex: 0 0 25px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row {
-  gap: 6px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-hash {
-  width: 15px !important;
-  height: 15px !important;
-  color: #7fa4b8 !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row h1 {
-  font-size: 16px !important;
-  line-height: 18px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy p {
-  margin-top: 3px !important;
-  max-width: 620px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 9px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-welcome {
-  flex-basis: 158px !important;
-  min-height: 158px !important;
-  margin: 11px 14px 7px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-welcome-copy {
-  padding: 13px 16px 11px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 {
-  font-size: 19px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-welcome-portal {
-  width: 88px !important;
-  height: 88px !important;
-  top: 24px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-list {
-  padding-inline: 14px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message {
-  min-height: 56px !important;
-  padding-block: 7px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message.compact {
-  min-height: 31px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-avatar,
-.vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner {
-  width: 44px !important;
-  height: 44px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-avatar-column {
-  width: 52px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-meta strong {
-  font-size: 13px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-meta time {
-  font-size: 9px !important;
-  opacity: .86;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-message-text {
-  font-size: 12px !important;
-  line-height: 18px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-composer-v3 {
-  margin: 0 10px 8px !important;
-  padding: 8px 8px 6px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-composer-plus,
-.vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap,
-.vox-reference-shell.sv-shell-v4 .sv-composer-send {
-  min-height: 48px !important;
-  height: 48px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-composer-plus {
-  width: 48px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-composer-send {
-  width: 52px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-composer-textarea {
-  min-height: 48px !important;
-  padding-top: 15px !important;
-  font-size: 12px !important;
-}
+.vox-reference-shell.sv-shell-v4 .sv-channel-header { flex-basis: 62px !important; min-height: 62px !important; padding-inline: 18px 14px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-main { min-width: 0; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon { width: 25px !important; height: 25px !important; flex: 0 0 25px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row { gap: 6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-hash { width: 15px !important; height: 15px !important; color: #7fa4b8 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row h1 { font-size: 16px !important; line-height: 18px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy p { margin-top: 3px !important; max-width: 620px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome { flex-basis: 158px !important; min-height: 158px !important; margin: 11px 14px 7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy { padding: 13px 16px 11px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 { font-size: 19px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-portal { width: 88px !important; height: 88px !important; top: 24px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-list { padding-inline: 14px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message { min-height: 56px !important; padding-block: 7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message.compact { min-height: 31px !important; padding-top: 4px !important; padding-bottom: 4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar, .vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner { width: 44px !important; height: 44px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar-column { width: 52px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-meta strong { font-size: 13px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-meta time { font-size: 9px !important; opacity: .86; }
+.vox-reference-shell.sv-shell-v4 .sv-message-text { font-size: 12px !important; line-height: 18px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-v3 { margin: 0 10px 8px !important; padding: 8px 8px 6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus, .vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap, .vox-reference-shell.sv-shell-v4 .sv-composer-send { min-height: 48px !important; height: 48px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus { width: 48px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-send { width: 52px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-textarea { min-height: 48px !important; padding-top: 15px !important; font-size: 12px !important; }
 
 /* --------------------------------------------------------------------------
    RIGHT PANEL
    -------------------------------------------------------------------------- */
-.vox-reference-shell.sv-shell-v4 .sv-workspace-right > .sv-right-shell {
-  padding: 8px !important;
-  gap: 8px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-about-v3 {
-  padding: 12px 12px 11px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-community-heading {
-  margin-top: 8px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-about h2 {
-  font-size: 16px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-about p {
-  font-size: 9px !important;
-  line-height: 13px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 {
-  margin: 10px 0 9px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div {
-  min-height: 40px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-now-v3 {
-  padding: 10px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
-  margin-top: 8px !important;
-  padding: 9px !important;
-  grid-template-columns: 52px minmax(0, 1fr) auto !important;
-  min-height: 76px !important;
-  background:
-    radial-gradient(circle at 18% 42%, rgba(107, 61, 255, .22), transparent 30%),
-    linear-gradient(110deg, rgba(55, 34, 112, .54), rgba(7, 39, 65, .56)) !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon {
-  position: relative;
-  width: 52px !important;
-  height: 52px !important;
-  display: grid !important;
-  place-items: center !important;
-  overflow: hidden;
-  border: 1px solid rgba(137, 91, 255, .48) !important;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(167, 105, 255, .32), transparent 44%),
-    linear-gradient(145deg, rgba(87, 47, 166, .82), rgba(27, 43, 91, .92)) !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon svg {
-  width: 22px !important;
-  height: 22px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-live {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  padding: 2px 4px;
-  border: 1px solid rgba(115, 225, 255, .46);
-  border-radius: 2px;
-  color: #b9f6ff;
-  background: rgba(4, 30, 51, .88);
-  font: 800 6px/1 Inter, "Segoe UI", sans-serif;
-  letter-spacing: .12em;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong {
-  font-size: 11px !important;
-  line-height: 14px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span {
-  margin-top: 2px;
-  font-size: 8px !important;
-  line-height: 11px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-people {
-  margin-top: 7px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 > button {
-  min-width: 64px !important;
-  height: 30px !important;
-  align-self: center;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-members-v3 {
-  padding: 10px 10px 52px !important;
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-members-head {
-  padding-bottom: 9px !important;
-  border-bottom: 1px solid rgba(51, 196, 231, .11);
-}
-
-.vox-reference-shell.sv-shell-v4 .sv-right-members-list {
-  padding-top: 4px;
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-ref-active-member {
-  min-height: 42px !important;
-  padding-block: 3px !important;
-  border-bottom: 1px solid rgba(49, 150, 183, .07);
-}
-
-.vox-reference-shell.sv-shell-v4 .vox-ref-member-avatar {
-  width: 34px !important;
-  height: 34px !important;
-  flex-basis: 34px !important;
-}
+.vox-reference-shell.sv-shell-v4 .sv-workspace-right > .sv-right-shell { padding: 8px !important; gap: 8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-about-v3 { padding: 12px 12px 11px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading { margin-top: 8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-about h2 { font-size: 16px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-about p { font-size: 9px !important; line-height: 13px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 { margin: 10px 0 9px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div { min-height: 40px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-now-v3 { padding: 10px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 { margin-top: 8px !important; padding: 9px !important; grid-template-columns: 52px minmax(0, 1fr) auto !important; min-height: 76px !important; background: radial-gradient(circle at 18% 42%, rgba(107, 61, 255, .22), transparent 30%), linear-gradient(110deg, rgba(55, 34, 112, .54), rgba(7, 39, 65, .56)) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon { position: relative; width: 52px !important; height: 52px !important; display: grid !important; place-items: center !important; overflow: hidden; border: 1px solid rgba(137, 91, 255, .48) !important; background: radial-gradient(circle at 50% 35%, rgba(167, 105, 255, .32), transparent 44%), linear-gradient(145deg, rgba(87, 47, 166, .82), rgba(27, 43, 91, .92)) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon svg { width: 22px !important; height: 22px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-live { position: absolute; right: 3px; bottom: 3px; padding: 2px 4px; border: 1px solid rgba(115, 225, 255, .46); border-radius: 2px; color: #b9f6ff; background: rgba(4, 30, 51, .88); font: 800 6px/1 Inter, "Segoe UI", sans-serif; letter-spacing: .12em; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong { font-size: 11px !important; line-height: 14px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span { margin-top: 2px; font-size: 8px !important; line-height: 11px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-people { margin-top: 7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 > button { min-width: 64px !important; height: 30px !important; align-self: center; }
+.vox-reference-shell.sv-shell-v4 .sv-right-members-v3 { padding: 10px 10px 52px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head { padding-bottom: 9px !important; border-bottom: 1px solid rgba(51, 196, 231, .11); }
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list { padding-top: 4px; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-member { min-height: 42px !important; padding-block: 3px !important; border-bottom: 1px solid rgba(49, 150, 183, .07); }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-avatar { width: 34px !important; height: 34px !important; flex-basis: 34px !important; }
 
 @media (max-height: 860px) {
-  .vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
-    height: 174px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-welcome {
-    flex-basis: 146px !important;
-    min-height: 146px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
-    min-height: 32px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-channel-item {
-    min-height: 35px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-message {
-    min-height: 53px !important;
-    padding-block: 6px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-message-avatar,
-  .vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner {
-    width: 42px !important;
-    height: 42px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-message-avatar-column {
-    width: 50px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
-    grid-template-columns: 46px minmax(0, 1fr) auto !important;
-    min-height: 68px !important;
-  }
-  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon {
-    width: 46px !important;
-    height: 46px !important;
-  }
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero { height: 174px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome { flex-basis: 146px !important; min-height: 146px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button { min-height: 32px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-channel-item { min-height: 35px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message { min-height: 53px !important; padding-block: 6px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar, .vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner { width: 42px !important; height: 42px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar-column { width: 50px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 { grid-template-columns: 46px minmax(0, 1fr) auto !important; min-height: 68px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon { width: 46px !important; height: 46px !important; }
 }
