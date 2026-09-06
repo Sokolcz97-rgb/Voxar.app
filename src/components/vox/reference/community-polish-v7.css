@@ -1,0 +1,280 @@
+/* V7 polish: targeted refinements for the clean structural shell.
+   This file intentionally touches only current sv-* markup. */
+
+/* --------------------------------------------------------------------------
+   LEFT SIDEBAR / SELF PANEL
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
+  height: 184px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero-art {
+  inset-bottom: 62px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav {
+  padding: 9px 0 7px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
+  min-height: 35px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title {
+  padding-bottom: 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self {
+  padding-top: 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel {
+  min-width: 0;
+  border: 1px solid rgba(48, 203, 239, .20) !important;
+  border-top-color: rgba(48, 218, 251, .30) !important;
+  background: linear-gradient(180deg, rgba(3, 24, 39, .96), rgba(2, 17, 29, .99)) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-row {
+  min-width: 0;
+  height: 60px !important;
+  padding-inline: 7px !important;
+  gap: 5px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity {
+  min-width: 0 !important;
+  gap: 7px !important;
+  padding-inline: 0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-ring {
+  width: 39px !important;
+  height: 39px !important;
+  flex: 0 0 39px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-identity .rank-inner {
+  width: 35px !important;
+  height: 35px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-copy {
+  min-width: 58px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-name {
+  max-width: none !important;
+  color: #ecfaff !important;
+  font-family: Inter, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  line-height: 15px !important;
+  text-shadow: none !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions {
+  gap: 1px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action {
+  width: 25px !important;
+  height: 25px !important;
+  min-width: 25px !important;
+  padding: 0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-self-panel-actions .vox-self-action svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* --------------------------------------------------------------------------
+   CHANNEL HEADER / CHAT
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-channel-header {
+  flex-basis: 64px !important;
+  min-height: 64px !important;
+  padding-inline: 18px 14px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-main {
+  min-width: 0;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon {
+  width: 25px !important;
+  height: 25px !important;
+  flex: 0 0 25px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row {
+  gap: 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-hash {
+  width: 15px !important;
+  height: 15px !important;
+  color: #7fa4b8 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row h1 {
+  font-size: 16px !important;
+  line-height: 18px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy p {
+  margin-top: 3px !important;
+  max-width: 620px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome {
+  flex-basis: 162px !important;
+  min-height: 162px !important;
+  margin: 12px 14px 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy {
+  padding: 13px 16px 11px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 {
+  font-size: 19px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-welcome-portal {
+  width: 88px !important;
+  height: 88px !important;
+  top: 24px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-list {
+  padding-inline: 12px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message {
+  min-height: 55px !important;
+  padding-block: 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message.compact {
+  min-height: 30px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar,
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar-column {
+  width: 50px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-meta strong {
+  font-size: 13px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-message-text {
+  font-size: 11px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-v3 {
+  margin: 0 10px 8px !important;
+  padding: 8px 8px 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus,
+.vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap,
+.vox-reference-shell.sv-shell-v4 .sv-composer-send {
+  min-height: 46px !important;
+  height: 46px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus {
+  width: 46px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-send {
+  width: 50px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-composer-textarea {
+  min-height: 46px !important;
+  padding-top: 14px !important;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-right > .sv-right-shell {
+  padding: 8px !important;
+  gap: 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about-v3 {
+  padding: 12px 12px 11px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading {
+  margin-top: 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about h2 {
+  font-size: 16px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-about p {
+  font-size: 9px !important;
+  line-height: 13px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 {
+  margin: 10px 0 9px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div {
+  min-height: 40px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-now-v3 {
+  padding: 10px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
+  margin-top: 8px !important;
+  padding: 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members-v3 {
+  padding: 10px 10px 52px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-member {
+  min-height: 42px !important;
+  padding-block: 3px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  flex-basis: 34px !important;
+}
+
+@media (max-height: 860px) {
+  .vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar .sv-community-hero {
+    height: 168px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome {
+    flex-basis: 148px !important;
+    min-height: 148px !important;
+  }
+  .vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
+    min-height: 32px !important;
+  }
+}

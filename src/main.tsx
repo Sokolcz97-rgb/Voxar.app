@@ -10,6 +10,7 @@ import "./components/vox/reference/community-structured-settings.css";
 import "./components/vox/reference/community-app-shell-v4.css";
 import "./components/vox/reference/community-app-shell-v5.css";
 import "./components/vox/reference/community-panel-recovery-v6.css";
+import "./components/vox/reference/community-polish-v7.css";
 import "./i18n";
 
 const syncAppTitle = () => {
