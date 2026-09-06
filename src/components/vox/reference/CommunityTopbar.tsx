@@ -53,7 +53,15 @@ export function CommunityTopbar({
   };
 
   return (
-    <header className="sv-topbar">
+    <header className="sv-topbar sv-topbar-v17">
+      <div className="sv-topbar-scene" aria-hidden="true">
+        <span className="sv-topbar-horizon" />
+        <span className="sv-topbar-planet"><i /><b /></span>
+        <span className="sv-topbar-comet sv-topbar-comet-a" />
+        <span className="sv-topbar-comet sv-topbar-comet-b" />
+        <span className="sv-topbar-grid" />
+      </div>
+
       <div className="sv-topbar-brand">
         <span className="sv-brand-symbol" aria-hidden="true">
           <i className="sv-brand-wing sv-brand-wing-left" />
