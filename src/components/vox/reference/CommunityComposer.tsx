@@ -40,11 +40,14 @@ export function CommunityComposer({
   const canSend = !!input.trim() || pending.length > 0;
 
   return (
-    <footer className="sv-composer sv-composer-v3 sv-composer-v17">
+    <footer className="sv-composer sv-composer-v3 sv-composer-v17 sv-composer-v19">
       <span className="sv-composer-corner sv-composer-corner-tl" aria-hidden="true" />
       <span className="sv-composer-corner sv-composer-corner-tr" aria-hidden="true" />
       <span className="sv-composer-corner sv-composer-corner-bl" aria-hidden="true" />
       <span className="sv-composer-corner sv-composer-corner-br" aria-hidden="true" />
+      <span className="sv-composer-edge sv-composer-edge-left" aria-hidden="true" />
+      <span className="sv-composer-edge sv-composer-edge-right" aria-hidden="true" />
+      <span className="sv-composer-mode" aria-hidden="true">TX // MESSAGE NODE</span>
 
       {pending.length > 0 && (
         <div className="sv-composer-pending">
@@ -131,6 +134,7 @@ export function CommunityComposer({
           onClick={() => void onSend()}
         >
           <Send />
+          <span aria-hidden="true">SEND</span>
         </button>
       </div>
 
@@ -145,7 +149,7 @@ export function CommunityComposer({
         >
           <Bot />AI asistent
         </button>
-        <span>{hasKey ? "E2E · " : ""}ENTER pro odeslání</span>
+        <span className="sv-composer-enter-hint">{hasKey ? "E2E · " : ""}ENTER pro odeslání</span>
       </div>
     </footer>
   );
