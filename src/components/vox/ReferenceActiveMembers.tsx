@@ -15,6 +15,13 @@ const statusText: Record<string, string> = {
   offline: "Offline",
 };
 
+const activityText: Record<string, string> = {
+  online: "Aktivní v komunitě",
+  idle: "Chvíli mimo",
+  dnd: "Nerušit",
+  offline: "Naposledy offline",
+};
+
 export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSelf }: Props) {
   const visible = [...members]
     .sort((a, b) => {
@@ -24,7 +31,7 @@ export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSe
     .slice(0, 7);
 
   return (
-    <div className="vox-ref-active-members">
+    <div className="vox-ref-active-members vox-ref-active-members-v18">
       {visible.map((member) => {
         const name = member.nickname || member.display_name || member.user_id.slice(0, 8);
         const topRole = member.roles?.[0];
@@ -34,7 +41,7 @@ export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSe
           <button
             type="button"
             key={member.user_id}
-            className="vox-ref-active-member"
+            className={`vox-ref-active-member status-${status}`}
             onClick={() => isSelf ? onSelf?.(member) : onMessage(member)}
             title={isSelf ? `Otevřít profil ${name}` : `Napsat uživateli ${name}`}
           >
@@ -50,9 +57,14 @@ export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSe
                 {topRole && <em>{topRole.name}</em>}
                 {!topRole && (member.role === "owner" || member.role === "mod") && <ShieldCheck />}
               </span>
-              <small>{statusText[status] || "Offline"}</small>
+              <span className="vox-ref-member-activity">
+                <small>{activityText[status] || statusText[status] || "Offline"}</small>
+                <i aria-hidden="true" />
+                <small>{statusText[status] || "Offline"}</small>
+              </span>
             </span>
             {!isSelf && <MessageCircle className="vox-ref-member-message" />}
+            <span className="vox-ref-member-edge" aria-hidden="true" />
           </button>
         );
       })}
