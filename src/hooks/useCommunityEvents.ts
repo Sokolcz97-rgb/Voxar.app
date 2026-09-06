@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getVoxCommunityContext, subscribeVoxCommunityContext } from "@/lib/voxCommunityBridge";
 
 export type VoxEventRsvpStatus = "going" | "interested" | "declined";
 
@@ -48,12 +49,22 @@ const db = supabase as any;
 
 export function useCommunityEvents(guildId?: string | null) {
   const { user } = useAuth();
+  const [resolvedGuildId, setResolvedGuildId] = useState<string | null>(() => guildId ?? getVoxCommunityContext().guildId);
   const [events, setEvents] = useState<VoxCommunityEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (guildId !== undefined) {
+      setResolvedGuildId(guildId ?? null);
+      return;
+    }
+    setResolvedGuildId(getVoxCommunityContext().guildId);
+    return subscribeVoxCommunityContext((context) => setResolvedGuildId(context.guildId));
+  }, [guildId]);
+
   const load = useCallback(async () => {
-    if (!guildId) {
+    if (!resolvedGuildId) {
       setEvents([]);
       setLoading(false);
       return;
@@ -66,7 +77,7 @@ export function useCommunityEvents(guildId?: string | null) {
       const { data: eventRows, error: eventError } = await db
         .from("vox_events")
         .select("id,guild_id,title,description,starts_at,ends_at,location,channel_id,cover_url,created_by,status,capacity,created_at,updated_at")
-        .eq("guild_id", guildId)
+        .eq("guild_id", resolvedGuildId)
         .gte("starts_at", lowerBound)
         .order("starts_at", { ascending: true })
         .limit(100);
@@ -122,24 +133,24 @@ export function useCommunityEvents(guildId?: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [guildId, user?.id]);
+  }, [resolvedGuildId, user?.id]);
 
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    if (!guildId) return;
+    if (!resolvedGuildId) return;
     const eventChannel = supabase
-      .channel(`vox_events_${guildId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "vox_events", filter: `guild_id=eq.${guildId}` }, () => void load())
+      .channel(`vox_events_${resolvedGuildId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vox_events", filter: `guild_id=eq.${resolvedGuildId}` }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_event_attendees" }, () => void load())
       .subscribe();
     return () => { void supabase.removeChannel(eventChannel); };
-  }, [guildId, load]);
+  }, [resolvedGuildId, load]);
 
   const createEvent = useCallback(async (input: VoxCommunityEventInput) => {
-    if (!guildId || !user) throw new Error("Vyber komunitu a přihlas se.");
+    if (!resolvedGuildId || !user) throw new Error("Vyber komunitu a přihlas se.");
     const { error: insertError } = await db.from("vox_events").insert({
-      guild_id: guildId,
+      guild_id: resolvedGuildId,
       created_by: user.id,
       title: input.title.trim(),
       description: input.description?.trim() || null,
@@ -153,7 +164,7 @@ export function useCommunityEvents(guildId?: string | null) {
     });
     if (insertError) throw insertError;
     await load();
-  }, [guildId, user, load]);
+  }, [resolvedGuildId, user, load]);
 
   const updateEvent = useCallback(async (eventId: string, input: Partial<VoxCommunityEventInput> & { status?: "scheduled" | "cancelled" }) => {
     const patch: Record<string, unknown> = { ...input };
@@ -194,6 +205,7 @@ export function useCommunityEvents(guildId?: string | null) {
   const upcomingEvent = activeEvents[0] ?? null;
 
   return {
+    guildId: resolvedGuildId,
     events,
     activeEvents,
     upcomingEvent,
