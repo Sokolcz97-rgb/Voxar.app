@@ -1,0 +1,45 @@
+/* V21 cleanup: remove development-style micro labels and preserve hierarchy from the visual reference. */
+
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-kind,
+.vox-reference-shell.sv-shell-v4 .sv-channel-node-label,
+.vox-reference-shell.sv-shell-v4 .sv-right-community-code,
+.vox-reference-shell.sv-shell-v4 .sv-right-presence-summary > strong,
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan-node,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-badge,
+.vox-reference-shell.sv-shell-v4 .sv-composer-mode {
+  display:none !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan,
+.vox-reference-shell.sv-shell-v4 .sv-channel-header,
+.vox-reference-shell.sv-shell-v4 .sv-welcome,
+.vox-reference-shell.sv-shell-v4 .sv-right-card {
+  isolation:isolate;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button {
+  color:#75cddd !important;
+  opacity:.9 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button:hover,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button:hover {
+  color:#62ebff !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-card-cut { opacity:.72 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-edge-top,
+.vox-reference-shell.sv-shell-v4 .sv-welcome-edge-bottom { opacity:.9 !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-message-meta .role-badge,
+.vox-reference-shell.sv-shell-v4 .sv-message-meta [class*="role"] {
+  transform:scale(.96);
+  transform-origin:left center;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list,
+.vox-reference-shell.sv-shell-v4 .sv-message-list {
+  scrollbar-gutter:stable;
+}
