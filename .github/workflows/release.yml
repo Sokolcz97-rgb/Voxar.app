@@ -23,6 +23,12 @@ on:
 permissions:
   contents: write
 
+# Desktop release mění main (version bump + veřejná metadata). Dvě souběžné
+# release úlohy by si jinak mohly navzájem odmítnout non-fast-forward push.
+concurrency:
+  group: studiovoxario-desktop-release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest
@@ -52,7 +58,29 @@ jobs:
           VERSION=$(node -p "require('./electron/package.json').version")
           git add electron/package.json electron/package-lock.json || true
           git commit -m "ci: desktop v$VERSION [skip ci]" || echo "nothing to commit"
-          git push
+
+          # Mezi checkoutem a bumpem může na main přistát jiný commit. Nikdy
+          # nepoužíváme force push; vlastní malý commit bezpečně přehrajeme na
+          # aktuální origin/main a push několikrát zopakujeme.
+          pushed=false
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "Desktop version rebase failed; refusing to overwrite main."
+              git rebase --abort || true
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              pushed=true
+              break
+            fi
+            echo "Version push raced with main (attempt $attempt/3); retrying..."
+            sleep 2
+          done
+          if [ "$pushed" != true ]; then
+            echo "Desktop version push failed after 3 safe attempts."
+            exit 1
+          fi
 
       - name: Resolve desktop version
         id: appver
@@ -247,7 +275,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/write-desktop-metadata.cjs "${{ steps.appver.outputs.version }}" "${{ github.repository }}"
+          VERSION="${{ steps.appver.outputs.version }}"
+          node scripts/write-desktop-metadata.cjs "$VERSION" "${{ github.repository }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
@@ -258,6 +287,37 @@ jobs:
           if git diff --cached --quiet; then
             echo "No metadata changes."
           else
-            git commit -m "ci: update desktop metadata and custom installer v${{ steps.appver.outputs.version }} [skip ci]"
-            git push
+            git commit -m "ci: update desktop metadata and custom installer v$VERSION [skip ci]"
+
+            # Build mezitím může trvat několik minut a main se může posunout.
+            # Zahodíme pouze zbylé build-time změny pracovního stromu; metadata
+            # už jsou v samostatném commitu. Poté commit bezpečně rebasujeme na
+            # nejnovější main a zkusíme push bez force až třikrát.
+            git reset --hard HEAD
+            pushed=false
+            for attempt in 1 2 3; do
+              git fetch origin main
+              if ! git rebase origin/main; then
+                echo "Metadata rebase failed; refusing to overwrite main."
+                git rebase --abort || true
+                exit 1
+              fi
+              if git push origin HEAD:main; then
+                pushed=true
+                break
+              fi
+              echo "Metadata push raced with main (attempt $attempt/3); retrying..."
+              sleep 2
+            done
+            if [ "$pushed" != true ]; then
+              echo "Metadata push failed after 3 safe attempts."
+              exit 1
+            fi
+
+            REMOTE_VERSION=$(git show origin/main:public/desktop-version.json | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).version || ''))")
+            if [ "$REMOTE_VERSION" != "$VERSION" ]; then
+              echo "Remote desktop metadata mismatch: expected $VERSION, got $REMOTE_VERSION"
+              exit 1
+            fi
+            echo "✓ Remote desktop metadata is synchronized to $VERSION"
           fi
