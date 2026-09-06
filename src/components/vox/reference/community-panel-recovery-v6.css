@@ -1,1 +1,315 @@
-/* placeholder */
+/* V6 panel recovery.
+   These rules style the V3 panel markup that is still rendered by
+   CommunitySidebarPanel/CommunityRightPanel without restoring the retired
+   screenshot-era global CSS passes. */
+
+/* --------------------------------------------------------------------------
+   LEFT SIDEBAR: robust vertical flow (optional call dock no longer breaks it)
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar > .sv-sidebar-shell,
+.vox-reference-shell.sv-shell-v4 .sv-workspace-sidebar > .sv-sidebar-shell-v3 {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  padding: 10px 10px 9px !important;
+  overflow: hidden !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan {
+  flex: 0 0 auto;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 5px 8px;
+  color: #6fdcf0;
+  font: 650 8px/1.35 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .23em;
+  text-transform: uppercase;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-community-hero {
+  flex: 0 0 auto;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav,
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title,
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-call-dock,
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self {
+  flex: 0 0 auto;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels {
+  flex: 1 1 auto !important;
+  min-height: 150px !important;
+  overflow: hidden !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels > * {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-stars {
+  position: absolute;
+  inset: 0;
+  opacity: .72;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 17% 25%, rgba(148, 229, 255, .95) 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 17%, rgba(116, 192, 255, .84) 0 1px, transparent 2px),
+    radial-gradient(circle at 61% 36%, rgba(167, 112, 255, .88) 0 1px, transparent 2px),
+    radial-gradient(circle at 84% 20%, rgba(97, 224, 255, .75) 0 1px, transparent 2px);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-glow {
+  position: absolute;
+  right: 24px;
+  top: 15px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(50, 212, 255, .12), transparent 68%);
+  filter: blur(5px);
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL: restore layout for the newer semantic markup
+   -------------------------------------------------------------------------- */
+.vox-reference-shell.sv-shell-v4 .sv-right-shell-v3 {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-card-head,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head {
+  min-width: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-card-head {
+  min-height: 18px;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-head-icon {
+  width: 14px !important;
+  height: 14px !important;
+  flex: 0 0 14px;
+  color: #48daf4;
+  stroke-width: 1.7;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading {
+  min-width: 0;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 10px 0 6px;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading h2 {
+  min-width: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-verified {
+  flex: 0 0 auto;
+  color: #47e4fb;
+  font-size: 8px;
+  text-shadow: 0 0 7px rgba(71, 228, 251, .55);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 {
+  margin: 12px 0 10px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  border: 1px solid rgba(54, 183, 220, .18);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div {
+  min-width: 0;
+  min-height: 44px !important;
+  display: grid !important;
+  grid-template-columns: 16px minmax(0, 1fr) !important;
+  grid-template-rows: 1fr !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 6px;
+  border-right: 1px solid rgba(54, 183, 220, .17);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stats-v3 > div:last-child {
+  border-right: 0;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy {
+  min-width: 0;
+  display: grid !important;
+  gap: 2px !important;
+  line-height: 1 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy strong,
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy small {
+  display: block !important;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy strong {
+  color: #edfaff;
+  font: 700 10px/1 Inter, "Segoe UI", sans-serif !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy small {
+  color: #7897a8;
+  font: 500 7px/1 Inter, "Segoe UI", sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head > button {
+  flex: 0 0 auto;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #67cce2 !important;
+  background: transparent !important;
+  font: 500 8px/1 Inter, "Segoe UI", sans-serif !important;
+  white-space: nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button svg,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head > button svg {
+  width: 11px !important;
+  height: 11px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
+  min-width: 0;
+  grid-template-columns: 42px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 9px !important;
+  padding: 9px !important;
+  border: 1px solid rgba(100, 107, 255, .36) !important;
+  background: linear-gradient(110deg, rgba(51, 35, 111, .48), rgba(8, 42, 66, .48)) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy {
+  min-width: 0 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-people {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 23px;
+  margin-top: 6px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-avatar,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-more {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  margin-left: -4px;
+  border: 1px solid #47def8 !important;
+  border-radius: 50% !important;
+  color: #dffaff !important;
+  background: #0c2e43 !important;
+  font: 700 7px/1 Inter, "Segoe UI", sans-serif !important;
+  box-shadow: 0 0 8px rgba(48, 222, 255, .10);
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-avatar:first-child {
+  margin-left: 0;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-more {
+  background: #3d2d7e !important;
+  border-color: #8b68ff !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-event-v3 > button {
+  min-width: 66px;
+  height: 29px !important;
+  padding: 0 8px !important;
+  white-space: nowrap;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members-v3 {
+  min-height: 0 !important;
+  padding: 12px 12px 58px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list {
+  min-height: 0 !important;
+  overflow: hidden auto !important;
+}
+
+@media (max-width: 1280px) {
+  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 .sv-right-event-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-right-event-v3 > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-height: 760px) {
+  .vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan {
+    min-height: 22px;
+    padding-bottom: 5px;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-right-members-v3 {
+    padding-bottom: 52px !important;
+  }
+}
