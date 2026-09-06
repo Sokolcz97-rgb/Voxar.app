@@ -46,17 +46,18 @@ export function CommunitySidebarPanel({
   onBoosts,
 }: Props) {
   return (
-    <div className="sv-sidebar-shell sv-sidebar-shell-v3 sv-sidebar-shell-v17 sv-sidebar-shell-v18 sv-sidebar-shell-v19">
+    <div className="sv-sidebar-shell sv-sidebar-shell-v3 sv-sidebar-shell-v17 sv-sidebar-shell-v18 sv-sidebar-shell-v19 sv-sidebar-shell-v24">
       <div className="sv-sidebar-slogan">
         <span>„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“</span>
         <i className="sv-sidebar-slogan-accent" aria-hidden="true" />
       </div>
 
-      <section className="sv-community-hero sv-community-hero-v3 sv-community-hero-v17 sv-community-hero-v18 sv-community-hero-v19" aria-label={`Komunita ${guild.name}`}>
+      <section className="sv-community-hero sv-community-hero-v3 sv-community-hero-v17 sv-community-hero-v18 sv-community-hero-v19 sv-community-hero-v24" aria-label={`Komunita ${guild.name}`}>
         <span className="sv-community-hero-frame sv-community-hero-frame-a" aria-hidden="true" />
         <span className="sv-community-hero-frame sv-community-hero-frame-b" aria-hidden="true" />
         <span className="sv-community-hero-frame sv-community-hero-frame-c" aria-hidden="true" />
         <div className="sv-community-hero-art" aria-hidden="true">
+          <img className="sv-community-hero-image" src="/vox/reference/sidebar-world-v24.svg" alt="" />
           <div className="sv-community-hero-stars" />
           <div className="sv-community-hero-nebula" />
           <div className="sv-community-hero-aurora" />
@@ -77,9 +78,7 @@ export function CommunitySidebarPanel({
 
         <div className="sv-community-identity">
           <div className="sv-community-logo">
-            {guild.icon_url
-              ? <img src={guild.icon_url} alt="" />
-              : <span>{guild.name.slice(0, 2).toUpperCase()}</span>}
+            {guild.icon_url ? <img src={guild.icon_url} alt="" /> : <span>{guild.name.slice(0, 2).toUpperCase()}</span>}
           </div>
           <div className="sv-community-copy">
             <div className="sv-community-name-row">
@@ -101,10 +100,7 @@ export function CommunitySidebarPanel({
         <button type="button" onClick={onBoosts}><Gem /><span>Boosty & Perky</span></button>
       </nav>
 
-      <div className="sv-sidebar-section-title">
-        <span>Komunikační zóna</span>
-        <i aria-hidden="true" />
-      </div>
+      <div className="sv-sidebar-section-title"><span>Komunikační zóna</span><i aria-hidden="true" /></div>
 
       <div className="sv-sidebar-channels">
         <CommunityChannelList
