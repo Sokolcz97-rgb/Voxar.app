@@ -13,6 +13,24 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
   selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),
 
+  // Native RTMP publisher. Renderer captures the selected screen/window with
+  // MediaRecorder and streams WebM chunks to bundled FFmpeg in the main process.
+  broadcastAvailable: () => ipcRenderer.invoke("broadcast:available"),
+  broadcastStart: (config) => ipcRenderer.invoke("broadcast:start", config),
+  broadcastWriteChunk: (chunk) => ipcRenderer.send("broadcast:chunk", chunk),
+  broadcastStop: () => ipcRenderer.invoke("broadcast:stop"),
+  broadcastStatus: () => ipcRenderer.invoke("broadcast:status"),
+  onBroadcastState: (cb) => {
+    const listener = (_e, payload) => { try { cb(payload); } catch {} };
+    ipcRenderer.on("broadcast:state", listener);
+    return () => ipcRenderer.removeListener("broadcast:state", listener);
+  },
+  onBroadcastLog: (cb) => {
+    const listener = (_e, payload) => { try { cb(payload); } catch {} };
+    ipcRenderer.on("broadcast:log", listener);
+    return () => ipcRenderer.removeListener("broadcast:log", listener);
+  },
+
   arch: process.arch,
   electronVersion: process.versions.electron,
   chromeVersion: process.versions.chrome,
