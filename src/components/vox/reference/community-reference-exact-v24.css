@@ -1,0 +1,784 @@
+/* V24 — reference-locked community UI.
+   This layer intentionally overrides the accumulated legacy passes and targets
+   the current DOM directly. It uses dedicated scene assets for the topbar,
+   sidebar hero and welcome banner so the visual composition is stable. */
+
+.vox-reference-shell.sv-shell-v4 {
+  --v24-cyan:#38eaff;
+  --v24-cyan-hot:#62f3ff;
+  --v24-blue:#168ed8;
+  --v24-violet:#7252ff;
+  --v24-purple:#a34cff;
+  --v24-bg:#010810;
+  --v24-panel:#031522;
+  --v24-panel-2:#052235;
+  --v24-line:rgba(57,224,253,.62);
+  --v24-line-soft:rgba(57,224,253,.24);
+  --v24-text:#e6f4f8;
+  --v24-muted:#91aeba;
+  --v24-green:#49efac;
+  color:var(--v24-text) !important;
+  background:#010810 !important;
+}
+
+.vox-reference-shell.sv-shell-v4,
+.vox-reference-shell.sv-shell-v4 * { box-sizing:border-box; }
+
+.vox-reference-shell.sv-shell-v4 button,
+.vox-reference-shell.sv-shell-v4 input,
+.vox-reference-shell.sv-shell-v4 textarea,
+.vox-reference-shell.sv-shell-v4 p,
+.vox-reference-shell.sv-shell-v4 span,
+.vox-reference-shell.sv-shell-v4 small,
+.vox-reference-shell.sv-shell-v4 strong,
+.vox-reference-shell.sv-shell-v4 time {
+  font-family:Inter,"Segoe UI",system-ui,sans-serif;
+}
+
+/* ---------- TOP BAR ---------- */
+.vox-reference-shell.sv-shell-v4 > .sv-topbar {
+  position:relative !important;
+  isolation:isolate !important;
+  height:112px !important;
+  min-height:112px !important;
+  grid-template-columns:294px 540px minmax(0,1fr) !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  background:#041624 !important;
+  border-bottom:1px solid rgba(58,232,255,.78) !important;
+  box-shadow:0 12px 32px rgba(0,0,0,.48), inset 0 -1px rgba(103,235,255,.18) !important;
+}
+
+.sv-topbar-v24 .sv-topbar-scene {
+  position:absolute !important;
+  inset:0 !important;
+  z-index:0 !important;
+  pointer-events:none !important;
+  overflow:hidden !important;
+}
+.sv-topbar-v24 .sv-topbar-scene-image {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center 52% !important;
+  opacity:.98 !important;
+}
+.sv-topbar-v24 .sv-topbar-deep-space,
+.sv-topbar-v24 .sv-topbar-planet,
+.sv-topbar-v24 .sv-topbar-planet-glow,
+.sv-topbar-v24 .sv-topbar-orbit,
+.sv-topbar-v24 .sv-topbar-horizon,
+.sv-topbar-v24 .sv-topbar-ridge,
+.sv-topbar-v24 .sv-topbar-skyline,
+.sv-topbar-v24 .sv-topbar-beam,
+.sv-topbar-v24 .sv-topbar-comet,
+.sv-topbar-v24 .sv-topbar-grid,
+.sv-topbar-v24 .sv-topbar-scan,
+.sv-topbar-v24 .sv-topbar-stars,
+.sv-topbar-v24 .sv-topbar-constellation { opacity:0 !important; }
+
+.sv-topbar-v24 .sv-topbar-brand,
+.sv-topbar-v24 .sv-topbar-nav,
+.sv-topbar-v24 .sv-topbar-tools { position:relative !important; z-index:4 !important; }
+
+.sv-topbar-v24 .sv-topbar-brand {
+  height:112px !important;
+  padding:0 24px 0 28px !important;
+  gap:16px !important;
+  background:linear-gradient(90deg,rgba(1,14,24,.98),rgba(1,19,31,.94) 82%,rgba(3,29,45,.25)) !important;
+  border-right:1px solid rgba(64,214,245,.14) !important;
+}
+.sv-topbar-v24 .sv-brand-symbol {
+  width:63px !important;
+  height:66px !important;
+  filter:drop-shadow(0 0 11px rgba(61,224,255,.32)) !important;
+}
+.sv-topbar-v24 .sv-brand-copy strong {
+  font-family:Orbitron,Inter,sans-serif !important;
+  font-size:22px !important;
+  line-height:1 !important;
+  letter-spacing:.20em !important;
+  color:#64efff !important;
+  text-shadow:0 0 14px rgba(62,225,255,.28) !important;
+}
+.sv-topbar-v24 .sv-brand-copy span {
+  margin-top:8px !important;
+  font-size:8px !important;
+  letter-spacing:.42em !important;
+  color:#c4d7df !important;
+}
+
+.sv-topbar-v24 .sv-topbar-nav {
+  height:112px !important;
+  display:grid !important;
+  grid-template-columns:repeat(6,1fr) !important;
+  align-items:stretch !important;
+  border-left:1px solid rgba(45,182,217,.08) !important;
+  border-right:1px solid rgba(45,182,217,.08) !important;
+  background:rgba(1,13,22,.12) !important;
+}
+.sv-topbar-v24 .sv-topbar-nav button {
+  position:relative !important;
+  min-width:0 !important;
+  height:112px !important;
+  min-height:112px !important;
+  padding:17px 5px 12px !important;
+  gap:8px !important;
+  color:#b6cbd4 !important;
+  font-size:12px !important;
+  letter-spacing:0 !important;
+  border:0 !important;
+  border-left:1px solid rgba(55,174,204,.08) !important;
+  background:rgba(0,10,18,.30) !important;
+}
+.sv-topbar-v24 .sv-topbar-nav button svg {
+  width:22px !important;
+  height:22px !important;
+  stroke-width:1.65 !important;
+  filter:none !important;
+}
+.sv-topbar-v24 .sv-topbar-nav button.active {
+  color:#5ff2ff !important;
+  background:linear-gradient(180deg,rgba(6,58,78,.45),rgba(4,65,87,.78)) !important;
+  box-shadow:inset 0 -3px #44efff, inset 0 0 30px rgba(44,222,255,.10),0 0 22px rgba(24,171,221,.08) !important;
+}
+.sv-topbar-v24 .sv-topbar-nav button.active svg {
+  color:#68f5ff !important;
+  filter:drop-shadow(0 0 8px rgba(68,235,255,.62)) !important;
+}
+.sv-topbar-v24 .sv-topbar-nav-glow,
+.sv-topbar-v24 .sv-topbar-nav-notch { opacity:0 !important; }
+
+.sv-topbar-v24 .sv-topbar-tools {
+  height:112px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:14px !important;
+  padding:0 18px 0 14px !important;
+}
+.sv-topbar-v24 .sv-topbar-search {
+  width:244px !important;
+  height:44px !important;
+  border:1px solid rgba(63,214,245,.54) !important;
+  border-radius:4px !important;
+  background:rgba(2,20,34,.92) !important;
+  box-shadow:inset 0 0 20px rgba(18,136,180,.07),0 0 18px rgba(0,0,0,.22) !important;
+}
+.sv-topbar-v24 .sv-topbar-search svg { width:18px !important; height:18px !important; color:#87aebb !important; }
+.sv-topbar-v24 .sv-topbar-search input { font-size:12px !important; color:#d6e8ee !important; }
+.sv-topbar-v24 .sv-topbar-search kbd {
+  height:24px !important;
+  padding:0 8px !important;
+  border:1px solid rgba(70,213,245,.45) !important;
+  border-radius:3px !important;
+  color:#b5d5df !important;
+  background:#071f31 !important;
+  font-size:10px !important;
+}
+.sv-topbar-v24 .sv-topbar-icon-button {
+  width:40px !important;
+  height:40px !important;
+  color:#9fc8d5 !important;
+}
+.sv-topbar-v24 .sv-topbar-icon-button svg { width:20px !important; height:20px !important; }
+.sv-topbar-v24 .sv-topbar-avatar {
+  width:50px !important;
+  height:50px !important;
+  border:1px solid #43eaff !important;
+  box-shadow:0 0 0 3px rgba(120,70,255,.28),0 0 17px rgba(52,221,255,.24) !important;
+}
+.sv-topbar-v24 .sv-topbar-presence-label { display:none !important; }
+.sv-topbar-v24 .sv-topbar-motto {
+  width:68px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  gap:0 !important;
+  font-size:7px !important;
+  line-height:1.38 !important;
+  letter-spacing:.26em !important;
+  color:#7ce8fa !important;
+  text-transform:uppercase !important;
+}
+
+/* ---------- GLOBAL WORKSPACE ---------- */
+.vox-reference-shell.sv-shell-v4 > .sv-workspace {
+  height:calc(100vh - 112px) !important;
+  min-height:0 !important;
+  display:grid !important;
+  grid-template-columns:88px 272px minmax(0,1fr) 292px !important;
+  gap:7px !important;
+  padding:8px 7px 8px !important;
+  background:
+    radial-gradient(circle at 49% 0,rgba(22,123,169,.08),transparent 28%),
+    linear-gradient(180deg,#020c14,#01070d) !important;
+  overflow:hidden !important;
+}
+.sv-workspace > .sv-workspace-rail,
+.sv-workspace > .sv-workspace-sidebar,
+.sv-workspace > .sv-workspace-center,
+.sv-workspace > .sv-workspace-right {
+  min-height:0 !important;
+  border:1px solid rgba(60,218,248,.38) !important;
+  background:#02101a !important;
+  box-shadow:inset 0 0 28px rgba(36,193,230,.025),0 0 16px rgba(0,0,0,.20) !important;
+}
+.sv-workspace > .sv-workspace-center {
+  overflow:hidden !important;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px) !important;
+}
+.sv-workspace > .sv-workspace-right {
+  overflow:hidden !important;
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 12px) !important;
+}
+.sv-workspace-clock { opacity:.42 !important; font-size:8px !important; right:11px !important; bottom:2px !important; }
+
+/* ---------- GUILD RAIL ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail {
+  height:100% !important;
+  padding:12px 7px 10px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  gap:8px !important;
+  background:linear-gradient(180deg,#031928,#020d16) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-primary,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-create,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-item,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-join {
+  flex:0 0 auto !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-primary {
+  position:relative !important;
+  width:62px !important;
+  height:68px !important;
+  border:1px solid rgba(67,234,255,.6) !important;
+  background:linear-gradient(145deg,#06273e,#051522) !important;
+  clip-path:polygon(50% 0,93% 20%,93% 80%,50% 100%,7% 80%,7% 20%) !important;
+  box-shadow:0 0 20px rgba(45,218,247,.13),inset 0 0 20px rgba(39,216,245,.05) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-primary .sv-guild-frame,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-primary .sv-guild-icon { width:51px !important; height:51px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-primary-mark {
+  position:absolute !important;
+  left:-8px !important;
+  top:13px !important;
+  width:3px !important;
+  height:40px !important;
+  background:#51ecff !important;
+  box-shadow:0 0 9px #51ecff !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-separator { width:52px !important; height:1px !important; background:rgba(86,167,190,.24) !important; margin:2px 0 1px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-create,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-item,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-join {
+  width:50px !important;
+  height:50px !important;
+  margin:0 !important;
+  border-radius:50% !important;
+  border:1px solid rgba(64,194,225,.43) !important;
+  background:#062035 !important;
+  color:#a4ccda !important;
+  box-shadow:none !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-create:hover,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-item:hover,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-join:hover { border-color:#49eaff !important; color:#5ef1ff !important; box-shadow:0 0 17px rgba(58,222,250,.16) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-create svg,
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-join svg { width:21px !important; height:21px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-spacer { flex:1 1 auto !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-status { font-size:7px !important; margin-top:3px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-guild-rail-status span { width:6px !important; height:6px !important; background:#39efac !important; box-shadow:0 0 8px rgba(57,239,172,.65) !important; }
+
+/* ---------- LEFT COMMUNITY SIDEBAR ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-shell-v24 {
+  height:100% !important;
+  padding:0 10px 9px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  background:linear-gradient(180deg,#031826,#02101a) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan {
+  flex:0 0 34px !important;
+  min-height:34px !important;
+  padding:8px 5px 0 !important;
+  overflow:hidden !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan span {
+  display:block !important;
+  font-size:8px !important;
+  line-height:1.3 !important;
+  letter-spacing:.20em !important;
+  color:#76d8e8 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-slogan-accent { display:none !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 {
+  position:relative !important;
+  flex:0 0 194px !important;
+  height:194px !important;
+  min-height:194px !important;
+  margin:0 0 11px !important;
+  overflow:hidden !important;
+  border:1px solid rgba(58,225,253,.68) !important;
+  background:#061d2e !important;
+  box-shadow:inset 0 0 26px rgba(56,202,235,.04),0 0 13px rgba(0,0,0,.22) !important;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 9px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-art {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:hidden !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-image {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:132px !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  z-index:0 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-stars,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-nebula,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-aurora,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-glow,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-orbit,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-orbit-secondary,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-moon,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-beacon,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-lightpath,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-horizon,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-city,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-ridge,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-grid,
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 .sv-community-hero-scan { opacity:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-community-hero-frame { opacity:.35 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-community-identity {
+  position:absolute !important;
+  z-index:5 !important;
+  left:10px !important;
+  right:10px !important;
+  bottom:10px !important;
+  height:67px !important;
+  padding:8px 10px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  border:1px solid rgba(70,225,252,.56) !important;
+  background:linear-gradient(90deg,rgba(2,18,30,.98),rgba(4,35,53,.96)) !important;
+  box-shadow:inset 0 0 20px rgba(59,221,251,.04),0 0 14px rgba(0,0,0,.25) !important;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 9px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-community-logo { width:47px !important; height:47px !important; flex:0 0 47px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-community-copy strong { font-size:14px !important; line-height:1.2 !important; color:#f3fbff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-community-copy > span { font-size:10px !important; color:#a9c4ce !important; margin-top:4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-community-name-row i { width:8px !important; height:8px !important; background:#4feaff !important; transform:rotate(45deg) !important; box-shadow:0 0 7px rgba(72,231,255,.4) !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav {
+  flex:0 0 auto !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:3px !important;
+  margin:0 0 10px !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button {
+  min-height:39px !important;
+  height:39px !important;
+  padding:0 11px !important;
+  gap:10px !important;
+  border:1px solid transparent !important;
+  border-radius:2px !important;
+  color:#afc5cd !important;
+  font-size:13px !important;
+  background:transparent !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button svg { width:17px !important; height:17px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button.active {
+  color:#fff !important;
+  border-color:#45e8ff !important;
+  background:linear-gradient(90deg,rgba(7,70,91,.94),rgba(4,55,74,.76)) !important;
+  box-shadow:inset 3px 0 #4ff0ff,inset 0 0 20px rgba(54,221,249,.07) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-quick-nav button.active .arrow { margin-left:auto !important; color:#d7f9ff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-nav-accent { display:none !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title {
+  flex:0 0 28px !important;
+  height:28px !important;
+  padding:0 3px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:9px !important;
+  color:#48e7f9 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title span {
+  font-size:9px !important;
+  letter-spacing:.22em !important;
+  text-transform:uppercase !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-section-title i { flex:1 !important; height:1px !important; background:rgba(62,186,216,.25) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-channels { flex:1 1 auto !important; min-height:0 !important; overflow:hidden !important; }
+
+/* ---------- CHANNEL LIST ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-channel-list { height:100% !important; display:flex !important; flex-direction:column !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools {
+  flex:0 0 32px !important;
+  height:32px !important;
+  padding:0 3px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  border-bottom:1px solid rgba(59,147,174,.16) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools > span { font-size:8px !important; letter-spacing:.18em !important; text-transform:uppercase !important; color:#75a7b7 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools > small { display:none !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools > div { margin-left:auto !important; display:flex !important; gap:4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools button { width:28px !important; height:28px !important; border:1px solid rgba(63,201,232,.38) !important; color:#83bbc9 !important; background:#052034 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-tools button svg { width:14px !important; height:14px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-scroll { flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important; padding:5px 1px 6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group { margin:0 0 8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-head { min-height:27px !important; height:27px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-toggle {
+  min-height:27px !important;
+  height:27px !important;
+  gap:6px !important;
+  padding:0 4px !important;
+  color:#60dff1 !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-toggle > span:not(.sv-channel-group-emoji) { font-size:8px !important; letter-spacing:.18em !important; text-transform:uppercase !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-toggle svg { width:12px !important; height:12px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-count,
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-live { display:none !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-actions { opacity:.28 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group:hover .sv-channel-group-actions { opacity:.8 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-group-items { display:flex !important; flex-direction:column !important; gap:3px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item-wrap { position:relative !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item {
+  width:100% !important;
+  min-height:36px !important;
+  height:36px !important;
+  padding:0 34px 0 11px !important;
+  gap:10px !important;
+  color:#abc1ca !important;
+  border:1px solid rgba(58,119,143,.24) !important;
+  border-radius:2px !important;
+  background:rgba(2,16,27,.48) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-channel-item:hover { background:rgba(8,47,64,.54) !important; border-color:rgba(68,196,225,.36) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item.active {
+  color:#fff !important;
+  border-color:#3de7ff !important;
+  background:linear-gradient(90deg,rgba(7,74,95,.98),rgba(4,54,74,.92)) !important;
+  box-shadow:inset 3px 0 #8955ff,inset 0 0 22px rgba(43,221,249,.10) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-channel-item-icon { width:18px !important; color:#bde8ef !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item-icon svg { width:17px !important; height:17px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item-name { font-size:12px !important; line-height:1 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-active-dot { width:8px !important; height:8px !important; right:12px !important; background:#53efff !important; box-shadow:0 0 9px #53efff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-edit { opacity:0 !important; width:27px !important; height:27px !important; right:4px !important; top:4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-item-wrap:hover .sv-channel-edit { opacity:.65 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-new-section { min-height:35px !important; height:35px !important; margin-top:4px !important; color:#64dcec !important; border:1px dashed rgba(63,202,230,.42) !important; background:rgba(3,28,43,.32) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-new-section span { font-size:8px !important; letter-spacing:.18em !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self { flex:0 0 62px !important; min-height:62px !important; margin-top:7px !important; overflow:hidden !important; border-top:1px solid rgba(65,194,221,.25) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-sidebar-self > * { min-height:62px !important; }
+
+/* ---------- CHAT HEADER ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-channel-header {
+  position:relative !important;
+  flex:0 0 68px !important;
+  min-height:68px !important;
+  height:68px !important;
+  padding:0 14px !important;
+  display:flex !important;
+  align-items:center !important;
+  border-bottom:1px solid rgba(66,224,253,.54) !important;
+  background:linear-gradient(90deg,#05243a,#04192a 66%,#041522) !important;
+  box-shadow:inset 0 -14px 26px rgba(0,7,13,.14) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-grid,
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-edge { opacity:.16 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-main { min-width:0 !important; display:flex !important; align-items:center !important; gap:11px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon { width:36px !important; height:36px !important; flex:0 0 36px !important; color:#fff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-icon svg { width:24px !important; height:24px !important; fill:#fff !important; stroke:#fff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-title-row { gap:8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-hash { width:18px !important; height:18px !important; color:#739eaa !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy h1 { font-size:19px !important; line-height:1.1 !important; color:#f2f8fb !important; letter-spacing:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-copy p { max-width:600px !important; margin-top:4px !important; font-size:11px !important; line-height:1.25 !important; color:#8facb8 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-actions { margin-left:auto !important; gap:5px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-online { min-width:82px !important; justify-content:center !important; font-size:11px !important; color:#bad3db !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-online i { width:9px !important; height:9px !important; background:#4ff0a9 !important; box-shadow:0 0 9px rgba(79,240,169,.7) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-actions button { width:38px !important; height:38px !important; color:#88aab6 !important; border:1px solid rgba(69,181,211,.30) !important; background:#041b2c !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-actions button:hover { color:#58eaff !important; border-color:rgba(68,226,252,.58) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-channel-header-actions button svg { width:18px !important; height:18px !important; }
+
+/* ---------- WELCOME BANNER ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-welcome-v24 {
+  position:relative !important;
+  flex:0 0 190px !important;
+  min-height:190px !important;
+  height:190px !important;
+  margin:12px 14px 7px !important;
+  display:grid !important;
+  grid-template-columns:minmax(420px,51%) minmax(0,49%) !important;
+  overflow:hidden !important;
+  border:1px solid rgba(67,224,253,.72) !important;
+  background:#061b2c !important;
+  box-shadow:0 0 0 1px rgba(112,70,255,.18),0 0 20px rgba(12,104,143,.15),inset 0 0 28px rgba(31,178,220,.03) !important;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-v24::before { left:18px !important; top:0 !important; width:58px !important; height:2px !important; background:#50efff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-v24::after { width:80px !important; right:14px !important; bottom:0 !important; background:linear-gradient(90deg,#4beaff,#8c54ff) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy {
+  position:relative !important;
+  z-index:4 !important;
+  padding:17px 18px 12px !important;
+  min-width:0 !important;
+  background:linear-gradient(90deg,rgba(4,31,49,.99),rgba(4,31,49,.96) 82%,rgba(4,31,49,.80)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-eyebrow { height:30px !important; display:flex !important; align-items:center !important; gap:8px !important; margin-bottom:4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-mark { width:30px !important; height:30px !important; border:1px solid rgba(55,219,248,.54) !important; background:#062439 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-eyebrow strong { font-size:10px !important; letter-spacing:.16em !important; color:#60eaff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-app { padding:3px 6px !important; border-radius:3px !important; background:#4cdff6 !important; color:#062331 !important; font-size:8px !important; font-weight:800 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-time { font-size:9px !important; color:#8ba6af !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 { margin:2px 0 7px !important; font-size:23px !important; line-height:1.08 !important; letter-spacing:0 !important; color:#f4fbff !important; text-shadow:0 0 12px rgba(82,224,249,.12) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-copy p { margin:0 0 2px !important; max-width:570px !important; font-size:11px !important; line-height:1.34 !important; color:#abc4ce !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions { position:absolute !important; left:18px !important; right:12px !important; bottom:13px !important; display:flex !important; gap:7px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button {
+  min-height:36px !important;
+  height:36px !important;
+  padding:0 13px !important;
+  gap:7px !important;
+  border:1px solid rgba(66,206,237,.48) !important;
+  border-radius:3px !important;
+  background:linear-gradient(180deg,#092b42,#061e31) !important;
+  color:#d4e7ed !important;
+  font-size:11px !important;
+  box-shadow:inset 0 0 14px rgba(58,200,230,.03) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button:first-child { border-color:rgba(127,79,255,.62) !important; background:linear-gradient(180deg,rgba(91,58,170,.55),rgba(25,35,76,.86)) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button.primary { border-color:#3fe7ff !important; background:linear-gradient(180deg,#08627d,#07445d) !important; color:#eaffff !important; box-shadow:0 0 14px rgba(50,223,251,.13),inset 0 0 16px rgba(66,230,255,.08) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-actions button svg { width:16px !important; height:16px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art { position:relative !important; min-width:0 !important; overflow:hidden !important; background:#08173b !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-scene-image { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; object-position:center center !important; z-index:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-art > div:not(.sv-welcome-motto) { opacity:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-welcome-motto { position:absolute !important; z-index:6 !important; right:20px !important; top:43px !important; font-family:Orbitron,Inter,sans-serif !important; font-size:10px !important; line-height:1.8 !important; letter-spacing:.32em !important; color:#d7eff7 !important; text-align:left !important; text-shadow:0 0 8px rgba(119,104,255,.35) !important; }
+
+/* ---------- MESSAGES ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-message-list {
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  padding:0 14px 4px !important;
+  overflow-y:auto !important;
+  background:linear-gradient(180deg,rgba(1,11,18,.9),rgba(1,9,15,.98)) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message {
+  min-height:67px !important;
+  padding:8px 9px !important;
+  margin:0 !important;
+  border-bottom:1px solid rgba(65,120,142,.20) !important;
+  background:transparent !important;
+  transition:background .15s ease,border-color .15s ease !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-message:hover { background:linear-gradient(90deg,rgba(10,57,75,.13),rgba(4,25,38,.04)) !important; border-bottom-color:rgba(68,169,196,.26) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message.compact { min-height:38px !important; padding-top:2px !important; padding-bottom:4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar-column { width:52px !important; flex:0 0 52px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar { width:46px !important; height:46px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-avatar-inner { font-size:11px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-body { min-width:0 !important; padding-top:1px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-meta { display:flex !important; align-items:center !important; gap:8px !important; min-height:21px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-meta strong { font-size:14px !important; line-height:1.15 !important; font-weight:700 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-meta time { margin-left:2px !important; font-size:9px !important; color:#6f8f9c !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-text { font-size:12.5px !important; line-height:1.42 !important; color:#d8e8ed !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message-delete { opacity:0 !important; width:28px !important; height:28px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-message:hover .sv-message-delete { opacity:.62 !important; }
+
+/* ---------- COMPOSER ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-composer {
+  position:relative !important;
+  flex:0 0 108px !important;
+  min-height:108px !important;
+  height:108px !important;
+  margin:0 12px 9px !important;
+  padding:10px 10px 7px !important;
+  border:1px solid rgba(64,229,255,.68) !important;
+  background:linear-gradient(180deg,#031827,#02121e) !important;
+  box-shadow:0 0 0 1px rgba(100,72,255,.14),0 0 19px rgba(20,136,174,.10),inset 0 0 24px rgba(46,211,242,.025) !important;
+  clip-path:polygon(13px 0,100% 0,100% calc(100% - 13px),calc(100% - 13px) 100%,0 100%,0 13px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-composer::before { width:63px !important; height:2px !important; left:14px !important; top:0 !important; background:#47eaff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer::after { width:70px !important; height:2px !important; right:11px !important; bottom:0 !important; background:linear-gradient(90deg,#4eeaff,#8c55ff) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-row { height:57px !important; min-height:57px !important; display:grid !important; grid-template-columns:54px minmax(0,1fr) 58px !important; gap:8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus { width:54px !important; height:57px !important; border:1px solid rgba(61,206,237,.48) !important; background:#052034 !important; color:#60e9fa !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-plus svg { width:22px !important; height:22px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-input-wrap { height:57px !important; display:flex !important; align-items:center !important; border:1px solid rgba(65,179,207,.38) !important; background:#02111d !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-textarea { min-height:55px !important; max-height:55px !important; height:55px !important; padding:17px 12px 12px 15px !important; border:0 !important; background:transparent !important; color:#dcebf0 !important; font-size:12px !important; line-height:1.25 !important; box-shadow:none !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-textarea::placeholder { color:#668590 !important; opacity:1 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-inline-actions { height:55px !important; display:flex !important; align-items:center !important; gap:5px !important; padding-right:8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-inline-actions button { width:31px !important; height:31px !important; color:#9db8c2 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-inline-actions button svg { width:17px !important; height:17px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-gif { width:34px !important; font-size:9px !important; font-weight:800 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-send { width:58px !important; height:57px !important; border:1px solid #35dff8 !important; background:linear-gradient(180deg,#08718a,#06445d) !important; color:#bff9ff !important; box-shadow:0 0 18px rgba(54,225,251,.18),inset 0 0 17px rgba(76,235,255,.12) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-send svg { width:23px !important; height:23px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar { min-height:33px !important; height:33px !important; padding:4px 4px 0 4px !important; display:flex !important; align-items:center !important; gap:6px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar button { min-height:27px !important; height:27px !important; padding:0 10px !important; gap:6px !important; border:1px solid rgba(63,168,197,.33) !important; background:#041a2a !important; color:#9db9c4 !important; font-size:9px !important; border-radius:3px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar button svg { width:13px !important; height:13px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-toolbar button.ai { border-color:rgba(135,81,255,.55) !important; color:#b993ff !important; background:rgba(48,27,91,.40) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-composer-enter-hint { margin-left:auto !important; padding-right:4px !important; font-size:8px !important; letter-spacing:.12em !important; color:#6d8792 !important; }
+
+/* ---------- RIGHT COLUMN ---------- */
+.vox-reference-shell.sv-shell-v4 .sv-right-shell-v24 {
+  height:100% !important;
+  padding:0 !important;
+  display:grid !important;
+  grid-template-rows:256px 151px minmax(0,1fr) !important;
+  gap:9px !important;
+  overflow:hidden !important;
+  background:transparent !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-card {
+  position:relative !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  padding:13px 12px !important;
+  border:1px solid rgba(62,220,250,.47) !important;
+  background:linear-gradient(180deg,#052135,#031726) !important;
+  box-shadow:inset 0 0 24px rgba(47,208,240,.03) !important;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 9px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-card::before { left:13px !important; top:0 !important; width:42px !important; height:2px !important; background:#46eaff !important; opacity:.85 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-card-grid { opacity:.05 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-card-orbit { opacity:.12 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-card-head,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head { min-height:25px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-card-title { font-size:9px !important; letter-spacing:.20em !important; color:#4beaff !important; text-transform:uppercase !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-head-icon { width:15px !important; height:15px !important; color:#4ceaff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading { display:flex !important; align-items:center !important; gap:7px !important; margin:7px 0 8px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-community-heading h2 { font-size:20px !important; line-height:1.15 !important; color:#f0f8fb !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-verified { font-size:10px !important; color:#51eaff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-about > p { margin:0 0 13px !important; font-size:11px !important; line-height:1.45 !important; color:#a9c0ca !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats { height:58px !important; display:grid !important; grid-template-columns:repeat(3,1fr) !important; margin:0 0 10px !important; border:1px solid rgba(59,167,196,.30) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats > div { min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; border-right:1px solid rgba(59,151,180,.22) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats > div:last-child { border-right:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stats svg { width:17px !important; height:17px !important; color:#46e7f9 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-online-dot { width:8px !important; height:8px !important; background:#43efaa !important; box-shadow:0 0 9px rgba(67,239,170,.7) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy strong { font-size:14px !important; color:#eef9fc !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-stat-copy small { font-size:7px !important; letter-spacing:.12em !important; color:#8ca8b2 !important; text-transform:uppercase !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-tags { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:5px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-tags span { min-width:0 !important; height:24px !important; display:flex !important; align-items:center !important; justify-content:center !important; border:1px solid rgba(61,221,249,.62) !important; color:#53e9f9 !important; font-size:8px !important; letter-spacing:.05em !important; background:#052035 !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-right-now { padding:11px 10px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button { font-size:8px !important; color:#6acddd !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-link-button svg,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head button svg { width:12px !important; height:12px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event {
+  height:102px !important;
+  min-height:102px !important;
+  display:grid !important;
+  grid-template-columns:50px minmax(0,1fr) 66px !important;
+  gap:8px !important;
+  align-items:center !important;
+  margin-top:6px !important;
+  padding:8px !important;
+  border:1px solid rgba(91,101,255,.45) !important;
+  background:linear-gradient(110deg,rgba(49,28,103,.88),rgba(17,32,73,.93)) !important;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-event-icon { width:48px !important; height:48px !important; border:1px solid rgba(163,83,255,.62) !important; background:rgba(86,44,157,.46) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-icon svg { width:23px !important; height:23px !important; color:#b47cff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-live { font-size:6px !important; bottom:-4px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy strong { font-size:11px !important; line-height:1.2 !important; color:#f0f2ff !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-copy > span { margin-top:3px !important; font-size:8px !important; color:#8fbfe0 !important; line-height:1.25 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-people { margin-top:7px !important; display:flex !important; align-items:center !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-avatar,
+.vox-reference-shell.sv-shell-v4 .sv-right-event-more { width:23px !important; height:23px !important; margin-right:-5px !important; font-size:7px !important; border:1px solid #49dff5 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-event-join { width:66px !important; height:34px !important; padding:0 6px !important; border:1px solid #45e5fa !important; background:linear-gradient(180deg,#08718c,#06445d) !important; color:#f3ffff !important; font-size:8px !important; text-transform:uppercase !important; }
+
+.vox-reference-shell.sv-shell-v4 .sv-right-members { display:flex !important; flex-direction:column !important; padding:11px 10px 9px !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-members-head { flex:0 0 29px !important; border-bottom:1px solid rgba(64,143,166,.17) !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list { flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important; padding:7px 0 6px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-members { display:flex !important; flex-direction:column !important; gap:3px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-active-member { min-height:54px !important; height:54px !important; padding:4px 4px !important; gap:9px !important; border-bottom:1px solid rgba(65,123,144,.15) !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-avatar { width:38px !important; height:38px !important; flex:0 0 38px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-line strong { font-size:12px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-line em { padding:2px 6px !important; font-size:7px !important; border-radius:8px !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-activity small { font-size:9px !important; color:#7f9ca8 !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-activity small:last-child,
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-activity i { display:none !important; }
+.vox-reference-shell.sv-shell-v4 .vox-ref-member-message { opacity:0 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-signature {
+  flex:0 0 58px !important;
+  min-height:58px !important;
+  padding:10px 10px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  gap:5px !important;
+  border-top:1px solid rgba(65,157,184,.20) !important;
+  background:linear-gradient(105deg,rgba(2,20,32,.92),rgba(22,17,55,.88)) !important;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%) !important;
+}
+.vox-reference-shell.sv-shell-v4 .sv-right-signature span { font-size:8px !important; line-height:1.35 !important; letter-spacing:.16em !important; text-transform:uppercase !important; color:#7ca7b5 !important; }
+.vox-reference-shell.sv-shell-v4 .sv-right-signature strong { font-size:7px !important; letter-spacing:.24em !important; color:#45e6f8 !important; }
+
+/* ---------- SCROLLBARS ---------- */
+.vox-reference-shell.sv-shell-v4 .hud-scrollbar,
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-scroll,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list { scrollbar-width:thin !important; scrollbar-color:#1589a8 rgba(3,26,40,.5) !important; }
+.vox-reference-shell.sv-shell-v4 .hud-scrollbar::-webkit-scrollbar,
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-scroll::-webkit-scrollbar,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list::-webkit-scrollbar { width:6px !important; }
+.vox-reference-shell.sv-shell-v4 .hud-scrollbar::-webkit-scrollbar-thumb,
+.vox-reference-shell.sv-shell-v4 .sv-channel-list-scroll::-webkit-scrollbar-thumb,
+.vox-reference-shell.sv-shell-v4 .sv-right-members-list::-webkit-scrollbar-thumb { background:#167e99 !important; border-radius:4px !important; }
+
+/* ---------- DESKTOP WIDTH TUNING ---------- */
+@media (max-width:1450px) {
+  .vox-reference-shell.sv-shell-v4 > .sv-topbar { grid-template-columns:268px 500px minmax(0,1fr) !important; }
+  .sv-topbar-v24 .sv-topbar-brand { padding-left:24px !important; gap:13px !important; }
+  .sv-topbar-v24 .sv-brand-symbol { width:56px !important; height:60px !important; }
+  .sv-topbar-v24 .sv-brand-copy strong { font-size:20px !important; }
+  .sv-topbar-v24 .sv-topbar-nav button { font-size:11px !important; }
+  .sv-topbar-v24 .sv-topbar-search { width:229px !important; }
+  .vox-reference-shell.sv-shell-v4 > .sv-workspace { grid-template-columns:82px 258px minmax(0,1fr) 282px !important; gap:6px !important; padding:7px 6px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 { flex-basis:185px !important; height:185px !important; min-height:185px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-community-hero-image { height:124px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-v24 { grid-template-columns:minmax(390px,53%) minmax(0,47%) !important; margin-left:12px !important; margin-right:12px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 { font-size:21px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-copy p { font-size:10.5px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-actions button { padding:0 11px !important; font-size:10px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-list { padding-left:12px !important; padding-right:12px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-shell-v24 { grid-template-rows:247px 145px minmax(0,1fr) !important; gap:8px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-about > p { font-size:10.5px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-community-heading h2 { font-size:18px !important; }
+}
+
+@media (min-width:1600px) {
+  .vox-reference-shell.sv-shell-v4 > .sv-topbar { height:120px !important; min-height:120px !important; grid-template-columns:320px 585px minmax(0,1fr) !important; }
+  .sv-topbar-v24 .sv-topbar-brand,
+  .sv-topbar-v24 .sv-topbar-nav,
+  .sv-topbar-v24 .sv-topbar-tools,
+  .sv-topbar-v24 .sv-topbar-nav button { height:120px !important; min-height:120px !important; }
+  .sv-topbar-v24 .sv-brand-copy strong { font-size:24px !important; }
+  .sv-topbar-v24 .sv-topbar-nav button { font-size:13px !important; }
+  .vox-reference-shell.sv-shell-v4 > .sv-workspace { height:calc(100vh - 120px) !important; grid-template-columns:92px 304px minmax(0,1fr) 320px !important; gap:8px !important; padding:9px 8px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-community-hero-v24 { flex-basis:210px !important; height:210px !important; min-height:210px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-community-hero-image { height:145px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-v24 { flex-basis:204px !important; min-height:204px !important; height:204px !important; grid-template-columns:minmax(470px,51%) minmax(0,49%) !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-copy h2 { font-size:25px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-welcome-copy p { font-size:12px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message { min-height:74px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-avatar { width:50px !important; height:50px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-meta strong { font-size:15px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-message-text { font-size:13.5px !important; }
+  .vox-reference-shell.sv-shell-v4 .sv-right-shell-v24 { grid-template-rows:270px 164px minmax(0,1fr) !important; }
+}
