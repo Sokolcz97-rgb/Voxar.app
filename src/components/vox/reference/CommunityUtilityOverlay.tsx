@@ -4,6 +4,7 @@ import { CommunityEventsStudio } from "./CommunityEventsStudio";
 import { CommunityFiles } from "./CommunityFiles";
 import { CommunityShop } from "./CommunityShop";
 import "./community-suite-v25.css";
+import "./community-topbar-v25.css";
 
 export type UtilityMode = "events" | "files" | "store" | "remove-bg";
 
