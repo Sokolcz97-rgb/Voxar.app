@@ -3026,6 +3026,104 @@ export type Database = {
           },
         ]
       }
+      vox_event_attendees: {
+        Row: {
+          created_at: string
+          event_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "vox_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vox_events: {
+        Row: {
+          capacity: number | null
+          channel_id: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          ends_at: string | null
+          guild_id: string
+          id: string
+          location: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          channel_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string | null
+          guild_id: string
+          id?: string
+          location?: string | null
+          starts_at: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          channel_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string | null
+          guild_id?: string
+          id?: string
+          location?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_events_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vox_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vox_events_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vox_guild_bans: {
         Row: {
           banned_by: string | null
@@ -3203,6 +3301,53 @@ export type Database = {
           },
         ]
       }
+      vox_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json
+          guild_id: string | null
+          id: string
+          is_read: boolean
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          guild_id?: string | null
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          guild_id?: string | null
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vox_notifications_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "vox_guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vox_presence: {
         Row: {
           custom_status: string | null
@@ -3366,6 +3511,10 @@ export type Database = {
     Functions: {
       bounty_complete: { Args: { _contract_id: string }; Returns: undefined }
       can: { Args: { _action: string; _module: string }; Returns: boolean }
+      can_manage_vox_events: {
+        Args: { _guild: string; _user: string }
+        Returns: boolean
+      }
       clear_conversation_for_me: {
         Args: { _conv_id: string }
         Returns: undefined
@@ -3447,6 +3596,10 @@ export type Database = {
       }
       is_guild_manager: {
         Args: { _guild_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_vox_event_member: {
+        Args: { _event: string; _user: string }
         Returns: boolean
       }
       is_vox_member: {
