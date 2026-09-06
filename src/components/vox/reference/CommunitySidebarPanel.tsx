@@ -42,7 +42,6 @@ export function CommunitySidebarPanel({
   onOpenServerSettings,
   onCategoriesChanged,
   onHome,
-  onMembers,
 }: Props) {
   useEffect(() => {
     publishVoxCommunityContext({ guildId, isAdmin });
@@ -105,7 +104,7 @@ export function CommunitySidebarPanel({
           <Home /><span>Domů</span><ChevronRight className="arrow" />
         </button>
         <button type="button" onClick={() => openVoxUtility("events")}><CalendarDays /><span>Události</span></button>
-        <button type="button" onClick={onMembers}><UsersRound /><span>Členové</span></button>
+        <button type="button" onClick={() => openVoxUtility("members")}><UsersRound /><span>Členové</span></button>
         <button type="button" onClick={() => openVoxUtility("store")}><Gem /><span>Boosty & Perky</span></button>
       </nav>
 
