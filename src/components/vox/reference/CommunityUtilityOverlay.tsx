@@ -1,4 +1,5 @@
-import { BellRing, CalendarDays, Folder, ShoppingBag, UsersRound, WandSparkles, X } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { BellRing, CalendarDays, Folder, RefreshCw, ShoppingBag, UsersRound, WandSparkles, X } from "lucide-react";
 import { CommunityBackgroundRemoval } from "./CommunityBackgroundRemoval";
 import { CommunityEventsStudio } from "./CommunityEventsStudio";
 import { CommunityFiles } from "./CommunityFiles";
@@ -31,25 +32,75 @@ type Props = {
   onOpenChannel?: (channelId: string) => void;
 };
 
+type BoundaryProps = {
+  resetKey: string;
+  children: ReactNode;
+};
+
+type BoundaryState = {
+  failed: boolean;
+};
+
+class UtilityPanelBoundary extends Component<BoundaryProps, BoundaryState> {
+  state: BoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): BoundaryState {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Voxar utility panel crashed", error, info);
+  }
+
+  componentDidUpdate(previous: BoundaryProps) {
+    if (previous.resetKey !== this.props.resetKey && this.state.failed) {
+      this.setState({ failed: false });
+    }
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="sv-feature-empty sv-utility-error">
+          <BellRing />
+          <strong>Panel se nepodařilo zobrazit</strong>
+          <span>Voxar zachoval zbytek aplikace aktivní. Zkus panel načíst znovu.</span>
+          <button type="button" className="sv-hud-button secondary" onClick={() => this.setState({ failed: false })}>
+            <RefreshCw /> Zkusit znovu
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export function CommunityUtilityOverlay({ mode, onClose, guildId, isGuildAdmin, onOpenChannel }: Props) {
-  const Icon = meta[mode].icon;
+  const entry = meta[mode];
+  if (!entry) return null;
+
+  const Icon = entry.icon;
   const bridged = getVoxCommunityContext();
   const resolvedGuildId = guildId === undefined ? bridged.guildId : guildId;
   const resolvedAdmin = isGuildAdmin === undefined ? bridged.isAdmin : isGuildAdmin;
+
   return (
-    <section className="sv-utility-overlay" aria-label={meta[mode].label}>
+    <section className="sv-utility-overlay" aria-label={entry.label}>
       <div className="sv-utility-chrome" aria-hidden="true"><i /><i /><i /><span /></div>
       <header className="sv-utility-overlay-head">
-        <div><Icon /><span>{meta[mode].label}</span><small>VOXAR.APP / STUDIOVOXARIO</small></div>
+        <div><Icon /><span>{entry.label}</span><small>VOXAR.APP / STUDIOVOXARIO</small></div>
         <button type="button" onClick={onClose} aria-label="Zavřít"><X /></button>
       </header>
       <div className="sv-utility-scroll">
-        {mode === "events" && <CommunityEventsStudio guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
-        {mode === "members" && <CommunityMembers guildId={resolvedGuildId} />}
-        {mode === "notifications" && <CommunityNotifications />}
-        {mode === "files" && <CommunityFiles />}
-        {mode === "store" && <CommunityShop />}
-        {mode === "remove-bg" && <CommunityBackgroundRemoval />}
+        <UtilityPanelBoundary resetKey={mode}>
+          {mode === "events" && <CommunityEventsStudio guildId={resolvedGuildId} isAdmin={resolvedAdmin} onOpenChannel={onOpenChannel ?? openVoxChannel} />}
+          {mode === "members" && <CommunityMembers guildId={resolvedGuildId} />}
+          {mode === "notifications" && <CommunityNotifications />}
+          {mode === "files" && <CommunityFiles />}
+          {mode === "store" && <CommunityShop />}
+          {mode === "remove-bg" && <CommunityBackgroundRemoval />}
+        </UtilityPanelBoundary>
       </div>
     </section>
   );

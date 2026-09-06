@@ -17,6 +17,10 @@ export type VoxNotification = {
 
 const db = supabase as any;
 
+function makeChannelSuffix() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
 export function useVoxNotifications(limit = 100) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<VoxNotification[]>([]);
@@ -51,11 +55,34 @@ export function useVoxNotifications(limit = 100) {
 
   useEffect(() => {
     if (!user) return;
+
+    let active = true;
+    const topic = `vox_notifications_${user.id}_${makeChannelSuffix()}`;
     const channel = supabase
-      .channel(`vox_notifications_${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "vox_notifications", filter: `user_id=eq.${user.id}` }, () => void load())
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
+      .channel(topic)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "vox_notifications", filter: `user_id=eq.${user.id}` },
+        () => {
+          if (active) void load();
+        },
+      );
+
+    try {
+      channel.subscribe((status, subscribeError) => {
+        if (!active) return;
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setError(subscribeError?.message || "Realtime oznámení se nepodařilo připojit.");
+        }
+      });
+    } catch (subscribeError) {
+      if (active) setError((subscribeError as Error).message || "Realtime oznámení se nepodařilo připojit.");
+    }
+
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel).catch(() => undefined);
+    };
   }, [user, load]);
 
   const markRead = useCallback(async (id: string, read = true) => {
