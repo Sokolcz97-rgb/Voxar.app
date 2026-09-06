@@ -25,5 +25,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Check Electron RTMP syntax
+        run: node --check electron/rtmp.cjs
+
+      - name: Run focused community tests
+        run: npm test -- src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx
+
       - name: Build web app
         run: npm run build
