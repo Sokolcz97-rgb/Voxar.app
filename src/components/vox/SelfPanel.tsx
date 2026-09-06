@@ -77,10 +77,10 @@ export function SelfPanel({
           </div>
         </div>
         <div className="vox-self-panel-actions flex items-center gap-0.5 shrink-0">
-          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", muted && "text-destructive")} onClick={onToggleMute} title={muted ? "Zapnout mikrofon" : "Ztlumit mikrofon"}>
+          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", muted && "text-destructive")} disabled={!connectedChannelName} onClick={onToggleMute} title={muted ? "Zapnout mikrofon" : "Ztlumit mikrofon"}>
             {muted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
           </Button>
-          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", deafened && "text-destructive")} onClick={onToggleDeafen} title={deafened ? "Zapnout zvuk" : "Vypnout zvuk"}>
+          <Button size="icon" variant="ghost" className={cn("vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]", deafened && "text-destructive")} disabled={!connectedChannelName} onClick={onToggleDeafen} title={deafened ? "Zapnout zvuk" : "Vypnout zvuk"}>
             {deafened ? <HeadphoneOff className="w-3.5 h-3.5" /> : <Headphones className="w-3.5 h-3.5" />}
           </Button>
           <Button size="icon" variant="ghost" className="vox-self-action h-7 w-7 hover:text-primary hover:shadow-[0_0_10px_hsl(var(--primary)/0.4)]" onClick={onOpenSettings} title="Nastavení">

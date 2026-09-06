@@ -54,7 +54,7 @@ export function CommunityWelcomeBanner({
             disabled={!canShowRules}
             title={rulesChannel ? `Přejít do #${rulesChannel.name}` : "Pravidla komunity"}
           >
-            <BookOpen /><span>Přečíst pravidla</span>
+            <BookOpen /><span>{rulesChannel ? "Přečíst pravidla" : onShowRules ? "Vytvořit kanál pravidel" : "Pravidla nezveřejněna"}</span>
           </button>
           <button
             type="button"
@@ -77,7 +77,7 @@ export function CommunityWelcomeBanner({
       </div>
 
       <div className="sv-welcome-art" aria-hidden="true">
-        <img className="sv-welcome-scene-image" src="/vox/reference/welcome-world-v24.svg" alt="" />
+        <img className="sv-welcome-scene-image" src="/vox/reference/welcome-world-v30.webp" alt="" />
         <div className="sv-welcome-stars" />
         <div className="sv-welcome-starfield" />
         <div className="sv-welcome-clouds" />

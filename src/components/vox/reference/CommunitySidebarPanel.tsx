@@ -65,7 +65,7 @@ export function CommunitySidebarPanel({
         <span className="sv-community-hero-frame sv-community-hero-frame-b" aria-hidden="true" />
         <span className="sv-community-hero-frame sv-community-hero-frame-c" aria-hidden="true" />
         <div className="sv-community-hero-art" aria-hidden="true">
-          <img className="sv-community-hero-image" src="/vox/reference/sidebar-world-v24.svg" alt="" />
+          <img className="sv-community-hero-image" src="/vox/reference/sidebar-world-v30.webp" alt="" />
           <div className="sv-community-hero-stars" />
           <div className="sv-community-hero-nebula" />
           <div className="sv-community-hero-aurora" />

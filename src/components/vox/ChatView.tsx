@@ -63,6 +63,8 @@ export function ChatView({
   const [hasKey, setHasKey] = useState<boolean>(() => !!getPassphrase(channel.guild_id));
   const [pending, setPending] = useState<UploadedAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [pins, setPins] = useState<MessagePin[]>([]);
   const [reactions, setReactions] = useState<CommunityReaction[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -122,11 +124,11 @@ export function ChatView({
         .from("vox_messages")
         .select("*")
         .eq("channel_id", channel.id)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(200);
 
       if (!mounted || !data) return;
-      const rows = data as unknown as CommunityMessage[];
+      const rows = (data as unknown as CommunityMessage[]).reverse();
       setMessages(rows);
       void loadProfiles(rows.map((message) => message.author_id));
       void loadInteractions();
@@ -206,23 +208,30 @@ export function ChatView({
   };
 
   const send = async () => {
-    if ((!input.trim() && pending.length === 0) || !user) return;
-
+    if ((!input.trim() && pending.length === 0) || !user || uploading || sendingRef.current) return;
+    sendingRef.current = true;
+    setSending(true);
     const raw = input.trim();
-    const content = raw && hasKey ? await encryptMessage(channel.guild_id, raw) : raw;
+    const draft = input;
     const attachments = pending;
-
-    setInput("");
-    setPending([]);
-
-    const { error } = await supabase.from("vox_messages").insert({
-      channel_id: channel.id,
-      author_id: user.id,
-      content,
-      attachments: attachments as any,
-    });
-
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    try {
+      const content = raw && hasKey ? await encryptMessage(channel.guild_id, raw) : raw;
+      const { data, error } = await supabase.from("vox_messages").insert({
+        channel_id: channel.id, author_id: user.id, content, attachments: attachments as any,
+      }).select().single();
+      if (error) throw error;
+      if (data) {
+        setMessages(current => current.some(m => m.id === data.id) ? current : [...current, data as unknown as CommunityMessage]);
+        void loadProfiles([user.id]);
+      }
+      setInput(current => current === draft ? "" : current);
+      setPending(current => current.filter(item => !attachments.includes(item)));
+    } catch (error) {
+      toast({ title: "Zpráva se neodeslala", description: "Text i přílohy zůstaly zachované. " + (error as Error).message, variant: "destructive" });
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
+    }
   };
 
   const pickFiles = async (files: FileList | null) => {
@@ -251,7 +260,7 @@ export function ChatView({
     if (!user) return;
     if (pinned) {
       const { error } = await db.from("vox_message_pins").delete().eq("message_id", message.id);
-      if (error) return toast({ title: "Zprávu se nepodařilo odepnout", description: error.message, variant: "destructive" });
+      if (error) { toast({ title: "Zprávu se nepodařilo odepnout", description: error.message, variant: "destructive" }); return; }
       setPins((current) => current.filter((pin) => pin.message_id !== message.id));
     } else {
       const { data, error } = await db
@@ -259,7 +268,7 @@ export function ChatView({
         .insert({ message_id: message.id, channel_id: channel.id, guild_id: channel.guild_id, pinned_by: user.id })
         .select("message_id,pinned_by,created_at")
         .single();
-      if (error) return toast({ title: "Zprávu se nepodařilo připnout", description: error.message, variant: "destructive" });
+      if (error) { toast({ title: "Zprávu se nepodařilo připnout", description: error.message, variant: "destructive" }); return; }
       setPins((current) => [data as MessagePin, ...current.filter((pin) => pin.message_id !== message.id)]);
     }
   }, [channel.id, channel.guild_id, user]);
@@ -268,7 +277,7 @@ export function ChatView({
     if (!user) return;
     if (active) {
       const { error } = await db.from("vox_message_reactions").delete().eq("message_id", messageId).eq("user_id", user.id).eq("emoji", emoji);
-      if (error) return toast({ title: "Reakci se nepodařilo odebrat", description: error.message, variant: "destructive" });
+      if (error) { toast({ title: "Reakci se nepodařilo odebrat", description: error.message, variant: "destructive" }); return; }
       setReactions((current) => current.filter((reaction) => !(reaction.message_id === messageId && reaction.user_id === user.id && reaction.emoji === emoji)));
     } else {
       const { error } = await db.from("vox_message_reactions").insert({
@@ -278,7 +287,7 @@ export function ChatView({
         user_id: user.id,
         emoji,
       });
-      if (error) return toast({ title: "Reakci se nepodařilo přidat", description: error.message, variant: "destructive" });
+      if (error) { toast({ title: "Reakci se nepodařilo přidat", description: error.message, variant: "destructive" }); return; }
       setReactions((current) => [...current, { message_id: messageId, user_id: user.id, emoji }]);
     }
   }, [channel.id, channel.guild_id, user]);
@@ -327,6 +336,8 @@ export function ChatView({
       />
 
       <CommunityComposer
+        members={members}
+        sending={sending}
         channelName={channel.name}
         hasKey={hasKey}
         input={input}

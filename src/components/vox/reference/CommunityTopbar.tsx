@@ -1,3 +1,4 @@
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useEffect, useRef, useState } from "react";
 import {
   AudioLines,
@@ -8,7 +9,6 @@ import {
   MoreHorizontal,
   Search,
   ShoppingBag,
-  WandSparkles,
 } from "lucide-react";
 import { CommunityUtilityOverlay, type UtilityMode } from "./CommunityUtilityOverlay";
 import { CommunitySearchPopover } from "./CommunitySearchPopover";
@@ -39,7 +39,6 @@ const navItems = [
   { key: "voice", label: "Hlas", icon: AudioLines },
   { key: "files", label: "Soubory", icon: Folder },
   { key: "store", label: "Obchod", icon: ShoppingBag },
-  { key: "remove-bg", label: "Odstranit pozadí", icon: WandSparkles },
   { key: "more", label: "Více", icon: MoreHorizontal },
 ] as const;
 
@@ -120,7 +119,7 @@ export function CommunityTopbar({
     <>
       <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19 sv-topbar-v24 sv-topbar-v25 sv-topbar-v29">
         <div className="sv-topbar-scene" aria-hidden="true">
-          <img className="sv-topbar-scene-image" src="/vox/reference/topbar-space-v24.svg" alt="" />
+          <img className="sv-topbar-scene-image" src="/vox/reference/topbar-space-v30.webp" alt="" />
           <span className="sv-topbar-deep-space" />
           <span className="sv-topbar-stars sv-topbar-stars-a" />
           <span className="sv-topbar-stars sv-topbar-stars-b" />
@@ -157,7 +156,15 @@ export function CommunityTopbar({
 
         <nav className="sv-topbar-nav" aria-label="Hlavní navigace">
           {navItems.map(({ key, label, icon: Icon }) => (
-            <button key={key} type="button" data-label={label} className={activeKey === key ? "active" : undefined} onClick={() => activate(key)}>
+            key === "more" ? <DropdownMenu key={key}>
+              <DropdownMenuTrigger asChild><button type="button" data-label={label} aria-label="Další nástroje"><Icon /><span>{label}</span></button></DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onSelect={() => setUtility("broadcast")}>Vysílací studio (RTMP)</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setUtility("remove-bg")}>Odstranit pozadí obrázku</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setUtility("members")}>Členové komunity</DropdownMenuItem>
+                <DropdownMenuItem onSelect={onMore}>Otevřít dashboard</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu> : <button key={key} type="button" data-label={label} aria-current={activeKey === key ? "page" : undefined} className={activeKey === key ? "active" : undefined} onClick={() => activate(key)}>
               <span className="sv-topbar-nav-glow" aria-hidden="true" />
               <span className="sv-topbar-nav-notch" aria-hidden="true" />
               <Icon />

@@ -55,7 +55,7 @@ export function CommunityRightPanel({
 
         <div className="sv-right-community-heading">
           <h2>{guildName}</h2>
-          <span className="sv-right-verified" title="Ověřená komunita">◆</span>
+
         </div>
         <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele. Buď součástí.</p>
 
@@ -75,7 +75,7 @@ export function CommunityRightPanel({
         <span className="sv-right-now-scan" aria-hidden="true" />
         <span className="sv-right-now-beam" aria-hidden="true" />
         <div className="sv-right-card-head">
-          <div className="sv-right-card-title">Nejbližší událost</div>
+          <div className="sv-right-card-title">Právě se děje</div>
           <button type="button" className="sv-right-link-button" onClick={showEvents}>Zobrazit vše <ChevronRight /></button>
         </div>
 

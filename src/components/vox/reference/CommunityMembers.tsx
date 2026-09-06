@@ -207,7 +207,7 @@ export function CommunityMembers({ guildId }: { guildId?: string | null }) {
                       <i className={`status-${member.status}`} title={statusLabel(member.status)} />
                     </div>
                     <div className="sv-member-main">
-                      <div className="sv-member-name-row"><strong>{name}</strong>{member.role === "owner" ? <Crown title="Vlastník" /> : member.role === "mod" ? <ShieldCheck title="Moderátor" /> : null}</div>
+                      <div className="sv-member-name-row"><strong>{name}</strong>{member.role === "owner" ? <Crown aria-label="Vlastník" /> : member.role === "mod" ? <ShieldCheck aria-label="Moderátor" /> : null}</div>
                       {member.nickname && member.nickname !== member.display_name && <small className="sv-member-nickname">{member.nickname}</small>}
                       <div className="sv-member-role-row">
                         <span className={`sv-member-system-role role-${member.role}`}>{roleLabel(member.role)}</span>

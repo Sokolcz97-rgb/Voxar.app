@@ -46,6 +46,7 @@ const PLATFORM_META: Record<BroadcastPlatform, { icon: any; handle: "twitch_user
 type CaptureSource = { id: string; name: string; type?: string; thumbnail?: string | null; appIcon?: string | null };
 type ProfileLinks = { twitch_username?: string | null; youtube_handle?: string | null; kick_username?: string | null };
 type Props = {
+  initialTab?: "events" | "broadcast";
   guildId?: string | null;
   isAdmin?: boolean;
   onOpenChannel?: (channelId: string) => void;
@@ -129,9 +130,10 @@ async function captureSelectedSource(sourceId: string | null, withSystemAudio: b
   });
 }
 
-export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel }: Props) {
+export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel, initialTab = "events" }: Props) {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"events" | "broadcast">("events");
+  const [tab, setTab] = useState<"events" | "broadcast">(initialTab);
+  useEffect(() => setTab(initialTab), [initialTab]);
   const [settings, setSettings] = useState<BroadcastSettings>(BROADCAST_DEFAULTS);
   const [links, setLinks] = useState<ProfileLinks>({});
   const [sources, setSources] = useState<CaptureSource[]>([]);
