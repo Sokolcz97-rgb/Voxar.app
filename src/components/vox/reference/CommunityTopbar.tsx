@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AudioLines,
   Bell,
@@ -11,6 +11,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { CommunityUtilityOverlay, type UtilityMode } from "./CommunityUtilityOverlay";
+import { subscribeVoxUtility } from "@/lib/voxCommunityBridge";
 
 interface Props {
   displayName: string;
@@ -51,7 +52,7 @@ export function CommunityTopbar({
   onNotifications,
   onProfile,
   activeGuildId,
-  isGuildAdmin = false,
+  isGuildAdmin,
   onOpenChannel,
   utilityMode,
   onUtilityModeChange,
@@ -59,10 +60,17 @@ export function CommunityTopbar({
   const [internalUtility, setInternalUtility] = useState<UtilityMode | null>(null);
   const controlled = utilityMode !== undefined;
   const utility = controlled ? utilityMode : internalUtility;
+
   const setUtility = (next: UtilityMode | null) => {
     if (!controlled) setInternalUtility(next);
     onUtilityModeChange?.(next);
   };
+
+  useEffect(() => subscribeVoxUtility((mode) => {
+    const next = mode as UtilityMode | null;
+    if (!controlled) setInternalUtility(next);
+    onUtilityModeChange?.(next);
+  }), [controlled, onUtilityModeChange]);
 
   const activate = (key: NavKey) => {
     if (key === "community") {
