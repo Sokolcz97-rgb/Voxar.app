@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { CalendarDays, ChevronRight, Gem, Home, UsersRound } from "lucide-react";
 import type { VoxChannel } from "../ChannelSidebar";
 import type { VoxGuild } from "../GuildRail";
 import { CommunityChannelList } from "./CommunityChannelList";
+import { openVoxUtility, publishVoxCommunityContext, subscribeVoxChannel } from "@/lib/voxCommunityBridge";
 
 interface Props {
   guild: VoxGuild;
@@ -41,10 +42,18 @@ export function CommunitySidebarPanel({
   onOpenServerSettings,
   onCategoriesChanged,
   onHome,
-  onEvents,
   onMembers,
-  onBoosts,
 }: Props) {
+  useEffect(() => {
+    publishVoxCommunityContext({ guildId, isAdmin });
+    return () => publishVoxCommunityContext({ guildId: null, isAdmin: false });
+  }, [guildId, isAdmin]);
+
+  useEffect(() => subscribeVoxChannel((channelId) => {
+    const channel = channels.find((item) => item.id === channelId);
+    if (channel) onSelectChannel(channel);
+  }), [channels, onSelectChannel]);
+
   return (
     <div className="sv-sidebar-shell sv-sidebar-shell-v3 sv-sidebar-shell-v17 sv-sidebar-shell-v18 sv-sidebar-shell-v19 sv-sidebar-shell-v24">
       <div className="sv-sidebar-slogan">
@@ -91,13 +100,13 @@ export function CommunitySidebarPanel({
       </section>
 
       <nav className="sv-sidebar-quick-nav" aria-label="Navigace komunity">
-        <button type="button" className="active" onClick={onHome}>
+        <button type="button" className="active" onClick={() => { openVoxUtility(null); onHome(); }}>
           <span className="sv-sidebar-nav-accent" aria-hidden="true" />
           <Home /><span>Domů</span><ChevronRight className="arrow" />
         </button>
-        <button type="button" onClick={onEvents}><CalendarDays /><span>Události</span></button>
+        <button type="button" onClick={() => openVoxUtility("events")}><CalendarDays /><span>Události</span></button>
         <button type="button" onClick={onMembers}><UsersRound /><span>Členové</span></button>
-        <button type="button" onClick={onBoosts}><Gem /><span>Boosty & Perky</span></button>
+        <button type="button" onClick={() => openVoxUtility("store")}><Gem /><span>Boosty & Perky</span></button>
       </nav>
 
       <div className="sv-sidebar-section-title"><span>Komunikační zóna</span><i aria-hidden="true" /></div>
