@@ -46,19 +46,27 @@ export function CommunitySidebarPanel({
   onBoosts,
 }: Props) {
   return (
-    <div className="sv-sidebar-shell sv-sidebar-shell-v3 sv-sidebar-shell-v17">
-      <div className="sv-sidebar-slogan">„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“</div>
+    <div className="sv-sidebar-shell sv-sidebar-shell-v3 sv-sidebar-shell-v17 sv-sidebar-shell-v18">
+      <div className="sv-sidebar-slogan">
+        <span>„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“</span>
+        <i className="sv-sidebar-slogan-accent" aria-hidden="true" />
+      </div>
 
-      <section className="sv-community-hero sv-community-hero-v3 sv-community-hero-v17" aria-label={`Komunita ${guild.name}`}>
+      <section className="sv-community-hero sv-community-hero-v3 sv-community-hero-v17 sv-community-hero-v18" aria-label={`Komunita ${guild.name}`}>
+        <span className="sv-community-hero-frame sv-community-hero-frame-a" aria-hidden="true" />
+        <span className="sv-community-hero-frame sv-community-hero-frame-b" aria-hidden="true" />
         <div className="sv-community-hero-art" aria-hidden="true">
           <div className="sv-community-hero-stars" />
+          <div className="sv-community-hero-aurora" />
           <div className="sv-community-hero-glow" />
           <div className="sv-community-hero-orbit" />
           <div className="sv-community-hero-moon" />
+          <div className="sv-community-hero-beacon" />
           <div className="sv-community-hero-city sv-community-hero-city-back" />
           <div className="sv-community-hero-city sv-community-hero-city-front" />
           <div className="sv-community-hero-ridge sv-community-hero-ridge-back" />
           <div className="sv-community-hero-ridge sv-community-hero-ridge-front" />
+          <div className="sv-community-hero-grid" />
           <div className="sv-community-hero-scan" />
         </div>
 
@@ -81,6 +89,7 @@ export function CommunitySidebarPanel({
 
       <nav className="sv-sidebar-quick-nav" aria-label="Navigace komunity">
         <button type="button" className="active" onClick={onHome}>
+          <span className="sv-sidebar-nav-accent" aria-hidden="true" />
           <Home /><span>Domů</span><ChevronRight className="arrow" />
         </button>
         <button type="button" onClick={onEvents}><CalendarDays /><span>Události</span></button>
@@ -88,7 +97,10 @@ export function CommunitySidebarPanel({
         <button type="button" onClick={onBoosts}><Gem /><span>Boosty & Perky</span></button>
       </nav>
 
-      <div className="sv-sidebar-section-title">Komunikační zóna</div>
+      <div className="sv-sidebar-section-title">
+        <span>Komunikační zóna</span>
+        <i aria-hidden="true" />
+      </div>
 
       <div className="sv-sidebar-channels">
         <CommunityChannelList

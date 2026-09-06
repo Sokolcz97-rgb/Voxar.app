@@ -1,0 +1,93 @@
+/* V18 extras — component-level finishing rules for the structural additions. */
+
+.sv-channel-header-v18 { position: relative; overflow: hidden; }
+.sv-channel-header-v18 .sv-channel-header-edge { position: absolute; pointer-events: none; z-index: 4; }
+.sv-channel-header-v18 .sv-channel-header-edge-a { left: 0; top: 0; width: 62px; height: 2px; background: #44e9ff; box-shadow: 0 0 9px rgba(68,233,255,.5); }
+.sv-channel-header-v18 .sv-channel-header-edge-b { right: 0; bottom: 0; width: 48px; height: 1px; background: #774cff; box-shadow: 0 0 8px rgba(119,76,255,.52); }
+.sv-channel-header-v18 .sv-channel-header-kind {
+  margin-left: 7px;
+  padding: 2px 6px;
+  border: 1px solid rgba(62,209,244,.22);
+  color: #527f91;
+  background: rgba(3,27,43,.58);
+  font-size: 6px;
+  line-height: 1;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.sv-channel-header-v18 .sv-channel-header-main::after {
+  content: "";
+  width: 1px;
+  height: 34px;
+  margin-left: 18px;
+  background: linear-gradient(180deg, transparent, rgba(62,211,245,.22), transparent);
+}
+
+.sv-right-shell-v18 .sv-right-link-button,
+.sv-right-shell-v18 .sv-right-members-head button {
+  color: #789dab !important;
+  transition: color .15s ease, transform .15s ease;
+}
+.sv-right-shell-v18 .sv-right-link-button:hover,
+.sv-right-shell-v18 .sv-right-members-head button:hover { color: #58e8fb !important; transform: translateX(1px); }
+
+.sv-right-shell-v18 .sv-right-signature {
+  left: 11px !important;
+  right: 11px !important;
+  bottom: 10px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(57,197,232,.14) !important;
+  background: linear-gradient(180deg, transparent, rgba(2,17,28,.96) 32%) !important;
+}
+.sv-right-shell-v18 .sv-right-signature strong { color: #49cfe6 !important; letter-spacing: .24em !important; }
+
+.sv-sidebar-shell-v18 .sv-channel-edit,
+.sv-sidebar-shell-v18 .sv-channel-group-actions button {
+  opacity: .45;
+  transition: opacity .15s ease, color .15s ease;
+}
+.sv-sidebar-shell-v18 .sv-channel-item-wrap:hover .sv-channel-edit,
+.sv-sidebar-shell-v18 .sv-channel-group-head:hover .sv-channel-group-actions button { opacity: .9; color: #53dff4; }
+
+.sv-sidebar-shell-v18 .sv-channel-list-scroll { padding-right: 3px; }
+.sv-sidebar-shell-v18 .sv-channel-list-scroll::-webkit-scrollbar { width: 6px; }
+.sv-sidebar-shell-v18 .sv-channel-list-scroll::-webkit-scrollbar-thumb { background: rgba(52,198,235,.45); }
+
+.sv-community-hero-v18 .sv-community-name-row i {
+  width: 7px !important;
+  height: 7px !important;
+  transform: rotate(45deg);
+  border-radius: 0 !important;
+  background: #4cecff !important;
+  box-shadow: 0 0 8px rgba(76,236,255,.68) !important;
+}
+
+.sv-welcome-v18 .sv-welcome-app {
+  color: #031823 !important;
+  background: #4fe9ff !important;
+  border-color: #4fe9ff !important;
+  font-weight: 800 !important;
+}
+.sv-welcome-v18 .sv-welcome-time { color: #698694 !important; }
+
+.sv-composer-v17 .sv-composer-inline-actions button:hover { color: #5be9fa !important; }
+.sv-composer-v17 .sv-composer-gif { letter-spacing: .08em !important; }
+
+.sv-message.compact .sv-message-avatar-column::after {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 4px;
+  margin: 9px auto 0;
+  border-radius: 50%;
+  background: rgba(91,149,171,.38);
+}
+
+.vox-ref-active-members-v18 .vox-ref-active-member.status-online .vox-ref-member-activity small:first-child { color: #7ecdb9 !important; }
+.vox-ref-active-members-v18 .vox-ref-active-member.status-dnd .vox-ref-member-activity small:first-child { color: #dd8181 !important; }
+.vox-ref-active-members-v18 .vox-ref-active-member.status-idle .vox-ref-member-activity small:first-child { color: #d2b86b !important; }
+
+@media (max-width: 1320px) {
+  .sv-channel-header-v18 .sv-channel-header-kind { display: none; }
+}

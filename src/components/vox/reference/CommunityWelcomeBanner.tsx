@@ -24,9 +24,11 @@ export function CommunityWelcomeBanner({
   const currentTime = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <section className="sv-welcome sv-welcome-v17" aria-label="Vítej v komunitě">
+    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18" aria-label="Vítej v komunitě">
       <span className="sv-welcome-corner sv-welcome-corner-left" aria-hidden="true" />
       <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
+      <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
+      <span className="sv-welcome-edge sv-welcome-edge-bottom" aria-hidden="true" />
 
       <div className="sv-welcome-copy">
         <div className="sv-welcome-eyebrow">
@@ -73,12 +75,17 @@ export function CommunityWelcomeBanner({
 
       <div className="sv-welcome-art" aria-hidden="true">
         <div className="sv-welcome-stars" />
+        <div className="sv-welcome-starfield" />
         <div className="sv-welcome-nebula" />
-        <div className="sv-welcome-portal"><i /><b /></div>
+        <div className="sv-welcome-aurora" />
+        <div className="sv-welcome-beam" />
+        <div className="sv-welcome-portal"><i /><b /><em /></div>
         <div className="sv-welcome-spires sv-welcome-spires-back" />
         <div className="sv-welcome-spires sv-welcome-spires-front" />
+        <div className="sv-welcome-cityline" />
         <div className="sv-welcome-ridge sv-welcome-ridge-a" />
         <div className="sv-welcome-ridge sv-welcome-ridge-b" />
+        <div className="sv-welcome-reflection" />
         <div className="sv-welcome-lightline" />
         <div className="sv-welcome-motto">GOOD<br />PEOPLE<br />BETTER<br />WORLDS</div>
       </div>
