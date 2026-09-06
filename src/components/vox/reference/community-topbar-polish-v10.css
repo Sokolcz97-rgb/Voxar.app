@@ -1,0 +1,119 @@
+/* V10 topbar balance: current structural sv-* chrome only. */
+.vox-reference-shell.sv-shell-v4 > .sv-topbar {
+  height: 88px !important;
+  min-height: 88px !important;
+  grid-template-columns: 276px minmax(500px, 1fr) 326px !important;
+  border-bottom-color: rgba(55, 224, 255, .48) !important;
+  box-shadow: 0 9px 28px rgba(0, 0, 0, .30) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 > .sv-topbar::before {
+  left: 60% !important;
+  top: -151px !important;
+  width: 300px !important;
+  height: 300px !important;
+  opacity: .78 !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-brand {
+  gap: 13px !important;
+  padding-inline: 24px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-brand img {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-brand strong {
+  font-size: 17px !important;
+  letter-spacing: .22em !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-brand span {
+  margin-top: 7px !important;
+  letter-spacing: .36em !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav {
+  justify-content: flex-start !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav button {
+  min-width: 80px !important;
+  gap: 6px !important;
+  padding: 8px 10px 7px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav button::after {
+  left: 14px !important;
+  right: 14px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-nav span {
+  font-size: 10px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-tools {
+  gap: 10px !important;
+  padding: 0 16px 0 10px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-search {
+  width: 222px !important;
+  height: 36px !important;
+  border-color: rgba(55, 203, 239, .34) !important;
+  background: rgba(2, 18, 32, .82) !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-search input {
+  font-size: 10px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-search kbd {
+  padding: 3px 5px !important;
+  font-size: 8px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-icon-button {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-topbar-avatar {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.vox-reference-shell.sv-shell-v4 .sv-workspace,
+.vox-reference-shell.sv-shell-v4 .vox-reference-workspace {
+  height: calc(100vh - 88px) !important;
+}
+
+@media (max-width: 1320px) {
+  .vox-reference-shell.sv-shell-v4 > .sv-topbar {
+    grid-template-columns: 248px minmax(440px, 1fr) 286px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-topbar-brand {
+    padding-inline: 18px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-topbar-brand strong {
+    font-size: 15px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-topbar-nav button {
+    min-width: 71px !important;
+    padding-inline: 7px !important;
+  }
+
+  .vox-reference-shell.sv-shell-v4 .sv-topbar-search {
+    width: 198px !important;
+  }
+}
