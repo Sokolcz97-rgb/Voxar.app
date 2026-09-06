@@ -53,14 +53,13 @@ export function CommunityTopbar({
   };
 
   return (
-    <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19">
+    <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19 sv-topbar-v24">
       <div className="sv-topbar-scene" aria-hidden="true">
+        <img className="sv-topbar-scene-image" src="/vox/reference/topbar-space-v24.svg" alt="" />
         <span className="sv-topbar-deep-space" />
         <span className="sv-topbar-stars sv-topbar-stars-a" />
         <span className="sv-topbar-stars sv-topbar-stars-b" />
-        <span className="sv-topbar-constellation">
-          <i /><i /><i /><i /><i />
-        </span>
+        <span className="sv-topbar-constellation"><i /><i /><i /><i /><i /></span>
         <span className="sv-topbar-horizon" />
         <span className="sv-topbar-ridge sv-topbar-ridge-back" />
         <span className="sv-topbar-ridge sv-topbar-ridge-front" />
@@ -115,12 +114,7 @@ export function CommunityTopbar({
           <kbd>Ctrl K</kbd>
         </label>
 
-        <button
-          type="button"
-          className="sv-topbar-icon-button"
-          onClick={onNotifications}
-          aria-label="Oznámení"
-        >
+        <button type="button" className="sv-topbar-icon-button" onClick={onNotifications} aria-label="Oznámení">
           <Bell />
           <i aria-hidden="true" />
         </button>
@@ -134,19 +128,14 @@ export function CommunityTopbar({
             title="Nastavení profilu"
             aria-label={`Profil ${displayName}`}
           >
-            {avatarUrl
-              ? <img src={avatarUrl} alt={displayName} />
-              : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
+            {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
             <i className="sv-topbar-avatar-ring" aria-hidden="true" />
             <b className="sv-topbar-avatar-dot" aria-hidden="true" />
           </button>
         </div>
 
         <div className="sv-topbar-motto" aria-hidden="true">
-          <span>People</span>
-          <span>Ideas</span>
-          <span>Games</span>
-          <span>Together</span>
+          <span>People</span><span>Ideas</span><span>Games</span><span>Together</span>
         </div>
       </div>
     </header>

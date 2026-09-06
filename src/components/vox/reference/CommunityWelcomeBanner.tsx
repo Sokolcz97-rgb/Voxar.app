@@ -17,14 +17,13 @@ export function CommunityWelcomeBanner({
   onShowRules,
 }: Props) {
   const introChannel = channels.find((channel) =>
-    channel.type === "text"
-    && ["představ-se", "predstav-se", "introductions"].includes(channel.name.toLowerCase()),
+    channel.type === "text" && ["představ-se", "predstav-se", "introductions"].includes(channel.name.toLowerCase()),
   );
   const voiceChannel = channels.find((channel) => channel.type === "voice");
   const currentTime = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19" aria-label="Vítej v komunitě">
+    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19 sv-welcome-v24" aria-label="Vítej v komunitě">
       <span className="sv-welcome-corner sv-welcome-corner-left" aria-hidden="true" />
       <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
@@ -33,9 +32,7 @@ export function CommunityWelcomeBanner({
       <div className="sv-welcome-copy">
         <div className="sv-welcome-eyebrow">
           <span className="sv-welcome-mark">
-            {guildIconUrl
-              ? <img src={guildIconUrl} alt="" />
-              : guildName.slice(0, 2).toUpperCase()}
+            {guildIconUrl ? <img src={guildIconUrl} alt="" /> : guildName.slice(0, 2).toUpperCase()}
           </span>
           <strong>{guildName.toUpperCase()}</strong>
           <span className="sv-welcome-app">APP</span>
@@ -48,8 +45,7 @@ export function CommunityWelcomeBanner({
 
         <div className="sv-welcome-actions">
           <button type="button" onClick={onShowRules} disabled={!onShowRules}>
-            <BookOpen />
-            <span>Přečíst pravidla</span>
+            <BookOpen /><span>Přečíst pravidla</span>
           </button>
           <button
             type="button"
@@ -57,8 +53,7 @@ export function CommunityWelcomeBanner({
             disabled={!introChannel}
             title={introChannel ? `Přejít do #${introChannel.name}` : "Kanál pro představení zatím není vytvořený"}
           >
-            <UserRound />
-            <span>Představ se</span>
+            <UserRound /><span>Představ se</span>
           </button>
           <button
             type="button"
@@ -67,13 +62,13 @@ export function CommunityWelcomeBanner({
             disabled={!voiceChannel}
             title={voiceChannel ? `Přejít do ${voiceChannel.name}` : "Hlasový kanál zatím není vytvořený"}
           >
-            <Mic2 />
-            <span>Připojit se na hlas</span>
+            <Mic2 /><span>Připojit se na hlas</span>
           </button>
         </div>
       </div>
 
       <div className="sv-welcome-art" aria-hidden="true">
+        <img className="sv-welcome-scene-image" src="/vox/reference/welcome-world-v24.svg" alt="" />
         <div className="sv-welcome-stars" />
         <div className="sv-welcome-starfield" />
         <div className="sv-welcome-clouds" />

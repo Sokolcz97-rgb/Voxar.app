@@ -21,11 +21,11 @@ export function CommunityRightPanel({
   onShowMembers,
   onMessage,
 }: Props) {
-  const previewMembers = members.slice(0, 4);
+  const previewMembers = members.slice(0, 3);
   const extraCount = Math.max(memberCount - previewMembers.length, 0);
 
   return (
-    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19">
+    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19 sv-right-shell-v24">
       <section className="sv-right-card sv-right-about sv-right-about-v3 sv-right-about-v18 sv-right-about-v19">
         <span className="sv-right-card-cut" aria-hidden="true" />
         <span className="sv-right-card-grid" aria-hidden="true" />
@@ -40,21 +40,12 @@ export function CommunityRightPanel({
           <h2>{guildName}</h2>
           <span className="sv-right-verified" title="Ověřená komunita">◆</span>
         </div>
-        <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele.</p>
+        <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele. Buď součástí.</p>
 
         <div className="sv-right-stats sv-right-stats-v3">
-          <div>
-            <UsersRound />
-            <span className="sv-right-stat-copy"><strong>{memberCount}</strong><small>členů</small></span>
-          </div>
-          <div>
-            <i className="sv-right-online-dot" />
-            <span className="sv-right-stat-copy"><strong>{onlineCount}</strong><small>online</small></span>
-          </div>
-          <div>
-            <CalendarDays />
-            <span className="sv-right-stat-copy"><strong>6</strong><small>událostí</small></span>
-          </div>
+          <div><UsersRound /><span className="sv-right-stat-copy"><strong>{memberCount}</strong><small>členů</small></span></div>
+          <div><i className="sv-right-online-dot" /><span className="sv-right-stat-copy"><strong>{onlineCount}</strong><small>online</small></span></div>
+          <div><CalendarDays /><span className="sv-right-stat-copy"><strong>6</strong><small>událostí</small></span></div>
         </div>
 
         <div className="sv-right-tags">
@@ -68,25 +59,18 @@ export function CommunityRightPanel({
         <span className="sv-right-now-beam" aria-hidden="true" />
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">Právě se děje</div>
-          <button type="button" className="sv-right-link-button" onClick={onJoinVoice}>
-            Zobrazit vše <ChevronRight />
-          </button>
+          <button type="button" className="sv-right-link-button" onClick={onJoinVoice}>Zobrazit vše <ChevronRight /></button>
         </div>
 
         <div className="sv-right-event sv-right-event-v3 sv-right-event-v18 sv-right-event-v19">
-          <div className="sv-right-event-icon">
-            <Gamepad2 />
-            <span className="sv-right-event-live">LIVE</span>
-          </div>
+          <div className="sv-right-event-icon"><Gamepad2 /><span className="sv-right-event-live">LIVE</span></div>
           <div className="sv-right-event-copy">
             <strong>Páteční herní večer</strong>
-            <span>Dnes 20:00 · Hlasový kanál</span>
+            <span>Dnes 20:00 · Hlasový kanál: Hraní</span>
             <div className="sv-right-event-people" aria-label="Účastníci události">
               {previewMembers.map((member) => (
                 <span className="sv-right-event-avatar" key={member.user_id} title={member.display_name || member.nickname || "Člen"}>
-                  {member.avatar_url
-                    ? <img src={member.avatar_url} alt="" />
-                    : (member.display_name || member.nickname || "??").slice(0, 2).toUpperCase()}
+                  {member.avatar_url ? <img src={member.avatar_url} alt="" /> : (member.display_name || member.nickname || "??").slice(0, 2).toUpperCase()}
                 </span>
               ))}
               {extraCount > 0 && <span className="sv-right-event-more">+{extraCount}</span>}
@@ -100,21 +84,13 @@ export function CommunityRightPanel({
         <span className="sv-right-members-line" aria-hidden="true" />
         <span className="sv-right-members-grid" aria-hidden="true" />
         <div className="sv-right-members-head">
-          <div>
-            <div className="sv-right-card-title">Aktivní členové</div>
-            <small>{onlineCount} online právě teď</small>
-          </div>
+          <div><div className="sv-right-card-title">Aktivní členové</div></div>
           <button type="button" onClick={onShowMembers}>Zobrazit vše <ChevronRight /></button>
         </div>
 
-        <div className="sv-right-members-list">
-          <ReferenceActiveMembers members={members} onMessage={onMessage} />
-        </div>
+        <div className="sv-right-members-list"><ReferenceActiveMembers members={members} onMessage={onMessage} /></div>
 
-        <div className="sv-right-signature">
-          <span>„Lepší komunity tvoří lepší hráče.“</span>
-          <strong>STUDIOVOXARIO</strong>
-        </div>
+        <div className="sv-right-signature"><span>„Lepší komunity tvoří lepší hráče.“</span><strong>STUDIOVOXARIO</strong></div>
       </section>
     </div>
   );
