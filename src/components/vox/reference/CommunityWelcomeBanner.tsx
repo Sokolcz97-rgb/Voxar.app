@@ -16,11 +16,15 @@ export function CommunityWelcomeBanner({
   onSelectChannel,
   onShowRules,
 }: Props) {
+  const rulesChannel = channels.find((channel) =>
+    channel.type === "text" && ["pravidla", "rules", "pravidla-komunity"].includes(channel.name.toLowerCase()),
+  );
   const introChannel = channels.find((channel) =>
     channel.type === "text" && ["představ-se", "predstav-se", "introductions"].includes(channel.name.toLowerCase()),
   );
   const voiceChannel = channels.find((channel) => channel.type === "voice");
   const currentTime = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+  const canShowRules = !!rulesChannel || !!onShowRules;
 
   return (
     <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19 sv-welcome-v24" aria-label="Vítej v komunitě">
@@ -44,7 +48,12 @@ export function CommunityWelcomeBanner({
         <p>Respektuj ostatní, užívej si atmosféru a tvoř s námi něco většího.</p>
 
         <div className="sv-welcome-actions">
-          <button type="button" onClick={onShowRules} disabled={!onShowRules}>
+          <button
+            type="button"
+            onClick={() => rulesChannel ? onSelectChannel(rulesChannel) : onShowRules?.()}
+            disabled={!canShowRules}
+            title={rulesChannel ? `Přejít do #${rulesChannel.name}` : "Pravidla komunity"}
+          >
             <BookOpen /><span>Přečíst pravidla</span>
           </button>
           <button
