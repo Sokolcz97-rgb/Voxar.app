@@ -47,7 +47,6 @@ export function CommunityComposer({
       <span className="sv-composer-corner sv-composer-corner-br" aria-hidden="true" />
       <span className="sv-composer-edge sv-composer-edge-left" aria-hidden="true" />
       <span className="sv-composer-edge sv-composer-edge-right" aria-hidden="true" />
-      <span className="sv-composer-mode" aria-hidden="true">TX // MESSAGE NODE</span>
 
       {pending.length > 0 && (
         <div className="sv-composer-pending">
@@ -87,7 +86,6 @@ export function CommunityComposer({
         </button>
 
         <div className="sv-composer-input-wrap">
-          <span className="sv-composer-channel-chip" aria-hidden="true"># {channelName}</span>
           <Textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
@@ -134,7 +132,6 @@ export function CommunityComposer({
           onClick={() => void onSend()}
         >
           <Send />
-          <span aria-hidden="true">SEND</span>
         </button>
       </div>
 

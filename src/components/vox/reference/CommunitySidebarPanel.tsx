@@ -50,7 +50,6 @@ export function CommunitySidebarPanel({
       <div className="sv-sidebar-slogan">
         <span>„VÍCE NEŽ HLAS. KOMUNITA, KTERÁ TVOŘÍ.“</span>
         <i className="sv-sidebar-slogan-accent" aria-hidden="true" />
-        <b className="sv-sidebar-slogan-node" aria-hidden="true" />
       </div>
 
       <section className="sv-community-hero sv-community-hero-v3 sv-community-hero-v17 sv-community-hero-v18 sv-community-hero-v19" aria-label={`Komunita ${guild.name}`}>
@@ -88,9 +87,7 @@ export function CommunitySidebarPanel({
               <i aria-hidden="true" />
             </div>
             <span>Herní komunita & tvorba</span>
-            <small>GOOD PEOPLE · BETTER WORLDS</small>
           </div>
-          <span className="sv-community-hero-badge" aria-hidden="true">COMMUNITY</span>
         </div>
       </section>
 
@@ -107,7 +104,6 @@ export function CommunitySidebarPanel({
       <div className="sv-sidebar-section-title">
         <span>Komunikační zóna</span>
         <i aria-hidden="true" />
-        <b aria-hidden="true">NODE 01</b>
       </div>
 
       <div className="sv-sidebar-channels">

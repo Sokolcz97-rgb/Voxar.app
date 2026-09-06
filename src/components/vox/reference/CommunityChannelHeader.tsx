@@ -35,14 +35,12 @@ export function CommunityChannelHeader({
           <div className="sv-channel-header-title-row">
             <Hash className="sv-channel-hash" />
             <h1>{channel.name}</h1>
-            <span className="sv-channel-header-kind">TEXT LINK</span>
           </div>
           <p>{topic}</p>
         </div>
       </div>
 
       <div className="sv-channel-header-actions">
-        <span className="sv-channel-node-label" aria-hidden="true">NODE // 10 PKT</span>
         <span className="sv-channel-online"><i />{onlineCount} online</span>
         <span className="sv-channel-divider" aria-hidden="true" />
         <button
