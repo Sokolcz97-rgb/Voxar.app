@@ -170,8 +170,8 @@ async function executeTool(
   name: string,
   args: any,
   ctx: {
-    userClient: ReturnType<typeof createClient>;
-    serviceClient: ReturnType<typeof createClient>;
+    userClient: any;
+    serviceClient: any;
     userId: string;
   },
 ): Promise<unknown> {
