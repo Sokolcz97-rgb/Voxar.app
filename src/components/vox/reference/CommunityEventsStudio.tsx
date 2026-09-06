@@ -1,25 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
+  Check,
   CheckCircle2,
+  Clock3,
   Copy,
+  Edit3,
   Eye,
   EyeOff,
   Gamepad2,
   Loader2,
+  MapPin,
   Mic,
   MonitorUp,
+  Plus,
   Radio,
   Settings2,
   Square,
+  Trash2,
   Twitch,
-  Video,
+  UsersRound,
   Youtube,
   Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useCommunityEvents, type VoxCommunityEvent, type VoxEventRsvpStatus } from "@/hooks/useCommunityEvents";
 import {
   BROADCAST_DEFAULTS,
   buildRtmpUrl,
@@ -38,11 +45,45 @@ const PLATFORM_META: Record<BroadcastPlatform, { icon: any; handle: "twitch_user
 
 type CaptureSource = { id: string; name: string; type?: string; thumbnail?: string | null; appIcon?: string | null };
 type ProfileLinks = { twitch_username?: string | null; youtube_handle?: string | null; kick_username?: string | null };
+type Props = {
+  guildId?: string | null;
+  isAdmin?: boolean;
+  onOpenChannel?: (channelId: string) => void;
+};
+
+type EventForm = {
+  title: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+  location: string;
+  channelId: string;
+  capacity: string;
+};
+
+const emptyForm = (): EventForm => {
+  const start = new Date(Date.now() + 60 * 60 * 1000);
+  start.setMinutes(Math.ceil(start.getMinutes() / 15) * 15, 0, 0);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const local = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  return { title: "", description: "", startsAt: local(start), endsAt: local(end), location: "", channelId: "", capacity: "" };
+};
 
 function maskKey(value: string) {
   if (!value) return "nenastaven";
   if (value.length < 8) return "••••••••";
   return `${value.slice(0, 3)}••••••••${value.slice(-3)}`;
+}
+
+function eventDate(value: string) {
+  return new Date(value).toLocaleString("cs-CZ", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function eventTimeLabel(event: VoxCommunityEvent) {
+  const start = new Date(event.starts_at);
+  const now = new Date();
+  const sameDay = start.toDateString() === now.toDateString();
+  return `${sameDay ? "DNES" : start.toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "short" }).toUpperCase()} · ${start.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function makeCombinedStream(videoStream: MediaStream, micStream: MediaStream | null) {
@@ -88,7 +129,7 @@ async function captureSelectedSource(sourceId: string | null, withSystemAudio: b
   });
 }
 
-export function CommunityEventsStudio() {
+export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel }: Props) {
   const { user } = useAuth();
   const [tab, setTab] = useState<"events" | "broadcast">("events");
   const [settings, setSettings] = useState<BroadcastSettings>(BROADCAST_DEFAULTS);
@@ -102,10 +143,25 @@ export function CommunityEventsStudio() {
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [nativeReady, setNativeReady] = useState(false);
   const [lastLog, setLastLog] = useState("");
+  const [channels, setChannels] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [form, setForm] = useState<EventForm>(() => emptyForm());
   const recorderRef = useRef<MediaRecorder | null>(null);
   const captureRef = useRef<MediaStream | null>(null);
   const micRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef<number | null>(null);
+
+  const {
+    activeEvents,
+    loading: eventsLoading,
+    error: eventsError,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    setRsvp,
+  } = useCommunityEvents(guildId);
 
   const desktop = (window as any).studioVoxarioDesktop;
 
@@ -129,6 +185,16 @@ export function CommunityEventsStudio() {
     });
     return () => { offState?.(); offLog?.(); };
   }, [user]);
+
+  useEffect(() => {
+    if (!guildId) { setChannels([]); return; }
+    void supabase
+      .from("vox_channels")
+      .select("id,name,type")
+      .eq("guild_id", guildId)
+      .order("position")
+      .then(({ data }) => setChannels((data ?? []) as any[]));
+  }, [guildId]);
 
   useEffect(() => {
     if (!live) { setElapsed(0); return; }
@@ -244,13 +310,91 @@ export function CommunityEventsStudio() {
     }
   };
 
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm());
+    setEditorOpen(true);
+  };
+
+  const openEdit = (event: VoxCommunityEvent) => {
+    const local = (value: string | null) => value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "";
+    setEditingId(event.id);
+    setForm({
+      title: event.title,
+      description: event.description || "",
+      startsAt: local(event.starts_at),
+      endsAt: local(event.ends_at),
+      location: event.location || "",
+      channelId: event.channel_id || "",
+      capacity: event.capacity ? String(event.capacity) : "",
+    });
+    setEditorOpen(true);
+  };
+
+  const saveEvent = async () => {
+    if (!form.title.trim() || !form.startsAt) {
+      toast({ title: "Doplň název a začátek události", variant: "destructive" });
+      return;
+    }
+    setSavingEvent(true);
+    try {
+      const payload = {
+        title: form.title,
+        description: form.description || null,
+        starts_at: new Date(form.startsAt).toISOString(),
+        ends_at: form.endsAt ? new Date(form.endsAt).toISOString() : null,
+        location: form.location || null,
+        channel_id: form.channelId || null,
+        capacity: form.capacity ? Math.max(1, Number(form.capacity)) : null,
+      };
+      if (editingId) await updateEvent(editingId, payload);
+      else await createEvent(payload);
+      toast({ title: editingId ? "Událost upravena" : "Událost vytvořena" });
+      setEditorOpen(false);
+      setEditingId(null);
+    } catch (error) {
+      toast({ title: "Událost se nepodařilo uložit", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const removeEvent = async (event: VoxCommunityEvent) => {
+    if (!confirm(`Smazat událost „${event.title}“?`)) return;
+    try {
+      await deleteEvent(event.id);
+      toast({ title: "Událost odstraněna" });
+    } catch (error) {
+      toast({ title: "Událost se nepodařilo odstranit", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
+  const rsvp = async (event: VoxCommunityEvent, status: VoxEventRsvpStatus) => {
+    try {
+      await setRsvp(event.id, event.myRsvp === status ? null : status);
+    } catch (error) {
+      toast({ title: "Účast se nepodařilo uložit", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
   const time = `${String(Math.floor(elapsed / 3600)).padStart(2, "0")}:${String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+  const hero = activeEvents[0] ?? null;
+
+  const rsvpButtons = (event: VoxCommunityEvent) => (
+    <div className="sv-event-rsvp">
+      <button className={event.myRsvp === "going" ? "active" : ""} onClick={() => void rsvp(event, "going")}><Check /> Jdu <b>{event.rsvp.going}</b></button>
+      <button className={event.myRsvp === "interested" ? "active" : ""} onClick={() => void rsvp(event, "interested")}><UsersRound /> Zajímá mě <b>{event.rsvp.interested}</b></button>
+    </div>
+  );
 
   return (
-    <div className="sv-feature-page sv-events-studio">
+    <div className="sv-feature-page sv-events-studio sv-events-studio-v26">
       <div className="sv-feature-heading">
-        <div><span>STUDIOVOXARIO</span><h2>Události & vysílání</h2><p>Komunitní program a RTMP studio přímo ve Voxar.app.</p></div>
-        <div className={`sv-live-chip${live ? " is-live" : ""}`}><i />{live ? `LIVE ${time}` : "OFFLINE"}</div>
+        <div><span>STUDIOVOXARIO</span><h2>Události & vysílání</h2><p>Komunitní program, potvrzení účasti a RTMP studio přímo ve Voxar.app.</p></div>
+        <div className="sv-event-heading-actions">
+          {tab === "events" && isAdmin && guildId && <button className="sv-hud-button" onClick={openCreate}><Plus /> Nová událost</button>}
+          <div className={`sv-live-chip${live ? " is-live" : ""}`}><i />{live ? `LIVE ${time}` : "OFFLINE"}</div>
+        </div>
       </div>
 
       <div className="sv-feature-tabs">
@@ -259,14 +403,62 @@ export function CommunityEventsStudio() {
       </div>
 
       {tab === "events" ? (
-        <div className="sv-events-grid">
-          <article className="sv-event-hero-card">
-            <div className="sv-event-hero-art"><span>LIVE COMMUNITY</span><Gamepad2 /></div>
-            <div className="sv-event-hero-copy"><small>DNES · 20:00</small><h3>Páteční herní večer</h3><p>Společné hraní a hlasový kanál Hraní. Připoj se k ostatním členům komunity.</p><button onClick={() => setTab("broadcast")}>Otevřít vysílací studio</button></div>
-          </article>
-          <article className="sv-event-card"><CalendarDays /><div><small>PŘÍŠTÍ TÝDEN</small><h3>Community Night</h3><p>Novinky, hry a prostor pro tvorbu.</p></div></article>
-          <article className="sv-event-card"><Video /><div><small>VYSÍLÁNÍ</small><h3>StudioVoxario Live</h3><p>Multistream přes RTMP na propojené platformy.</p></div></article>
-        </div>
+        !guildId ? (
+          <div className="sv-feature-empty"><CalendarDays /><strong>Vyber komunitu</strong><span>Události jsou navázané na konkrétní komunitu.</span></div>
+        ) : eventsLoading ? (
+          <div className="sv-feature-loading"><Loader2 className="animate-spin" /> Načítám komunitní události…</div>
+        ) : eventsError ? (
+          <div className="sv-feature-empty"><CalendarDays /><strong>Databáze událostí zatím není dostupná</strong><span>{eventsError}</span></div>
+        ) : (
+          <>
+            {editorOpen && (
+              <section className="sv-event-editor">
+                <div className="sv-event-editor-head"><div><small>EVENT CONTROL</small><h3>{editingId ? "Upravit událost" : "Nová komunitní událost"}</h3></div><button onClick={() => setEditorOpen(false)}>Zavřít</button></div>
+                <div className="sv-event-form-grid">
+                  <label className="wide">Název<input value={form.title} maxLength={120} onChange={(e) => setForm((current) => ({ ...current, title: e.target.value }))} placeholder="Např. Páteční herní večer" /></label>
+                  <label>Začátek<input type="datetime-local" value={form.startsAt} onChange={(e) => setForm((current) => ({ ...current, startsAt: e.target.value }))} /></label>
+                  <label>Konec<input type="datetime-local" value={form.endsAt} onChange={(e) => setForm((current) => ({ ...current, endsAt: e.target.value }))} /></label>
+                  <label>Místo / popis místa<input value={form.location} onChange={(e) => setForm((current) => ({ ...current, location: e.target.value }))} placeholder="Voxar.app / Discord / server" /></label>
+                  <label>Kanál<select value={form.channelId} onChange={(e) => setForm((current) => ({ ...current, channelId: e.target.value }))}><option value="">Bez konkrétního kanálu</option>{channels.map((channel) => <option key={channel.id} value={channel.id}>{channel.type === "voice" ? "🔊" : "#"} {channel.name}</option>)}</select></label>
+                  <label>Kapacita<input type="number" min="1" value={form.capacity} onChange={(e) => setForm((current) => ({ ...current, capacity: e.target.value }))} placeholder="Bez limitu" /></label>
+                  <label className="wide">Popis<textarea value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} rows={3} placeholder="Co se bude dít, co si připravit, pro koho je akce…" /></label>
+                </div>
+                <div className="sv-event-editor-actions"><button className="sv-hud-button secondary" onClick={() => setEditorOpen(false)}>Zrušit</button><button className="sv-hud-button" disabled={savingEvent} onClick={() => void saveEvent()}>{savingEvent ? <Loader2 className="animate-spin" /> : <Check />} {editingId ? "Uložit změny" : "Vytvořit událost"}</button></div>
+              </section>
+            )}
+
+            {hero ? (
+              <div className="sv-events-grid sv-events-grid-v26">
+                <article className="sv-event-hero-card sv-event-live-card">
+                  <div className="sv-event-hero-art" style={hero.cover_url ? { backgroundImage: `linear-gradient(rgba(2,13,25,.4),rgba(2,13,25,.82)),url(${hero.cover_url})` } : undefined}><span>LIVE COMMUNITY</span><Gamepad2 /></div>
+                  <div className="sv-event-hero-copy">
+                    <small>{eventTimeLabel(hero)}</small>
+                    <h3>{hero.title}</h3>
+                    <p>{hero.description || "Komunitní událost ve Voxar.app."}</p>
+                    <div className="sv-event-meta-row"><span><Clock3 />{eventDate(hero.starts_at)}</span>{hero.location && <span><MapPin />{hero.location}</span>}<span><UsersRound />{hero.rsvp.going} potvrzeno{hero.capacity ? ` / ${hero.capacity}` : ""}</span></div>
+                    {rsvpButtons(hero)}
+                    <div className="sv-event-actions-row">
+                      {hero.channel_id && onOpenChannel && <button onClick={() => onOpenChannel(hero.channel_id!)}>Otevřít kanál</button>}
+                      <button onClick={() => setTab("broadcast")}>Otevřít vysílací studio</button>
+                      {isAdmin && <button className="icon" onClick={() => openEdit(hero)} title="Upravit"><Edit3 /></button>}
+                      {isAdmin && <button className="icon danger" onClick={() => void removeEvent(hero)} title="Smazat"><Trash2 /></button>}
+                    </div>
+                  </div>
+                </article>
+
+                {activeEvents.slice(1).map((event) => (
+                  <article className="sv-event-card sv-event-card-v26" key={event.id}>
+                    <CalendarDays />
+                    <div className="sv-event-card-copy"><small>{eventTimeLabel(event)}</small><h3>{event.title}</h3><p>{event.description || event.location || "Komunitní událost"}</p><div className="sv-event-compact-meta"><span>{event.rsvp.going} jde</span>{event.location && <span>{event.location}</span>}</div>{rsvpButtons(event)}</div>
+                    {isAdmin && <div className="sv-event-card-admin"><button onClick={() => openEdit(event)}><Edit3 /></button><button className="danger" onClick={() => void removeEvent(event)}><Trash2 /></button></div>}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="sv-feature-empty"><CalendarDays /><strong>Žádná naplánovaná událost</strong><span>{isAdmin ? "Vytvoř první komunitní událost tlačítkem nahoře." : "Až správci něco naplánují, objeví se to tady."}</span>{isAdmin && <button className="sv-hud-button" onClick={openCreate}><Plus /> Vytvořit událost</button>}</div>
+            )}
+          </>
+        )
       ) : (
         <div className="sv-broadcast-layout">
           <section className="sv-broadcast-main">
