@@ -28,8 +28,7 @@ export function CommunityChannelHeader({
         </div>
         <div className="sv-channel-header-copy">
           <div className="sv-channel-header-title-row">
-            {!channel.emoji && <Hash className="sv-channel-hash" />}
-            {channel.emoji && <span className="sv-channel-emoji">{channel.emoji}</span>}
+            <Hash className="sv-channel-hash" />
             <h1>{channel.name}</h1>
           </div>
           <p>{topic}</p>
