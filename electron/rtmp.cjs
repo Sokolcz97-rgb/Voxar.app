@@ -100,21 +100,26 @@ function registerRtmpHandlers() {
         entry.stderr = (entry.stderr + text).slice(-5000);
         safeSend(event.sender, "broadcast:log", { platform: entry.platform, text });
       });
+      proc.stdin?.on("error", (error) => {
+        state.error = `${entry.platform}: RTMP vstup selhal (${error.message})`;
+        safeSend(event.sender, "broadcast:state", { ...state });
+      });
       proc.on("error", (error) => {
         state.error = `${entry.platform}: ${error.message}`;
         safeSend(event.sender, "broadcast:state", { ...state });
       });
       proc.on("exit", (code) => {
         sessions = sessions.filter((item) => item.proc !== proc);
-        if (state.active && sessions.length === 0) {
-          state = {
-            active: false,
-            startedAt: null,
-            destinations: [],
-            error: code === 0 || code === null ? null : `FFmpeg skončil s kódem ${code}`,
-          };
-          safeSend(event.sender, "broadcast:state", { ...state });
-        }
+        const remaining = sessions.map((item) => item.platform);
+        const exitError = code === 0 || code === null ? null : `${entry.platform}: FFmpeg skončil s kódem ${code}`;
+        state = {
+          ...state,
+          active: remaining.length > 0,
+          startedAt: remaining.length > 0 ? state.startedAt : null,
+          destinations: remaining,
+          error: exitError || state.error,
+        };
+        safeSend(event.sender, "broadcast:state", { ...state });
       });
     }
 
