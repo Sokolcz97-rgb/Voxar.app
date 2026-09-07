@@ -268,6 +268,35 @@ jobs:
             electron/release/win-unpacked/resources/app-update.yml
           if-no-files-found: error
 
+      # electron-builder vytváří release nejdřív jako draft. `/releases/latest`
+      # proto po celou dobu buildu dál ukazuje na poslední kompletní verzi a
+      # nikdy neodkáže na release, ve kterém ještě chybí webový Setup.
+      - name: Publish complete release atomically
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.appver.outputs.version }}"
+          TAG="v$VERSION"
+          REPO="${{ github.repository }}"
+
+          gh release edit "$TAG" --draft=false --prerelease=false --latest --repo "$REPO"
+
+          LATEST_TAG=$(gh api "repos/$REPO/releases/latest" --jq '.tag_name')
+          if [ "$LATEST_TAG" != "$TAG" ]; then
+            echo "Latest release mismatch: expected $TAG, got $LATEST_TAG"
+            exit 1
+          fi
+
+          DOWNLOAD_URL="https://github.com/$REPO/releases/latest/download/StudioVoxarioSetup.exe"
+          STATUS=$(curl --head --location --silent --show-error --output /dev/null --write-out '%{http_code}' "$DOWNLOAD_URL")
+          if [ "$STATUS" != "200" ]; then
+            echo "Stable installer URL returned HTTP $STATUS"
+            exit 1
+          fi
+          echo "✓ $TAG is public, complete and downloadable through the stable URL"
+
       # desktop-version.json + website pointer odkazují na VLASTNÍ Setup EXE.
       # public/latest.yml + public/beta.yml jsou migrační feed pro staré klienty
       # a zůstávají navázané na technický StudioVoxarioUpdate EXE.
