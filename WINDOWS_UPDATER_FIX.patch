@@ -1,0 +1,534 @@
+diff --git a/electron/assets/installer.nsh b/electron/assets/installer.nsh
+index 2a13c28..34cd1c2 100644
+--- a/electron/assets/installer.nsh
++++ b/electron/assets/installer.nsh
+@@ -1,89 +1,124 @@
+ ; StudioVoxario NSIS bridge
+ ; ------------------------
+ ; Prvni instalaci dela vlastni Electron/HUD instalator, ktery historicky zapisuje
+ ; instalacni cestu sem:
+ ; HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app\InstallLocation
+ ;
+ ; electron-updater ale pri naslednem tichem NSIS updatu pouziva vlastni
+ ; INSTALL_REGISTRY_KEY od electron-builderu. Pred inicializaci proto prekopirujeme
+ ; existujici custom install path do jeho registry klice. Tim se prvni auto-update
+ ; nainstaluje PRESNE pres stavajici instalaci, i kdyz byla puvodne rozbalena
+ ; vlastnim HUD instalatorem.
+ ;
++; NSIS update pri tom standardne spousti predchozi uninstaller. U velkeho
++; asar.unpacked balicku (FFmpeg pro RTMP) muze tento pomocny proces narazit na
++; kratky Windows timeout a vrati kod 2, i kdyz aplikace uz neběží. Proto při
++; aktualizaci stejné per-user instalace odstraníme pouze staré uninstall příkazy
++; a necháme NSIS bezpečně přepsat soubory na místě. Nový uninstaller se zapíše
++; znovu v registryAddInstallInfo.
++;
+ ; DULEZITE: modules.json lezi vedle exe a obsahuje volbu, zda uzivatel instaloval
+ ; VoxarioBrowser. NSIS pri update muze cizi soubory v instalacni slozce odstranit,
+ ; proto stav pred aktualizaci zalohujeme a po instalaci vratime.
+ 
+ !macro preInit
+   StrCpy $R9 ""
+   StrCpy $R8 "0"
+   Delete "$TEMP\StudioVoxario-modules.json"
+ 
+   ; 1) Prvni prechod z vlastniho HUD instalatoru.
+   SetRegView 64
+   ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app" "InstallLocation"
+ 
+   ${If} $R9 == ""
+     SetRegView 32
+     ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app" "InstallLocation"
+   ${EndIf}
+ 
+   ; 2) Dalsi aktualizace uz pouzivaji standardni electron-builder registry klic.
+   ${If} $R9 == ""
+     SetRegView 64
+     ReadRegStr $R9 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+   ${EndIf}
+   ${If} $R9 == ""
+     SetRegView 32
+     ReadRegStr $R9 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+   ${EndIf}
+ 
+   ${If} $R9 != ""
+     ; Zapiseme cestu do obou view. electron-builder si pak pri update vybere
+     ; spravny per-user InstallLocation a nepresune appku jinam.
+     SetRegView 64
+     WriteRegStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "$R9"
+     SetRegView 32
+     WriteRegStr HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation" "$R9"
+ 
+     ; Zachovej volbu nainstalovanych modulu pres NSIS update.
+     IfFileExists "$R9\modules.json" 0 sv_modules_backup_done
+       CopyFiles /SILENT "$R9\modules.json" "$TEMP\StudioVoxario-modules.json"
+       StrCpy $R8 "1"
+     sv_modules_backup_done:
+   ${EndIf}
+ 
+   SetRegView 64
+ !macroend
+ 
++; Preskoc standardni spousteni stareho uninstalleru. To je dulezite hlavne pro
++; migraci z prvni verze a pro balicky s velkym asar.unpacked (FFmpeg). Oba
++; registry view cistime proto, aby se update nikdy nevratil ke staremu prikazu.
++!macro customInit
++  SetOverwrite on
++
++  ClearErrors
++  SetRegView 64
++  DeleteRegValue HKCU "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
++  DeleteRegValue HKCU "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
++  DeleteRegValue HKLM "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
++  DeleteRegValue HKLM "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
++  SetRegView 32
++  DeleteRegValue HKCU "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
++  DeleteRegValue HKCU "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
++  DeleteRegValue HKLM "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
++  DeleteRegValue HKLM "${UNINSTALL_REGISTRY_KEY}" "QuietUninstallString"
++  SetRegView 64
++  ClearErrors
++!macroend
++
++; Instalator je vzdy per-user a cesta se nesmi pri tichém update zmenit.
++!macro customInstallMode
++  StrCpy $isForceCurrentInstall "1"
++!macroend
++
+ ; Po prvnim uspesnem NSIS updatu uz ma aplikace standardni electron-builder
+ ; registry zaznam. Stary custom uninstall zaznam odstraníme, aby ve Windows
+ ; nevznikaly dve polozky stejne aplikace. Samotna instalacni cesta a uzivatelska
+ ; data zustavaji zachovana.
+ !macro customInstall
++  SetOverwrite on
++
+   ; Vrat modules.json, ktery mohl NSIS pri prepisu instalace odstranit.
+   ${If} $R8 == "1"
+     IfFileExists "$TEMP\StudioVoxario-modules.json" 0 sv_modules_restore_done
+       CopyFiles /SILENT "$TEMP\StudioVoxario-modules.json" "$INSTDIR\modules.json"
+       Delete "$TEMP\StudioVoxario-modules.json"
+     sv_modules_restore_done:
+   ${Else}
+     ; Oprava pro klienty, kterym uz starsi update modules.json smazal.
+     ; Vlastni instalator vytvari Start Menu zkratku jen tehdy, kdyz byl
+     ; VoxarioBrowser skutecne zvolen, takze ji muzeme pouzit jako migracni dukaz.
+     IfFileExists "$APPDATA\Microsoft\Windows\Start Menu\Programs\Voxar.app\VoxarioBrowser.lnk" 0 sv_modules_migration_done
+       FileOpen $R7 "$INSTDIR\modules.json" w
+       FileWrite $R7 '{"browser":{"installed":true}}'
+       FileClose $R7
+       StrCpy $R8 "1"
+     sv_modules_migration_done:
+   ${EndIf}
+ 
+   ${If} ${isUpdated}
+     SetRegView 64
+     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app"
+     SetRegView 32
+     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app"
+     SetRegView 64
+   ${EndIf}
+ !macroend
+diff --git a/electron/rtmp.cjs b/electron/rtmp.cjs
+index f26be1f..3eeaf51 100644
+--- a/electron/rtmp.cjs
++++ b/electron/rtmp.cjs
+@@ -1,145 +1,153 @@
+-const { ipcMain } = require("electron");
++const { app, ipcMain } = require("electron");
+ const { spawn } = require("child_process");
+ 
+ let ffmpegPath = null;
+ try {
+   ffmpegPath = require("ffmpeg-static");
+ } catch (error) {
+   console.warn("[rtmp] ffmpeg-static není dostupný", error?.message || error);
+ }
+ 
+ let sessions = [];
+ let state = { active: false, startedAt: null, destinations: [], error: null };
++let shutdownHookRegistered = false;
+ 
+ function safeSend(sender, channel, payload) {
+   try {
+     if (sender && !sender.isDestroyed?.()) sender.send(channel, payload);
+   } catch {}
+ }
+ 
+ function stopProcesses() {
+-  for (const session of sessions) {
++  const activeSessions = sessions.slice();
++  sessions = [];
++  for (const session of activeSessions) {
+     try { session.proc.stdin?.end(); } catch {}
+-    try {
+-      setTimeout(() => {
+-        if (!session.proc.killed) session.proc.kill("SIGKILL");
+-      }, 1200).unref?.();
+-    } catch {}
++    // Aktualizátor musí mít jistotu, že FFmpeg nedrží soubory v
++    // resources/app.asar.unpacked. Na Windows je SIGKILL namapovaný na
++    // TerminateProcess a uvolní handle synchronně před quitAndInstall.
++    try { if (!session.proc.killed) session.proc.kill("SIGKILL"); } catch {}
+   }
+-  sessions = [];
+   state = { active: false, startedAt: null, destinations: [], error: null };
+ }
+ 
+ function destinationArgs(config, destination) {
+   const bitrate = Math.max(1200, Math.min(16000, Number(config.videoBitrate) || 6000));
+   const fps = Math.max(24, Math.min(60, Number(config.fps) || 30));
+   const gop = fps * 2;
+   return [
+     "-hide_banner",
+     "-loglevel", "warning",
+     "-fflags", "+genpts+nobuffer",
+     "-flags", "low_delay",
+     "-f", "webm",
+     "-i", "pipe:0",
+     "-map", "0:v:0",
+     "-map", "0:a:0?",
+     "-c:v", "libx264",
+     "-preset", "veryfast",
+     "-tune", "zerolatency",
+     "-pix_fmt", "yuv420p",
+     "-r", String(fps),
+     "-g", String(gop),
+     "-keyint_min", String(gop),
+     "-b:v", `${bitrate}k`,
+     "-maxrate", `${bitrate}k`,
+     "-bufsize", `${bitrate * 2}k`,
+     "-c:a", "aac",
+     "-b:a", "160k",
+     "-ar", "48000",
+     "-ac", "2",
+     "-f", "flv",
+     destination.url,
+   ];
+ }
+ 
+ function registerRtmpHandlers() {
++  // app.quit() při aktualizaci nejdříve zavolá tento hook. Bez něj mohl
++  // oddělený FFmpeg proces zůstat živý a NSIS pak hlásil kód 2 při přepisu.
++  if (!shutdownHookRegistered) {
++    app.on("before-quit", stopProcesses);
++    shutdownHookRegistered = true;
++  }
++
+   ipcMain.removeHandler("broadcast:available");
+   ipcMain.removeHandler("broadcast:start");
+   ipcMain.removeHandler("broadcast:stop");
+   ipcMain.removeHandler("broadcast:status");
+   ipcMain.removeAllListeners("broadcast:chunk");
+ 
+   ipcMain.handle("broadcast:available", () => ({
+     available: !!ffmpegPath,
+     ffmpegPath: ffmpegPath ? "bundled" : null,
+   }));
+ 
+   ipcMain.handle("broadcast:status", () => ({ ...state }));
+ 
+   ipcMain.handle("broadcast:start", (event, config = {}) => {
+     stopProcesses();
+     if (!ffmpegPath) return { ok: false, error: "FFmpeg není v desktop balíčku dostupný." };
+ 
+     const destinations = (Array.isArray(config.destinations) ? config.destinations : [])
+       .filter((item) => item && typeof item.url === "string" && /^rtmps?:\/\//i.test(item.url))
+       .slice(0, 3);
+     if (!destinations.length) return { ok: false, error: "Není vybraný žádný platný RTMP cíl." };
+ 
+     const started = [];
+     for (const destination of destinations) {
+       const proc = spawn(ffmpegPath, destinationArgs(config, destination), {
+         windowsHide: true,
+         stdio: ["pipe", "ignore", "pipe"],
+       });
+       const entry = { proc, platform: destination.platform || "rtmp", stderr: "" };
+       sessions.push(entry);
+       started.push(entry.platform);
+ 
+       proc.stderr?.on("data", (chunk) => {
+         const text = String(chunk || "");
+         entry.stderr = (entry.stderr + text).slice(-5000);
+         safeSend(event.sender, "broadcast:log", { platform: entry.platform, text });
+       });
+       proc.stdin?.on("error", (error) => {
+         state.error = `${entry.platform}: RTMP vstup selhal (${error.message})`;
+         safeSend(event.sender, "broadcast:state", { ...state });
+       });
+       proc.on("error", (error) => {
+         state.error = `${entry.platform}: ${error.message}`;
+         safeSend(event.sender, "broadcast:state", { ...state });
+       });
+       proc.on("exit", (code) => {
+         sessions = sessions.filter((item) => item.proc !== proc);
+         const remaining = sessions.map((item) => item.platform);
+         const exitError = code === 0 || code === null ? null : `${entry.platform}: FFmpeg skončil s kódem ${code}`;
+         state = {
+           ...state,
+           active: remaining.length > 0,
+           startedAt: remaining.length > 0 ? state.startedAt : null,
+           destinations: remaining,
+           error: exitError || state.error,
+         };
+         safeSend(event.sender, "broadcast:state", { ...state });
+       });
+     }
+ 
+     state = {
+       active: true,
+       startedAt: new Date().toISOString(),
+       destinations: started,
+       error: null,
+     };
+     safeSend(event.sender, "broadcast:state", { ...state });
+     return { ok: true, ...state };
+   });
+ 
+   ipcMain.on("broadcast:chunk", (_event, raw) => {
+     if (!state.active || !sessions.length || !raw) return;
+     let data;
+     try {
+       data = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
+     } catch {
+       return;
+     }
+     for (const session of sessions) {
+       try {
+diff --git a/electron/updater.cjs b/electron/updater.cjs
+index cf6d4b9..98f3263 100644
+--- a/electron/updater.cjs
++++ b/electron/updater.cjs
+@@ -1,94 +1,95 @@
+ // StudioVoxario desktop updater — electron-updater integration.
+ //
+ // The updater intentionally has one canonical source (electron-builder's
+ // app-update.yml / GitHub provider), one explicit download, and one explicit
+ // quitAndInstall step. Keeping those phases separate avoids duplicate checks,
+ // duplicate downloads and stale "busy" state after a failed update.
+ const { app, BrowserWindow, Notification } = require("electron");
+ const { autoUpdater } = require("electron-updater");
+ 
+ const path = require("path");
+ const fs = require("fs");
+ const https = require("https");
+ const http = require("http");
+ const pinning = require("./pinning.cjs");
++const rtmp = require("./rtmp.cjs");
+ 
+ const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || null;
+ const LEGACY_MANIFEST_URL = process.env.STUDIOVOXARIO_UPDATE_URL || "https://studiovoxario.com/desktop-version.json";
+ const GITHUB_PUBLISH = { provider: "github", owner: "Sokolcz97-rgb", repo: "Voxar.app" };
+ 
+ let checking = false;
+ let installing = false;
+ let downloadedVersion = null;
+ let latestInfo = null;
+ let uiBridge = null;
+ let pendingAutoInstall = false;
+ 
+ const diagnostics = {
+   feedUrl: FEED_URL,
+   manifestUrl: LEGACY_MANIFEST_URL,
+   currentVersion: null,
+   remoteVersion: null,
+   channel: "stable",
+   status: "idle",
+   lastError: null,
+   lastCheckAt: null,
+   updateInfo: null,
+   pinnedThumbprints: [],
+   progress: {
+     phase: null,
+     label: null,
+     received: 0,
+     total: 0,
+     pct: 0,
+     speedBps: 0,
+     etaSec: null,
+     canceled: false,
+     startedAt: null,
+     updatedAt: null,
+   },
+   logs: [],
+ };
+ 
+ function normalizeChannel(channel = "stable") {
+   return channel === "beta" ? "beta" : "latest";
+ }
+ 
+ function publicChannel(channel = "stable") {
+   return channel === "beta" ? "beta" : "stable";
+ }
+ 
+ function log(message) {
+   const line = `[${new Date().toISOString()}] ${message}`;
+   diagnostics.logs.push(line);
+   if (diagnostics.logs.length > 200) diagnostics.logs.splice(0, diagnostics.logs.length - 200);
+   try { console.log(line); } catch {}
+   broadcast("launcher:log", line);
+ }
+ 
+ function broadcast(channel, payload) {
+   try {
+     BrowserWindow.getAllWindows().forEach((win) => {
+       if (!win.isDestroyed()) win.webContents.send(channel, payload);
+     });
+   } catch {}
+ }
+ 
+ function updateProgress(patch) {
+   diagnostics.progress = {
+     ...diagnostics.progress,
+     ...patch,
+     updatedAt: new Date().toISOString(),
+   };
+   broadcast("launcher:progress", diagnostics.progress);
+ }
+ 
+ function clearOperationState({ keepStatus = false } = {}) {
+   checking = false;
+   installing = false;
+   pendingAutoInstall = false;
+   if (!keepStatus && diagnostics.status === "downloading") diagnostics.status = "idle";
+ }
+ 
+ function getDiagnostics() {
+   return {
+@@ -431,133 +432,137 @@ async function installUpdateFromRenderer({ parentWindow = null, channel = "stabl
+ async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
+   const info = await checkForUpdatesQuiet({ channel: "stable" });
+   if (info.available && (!version || info.remote === version)) {
+     return downloadAndInstall({ parentWindow, channel: "stable", source: label });
+   }
+   log(`${label}: požadovaná verze není aktuální cíl feedu; bezpečný downgrade se neprovádí.`);
+   return { status: "unsupported", version, asset };
+ }
+ 
+ function cancelActiveDownload() {
+   // electron-updater downloadUpdate() in this flow is intentionally atomic.
+   // Returning false tells the UI there is no half-installed state to cancel.
+   return false;
+ }
+ 
+ function getPinState() { return pinning.loadPins(); }
+ function resetPinState() { return pinning.resetPins(); }
+ 
+ function setupEvents() {
+   autoUpdater.logger = {
+     info: (m) => log(String(m)),
+     warn: (m) => log(`WARN: ${m}`),
+     error: (m) => log(`ERROR: ${m}`),
+     debug: (m) => log(`DEBUG: ${m}`),
+   };
+ 
+   autoUpdater.on("checking-for-update", () => {
+     diagnostics.status = "checking";
+   });
+ 
+   autoUpdater.on("update-available", (info) => {
+     rememberUpdateInfo(info);
+     diagnostics.status = "available";
+     toAvailability(info, diagnostics.channel);
+   });
+ 
+   autoUpdater.on("update-not-available", (info) => {
+     rememberUpdateInfo(info);
+     diagnostics.status = "up-to-date";
+     toAvailability(info, diagnostics.channel);
+   });
+ 
+   autoUpdater.on("download-progress", (p) => {
+     const total = Number(p.total || 0);
+     const received = Number(p.transferred || 0);
+     updateProgress({
+       phase: "download",
+       label: `Stahuji StudioVoxario ${latestInfo?.version || ""}`.trim(),
+       received,
+       total,
+       pct: total > 0 ? received / total : Math.max(0, Math.min(1, Number(p.percent || 0) / 100)),
+       speedBps: Number(p.bytesPerSecond || 0),
+       etaSec: total > 0 && Number(p.bytesPerSecond || 0) > 0 ? (total - received) / Number(p.bytesPerSecond) : null,
+     });
+   });
+ 
+   autoUpdater.on("update-downloaded", (info) => {
+     downloadedVersion = info?.version || latestInfo?.version || null;
+     diagnostics.status = "downloaded";
+     diagnostics.updateInfo = info;
+     log(`Aktualizace stažena: ${downloadedVersion || "neznámá verze"}`);
+ 
+     if (!pendingAutoInstall) return;
+     pendingAutoInstall = false;
+     updateProgress({
+       phase: "installing",
+       label: `Instaluji StudioVoxario ${downloadedVersion || ""}`.trim(),
+       pct: 1,
+     });
+ 
+     if (uiBridge) {
+       uiBridge({
+         kind: "installing",
+         title: "Instaluji aktualizaci",
+         message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
+         detail: "Aplikace se ukončí, aktualizace přepíše stávající instalaci a potom se Voxar.app znovu spustí.",
+         version: downloadedVersion,
+       }).catch(() => {});
+     }
+ 
++    // Uvolni vsechny streamovaci child procesy jeste pred quitAndInstall.
++    // Jinak mohou držet FFmpeg/asar.unpacked soubory a NSIS vrati
++    // „Failed to uninstall old application files …: 2“.
++    try { rtmp.stopProcesses(); } catch (error) { log(`RTMP cleanup selhal: ${error?.message || error}`); }
+     isQuittingForUpdate();
+     setTimeout(() => {
+       try {
+         // Silent update keeps our custom installer UI out of the automatic path;
+         // allowElevation in package.json lets NSIS request permission if the user
+         // chose a protected custom installation directory.
+         autoUpdater.quitAndInstall(true, true);
+       } catch (error) {
+         installing = false;
+         try { app.isQuittingForUpdate = false; } catch {}
+         diagnostics.status = "error";
+         diagnostics.lastError = String(error?.message || error);
+         updateProgress({ phase: "error", label: "Instalace se nespustila" });
+         log(`quitAndInstall selhalo: ${diagnostics.lastError}`);
+       }
+     }, 700);
+   });
+ 
+   autoUpdater.on("error", (error) => {
+     installing = false;
+     checking = false;
+     pendingAutoInstall = false;
+     diagnostics.status = "error";
+     diagnostics.lastError = String(error?.message || error);
+     updateProgress({ phase: "error", label: "Chyba aktualizace" });
+     log(`electron-updater chyba: ${diagnostics.lastError}`);
+   });
+ 
+   try {
+     const devConfig = path.join(app.getAppPath(), "dev-app-update.yml");
+     if (!app.isPackaged && !fs.existsSync(devConfig)) {
+       const yml = FEED_URL
+         ? `provider: generic\nurl: ${FEED_URL}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`
+         : `provider: github\nowner: ${GITHUB_PUBLISH.owner}\nrepo: ${GITHUB_PUBLISH.repo}\nupdaterCacheDirName: studiovoxario-desktop-updater\n`;
+       fs.writeFileSync(devConfig, yml, "utf8");
+     }
+   } catch {}
+ }
+ 
+ setupEvents();
+ 
+ module.exports = {
+   checkForUpdates,
+   getDiagnostics,
+   installVerified,
+   fetchManifest,
+   cancelActiveDownload,
+   getPinState,
+   resetPinState,
+   setUiBridge,
+   checkForUpdatesQuiet,
+   installUpdateFromRenderer,
+ };
+
