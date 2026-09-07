@@ -1,0 +1,175 @@
+/* V31 — authoritative welcome-banner readability layer.
+   Imported directly by CommunityWelcomeBanner so it wins over older visual passes. */
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable {
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: 188px !important;
+  height: auto !important;
+  margin: 14px 16px 8px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(57, 221, 255, .72) !important;
+  border-radius: 12px 3px 12px 3px !important;
+  clip-path: none !important;
+  background: #041827 !important;
+  box-shadow: inset 0 0 36px rgba(34, 211, 255, .05), 0 0 18px rgba(0, 196, 255, .07) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-art {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-scene-image {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: 72% center !important;
+  opacity: .82 !important;
+  filter: brightness(.88) saturate(1.05) contrast(1.03) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-art::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  display: block !important;
+  background: linear-gradient(90deg,
+    rgba(2, 20, 33, .995) 0%,
+    rgba(3, 23, 38, .985) 31%,
+    rgba(3, 23, 38, .94) 49%,
+    rgba(3, 23, 38, .54) 66%,
+    rgba(3, 23, 38, .10) 100%) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy {
+  position: relative !important;
+  z-index: 10 !important;
+  width: min(64%, 650px) !important;
+  min-width: 0 !important;
+  padding: 15px 20px 16px !important;
+  background: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-eyebrow,
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy h2,
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy p,
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions {
+  position: relative !important;
+  z-index: 11 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-eyebrow {
+  min-height: 28px !important;
+  height: auto !important;
+  color: #7fefff !important;
+  font: 700 12px/1.2 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: .08em !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-mark {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  background: rgba(3, 30, 46, .98) !important;
+  border-color: rgba(72, 230, 255, .85) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-app {
+  color: #03131d !important;
+  background: #51e1ff !important;
+  font-weight: 900 !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-time {
+  color: #a7c8da !important;
+  font-size: 11px !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy h2 {
+  margin: 8px 0 6px !important;
+  color: #ffffff !important;
+  font: 800 24px/1.18 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: -.015em !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .55), 0 0 16px rgba(57, 218, 255, .15) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy p {
+  max-width: 620px !important;
+  margin: 0 0 3px !important;
+  color: #d5e8f2 !important;
+  font: 500 13px/1.55 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: 0 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  color: #d9f4ff !important;
+  font: 600 12px/1 Inter, "Segoe UI", sans-serif !important;
+  border: 1px solid rgba(78, 194, 235, .56) !important;
+  background: linear-gradient(180deg, rgba(10, 59, 83, .96), rgba(4, 35, 51, .98)) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button.primary {
+  color: #ffffff !important;
+  border-color: rgba(73, 235, 255, .92) !important;
+  background: linear-gradient(180deg, rgba(0, 174, 220, .96), rgba(0, 102, 145, .98)) !important;
+  box-shadow: 0 0 16px rgba(25, 215, 255, .18) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button:disabled {
+  opacity: .42 !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-corner,
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-edge {
+  z-index: 12 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 1050px) {
+  #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy { width: 72% !important; }
+}
+
+@media (max-width: 760px) {
+  #voxar-community .sv-welcome.sv-welcome-v31-readable { min-height: 210px !important; }
+  #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy {
+    width: 100% !important;
+    padding: 14px !important;
+  }
+  #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-art::after {
+    background: rgba(2, 20, 33, .88) !important;
+  }
+  #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy h2 { font-size: 21px !important; }
+}
