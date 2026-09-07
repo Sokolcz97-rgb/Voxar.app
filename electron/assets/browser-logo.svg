@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 64" role="img" aria-label="Voxario">
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#67f3ff"/>
+      <stop offset=".56" stop-color="#13bce9"/>
+      <stop offset="1" stop-color="#7059ff"/>
+    </linearGradient>
+    <linearGradient id="b" x1="1" y1="0" x2="0" y2="1">
+      <stop stop-color="#58efff"/>
+      <stop offset=".5" stop-color="#1caadf"/>
+      <stop offset="1" stop-color="#724bff"/>
+    </linearGradient>
+    <filter id="g" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#g)">
+    <path fill="url(#a)" d="M3 5h22l12 19-12 9L3 5Z"/>
+    <path fill="url(#b)" d="M69 5H47L35 24l12 9L69 5Z"/>
+    <path fill="#168ccc" d="m25 35 10-8 8 9-8 23-10-24Z"/>
+    <path fill="#654eff" d="m16 26 9 9 10 24-17-17-2-16Z" opacity=".82"/>
+    <path fill="#3ee8ff" d="m56 25-9 10-12 24 18-17 3-17Z" opacity=".84"/>
+  </g>
+</svg>

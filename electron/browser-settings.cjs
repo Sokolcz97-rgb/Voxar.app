@@ -45,10 +45,14 @@ const DEFAULTS = {
   hardwareAcceleration: true,
   imageLoading: true,
   backgroundThrottling: true,
-  maxActiveTabs: 0,
+  // Herní režim drží aktivní panel plynulý, ostatní po chvíli skutečně
+  // uvolní z paměti. GPU zůstává zapnuté kvůli úspornému dekódování videa.
+  gameMode: true,
+  maxActiveTabs: 4,
+  autoSuspendMinutes: 5,
   // limity zdrojů (0 = bez limitu)
-  cpuLimitPercent: 0,
-  ramLimitMB: 0,
+  cpuLimitPercent: 35,
+  ramLimitMB: 1536,
   gpuMode: "full", // full | limited | off
   // relace
   restoreSession: true,
@@ -156,13 +160,32 @@ function setSession(data) {
 
 function getDial() {
   const list = readJson("browser-dial.json", null);
-  if (Array.isArray(list)) return list;
-  return [
-    { url: "https://studiovoxario.com", title: "StudioVoxario" },
+  const defaults = [
     { url: "https://www.youtube.com", title: "YouTube" },
-    { url: "https://kick.com", title: "Kick" },
     { url: "https://www.twitch.tv", title: "Twitch" },
+    { url: "https://www.netflix.com", title: "Netflix" },
+    { url: "https://store.steampowered.com", title: "Steam" },
+    { url: "https://github.com", title: "GitHub" },
+    { url: "https://www.alza.cz", title: "Alza" },
+    { url: "https://www.csfd.cz", title: "ČSFD" },
+    { url: "https://www.reddit.com", title: "Reddit" },
+    { url: "https://www.google.com", title: "Google" },
+    { url: "https://www.seznam.cz", title: "Seznam" },
+    { url: "https://mapy.com", title: "Mapy" },
+    { url: "https://mail.google.com", title: "Gmail" },
+    { url: "https://drive.google.com", title: "Disk" },
+    { url: "https://www.notion.so", title: "Notion" },
+    { url: "https://chatgpt.com", title: "ChatGPT" },
   ];
+  if (!Array.isArray(list)) return defaults;
+  // Jednorázově rozšíří původní čtyřpoložkovou výchozí sadu. Vlastní sadu
+  // uživatele nikdy nepřepisujeme.
+  const legacy = new Set(["studiovoxario.com", "www.youtube.com", "kick.com", "www.twitch.tv"]);
+  const isLegacyDefault = list.length === 4 && list.every((item) => {
+    try { return legacy.has(new URL(item.url).hostname); } catch { return false; }
+  });
+  if (isLegacyDefault) return writeJson("browser-dial.json", defaults);
+  return list;
 }
 function setDial(list) {
   const clean = (Array.isArray(list) ? list : [])
@@ -959,4 +982,3 @@ module.exports = {
   isAuthHost,
   applyUserAgent,
 };
-
