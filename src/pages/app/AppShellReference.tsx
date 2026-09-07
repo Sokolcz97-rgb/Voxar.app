@@ -15,7 +15,6 @@ import { AppServerSettings } from "@/components/vox/AppServerSettings";
 import { CreateChannelDialog } from "@/components/vox/CreateChannelDialog";
 import { DesktopUpdateFab } from "@/components/vox/DesktopUpdateFab";
 import { AppAuthGate } from "@/components/vox/AppAuthGate";
-import { CallDock } from "@/components/vox/CallDock";
 import { CommunitySidebarPanel } from "@/components/vox/reference/CommunitySidebarPanel";
 import { CommunityRightPanel } from "@/components/vox/reference/CommunityRightPanel";
 import { CommunityTopbar } from "@/components/vox/reference/CommunityTopbar";
@@ -52,7 +51,7 @@ export default function AppShellReference() {
   const [categoryRows, setCategoryRows] = useState<Array<{ name: string; emoji: string | null }>>([]);
   const guildLoadEpochRef = useRef(0);
 
-  const { channel: voiceChannel, api: voiceApi, leaveChannel } = useVoiceCall();
+  const { channel: voiceChannel, api: voiceApi, joinChannel, leaveChannel } = useVoiceCall();
   const voiceConn = voiceApi.connected ? { channel: voiceChannel, api: voiceApi as any } : null;
 
   useEffect(() => {
@@ -426,6 +425,18 @@ export default function AppShellReference() {
     setActiveChannel(channel);
     setView("main");
   };
+  const connectVoice = async () => {
+    if (!firstVoiceChannel) {
+      missingVoice();
+      return;
+    }
+    selectChannel(firstVoiceChannel);
+    try {
+      await joinChannel(firstVoiceChannel);
+    } catch {
+      // useVoiceVoice reports the actionable connection error.
+    }
+  };
 
   return (
     <div id="voxar-community" className={`vox-reference-shell sv-shell-v4 sv-refined${mobileChannelsOpen ? " mobile-nav-open" : ""}${view !== "main" ? " is-settings-view" : ""}`}>
@@ -437,10 +448,7 @@ export default function AppShellReference() {
         isGuildAdmin={isAdmin}
         onOpenChannel={(id) => { const target = channels.find(c => c.id === id); if (target) selectChannel(target); }}
         onEvents={() => openVoxUtility("events")}
-        onVoice={() => {
-          if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-          else missingVoice();
-        }}
+        onVoice={connectVoice}
         onFiles={() => openVoxUtility("files")}
         onStore={() => navigate("/obchod")}
         onMore={() => navigate("/dashboard")}
@@ -472,7 +480,6 @@ export default function AppShellReference() {
               isAdmin={isAdmin}
               voiceParticipants={voiceParticipants}
               selfPanel={selfPanel}
-              callDock={voiceConn ? <CallDock compact /> : undefined}
               onSelectChannel={selectChannel}
               onCreateChannel={openCreateChannel}
               onOpenServerSettings={openServerSettings}
@@ -520,6 +527,7 @@ export default function AppShellReference() {
                   guildIconUrl={activeGuild.icon_url}
                   channels={channels}
                   onSelectChannel={selectChannel}
+                  onJoinVoice={connectVoice}
                   onShowRules={isAdmin ? () => openCreateChannel("text", "Informace") : undefined}
                 />
               ) : (
@@ -542,10 +550,7 @@ export default function AppShellReference() {
                 memberCount={members.length}
                 onlineCount={onlineCount}
                 members={members}
-                onJoinVoice={() => {
-                  if (firstVoiceChannel) selectChannel(firstVoiceChannel);
-                  else missingVoice();
-                }}
+                onJoinVoice={connectVoice}
                 onShowMembers={() => openVoxUtility("members")}
                 onMessage={(member) => member.user_id === user.id ? openUserSettings() : navigate(`/messages?user=${member.user_id}`)}
               />

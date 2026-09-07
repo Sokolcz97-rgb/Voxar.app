@@ -26,6 +26,7 @@ interface Props {
   guildIconUrl?: string | null;
   channels?: VoxChannel[];
   onSelectChannel?: (channel: VoxChannel) => void;
+  onJoinVoice?: () => void;
   onShowRules?: () => void;
 }
 
@@ -49,6 +50,7 @@ export function ChatView({
   guildIconUrl,
   channels,
   onSelectChannel,
+  onJoinVoice,
   onShowRules,
 }: Props) {
   const { user } = useAuth();
@@ -303,9 +305,9 @@ export function ChatView({
         memberCount={members.length}
         hasKey={hasKey}
         onOpenEncryption={() => setE2eeOpen(true)}
-        onJoinVoice={() => firstVoiceChannel
+        onJoinVoice={onJoinVoice ?? (() => firstVoiceChannel
           ? effectiveSelectChannel(firstVoiceChannel)
-          : toast({ title: "Hlas", description: "V komunitě zatím není hlasový kanál." })}
+          : toast({ title: "Hlas", description: "V komunitě zatím není hlasový kanál." }))}
         onOpenPins={() => setPinsOpen(true)}
         onOpenMembers={() => openVoxUtility("members")}
       />
@@ -315,6 +317,7 @@ export function ChatView({
         guildIconUrl={effectiveGuildIconUrl}
         channels={effectiveChannels}
         onSelectChannel={effectiveSelectChannel}
+        onJoinVoice={onJoinVoice}
         onShowRules={effectiveShowRules}
       />
 

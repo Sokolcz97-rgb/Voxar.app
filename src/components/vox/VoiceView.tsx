@@ -358,7 +358,9 @@ export function VoiceView({ channel }: { channel: VoxChannel }) {
 
       <div className="border-t border-primary/15">
         {joinedHere ? (
-          <CallDock />
+          <div className="sv-voice-call-dock">
+            <CallDock />
+          </div>
         ) : (
           <div className="p-4 flex items-center justify-center gap-3">
             <button

@@ -15,7 +15,6 @@ interface Props {
   isAdmin: boolean;
   voiceParticipants: Record<string, any[]>;
   selfPanel: ReactNode;
-  callDock?: ReactNode;
   onSelectChannel: (channel: VoxChannel) => void;
   onCreateChannel: (type: "text" | "voice", category?: string | null) => void;
   onOpenServerSettings: () => void;
@@ -36,7 +35,6 @@ export function CommunitySidebarPanel({
   isAdmin,
   voiceParticipants,
   selfPanel,
-  callDock,
   onSelectChannel,
   onCreateChannel,
   onOpenServerSettings,
@@ -126,7 +124,6 @@ export function CommunitySidebarPanel({
         />
       </div>
 
-      {callDock ? <div className="sv-sidebar-call-dock">{callDock}</div> : null}
       <div className="sv-sidebar-self">{selfPanel}</div>
     </div>
   );

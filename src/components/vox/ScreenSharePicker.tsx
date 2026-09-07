@@ -40,9 +40,19 @@ export function ScreenSharePicker({ open, onOpenChange, onPick }: Props) {
     onOpenChange(false);
   };
 
+  // Keep the picker and its scrim in the desktop app shell. Radix normally
+  // mounts dialogs under <body>, which made voice controls appear detached
+  // from the Voxar workspace in the Electron view.
+  const shellContainer = typeof document !== "undefined"
+    ? document.getElementById("voxar-community")
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-[hsl(222_42%_6%/0.96)] border-primary/30 [clip-path:polygon(18px_0,100%_0,100%_calc(100%-18px),calc(100%-18px)_100%,0_100%,0_18px)]">
+      <DialogContent
+        container={shellContainer}
+        className="sv-screen-share-dialog max-w-3xl bg-[hsl(222_42%_6%/0.96)] border-primary/30 [clip-path:polygon(18px_0,100%_0,100%_calc(100%-18px),calc(100%-18px)_100%,0_100%,0_18px)]"
+      >
         <div className="flex items-center gap-2 border-b border-primary/20 pb-3">
           <MonitorUp className="w-4 h-4 text-primary text-glow" />
           <span className="font-display text-xs tracking-[0.26em] uppercase text-primary text-glow">

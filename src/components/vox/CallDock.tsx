@@ -42,7 +42,10 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
       </div>
       <div className={cn("p-2 grid gap-1.5", compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
         <button
+          type="button"
           onClick={api.toggleMute}
+          aria-pressed={api.muted}
+          title={api.muted ? "Zapnout mikrofon" : "Ztlumit mikrofon"}
           className={cn(btn, api.muted
             ? "border-destructive/50 text-destructive bg-destructive/10"
             : "border-primary/35 text-primary hover:bg-primary/10")}
@@ -51,7 +54,10 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           MIC
         </button>
         <button
+          type="button"
           onClick={api.toggleDeafen}
+          aria-pressed={api.deafened}
+          title={api.deafened ? "Zapnout zvuk" : "Vypnout zvuk"}
           className={cn(btn, api.deafened
             ? "border-destructive/50 text-destructive bg-destructive/10"
             : "border-primary/35 text-primary hover:bg-primary/10")}
@@ -60,7 +66,10 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           AUDIO
         </button>
         <button
+          type="button"
           onClick={api.toggleVideo}
+          aria-pressed={api.videoOn}
+          title={api.videoOn ? "Vypnout kameru" : "Zapnout kameru"}
           className={cn(btn, api.videoOn
             ? "border-emerald-400/50 text-emerald-300 bg-emerald-500/10"
             : "border-primary/35 text-primary hover:bg-primary/10")}
@@ -69,7 +78,10 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           KAMERA
         </button>
         <button
+          type="button"
           onClick={onScreenClick}
+          aria-pressed={api.screenOn}
+          title={api.screenOn ? "Zastavit sdílení obrazovky" : "Sdílet obrazovku"}
           className={cn(btn, api.screenOn
             ? "border-emerald-400/50 text-emerald-300 bg-emerald-500/10"
             : "border-primary/35 text-primary hover:bg-primary/10")}
@@ -79,7 +91,10 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
         </button>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setQualityOpen((o) => !o)}
+            aria-expanded={qualityOpen}
+            title="Kvalita kamery"
             className={cn(btn, "w-full border-primary/35 text-primary hover:bg-primary/10")}
           >
             <Gauge className="w-3.5 h-3.5" /> {quality.toUpperCase()}
@@ -89,6 +104,7 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
               {QUALITY_PRESETS.map((p) => (
                 <button
                   key={p.key}
+                  type="button"
                   onClick={() => pickQuality(p.key)}
                   className={cn(
                     "w-full px-2 py-1.5 text-left font-display text-[9px] tracking-[0.18em] uppercase transition-colors",
@@ -102,7 +118,9 @@ export function CallDock({ compact = false }: { compact?: boolean }) {
           )}
         </div>
         <button
+          type="button"
           onClick={() => void leaveChannel()}
+          title="Opustit hlasový kanál"
           className={cn(btn, "col-span-2 sm:col-span-1 border-destructive/50 text-destructive hover:bg-destructive/15")}
         >
           <PhoneOff className="w-3.5 h-3.5" /> ODPOJIT

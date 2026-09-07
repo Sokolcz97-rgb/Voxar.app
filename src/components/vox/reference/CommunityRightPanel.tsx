@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "lucide-react";
+import { AudioLines, CalendarDays, ChevronRight, Gamepad2, Sparkles, UsersRound } from "lucide-react";
 import type { VoxMember } from "../MemberList";
 import { ReferenceActiveMembers } from "../ReferenceActiveMembers";
 import { useCommunityEvents } from "@/hooks/useCommunityEvents";
@@ -29,6 +29,7 @@ export function CommunityRightPanel({
   memberCount,
   onlineCount,
   members,
+  onJoinVoice,
   onShowEvents,
   onOpenChannel,
   onMessage,
@@ -68,6 +69,9 @@ export function CommunityRightPanel({
         <div className="sv-right-tags">
           <span>HRY</span><span>KOMUNITA</span><span>TVORBA</span><span>PŘÁTELSTVÍ</span>
         </div>
+        <button type="button" className="sv-right-voice-action" onClick={onJoinVoice}>
+          <AudioLines /> <span>Připojit se na hlas</span><ChevronRight />
+        </button>
       </section>
 
       <section className="sv-right-card sv-right-now sv-right-now-v3 sv-right-now-v18 sv-right-now-v19">

@@ -8,14 +8,15 @@ interface Props {
   channels: VoxChannel[];
   onSelectChannel: (channel: VoxChannel) => void;
   onShowRules?: () => void;
+  onJoinVoice?: (channel: VoxChannel) => void;
 }
-
 export function CommunityWelcomeBanner({
   guildName,
   guildIconUrl,
   channels,
   onSelectChannel,
   onShowRules,
+  onJoinVoice,
 }: Props) {
   const rulesChannel = channels.find((channel) =>
     channel.type === "text" && ["pravidla", "rules", "pravidla-komunity"].includes(channel.name.toLowerCase()),
@@ -68,7 +69,11 @@ export function CommunityWelcomeBanner({
           <button
             type="button"
             className="primary"
-            onClick={() => voiceChannel && onSelectChannel(voiceChannel)}
+            onClick={() => {
+              if (!voiceChannel) return;
+              onSelectChannel(voiceChannel);
+              onJoinVoice?.(voiceChannel);
+            }}
             disabled={!voiceChannel}
             title={voiceChannel ? `Přejít do ${voiceChannel.name}` : "Hlasový kanál zatím není vytvořený"}
           >
