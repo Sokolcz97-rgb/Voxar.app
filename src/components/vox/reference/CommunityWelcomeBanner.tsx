@@ -56,7 +56,7 @@ export function CommunityWelcomeBanner({
             disabled={!canShowRules}
             title={rulesChannel ? `Přejít do #${rulesChannel.name}` : "Pravidla komunity"}
           >
-            <BookOpen /><span>{rulesChannel ? "Přečíst pravidla" : onShowRules ? "Vytvořit kanál pravidel" : "Pravidla nezveřejněna"}</span>
+            <BookOpen /><span>Přečíst pravidla</span>
           </button>
           <button
             type="button"

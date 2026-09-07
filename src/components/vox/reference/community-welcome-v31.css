@@ -4,13 +4,14 @@
 #voxar-community .sv-welcome.sv-welcome-v31-readable {
   position: relative !important;
   isolation: isolate !important;
-  min-height: 188px !important;
-  height: auto !important;
+  flex: 0 0 164px !important;
+  min-height: 164px !important;
+  height: 164px !important;
   margin: 14px 16px 8px !important;
   overflow: hidden !important;
   border: 1px solid rgba(57, 221, 255, .72) !important;
-  border-radius: 12px 3px 12px 3px !important;
-  clip-path: none !important;
+  border-radius: 0 !important;
+  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px) !important;
   background: #041827 !important;
   box-shadow: inset 0 0 36px rgba(34, 211, 255, .05), 0 0 18px rgba(0, 196, 255, .07) !important;
 }
@@ -40,8 +41,8 @@
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  object-position: 72% center !important;
-  opacity: .82 !important;
+  object-position: 76% center !important;
+  opacity: .88 !important;
   filter: brightness(.88) saturate(1.05) contrast(1.03) !important;
 }
 
@@ -53,19 +54,19 @@
   display: block !important;
   background:
     linear-gradient(90deg,
-      rgba(2, 20, 33, .995) 0%,
-      rgba(3, 23, 38, .985) 31%,
-      rgba(3, 23, 38, .94) 49%,
-      rgba(3, 23, 38, .54) 66%,
-      rgba(3, 23, 38, .10) 100%) !important;
+      rgba(2, 20, 33, .99) 0%,
+      rgba(3, 23, 38, .97) 29%,
+      rgba(3, 23, 38, .88) 48%,
+      rgba(3, 23, 38, .46) 65%,
+      rgba(3, 23, 38, .06) 100%) !important;
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy {
   position: relative !important;
   z-index: 10 !important;
-  width: min(64%, 650px) !important;
+  width: min(72%, 660px) !important;
   min-width: 0 !important;
-  padding: 15px 20px 16px !important;
+  padding: 12px 18px 13px !important;
   background: none !important;
   opacity: 1 !important;
   filter: none !important;
@@ -85,17 +86,17 @@
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-eyebrow {
-  min-height: 28px !important;
+  min-height: 24px !important;
   height: auto !important;
   color: #7fefff !important;
-  font: 700 12px/1.2 Inter, "Segoe UI", sans-serif !important;
+  font: 700 11px/1.2 Inter, "Segoe UI", sans-serif !important;
   letter-spacing: .08em !important;
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-mark {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
   background: rgba(3, 30, 46, .98) !important;
   border-color: rgba(72, 230, 255, .85) !important;
 }
@@ -112,18 +113,18 @@
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy h2 {
-  margin: 8px 0 6px !important;
+  margin: 5px 0 3px !important;
   color: #ffffff !important;
-  font: 800 24px/1.18 Inter, "Segoe UI", sans-serif !important;
-  letter-spacing: -.015em !important;
+  font: 750 21px/1.2 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: -.01em !important;
   text-shadow: 0 2px 14px rgba(0, 0, 0, .55), 0 0 16px rgba(57, 218, 255, .15) !important;
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy p {
   max-width: 620px !important;
-  margin: 0 0 3px !important;
+  margin: 0 !important;
   color: #d5e8f2 !important;
-  font: 500 13px/1.55 Inter, "Segoe UI", sans-serif !important;
+  font: 400 12px/1.45 Inter, "Segoe UI", sans-serif !important;
   letter-spacing: 0 !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .9) !important;
 }
@@ -133,19 +134,29 @@
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 8px !important;
-  margin-top: 12px !important;
+  margin-top: 8px !important;
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button {
   min-height: 34px !important;
   height: 34px !important;
-  padding: 0 12px !important;
+  padding: 0 11px !important;
   color: #d9f4ff !important;
-  font: 600 12px/1 Inter, "Segoe UI", sans-serif !important;
+  font: 600 11px/1 Inter, "Segoe UI", sans-serif !important;
   border: 1px solid rgba(78, 194, 235, .56) !important;
   background: linear-gradient(180deg, rgba(10, 59, 83, .96), rgba(4, 35, 51, .98)) !important;
   opacity: 1 !important;
   filter: none !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button:first-child {
+  border-color: rgba(126, 92, 255, .72) !important;
+  background: linear-gradient(180deg, rgba(64, 50, 137, .88), rgba(31, 31, 84, .96)) !important;
+}
+
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button:nth-child(2) {
+  border-color: rgba(67, 175, 224, .62) !important;
+  background: linear-gradient(180deg, rgba(18, 78, 112, .92), rgba(7, 43, 68, .98)) !important;
 }
 
 #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-actions button.primary {
@@ -165,6 +176,20 @@
   pointer-events: none !important;
 }
 
+#voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-motto {
+  position: absolute !important;
+  top: 22px !important;
+  right: 18px !important;
+  z-index: 12 !important;
+  display: block !important;
+  color: #b6def0 !important;
+  font: 600 8px/1.75 Inter, "Segoe UI", sans-serif !important;
+  letter-spacing: .34em !important;
+  text-align: left !important;
+  text-shadow: 0 0 12px rgba(67, 218, 255, .3) !important;
+  opacity: .9 !important;
+}
+
 @media (max-width: 1050px) {
   #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy {
     width: 72% !important;
@@ -173,7 +198,9 @@
 
 @media (max-width: 760px) {
   #voxar-community .sv-welcome.sv-welcome-v31-readable {
+    flex-basis: auto !important;
     min-height: 210px !important;
+    height: auto !important;
   }
 
   #voxar-community .sv-welcome.sv-welcome-v31-readable .sv-welcome-copy {

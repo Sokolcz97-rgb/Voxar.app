@@ -550,7 +550,6 @@ export default function AppShellReference() {
                 memberCount={members.length}
                 onlineCount={onlineCount}
                 members={members}
-                onJoinVoice={connectVoice}
                 onShowMembers={() => openVoxUtility("members")}
                 onMessage={(member) => member.user_id === user.id ? openUserSettings() : navigate(`/messages?user=${member.user_id}`)}
               />
