@@ -28,11 +28,16 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  /** Optional portal mount point for dialogs that must stay inside an app shell. */
+  container?: HTMLElement | null;
+};
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
+  DialogContentProps
+>(({ className, children, container, ...props }, ref) => (
+  <DialogPortal container={container ?? undefined}>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}

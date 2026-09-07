@@ -32,7 +32,6 @@ interface Props {
   utilityMode?: UtilityMode | null;
   onUtilityModeChange?: (mode: UtilityMode | null) => void;
 }
-
 const navItems = [
   { key: "community", label: "Komunita", icon: Home },
   { key: "events", label: "Události", icon: CalendarDays },
@@ -173,8 +172,14 @@ export function CommunityTopbar({
         <nav className="sv-topbar-nav" aria-label="Hlavní navigace">
           {navItems.map(({ key, label, icon: Icon }) => (
             key === "more" ? <DropdownMenu key={key}>
-              <DropdownMenuTrigger asChild><button type="button" data-label={label} aria-label="Další nástroje" aria-current={activeKey === "more" ? "page" : undefined} className={activeKey === "more" ? "active" : undefined}><Icon /><span>{label}</span></button></DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuTrigger asChild>
+                <button type="button" data-label={label} aria-label="Další nástroje" aria-current={activeKey === "more" ? "page" : undefined} className={activeKey === "more" ? "active" : undefined}>
+                  <span className="sv-topbar-nav-glow" aria-hidden="true" />
+                  <span className="sv-topbar-nav-notch" aria-hidden="true" />
+                  <Icon /><span>{label}</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="sv-more-menu" align="start" sideOffset={8}>
                 <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("broadcast"); }}>Vysílací studio (RTMP)</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("remove-bg"); }}>Odstranit pozadí obrázku</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => { setSearchOpen(false); setUtility("members"); }}>Členové komunity</DropdownMenuItem>

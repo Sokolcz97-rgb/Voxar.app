@@ -32,10 +32,16 @@ export function DesktopRouteGuard() {
     }
 
     const path = location.pathname;
-    // Cesty, které v desktop aplikaci dávají smysl.
+    // Cesty, které v desktop aplikaci dávají smysl. Dashboard a zprávy jsou
+    // plnohodnotné pracovní obrazovky a musí zůstat dosažitelné z horní
+    // navigace / kontextu člena; dříve je guard okamžitě vracel do /app.
     const allowed =
       path === "/app" ||
       path.startsWith("/app/") ||
+      path === "/dashboard" ||
+      path.startsWith("/dashboard/") ||
+      path === "/messages" ||
+      path.startsWith("/messages/") ||
       path.startsWith("/browser") ||
       path.startsWith("/launcher") ||
       path.startsWith("/discord-oauth-complete") ||

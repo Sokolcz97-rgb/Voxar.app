@@ -30,10 +30,15 @@ const Dashboard = () => {
   const [recentThreads, setRecentThreads] = useState<RecentThread[]>([]);
   const [recentDms, setRecentDms] = useState<RecentDm[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({});
+  const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    setLoadingData(true);
+    setLoadError(null);
 
     const load = async () => {
       const [profileRes, threadsCount, postsCount, ticketsCount, dmsCount, threadsRecent, catsRes, convsRes] =
@@ -57,6 +62,11 @@ const Dashboard = () => {
             .order("updated_at", { ascending: false })
             .limit(5),
         ]);
+
+      const firstError = [profileRes, threadsCount, postsCount, ticketsCount, dmsCount, threadsRecent, catsRes, convsRes]
+        .map((result) => result.error)
+        .find(Boolean);
+      if (firstError) throw firstError;
 
       if (cancelled) return;
 
@@ -91,6 +101,9 @@ const Dashboard = () => {
         supabase.from("profiles").select("user_id,display_name,username").in("user_id", otherIds),
       ]);
 
+      if (lastMsgsRes.error) throw lastMsgsRes.error;
+      if (profilesRes.error) throw profilesRes.error;
+
       if (cancelled) return;
 
       const profileMap: Record<string, string> = {};
@@ -122,11 +135,19 @@ const Dashboard = () => {
       setRecentDms(dms);
     };
 
-    load();
+    void load()
+      .catch((error) => {
+        if (!cancelled) {
+          setLoadError(error instanceof Error ? error.message : "Dashboard se nepodařilo načíst.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingData(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, reloadKey]);
 
   const stats = [
     { icon: FileText, label: t("dashboard.stats.threads"), value: counts.threads },
@@ -194,11 +215,20 @@ const Dashboard = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               <s.icon className="h-5 w-5 text-primary mb-3 relative" />
-              <div className="font-display text-3xl font-bold relative">{s.value}</div>
+              <div className="font-display text-3xl font-bold relative">{loadingData ? "—" : s.value}</div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1 relative">{s.label}</div>
             </Card>
           ))}
         </div>
+
+        {loadError && (
+          <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">
+            <span className="text-destructive">Dashboard se nepodařilo načíst: {loadError}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
+              Zkusit znovu
+            </Button>
+          </div>
+        )}
 
         {user && <LfgWidget />}
         {user && <OnlineUsers currentUserId={user.id} />}
@@ -215,7 +245,9 @@ const Dashboard = () => {
                 <Link to="/forum">{t("dashboard.viewAll")}</Link>
               </Button>
             </div>
-            {recentThreads.length === 0 ? (
+            {loadingData ? (
+              <p className="text-sm text-muted-foreground">Načítám aktivitu…</p>
+            ) : recentThreads.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("dashboard.noActivity")}</p>
             ) : (
               <ul className="space-y-3">
@@ -242,7 +274,9 @@ const Dashboard = () => {
                 <Link to="/messages">{t("dashboard.viewAll")}</Link>
               </Button>
             </div>
-            {recentDms.length === 0 ? (
+            {loadingData ? (
+              <p className="text-sm text-muted-foreground">Načítám zprávy…</p>
+            ) : recentDms.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("dashboard.noActivity")}</p>
             ) : (
               <ul className="space-y-3">
