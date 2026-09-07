@@ -1,5 +1,6 @@
 import { BookOpen, Mic2, UserRound } from "lucide-react";
 import type { VoxChannel } from "../ChannelSidebar";
+import "./community-welcome-v31.css";
 
 interface Props {
   guildName: string;
@@ -27,7 +28,7 @@ export function CommunityWelcomeBanner({
   const canShowRules = !!rulesChannel || !!onShowRules;
 
   return (
-    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19 sv-welcome-v24" aria-label="Vítej v komunitě">
+    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19 sv-welcome-v24 sv-welcome-v31-readable" aria-label="Vítej v komunitě">
       <span className="sv-welcome-corner sv-welcome-corner-left" aria-hidden="true" />
       <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
       <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
