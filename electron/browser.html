@@ -63,6 +63,11 @@
     }
     .tab .t { overflow: hidden; text-overflow: ellipsis; flex: 1; }
     .tab.active { color: var(--text); border-bottom-color: var(--cyan); box-shadow: 0 4px 18px -8px var(--cyan) inset; }
+    /* VOXARIO_NATIVE_TAB_DRAG_V1 */
+    .tab { user-select: none; }
+    .tab.dragging { opacity: .55; cursor: grabbing; }
+    .tab.drag-over-left { box-shadow: inset 3px 0 0 var(--cyan), 0 0 14px -8px var(--cyan); }
+    .tab.drag-over-right { box-shadow: inset -3px 0 0 var(--cyan), 0 0 14px -8px var(--cyan); }
     .tab .x { opacity: .5; padding: 0 2px; }
     .tab .x:hover { opacity: 1; color: #f87171; }
     .newtab { -webkit-app-region: no-drag; background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; padding: 0 12px; font-size: 16px; }
@@ -215,26 +220,32 @@
     .startfoot { margin-top: 26px; color: #475569; font-size: 11px; }
 
   </style>
+  <link rel="stylesheet" href="assets/browser-ui.css" />
 </head>
 <body>
   <div class="dock">
-    <div class="brand">◉</div>
-    <button class="dockbtn gold" id="goApp" title="Voxar.app">◈</button>
-    <button class="dockbtn gold" id="goHub" title="StudioVoxario HUB">⬢</button>
-    <button class="dockbtn" data-url="https://kick.com" title="Kick Stream">▶</button>
-    <button class="dockbtn" data-url="https://www.twitch.tv" title="Twitch">✦</button>
-    <button class="dockbtn" data-url="https://panel.studiovoxario.com" title="Pterodactyl Server Manager">⛁</button>
-    <button class="dockbtn" id="btnBookmarks" title="Záložky (Ctrl+Shift+B)">★</button>
+    <div class="brand"><img src="assets/browser-logo.svg" alt="Voxario" /></div>
+    <button class="dockbtn active" id="dockHome" title="Domů"><span class="dockico">⌂</span><span>Domů</span></button>
+    <button class="dockbtn" id="dockWorkspaces" title="Pracovní prostory"><span class="dockico">▣</span><span>Pracovní<br>prostory</span></button>
+    <button class="dockbtn" id="btnBookmarks" title="Oblíbené (Ctrl+Shift+B)"><span class="dockico">☆</span><span>Oblíbené</span></button>
+    <button class="dockbtn" id="dockHistory" title="Historie (Ctrl+H)"><span class="dockico">◷</span><span>Historie</span></button>
+    <button class="dockbtn" id="btnDownloads" title="Stahování (Ctrl+J)"><span class="dockico">⇩</span><span>Stahování</span></button>
+    <button class="dockbtn" id="dockNotes" title="Poznámky"><span class="dockico">▤</span><span>Poznámky</span></button>
+    <button class="dockbtn" id="btnPerf" title="Nástroje a výkon"><span class="dockico">⌘</span><span>Nástroje</span></button>
     <div class="spacer"></div>
-    <button class="dockbtn" id="btnFind" title="Najít na stránce (Ctrl+F)">⌕</button>
-    <button class="dockbtn" id="btnDownloads" title="Stahování (Ctrl+J)">⤓</button>
-    <button class="dockbtn" id="btnPerf" title="Využití systému (CPU/GPU/RAM/síť)">◱</button>
-    <button class="dockbtn" id="btnSettings" title="Nastavení VoxarioBrowser (Ctrl+,)">⚙</button>
-    <button class="dockbtn" id="btnLauncher" title="Zpět do rozcestníku">⏻</button>
+    <button class="dockbtn dock-mini" id="goApp" title="Otevřít Voxar.app"><span class="dockico">V</span></button>
+    <button class="dockbtn dock-mini" id="btnSettings" title="Nastavení VoxarioBrowser (Ctrl+,)"><span class="dockico">⚙</span></button>
+    <button class="dockbtn dock-mini" id="btnLauncher" title="Zpět do rozcestníku"><span class="dockico">↪</span></button>
+    <button class="sr-only" id="goHub" title="StudioVoxario HUB">Hub</button>
+    <button class="sr-only" data-url="https://kick.com">Kick</button>
+    <button class="sr-only" data-url="https://www.twitch.tv">Twitch</button>
+    <button class="sr-only" data-url="https://panel.studiovoxario.com">Pterodactyl</button>
+    <button class="sr-only" id="btnFind">Najít</button>
   </div>
 
   <div class="main">
     <div class="tabbar" id="tabbar">
+      <button class="window-brand" id="windowBrand" title="Zpět do rozcestníku"><img src="assets/browser-logo.svg" alt="" /><strong>VoxarioBrowser</strong></button>
       <button class="newtab" id="newtab" title="Nový panel (Ctrl+T)">+</button>
       <div class="wctl">
         <button id="wmin" title="Minimalizovat">—</button>
@@ -253,17 +264,67 @@
         <input id="url" placeholder="Zadej adresu nebo hledej…" spellcheck="false" />
       </div>
       <button class="navbtn" id="btnStar" title="Přidat do záložek (Ctrl+D)">☆</button>
+      <button class="navbtn" id="btnShield" title="Ochrana prohlížeče">♢</button>
+      <button class="navbtn" id="btnPrivacy" title="Soukromí">⬡</button>
+      <button class="navbtn avatar-button" id="btnProfile" title="Voxar.app"><img src="assets/icon.png" alt="Profil" /></button>
+      <button class="navbtn" id="btnMenu" title="Nastavení">⋮</button>
     </div>
-    <div class="bmbar" id="bmbar"></div>
+    <div class="bookmark-shell">
+      <div class="bmbar" id="bmbar"></div>
+      <div class="sync-state"><span>☁</span> Synchronizováno <button id="btnNotifications" title="Oznámení">♧</button></div>
+    </div>
     <div class="prog" id="prog"></div>
 
     <div class="viewport" id="viewport">
       <div class="startpage" id="startpage">
-        <h1>// VoxarioBrowser</h1>
-        <div class="sub2">Uložené stránky — klikni pro otevření, ✕ pro smazání, + pro přidání.</div>
-        <div class="dial" id="dial"></div>
-        <div class="startfoot">Tip: Ctrl+T nový panel · Ctrl+D záložka · Ctrl+J stahování · Ctrl+, nastavení</div>
+        <div class="start-main">
+          <section class="browser-hero hud-cut">
+            <div class="hero-brand"><img src="assets/browser-logo.svg" alt="VoxarioBrowser" /><div><strong><b>VOXARIO</b>BROWSER</strong><span>RYCHLEJI K VĚCEM, KTERÉ TĚ BAVÍ.</span></div></div>
+            <blockquote>„Internet je místo, kde se<br>setkávají nápady, lidé a světy.“<small>— STUDIOVOXARIO</small></blockquote>
+            <div class="hero-copy"><h1>Objevuj větší svět.</h1><p>Web bez hranic. Tvoje pravidla.</p></div>
+            <form class="hero-search" id="startSearch"><span>⌕</span><input id="startSearchInput" placeholder="Hledat nebo zadat adresu" autocomplete="off" /><button type="submit" title="Přejít">→</button></form>
+            <div class="hero-actions">
+              <button data-start-action="focus-search">⌕ <span>Hledat na webu</span></button>
+              <button data-start-url="https://www.youtube.com">▶ <span>YouTube</span></button>
+              <button data-start-url="https://mapy.com">◆ <span>Mapy</span></button>
+              <button data-start-url="https://translate.google.com">▣ <span>Přeložit</span></button>
+              <button data-start-url="https://chatgpt.com">✦ <span>AI asistent</span></button>
+            </div>
+            <div class="hero-motto">GOOD<br>PEOPLE<br>BETTER<br>WORLDS<i></i></div>
+          </section>
+
+          <section class="quick-panel hud-cut">
+            <header><strong><span>◉</span> Rychlé odkazy</strong><button id="dialEdit">⌁ Upravit</button></header>
+            <div class="dial" id="dial"></div>
+            <div class="quick-art"><span></span></div>
+          </section>
+
+          <div class="start-lower">
+            <section class="dashboard-card hud-cut">
+              <header><strong>☆ &nbsp; Oblíbené stránky</strong><button id="showAllBookmarks">Zobrazit vše →</button></header>
+              <div id="startFavorites" class="mini-list"></div>
+            </section>
+            <section class="dashboard-card hud-cut">
+              <header><strong>◷ &nbsp; Nedávná aktivita</strong><button id="showAllHistory">Zobrazit vše →</button></header>
+              <div id="startRecent" class="mini-list"></div>
+            </section>
+            <section class="dashboard-card hud-cut">
+              <header><strong>▤ &nbsp; Pro tebe z webu</strong><button id="refreshDiscover">Zobrazit více →</button></header>
+              <div id="discoverList" class="discover-list"></div>
+            </section>
+          </div>
+        </div>
+
+        <aside class="start-right">
+          <section class="weather-card hud-cut"><div class="weather-city" id="weatherCity">Praha</div><div class="weather-main"><span id="weatherIcon">☾</span><strong id="weatherTemp">-- °C</strong></div><div id="weatherState">Načítám počasí…</div><small id="weatherNext">Aktuální předpověď</small></section>
+          <section class="quote-card hud-cut">„ Velké věci<br>začínají zvědavostí.“<small>— STUDIOVOXARIO</small></section>
+          <section class="workspace-card hud-cut"><header><strong>▱ Pracovní prostory</strong><button id="workspaceAdd" title="Přidat pracovní prostor">＋</button></header><div id="workspaceList"></div></section>
+          <section class="promo-card hud-cut"><span>PROHLÍŽEJ<br>TVOŘ<br>OBJEVUJ</span><i></i><small>STUDIOVOXARIO</small></section>
+        </aside>
+        <div class="start-signature">VOICE NEŽ PROHLÍŽEČ<br><span>SPOJUJE SVĚTY</span></div>
       </div>
+      <div class="panel compact-panel" id="workspacePanel"><div class="panel-head"><div><h2>// Pracovní prostory</h2><div class="sub">Skupiny stránek otevřené úsporně na vyžádání</div></div><button class="pbtn" id="workspaceClose">Zavřít</button></div><div id="workspaceManager" class="workspace-manager"></div></div>
+      <div class="panel compact-panel" id="notesPanel"><div class="panel-head"><div><h2>// Poznámky</h2><div class="sub">Ukládají se automaticky pouze v tomto počítači</div></div><button class="pbtn" id="notesClose">Zavřít</button></div><textarea id="notesText" class="notes-text" placeholder="Napiš si poznámku, odkaz nebo plán ke hře…"></textarea><div class="notes-status" id="notesStatus">Uloženo lokálně</div></div>
       <div class="findbar" id="findbar">
         <input id="findinput" placeholder="Najít…" />
         <button class="navbtn" id="findnext">↓</button>
@@ -434,6 +495,14 @@
               <div class="card">
                 <h3>Limity zdrojů</h3>
                 <div class="opt">
+                  <div><div class="lbl">Současně načtené panely</div><div class="dsc">Starší panely zůstanou uložené, ale jejich web se načte až po otevření.</div></div>
+                  <input class="inp" id="maxActiveTabs" type="number" min="1" max="20" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
+                  <div><div class="lbl">Automaticky uspat po</div><div class="dsc">Počet minut neaktivity. 0 = jen podle limitu panelů a paměti.</div></div>
+                  <input class="inp" id="autoSuspendMinutes" type="number" min="0" max="120" step="1" style="width:110px" />
+                </div>
+                <div class="opt">
                   <div><div class="lbl">Limit CPU</div><div class="dsc">V %. Při překročení se panely na pozadí uspí. 0 = bez limitu.</div></div>
                   <input class="inp" id="cpuLimit" type="number" min="0" max="100" step="1" style="width:110px" />
                 </div>
@@ -514,6 +583,12 @@
     let tabs = [];
     let activeId = null;
     let seq = 0;
+    let draggedTabId = null;
+    function clearTabDragIndicators() {
+      document.querySelectorAll('.tab').forEach((node) => {
+        node.classList.remove('dragging', 'drag-over-left', 'drag-over-right');
+      });
+    }
 
     const viewport = $('viewport');
     const tabbar = $('tabbar');
@@ -530,11 +605,12 @@
 
     function activeTab() { return tabs.find((t) => t.id === activeId); }
 
-    function createTab(url) {
+    function createTab(url, options = {}) {
       const id = 'tab' + ++seq;
       const wv = document.createElement('webview');
       const initial = toUrl(url);
-      wv.setAttribute('src', initial === START ? 'about:blank' : initial);
+      const lazy = !!options.lazy && initial !== START;
+      wv.setAttribute('src', initial === START || lazy ? 'about:blank' : initial);
       wv.setAttribute('allowpopups', 'true');
       wv.setAttribute('useragent', CHROME_UA);
       wv.setAttribute('partition', 'persist:voxario');
@@ -542,7 +618,18 @@
       wv.style.display = 'none';
       viewport.appendChild(wv);
 
-      const tab = { id, wv, title: initial === START ? 'Úvodní stránka' : 'Nový panel', url: initial, loading: initial !== START, back: false, fwd: false };
+      const tab = {
+        id,
+        wv,
+        title: options.title || (initial === START ? 'Nová karta' : 'Nový panel'),
+        url: initial,
+        loading: initial !== START && !lazy,
+        back: false,
+        fwd: false,
+        suspended: lazy,
+        pendingUrl: lazy ? initial : null,
+        lastActiveAt: Date.now(),
+      };
       tabs.push(tab);
 
       const sync = () => {
@@ -577,7 +664,12 @@
         if (e.url) { st.textContent = e.url; st.style.display = ''; } else { st.style.display = 'none'; }
       });
 
-      setActive(id);
+      if (options.background) {
+        render();
+        saveSession();
+      } else {
+        setActive(id);
+      }
       return tab;
     }
 
@@ -604,6 +696,8 @@
         saveSession();
         return;
       }
+      tab.suspended = false;
+      tab.pendingUrl = null;
       try { tab.wv.loadURL(u); } catch {}
       render();
     }
@@ -616,11 +710,13 @@
         try { target.wv.loadURL(target.pendingUrl); } catch {}
         target.pendingUrl = null;
       }
+      if (target) target.lastActiveAt = Date.now();
       tabs.forEach((t) => { t.wv.style.display = t.id === id ? 'flex' : 'none'; });
       render();
       const t = activeTab();
       if (t) $('url').value = t.url === START ? '' : t.url;
       saveSession();
+      if (PREFS.gameMode !== false) setTimeout(() => enforceTabBudget(), 0);
     }
 
     function render() {
@@ -629,11 +725,57 @@
       tabs.forEach((t) => {
         const el = document.createElement('div');
         el.className = 'tab' + (t.id === activeId ? ' active' : '');
+        el.draggable = true;
+        el.dataset.tabId = t.id;
+        el.addEventListener('dragstart', (e) => {
+          if (e.target?.closest?.('.x')) { e.preventDefault(); return; }
+          draggedTabId = t.id;
+          el.classList.add('dragging');
+          try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', t.id);
+          } catch {}
+        });
+        el.addEventListener('dragend', () => {
+          draggedTabId = null;
+          clearTabDragIndicators();
+        });
+        el.addEventListener('dragover', (e) => {
+          if (!draggedTabId || draggedTabId === t.id) return;
+          e.preventDefault();
+          const rect = el.getBoundingClientRect();
+          const before = e.clientX < rect.left + rect.width / 2;
+          el.classList.toggle('drag-over-left', before);
+          el.classList.toggle('drag-over-right', !before);
+          try { e.dataTransfer.dropEffect = 'move'; } catch {}
+        });
+        el.addEventListener('dragleave', () => {
+          el.classList.remove('drag-over-left', 'drag-over-right');
+        });
+        el.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const fromId = draggedTabId || e.dataTransfer?.getData?.('text/plain');
+          if (!fromId || fromId === t.id) { clearTabDragIndicators(); return; }
+          const fromIndex = tabs.findIndex((item) => item.id === fromId);
+          if (fromIndex < 0) { clearTabDragIndicators(); return; }
+          const rect = el.getBoundingClientRect();
+          const before = e.clientX < rect.left + rect.width / 2;
+          const [moved] = tabs.splice(fromIndex, 1);
+          let insertIndex = tabs.findIndex((item) => item.id === t.id);
+          if (insertIndex < 0) insertIndex = tabs.length;
+          if (!before) insertIndex += 1;
+          tabs.splice(Math.max(0, Math.min(insertIndex, tabs.length)), 0, moved);
+          draggedTabId = null;
+          clearTabDragIndicators();
+          saveSession();
+          render();
+        });
         const label = document.createElement('span');
         label.className = 't';
-        label.textContent = (t.loading ? '· ' : '') + (t.title || t.url);
+        label.textContent = (t.suspended ? '◌ ' : t.loading ? '· ' : '') + (t.title || t.url);
         const x = document.createElement('span');
         x.className = 'x';
+        x.draggable = false;
         x.textContent = '✕';
         x.onclick = (e) => { e.stopPropagation(); closeTab(t.id); };
         el.onclick = () => setActive(t.id);
@@ -648,6 +790,7 @@
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
       $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
       $('startpage').classList.toggle('on', !!t && t.url === START);
+      $('dockHome')?.classList.toggle('active', !!t && t.url === START);
       syncWebviewVisibility();
       document.title = t ? (t.title || 'VoxarioBrowser') + ' — VoxarioBrowser' : 'VoxarioBrowser';
     }
@@ -671,6 +814,229 @@
     $('goApp').onclick = () => ipcRenderer.invoke('app:open-module', 'app');
     $('goHub').onclick = () => ipcRenderer.invoke('app:open-module', 'hub');
     $('btnLauncher').onclick = () => ipcRenderer.invoke('app:return-to-launcher');
+    $('windowBrand').onclick = () => ipcRenderer.invoke('app:return-to-launcher');
+
+    // ---- start dashboard: every visible control has a real action ----
+    const DEFAULT_WORKSPACES = [
+      { id: 'personal', name: 'Osobní', icon: '♙', urls: ['https://studiovoxario.com', 'https://mail.google.com', 'https://www.youtube.com', 'https://www.seznam.cz'] },
+      { id: 'work', name: 'Práce', icon: '▣', urls: ['https://github.com', 'https://drive.google.com', 'https://www.notion.so'] },
+      { id: 'gaming', name: 'Gaming', icon: '🎮', urls: ['https://store.steampowered.com', 'https://www.twitch.tv', 'https://kick.com', 'https://www.reddit.com/r/gaming'] },
+      { id: 'research', name: 'Výzkum / AI', icon: '⌘', urls: ['https://chatgpt.com', 'https://www.google.com', 'https://www.perplexity.ai'] },
+    ];
+    const DISCOVER_ITEMS = [
+      { title: 'Budoucnost internetu: rychlejší, chytřejší, otevřenější', source: 'Voxario Magazín', url: 'https://studiovoxario.com', icon: '◉' },
+      { title: 'Nejlepší hry, které stojí za pozornost', source: 'Herní přehled', url: 'https://store.steampowered.com/charts/mostplayed', icon: '🎮' },
+      { title: 'Novinky z technologií a světa počítačů', source: 'Google Zprávy', url: 'https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSkwyMHZNRGRqTVhZMUVnVmpjeWdBUAE', icon: '⌁' },
+    ];
+    let workspaces = [];
+    let notesTimer = null;
+
+    function readWorkspaces() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem('voxario-workspaces') || 'null');
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      } catch {}
+      localStorage.setItem('voxario-workspaces', JSON.stringify(DEFAULT_WORKSPACES));
+      return DEFAULT_WORKSPACES.map((item) => ({ ...item, urls: [...item.urls] }));
+    }
+    function saveWorkspaces() {
+      localStorage.setItem('voxario-workspaces', JSON.stringify(workspaces));
+      renderWorkspaces();
+    }
+    function siteLabel(url) {
+      try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+    }
+    function relativeTime(at) {
+      const mins = Math.max(0, Math.round((Date.now() - Number(at || Date.now())) / 60000));
+      if (mins < 1) return 'právě teď';
+      if (mins < 60) return 'před ' + mins + ' min';
+      const hours = Math.round(mins / 60);
+      return hours < 24 ? 'před ' + hours + ' h' : 'před ' + Math.round(hours / 24) + ' d';
+    }
+    function openAuxPanel(id) {
+      try { closeSettings(); } catch {}
+      document.querySelectorAll('.panel.on').forEach((panel) => panel.classList.remove('on'));
+      $(id)?.classList.add('on');
+      syncWebviewVisibility();
+    }
+    function closeAuxPanels() {
+      ['workspacePanel', 'notesPanel'].forEach((id) => $(id)?.classList.remove('on'));
+      syncWebviewVisibility();
+    }
+    function openWorkspace(workspace) {
+      if (!workspace?.urls?.length) return flash('Tento pracovní prostor je prázdný.');
+      navigate(activeTab(), workspace.urls[0]);
+      workspace.urls.slice(1).forEach((url) => createTab(url, { background: true, lazy: true, title: siteLabel(url) }));
+      closeAuxPanels();
+      enforceTabBudget();
+      flash('Pracovní prostor „' + workspace.name + '“ je připraven — další panely se načtou až po otevření.');
+    }
+    function renderWorkspaces() {
+      const compact = $('workspaceList');
+      const manager = $('workspaceManager');
+      if (compact) compact.innerHTML = '';
+      if (manager) manager.innerHTML = '';
+      workspaces.forEach((workspace) => {
+        if (compact) {
+          const row = document.createElement('button');
+          row.className = 'workspace-row';
+          row.innerHTML = '<i></i><span><strong></strong><small></small></span>';
+          row.querySelector('i').textContent = workspace.icon || '▣';
+          row.querySelector('strong').textContent = workspace.name;
+          row.querySelector('small').textContent = workspace.urls.length + ' záložek';
+          row.onclick = () => openWorkspace(workspace);
+          compact.appendChild(row);
+        }
+        if (manager) {
+          const card = document.createElement('article');
+          card.className = 'workspace-manage-card hud-cut';
+          const domains = workspace.urls.slice(0, 4).map(siteLabel).join(' · ') || 'Prázdný prostor';
+          card.innerHTML = '<header><h3></h3><span class="badge"></span></header><p></p><footer><button class="pbtn">Otevřít úsporně</button><button class="mini dang">Odebrat</button></footer>';
+          card.querySelector('h3').textContent = (workspace.icon || '▣') + ' ' + workspace.name;
+          card.querySelector('.badge').textContent = workspace.urls.length + ' webů';
+          card.querySelector('p').textContent = domains;
+          const [open, remove] = card.querySelectorAll('button');
+          open.onclick = () => openWorkspace(workspace);
+          remove.onclick = () => {
+            if (!confirm('Odebrat pracovní prostor „' + workspace.name + '“?')) return;
+            workspaces = workspaces.filter((item) => item.id !== workspace.id);
+            saveWorkspaces();
+          };
+          manager.appendChild(card);
+        }
+      });
+    }
+    function addWorkspace() {
+      const name = prompt('Název pracovního prostoru:');
+      if (!name) return;
+      const currentUrls = tabs.map((tab) => tab.url).filter((url) => /^https?:/i.test(url));
+      if (!currentUrls.length) return flash('Nejdřív otevři stránky, které chceš uložit.');
+      workspaces.push({ id: 'ws-' + Date.now(), name: name.trim(), icon: '▣', urls: [...new Set(currentUrls)] });
+      saveWorkspaces();
+      openAuxPanel('workspacePanel');
+    }
+    function renderStartFavorites() {
+      const host = $('startFavorites');
+      if (!host) return;
+      host.innerHTML = '';
+      const items = bookmarks.slice(0, 5);
+      if (!items.length) host.innerHTML = '<div class="empty">Přidej stránku hvězdičkou v adresním řádku.</div>';
+      items.forEach((item) => {
+        const row = document.createElement('button');
+        row.className = 'mini-row';
+        row.innerHTML = '<span class="favico"></span><span class="favcopy"><strong></strong><small></small></span><em>☆</em>';
+        row.querySelector('.favico').textContent = siteLabel(item.url).charAt(0).toUpperCase();
+        row.querySelector('strong').textContent = item.title || siteLabel(item.url);
+        row.querySelector('small').textContent = item.url;
+        row.onclick = () => navigate(activeTab(), item.url);
+        host.appendChild(row);
+      });
+    }
+    function renderStartRecent(items = histItems) {
+      const host = $('startRecent');
+      if (!host) return;
+      host.innerHTML = '';
+      const rows = (items || []).slice(0, 5);
+      if (!rows.length) host.innerHTML = '<div class="empty">Navštívené stránky se zobrazí zde.</div>';
+      rows.forEach((item) => {
+        const row = document.createElement('button');
+        row.className = 'mini-row';
+        row.innerHTML = '<span class="favico"></span><span class="favcopy"><strong></strong><small></small></span><time></time>';
+        row.querySelector('.favico').textContent = siteLabel(item.url).charAt(0).toUpperCase();
+        row.querySelector('strong').textContent = item.title || siteLabel(item.url);
+        row.querySelector('small').textContent = siteLabel(item.url);
+        row.querySelector('time').textContent = relativeTime(item.at);
+        row.onclick = () => navigate(activeTab(), item.url);
+        host.appendChild(row);
+      });
+    }
+    function renderDiscover() {
+      const host = $('discoverList');
+      if (!host) return;
+      host.innerHTML = '';
+      DISCOVER_ITEMS.forEach((item) => {
+        const row = document.createElement('button');
+        row.className = 'discover-item';
+        row.innerHTML = '<span class="discover-thumb"></span><span><strong></strong><small></small></span>';
+        row.querySelector('.discover-thumb').textContent = item.icon;
+        row.querySelector('strong').textContent = item.title;
+        row.querySelector('small').textContent = item.source;
+        row.onclick = () => navigate(activeTab(), item.url);
+        host.appendChild(row);
+      });
+    }
+    async function loadWeather() {
+      const apply = (data, city) => {
+        const current = data?.current;
+        if (!current) throw new Error('weather');
+        const code = Number(current.weather_code);
+        const clear = code <= 1;
+        $('weatherCity').textContent = city;
+        $('weatherTemp').textContent = Math.round(current.temperature_2m) + ' °C';
+        $('weatherState').textContent = clear ? 'Jasno' : code <= 3 ? 'Polojasno' : code <= 67 ? 'Déšť' : code <= 77 ? 'Sněžení' : 'Bouřky';
+        $('weatherIcon').textContent = clear ? '☾' : code <= 3 ? '☁' : code <= 77 ? '☂' : 'ϟ';
+        const max = data?.daily?.temperature_2m_max?.[1];
+        const min = data?.daily?.temperature_2m_min?.[1];
+        $('weatherNext').textContent = Number.isFinite(max) && Number.isFinite(min) ? 'Zítra: ' + Math.round(max) + '° / ' + Math.round(min) + '°' : 'Aktuální předpověď';
+      };
+      const fetchFor = async (lat, lon, city) => {
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2';
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('weather');
+        const data = await response.json();
+        apply(data, city);
+        try { localStorage.setItem('voxario-weather', JSON.stringify({ at: Date.now(), city, data })); } catch {}
+      };
+      try {
+        const cached = JSON.parse(localStorage.getItem('voxario-weather') || 'null');
+        if (cached?.data && Date.now() - Number(cached.at || 0) < 15 * 60000) {
+          apply(cached.data, cached.city || 'Praha');
+          return;
+        }
+        await fetchFor(50.0755, 14.4378, 'Praha');
+      } catch {
+        $('weatherState').textContent = 'Počasí není dostupné';
+        $('weatherNext').textContent = 'Zkusit znovu později';
+      }
+    }
+
+    $('startSearch').addEventListener('submit', (event) => {
+      event.preventDefault();
+      navigate(activeTab(), $('startSearchInput').value);
+    });
+    document.querySelectorAll('[data-start-url]').forEach((button) => {
+      button.onclick = () => navigate(activeTab(), button.dataset.startUrl);
+    });
+    document.querySelector('[data-start-action="focus-search"]').onclick = () => $('startSearchInput').focus();
+    $('dockHome').onclick = () => navigate(activeTab(), START);
+    $('dockWorkspaces').onclick = () => openAuxPanel('workspacePanel');
+    $('dockHistory').onclick = () => openSettings('history');
+    $('dockNotes').onclick = () => openAuxPanel('notesPanel');
+    $('btnShield').onclick = () => openSettings('protect');
+    $('btnPrivacy').onclick = () => openSettings('privacy');
+    $('btnProfile').onclick = () => ipcRenderer.invoke('app:open-module', 'app');
+    $('btnMenu').onclick = () => openSettings('search');
+    $('btnNotifications').onclick = () => ipcRenderer.invoke('app:open-module', 'app');
+    $('workspaceClose').onclick = closeAuxPanels;
+    $('notesClose').onclick = closeAuxPanels;
+    $('workspaceAdd').onclick = addWorkspace;
+    $('dialEdit').onclick = addDialEntry;
+    $('showAllBookmarks').onclick = openPanel;
+    $('showAllHistory').onclick = () => openSettings('history');
+    $('refreshDiscover').onclick = () => navigate(activeTab(), 'https://news.google.com');
+    $('notesText').value = localStorage.getItem('voxario-notes') || '';
+    $('notesText').addEventListener('input', () => {
+      $('notesStatus').textContent = 'Ukládám…';
+      if (notesTimer) clearTimeout(notesTimer);
+      notesTimer = setTimeout(() => {
+        localStorage.setItem('voxario-notes', $('notesText').value);
+        $('notesStatus').textContent = 'Uloženo lokálně';
+      }, 300);
+    });
+    workspaces = readWorkspaces();
+    renderWorkspaces();
+    renderDiscover();
+    loadWeather();
 
     // find in page
     const findbar = $('findbar');
@@ -892,6 +1258,7 @@
       };
 
       renderNode(tree, list, '', 0);
+      renderStartFavorites();
     }
 
     async function loadBookmarks() {
@@ -926,7 +1293,7 @@
       });
     }
 
-    function openPanel() { try { closeSettings(); } catch {} bmpanel.classList.add('on'); syncWebviewVisibility(); renderSources(); }
+    function openPanel() { try { closeSettings(); } catch {} closeAuxPanels(); bmpanel.classList.add('on'); syncWebviewVisibility(); renderSources(); }
     function closePanel() { bmpanel.classList.remove('on'); syncWebviewVisibility(); }
 
     $('btnBookmarks').onclick = () => bmpanel.classList.contains('on') ? closePanel() : openPanel();
@@ -969,7 +1336,7 @@
       else if (ctrl && e.key === ',') { e.preventDefault(); openSettings('search'); }
       else if (ctrl && e.key.toLowerCase() === 'j') { e.preventDefault(); openSettings('downloads'); }
       else if (ctrl && e.key.toLowerCase() === 'h') { e.preventDefault(); openSettings('history'); }
-      else if (e.key === 'Escape') { closeFind(); closePanel(); closeSettings(); }
+      else if (e.key === 'Escape') { closeFind(); closePanel(); closeSettings(); closeAuxPanels(); }
       else if (e.key === 'F5') { e.preventDefault(); activeTab()?.wv.reload(); }
     });
 
@@ -1005,6 +1372,7 @@
         ['savePasswords', 'Ukládat hesla ze stránek', 'Hesla jsou šifrovaná klíčem operačního systému.'],
       ],
       optsPerf: [
+        ['gameMode', 'Herní režim', 'Omezí efekty a po čase uvolní weby na pozadí, aby hra dostala více CPU, RAM i GPU.'],
         ['hardwareAcceleration', 'Hardwarová akcelerace (GPU)', 'Změna se projeví po restartu prohlížeče.'],
         ['imageLoading', 'Načítat obrázky', 'Vypnutí výrazně sníží datový tok i zátěž.'],
         ['backgroundThrottling', 'Uspávat panely na pozadí', 'Šetří CPU u neaktivních panelů.'],
@@ -1061,10 +1429,13 @@
       $('dlDir').textContent = 'Složka stahování: ' + (PREFS.downloadDir || '—');
       $('cpuLimit').value = PREFS.cpuLimitPercent || 0;
       $('ramLimit').value = PREFS.ramLimitMB || 0;
+      $('maxActiveTabs').value = PREFS.maxActiveTabs || 4;
+      $('autoSuspendMinutes').value = PREFS.autoSuspendMinutes || 0;
       $('dlSpeedLimit').value = PREFS.downloadLimitMbps || 0;
       $('dlMaxParallel').value = PREFS.maxConcurrentDownloads || 0;
       $('gpuMode').value = PREFS.gpuMode || 'full';
       $('url').placeholder = 'Zadej adresu nebo hledej přes ' + (eng ? eng.label : 'web') + '…';
+      document.body.classList.toggle('game-mode', PREFS.gameMode !== false);
     }
 
     async function loadPrefs() {
@@ -1218,6 +1589,7 @@
         row.append(nm, u, at, del);
         list.appendChild(row);
       });
+      renderStartRecent(histItems);
     }
     $('hsearch').addEventListener('input', renderHistory);
 
@@ -1280,6 +1652,14 @@
         try { letter = new URL(d.url).hostname.replace(/^www\./, '').charAt(0).toUpperCase() || '◈'; } catch {}
         const ico = document.createElement('div');
         ico.className = 'ico'; ico.textContent = letter;
+        try {
+          const favicon = document.createElement('img');
+          favicon.src = new URL('/favicon.ico', d.url).toString();
+          favicon.alt = '';
+          favicon.loading = 'lazy';
+          favicon.onerror = () => favicon.remove();
+          ico.appendChild(favicon);
+        } catch {}
         const wrap = document.createElement('div');
         const ti = document.createElement('div');
         ti.className = 'dt'; ti.textContent = d.title || d.url;
@@ -1335,6 +1715,8 @@
     }
     bindNumber('cpuLimit', 'cpuLimitPercent');
     bindNumber('ramLimit', 'ramLimitMB');
+    bindNumber('maxActiveTabs', 'maxActiveTabs', 'Limit načtených panelů uložen.');
+    bindNumber('autoSuspendMinutes', 'autoSuspendMinutes', 'Čas automatického uspání uložen.');
     bindNumber('dlSpeedLimit', 'downloadLimitMbps', 'Limit rychlosti stahování uložen.');
     bindNumber('dlMaxParallel', 'maxConcurrentDownloads');
     $('gpuMode').onchange = async () => {
@@ -1385,23 +1767,53 @@
       if (info.overCpu) parts.push('CPU ' + info.cpuPercent + ' % (limit ' + info.cpuLimit + ' %)');
       if (info.overRam) parts.push('RAM ' + info.ramMB + ' MB (limit ' + info.ramLimit + ' MB)');
       $('limitNote').textContent = 'Překročen limit: ' + parts.join(', ') + ' — panely na pozadí byly uvolněny.';
-      if (info.overRam) suspendBackgroundTabs();
+      if (info.overCpu || info.overRam) suspendBackgroundTabs();
     });
 
-    // Uvolní neaktivní panely z paměti, adresu si pamatuje pro pozdější načtení.
-    function suspendBackgroundTabs() {
-      tabs.forEach((t) => {
-        if (t.id === activeId || t.suspended || t.url === START) return;
-        t.suspended = true;
-        t.pendingUrl = t.url;
-        try { t.wv.loadURL('about:blank'); } catch {}
-      });
+    // Uvolní web z paměti, ale panel, název i URL zůstanou zachované.
+    function suspendTab(tab) {
+      if (!tab || tab.id === activeId || tab.suspended || tab.url === START) return false;
+      tab.suspended = true;
+      tab.pendingUrl = tab.url;
+      tab.loading = false;
+      try { tab.wv.stop?.(); } catch {}
+      try { tab.wv.loadURL('about:blank'); } catch {}
+      return true;
+    }
+    function enforceTabBudget(forceIdle = false) {
+      if (PREFS.gameMode === false) return;
+      const now = Date.now();
+      const idleMinutes = Math.max(0, Number(PREFS.autoSuspendMinutes) || 0);
+      const maxLoaded = Math.max(1, Number(PREFS.maxActiveTabs) || 4);
+      const candidates = tabs
+        .filter((tab) => tab.id !== activeId && !tab.suspended && tab.url !== START)
+        .sort((a, b) => (a.lastActiveAt || 0) - (b.lastActiveAt || 0));
+      if (idleMinutes > 0) {
+        const cutoff = now - idleMinutes * 60000;
+        candidates.forEach((tab) => {
+          if ((tab.lastActiveAt || 0) < cutoff || forceIdle) suspendTab(tab);
+        });
+      }
+      let loaded = tabs.filter((tab) => !tab.suspended && tab.url !== START).length;
+      for (const tab of candidates) {
+        if (loaded <= maxLoaded) break;
+        if (suspendTab(tab)) loaded -= 1;
+      }
       render();
     }
+    function suspendBackgroundTabs() {
+      tabs.forEach(suspendTab);
+      render();
+    }
+    setInterval(() => enforceTabBudget(false), 30000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && PREFS.gameMode !== false) enforceTabBudget(true);
+    });
 
     /* --- otevírání panelu --- */
     async function openSettings(sec) {
       closePanel();
+      closeAuxPanels();
       setpanel.classList.add('on');
       syncWebviewVisibility();
       selectSection(sec || 'search');
@@ -1428,23 +1840,24 @@
     $('btnDownloads').onclick = () => openSettings('downloads');
     $('btnPerf').onclick = () => openSettings('perf');
 
-    loadPrefs();
     ipcRenderer.invoke('vb:downloads:list').then((d) => { dlItems = d || []; renderDownloads(); });
 
     (async () => {
+      await loadPrefs();
       let restored = false;
       try {
         const r = await ipcRenderer.invoke('vb:session:get');
         if (r?.restore && Array.isArray(r.session?.tabs) && r.session.tabs.length) {
-          r.session.tabs.forEach((t) => createTab(t.url));
-          const idx = Math.min(Math.max(0, r.session.activeIndex || 0), tabs.length - 1);
-          if (tabs[idx]) setActive(tabs[idx].id);
+          const safeIdx = Math.min(Math.max(0, r.session.activeIndex || 0), r.session.tabs.length - 1);
+          r.session.tabs.forEach((t, i) => createTab(t.url, { background: i !== safeIdx, lazy: i !== safeIdx, title: t.title }));
+          if (tabs[safeIdx]) setActive(tabs[safeIdx].id);
           restored = true;
         }
       } catch {}
       if (!restored) createTab(HOME);
       loadBookmarks();
       loadDial();
+      ipcRenderer.invoke('vb:history:list').then((items) => { histItems = items || []; renderStartRecent(histItems); }).catch(() => renderStartRecent([]));
     })();
 
   </script>

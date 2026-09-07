@@ -835,8 +835,8 @@ function createBrowserWindow() {
     return browserWindow;
   }
   browserWindow = new BrowserWindow({
-    width: 1440,
-    height: 920,
+    width: 1536,
+    height: 864,
     minWidth: 900,
     minHeight: 600,
     frame: false,
@@ -848,6 +848,8 @@ function createBrowserWindow() {
       nodeIntegration: true,
       webviewTag: true,
       webSecurity: true,
+      backgroundThrottling: true,
+      spellcheck: false,
     },
   });
   startupLog("Okno VoxarioBrowseru vytvořeno");
