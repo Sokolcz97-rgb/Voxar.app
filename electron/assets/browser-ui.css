@@ -33,6 +33,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 /* Native window chrome */
 .main { width: 100%; height: 100%; }
 .tabbar {
+  position: relative;
   height: 46px;
   min-height: 46px;
   padding: 4px 110px 0 217px;
