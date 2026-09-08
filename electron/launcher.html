@@ -162,6 +162,89 @@
       border-color: transparent; color: #0a0a0f; font-weight: 600;
     }
     .modal .mbtn.primary:hover { filter: brightness(1.08); }
+
+    /* ------------------------------------------------------------------
+       Voxar module launcher — same visual language as Voxar.app and the
+       native VoxarioBrowser.  These rules deliberately override the legacy
+       splash styles above while preserving every existing control and IPC id.
+       ------------------------------------------------------------------ */
+    :root { color-scheme: dark; }
+    html, body {
+      background:
+        radial-gradient(circle at 77% 6%, rgba(88, 72, 218, .32), transparent 24%),
+        radial-gradient(circle at 12% 78%, rgba(10, 176, 218, .15), transparent 31%),
+        linear-gradient(135deg, #010911 0%, #031827 52%, #060d23 100%);
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .55;
+      background-image: linear-gradient(rgba(64, 212, 242, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(64, 212, 242, .035) 1px, transparent 1px);
+      background-size: 42px 42px; mask-image: linear-gradient(to bottom, #000, transparent 80%);
+    }
+    .titlebar {
+      position: relative; z-index: 4; height: 36px; padding: 0 15px;
+      justify-content: space-between; border-bottom: 1px solid rgba(70, 215, 244, .16);
+      background: rgba(2, 13, 23, .64); color: #7198a9;
+    }
+    .titlebar::before { content: "VOXAR.APP  /  MODULE LAUNCHER"; font-size: 9px; font-weight: 700; letter-spacing: .22em; color: #67ddf2; }
+    .titlebar button { border: 1px solid rgba(82, 199, 223, .18); border-radius: 0; font-size: 10px; letter-spacing: .06em; }
+    .titlebar button:hover { border-color: rgba(82, 227, 252, .64); background: rgba(24, 119, 148, .2); }
+    .wrap {
+      position: relative; z-index: 1; height: calc(100% - 36px); display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto; align-items: stretch; justify-items: stretch;
+      gap: 0; padding: 0 38px 22px; text-align: left;
+    }
+    .wrap > .logo, .wrap > h1 { display: none; }
+    .status {
+      position: absolute; top: 15px; right: 39px; z-index: 2; min-height: 0;
+      font: 700 9px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em;
+      color: #75d6e9; text-transform: uppercase;
+    }
+    .status::before { content: "●"; margin-right: 7px; color: #43e4a1; text-shadow: 0 0 9px #43e4a1; }
+    .bar { position: absolute; top: 35px; right: 39px; width: 154px; height: 2px; border-radius: 0; background: rgba(80, 201, 229, .14); }
+    .fill { background: linear-gradient(90deg, transparent, #4ce8ff, transparent); }
+    #progressPanel { position: absolute; top: 43px; right: 39px; z-index: 3; width: 260px !important; }
+    #splashContinueBtn { position: absolute; top: 55px; right: 39px; z-index: 3; }
+    #chooser {
+      grid-row: 2; width: min(1080px, 100%); align-self: center; justify-self: center;
+      margin: 0 !important; padding-top: 32px;
+    }
+    .launcher-intro { max-width: 680px; margin: 0 auto 30px; text-align: center; }
+    .launcher-kicker { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid rgba(78, 221, 247, .32); color: #71e8fb; background: rgba(4, 39, 57, .6); font: 700 9px/1.2 Inter, sans-serif; letter-spacing: .18em; }
+    .launcher-kicker i { width: 6px; height: 6px; background: #66eaff; box-shadow: 0 0 10px #66eaff; }
+    .launcher-intro h1 { display: block; margin: 14px 0 9px; color: #edfaff; font: 700 clamp(25px, 3vw, 38px)/1.08 Inter, sans-serif; letter-spacing: -.045em; }
+    .launcher-intro h1 b { color: #48e7ff; font-weight: inherit; text-shadow: 0 0 20px rgba(72, 231, 255, .35); }
+    .launcher-intro p { margin: 0; color: #83aab7; font-size: 13px; line-height: 1.5; }
+    .module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .modcard {
+      position: relative; isolation: isolate; width: auto; min-height: 226px; overflow: hidden;
+      display: flex; flex-direction: column; align-items: flex-start; padding: 22px 22px 18px;
+      border: 1px solid rgba(76, 177, 206, .28); border-radius: 0; color: #e9f8fc;
+      background: linear-gradient(145deg, rgba(5, 35, 51, .94), rgba(2, 16, 28, .96));
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .modcard::before { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .75; background: radial-gradient(circle at 88% 12%, var(--module-glow, rgba(73, 229, 255, .18)), transparent 32%), linear-gradient(rgba(72, 211, 242, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(72, 211, 242, .035) 1px, transparent 1px); background-size: auto, 24px 24px, 24px 24px; }
+    .modcard::after { content: ""; position: absolute; left: 0; bottom: 0; width: 58%; height: 2px; background: var(--module-accent, #52e7ff); box-shadow: 0 0 13px var(--module-accent, #52e7ff); }
+    .modcard:hover, .modcard:focus-visible { transform: translateY(-4px); border-color: var(--module-accent, #52e7ff); box-shadow: 0 15px 35px rgba(0, 0, 0, .35), 0 0 24px var(--module-shadow, rgba(60, 225, 255, .17)); outline: none; background: linear-gradient(145deg, rgba(7, 49, 68, .97), rgba(3, 19, 33, .98)); }
+    .modcard:focus-visible { outline: 2px solid #7af1ff; outline-offset: 3px; }
+    .modcard.hub { --module-accent: #f5ca68; --module-glow: rgba(245, 202, 104, .18); --module-shadow: rgba(245, 202, 104, .2); }
+    .modcard.browser { --module-accent: #54eaff; --module-glow: rgba(84, 234, 255, .21); --module-shadow: rgba(84, 234, 255, .2); }
+    .modcard.app { --module-accent: #9a78ff; --module-glow: rgba(154, 120, 255, .21); --module-shadow: rgba(154, 120, 255, .2); }
+    .modcard .modtype { color: var(--module-accent, #52e7ff); font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .18em; }
+    .modicon { width: 49px; height: 49px; margin: 17px 0 15px; border-color: color-mix(in srgb, var(--module-accent, #52e7ff) 58%, transparent) !important; color: var(--module-accent, #52e7ff) !important; background: rgba(2, 19, 31, .62); font-size: 22px; box-shadow: inset 0 0 17px color-mix(in srgb, var(--module-accent, #52e7ff) 11%, transparent); }
+    .modtitle { color: #edfaff; font: 700 19px/1.15 Inter, sans-serif; letter-spacing: -.025em; text-transform: none; }
+    .modsub { min-height: 34px; margin-top: 7px; color: #8eb0bc; font-size: 12px; line-height: 1.45; }
+    .modgo { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 16px; color: var(--module-accent, #52e7ff); font: 700 9px/1.2 Inter, sans-serif; letter-spacing: .16em; }
+    .modgo::after { content: "→"; font-size: 15px; line-height: 0; transition: transform .18s ease; }
+    .modcard:hover .modgo::after { transform: translateX(4px); }
+    .launcher-footer { grid-row: 3; display: flex; align-items: center; justify-content: space-between; gap: 16px; width: min(1080px, 100%); justify-self: center; padding-top: 12px; border-top: 1px solid rgba(70, 187, 214, .15); color: #63828e; font-size: 10px; }
+    .launcher-footer strong { color: #9cdce9; font: 700 9px/1.3 Inter, sans-serif; letter-spacing: .16em; }
+    .ver { position: static; justify-self: center; color: #587886; font-size: 10px; }
+    @media (max-width: 790px) {
+      .wrap { padding-inline: 18px; } .module-grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+      .modcard { min-height: 160px; } .launcher-intro { margin-bottom: 18px; } .status, .bar { right: 19px; }
+    }
   </style>
 
 </head>
@@ -201,32 +284,38 @@
     <button id="splashContinueBtn" class="btn primary" style="display:none;margin-top:6px;">Pokračovat do aplikace</button>
 
     <!-- Rozcestník modulů -->
-    <div id="chooser" style="display:none;margin-top:18px;">
-      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-        <button class="modcard" data-module="hub">
-          <div class="modicon" style="color:#fbbf24;border-color:rgba(251,191,36,.45);">⬢</div>
+    <div id="chooser" aria-label="Výběr modulu">
+      <div class="launcher-intro">
+        <span class="launcher-kicker"><i></i> STUDIOVOXARIO / CONTROL DECK</span>
+        <h1>Vyber si svůj <b>prostor.</b></h1>
+        <p>Komunita, prohlížeč a komunikační aplikace — jeden ekosystém, tři samostatně použitelné moduly.</p>
+      </div>
+      <div class="module-grid">
+        <button class="modcard hub" data-module="hub" type="button">
+          <span class="modtype">01 / COMMUNITY HUB</span>
+          <div class="modicon">⬢</div>
           <div class="modtitle">StudioVoxario HUB</div>
-          <div class="modsub">Web, fórum, obchod, zakázky a novinky</div>
-          <div class="modgo">Spustit modul →</div>
+          <div class="modsub">Web, fórum, obchod, zakázky a novinky komunity.</div>
+          <div class="modgo">Otevřít HUB</div>
         </button>
-        <button class="modcard cyan" data-module="browser">
-          <div class="modicon" style="color:#22d3ee;border-color:rgba(34,211,238,.45);">◉</div>
+        <button class="modcard browser" data-module="browser" type="button">
+          <span class="modtype">02 / NAVIGATION</span>
+          <div class="modicon">◉</div>
           <div class="modtitle">VoxarioBrowser</div>
-          <div class="modsub">Plnohodnotný Chromium prohlížeč</div>
-          <div class="modgo" id="browserGo">Spustit modul →</div>
+          <div class="modsub">Samostatný Chromium prohlížeč pro rychlou práci i hraní.</div>
+          <div class="modgo" id="browserGo">Spustit prohlížeč</div>
         </button>
-
-        <button class="modcard" data-module="app">
-          <div class="modicon" style="color:#fbbf24;border-color:rgba(251,191,36,.45);">◈</div>
+        <button class="modcard app" data-module="app" type="button">
+          <span class="modtype">03 / COMMUNITY APP</span>
+          <div class="modicon">◈</div>
           <div class="modtitle">Voxar.app</div>
-          <div class="modsub">Komunikace, LFG, kontrakty, inventáře</div>
-          <div class="modgo">Spustit modul →</div>
+          <div class="modsub">Komunikace, hlas, LFG, události a nástroje komunity.</div>
+          <div class="modgo">Spustit aplikaci</div>
         </button>
       </div>
     </div>
 
-
-    <div class="ver" id="ver"></div>
+    <div class="launcher-footer"><strong>VOXAR.APP / STUDIOVOXARIO</strong><span>Vyber modul nebo otevři diagnostiku aktualizací.</span><div class="ver" id="ver"></div></div>
   </div>
 
 

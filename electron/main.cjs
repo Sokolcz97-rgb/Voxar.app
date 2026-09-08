@@ -1046,10 +1046,10 @@ function createLauncher() {
     return launcherWindow;
   }
   launcherWindow = new BrowserWindow({
-    width: 460,
-    height: 340,
-    minWidth: 460,
-    minHeight: 340,
+    width: 1080,
+    height: 680,
+    minWidth: 920,
+    minHeight: 560,
     frame: false,
     resizable: true,
     backgroundColor: "#020617",
@@ -1114,8 +1114,8 @@ async function runLauncherSequence() {
   // Zobrazíme ho okamžitě, aktualizace doběhne na pozadí.
   setLauncherStatus("Vyberte modul");
   try {
-    launcherWindow?.setMinimumSize(980, 560);
-    launcherWindow?.setSize(1020, 600);
+    launcherWindow?.setMinimumSize(920, 560);
+    launcherWindow?.setSize(1080, 680);
     launcherWindow?.center();
   } catch {}
   sendLauncherChoose();
@@ -1265,5 +1265,4 @@ app.on("before-quit", (event) => {
   }
   rollback.recordCleanExit();
 });
-
 
