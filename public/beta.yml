@@ -1,7 +1,7 @@
-version: 0.0.45
+version: 0.0.46
 files:
-  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.45/StudioVoxarioUpdate-0.0.45.exe
-    sha512: 0unKuNdJ3rV0m54YAlLCwiyBKrjM1JbbJ9MQ2DR8LLgFlu9S00mHFlkAd/2+IpJJXrvkU46v2UN5udAgd4c4hg==
-path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.45/StudioVoxarioUpdate-0.0.45.exe
-sha512: 0unKuNdJ3rV0m54YAlLCwiyBKrjM1JbbJ9MQ2DR8LLgFlu9S00mHFlkAd/2+IpJJXrvkU46v2UN5udAgd4c4hg==
-releaseDate: '2026-09-08T20:13:19.782Z'
+  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.46/StudioVoxarioUpdate-0.0.46.exe
+    sha512: b2t4iq+QYq8BBrp4PxTRHh4WBIgIryd5Ee0RwGL19VYZVoik3IIJeYl1YFHRu30M0TJrWRQhqgi1yScdkfQFug==
+path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.46/StudioVoxarioUpdate-0.0.46.exe
+sha512: b2t4iq+QYq8BBrp4PxTRHh4WBIgIryd5Ee0RwGL19VYZVoik3IIJeYl1YFHRu30M0TJrWRQhqgi1yScdkfQFug==
+releaseDate: '2026-09-08T20:43:03.874Z'
