@@ -1,0 +1,182 @@
+/*
+ * StudioVoxario unified application skin.
+ *
+ * This is intentionally the only global community stylesheet. Every selector
+ * is scoped to the live app shell so the public site, admin pages and browser
+ * module cannot inherit it. The structure and interaction components remain
+ * unchanged; this file owns their visual layout.
+ */
+#voxar-community {
+  --sv-bg: #020b14;
+  --sv-panel: #041827;
+  --sv-panel-raised: #06243a;
+  --sv-panel-soft: #072038;
+  --sv-line: rgba(48, 211, 244, .45);
+  --sv-line-soft: rgba(62, 178, 216, .22);
+  --sv-cyan: #20dcf5;
+  --sv-cyan-bright: #6df4ff;
+  --sv-text: #d5edf7;
+  --sv-muted: #86aabe;
+  --sv-rail: clamp(76px, 5.4vw, 90px);
+  --sv-sidebar: clamp(250px, 17.4vw, 290px);
+  --sv-right: clamp(278px, 19.1vw, 320px);
+  --sv-top: clamp(112px, 7.6vw, 128px);
+  position: relative;
+  isolation: isolate;
+  display: grid !important;
+  grid-template-rows: var(--sv-top) minmax(0, 1fr) !important;
+  width: 100%; height: 100dvh; min-height: 0;
+  overflow: hidden;
+  color: var(--sv-text);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse at 72% -7%, rgba(15, 91, 139, .36), transparent 37%),
+    radial-gradient(ellipse at 88% 2%, rgba(89, 44, 165, .23), transparent 25%),
+    linear-gradient(180deg, #031322 0%, #020c15 34%, #01080e 100%);
+}
+#voxar-community *, #voxar-community *::before, #voxar-community *::after { box-sizing: border-box; }
+#voxar-community button { cursor: pointer; }
+#voxar-community button:disabled { cursor: not-allowed; opacity: .55; }
+#voxar-community :is(button, input, textarea, select):focus-visible { outline: 2px solid var(--sv-cyan-bright); outline-offset: 2px; }
+#voxar-community::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .48; background-image: linear-gradient(rgba(73, 216, 246, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(73, 216, 246, .028) 1px, transparent 1px); background-size: 56px 56px; mask-image: linear-gradient(#000, rgba(0,0,0,.58) 62%, transparent); }
+
+/* Top chrome, aligned with the supplied StudioVoxario reference. */
+#voxar-community .sv-topbar {
+  position: relative !important; z-index: 20;
+  display: grid !important; grid-template-columns: clamp(308px, 22vw, 366px) clamp(490px, 35.4vw, 594px) minmax(0, 1fr) !important;
+  height: var(--sv-top) !important; min-height: 0 !important;
+  overflow: hidden !important;
+  border-bottom: 1px solid var(--sv-line) !important;
+  background: #03101d !important;
+  box-shadow: 0 8px 26px rgba(0,0,0,.42), inset 0 -1px rgba(101,237,255,.15);
+}
+#voxar-community .sv-topbar-scene { position: absolute !important; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+#voxar-community .sv-topbar-scene-image { width: 100%; height: 100%; object-fit: cover; object-position: center 50%; opacity: .9; }
+#voxar-community .sv-topbar-scene > :not(img) { display: none !important; }
+#voxar-community .sv-topbar-brand, #voxar-community .sv-topbar-nav, #voxar-community .sv-topbar-tools { position: relative; z-index: 1; min-width: 0; }
+#voxar-community .sv-topbar-brand { display: flex; align-items: center; gap: 17px; padding: 0 clamp(25px, 2vw, 34px); background: linear-gradient(102deg, rgba(1,11,20,.99) 66%, rgba(2,16,28,.88) 85%, transparent); }
+#voxar-community .sv-topbar-brand::after { content: ""; position: absolute; right: clamp(26px,2vw,34px); top: -8px; width: 1px; height: calc(100% + 16px); transform: rotate(-34deg); background: linear-gradient(transparent, rgba(62,218,247,.68), transparent); box-shadow: 0 0 10px rgba(31,218,248,.38); }
+#voxar-community .sv-brand-symbol { width: 60px; height: 64px; flex: 0 0 auto; }
+#voxar-community .sv-brand-copy strong { color: #29e6fb; font: 700 clamp(21px,1.38vw,24px)/1 Orbitron, Inter, sans-serif; letter-spacing: .18em; text-shadow: 0 0 13px rgba(39,222,247,.42); }
+#voxar-community .sv-brand-copy span { margin-top: 7px; color: #a6e7f4; font: 700 9px/1 Inter, sans-serif; letter-spacing: .4em; }
+#voxar-community .sv-topbar-nav { display: grid !important; grid-template-columns: repeat(6, minmax(0,1fr)); height: 100%; border-inline: 1px solid rgba(80,195,224,.12); background: rgba(1,12,22,.2); }
+#voxar-community .sv-topbar-nav > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-width: 0; padding: 18px 3px 13px; border: 0; border-left: 1px solid rgba(54,166,199,.09); color: #a9cfdf; background: transparent; font: 600 clamp(11px,.78vw,13px)/1.25 Inter, sans-serif; }
+#voxar-community .sv-topbar-nav > button svg { width: 21px; height: 21px; stroke-width: 1.8; }
+#voxar-community .sv-topbar-nav > button:hover, #voxar-community .sv-topbar-nav > button.active { color: var(--sv-cyan-bright); background: linear-gradient(0deg, rgba(3,99,140,.58), rgba(2,33,53,.1) 66%, transparent); box-shadow: inset 0 -3px var(--sv-cyan), 0 0 24px rgba(14,205,245,.11); }
+#voxar-community .sv-topbar-tools { display: flex; align-items: center; justify-content: flex-end; gap: clamp(10px,.8vw,14px); padding: 0 clamp(14px,1.1vw,20px); }
+#voxar-community .sv-topbar-search-wrap { flex: 0 1 258px; min-width: 160px; }
+#voxar-community .sv-topbar-search { width: 100%; height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 10px; color: #8fbfd2; border: 1px solid rgba(59,211,239,.48); border-radius: 4px; background: rgba(2,20,34,.9); box-shadow: inset 0 0 20px rgba(30,180,215,.08); }
+#voxar-community .sv-topbar-search input { min-width: 0; flex: 1; color: #d5edf7; border: 0; outline: 0; background: transparent; font-size: 13px; }
+#voxar-community .sv-topbar-search kbd { border: 1px solid rgba(71,193,222,.48); border-radius: 4px; padding: 3px 6px; color: #b5e9f6; background: rgba(9,47,69,.76); font-size: 10px; }
+#voxar-community .sv-topbar-icon-button { display: grid; place-items: center; width: 40px; height: 40px; border: 0; color: #b8dce9; background: transparent; }
+#voxar-community .sv-topbar-icon-button:hover, #voxar-community .sv-topbar-icon-button.active { color: var(--sv-cyan-bright); background: rgba(14,102,135,.2); }
+#voxar-community .sv-topbar-avatar { width: 49px; height: 49px; overflow: hidden; border: 2px solid rgba(122,80,240,.9); border-radius: 50%; background: #082337; box-shadow: 0 0 14px rgba(142,72,253,.56); }
+#voxar-community .sv-topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#voxar-community .sv-topbar-motto { display: flex; flex-direction: column; align-items: flex-end; width: 62px; color: #7ed1e6; font: 700 7px/1.38 Inter,sans-serif; letter-spacing: .28em; text-transform: uppercase; }
+
+/* Four-column application canvas. */
+#voxar-community .sv-workspace { position: relative; z-index: 1; display: grid !important; grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(0,1fr) var(--sv-right) !important; gap: 10px; min-height: 0; height: 100%; padding: 8px 12px 14px; overflow: hidden; }
+#voxar-community .sv-workspace.is-settings { grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(0,1fr) !important; }
+#voxar-community .sv-workspace > * { min-width: 0; min-height: 0; height: 100%; }
+#voxar-community .sv-workspace-rail { position: relative; top: -40px; height: calc(100% + 27px) !important; overflow: hidden; border: 1px solid var(--sv-line); background: linear-gradient(180deg, #042135, #020e1a); clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+#voxar-community .sv-workspace-sidebar { height: calc(100% - 26px) !important; min-height: 0; }
+#voxar-community .sv-workspace-center { position: relative; top: -8px; height: calc(100% - 5px) !important; overflow: hidden; border: 1px solid var(--sv-line); background: #031522; clip-path: polygon(15px 0,calc(100% - 250px) 0,calc(100% - 236px) 14px,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px); box-shadow: inset 0 0 35px rgba(5,136,176,.06); }
+#voxar-community .sv-workspace-right { height: calc(100% - 8px) !important; min-height: 0; overflow: hidden; }
+#voxar-community .sv-guild-rail { height: 100%; padding: 12px 8px; gap: 12px; background: transparent; }
+#voxar-community :is(.sv-guild-rail-primary,.sv-guild-rail-item,.sv-guild-rail-create,.sv-guild-rail-join) { border-color: rgba(72,211,241,.38) !important; background: linear-gradient(145deg,#0b3550,#072033) !important; box-shadow: inset 0 0 16px rgba(41,197,231,.09); }
+
+/* Community sidebar and channel density. */
+#voxar-community .sv-sidebar-shell { height: 100%; display: flex; flex-direction: column; overflow: visible; background: transparent; }
+#voxar-community .sv-sidebar-slogan { position: absolute; top: -39px; height: 28px; overflow: hidden; color: #8bd2e5; font: 700 9px/1.45 Inter,sans-serif; letter-spacing: .22em; }
+#voxar-community .sv-community-hero { flex: 0 0 142px; height: 142px; overflow: hidden; border: 1px solid var(--sv-line); background: #061725; clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+#voxar-community .sv-community-hero-image { width: 100%; height: 100%; object-fit: cover; }
+#voxar-community .sv-community-identity { padding: 15px 18px; background: linear-gradient(0deg,rgba(3,18,31,.98),rgba(3,18,31,.62) 50%,transparent); }
+#voxar-community .sv-community-logo { width: 44px; height: 44px; border-color: rgba(48,225,249,.75); }
+#voxar-community .sv-community-name-row strong { font: 700 20px/1.2 Inter,sans-serif; }
+#voxar-community .sv-community-copy > span { color: #a3cadd; font-size: 13px; }
+#voxar-community .sv-sidebar-quick-nav { margin: 8px 7px; gap: 2px; }
+#voxar-community .sv-sidebar-quick-nav button { height: 35px; padding: 0 13px; border: 1px solid transparent; border-radius: 0; color: #b7d7e4; background: transparent; font-size: 14px; }
+#voxar-community .sv-sidebar-quick-nav button:hover, #voxar-community .sv-sidebar-quick-nav button.active { color: #effdff; border-color: var(--sv-cyan); background: linear-gradient(90deg,#07506d,#073246); box-shadow: inset 3px 0 var(--sv-cyan), 0 0 15px rgba(12,207,241,.13); }
+#voxar-community .sv-sidebar-section-title { flex: 0 0 29px; margin: 0 11px; color: #64cde8; font: 700 9px/29px Inter,sans-serif; letter-spacing: .23em; text-transform: uppercase; }
+#voxar-community .sv-sidebar-channels { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+#voxar-community .sv-channel-list, #voxar-community .sv-channel-list-scroll { height: 100%; min-height: 0; }
+#voxar-community .sv-channel-item { min-height: 35px; height: 35px; margin-inline: 7px; border-radius: 0; color: #bedbe6; }
+#voxar-community .sv-channel-item.active { color: #ecfeff; border-color: var(--sv-cyan); background: linear-gradient(90deg,#07536e,#062c3d); box-shadow: inset 3px 0 var(--sv-cyan); }
+#voxar-community .sv-sidebar-self { flex: 0 0 84px; margin-top: 8px; padding: 4px; border: 1px solid var(--sv-line); background: linear-gradient(110deg,#05283e,#031624); clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+
+/* Main channel, messages and composer. */
+#voxar-community .sv-chat-shell { height: 100%; background: linear-gradient(rgba(46,201,235,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(46,201,235,.025) 1px,transparent 1px),linear-gradient(135deg,#041a2a,#020d17); background-size: 74px 74px,74px 74px,auto; }
+#voxar-community .sv-channel-header { min-height: 70px; height: 70px; padding: 0 22px; border-bottom: 1px solid var(--sv-line); background: linear-gradient(90deg,#06273d,#041a2b 72%,#031522); }
+#voxar-community .sv-channel-header-title { color: #eefbff; font-size: 19px; }
+#voxar-community .sv-channel-header-description { color: #a0c6d8; }
+#voxar-community .sv-welcome { min-height: 160px; margin: 18px 20px 6px; border: 1px solid #3bcff7; border-radius: 0; background: #05172a; clip-path: polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px); box-shadow: 0 0 20px rgba(48,210,244,.12), inset 0 0 25px rgba(92,50,219,.14); }
+#voxar-community .sv-welcome-copy { padding: 15px 22px; background: linear-gradient(90deg,rgba(3,22,39,.98),rgba(3,22,39,.83) 53%,transparent); }
+#voxar-community .sv-welcome-copy h2 { color: #f1fcff; font-size: 21px; }
+#voxar-community .sv-welcome-copy p { color: #add0df; font-size: 13px; }
+#voxar-community .sv-welcome-actions button, #voxar-community .sv-hud-button { border: 1px solid rgba(66,222,246,.6); border-radius: 3px; color: #dffaff; background: linear-gradient(135deg,rgba(18,91,125,.82),rgba(35,54,123,.72)); box-shadow: inset 0 0 14px rgba(66,230,255,.08); }
+#voxar-community .sv-message-list { padding-inline: 22px; }
+#voxar-community .sv-message { border-bottom-color: rgba(59,172,204,.18); }
+#voxar-community .sv-message-author { color: #2ae5ec; }
+#voxar-community .sv-message-content { color: #c4dfeb; }
+#voxar-community .sv-composer { margin: 0 18px 12px; padding: 12px 14px 10px; border: 1px solid var(--sv-line); background: linear-gradient(135deg,#062a40,#031725); clip-path: polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px); }
+#voxar-community .sv-composer textarea, #voxar-community .sv-composer input { color: #e6faff; background: rgba(2,18,30,.8); }
+
+/* Right hand information rail. */
+#voxar-community .sv-right-shell { height: 100%; overflow-y: auto; padding-right: 1px; }
+#voxar-community .sv-right-card { position: relative; margin-bottom: 10px; padding: 14px; overflow: hidden; border: 1px solid var(--sv-line); border-radius: 0; background: linear-gradient(145deg,#062238,#031522); clip-path: polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px); }
+#voxar-community .sv-right-card-title { color: #6fe7fb; font: 700 10px/1 Inter,sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+#voxar-community .sv-right-community-heading h2 { color: #f1fcff; font-size: 22px; }
+#voxar-community .sv-right-card p, #voxar-community .sv-right-member-meta { color: #a8c8d7; }
+#voxar-community .sv-right-stats { border-block-color: rgba(65,208,238,.22); }
+#voxar-community .sv-right-event { border-color: rgba(102,107,245,.5); background: linear-gradient(135deg,rgba(59,43,133,.62),rgba(5,36,55,.88)); }
+
+/* Settings and server settings use the same dark, readable workspace. */
+#voxar-community .hud-settings { height: 100%; min-height: 0; color: var(--sv-text); background: linear-gradient(135deg,#041c2e,#020d17) !important; }
+#voxar-community .hud-settings > aside { width: 250px !important; padding: 16px !important; border-right: 1px solid var(--sv-line-soft) !important; background: linear-gradient(180deg,#061d2d,#03121f) !important; }
+#voxar-community .hud-settings > aside nav > button { min-height: 34px; border-radius: 2px !important; color: #a8c8d6 !important; font-family: Inter,sans-serif !important; letter-spacing: .04em !important; text-transform: none !important; }
+#voxar-community .hud-settings > aside nav > button:hover, #voxar-community .hud-settings > aside nav > button[class*="bg-primary"] { color: #effdff !important; border-left-color: var(--sv-cyan) !important; background: linear-gradient(90deg,rgba(0,154,194,.3),rgba(14,61,87,.3)) !important; box-shadow: inset 3px 0 var(--sv-cyan); }
+#voxar-community .hud-settings > div.flex-1 { min-width: 0; overflow: auto; background: radial-gradient(circle at 82% 0,rgba(19,108,147,.12),transparent 33%); }
+#voxar-community .hud-settings > div.flex-1 > div { max-width: 980px; padding: 28px 34px 44px !important; }
+#voxar-community .hud-settings h1, #voxar-community .hud-settings h2, #voxar-community .hud-settings h3 { color: #effcff; }
+#voxar-community .hud-settings label { color: #a6c9d9; }
+#voxar-community .hud-settings :is(input,textarea,select) { border-color: rgba(58,193,222,.37) !important; color: #e8faff !important; background: rgba(2,20,32,.88) !important; box-shadow: inset 0 0 12px rgba(18,121,152,.05); }
+#voxar-community .hud-settings :is(input,textarea,select):focus { border-color: var(--sv-cyan) !important; box-shadow: 0 0 0 2px rgba(32,220,245,.12); }
+#voxar-community .hud-settings button:not(aside button) { border-radius: 3px; }
+
+/* Utility overlays (events, RTMP, files, store, members) are full, clear panels. */
+#voxar-community .sv-utility-overlay { position: fixed; z-index: 80; left: calc(var(--sv-rail) + 24px); right: 12px; top: calc(var(--sv-top) + 7px); bottom: 10px; overflow: hidden; border: 1px solid rgba(65,226,249,.68); border-radius: 0; background: linear-gradient(145deg,#031725,#052238 58%,#06142b); box-shadow: 0 22px 62px rgba(0,0,0,.7), inset 0 0 42px rgba(38,205,243,.06); clip-path: polygon(15px 0,100% 0,100% calc(100% - 15px),calc(100% - 15px) 100%,0 100%,0 15px); }
+#voxar-community .sv-utility-overlay-head { height: 56px; padding: 0 18px; border-bottom: 1px solid var(--sv-line); background: linear-gradient(90deg,#062d45,#082139 62%,#180e43); }
+#voxar-community .sv-utility-scroll { height: calc(100% - 56px); overflow: auto; }
+#voxar-community .sv-feature-page { min-height: 100%; padding: 25px 28px 38px; background: transparent; }
+#voxar-community .sv-feature-heading, #voxar-community .sv-feature-toolbar { padding-bottom: 18px; border-bottom: 1px solid var(--sv-line-soft); }
+#voxar-community .sv-feature-heading h2, #voxar-community .sv-feature-toolbar h2 { color: #effcff; }
+#voxar-community .sv-feature-card, #voxar-community .sv-studio-block, #voxar-community .sv-broadcast-side, #voxar-community .sv-event-editor, #voxar-community .sv-event-card, #voxar-community .sv-shop-card { border-color: var(--sv-line-soft); border-radius: 2px; background: linear-gradient(145deg,rgba(7,37,56,.9),rgba(3,19,31,.92)); }
+
+@media (max-width: 1450px) {
+  #voxar-community { --sv-rail: 70px; --sv-sidebar: 228px; --sv-right: 255px; --sv-top: 108px; }
+  #voxar-community .sv-topbar { grid-template-columns: 306px 486px minmax(0,1fr) !important; }
+  #voxar-community .sv-topbar-brand { padding-inline: 20px; }
+  #voxar-community .sv-brand-symbol { width: 54px; height: 58px; }
+  #voxar-community .sv-brand-copy strong { font-size: 20px; }
+  #voxar-community .sv-workspace { padding-inline: 8px; gap: 8px; }
+  #voxar-community .sv-community-hero { flex-basis: 135px; height: 135px; }
+  #voxar-community .sv-welcome { margin: 10px 12px 5px; min-height: 150px; }
+  #voxar-community .sv-message-list { padding-inline: 15px; }
+  #voxar-community .sv-composer { margin-inline: 12px; }
+}
+@media (max-width: 1120px) {
+  #voxar-community .sv-workspace { grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(0,1fr) !important; }
+  #voxar-community .sv-workspace-right { display: none; }
+  #voxar-community .sv-topbar { grid-template-columns: 250px minmax(340px,1fr) 220px !important; }
+  #voxar-community .sv-topbar-motto { display: none; }
+}
+@media (max-width: 800px) {
+  #voxar-community { --sv-top: 140px; --sv-rail: 54px; --sv-sidebar: 205px; }
+  #voxar-community .sv-topbar { grid-template-columns: 1fr 1fr !important; grid-template-rows: 70px 70px; }
+  #voxar-community .sv-topbar-nav { grid-row: 2; grid-column: 1 / -1; }
+  #voxar-community .sv-topbar-tools { grid-row: 1; grid-column: 2; }
+  #voxar-community .sv-topbar-brand { padding-inline: 14px; }
+  #voxar-community .sv-brand-copy strong { font-size: 16px; }
+  #voxar-community .sv-workspace, #voxar-community .sv-workspace.is-settings { grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(320px,1fr) !important; overflow-x: auto; }
+  #voxar-community .sv-utility-overlay { left: 7px; }
+}
