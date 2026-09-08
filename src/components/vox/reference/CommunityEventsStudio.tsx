@@ -404,16 +404,38 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
       toast({ title: "Doplň název a začátek události", variant: "destructive" });
       return;
     }
+
+    const startsAt = new Date(form.startsAt);
+    const endsAt = form.endsAt ? new Date(form.endsAt) : null;
+    const capacity = form.capacity.trim() ? Number(form.capacity) : null;
+
+    if (Number.isNaN(startsAt.getTime())) {
+      toast({ title: "Začátek události nemá platné datum", variant: "destructive" });
+      return;
+    }
+    if (endsAt && Number.isNaN(endsAt.getTime())) {
+      toast({ title: "Konec události nemá platné datum", variant: "destructive" });
+      return;
+    }
+    if (endsAt && endsAt <= startsAt) {
+      toast({ title: "Konec události musí být po začátku", variant: "destructive" });
+      return;
+    }
+    if (capacity !== null && (!Number.isInteger(capacity) || capacity < 1)) {
+      toast({ title: "Kapacita musí být celé číslo větší než nula", variant: "destructive" });
+      return;
+    }
+
     setSavingEvent(true);
     try {
       const payload = {
         title: form.title,
         description: form.description || null,
-        starts_at: new Date(form.startsAt).toISOString(),
-        ends_at: form.endsAt ? new Date(form.endsAt).toISOString() : null,
+        starts_at: startsAt.toISOString(),
+        ends_at: endsAt?.toISOString() ?? null,
         location: form.location || null,
         channel_id: form.channelId || null,
-        capacity: form.capacity ? Math.max(1, Number(form.capacity)) : null,
+        capacity,
       };
       if (editingId) await updateEvent(editingId, payload);
       else await createEvent(payload);

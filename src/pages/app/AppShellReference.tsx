@@ -24,6 +24,10 @@ import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import { Loader2 } from "lucide-react";
 import "./community-reference.css";
 import "./community-reference-polish.css";
+// The v29 stylesheet targets the structured shell rendered below.  Keep this
+// import last so the live community UI uses the final layout rather than the
+// legacy reference skin that remains for older embedded components.
+import "@/components/vox/reference/community-final-reference-v29.css";
 
 export default function AppShellReference() {
   useVoxHeartbeat("online");
