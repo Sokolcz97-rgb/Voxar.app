@@ -1,0 +1,115 @@
+/*
+ * Final cascade owner for the live StudioVoxario shell.
+ * Component-level legacy visual experiments are deliberately overridden here;
+ * this file is imported by AppShellReference after every component dependency.
+ */
+#voxar-community {
+  --sv-rail: 76px;
+  --sv-sidebar: 252px;
+  --sv-right: 276px;
+  --sv-top: 110px;
+  display: grid !important;
+  grid-template-rows: var(--sv-top) minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#voxar-community .sv-topbar {
+  display: grid !important;
+  grid-template-columns: 304px 490px minmax(0, 1fr) !important;
+  height: var(--sv-top) !important;
+  min-height: 0 !important;
+}
+#voxar-community .sv-topbar-brand { min-width: 0 !important; padding: 0 22px !important; }
+#voxar-community .sv-brand-symbol { width: 52px !important; height: 56px !important; }
+#voxar-community .sv-brand-copy { min-width: 0 !important; }
+#voxar-community .sv-brand-copy strong { font-size: 19px !important; letter-spacing: .16em !important; white-space: nowrap !important; }
+#voxar-community .sv-brand-copy span { font-size: 8px !important; letter-spacing: .3em !important; white-space: nowrap !important; }
+#voxar-community .sv-topbar-nav { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+#voxar-community .sv-topbar-nav > button { min-width: 0 !important; padding: 13px 2px 10px !important; gap: 6px !important; font-size: 10px !important; overflow: hidden !important; }
+#voxar-community .sv-topbar-nav > button svg { width: 19px !important; height: 19px !important; flex: 0 0 auto !important; }
+#voxar-community .sv-topbar-tools { min-width: 0 !important; padding: 0 13px !important; gap: 9px !important; overflow: hidden !important; }
+#voxar-community .sv-topbar-search-wrap { flex: 1 1 210px !important; max-width: 250px !important; min-width: 140px !important; }
+#voxar-community .sv-topbar-search { height: 40px !important; }
+#voxar-community .sv-topbar-avatar { width: 45px !important; height: 45px !important; flex: 0 0 45px !important; }
+#voxar-community .sv-topbar-motto { width: 54px !important; flex: 0 0 54px !important; }
+
+#voxar-community .sv-workspace {
+  display: grid !important;
+  grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(0, 1fr) var(--sv-right) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  gap: 9px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  padding: 8px 10px 12px !important;
+  overflow: hidden !important;
+}
+#voxar-community .sv-workspace.is-settings { grid-template-columns: var(--sv-rail) var(--sv-sidebar) minmax(0, 1fr) !important; }
+#voxar-community .sv-workspace > * { min-width: 0 !important; min-height: 0 !important; height: 100% !important; margin: 0 !important; }
+#voxar-community .sv-workspace-rail { position: relative !important; top: -30px !important; height: calc(100% + 23px) !important; overflow: hidden !important; }
+#voxar-community .sv-workspace-sidebar { height: calc(100% - 18px) !important; overflow: hidden !important; }
+#voxar-community .sv-workspace-center { position: relative !important; top: -7px !important; height: calc(100% - 4px) !important; min-width: 0 !important; overflow: hidden !important; }
+#voxar-community .sv-workspace-right { height: calc(100% - 7px) !important; overflow: hidden !important; }
+
+#voxar-community .sv-sidebar-shell { display: flex !important; flex-direction: column !important; min-height: 0 !important; height: 100% !important; overflow: hidden !important; }
+#voxar-community .sv-sidebar-slogan { top: -29px !important; height: 22px !important; padding: 0 8px !important; font-size: 7px !important; white-space: nowrap !important; }
+#voxar-community .sv-community-hero { flex: 0 0 134px !important; height: 134px !important; min-height: 134px !important; margin: 0 !important; }
+#voxar-community .sv-community-identity { padding: 12px 14px !important; gap: 7px !important; }
+#voxar-community .sv-community-logo { width: 37px !important; height: 37px !important; }
+#voxar-community .sv-community-name-row strong { font-size: 17px !important; white-space: nowrap !important; }
+#voxar-community .sv-community-copy > span { font-size: 11px !important; }
+#voxar-community .sv-sidebar-quick-nav { flex: 0 0 auto !important; margin: 7px 5px !important; gap: 1px !important; }
+#voxar-community .sv-sidebar-quick-nav button { display: flex !important; align-items: center !important; min-width: 0 !important; height: 33px !important; min-height: 33px !important; padding: 0 10px !important; font-size: 12px !important; overflow: hidden !important; }
+#voxar-community .sv-sidebar-quick-nav button svg { width: 17px !important; height: 17px !important; flex: 0 0 auto !important; }
+#voxar-community .sv-sidebar-quick-nav button span:not(.sv-sidebar-nav-accent) { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+#voxar-community .sv-sidebar-section-title { flex: 0 0 26px !important; height: 26px !important; margin: 0 9px !important; font-size: 8px !important; line-height: 26px !important; }
+#voxar-community .sv-sidebar-channels { flex: 1 1 100px !important; min-height: 0 !important; overflow: hidden !important; }
+#voxar-community .sv-channel-list { height: 100% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; }
+#voxar-community .sv-channel-list-scroll { flex: 1 1 auto !important; height: auto !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; }
+#voxar-community .sv-channel-item { display: flex !important; min-width: 0 !important; height: 32px !important; min-height: 32px !important; margin: 0 5px !important; padding: 0 9px !important; font-size: 12px !important; overflow: hidden !important; }
+#voxar-community .sv-channel-item-name { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-size: 12px !important; }
+#voxar-community .sv-sidebar-self { flex: 0 0 78px !important; height: 78px !important; min-height: 78px !important; margin-top: 6px !important; overflow: hidden !important; }
+
+#voxar-community .sv-chat-shell { display: flex !important; flex-direction: column !important; min-height: 0 !important; height: 100% !important; overflow: hidden !important; }
+#voxar-community .sv-channel-header { flex: 0 0 64px !important; height: 64px !important; min-height: 64px !important; padding: 0 17px !important; }
+#voxar-community .sv-channel-header-title { font-size: 17px !important; }
+#voxar-community .sv-channel-header-description { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-size: 11px !important; }
+#voxar-community .sv-welcome { flex: 0 0 150px !important; min-height: 150px !important; height: 150px !important; margin: 13px 15px 4px !important; overflow: hidden !important; }
+#voxar-community .sv-welcome-copy { min-width: 0 !important; padding: 13px 17px !important; }
+#voxar-community .sv-welcome-copy h2 { margin: 4px 0 !important; font-size: 19px !important; }
+#voxar-community .sv-welcome-copy p { max-width: 62% !important; font-size: 12px !important; line-height: 1.4 !important; }
+#voxar-community .sv-welcome-actions { gap: 7px !important; }
+#voxar-community .sv-welcome-actions button { height: 32px !important; padding: 0 11px !important; font-size: 10px !important; white-space: nowrap !important; }
+#voxar-community .sv-message-list { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; padding: 0 17px !important; }
+#voxar-community .sv-message { min-width: 0 !important; padding-block: 11px !important; }
+#voxar-community .sv-message-content { font-size: 13px !important; line-height: 1.4 !important; }
+#voxar-community .sv-composer { flex: 0 0 auto !important; margin: 0 13px 10px !important; padding: 9px 11px 8px !important; }
+
+#voxar-community .sv-right-shell { display: flex !important; flex-direction: column !important; gap: 9px !important; height: 100% !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; padding: 0 1px 12px 0 !important; }
+#voxar-community .sv-right-card { flex: 0 0 auto !important; min-width: 0 !important; margin: 0 !important; padding: 12px !important; overflow: hidden !important; }
+#voxar-community .sv-right-about { min-height: 250px !important; }
+#voxar-community .sv-right-card-head { min-width: 0 !important; }
+#voxar-community .sv-right-community-heading h2 { margin: 10px 0 7px !important; font-size: 20px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+#voxar-community .sv-right-card p { margin: 0 !important; font-size: 12px !important; line-height: 1.42 !important; }
+#voxar-community .sv-right-stats { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)) !important; gap: 5px !important; padding: 11px 0 !important; }
+#voxar-community .sv-right-stats > div { min-width: 0 !important; display:flex !important; align-items:center !important; gap:5px !important; }
+#voxar-community .sv-right-stats svg { width:17px !important; height:17px !important; flex:0 0 auto !important; }
+#voxar-community .sv-right-stat-copy strong { font-size:12px !important; }.sv-right-stat-copy small { font-size:9px !important; }
+#voxar-community .sv-right-tags { display:flex !important; flex-wrap:wrap !important; gap:5px !important; }.sv-right-tags span { padding:4px 6px !important; font-size:8px !important; }
+#voxar-community .sv-right-now { min-height: 190px !important; }.sv-right-members { min-height: 230px !important; }
+#voxar-community .sv-right-event { display:grid !important; grid-template-columns:38px minmax(0,1fr) auto !important; gap:9px !important; min-width:0 !important; padding:10px !important; }.sv-right-event-copy { min-width:0 !important; }.sv-right-event-copy strong,.sv-right-event-copy span { overflow:hidden !important; text-overflow:ellipsis !important; }.sv-right-event-join { align-self:center !important; white-space:nowrap !important; }
+
+#voxar-community .hud-settings { min-width:0 !important; overflow:hidden !important; }
+#voxar-community .hud-settings > aside { width:220px !important; flex:0 0 220px !important; overflow-y:auto !important; }
+#voxar-community .hud-settings > div.flex-1 { min-width:0 !important; overflow:auto !important; }
+
+@media (max-width: 1450px) {
+  #voxar-community { --sv-rail: 68px; --sv-sidebar: 230px; --sv-right: 250px; --sv-top: 104px; }
+  #voxar-community .sv-topbar { grid-template-columns: 300px 450px minmax(0,1fr) !important; }
+  #voxar-community .sv-workspace { gap:7px !important; padding:7px 8px 10px !important; }
+  #voxar-community .sv-community-hero { flex-basis:125px !important; height:125px !important; min-height:125px !important; }
+  #voxar-community .sv-welcome { flex-basis:142px !important; min-height:142px !important; height:142px !important; margin-inline:12px !important; }
+  #voxar-community .sv-welcome-copy p { max-width:55% !important; }
+}

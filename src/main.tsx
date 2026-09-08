@@ -3,7 +3,6 @@ import App from "./App.tsx";
 import "./index.css";
 // One authoritative community skin.  Previous visual experiments remain in
 // the repository for history, but must never be imported globally together.
-import "./components/vox/reference/community-unified-v32.css";
 import "./i18n";
 
 const syncAppTitle = () => {
