@@ -220,22 +220,22 @@
     .startfoot { margin-top: 26px; color: #475569; font-size: 11px; }
 
   </style>
-  <link rel="stylesheet" href="assets/browser-ui.css" />
+  <link rel="stylesheet" href="assets/browser-unified.css" />
 </head>
 <body>
   <div class="dock">
     <div class="brand"><img src="assets/browser-logo.svg" alt="Voxario" /></div>
-    <button class="dockbtn active" id="dockHome" title="Domů"><span class="dockico">⌂</span><span>Domů</span></button>
-    <button class="dockbtn" id="dockWorkspaces" title="Pracovní prostory"><span class="dockico">▣</span><span>Pracovní<br>prostory</span></button>
-    <button class="dockbtn" id="btnBookmarks" title="Oblíbené (Ctrl+Shift+B)"><span class="dockico">☆</span><span>Oblíbené</span></button>
-    <button class="dockbtn" id="dockHistory" title="Historie (Ctrl+H)"><span class="dockico">◷</span><span>Historie</span></button>
-    <button class="dockbtn" id="btnDownloads" title="Stahování (Ctrl+J)"><span class="dockico">⇩</span><span>Stahování</span></button>
-    <button class="dockbtn" id="dockNotes" title="Poznámky"><span class="dockico">▤</span><span>Poznámky</span></button>
-    <button class="dockbtn" id="btnPerf" title="Nástroje a výkon"><span class="dockico">⌘</span><span>Nástroje</span></button>
+    <button class="dockbtn active" id="dockHome" title="Domů"><span class="dockico" data-icon="home"></span><span>Domů</span></button>
+    <button class="dockbtn" id="dockWorkspaces" title="Pracovní prostory"><span class="dockico" data-icon="layers"></span><span>Pracovní<br>prostory</span></button>
+    <button class="dockbtn" id="btnBookmarks" title="Oblíbené (Ctrl+Shift+B)"><span class="dockico" data-icon="star"></span><span>Oblíbené</span></button>
+    <button class="dockbtn" id="dockHistory" title="Historie (Ctrl+H)"><span class="dockico" data-icon="history"></span><span>Historie</span></button>
+    <button class="dockbtn" id="btnDownloads" title="Stahování (Ctrl+J)"><span class="dockico" data-icon="download"></span><span>Stahování</span></button>
+    <button class="dockbtn" id="dockNotes" title="Poznámky"><span class="dockico" data-icon="note"></span><span>Poznámky</span></button>
+    <button class="dockbtn" id="btnPerf" title="Nástroje a výkon"><span class="dockico" data-icon="grid"></span><span>Nástroje</span></button>
     <div class="spacer"></div>
-    <button class="dockbtn dock-mini" id="goApp" title="Otevřít Voxar.app"><span class="dockico">V</span></button>
-    <button class="dockbtn dock-mini" id="btnSettings" title="Nastavení VoxarioBrowser (Ctrl+,)"><span class="dockico">⚙</span></button>
-    <button class="dockbtn dock-mini" id="btnLauncher" title="Zpět do rozcestníku"><span class="dockico">↪</span></button>
+    <button class="dockbtn dock-mini" id="goApp" title="Otevřít Voxar.app"><span class="dockico vox-mark">V</span></button>
+    <button class="dockbtn dock-mini" id="btnSettings" title="Nastavení VoxarioBrowser (Ctrl+,)"><span class="dockico" data-icon="settings"></span></button>
+    <button class="dockbtn dock-mini" id="btnLauncher" title="Zpět do rozcestníku"><span class="dockico" data-icon="exit"></span></button>
     <button class="sr-only" id="goHub" title="StudioVoxario HUB">Hub</button>
     <button class="sr-only" data-url="https://kick.com">Kick</button>
     <button class="sr-only" data-url="https://www.twitch.tv">Twitch</button>
@@ -255,19 +255,19 @@
     </div>
 
     <div class="navbar">
-      <button class="navbtn" id="back" title="Zpět">←</button>
-      <button class="navbtn" id="fwd" title="Vpřed">→</button>
-      <button class="navbtn" id="reload" title="Obnovit">⟳</button>
-      <button class="navbtn" id="home" title="Domů">⌂</button>
+      <button class="navbtn" id="back" title="Zpět"><span data-icon="back"></span></button>
+      <button class="navbtn" id="fwd" title="Vpřed"><span data-icon="forward"></span></button>
+      <button class="navbtn" id="reload" title="Obnovit"><span data-icon="reload"></span></button>
+      <button class="navbtn" id="home" title="Domů"><span data-icon="home"></span></button>
       <div class="urlwrap">
-        <span class="lock" id="lock">▮</span>
+        <span class="lock" id="lock" data-icon="lock"></span>
         <input id="url" placeholder="Zadej adresu nebo hledej…" spellcheck="false" />
       </div>
-      <button class="navbtn" id="btnStar" title="Přidat do záložek (Ctrl+D)">☆</button>
-      <button class="navbtn" id="btnShield" title="Ochrana prohlížeče">♢</button>
-      <button class="navbtn" id="btnPrivacy" title="Soukromí">⬡</button>
+      <button class="navbtn" id="btnStar" title="Přidat do záložek (Ctrl+D)"><span data-icon="star"></span></button>
+      <button class="navbtn" id="btnShield" title="Ochrana prohlížeče"><span data-icon="shield"></span></button>
+      <button class="navbtn" id="btnPrivacy" title="Soukromí"><span data-icon="privacy"></span></button>
       <button class="navbtn avatar-button" id="btnProfile" title="Voxar.app"><img src="assets/icon.png" alt="Profil" /></button>
-      <button class="navbtn" id="btnMenu" title="Nastavení">⋮</button>
+      <button class="navbtn" id="btnMenu" title="Nastavení"><span data-icon="more"></span></button>
     </div>
     <div class="bookmark-shell">
       <div class="bmbar" id="bmbar"></div>
@@ -282,13 +282,13 @@
             <div class="hero-brand"><img src="assets/browser-logo.svg" alt="VoxarioBrowser" /><div><strong><b>VOXARIO</b>BROWSER</strong><span>RYCHLEJI K VĚCEM, KTERÉ TĚ BAVÍ.</span></div></div>
             <blockquote>„Internet je místo, kde se<br>setkávají nápady, lidé a světy.“<small>— STUDIOVOXARIO</small></blockquote>
             <div class="hero-copy"><h1>Objevuj větší svět.</h1><p>Web bez hranic. Tvoje pravidla.</p></div>
-            <form class="hero-search" id="startSearch"><span>⌕</span><input id="startSearchInput" placeholder="Hledat nebo zadat adresu" autocomplete="off" /><button type="submit" title="Přejít">→</button></form>
+            <form class="hero-search" id="startSearch"><span data-icon="search"></span><input id="startSearchInput" placeholder="Hledat nebo zadat adresu" autocomplete="off" /><button type="submit" title="Přejít"><span data-icon="forward"></span></button></form>
             <div class="hero-actions">
-              <button data-start-action="focus-search">⌕ <span>Hledat na webu</span></button>
-              <button data-start-url="https://www.youtube.com">▶ <span>YouTube</span></button>
-              <button data-start-url="https://mapy.com">◆ <span>Mapy</span></button>
-              <button data-start-url="https://translate.google.com">▣ <span>Přeložit</span></button>
-              <button data-start-url="https://chatgpt.com">✦ <span>AI asistent</span></button>
+              <button data-start-action="focus-search"><i data-icon="search"></i><span>Hledat na webu</span></button>
+              <button data-start-url="https://www.youtube.com"><i data-icon="play"></i><span>YouTube</span></button>
+              <button data-start-url="https://mapy.com"><i data-icon="pin"></i><span>Mapy</span></button>
+              <button data-start-url="https://translate.google.com"><i data-icon="translate"></i><span>Přeložit</span></button>
+              <button data-start-url="https://chatgpt.com"><i data-icon="sparkle"></i><span>AI asistent</span></button>
             </div>
             <div class="hero-motto">GOOD<br>PEOPLE<br>BETTER<br>WORLDS<i></i></div>
           </section>
@@ -557,6 +557,24 @@
     const { ipcRenderer, shell } = require('electron');
     const $ = (id) => document.getElementById(id);
     const START = 'voxario://start';
+    const ICONS = {
+      home: '<svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+      layers: '<svg viewBox="0 0 24 24"><path d="m12 3 8 4.5-8 4.5-8-4.5zM4 12l8 4.5 8-4.5M4 16.5 12 21l8-4.5"/></svg>',
+      star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.75 5.57 6.15.9-4.45 4.34 1.05 6.13L12 17.05l-5.5 2.89 1.05-6.13L3.1 9.47l6.15-.9z"/></svg>',
+      history: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3.5 2"/></svg>',
+      download: '<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16"/></svg>',
+      note: '<svg viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg>',
+      grid: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></svg>',
+      settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20.3h-3v-.08A1.7 1.7 0 0 0 10.68 18.7a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7.02 15a1.7 1.7 0 0 0-1.56-1.03h-.08v-3h.08A1.7 1.7 0 0 0 7.02 9.94a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.56v-.08h3v.08a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 8l-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.03h.08v3h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg>',
+      exit: '<svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>',
+      back: '<svg viewBox="0 0 24 24"><path d="m14 5-7 7 7 7M7 12h11"/></svg>', forward: '<svg viewBox="0 0 24 24"><path d="m10 5 7 7-7 7m7-7H6"/></svg>',
+      reload: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 1 4M20 4v7h-7"/></svg>', lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+      shield: '<svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg>', privacy: '<svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6z"/><path d="M9 11h6M9 14h4"/></svg>',
+      more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></svg>', search: '<svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4 4"/></svg>',
+      play: '<svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5z"/></svg>', pin: '<svg viewBox="0 0 24 24"><path d="M12 21s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11z"/><circle cx="12" cy="10" r="2"/></svg>', translate: '<svg viewBox="0 0 24 24"><path d="M4 5h10M9 3v2m-4 0c.5 4 2 6 5 8m4-8c-.4 3-1.5 5.4-3.5 7.2M13 19h7m-3.5-3.5L13 21m3.5-5.5L20 21"/></svg>', sparkle: '<svg viewBox="0 0 24 24"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5zM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg>'
+    };
+    const icon = (name) => ICONS[name] || ICONS.grid;
+    document.querySelectorAll('[data-icon]').forEach((node) => { node.innerHTML = icon(node.dataset.icon); });
     let HOME = START;
     let SEARCH_TPL = 'https://www.google.com/search?q=%s';
     let PREFS = {};
@@ -788,7 +806,7 @@
       $('fwd').disabled = !t || !t.fwd;
       $('prog').className = 'prog' + (t && t.loading ? ' on' : '');
       if (t && document.activeElement !== $('url')) $('url').value = t.url;
-      $('lock').textContent = t && t.url.startsWith('https://') ? '🔒' : '▮';
+      $('lock').innerHTML = icon(t && t.url.startsWith('https://') ? 'lock' : 'privacy');
       $('startpage').classList.toggle('on', !!t && t.url === START);
       $('dockHome')?.classList.toggle('active', !!t && t.url === START);
       syncWebviewVisibility();
@@ -846,6 +864,18 @@
     function siteLabel(url) {
       try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
     }
+    function workspaceIcon(workspace) {
+      const key = workspace?.id === 'personal' ? 'home' : workspace?.id === 'gaming' ? 'play' : workspace?.id === 'research' ? 'sparkle' : 'layers';
+      return icon(key);
+    }
+    function dialIcon(url) {
+      const host = siteLabel(url).toLowerCase();
+      if (/youtube|twitch|netflix|steam/.test(host)) return icon('play');
+      if (/github|notion/.test(host)) return icon('layers');
+      if (/google|mapy|seznam/.test(host)) return icon('search');
+      if (/chatgpt/.test(host)) return icon('sparkle');
+      return icon('grid');
+    }
     function relativeTime(at) {
       const mins = Math.max(0, Math.round((Date.now() - Number(at || Date.now())) / 60000));
       if (mins < 1) return 'právě teď';
@@ -881,7 +911,7 @@
           const row = document.createElement('button');
           row.className = 'workspace-row';
           row.innerHTML = '<i></i><span><strong></strong><small></small></span>';
-          row.querySelector('i').textContent = workspace.icon || '▣';
+          row.querySelector('i').innerHTML = workspaceIcon(workspace);
           row.querySelector('strong').textContent = workspace.name;
           row.querySelector('small').textContent = workspace.urls.length + ' záložek';
           row.onclick = () => openWorkspace(workspace);
@@ -892,7 +922,7 @@
           card.className = 'workspace-manage-card hud-cut';
           const domains = workspace.urls.slice(0, 4).map(siteLabel).join(' · ') || 'Prázdný prostor';
           card.innerHTML = '<header><h3></h3><span class="badge"></span></header><p></p><footer><button class="pbtn">Otevřít úsporně</button><button class="mini dang">Odebrat</button></footer>';
-          card.querySelector('h3').textContent = (workspace.icon || '▣') + ' ' + workspace.name;
+          card.querySelector('h3').textContent = workspace.name;
           card.querySelector('.badge').textContent = workspace.urls.length + ' webů';
           card.querySelector('p').textContent = domains;
           const [open, remove] = card.querySelectorAll('button');
@@ -958,7 +988,7 @@
         const row = document.createElement('button');
         row.className = 'discover-item';
         row.innerHTML = '<span class="discover-thumb"></span><span><strong></strong><small></small></span>';
-        row.querySelector('.discover-thumb').textContent = item.icon;
+        row.querySelector('.discover-thumb').innerHTML = item.icon === '🎮' ? icon('play') : item.icon === '⌁' ? icon('sparkle') : icon('grid');
         row.querySelector('strong').textContent = item.title;
         row.querySelector('small').textContent = item.source;
         row.onclick = () => navigate(activeTab(), item.url);
@@ -1651,7 +1681,7 @@
         let letter = '◈';
         try { letter = new URL(d.url).hostname.replace(/^www\./, '').charAt(0).toUpperCase() || '◈'; } catch {}
         const ico = document.createElement('div');
-        ico.className = 'ico'; ico.textContent = letter;
+        ico.className = 'ico'; ico.innerHTML = dialIcon(d.url);
         try {
           const favicon = document.createElement('img');
           favicon.src = new URL('/favicon.ico', d.url).toString();
