@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "app_version": "0.0.38",
+  "app_version": "0.0.39",
   "url": "https://github.com/Sokolcz97-rgb/Voxar.app/releases/latest/download/StudioVoxarioSetup.exe",
   "original_filename": "StudioVoxarioSetup.exe",
-  "versioned_filename": "StudioVoxarioSetup-0.0.38.exe",
-  "size": 279043081,
-  "sha256": "176dc7e8e7dc53c078498abd28d5903e70de3ca6a05c2c948b988b4b9c281e6e",
+  "versioned_filename": "StudioVoxarioSetup-0.0.39.exe",
+  "size": 279043122,
+  "sha256": "17e8330ef77f3b1ea5a7f9546ef947aaaca0add61247882ffd195f48bf152606",
   "content_type": "application/x-msdownload",
   "source": "github-release-latest",
   "tag": "latest",
-  "updated_at": "2026-09-07T16:32:37.849Z"
+  "updated_at": "2026-09-08T15:27:40.114Z"
 }
