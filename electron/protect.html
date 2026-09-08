@@ -7,11 +7,11 @@
   <style>
     :root { color-scheme: dark; font-family: Inter, "Segoe UI", system-ui, sans-serif; background: #020d16; color: #e8f8fb; }
     * { box-sizing: border-box; }
-    body { min-height: 100vh; margin: 0; overflow: auto; background: radial-gradient(circle at 85% 0%, rgba(53, 188, 143, .18), transparent 26%), radial-gradient(circle at 7% 87%, rgba(15, 162, 204, .13), transparent 30%), linear-gradient(135deg, #020d16, #041b29 54%, #06152a); }
+    body { min-height: 100vh; margin: 0; overflow-x: hidden; background: radial-gradient(circle at 85% 0%, rgba(53, 188, 143, .18), transparent 26%), radial-gradient(circle at 7% 87%, rgba(15, 162, 204, .13), transparent 30%), linear-gradient(135deg, #020d16, #041b29 54%, #06152a); }
     body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .42; background-image: linear-gradient(rgba(92, 238, 195, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(92, 238, 195, .035) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(#000, transparent 80%); }
     button { font: inherit; cursor: pointer; }
     button:focus-visible { outline: 2px solid #85ffca; outline-offset: 3px; }
-    .topbar { position: relative; z-index: 1; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px clamp(20px, 4vw, 52px); border-bottom: 1px solid rgba(89, 231, 185, .23); background: rgba(2, 13, 22, .72); }
+    .topbar { position: relative; z-index: 1; min-width: 0; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px clamp(16px, 4vw, 52px); border-bottom: 1px solid rgba(89, 231, 185, .23); background: rgba(2, 13, 22, .72); }
     .identity { display: flex; align-items: center; gap: 13px; }
     .mark { width: 42px; height: 42px; display: grid; place-items: center; color: #62efad; font-size: 23px; border: 1px solid rgba(102, 242, 180, .68); background: linear-gradient(145deg, #073124, #061b25); clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%); box-shadow: inset 0 0 18px rgba(78, 237, 169, .15), 0 0 18px rgba(78, 237, 169, .13); }
     .eyebrow { margin: 0 0 3px; color: #78ddbf; font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .19em; }
@@ -19,19 +19,19 @@
     h1 b { color: #65f0b2; }
     .mode { display: inline-flex; align-items: center; gap: 8px; color: #9ec5c1; font: 700 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .1em; }
     .mode i { width: 7px; height: 7px; border-radius: 50%; background: #67efad; box-shadow: 0 0 12px #67efad; }
-    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(295px, .75fr); gap: 16px; max-width: 1240px; margin: 0 auto; padding: clamp(20px, 3vw, 40px); }
-    .hero, .panel { border: 1px solid rgba(84, 204, 184, .29); background: linear-gradient(145deg, rgba(5, 34, 46, .95), rgba(2, 16, 28, .95)); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
-    .hero { min-height: 420px; display: flex; flex-direction: column; padding: clamp(24px, 4vw, 48px); overflow: hidden; }
+    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 16px; width: min(1240px, 100%); margin: 0 auto; padding: clamp(16px, 3vw, 40px); }
+    .hero, .panel, .side { min-width: 0; } .hero, .panel { border: 1px solid rgba(84, 204, 184, .29); background: linear-gradient(145deg, rgba(5, 34, 46, .95), rgba(2, 16, 28, .95)); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+    .hero { position: relative; min-height: 0; display: flex; flex-direction: column; padding: clamp(22px, 4vw, 48px); overflow: hidden; }
     .hero::after { content: ""; position: absolute; width: 430px; height: 430px; right: -150px; bottom: -200px; border: 1px solid rgba(99, 239, 177, .2); border-radius: 50%; box-shadow: 0 0 0 35px rgba(99, 239, 177, .025), 0 0 0 70px rgba(99, 239, 177, .018); pointer-events: none; }
     .badge { width: fit-content; padding: 6px 9px; border: 1px solid rgba(90, 238, 177, .39); color: #7cf3bb; background: rgba(10, 79, 66, .28); font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .16em; }
-    .hero h2 { max-width: 620px; margin: 22px 0 10px; font-size: clamp(28px, 4vw, 47px); line-height: 1.03; letter-spacing: -.055em; }
+    .hero h2 { max-width: 620px; margin: 22px 0 10px; overflow-wrap: anywhere; font-size: clamp(28px, 4vw, 47px); line-height: 1.03; letter-spacing: -.055em; }
     .hero h2 span { color: #69efb1; }
     .hero p { max-width: 610px; margin: 0; color: #9abcbf; line-height: 1.65; font-size: 14px; }
     .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: auto; padding-top: 32px; }
     .principle { min-height: 94px; padding: 13px; border: 1px solid rgba(76, 173, 167, .19); background: rgba(3, 24, 34, .56); }
     .principle strong { display: block; color: #d9fff0; font-size: 12px; }
     .principle span { display: block; margin-top: 5px; color: #83a9a9; font-size: 11px; line-height: 1.4; }
-    .side { display: grid; gap: 16px; align-content: start; }
+    .side { display: grid; grid-template-rows: auto auto minmax(180px, 1fr); gap: 16px; align-content: stretch; }
     .panel { padding: 19px; }
     .panel-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #a7d8d1; font: 700 10px/1.3 ui-monospace, Consolas, monospace; letter-spacing: .13em; }
     .status-main { display: flex; align-items: center; gap: 12px; margin-top: 19px; }
@@ -58,7 +58,7 @@
     .foot { grid-column: 1 / -1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 0 3px; color: #78979b; font-size: 11px; line-height: 1.45; }
     .foot strong { color: #a5d8cd; }
     .back { border: 0; padding: 0; color: #85efd0; background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
-    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; padding: 16px; } .principles { grid-template-columns: 1fr; } .hero { min-height: auto; } .foot { grid-column: 1; flex-direction: column; } .mode { display: none; } }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; padding: 16px; } .principles { grid-template-columns: 1fr; } .hero { min-height: auto; } .foot { grid-column: 1; flex-direction: column; } .mode { display: none; } }
   </style>
 </head>
 <body>
@@ -107,7 +107,7 @@
     const setText = (id, value) => { byId(id).textContent = value || '—'; };
     const formatDate = (value) => {
       if (!value || value === '1/1/0001 12:00:00 AM') return 'Nikdy';
-      const date = new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('cs-CZ');
+      const ticks = String(value).match(/\/Date\((\d+)/); const date = ticks ? new Date(Number(ticks[1])) : new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('cs-CZ');
     };
     function render(status) {
       const limited = status.AccessLimited === true;

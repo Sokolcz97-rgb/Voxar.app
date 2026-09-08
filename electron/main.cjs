@@ -609,7 +609,7 @@ async function scanProtectActivity(id) {
 }
 
 async function pollDefenderEvents() {
-  const eventScript = "$ErrorActionPreference='Stop'; Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Id=1000,1001,1116,1117,1118} -MaxEvents 20 | Select-Object RecordId,Id,TimeCreated,LevelDisplayName,Message | ConvertTo-Json -Compress";
+  const eventScript = "$ErrorActionPreference='Stop'; Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Id=1000,1001,1116,1117,1118,5001,5004,5007,5010} -MaxEvents 30 | Select-Object RecordId,Id,TimeCreated,LevelDisplayName,Message | ConvertTo-Json -Compress";
   const result = await runDefenderPowerShell(eventScript, 12_000);
   if (!result.ok) return;
   let rows;
@@ -622,6 +622,10 @@ async function pollDefenderEvents() {
     const message = String(event.Message || "").replace(/\s+/g, " ").trim().slice(0, 350);
     if (event.Id === 1116 || event.Id === 1117 || event.Id === 1118) {
       addProtectActivity({ type: "defender", status: "threat", severity: "high", title: "Microsoft Defender zaznamenal hrozbu", detail: message || "Otevři Windows Zabezpečení a zkontroluj historii ochrany." });
+    } else if (event.Id === 5001 || event.Id === 5010) {
+      addProtectActivity({ type: "defender", status: "threat", severity: "high", title: "Defender hlásí oslabení ochrany", detail: message || "Reálná ochrana Defenderu byla vypnuta. Otevři Windows Zabezpečení a ověř nastavení." });
+    } else if (event.Id === 5004 || event.Id === 5007) {
+      addProtectActivity({ type: "defender", status: "warning", severity: "medium", title: "Nastavení Defenderu se změnilo", detail: `${message || "Zkontroluj, zda byla změna očekávaná."} · Událost ${event.Id} není sama o sobě důkaz útoku.` });
     } else if (event.Id === 1000) {
       addProtectActivity({ type: "defender", status: "scanning", severity: "info", title: "Microsoft Defender zahájil kontrolu", detail: message || "Kontrola probíhá ve Windows." });
     } else if (event.Id === 1001) {
