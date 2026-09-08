@@ -16,6 +16,7 @@ const {
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const crypto = require("crypto");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
@@ -440,7 +441,7 @@ function createMainWindow(startUrl) {
 // VoxarioProtect neobsahuje druhý antivir ani rezidentní skener. Na vyžádání
 // čte stav vestavěného Defenderu a předá mu spuštění rychlé kontroly; tím
 // nevzniká souběh dvou AV enginů ani trvalá zátěž CPU/RAM.
-function runDefenderPowerShell(script, timeoutMs = 12_000) {
+function runDefenderPowerShell(script, timeoutMs = 12_000, environment = {}) {
   if (process.platform !== "win32") {
     return Promise.resolve({ ok: false, error: "VoxarioProtect je dostupný pouze ve Windows s Microsoft Defenderem." });
   }
@@ -461,6 +462,7 @@ function runDefenderPowerShell(script, timeoutMs = 12_000) {
       child = spawn("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script], {
         windowsHide: true,
         stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, ...environment },
       });
     } catch (error) {
       finish({ ok: false, error: error?.message || "PowerShell se nepodařilo spustit." });
@@ -505,6 +507,151 @@ async function getDefenderStatus() {
   try { return { ok: true, status: JSON.parse(result.output || "{}") }; }
   catch { return { ok: false, error: "Defender vrátil nečitelný stav." }; }
 }
+
+const PROTECT_RISKY_EXTENSIONS = new Set([".exe", ".msi", ".msix", ".bat", ".cmd", ".com", ".scr", ".ps1", ".js", ".jse", ".vbs", ".vbe", ".dll", ".zip", ".rar", ".7z", ".iso"]);
+const PROTECT_SIGNABLE_EXTENSIONS = new Set([".exe", ".msi", ".msix", ".com", ".scr", ".ps1", ".dll"]);
+const protectActivities = [];
+const protectFiles = new Map();
+const protectSeenEvents = new Set();
+let protectWatcher = null;
+let protectPollTimer = null;
+
+function publicProtectActivity(entry) {
+  const { path: _path, ...safe } = entry;
+  return safe;
+}
+
+function publishProtectActivities() {
+  const payload = protectActivities.map(publicProtectActivity);
+  try { protectWindow?.webContents?.send("protect:activity", payload); } catch {}
+}
+
+function addProtectActivity(entry) {
+  const record = {
+    id: `protect_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    createdAt: new Date().toISOString(),
+    ...entry,
+  };
+  protectActivities.unshift(record);
+  if (record.path) protectFiles.set(record.id, record.path);
+  protectActivities.splice(40);
+  for (const id of protectFiles.keys()) {
+    if (!protectActivities.some((item) => item.id === id)) protectFiles.delete(id);
+  }
+  publishProtectActivities();
+  return record;
+}
+
+function updateProtectActivity(id, patch) {
+  const entry = protectActivities.find((item) => item.id === id);
+  if (!entry) return null;
+  Object.assign(entry, patch, { updatedAt: new Date().toISOString() });
+  publishProtectActivities();
+  return entry;
+}
+
+function sha256File(target) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash("sha256");
+    const source = fs.createReadStream(target);
+    source.on("error", reject);
+    source.on("data", (chunk) => hash.update(chunk));
+    source.on("end", () => resolve(hash.digest("hex")));
+  });
+}
+
+async function inspectProtectFile(target, source = "Stažené soubory") {
+  try {
+    const stats = await fs.promises.stat(target);
+    if (!stats.isFile() || stats.size > 1_073_741_824) return null;
+    const ext = path.extname(target).toLowerCase();
+    if (!PROTECT_RISKY_EXTENSIONS.has(ext)) return null;
+    const fileName = path.basename(target);
+    const entry = addProtectActivity({
+      type: "file", status: "checking", severity: "info", path: target, fileName,
+      title: "Kontroluji nový rizikový soubor", detail: `${source}: ${fileName}`,
+    });
+    let sha256 = null;
+    if (stats.size <= 268_435_456) {
+      try { sha256 = await sha256File(target); } catch {}
+    }
+    if (PROTECT_SIGNABLE_EXTENSIONS.has(ext)) {
+      const signatureScript = "$ErrorActionPreference='Stop'; Get-AuthenticodeSignature -LiteralPath $env:VOXARIO_PROTECT_TARGET | Select-Object Status,StatusMessage,@{n='Signer';e={$_.SignerCertificate.Subject}} | ConvertTo-Json -Compress";
+      const signature = await runDefenderPowerShell(signatureScript, 12_000, { VOXARIO_PROTECT_TARGET: target });
+      let signatureInfo = null;
+      try { signatureInfo = signature.ok ? JSON.parse(signature.output || "{}") : null; } catch {}
+      if (signatureInfo?.Status === 0 || signatureInfo?.Status === "Valid") {
+        updateProtectActivity(entry.id, { status: "ready", severity: "low", sha256, title: "Podepsaný soubor čeká na kontrolu", detail: `${fileName} · podpis ověřen${signatureInfo.Signer ? ` · ${signatureInfo.Signer}` : ""}` });
+      } else {
+        updateProtectActivity(entry.id, { status: "warning", severity: "medium", sha256, title: "Neznámý nebo neplatně podepsaný spustitelný soubor", detail: `${fileName} · nespouštěj jej, dokud jej nezkontroluje Microsoft Defender.` });
+      }
+    } else {
+      updateProtectActivity(entry.id, { status: "warning", severity: "medium", sha256, title: "Archiv nebo rizikový soubor čeká na kontrolu", detail: `${fileName} · před rozbalením jej zkontroluj Microsoft Defenderem.` });
+    }
+    return entry.id;
+  } catch {
+    return null;
+  }
+}
+
+async function scanProtectActivity(id) {
+  const target = protectFiles.get(id);
+  if (!target || !fs.existsSync(target)) return { ok: false, error: "Soubor už není na původním místě." };
+  updateProtectActivity(id, { status: "scanning", severity: "info", title: "Defender kontroluje soubor", detail: `${path.basename(target)} · čekám na událost Defenderu.` });
+  const scanScript = "$ErrorActionPreference='Stop'; Start-MpScan -ScanType CustomScan -ScanPath $env:VOXARIO_PROTECT_TARGET; 'started'";
+  const result = await runDefenderPowerShell(scanScript, 25_000, { VOXARIO_PROTECT_TARGET: target });
+  if (!result.ok) {
+    updateProtectActivity(id, { status: "warning", severity: "medium", title: "Kontrolu Defenderu se nepodařilo spustit", detail: `${path.basename(target)} · ${result.error}` });
+    return result;
+  }
+  updateProtectActivity(id, { status: "queued", severity: "info", title: "Kontrola byla předána Defenderu", detail: `${path.basename(target)} · výsledek se objeví v přehledu Defenderu.` });
+  return { ok: true };
+}
+
+async function pollDefenderEvents() {
+  const eventScript = "$ErrorActionPreference='Stop'; Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Id=1000,1001,1116,1117,1118} -MaxEvents 20 | Select-Object RecordId,Id,TimeCreated,LevelDisplayName,Message | ConvertTo-Json -Compress";
+  const result = await runDefenderPowerShell(eventScript, 12_000);
+  if (!result.ok) return;
+  let rows;
+  try { rows = JSON.parse(result.output || "[]"); } catch { return; }
+  for (const event of (Array.isArray(rows) ? rows : [rows])) {
+    const key = String(event.RecordId || `${event.Id}:${event.TimeCreated}`);
+    if (protectSeenEvents.has(key)) continue;
+    protectSeenEvents.add(key);
+    if (protectSeenEvents.size > 100) protectSeenEvents.delete(protectSeenEvents.values().next().value);
+    const message = String(event.Message || "").replace(/\s+/g, " ").trim().slice(0, 350);
+    if (event.Id === 1116 || event.Id === 1117 || event.Id === 1118) {
+      addProtectActivity({ type: "defender", status: "threat", severity: "high", title: "Microsoft Defender zaznamenal hrozbu", detail: message || "Otevři Windows Zabezpečení a zkontroluj historii ochrany." });
+    } else if (event.Id === 1000) {
+      addProtectActivity({ type: "defender", status: "scanning", severity: "info", title: "Microsoft Defender zahájil kontrolu", detail: message || "Kontrola probíhá ve Windows." });
+    } else if (event.Id === 1001) {
+      addProtectActivity({ type: "defender", status: "complete", severity: "low", title: "Microsoft Defender dokončil kontrolu", detail: message || "Výsledek najdeš ve Windows Zabezpečení." });
+    }
+  }
+}
+
+function startProtectMonitor() {
+  if (protectPollTimer) return;
+  void pollDefenderEvents();
+  protectPollTimer = setInterval(() => void pollDefenderEvents(), 5 * 60 * 1000);
+  protectPollTimer.unref?.();
+  try {
+    const downloads = app.getPath("downloads");
+    protectWatcher = fs.watch(downloads, { persistent: false }, (_event, fileName) => {
+      if (!fileName) return;
+      const target = path.join(downloads, String(fileName));
+      const ext = path.extname(target).toLowerCase();
+      if (!PROTECT_RISKY_EXTENSIONS.has(ext)) return;
+      setTimeout(() => void inspectProtectFile(target, "Hlídač Stažených souborů"), 1_500).unref?.();
+    });
+    protectWatcher.on("error", () => {});
+  } catch {}
+}
+
+process.on("voxario-protect:download", (payload) => {
+  if (!getModulesInfo().protect.installed || !payload?.path) return;
+  void inspectProtectFile(payload.path, "VoxarioBrowser");
+});
 
 function createProtectWindow() {
   if (protectWindow && !protectWindow.isDestroyed()) {
@@ -575,6 +722,18 @@ ipcMain.handle("settings:unlock-beta", (_e, ok) => {
 });
 
 ipcMain.handle("protect:status", () => getDefenderStatus());
+ipcMain.handle("protect:activity", () => protectActivities.map(publicProtectActivity));
+ipcMain.handle("protect:choose-file", async () => {
+  const choice = await dialog.showOpenDialog(protectWindow || mainWindow || undefined, {
+    title: "Vybrat soubor pro kontrolu Microsoft Defenderem",
+    properties: ["openFile"],
+    filters: [{ name: "Rizikové soubory", extensions: [...PROTECT_RISKY_EXTENSIONS].map((ext) => ext.slice(1)) }, { name: "Všechny soubory", extensions: ["*"] }],
+  });
+  if (choice.canceled || !choice.filePaths[0]) return { ok: false, canceled: true };
+  const id = await inspectProtectFile(choice.filePaths[0], "Ruční výběr");
+  return id ? { ok: true, id } : { ok: false, error: "Vybraný soubor není možné zkontrolovat." };
+});
+ipcMain.handle("protect:scan-activity", (_e, id) => scanProtectActivity(typeof id === "string" ? id : ""));
 ipcMain.handle("protect:quick-scan", async () => {
   const result = await runDefenderPowerShell("$ErrorActionPreference='Stop'; Start-MpScan -ScanType QuickScan; 'started'", 20_000);
   return result.ok ? { ok: true } : result;
@@ -741,6 +900,7 @@ ipcMain.handle("modules:install", (_e, name) => {
   const state = readModulesState();
   state[key] = { installed: true, installedAt: new Date().toISOString() };
   writeModulesState(state);
+  if (key === "protect") startProtectMonitor();
   return { ok: true, modules: getModulesInfo() };
 });
 
@@ -1259,6 +1419,7 @@ app.whenReady().then(async () => {
   // vystavuje rendereru, ale bez této registrace by volání z vysílacího studia
   // skončilo chybou "No handler registered" a FFmpeg by se nikdy nespustil.
   registerRtmpHandlers();
+  if (getModulesInfo().protect.installed) startProtectMonitor();
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // ale nikdy kvůli tomu neblokujeme vytvoření prvního okna.
   session.defaultSession.clearCache().catch((error) => startupLog("Vyčištění cache při startu selhalo", error));

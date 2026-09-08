@@ -693,6 +693,9 @@ function installFilters() {
       rec.size = item.getTotalBytes() || rec.received;
       rec.finishedAt = Date.now();
       saveDownloads();
+      if (state === "completed" && rec.path) {
+        process.emit("voxario-protect:download", { path: rec.path, filename, url: item.getURL() });
+      }
     });
   });
 }

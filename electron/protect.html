@@ -50,6 +50,11 @@
     .action.secondary { color: #c7eee4; border-color: rgba(86, 185, 177, .38); background: rgba(5, 48, 59, .78); }
     .action:disabled { opacity: .55; cursor: wait; }
     .notice { margin: 15px 0 0; color: #779ba1; font-size: 11px; line-height: 1.45; }
+    .activity-list { display: grid; gap: 8px; margin-top: 13px; max-height: 235px; overflow: auto; }
+    .activity { padding: 10px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); }
+    .activity.threat { border-color: rgba(251, 113, 133, .58); } .activity.warning { border-color: rgba(245, 199, 106, .48); }
+    .activity strong { display: block; color: #d8f5ed; font-size: 11px; } .activity span { display: block; margin-top: 4px; color: #86a8aa; font-size: 10px; line-height: 1.4; }
+    .activity button { margin-top: 8px; padding: 5px 8px; border: 1px solid rgba(91, 234, 176, .42); color: #8df5c8; background: rgba(5, 62, 65, .55); font-size: 10px; }
     .foot { grid-column: 1 / -1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 0 3px; color: #78979b; font-size: 11px; line-height: 1.45; }
     .foot strong { color: #a5d8cd; }
     .back { border: 0; padding: 0; color: #85efd0; background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
@@ -87,10 +92,12 @@
         <div class="panel-title"><span>AKCE OCHRANY</span><span>RUČNĚ</span></div>
         <div class="actions">
           <button id="quickScanButton" class="action" type="button">Spustit rychlou kontrolu Defenderu</button>
+          <button id="chooseFileButton" class="action secondary" type="button">Vybrat soubor pro kontrolu</button>
           <button id="securityButton" class="action secondary" type="button">Otevřít Windows Zabezpečení</button>
         </div>
         <p class="notice" id="notice">Rychlá kontrola používá standardní Windows Defender. Pokud systém vyžádá oprávnění, rozhodnutí zůstává na tobě.</p>
       </section>
+      <section class="panel"><div class="panel-title"><span>PRŮBĚH A UPOZORNĚNÍ</span><span>LOKÁLNĚ</span></div><div class="activity-list" id="activityList"><span class="notice">Načítám lokální historii ochrany…</span></div></section>
     </aside>
     <footer class="foot"><span><strong>Soukromí:</strong> stav Defenderu se čte lokálně a neposílá se do Voxar.app ani na externí server.</span><button id="back" class="back" type="button">← Zpět do rozcestníku</button></footer>
   </main>
@@ -120,6 +127,21 @@
       if (result?.ok) { render(result.status || {}); setText('notice', 'Stav byl načten lokálně z Microsoft Defenderu.'); return; }
       byId('orb').className = 'status-orb bad'; setText('statusTitle', 'Stav se nepodařilo načíst'); setText('statusCopy', result?.error || 'Microsoft Defender není v tomto systému dostupný.');
     }
+    function renderActivities(items) {
+      const list = byId('activityList'); list.replaceChildren();
+      if (!items?.length) { const empty = document.createElement('span'); empty.className = 'notice'; empty.textContent = 'Zatím žádné lokální události ochrany.'; list.appendChild(empty); return; }
+      items.forEach((item) => {
+        const row = document.createElement('article'); row.className = `activity ${item.status || ''}`;
+        const title = document.createElement('strong'); title.textContent = item.title || 'Událost ochrany';
+        const detail = document.createElement('span'); detail.textContent = item.detail || '';
+        row.append(title, detail);
+        if (item.type === 'file' && ['warning', 'ready', 'queued'].includes(item.status)) {
+          const scan = document.createElement('button'); scan.type = 'button'; scan.textContent = 'Zkontrolovat Microsoft Defenderem';
+          scan.addEventListener('click', async () => { scan.disabled = true; const result = await api.protectScanActivity(item.id); if (!result?.ok) setText('notice', result?.error || 'Kontrolu se nepodařilo spustit.'); }); row.appendChild(scan);
+        }
+        list.appendChild(row);
+      });
+    }
     byId('refresh').addEventListener('click', refresh);
     byId('quickScanButton').addEventListener('click', async () => {
       const button = byId('quickScanButton'); button.disabled = true; button.textContent = 'Spouštím rychlou kontrolu…';
@@ -128,8 +150,11 @@
       setText('notice', result?.ok ? 'Rychlá kontrola byla předána Microsoft Defenderu. Výsledky zobrazí Windows Zabezpečení.' : (result?.error || 'Kontrolu se nepodařilo spustit.'));
       if (result?.ok) setTimeout(refresh, 1200);
     });
+    byId('chooseFileButton').addEventListener('click', async () => { const result = await api.protectChooseFile(); if (!result?.ok && !result?.canceled) setText('notice', result?.error || 'Soubor se nepodařilo připravit ke kontrole.'); });
     byId('securityButton').addEventListener('click', async () => { const result = await api.protectOpenWindowsSecurity(); if (!result?.ok) setText('notice', result?.error || 'Windows Zabezpečení se nepodařilo otevřít.'); });
     byId('back').addEventListener('click', () => api.protectReturnToLauncher());
+    api.onProtectActivity(renderActivities);
+    api.protectGetActivity().then(renderActivities).catch(() => renderActivities([]));
     refresh();
   </script>
 </body>
