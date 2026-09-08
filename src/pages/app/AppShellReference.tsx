@@ -24,6 +24,7 @@ import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import { attestDesktopProtect } from "@/lib/voxProtectAttestation";
 import { Loader2 } from "lucide-react";
+import "@/components/vox/reference/community-unified-v32.css";
 import "@/components/vox/reference/community-stability-v33.css";
 
 export default function AppShellReference() {

@@ -1195,6 +1195,16 @@ function createBrowserWindow() {
     startupLog("VoxarioBrowser se nepodařilo načíst", error);
     revealWindow(browserWindow);
   });
+  const fitBrowserUiZoom = () => {
+    if (!browserWindow || browserWindow.isDestroyed()) return;
+    const [width, height] = browserWindow.getContentSize();
+    // Referenční návrh je komponovaný přibližně pro 1680 × 940 px. Na
+    // širokých/QHD monitorech zvětšíme celé nativní UI, aby nezůstalo jako
+    // drobný pruh nahoře s prázdnou plochou pod ním. Webview si dál spravuje
+    // vlastní zoom stránky nezávisle.
+    const factor = Math.max(1, Math.min(1.5, Math.min(width / 1680, height / 940)));
+    browserWindow.webContents.setZoomFactor(Math.round(factor * 100) / 100);
+  };
   browserWindow.webContents.once("dom-ready", () => revealWindow(browserWindow));
   setTimeout(() => revealWindow(browserWindow), 3_000);
   browserWindow.on("closed", () => {
@@ -1204,8 +1214,10 @@ function createBrowserWindow() {
 
   // Auto-update při každém spuštění/restartu prohlížeče + periodicky.
   browserWindow.webContents.once("did-finish-load", () => {
+    fitBrowserUiZoom();
     setTimeout(() => runBrowserAutoUpdate().catch(() => {}), 3_000);
   });
+  browserWindow.on("resize", fitBrowserUiZoom);
   scheduleBrowserAutoUpdate();
 
   // Popupy z webview: přihlašovací okna (Google, Microsoft, …) musí zůstat
