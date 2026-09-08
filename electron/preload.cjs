@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   // VoxarioProtect is an opt-in, read-only bridge to Microsoft Defender.
   // It never changes Defender preferences or creates exclusions.
   protectGetStatus: () => ipcRenderer.invoke("protect:status"),
+  protectGetIntegrity: () => ipcRenderer.invoke("protect:integrity"),
   protectGetActivity: () => ipcRenderer.invoke("protect:activity"),
   protectChooseFile: () => ipcRenderer.invoke("protect:choose-file"),
   protectScanActivity: (id) => ipcRenderer.invoke("protect:scan-activity", id),

@@ -23,3 +23,6 @@ project_id = "rioexuvgvmdwvidfakxy"
     verify_jwt = false
   [functions.yt-websub]
     verify_jwt = false
+  [functions.protect-attestation]
+    # The function accepts only an authenticated Supabase user session.
+    verify_jwt = true

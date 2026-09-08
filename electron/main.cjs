@@ -508,6 +508,29 @@ async function getDefenderStatus() {
   catch { return { ok: false, error: "Defender vrátil nečitelný stav." }; }
 }
 
+async function desktopIntegrityManifest() {
+  const files = ["main.cjs", "preload.cjs", "protect.html", "rtmp.cjs"];
+  const digest = crypto.createHash("sha256");
+  for (const file of files) {
+    const target = path.join(__dirname, file);
+    digest.update(file);
+    try { digest.update(fs.readFileSync(target)); }
+    catch { digest.update("missing"); }
+  }
+  const securityFlags = [];
+  const defender = await getDefenderStatus();
+  if (defender.ok && defender.status?.RealTimeProtectionEnabled === false) securityFlags.push("defender_realtime_off");
+  if (protectActivities.some((entry) => entry.securityFlag === "defender_tamper_recent")) securityFlags.push("defender_tamper_recent");
+  return {
+    platform: process.platform,
+    appVersion: app.getVersion(),
+    integrityHash: digest.digest("hex"),
+    // Local events remain local. Only two non-sensitive, boolean-like signals
+    // are sent to the serverless policy endpoint when they were observed.
+    securityFlags,
+  };
+}
+
 const PROTECT_RISKY_EXTENSIONS = new Set([".exe", ".msi", ".msix", ".bat", ".cmd", ".com", ".scr", ".ps1", ".js", ".jse", ".vbs", ".vbe", ".dll", ".zip", ".rar", ".7z", ".iso"]);
 const PROTECT_SIGNABLE_EXTENSIONS = new Set([".exe", ".msi", ".msix", ".com", ".scr", ".ps1", ".dll"]);
 const protectActivities = [];
@@ -623,7 +646,7 @@ async function pollDefenderEvents() {
     if (event.Id === 1116 || event.Id === 1117 || event.Id === 1118) {
       addProtectActivity({ type: "defender", status: "threat", severity: "high", title: "Microsoft Defender zaznamenal hrozbu", detail: message || "Otevři Windows Zabezpečení a zkontroluj historii ochrany." });
     } else if (event.Id === 5001 || event.Id === 5010) {
-      addProtectActivity({ type: "defender", status: "threat", severity: "high", title: "Defender hlásí oslabení ochrany", detail: message || "Reálná ochrana Defenderu byla vypnuta. Otevři Windows Zabezpečení a ověř nastavení." });
+      addProtectActivity({ type: "defender", status: "threat", severity: "high", securityFlag: "defender_tamper_recent", title: "Defender hlásí oslabení ochrany", detail: message || "Reálná ochrana Defenderu byla vypnuta. Otevři Windows Zabezpečení a ověř nastavení." });
     } else if (event.Id === 5004 || event.Id === 5007) {
       addProtectActivity({ type: "defender", status: "warning", severity: "medium", title: "Nastavení Defenderu se změnilo", detail: `${message || "Zkontroluj, zda byla změna očekávaná."} · Událost ${event.Id} není sama o sobě důkaz útoku.` });
     } else if (event.Id === 1000) {
@@ -726,6 +749,7 @@ ipcMain.handle("settings:unlock-beta", (_e, ok) => {
 });
 
 ipcMain.handle("protect:status", () => getDefenderStatus());
+ipcMain.handle("protect:integrity", () => desktopIntegrityManifest());
 ipcMain.handle("protect:activity", () => protectActivities.map(publicProtectActivity));
 ipcMain.handle("protect:choose-file", async () => {
   const choice = await dialog.showOpenDialog(protectWindow || mainWindow || undefined, {

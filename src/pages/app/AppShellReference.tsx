@@ -21,6 +21,7 @@ import { CommunityTopbar } from "@/components/vox/reference/CommunityTopbar";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { openVoxUtility } from "@/lib/voxCommunityBridge";
+import { attestDesktopProtect } from "@/lib/voxProtectAttestation";
 import { Loader2 } from "lucide-react";
 import "./community-reference.css";
 import "./community-reference-polish.css";
@@ -46,6 +47,7 @@ export default function AppShellReference() {
   const [mobileChannelsOpen, setMobileChannelsOpen] = useState(false);
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
   const [now, setNow] = useState(() => new Date());
+  const [protectDecision, setProtectDecision] = useState<"allow" | "warn" | "block" | null>(null);
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -71,6 +73,22 @@ export default function AppShellReference() {
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data as any));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setProtectDecision(null);
+      return;
+    }
+    let active = true;
+    void attestDesktopProtect("account").then((result) => {
+      if (!active || !result) return;
+      setProtectDecision(result.decision);
+      if (result.decision === "warn") {
+        toast({ title: "VoxarioProtect vyžaduje pozornost", description: "Zkontroluj stav ochrany v modulu VoxarioProtect.", variant: "destructive" });
+      }
+    });
+    return () => { active = false; };
   }, [user]);
 
   const loadGuilds = async () => {
@@ -364,6 +382,9 @@ export default function AppShellReference() {
     );
   }
   if (!user) return <AppAuthGate />;
+  if (protectDecision === "block") {
+    return <div className="h-screen flex flex-col gap-4 items-center justify-center bg-slate-950 p-8 text-center text-slate-100"><strong className="text-xl">Přístup byl dočasně chráněn</strong><span className="max-w-md text-slate-300">Ověření integrity této verze nebylo schváleno. Aktualizuj Voxar.app z oficiálního zdroje nebo kontaktuj podporu.</span><button className="rounded bg-cyan-500 px-4 py-2 text-slate-950" type="button" onClick={() => window.studioVoxarioDesktop?.returnToLauncher?.()}>Otevřít rozcestník</button></div>;
+  }
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Uživatel";
   const selfSpeaking = !!(
