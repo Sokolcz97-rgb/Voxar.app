@@ -215,7 +215,7 @@
     .launcher-intro h1 { display: block; margin: 14px 0 9px; color: #edfaff; font: 700 clamp(25px, 3vw, 38px)/1.08 Inter, sans-serif; letter-spacing: -.045em; }
     .launcher-intro h1 b { color: #48e7ff; font-weight: inherit; text-shadow: 0 0 20px rgba(72, 231, 255, .35); }
     .launcher-intro p { margin: 0; color: #83aab7; font-size: 13px; line-height: 1.5; }
-    .module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .module-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .modcard {
       position: relative; isolation: isolate; width: auto; min-height: 226px; overflow: hidden;
       display: flex; flex-direction: column; align-items: flex-start; padding: 22px 22px 18px;
@@ -231,6 +231,7 @@
     .modcard.hub { --module-accent: #f5ca68; --module-glow: rgba(245, 202, 104, .18); --module-shadow: rgba(245, 202, 104, .2); }
     .modcard.browser { --module-accent: #54eaff; --module-glow: rgba(84, 234, 255, .21); --module-shadow: rgba(84, 234, 255, .2); }
     .modcard.app { --module-accent: #9a78ff; --module-glow: rgba(154, 120, 255, .21); --module-shadow: rgba(154, 120, 255, .2); }
+    .modcard.protect { --module-accent: #47e39b; --module-glow: rgba(71, 227, 155, .2); --module-shadow: rgba(71, 227, 155, .2); }
     .modcard .modtype { color: var(--module-accent, #52e7ff); font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .18em; }
     .modicon { width: 49px; height: 49px; margin: 17px 0 15px; border-color: color-mix(in srgb, var(--module-accent, #52e7ff) 58%, transparent) !important; color: var(--module-accent, #52e7ff) !important; background: rgba(2, 19, 31, .62); font-size: 22px; box-shadow: inset 0 0 17px color-mix(in srgb, var(--module-accent, #52e7ff) 11%, transparent); }
     .modtitle { color: #edfaff; font: 700 19px/1.15 Inter, sans-serif; letter-spacing: -.025em; text-transform: none; }
@@ -242,9 +243,10 @@
     .launcher-footer strong { color: #9cdce9; font: 700 9px/1.3 Inter, sans-serif; letter-spacing: .16em; }
     .ver { position: static; justify-self: center; color: #587886; font-size: 10px; }
     @media (max-width: 790px) {
-      .wrap { padding-inline: 18px; } .module-grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+      .wrap { padding-inline: 18px; } .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 700px; margin: 0 auto; }
       .modcard { min-height: 160px; } .launcher-intro { margin-bottom: 18px; } .status, .bar { right: 19px; }
     }
+    @media (max-width: 520px) { .module-grid { grid-template-columns: 1fr; max-width: 440px; } }
   </style>
 
 </head>
@@ -311,6 +313,13 @@
           <div class="modtitle">Voxar.app</div>
           <div class="modsub">Komunikace, hlas, LFG, události a nástroje komunity.</div>
           <div class="modgo">Spustit aplikaci</div>
+        </button>
+        <button class="modcard protect" data-module="protect" type="button">
+          <span class="modtype">04 / OPTIONAL PROTECTION</span>
+          <div class="modicon">⌾</div>
+          <div class="modtitle">VoxarioProtect</div>
+          <div class="modsub">Lehký stavový panel a rychlá kontrola přes Microsoft Defender.</div>
+          <div class="modgo" id="protectGo">Volitelný modul · Aktivovat</div>
         </button>
       </div>
     </div>
@@ -630,16 +639,19 @@
 
     // ---- Rozcestník modulů ----
     const chooser = $('chooser');
-    let modules = { browser: { installed: true, available: true } };
+    let modules = { browser: { installed: true, available: true }, protect: { installed: false, available: true } };
 
     async function refreshModules() {
       try {
         modules = await ipcRenderer.invoke('modules:state');
       } catch { return; }
-      const go = $('browserGo');
-      if (!go) return;
-      go.textContent = modules?.browser?.installed ? 'Spustit modul →' : 'Modul není nainstalován · Instalovat';
-      go.style.color = modules?.browser?.installed ? '#94a3b8' : '#22d3ee';
+      const browserGo = $('browserGo');
+      const protectGo = $('protectGo');
+      if (browserGo) {
+        browserGo.textContent = modules?.browser?.installed ? 'Spustit modul →' : 'Modul není aktivován · Aktivovat';
+        browserGo.style.color = modules?.browser?.installed ? '#94a3b8' : '#22d3ee';
+      }
+      if (protectGo) protectGo.textContent = modules?.protect?.installed ? 'Otevřít ochranu' : 'Volitelný modul · Aktivovat';
     }
 
     async function showChooser() {
@@ -654,11 +666,12 @@
       c.addEventListener('click', async () => {
         const mod = c.getAttribute('data-module');
 
-        // Prohlížeč je modul — když není nainstalovaný, nejdřív ho doinstalujeme.
-        if (mod === 'browser' && !modules?.browser?.installed) {
-          $('status').textContent = 'Instaluji modul VoxarioBrowser…';
+        // Optional modules become active only after the user's explicit choice.
+        // Their local payload is already bundled; activation never downloads or scans anything.
+        if ((mod === 'browser' || mod === 'protect') && !modules?.[mod]?.installed) {
+          $('status').textContent = mod === 'protect' ? 'Aktivuji VoxarioProtect…' : 'Aktivuji VoxarioBrowser…';
           const ind0 = $('indetBar'); if (ind0) ind0.style.display = '';
-          const res = await ipcRenderer.invoke('modules:install', 'browser');
+          const res = await ipcRenderer.invoke('modules:install', mod);
           if (!res?.ok) {
             if (ind0) ind0.style.display = 'none';
             $('status').textContent = 'Modul nelze aktivovat — otevřel jsem stránku se stažením.';
@@ -670,7 +683,7 @@
 
         chooser.style.display = 'none';
         const ind = $('indetBar'); if (ind) ind.style.display = '';
-        $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : (mod === 'hub' ? 'Spouštím StudioVoxario HUB…' : 'Spouštím Voxar.app…');
+        $('status').textContent = mod === 'browser' ? 'Spouštím VoxarioBrowser…' : (mod === 'hub' ? 'Spouštím StudioVoxario HUB…' : (mod === 'protect' ? 'Spouštím VoxarioProtect…' : 'Spouštím Voxar.app…'));
         let out = null;
         try {
           out = await ipcRenderer.invoke('launcher:continue', { module: mod });

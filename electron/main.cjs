@@ -15,6 +15,7 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { spawn } = require("child_process");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
@@ -70,12 +71,15 @@ function readModulesState() {
     try {
       if (fs.existsSync(p)) {
         const data = JSON.parse(fs.readFileSync(p, "utf8"));
-        return { browser: { installed: !!data?.browser?.installed } };
+        return {
+          browser: { installed: !!data?.browser?.installed },
+          protect: { installed: !!data?.protect?.installed },
+        };
       }
     } catch {}
   }
   // Žádný soubor (vývoj / starší instalace) — modul považujeme za nenainstalovaný.
-  return { browser: { installed: false } };
+  return { browser: { installed: false }, protect: { installed: false } };
 }
 
 function writeModulesState(state) {
@@ -104,6 +108,10 @@ function getModulesInfo() {
     browser: {
       installed: !!state.browser.installed,
       available: browserPayloadAvailable(),
+    },
+    protect: {
+      installed: !!state.protect?.installed,
+      available: fs.existsSync(path.join(__dirname, "protect.html")),
     },
   };
 }
@@ -159,6 +167,7 @@ if (!gotLock) {
 
 let mainWindow = null;
 let browserWindow = null;
+let protectWindow = null;
 
 let settingsWindow = null;
 let tray = null;
@@ -427,6 +436,93 @@ function createMainWindow(startUrl) {
   });
 }
 
+// ---- VoxarioProtect / Microsoft Defender bridge -----------------------
+// VoxarioProtect neobsahuje druhý antivir ani rezidentní skener. Na vyžádání
+// čte stav vestavěného Defenderu a předá mu spuštění rychlé kontroly; tím
+// nevzniká souběh dvou AV enginů ani trvalá zátěž CPU/RAM.
+function runDefenderPowerShell(script, timeoutMs = 12_000) {
+  if (process.platform !== "win32") {
+    return Promise.resolve({ ok: false, error: "VoxarioProtect je dostupný pouze ve Windows s Microsoft Defenderem." });
+  }
+
+  return new Promise((resolve) => {
+    let output = "";
+    let errorOutput = "";
+    let settled = false;
+    let timer;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+    let child;
+    try {
+      child = spawn("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script], {
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (error) {
+      finish({ ok: false, error: error?.message || "PowerShell se nepodařilo spustit." });
+      return;
+    }
+    timer = setTimeout(() => {
+      try { child.kill(); } catch {}
+      finish({ ok: false, error: "Kontrola Defenderu překročila časový limit." });
+    }, timeoutMs);
+    timer.unref?.();
+    child.stdout?.on("data", (chunk) => { output += String(chunk); });
+    child.stderr?.on("data", (chunk) => { errorOutput += String(chunk); });
+    child.on("error", (error) => finish({ ok: false, error: error?.message || "PowerShell se nepodařilo spustit." }));
+    child.on("close", (code) => {
+      if (code !== 0) return finish({ ok: false, error: errorOutput.trim() || `Defender vrátil kód ${code}.` });
+      finish({ ok: true, output: output.trim() });
+    });
+  });
+}
+
+const DEFENDER_STATUS_SCRIPT = [
+  "$ErrorActionPreference='Stop'",
+  "$s=Get-MpComputerStatus",
+  "[pscustomobject]@{AntivirusEnabled=$s.AntivirusEnabled;RealTimeProtectionEnabled=$s.RealTimeProtectionEnabled;BehaviorMonitorEnabled=$s.BehaviorMonitorEnabled;IoavProtectionEnabled=$s.IoavProtectionEnabled;AntivirusSignatureLastUpdated=$s.AntivirusSignatureLastUpdated;AntivirusSignatureAge=$s.AntivirusSignatureAge;QuickScanStartTime=$s.QuickScanStartTime;QuickScanEndTime=$s.QuickScanEndTime;FullScanStartTime=$s.FullScanStartTime;AMRunningMode=$s.AMRunningMode;AMProductVersion=$s.AMProductVersion}|ConvertTo-Json -Compress",
+].join(";");
+
+const DEFENDER_FALLBACK_SCRIPT = [
+  "$ErrorActionPreference='Stop'",
+  "$p=Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Where-Object {$_.displayName -match 'Defender|Microsoft'} | Select-Object -First 1",
+  "if($null -eq $p){throw 'Microsoft Defender nebyl ve Windows Security Center nalezen.'}",
+  "[pscustomobject]@{AntivirusEnabled=$true;RealTimeProtectionEnabled=$null;AntivirusSignatureLastUpdated=$null;AntivirusSignatureAge=$null;QuickScanStartTime=$null;QuickScanEndTime=$null;AMRunningMode='Omezený přístup';AMProductVersion=$p.productState;Provider=$p.displayName;AccessLimited=$true}|ConvertTo-Json -Compress",
+].join(";");
+
+async function getDefenderStatus() {
+  const result = await runDefenderPowerShell(DEFENDER_STATUS_SCRIPT);
+  if (!result.ok) {
+    const fallback = await runDefenderPowerShell(DEFENDER_FALLBACK_SCRIPT);
+    if (!fallback.ok) return result;
+    try { return { ok: true, status: JSON.parse(fallback.output || "{}") }; }
+    catch { return result; }
+  }
+  try { return { ok: true, status: JSON.parse(result.output || "{}") }; }
+  catch { return { ok: false, error: "Defender vrátil nečitelný stav." }; }
+}
+
+function createProtectWindow() {
+  if (protectWindow && !protectWindow.isDestroyed()) {
+    revealWindow(protectWindow);
+    return protectWindow;
+  }
+  protectWindow = new BrowserWindow({
+    width: 1060, height: 720, minWidth: 840, minHeight: 580, show: false,
+    autoHideMenuBar: true, backgroundColor: "#03111b", title: "VoxarioProtect",
+    icon: path.join(__dirname, "assets", "icon.png"),
+    webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
+  });
+  protectWindow.loadFile(path.join(__dirname, "protect.html"));
+  protectWindow.once("ready-to-show", () => revealWindow(protectWindow));
+  protectWindow.on("closed", () => { protectWindow = null; });
+  return protectWindow;
+}
+
 function openSettings() {
   if (settingsWindow) {
     settingsWindow.focus();
@@ -476,6 +572,23 @@ ipcMain.handle("settings:unlock-beta", (_e, ok) => {
     saveSettings(settings);
   }
   return { betaUnlocked: !!settings.betaUnlocked };
+});
+
+ipcMain.handle("protect:status", () => getDefenderStatus());
+ipcMain.handle("protect:quick-scan", async () => {
+  const result = await runDefenderPowerShell("$ErrorActionPreference='Stop'; Start-MpScan -ScanType QuickScan; 'started'", 20_000);
+  return result.ok ? { ok: true } : result;
+});
+ipcMain.handle("protect:open-windows-security", async () => {
+  if (process.platform !== "win32") return { ok: false, error: "Windows Zabezpečení je dostupné pouze ve Windows." };
+  try { await shell.openExternal("windowsdefender:"); return { ok: true }; }
+  catch (error) { return { ok: false, error: error?.message || "Windows Zabezpečení se nepodařilo otevřít." }; }
+});
+ipcMain.handle("protect:return-to-launcher", () => {
+  try { protectWindow?.close(); } catch {}
+  createLauncher();
+  revealWindow(launcherWindow);
+  return { ok: true };
 });
 // ---- Screen / window capture -------------------------------------------
 // Renderer si zobrazí vlastní HUD picker; main proces jen dodá seznam zdrojů
@@ -619,13 +732,14 @@ ipcMain.handle("modules:state", () => getModulesInfo());
 // Když soubory chybí (poškozená instalace), otevřeme stránku se stažením.
 ipcMain.handle("modules:install", (_e, name) => {
   const key = typeof name === "string" ? name : name?.module;
-  if (key !== "browser") return { ok: false, error: "Neznámý modul" };
-  if (!browserPayloadAvailable()) {
+  if (key !== "browser" && key !== "protect") return { ok: false, error: "Neznámý modul" };
+  const available = key === "browser" ? browserPayloadAvailable() : fs.existsSync(path.join(__dirname, "protect.html"));
+  if (!available) {
     shell.openExternal(DOWNLOAD_PAGE);
     return { ok: false, downloading: true, url: DOWNLOAD_PAGE };
   }
   const state = readModulesState();
-  state.browser = { installed: true, installedAt: new Date().toISOString() };
+  state[key] = { installed: true, installedAt: new Date().toISOString() };
   writeModulesState(state);
   return { ok: true, modules: getModulesInfo() };
 });
@@ -641,6 +755,14 @@ ipcMain.handle("modules:uninstall", (_e, name) => {
 
 ipcMain.handle("launcher:continue", (_e, payload) => {
   const mod = typeof payload === "string" ? payload : payload?.module;
+  if (mod === "protect") {
+    if (!getModulesInfo().protect.installed) return { ok: false, needsActivation: true };
+    createProtectWindow();
+    createTray();
+    try { launcherWindow?.close(); } catch {}
+    launcherWindow = null;
+    return { ok: true };
+  }
   if (mod === "browser") {
     const info = getModulesInfo();
     if (!info.browser.installed) {
@@ -648,7 +770,7 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
         shell.openExternal(DOWNLOAD_PAGE);
         return { ok: false, needsDownload: true, url: DOWNLOAD_PAGE };
       }
-      writeModulesState({ browser: { installed: true, installedAt: new Date().toISOString() } });
+      writeModulesState({ ...readModulesState(), browser: { installed: true, installedAt: new Date().toISOString() } });
     }
     createBrowserWindow();
     createTray();
@@ -694,6 +816,11 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
 // Přepnutí modulu přímo z běžícího okna (např. tlačítko Voxar.app v prohlížeči).
 ipcMain.handle("app:open-module", (_e, mod) => {
   const key = typeof mod === "string" ? mod : mod?.module;
+  if (key === "protect") {
+    if (!getModulesInfo().protect.installed) return { ok: false, needsActivation: true };
+    createProtectWindow();
+    return { ok: true };
+  }
   if (key === "browser") {
     const info = getModulesInfo();
     if (!info.browser.installed) {

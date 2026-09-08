@@ -9,6 +9,13 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   // Přímé přepnutí modulu (Voxar.app <-> VoxarioBrowser) bez návratu do launcheru.
   openModule: (mod) => ipcRenderer.invoke("app:open-module", mod),
 
+  // VoxarioProtect is an opt-in, read-only bridge to Microsoft Defender.
+  // It never changes Defender preferences or creates exclusions.
+  protectGetStatus: () => ipcRenderer.invoke("protect:status"),
+  protectQuickScan: () => ipcRenderer.invoke("protect:quick-scan"),
+  protectOpenWindowsSecurity: () => ipcRenderer.invoke("protect:open-windows-security"),
+  protectReturnToLauncher: () => ipcRenderer.invoke("protect:return-to-launcher"),
+
   // Screen sharing: vlastní HUD picker v aplikaci.
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
   selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoxarioProtect</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Segoe UI", system-ui, sans-serif; background: #020d16; color: #e8f8fb; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; overflow: auto; background: radial-gradient(circle at 85% 0%, rgba(53, 188, 143, .18), transparent 26%), radial-gradient(circle at 7% 87%, rgba(15, 162, 204, .13), transparent 30%), linear-gradient(135deg, #020d16, #041b29 54%, #06152a); }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .42; background-image: linear-gradient(rgba(92, 238, 195, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(92, 238, 195, .035) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(#000, transparent 80%); }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible { outline: 2px solid #85ffca; outline-offset: 3px; }
+    .topbar { position: relative; z-index: 1; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px clamp(20px, 4vw, 52px); border-bottom: 1px solid rgba(89, 231, 185, .23); background: rgba(2, 13, 22, .72); }
+    .identity { display: flex; align-items: center; gap: 13px; }
+    .mark { width: 42px; height: 42px; display: grid; place-items: center; color: #62efad; font-size: 23px; border: 1px solid rgba(102, 242, 180, .68); background: linear-gradient(145deg, #073124, #061b25); clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%); box-shadow: inset 0 0 18px rgba(78, 237, 169, .15), 0 0 18px rgba(78, 237, 169, .13); }
+    .eyebrow { margin: 0 0 3px; color: #78ddbf; font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .19em; }
+    h1 { margin: 0; font-size: clamp(19px, 2vw, 25px); letter-spacing: -.03em; }
+    h1 b { color: #65f0b2; }
+    .mode { display: inline-flex; align-items: center; gap: 8px; color: #9ec5c1; font: 700 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .1em; }
+    .mode i { width: 7px; height: 7px; border-radius: 50%; background: #67efad; box-shadow: 0 0 12px #67efad; }
+    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(295px, .75fr); gap: 16px; max-width: 1240px; margin: 0 auto; padding: clamp(20px, 3vw, 40px); }
+    .hero, .panel { border: 1px solid rgba(84, 204, 184, .29); background: linear-gradient(145deg, rgba(5, 34, 46, .95), rgba(2, 16, 28, .95)); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+    .hero { min-height: 420px; display: flex; flex-direction: column; padding: clamp(24px, 4vw, 48px); overflow: hidden; }
+    .hero::after { content: ""; position: absolute; width: 430px; height: 430px; right: -150px; bottom: -200px; border: 1px solid rgba(99, 239, 177, .2); border-radius: 50%; box-shadow: 0 0 0 35px rgba(99, 239, 177, .025), 0 0 0 70px rgba(99, 239, 177, .018); pointer-events: none; }
+    .badge { width: fit-content; padding: 6px 9px; border: 1px solid rgba(90, 238, 177, .39); color: #7cf3bb; background: rgba(10, 79, 66, .28); font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .16em; }
+    .hero h2 { max-width: 620px; margin: 22px 0 10px; font-size: clamp(28px, 4vw, 47px); line-height: 1.03; letter-spacing: -.055em; }
+    .hero h2 span { color: #69efb1; }
+    .hero p { max-width: 610px; margin: 0; color: #9abcbf; line-height: 1.65; font-size: 14px; }
+    .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: auto; padding-top: 32px; }
+    .principle { min-height: 94px; padding: 13px; border: 1px solid rgba(76, 173, 167, .19); background: rgba(3, 24, 34, .56); }
+    .principle strong { display: block; color: #d9fff0; font-size: 12px; }
+    .principle span { display: block; margin-top: 5px; color: #83a9a9; font-size: 11px; line-height: 1.4; }
+    .side { display: grid; gap: 16px; align-content: start; }
+    .panel { padding: 19px; }
+    .panel-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #a7d8d1; font: 700 10px/1.3 ui-monospace, Consolas, monospace; letter-spacing: .13em; }
+    .status-main { display: flex; align-items: center; gap: 12px; margin-top: 19px; }
+    .status-orb { width: 43px; height: 43px; border: 1px solid #4ae69f; border-radius: 50%; background: rgba(26, 177, 117, .15); box-shadow: 0 0 22px rgba(74, 230, 159, .24), inset 0 0 20px rgba(76, 238, 171, .12); }
+    .status-orb.warn { border-color: #f5c76a; background: rgba(245, 169, 61, .13); box-shadow: 0 0 22px rgba(245, 185, 79, .18); }
+    .status-orb.bad { border-color: #fb7185; background: rgba(251, 113, 133, .13); box-shadow: 0 0 22px rgba(251, 113, 133, .18); }
+    .status-main strong { display: block; font-size: 18px; }
+    .status-main span { display: block; margin-top: 3px; color: #87aab0; font-size: 12px; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; }
+    .metric { padding: 10px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); }
+    .metric small { display: block; color: #77959b; font-size: 10px; }
+    .metric strong { display: block; margin-top: 4px; color: #d4f3ed; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .actions { display: grid; gap: 9px; margin-top: 17px; }
+    .action { min-height: 46px; padding: 0 14px; border: 1px solid rgba(92, 237, 178, .55); color: #052418; background: linear-gradient(135deg, #62efad, #3cc59a); font-weight: 750; text-align: left; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
+    .action:hover { filter: brightness(1.08); }
+    .action.secondary { color: #c7eee4; border-color: rgba(86, 185, 177, .38); background: rgba(5, 48, 59, .78); }
+    .action:disabled { opacity: .55; cursor: wait; }
+    .notice { margin: 15px 0 0; color: #779ba1; font-size: 11px; line-height: 1.45; }
+    .foot { grid-column: 1 / -1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 0 3px; color: #78979b; font-size: 11px; line-height: 1.45; }
+    .foot strong { color: #a5d8cd; }
+    .back { border: 0; padding: 0; color: #85efd0; background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; padding: 16px; } .principles { grid-template-columns: 1fr; } .hero { min-height: auto; } .foot { grid-column: 1; flex-direction: column; } .mode { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="identity"><div class="mark">⌾</div><div><p class="eyebrow">STUDIOVOXARIO / OPTIONAL PROTECTION</p><h1>Voxario<b>Protect</b></h1></div></div>
+    <div class="mode"><i></i> DEFENDER BRIDGE · ON DEMAND</div>
+  </header>
+  <main class="layout">
+    <section class="hero">
+      <span class="badge">MICROSOFT DEFENDER · LOCAL INTEGRATION</span>
+      <h2>Ochrana, která <span>nepřekáží.</span></h2>
+      <p>VoxarioProtect nepřidává druhý antivir ani vlastní neustálé skenování. Na tvoje vyžádání zobrazí stav vestavěného Microsoft Defenderu a předá mu rychlou kontrolu. Žádné výjimky, žádné vypínání ochrany, žádná data mimo počítač.</p>
+      <div class="principles">
+        <div class="principle"><strong>Bez rezidentní zátěže</strong><span>Po zavření modul neběží na pozadí.</span></div>
+        <div class="principle"><strong>Jen oficiální Defender</strong><span>Kontrolu provádí Windows, ne druhý AV engine.</span></div>
+        <div class="principle"><strong>Pod kontrolou uživatele</strong><span>Kontrola se spouští jen tlačítkem níže.</span></div>
+      </div>
+    </section>
+    <aside class="side">
+      <section class="panel">
+        <div class="panel-title"><span>STAV MICROSOFT DEFENDERU</span><button id="refresh" class="back" type="button">Obnovit</button></div>
+        <div class="status-main"><i id="orb" class="status-orb"></i><div><strong id="statusTitle">Načítám stav…</strong><span id="statusCopy">Probíhá lokální kontrola přes Windows.</span></div></div>
+        <div class="metrics">
+          <div class="metric"><small>REŽIM</small><strong id="runningMode">—</strong></div>
+          <div class="metric"><small>REAL-TIME</small><strong id="realtime">—</strong></div>
+          <div class="metric"><small>POSLEDNÍ SIGNATURY</small><strong id="signatures">—</strong></div>
+          <div class="metric"><small>POSLEDNÍ RYCHLÁ KONTROLA</small><strong id="quickScan">—</strong></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-title"><span>AKCE OCHRANY</span><span>RUČNĚ</span></div>
+        <div class="actions">
+          <button id="quickScanButton" class="action" type="button">Spustit rychlou kontrolu Defenderu</button>
+          <button id="securityButton" class="action secondary" type="button">Otevřít Windows Zabezpečení</button>
+        </div>
+        <p class="notice" id="notice">Rychlá kontrola používá standardní Windows Defender. Pokud systém vyžádá oprávnění, rozhodnutí zůstává na tobě.</p>
+      </section>
+    </aside>
+    <footer class="foot"><span><strong>Soukromí:</strong> stav Defenderu se čte lokálně a neposílá se do Voxar.app ani na externí server.</span><button id="back" class="back" type="button">← Zpět do rozcestníku</button></footer>
+  </main>
+  <script>
+    const api = window.studioVoxarioDesktop;
+    const byId = (id) => document.getElementById(id);
+    const setText = (id, value) => { byId(id).textContent = value || '—'; };
+    const formatDate = (value) => {
+      if (!value || value === '1/1/0001 12:00:00 AM') return 'Nikdy';
+      const date = new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('cs-CZ');
+    };
+    function render(status) {
+      const limited = status.AccessLimited === true;
+      const protectedNow = status.AntivirusEnabled && status.RealTimeProtectionEnabled;
+      const orb = byId('orb'); orb.className = 'status-orb' + (limited || !protectedNow ? ' warn' : '');
+      setText('statusTitle', limited ? 'Defender je nalezen' : (protectedNow ? 'Ochrana je aktivní' : 'Ochrana vyžaduje pozornost'));
+      setText('statusCopy', limited ? 'Windows omezil detailní stav. Otevři Windows Zabezpečení pro úplný přehled.' : (protectedNow ? 'Microsoft Defender chrání tento počítač v reálném čase.' : 'Zkontroluj stav ve Windows Zabezpečení.'));
+      setText('runningMode', status.AMRunningMode || '—');
+      setText('realtime', limited ? 'Vyžaduje oprávnění' : (status.RealTimeProtectionEnabled ? 'Aktivní' : 'Vypnuto'));
+      setText('signatures', status.AntivirusSignatureAge === undefined || status.AntivirusSignatureAge === null ? formatDate(status.AntivirusSignatureLastUpdated) : `${status.AntivirusSignatureAge} dní`);
+      setText('quickScan', formatDate(status.QuickScanEndTime || status.QuickScanStartTime));
+    }
+    async function refresh() {
+      byId('refresh').disabled = true; setText('statusTitle', 'Načítám stav…');
+      const result = await api.protectGetStatus();
+      byId('refresh').disabled = false;
+      if (result?.ok) { render(result.status || {}); setText('notice', 'Stav byl načten lokálně z Microsoft Defenderu.'); return; }
+      byId('orb').className = 'status-orb bad'; setText('statusTitle', 'Stav se nepodařilo načíst'); setText('statusCopy', result?.error || 'Microsoft Defender není v tomto systému dostupný.');
+    }
+    byId('refresh').addEventListener('click', refresh);
+    byId('quickScanButton').addEventListener('click', async () => {
+      const button = byId('quickScanButton'); button.disabled = true; button.textContent = 'Spouštím rychlou kontrolu…';
+      const result = await api.protectQuickScan();
+      button.disabled = false; button.textContent = 'Spustit rychlou kontrolu Defenderu';
+      setText('notice', result?.ok ? 'Rychlá kontrola byla předána Microsoft Defenderu. Výsledky zobrazí Windows Zabezpečení.' : (result?.error || 'Kontrolu se nepodařilo spustit.'));
+      if (result?.ok) setTimeout(refresh, 1200);
+    });
+    byId('securityButton').addEventListener('click', async () => { const result = await api.protectOpenWindowsSecurity(); if (!result?.ok) setText('notice', result?.error || 'Windows Zabezpečení se nepodařilo otevřít.'); });
+    byId('back').addEventListener('click', () => api.protectReturnToLauncher());
+    refresh();
+  </script>
+</body>
+</html>

@@ -44,6 +44,7 @@
       "browser-settings.cjs",
       "browser.html",
       "launcher.html",
+      "protect.html",
       "settings.html",
       "package.json",
       "assets/**/*",
