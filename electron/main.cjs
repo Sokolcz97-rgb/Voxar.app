@@ -19,6 +19,7 @@ const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelA
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
 const browserSettings = require("./browser-settings.cjs");
+const { registerRtmpHandlers, stopProcesses: stopRtmpProcesses } = require("./rtmp.cjs");
 browserSettings.applyHardwareAcceleration();
 
 const APP_URL = process.env.STUDIOVOXARIO_URL || "https://studiovoxario.com/app";
@@ -1127,6 +1128,10 @@ async function runLauncherSequence() {
 app.whenReady().then(async () => {
   startupLog(`Start aplikace ${app.getVersion()}`);
   browserSettings.registerBrowserSettings();
+  // RTMP rozhraní je záměrně registrované až po startu Electronu. Preload jej
+  // vystavuje rendereru, ale bez této registrace by volání z vysílacího studia
+  // skončilo chybou "No handler registered" a FFmpeg by se nikdy nespustil.
+  registerRtmpHandlers();
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // ale nikdy kvůli tomu neblokujeme vytvoření prvního okna.
   session.defaultSession.clearCache().catch((error) => startupLog("Vyčištění cache při startu selhalo", error));
@@ -1240,6 +1245,9 @@ app.on("window-all-closed", () => {
 let cleanupDone = false;
 app.on("before-quit", (event) => {
   isQuitting = true;
+  // Nezanechávej při ukončení aplikace žádný běžící lokální RTMP proces.
+  // Funkce je idempotentní, takže je bezpečná i při ukončení kvůli aktualizaci.
+  try { stopRtmpProcesses(); } catch {}
   // Při ukončení kvůli aktualizaci nesmíme quit odkládat — instalátor
   // navazuje na quit a sám aplikaci po dokončení znovu spustí.
   if (app.isQuittingForUpdate) {
@@ -1265,4 +1273,3 @@ app.on("before-quit", (event) => {
   }
   rollback.recordCleanExit();
 });
-

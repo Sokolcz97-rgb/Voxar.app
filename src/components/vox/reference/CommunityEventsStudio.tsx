@@ -15,6 +15,7 @@ import {
   MonitorUp,
   Plus,
   Radio,
+  RefreshCw,
   Settings2,
   Square,
   Trash2,
@@ -160,6 +161,7 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
     activeEvents,
     loading: eventsLoading,
     error: eventsError,
+    refresh: refreshEvents,
     createEvent,
     updateEvent,
     deleteEvent,
@@ -498,7 +500,14 @@ export function CommunityEventsStudio({ guildId, isAdmin = false, onOpenChannel,
         ) : eventsLoading ? (
           <div className="sv-feature-loading"><Loader2 className="animate-spin" /> Načítám komunitní události…</div>
         ) : eventsError ? (
-          <div className="sv-feature-empty"><CalendarDays /><strong>Databáze událostí zatím není dostupná</strong><span>{eventsError}</span></div>
+          <div className="sv-feature-empty">
+            <CalendarDays />
+            <strong>Databáze událostí zatím není dostupná</strong>
+            <span>{eventsError}</span>
+            <button type="button" className="sv-hud-button secondary" onClick={() => void refreshEvents()}>
+              <RefreshCw /> Načíst znovu
+            </button>
+          </div>
         ) : (
           <>
             {editorOpen && (
