@@ -1202,7 +1202,11 @@ function createBrowserWindow() {
     // širokých/QHD monitorech zvětšíme celé nativní UI, aby nezůstalo jako
     // drobný pruh nahoře s prázdnou plochou pod ním. Webview si dál spravuje
     // vlastní zoom stránky nezávisle.
-    const factor = Math.max(1, Math.min(1.5, Math.min(width / 1680, height / 940)));
+    const referenceScale = Math.min(width / 1680, height / 940);
+    // Na maximalizovaném QHD okně stačí jen jemné zvětšení. Původní přepočet
+    // mířil téměř na 150 %, což bylo zbytečně mohutné; 80% korekce jej drží
+    // přibližně na 118–120 %, zatímco běžná okna zůstávají na 100 %.
+    const factor = Math.max(1, Math.min(1.25, referenceScale * 0.8));
     browserWindow.webContents.setZoomFactor(Math.round(factor * 100) / 100);
   };
   browserWindow.webContents.once("dom-ready", () => revealWindow(browserWindow));
