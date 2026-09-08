@@ -64,7 +64,7 @@
 <body>
   <header class="topbar">
     <div class="identity"><div class="mark">⌾</div><div><p class="eyebrow">STUDIOVOXARIO / OPTIONAL PROTECTION</p><h1>Voxario<b>Protect</b></h1></div></div>
-    <div class="mode"><i></i> DEFENDER BRIDGE · ON DEMAND</div>
+    <div class="mode"><i></i><span id="backgroundMode">OCHRANA NA POZADÍ · OVĚŘUJI</span></div>
   </header>
   <main class="layout">
     <section class="hero">
@@ -72,7 +72,7 @@
       <h2>Ochrana, která <span>nepřekáží.</span></h2>
       <p>VoxarioProtect nepřidává druhý antivir ani vlastní neustálé skenování. Na tvoje vyžádání zobrazí stav vestavěného Microsoft Defenderu a předá mu rychlou kontrolu. Žádné výjimky, žádné vypínání ochrany, žádná data mimo počítač.</p>
       <div class="principles">
-        <div class="principle"><strong>Bez rezidentní zátěže</strong><span>Po zavření modul neběží na pozadí.</span></div>
+        <div class="principle"><strong>Úsporně na pozadí</strong><span>Po zavření okna zůstane hlídač aktivní v system tray.</span></div>
         <div class="principle"><strong>Jen oficiální Defender</strong><span>Kontrolu provádí Windows, ne druhý AV engine.</span></div>
         <div class="principle"><strong>Pod kontrolou uživatele</strong><span>Kontrola se spouští jen tlačítkem níže.</span></div>
       </div>
@@ -124,7 +124,12 @@
       byId('refresh').disabled = true; setText('statusTitle', 'Načítám stav…');
       const result = await api.protectGetStatus();
       byId('refresh').disabled = false;
-      if (result?.ok) { render(result.status || {}); setText('notice', 'Stav byl načten lokálně z Microsoft Defenderu.'); return; }
+      if (result?.ok) {
+        render(result.status || {});
+        setText('backgroundMode', result?.background?.active ? 'OCHRANA NA POZADÍ · AKTIVNÍ' : 'OCHRANA NA POZADÍ · NEAKTIVNÍ');
+        setText('notice', result?.background?.mode || 'Stav byl načten lokálně z Microsoft Defenderu.');
+        return;
+      }
       byId('orb').className = 'status-orb bad'; setText('statusTitle', 'Stav se nepodařilo načíst'); setText('statusCopy', result?.error || 'Microsoft Defender není v tomto systému dostupný.');
     }
     function renderActivities(items) {

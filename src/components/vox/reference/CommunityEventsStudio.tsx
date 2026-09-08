@@ -108,23 +108,10 @@ function makeCombinedStream(videoStream: MediaStream, micStream: MediaStream | n
   }
 }
 
-async function captureSelectedSource(sourceId: string | null, withSystemAudio: boolean) {
-  if (sourceId) {
-    const mandatory: Record<string, any> = {
-      chromeMediaSource: "desktop",
-      chromeMediaSourceId: sourceId,
-      maxFrameRate: 60,
-    };
-    try {
-      return await navigator.mediaDevices.getUserMedia({
-        audio: withSystemAudio ? ({ mandatory: { chromeMediaSource: "desktop" } } as any) : false,
-        video: ({ mandatory } as any),
-      });
-    } catch {
-      return navigator.mediaDevices.getUserMedia({ audio: false, video: ({ mandatory } as any) });
-    }
-  }
-
+async function captureSelectedSource(_sourceId: string | null, withSystemAudio: boolean) {
+  // Electron's setDisplayMediaRequestHandler receives the source selected by
+  // the native picker IPC. getUserMedia bypassed that handler, so a chosen
+  // monitor/window could fail before FFmpeg ever received RTMP data.
   return navigator.mediaDevices.getDisplayMedia({
     video: { frameRate: { ideal: 30, max: 60 } },
     audio: withSystemAudio,

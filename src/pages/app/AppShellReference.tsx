@@ -18,6 +18,7 @@ import { AppAuthGate } from "@/components/vox/AppAuthGate";
 import { CommunitySidebarPanel } from "@/components/vox/reference/CommunitySidebarPanel";
 import { CommunityRightPanel } from "@/components/vox/reference/CommunityRightPanel";
 import { CommunityTopbar } from "@/components/vox/reference/CommunityTopbar";
+import type { UtilityMode } from "@/components/vox/reference/CommunityUtilityOverlay";
 import { useVoiceCall } from "@/contexts/VoiceCallContext";
 import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { openVoxUtility } from "@/lib/voxCommunityBridge";
@@ -48,6 +49,7 @@ export default function AppShellReference() {
   const [view, setView] = useState<"main" | "user-settings" | "server-settings">("main");
   const [now, setNow] = useState(() => new Date());
   const [protectDecision, setProtectDecision] = useState<"allow" | "warn" | "block" | null>(null);
+  const [utilityMode, setUtilityMode] = useState<UtilityMode | null>(null);
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -395,16 +397,19 @@ export default function AppShellReference() {
 
   const openUserSettings = () => {
     setMobileChannelsOpen(false);
+    setUtilityMode(null);
     openVoxUtility(null);
     setView("user-settings");
   };
   const openServerSettings = () => {
     setMobileChannelsOpen(false);
+    setUtilityMode(null);
     openVoxUtility(null);
     setView("server-settings");
   };
   const selectGuild = (id: string) => {
     setMobileChannelsOpen(false);
+    setUtilityMode(null);
     openVoxUtility(null);
     if (id !== activeGuildId) {
       guildLoadEpochRef.current += 1;
@@ -472,13 +477,15 @@ export default function AppShellReference() {
         activeGuildId={activeGuildId}
         isGuildAdmin={isAdmin}
         onOpenChannel={(id) => { const target = channels.find(c => c.id === id); if (target) selectChannel(target); }}
-        onEvents={() => openVoxUtility("events")}
+        onEvents={() => setUtilityMode("events")}
         onVoice={connectVoice}
-        onFiles={() => openVoxUtility("files")}
-        onStore={() => navigate("/obchod")}
+        onFiles={() => setUtilityMode("files")}
+        onStore={() => setUtilityMode("store")}
         onMore={() => navigate("/dashboard")}
-        onNotifications={() => openVoxUtility("notifications")}
+        onNotifications={() => setUtilityMode("notifications")}
         onProfile={openUserSettings}
+        utilityMode={utilityMode}
+        onUtilityModeChange={setUtilityMode}
       />
 
       <button type="button" className="sv-mobile-channel-toggle" aria-expanded={mobileChannelsOpen} onClick={() => setMobileChannelsOpen(open => !open)}>{mobileChannelsOpen ? "Zavřít seznam kanálů" : "Komunity a kanály"}</button>

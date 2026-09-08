@@ -48,8 +48,12 @@ export function CommunityTopbar({
   displayName,
   avatarUrl,
   onCommunity,
+  onEvents,
   onVoice,
+  onFiles,
+  onStore,
   onMore,
+  onNotifications,
   onProfile,
   activeGuildId,
   isGuildAdmin,
@@ -117,6 +121,18 @@ export function CommunityTopbar({
     if (key === "voice") {
       setUtility(null);
       onVoice();
+      return;
+    }
+    if (key === "events") {
+      onEvents();
+      return;
+    }
+    if (key === "files") {
+      onFiles();
+      return;
+    }
+    if (key === "store") {
+      onStore();
       return;
     }
     if (key === "more") {
@@ -224,7 +240,11 @@ export function CommunityTopbar({
           <button
             type="button"
             className={`sv-topbar-icon-button sv-notification-trigger${utility === "notifications" ? " active" : ""}`}
-            onClick={() => { setSearchOpen(false); setUtility(utility === "notifications" ? null : "notifications"); }}
+            onClick={() => {
+              setSearchOpen(false);
+              if (utility === "notifications") setUtility(null);
+              else onNotifications();
+            }}
             aria-label={notificationLabel}
             aria-expanded={utility === "notifications"}
             title={notificationLabel}

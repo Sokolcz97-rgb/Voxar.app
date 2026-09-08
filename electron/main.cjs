@@ -221,9 +221,15 @@ function createTray() {
 
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 20, height: 20 });
   tray = new Tray(icon);
-  tray.setToolTip("Voxar.app");
+  const protectActive = !!getModulesInfo().protect.installed;
+  tray.setToolTip(protectActive ? "Voxar.app · VoxarioProtect aktivní" : "Voxar.app");
   const contextMenu = Menu.buildFromTemplate([
     { label: "Otevřít Voxar.app", click: () => showMain() },
+    ...(protectActive ? [
+      { label: "VoxarioProtect je aktivní", enabled: false },
+      { label: "Otevřít VoxarioProtect", click: () => { createProtectWindow(); revealWindow(protectWindow); } },
+      { type: "separator" },
+    ] : []),
     { label: "Nastavení aplikace", click: () => openSettings() },
     { type: "separator" },
     {
@@ -249,7 +255,14 @@ function createTray() {
     },
   ]);
   tray.setContextMenu(contextMenu);
-  tray.on("click", () => showMain());
+  tray.on("click", () => {
+    if (getModulesInfo().protect.installed) {
+      createProtectWindow();
+      revealWindow(protectWindow);
+      return;
+    }
+    showMain();
+  });
 }
 
 function showMain() {
@@ -748,7 +761,13 @@ ipcMain.handle("settings:unlock-beta", (_e, ok) => {
   return { betaUnlocked: !!settings.betaUnlocked };
 });
 
-ipcMain.handle("protect:status", () => getDefenderStatus());
+ipcMain.handle("protect:status", async () => ({
+  ...(await getDefenderStatus()),
+  background: {
+    active: !!protectPollTimer,
+    mode: protectPollTimer ? "Hlídač Stažených souborů a Defenderu je aktivní na pozadí." : "Ochrana na pozadí není aktivní.",
+  },
+}));
 ipcMain.handle("protect:integrity", () => desktopIntegrityManifest());
 ipcMain.handle("protect:activity", () => protectActivities.map(publicProtectActivity));
 ipcMain.handle("protect:choose-file", async () => {
@@ -928,7 +947,10 @@ ipcMain.handle("modules:install", (_e, name) => {
   const state = readModulesState();
   state[key] = { installed: true, installedAt: new Date().toISOString() };
   writeModulesState(state);
-  if (key === "protect") startProtectMonitor();
+  if (key === "protect") {
+    startProtectMonitor();
+    createTray();
+  }
   return { ok: true, modules: getModulesInfo() };
 });
 
@@ -1447,7 +1469,13 @@ app.whenReady().then(async () => {
   // vystavuje rendereru, ale bez této registrace by volání z vysílacího studia
   // skončilo chybou "No handler registered" a FFmpeg by se nikdy nespustil.
   registerRtmpHandlers();
-  if (getModulesInfo().protect.installed) startProtectMonitor();
+  if (getModulesInfo().protect.installed) {
+    // Hlídač zůstává aktivní i po zavření okna Protect a po návratu do
+    // rozcestníku. Je úsporný: watcher Stažených souborů + kontrola událostí
+    // Defenderu jednou za pět minut, bez druhého AV enginu.
+    startProtectMonitor();
+    createTray();
+  }
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // ale nikdy kvůli tomu neblokujeme vytvoření prvního okna.
   session.defaultSession.clearCache().catch((error) => startupLog("Vyčištění cache při startu selhalo", error));
