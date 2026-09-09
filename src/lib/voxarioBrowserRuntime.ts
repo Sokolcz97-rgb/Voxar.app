@@ -17,7 +17,7 @@ type BrowserModelManifest = {
   ownModel: boolean;
 };
 
-const WEBLLM_MODULE_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm";
+const WEBLLM_MODULE_URL = "https://esm.run/@mlc-ai/web-llm@0.2.84";
 const DEFAULT_MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const MANIFEST_URL = "/ai/voxario-model-manifest.json";
 
