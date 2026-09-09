@@ -24,17 +24,7 @@ import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import { attestDesktopProtect } from "@/lib/voxProtectAttestation";
 import { Loader2 } from "lucide-react";
-// The live shell needs a small structural foundation, followed by the existing
-// reference lock.  Do not replace this with the historical 30-file cascade:
-// v29 owns the final dimensions while these files only provide component
-// primitives that v29 intentionally builds on.
-import "@/components/vox/reference/community-structured-shell.css";
-import "@/components/vox/reference/community-structured-panels.css";
-import "@/components/vox/reference/community-channel-list.css";
-import "@/components/vox/reference/community-structured-settings.css";
-import "@/components/vox/reference/community-app-shell-v4.css";
-import "@/components/vox/reference/community-reference-pass-v16.css";
-import "@/components/vox/reference/community-final-reference-v29.css";
+import "@/components/vox/reference/community-desktop.css";
 
 export default function AppShellReference() {
   useVoxHeartbeat("online");

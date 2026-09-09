@@ -1,0 +1,16 @@
+/*
+ * StudioVoxario desktop community skin.
+ *
+ * This file is deliberately the sole layout entry point for AppShellReference.
+ * The first six files provide only primitive structure for the live React
+ * components. The final reference lock owns their visual dimensions and is
+ * loaded last, so feature CSS (events, RTMP, notifications and chat) cannot
+ * move the desktop frame out of alignment.
+ */
+@import "./community-structured-shell.css";
+@import "./community-structured-panels.css";
+@import "./community-channel-list.css";
+@import "./community-structured-settings.css";
+@import "./community-app-shell-v4.css";
+@import "./community-reference-pass-v16.css";
+@import "./community-final-reference-v29.css";
