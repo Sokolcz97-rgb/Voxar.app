@@ -30,7 +30,6 @@ import NotFound from "./pages/NotFound.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
 import Servers from "./pages/Servers.tsx";
 import AdminGames from "./pages/AdminGames.tsx";
-
 import AdminDiscord from "./pages/AdminDiscord.tsx";
 import AdminSiteSettings from "./pages/AdminSiteSettings.tsx";
 import AdminStreams from "./pages/AdminStreams.tsx";
@@ -61,6 +60,7 @@ import PublicForm from "./pages/PublicForm.tsx";
 import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import VoxarioBrowser from "./pages/VoxarioBrowser.tsx";
 import GameLauncher from "./pages/GameLauncher.tsx";
+import AI from "./pages/AI.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
 import AdminConsole from "./pages/AdminConsole.tsx";
 import AdminCosmetics from "./pages/AdminCosmetics.tsx";
@@ -77,7 +77,6 @@ import { AppAccessGate } from "@/components/vox/AppAccessGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
 
-
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -85,73 +84,72 @@ const AppRoutes = () => {
   return (
     <>
       <DesktopRouteGuard />
-
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/discord-oauth-complete" element={<DiscordOAuthComplete />} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/bot" element={<ProtectedRoute><DashboardBot /></ProtectedRoute>} />
-      <Route path="/dashboard/bot/guilds" element={<ProtectedRoute><DashboardBotGuilds /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="/profile/:userId" element={<PublicProfile />} />
-      <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsersRoles /></ProtectedRoute>} />
-      <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
-      <Route path="/admin/pages" element={<ProtectedRoute requireEditor><AdminPages /></ProtectedRoute>} />
-      <Route path="/forum" element={<Forum />} />
-      <Route path="/forum/:slug" element={<ForumCategory />} />
-      <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
-      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-      <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
-      <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
-      <Route path="/leaderboard" element={<Leaderboard />} />
-      <Route path="/servery" element={<Servers />} />
-      <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
-      {/* /admin/roles je alias - přesměrováno na sjednocenou stránku /admin/users */}
-      <Route path="/admin/roles" element={<Navigate to="/admin/users" replace />} />
-      <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
-      <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
-      <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
-      <Route path="/admin/chat-bot" element={<ProtectedRoute requireEditor><AdminChatBot /></ProtectedRoute>} />
-      <Route path="/admin/forum-categories" element={<ProtectedRoute requireEditor><AdminForumCategories /></ProtectedRoute>} />
-      <Route path="/admin/stats" element={<ProtectedRoute requireEditor><AdminStats /></ProtectedRoute>} />
-      <Route path="/novinky" element={<Novinky />} />
-      <Route path="/verze" element={<Verze />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/obchod" element={<ShopPage />} />
-      <Route path="/obchodni-podminky" element={<BusinessTerms />} />
-      <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-      <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
-      <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
-      <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
-      <Route path="/live" element={<LiveNow />} />
-      <Route path="/kontrakty" element={<BountyBoard />} />
-      <Route path="/profile/formulare" element={<ProtectedRoute><MyForms /></ProtectedRoute>} />
-      <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
-      <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
-      <Route path="/f/:slug" element={<PublicForm />} />
-      <Route path="/desktop" element={<DownloadDesktop />} />
-      <Route path="/browser" element={<VoxarioBrowser />} />
-      <Route path="/launcher" element={<GameLauncher />} />
-      <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
-      <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
-      <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
-      <Route path="/admin/cosmetics" element={<ProtectedRoute requireEditor><AdminCosmetics /></ProtectedRoute>} />
-      <Route path="/admin/console" element={<ProtectedRoute requireEditor><AdminConsole /></ProtectedRoute>} />
-      <Route path="/app" element={<AppAccessGate><AppShell /></AppAccessGate>} />
-      <Route path="/:slug" element={<DynamicPage />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/discord-oauth-complete" element={<DiscordOAuthComplete />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/bot" element={<ProtectedRoute><DashboardBot /></ProtectedRoute>} />
+        <Route path="/dashboard/bot/guilds" element={<ProtectedRoute><DashboardBotGuilds /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<PublicProfile />} />
+        <Route path="/admin" element={<ProtectedRoute requireEditor><Admin /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute requireEditor><AdminUsersRoles /></ProtectedRoute>} />
+        <Route path="/admin/moderation" element={<ProtectedRoute requireEditor><AdminModeration /></ProtectedRoute>} />
+        <Route path="/admin/pages" element={<ProtectedRoute requireEditor><AdminPages /></ProtectedRoute>} />
+        <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/:slug" element={<ForumCategory />} />
+        <Route path="/forum/:slug/:threadSlug" element={<ForumThread />} />
+        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+        <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+        <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/servery" element={<Servers />} />
+        <Route path="/admin/games" element={<ProtectedRoute requireEditor><AdminGames /></ProtectedRoute>} />
+        <Route path="/admin/roles" element={<Navigate to="/admin/users" replace />} />
+        <Route path="/admin/discord" element={<ProtectedRoute requireEditor><AdminDiscord /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute requireEditor><AdminSiteSettings /></ProtectedRoute>} />
+        <Route path="/admin/streams" element={<ProtectedRoute requireEditor><AdminStreams /></ProtectedRoute>} />
+        <Route path="/admin/chat-bot" element={<ProtectedRoute requireEditor><AdminChatBot /></ProtectedRoute>} />
+        <Route path="/admin/forum-categories" element={<ProtectedRoute requireEditor><AdminForumCategories /></ProtectedRoute>} />
+        <Route path="/admin/stats" element={<ProtectedRoute requireEditor><AdminStats /></ProtectedRoute>} />
+        <Route path="/novinky" element={<Novinky />} />
+        <Route path="/verze" element={<Verze />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/obchod" element={<ShopPage />} />
+        <Route path="/obchodni-podminky" element={<BusinessTerms />} />
+        <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
+        <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+        <Route path="/admin/order-models" element={<ProtectedRoute requireEditor><AdminOrderModels /></ProtectedRoute>} />
+        <Route path="/live" element={<LiveNow />} />
+        <Route path="/kontrakty" element={<BountyBoard />} />
+        <Route path="/profile/formulare" element={<ProtectedRoute><MyForms /></ProtectedRoute>} />
+        <Route path="/profile/formulare/:id/edit" element={<ProtectedRoute><FormEditor /></ProtectedRoute>} />
+        <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
+        <Route path="/f/:slug" element={<PublicForm />} />
+        <Route path="/desktop" element={<DownloadDesktop />} />
+        <Route path="/browser" element={<VoxarioBrowser />} />
+        <Route path="/launcher" element={<GameLauncher />} />
+        <Route path="/ai" element={<ProtectedRoute><AI /></ProtectedRoute>} />
+        <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
+        <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
+        <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
+        <Route path="/admin/cosmetics" element={<ProtectedRoute requireEditor><AdminCosmetics /></ProtectedRoute>} />
+        <Route path="/admin/console" element={<ProtectedRoute requireEditor><AdminConsole /></ProtectedRoute>} />
+        <Route path="/app" element={<AppAccessGate><AppShell /></AppAccessGate>} />
+        <Route path="/:slug" element={<DynamicPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 };
 
-
 /** Root-level AI layer: a sibling of the router layout, never nested in app grids. */
 const RootAIHelper = () => {
   const { pathname } = useLocation();
+  if (pathname === "/ai" || pathname.startsWith("/ai/")) return null;
   if (pathname === "/app" || pathname.startsWith("/app/")) return <AIHelperHolo />;
   return <AIHelper />;
 };
@@ -167,20 +165,19 @@ const App = () => (
         <AuthProvider>
           <SiteSettingsProvider>
             <CosmeticsProvider>
-            <PresenceProvider>
-              <VoiceCallProvider>
-              <InlineEditorProvider>
-                <AppRoutes />
-                <InlineEditorChrome />
-                 <RootAIHelper />
-                <ShortcutsHelp />
-                <LiveNowHud />
-                <LfgHud />
-                <SystemUpdateAlert />
-
-              </InlineEditorProvider>
-              </VoiceCallProvider>
-            </PresenceProvider>
+              <PresenceProvider>
+                <VoiceCallProvider>
+                  <InlineEditorProvider>
+                    <AppRoutes />
+                    <InlineEditorChrome />
+                    <RootAIHelper />
+                    <ShortcutsHelp />
+                    <LiveNowHud />
+                    <LfgHud />
+                    <SystemUpdateAlert />
+                  </InlineEditorProvider>
+                </VoiceCallProvider>
+              </PresenceProvider>
             </CosmeticsProvider>
           </SiteSettingsProvider>
         </AuthProvider>
