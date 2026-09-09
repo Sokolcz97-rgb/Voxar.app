@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", components: { app: true, browser: true } };
+let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", browserOnly: false, components: { app: true, browser: true } };
 let operationRunning = false;
 
 async function boot() {
@@ -14,8 +14,26 @@ async function boot() {
   const d = await window.installer.defaults();
   state.dir = d.defaultDir;
   state.mode = d.mode;
+  state.productId = d.productId || "app";
+  state.browserOnly = !!d.browserOnly;
   $("verLbl").textContent = d.version;
   $("pathInput").value = state.dir;
+  if (d.browserOnly) {
+    state.components = { app: false, browser: true };
+    $("brandSub").textContent = "VoxarioBrowser · instalátor";
+    document.title = "VoxarioBrowser Installer";
+    const componentsStep = document.querySelector('.steps li[data-step="components"]');
+    const componentsPanel = document.querySelector('.panel[data-step="components"]');
+    if (componentsStep) componentsStep.style.display = "none";
+    if (componentsPanel) componentsPanel.style.display = "none";
+    const welcome = document.querySelector('.panel[data-step="welcome"]');
+    if (welcome) {
+      welcome.querySelector("h1").textContent = "Vítejte ve VoxarioBrowseru";
+      welcome.querySelector("p").textContent = "Samostatný StudioVoxario prohlížeč se nainstaluje jen pro vás a bude se aktualizovat nezávisle na Voxar.app.";
+      welcome.querySelector('[data-next="components"]').dataset.next = "location";
+    }
+    document.querySelectorAll('[data-next="components"]').forEach((button) => { button.dataset.next = "location"; });
+  }
   if (d.mode === "uninstall") {
     $("brandSub").textContent = "Odinstalace";
     $("uninPath").textContent = state.dir;
@@ -59,7 +77,7 @@ async function boot() {
   );
 
   $("startBtn").addEventListener("click", startInstall);
-  $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "app" }));
+  $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: d.browserOnly ? "browser" : "app" }));
   $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
   $("closeBtn").addEventListener("click", () => window.installer.close());
   $("btnMin").addEventListener("click", () => window.installer.minimize?.());
@@ -103,7 +121,8 @@ async function startInstall() {
     const parts = [state.components.app && "Voxar.app", state.components.browser && "VoxarioBrowser"].filter(Boolean);
     $("doneTitle").textContent = "Hotovo!";
     $("doneMsg").textContent = `${parts.join(" + ")} je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
-    $("launchBtn").style.display = state.components.app ? "" : "none";
+    $("launchBtn").style.display = (state.components.app || state.browserOnly) ? "" : "none";
+    if (state.browserOnly) $("launchBtn").textContent = "Spustit VoxarioBrowser";
     $("launchBrowserBtn").style.display = state.components.browser ? "" : "none";
     activate("done");
   } catch (err) {

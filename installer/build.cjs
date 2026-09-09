@@ -17,20 +17,30 @@ const sevenBin = require("7zip-bin");
 
 const ROOT = __dirname;
 const RESOURCES = path.join(ROOT, "resources");
-const PAYLOAD = path.join(ROOT, "..", "electron", "release", "win-unpacked");
 const OUT_ARCHIVE = path.join(RESOURCES, "app.7z");
 const OUT_7ZA = path.join(RESOURCES, "7za.exe");
-const INSTALLER_NAME = "StudioVoxarioInstaller";
+const productId = process.argv.includes("--product=browser") ? "browser" : "app";
+const PRODUCT = productId === "browser"
+  ? {
+      id: "browser", name: "VoxarioBrowser", executable: "VoxarioBrowser.exe",
+      installDirName: "VoxarioBrowser", payload: path.join(ROOT, "..", "electron", "release", "browser", "win-unpacked"),
+      installerName: "VoxarioBrowserInstaller", browserOnly: true,
+    }
+  : {
+      id: "app", name: "Voxar.app", executable: "Voxar.app.exe",
+      installDirName: "Voxar.app", payload: path.join(ROOT, "..", "electron", "release", "win-unpacked"),
+      installerName: "StudioVoxarioInstaller", browserOnly: false,
+    };
 
 async function main() {
-  if (!fs.existsSync(PAYLOAD)) {
-    console.error(`✗ Payload nenalezen: ${PAYLOAD}`);
+  if (!fs.existsSync(PRODUCT.payload)) {
+    console.error(`✗ Payload nenalezen: ${PRODUCT.payload}`);
     console.error("Nejdříve musí proběhnout electron-builder Windows build.");
     process.exit(1);
   }
 
-  const appExe = path.join(PAYLOAD, "Voxar.app.exe");
-  const updaterConfig = path.join(PAYLOAD, "resources", "app-update.yml");
+  const appExe = path.join(PRODUCT.payload, PRODUCT.executable);
+  const updaterConfig = path.join(PRODUCT.payload, "resources", "app-update.yml");
   if (!fs.existsSync(appExe)) {
     console.error(`✗ V payloadu chybí aplikace: ${appExe}`);
     process.exit(1);
@@ -43,13 +53,13 @@ async function main() {
 
   fs.mkdirSync(RESOURCES, { recursive: true });
   if (fs.existsSync(OUT_ARCHIVE)) fs.rmSync(OUT_ARCHIVE);
-  try { fs.rmSync(path.join(RESOURCES, "product.json"), { force: true }); } catch {}
+  fs.writeFileSync(path.join(RESOURCES, "product.json"), JSON.stringify(PRODUCT, null, 2));
   fs.copyFileSync(sevenBin.path7za, OUT_7ZA);
 
-  console.log("→ Balím electron-builder payload do vlastního instalátoru:", PAYLOAD);
+  console.log(`→ Balím ${PRODUCT.name} payload do vlastního instalátoru:`, PRODUCT.payload);
   await new Promise((resolve, reject) => {
     // `dir\\*` bez -r zachová správnou adresářovou strukturu.
-    const s = Seven.add(OUT_ARCHIVE, path.join(PAYLOAD, "*"), {
+    const s = Seven.add(OUT_ARCHIVE, path.join(PRODUCT.payload, "*"), {
       $bin: sevenBin.path7za,
       method: ["x=9"],
     });
@@ -64,17 +74,18 @@ async function main() {
   execFileSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
     [
-      "@electron/packager", ".", INSTALLER_NAME,
+      "@electron/packager", ".", PRODUCT.installerName,
       "--platform=win32", "--arch=x64",
       "--out=dist", "--overwrite",
       "--icon=assets/icon.ico",
       "--extra-resource=resources/app.7z",
       "--extra-resource=resources/7za.exe",
+      "--extra-resource=resources/product.json",
     ],
     { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
   );
 
-  const exe = path.join(ROOT, "dist", `${INSTALLER_NAME}-win32-x64`, `${INSTALLER_NAME}.exe`);
+  const exe = path.join(ROOT, "dist", `${PRODUCT.installerName}-win32-x64`, `${PRODUCT.installerName}.exe`);
   if (!fs.existsSync(exe)) {
     console.error(`✗ Vlastní installer.exe nebyl vytvořen: ${exe}`);
     process.exit(1);

@@ -11,11 +11,26 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
+const crypto = require("crypto");
+const { spawn } = require("child_process");
 const pinning = require("./pinning.cjs");
 
 const FEED_URL = process.env.STUDIOVOXARIO_UPDATE_FEED || null;
 const LEGACY_MANIFEST_URL = process.env.STUDIOVOXARIO_UPDATE_URL || "https://studiovoxario.com/desktop-version.json";
 const GITHUB_PUBLISH = { provider: "github", owner: "Sokolcz97-rgb", repo: "Voxar.app" };
+
+// The standalone VoxarioBrowser is a separate product and must never consume
+// Voxar.app's `latest.yml`.  electron-builder stores this flag in its packed
+// package metadata; the legacy `--browser` mode deliberately remains Voxar's
+// embedded module and continues using the Voxar feed.
+function isStandaloneBrowser() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(app.getAppPath(), "package.json"), "utf8"));
+    return pkg?.browserOnly === true;
+  } catch {
+    return false;
+  }
+}
 
 let checking = false;
 let installing = false;
@@ -51,10 +66,12 @@ const diagnostics = {
 };
 
 function normalizeChannel(channel = "stable") {
+  if (isStandaloneBrowser()) return "browser";
   return channel === "beta" ? "beta" : "latest";
 }
 
 function publicChannel(channel = "stable") {
+  if (isStandaloneBrowser()) return "browser";
   return channel === "beta" ? "beta" : "stable";
 }
 
@@ -429,12 +446,77 @@ async function installUpdateFromRenderer({ parentWindow = null, channel = "stabl
 }
 
 async function installVerified({ asset, version, parentWindow = null, label = "install" }) {
+  // Rollback points at a historical immutable release asset.  It cannot use
+  // checkForUpdates(): electron-updater correctly refuses downgrades.  Fetch
+  // that explicit asset only when the manifest supplies its SHA-256, verify it
+  // before execution, and let NSIS perform the normal in-place upgrade/downgrade.
+  if (asset?.installerUrl) {
+    if (!/^[a-f0-9]{64}$/i.test(String(asset.sha256 || ""))) {
+      return { status: "invalid-asset", error: "Rollback asset nemá platný SHA-256." };
+    }
+    const target = path.join(app.getPath("temp"), `StudioVoxario-rollback-${String(version || "unknown").replace(/[^\w.-]/g, "_")}.exe`);
+    try {
+      await downloadVerifiedAsset(asset.installerUrl, target, asset.sha256, asset.size);
+      const child = spawn(target, ["--updated"], { detached: true, windowsHide: false, stdio: "ignore" });
+      child.unref();
+      isQuittingForUpdate();
+      app.quit();
+      return { status: "installing", version, file: target };
+    } catch (error) {
+      const message = String(error?.message || error);
+      diagnostics.status = "error";
+      diagnostics.lastError = message;
+      log(`${label}: ověřený rollback selhal — ${message}`);
+      return { status: "error", error: message };
+    }
+  }
   const info = await checkForUpdatesQuiet({ channel: "stable" });
   if (info.available && (!version || info.remote === version)) {
     return downloadAndInstall({ parentWindow, channel: "stable", source: label });
   }
   log(`${label}: požadovaná verze není aktuální cíl feedu; bezpečný downgrade se neprovádí.`);
   return { status: "unsupported", version, asset };
+}
+
+function downloadVerifiedAsset(url, destination, expectedSha256, expectedSize, redirects = 0) {
+  if (redirects > 5) return Promise.reject(new Error("Příliš mnoho přesměrování rollback assetu."));
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith("https:") ? https : http;
+    const request = client.get(url, { headers: { "User-Agent": "StudioVoxario-Desktop", "Cache-Control": "no-cache" } }, (response) => {
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        response.resume();
+        return resolve(downloadVerifiedAsset(new URL(response.headers.location, url).toString(), destination, expectedSha256, expectedSize, redirects + 1));
+      }
+      if (response.statusCode !== 200) {
+        response.resume();
+        return reject(new Error(`Rollback download HTTP ${response.statusCode}`));
+      }
+      const declaredSize = Number(response.headers["content-length"] || 0);
+      if (expectedSize && declaredSize && Number(expectedSize) !== declaredSize) {
+        response.resume();
+        return reject(new Error("Rollback download má jinou deklarovanou velikost."));
+      }
+      const hash = crypto.createHash("sha256");
+      let received = 0;
+      const output = fs.createWriteStream(destination);
+      response.on("data", (chunk) => { received += chunk.length; hash.update(chunk); });
+      response.pipe(output);
+      output.on("error", (error) => { try { fs.rmSync(destination, { force: true }); } catch {} reject(error); });
+      output.on("finish", () => {
+        output.close(() => {
+          const actual = hash.digest("hex");
+          if ((expectedSize && Number(expectedSize) !== received) || actual.toLowerCase() !== String(expectedSha256).toLowerCase()) {
+            try { fs.rmSync(destination, { force: true }); } catch {}
+            reject(new Error("Rollback download neprošel ověřením integrity."));
+            return;
+          }
+          resolve();
+        });
+      });
+    });
+    request.setTimeout(30000, () => request.destroy(new Error("Rollback download timeout")));
+    request.on("error", reject);
+  });
 }
 
 function cancelActiveDownload() {

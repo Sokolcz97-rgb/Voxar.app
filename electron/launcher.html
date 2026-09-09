@@ -639,17 +639,22 @@
 
     // ---- Rozcestník modulů ----
     const chooser = $('chooser');
-    let modules = { browser: { installed: true, available: true }, protect: { installed: false, available: true } };
+    let modules = { browser: { installed: false, available: true }, protect: { installed: false, available: true } };
+    let products = {};
 
     async function refreshModules() {
       try {
         modules = await ipcRenderer.invoke('modules:state');
+        products = await ipcRenderer.invoke('products:state');
       } catch { return; }
       const browserGo = $('browserGo');
       const protectGo = $('protectGo');
       if (browserGo) {
-        browserGo.textContent = modules?.browser?.installed ? 'Spustit modul →' : 'Modul není aktivován · Aktivovat';
-        browserGo.style.color = modules?.browser?.installed ? '#94a3b8' : '#22d3ee';
+        const browser = products?.browser;
+        browserGo.textContent = browser?.installed
+          ? `Spustit VoxarioBrowser ${browser.version ? `v${browser.version}` : ''} →`
+          : 'VoxarioBrowser není nainstalovaný · Stáhnout instalátor';
+        browserGo.style.color = browser?.installed ? '#94a3b8' : '#22d3ee';
       }
       if (protectGo) protectGo.textContent = modules?.protect?.installed ? 'Otevřít ochranu' : 'Volitelný modul · Aktivovat';
     }
@@ -666,9 +671,23 @@
       c.addEventListener('click', async () => {
         const mod = c.getAttribute('data-module');
 
+        if (mod === 'browser') {
+          const browser = products?.browser;
+          if (!browser?.installed) {
+            $('status').textContent = 'Otevírám skutečný instalátor VoxarioBrowseru…';
+            const out = await ipcRenderer.invoke('products:download-installer', 'browser');
+            if (!out?.ok) $('status').textContent = 'Instalátor VoxarioBrowseru není momentálně dostupný.';
+            return;
+          }
+          $('status').textContent = `Spouštím VoxarioBrowser${browser.version ? ` v${browser.version}` : ''}…`;
+          const launched = await ipcRenderer.invoke('products:launch', 'browser');
+          if (!launched?.ok) $('status').textContent = 'VoxarioBrowser se nepodařilo spustit. Zkontrolujte instalaci.';
+          return;
+        }
+
         // Optional modules become active only after the user's explicit choice.
         // Their local payload is already bundled; activation never downloads or scans anything.
-        if ((mod === 'browser' || mod === 'protect') && !modules?.[mod]?.installed) {
+        if (mod === 'protect' && !modules?.[mod]?.installed) {
           $('status').textContent = mod === 'protect' ? 'Aktivuji VoxarioProtect…' : 'Aktivuji VoxarioBrowser…';
           const ind0 = $('indetBar'); if (ind0) ind0.style.display = '';
           const res = await ipcRenderer.invoke('modules:install', mod);

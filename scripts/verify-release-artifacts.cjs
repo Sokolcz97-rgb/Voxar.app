@@ -11,7 +11,8 @@ const crypto = require("crypto");
 
 const root = path.resolve(__dirname, "..");
 const version = process.argv[2] || require(path.join(root, "electron", "package.json")).version;
-const releaseDir = path.resolve(process.argv[3] || path.join(root, "electron", "release"));
+const product = process.argv[3] === "browser" ? "browser" : "app";
+const releaseDir = path.resolve(process.argv[product === "browser" ? 4 : 3] || path.join(root, "electron", "release", product === "browser" ? "browser" : ""));
 
 const fail = (m) => { console.error(`✗ ${m}`); process.exitCode = 1; };
 const ok = (m) => console.log(`✓ ${m}`);
@@ -25,12 +26,12 @@ const files = fs.readdirSync(releaseDir);
 console.log(`Release dir: ${releaseDir}`);
 console.log(files.map((f) => `  - ${f}`).join("\n"));
 
-const exeName = `StudioVoxarioUpdate-${version}.exe`;
+const exeName = product === "browser" ? `VoxarioBrowserUpdate-${version}.exe` : `StudioVoxarioUpdate-${version}.exe`;
 const exePath = path.join(releaseDir, exeName);
 if (!fs.existsSync(exePath)) fail(`chybí updater NSIS balíček ${exeName}`); else ok(`Updater NSIS balíček ${exeName}`);
 
 const isPrerelease = /-/.test(version);
-const ymlName = isPrerelease ? "beta.yml" : "latest.yml";
+const ymlName = product === "browser" ? "browser.yml" : (isPrerelease ? "beta.yml" : "latest.yml");
 const ymlPath = path.join(releaseDir, ymlName);
 if (!fs.existsSync(ymlPath)) {
   fail(`chybí ${ymlName} — electron-updater feed je nekompletní`);
