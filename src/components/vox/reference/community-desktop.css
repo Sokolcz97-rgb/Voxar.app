@@ -1,0 +1,56 @@
+/*
+ * StudioVoxario desktop community skin.
+ *
+ * This file is deliberately the sole layout entry point for AppShellReference.
+ * The first six files provide only primitive structure for the live React
+ * components. The final reference lock owns their visual dimensions and is
+ * loaded last, so feature CSS (events, RTMP, notifications and chat) cannot
+ * move the desktop frame out of alignment.
+ */
+@import "./community-structured-shell.css";
+@import "./community-structured-panels.css";
+@import "./community-channel-list.css";
+@import "./community-structured-settings.css";
+@import "./community-app-shell-v4.css";
+@import "./community-reference-pass-v16.css";
+@import "./community-final-reference-v29.css";
+
+/* The reference composition is calibrated for a 943 px desktop.  Windows
+ * laptops and high-DPI displays frequently leave the app with 720–820 px of
+ * usable height, so keep the same hierarchy while reducing only fixed vertical
+ * blocks.  The chat feed remains the flexible region; no data or controls are
+ * hidden. */
+@media (max-height: 820px) and (min-width: 801px) {
+  #voxar-community {
+    --chrome-height: 96px;
+    --workspace-gap: 7px;
+  }
+
+  #voxar-community .sv-workspace { padding-block: 6px 8px !important; }
+  #voxar-community .sv-workspace-center { top: -6px !important; height: calc(100% - 3px) !important; }
+  #voxar-community .sv-workspace-rail { top: -31px !important; height: calc(100% + 20px) !important; }
+  #voxar-community .sv-workspace-sidebar { height: calc(100% - 20px) !important; }
+  #voxar-community .sv-sidebar-slogan { top: -34px !important; }
+  #voxar-community .sv-community-hero { flex-basis: 112px !important; height: 112px !important; min-height: 112px !important; }
+  #voxar-community .sv-community-identity { padding: 11px 14px !important; gap: 4px !important; }
+  #voxar-community .sv-community-logo { width: 34px !important; height: 34px !important; }
+  #voxar-community .sv-community-name-row strong { font-size: 17px !important; }
+  #voxar-community .sv-sidebar-self { flex-basis: 72px !important; height: 72px !important; min-height: 72px !important; }
+  #voxar-community .vox-self-panel-row { min-height: 63px !important; height: 63px !important; }
+
+  #voxar-community .sv-channel-header { flex-basis: 58px !important; height: 58px !important; min-height: 58px !important; }
+  #voxar-community .sv-welcome { min-height: 136px !important; margin: 10px 14px 3px !important; }
+  #voxar-community .sv-welcome-copy { padding: 10px 16px !important; }
+  #voxar-community .sv-welcome-copy h2 { margin-top: 3px !important; font-size: 18px !important; }
+  #voxar-community .sv-welcome-actions { margin-top: 7px !important; }
+  #voxar-community .sv-welcome-actions button { height: 30px !important; }
+  #voxar-community .sv-message { min-height: 68px !important; padding-block: 7px !important; }
+  #voxar-community .sv-composer { flex-basis: 104px !important; height: 104px !important; min-height: 104px !important; padding: 12px 20px 7px 23px !important; }
+  #voxar-community .sv-composer-toolbar { margin-top: 7px !important; }
+
+  #voxar-community .sv-right-shell { grid-template-rows: 198px 123px minmax(0, 1fr) !important; gap: 8px !important; }
+  #voxar-community .sv-right-card { padding: 10px 11px !important; }
+  #voxar-community .sv-right-about > p { margin-bottom: 6px !important; }
+  #voxar-community .sv-right-signature { flex-basis: 58px !important; min-height: 58px !important; padding-block: 6px !important; }
+  #voxar-community .sv-utility-overlay { top: calc(var(--chrome-height) + 6px) !important; bottom: 10px !important; }
+}

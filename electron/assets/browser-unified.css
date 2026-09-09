@@ -1,6 +1,9 @@
 :root { --vb-bg:#020a12; --vb-panel:#061625; --vb-panel-hi:#08273a; --vb-line:rgba(38,214,246,.46); --vb-line-soft:rgba(85,163,190,.25); --vb-cyan:#29e2f7; --vb-blue:#64baff; --vb-violet:#a65cff; --vb-text:#d9eff8; --vb-muted:#8caec1; }
 * { box-sizing:border-box; scrollbar-color:rgba(41,219,245,.42) transparent; scrollbar-width:thin; }
-body { min-width:1080px; overflow:hidden; color:var(--vb-text); background:radial-gradient(circle at 70% -10%,rgba(26,114,170,.2),transparent 38%),#020a12; }
+/* The native window can be reduced to 900 px.  Keep the shell inside that
+   contract instead of forcing a wider document that is then clipped by the
+   viewport. */
+body { min-width:900px; overflow:hidden; color:var(--vb-text); background:radial-gradient(circle at 70% -10%,rgba(26,114,170,.2),transparent 38%),#020a12; }
 button,input,textarea,select { font:inherit; } button { cursor:pointer; } button:focus-visible,input:focus-visible,textarea:focus-visible { outline:2px solid var(--vb-cyan); outline-offset:2px; }
 .hud-cut { clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px); }
 .vb-icon,.dockico svg,[data-icon] svg { width:1.2em; height:1.2em; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
@@ -28,4 +31,33 @@ button,input,textarea,select { font:inherit; } button { cursor:pointer; } button
 
 /* Overlay panels and every settings section use the same spacious system. */
 .panel{background:radial-gradient(700px 420px at 70% 0,rgba(18,103,145,.12),transparent 60%),rgba(2,12,22,.985);padding:26px max(28px,5vw) 38px 140px}.panel h2{font-size:14px;color:var(--vb-cyan);letter-spacing:.24em}.panel .sub{font-size:12px}.compact-panel{padding:28px max(28px,8vw) 38px 140px}.setwrap{gap:22px}.setnav{width:218px;flex-basis:218px;gap:8px}.setnav button{padding:12px 14px;font-size:11px}.setbody{max-width:1120px;padding-right:14px}.card{padding:19px;margin-bottom:15px;border-color:rgba(50,181,214,.38);background:linear-gradient(145deg,rgba(7,34,52,.82),rgba(4,18,31,.9))}.card h3{font-size:12px;color:#9ce8f7}.opt{padding:12px 0}.opt .lbl{font-size:14px}.opt .dsc{font-size:12px}.pbtn{padding:9px 14px}.engines{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.eng{padding:11px 13px}.meters{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.inp{padding:9px 11px}.workspace-manager{max-width:1120px}.notes-text{max-width:1120px;min-height:360px}
-@media (max-width:1320px){.startpage.on{grid-template-columns:minmax(660px,1fr) 195px}.hero-search{right:245px}.quick-panel .dial{grid-template-columns:repeat(6,minmax(70px,1fr))}.start-lower{grid-template-columns:1fr 1fr}.start-lower .dashboard-card:last-child{display:none}}@media (max-width:1120px){.startpage{padding-left:112px}.startpage.on{grid-template-columns:1fr}.start-right{display:none}.hero-search{right:160px}.browser-hero blockquote,.hero-motto{display:none}.quick-panel{padding-right:16px}.quick-art{display:none}}
+@media (max-width:1320px){.startpage.on{grid-template-columns:minmax(660px,1fr) 195px}.hero-search{right:245px}.quick-panel .dial{grid-template-columns:repeat(6,minmax(70px,1fr))}.start-lower{grid-template-columns:1fr 1fr}.start-lower .dashboard-card:last-child{display:none}}
+@media (max-width:1120px){.startpage{padding-left:112px}.startpage.on{grid-template-columns:1fr}.start-right{display:none}.hero-search{right:160px}.browser-hero blockquote,.hero-motto{display:none}.quick-panel{padding-right:16px}.quick-art{display:none}}
+/* Compact mode is deliberately a layout change, not a page zoom.  Electron's
+   webview keeps its independent site zoom and all browser controls remain
+   usable down to the BrowserWindow minimum size. */
+@media (max-width:1000px){
+  .tabbar{height:45px;min-height:45px;padding:4px 105px 0 172px}
+  .window-brand{width:172px;padding-left:18px;font-size:14px}.window-brand img{width:27px;height:27px}
+  .tab{height:40px;min-width:132px;max-width:176px;padding:0 9px;font-size:11px}.newtab{height:39px;width:34px}
+  .wctl{height:40px}.wctl button{width:34px;height:40px}
+  .navbar{height:50px;min-height:50px;padding:5px 10px;gap:3px}.navbtn{width:34px;height:34px;flex-basis:34px;font-size:16px}
+  .urlwrap{height:36px;margin-left:5px;padding:0 9px}.avatar-button{width:36px;height:36px;flex-basis:36px}
+  .bookmark-shell{height:34px;min-height:34px;padding-left:88px}.bmbar{height:33px;min-height:33px;padding:3px 6px}.bmbar .chip{height:26px;font-size:10px}.sync-state{flex-basis:150px;padding-right:8px;font-size:10px}
+  .dock{top:95px;left:3px;width:78px;padding:7px 5px 9px}.dock .brand{width:66px;height:52px;flex-basis:52px}.dock .brand img{width:42px;height:42px}.dockbtn{width:66px;min-height:57px;height:57px;font-size:9px}.dockbtn .dockico{height:23px;font-size:20px}.dockbtn .dockico svg{width:20px;height:20px}.dock-mini{min-height:42px;height:42px;flex-basis:42px}
+  .viewport>webview{left:88px!important;width:calc(100% - 88px)!important}.startpage{padding:10px 10px 24px 91px}.browser-hero{height:326px;padding:22px 28px}.hero-copy{left:28px;top:110px}.hero-copy h1{font-size:36px}.hero-copy p{font-size:16px}.hero-search{left:28px;right:28px;top:198px;height:50px}.hero-search button{height:48px;width:50px}.hero-actions{left:28px;top:260px}.hero-actions button{height:33px;padding:0 11px;font-size:10px}.quick-panel{height:auto;min-height:192px;padding-left:12px}.quick-panel .dial{grid-template-columns:repeat(5,minmax(70px,1fr));grid-template-rows:repeat(2,62px)}.dialtile,.dialadd{height:62px}.start-lower{grid-template-columns:1fr}.start-lower .dashboard-card:last-child{display:block}.dashboard-card{min-height:190px}.panel,.compact-panel{padding-left:104px}.setnav{width:180px;flex-basis:180px}.findbar{top:50px;right:135px}.status{top:96px;left:96px}.prog{top:129px}
+}
+
+/* A short desktop window should retain the reference dashboard hierarchy
+   instead of showing only the hero.  These are fixed shell surfaces; the
+   actual page in each webview keeps its own dimensions and zoom. */
+@media (max-height:820px) and (min-width:1001px){
+  .tabbar{height:45px;min-height:45px;padding-top:3px}.tab{height:40px}.newtab{height:39px}.wctl,.wctl button{height:40px}
+  .navbar{height:50px;min-height:50px;padding-block:5px}.navbtn{height:36px}.urlwrap{height:38px}.avatar-button{height:38px}
+  .bookmark-shell{height:34px;min-height:34px}.bmbar{height:33px;min-height:33px;padding-block:3px}.prog{top:129px}.dock{top:95px}
+  .startpage{padding-top:8px;padding-bottom:18px}.start-main{gap:9px}.start-right{gap:9px}
+  .browser-hero{height:286px;padding:20px 34px}.hero-brand img{width:48px;height:48px}.hero-brand strong{font-size:16px}.hero-copy{left:34px;top:91px}.hero-copy h1{font-size:36px}.hero-copy p{font-size:16px;margin-top:5px}.browser-hero blockquote{top:20px;right:30px;font-size:11px}.hero-search{left:34px;right:320px;top:174px;height:50px}.hero-search button{height:48px;width:50px}.hero-actions{left:34px;top:237px}.hero-actions button{height:33px;padding-inline:13px;font-size:10px}.hero-motto{right:32px;bottom:22px;font-size:10px}
+  .quick-panel{height:174px;padding:11px 174px 10px 14px}.quick-panel .dial{grid-template-rows:repeat(2,55px);gap:6px;margin-top:4px}.dialtile,.dialadd{height:55px;padding:5px}.dialtile .ico,.dialtile .ico img{width:22px;height:22px}.dialtile .dt{font-size:9px}.quick-art{width:160px}
+  .start-lower{min-height:182px;gap:9px}.dashboard-card{min-height:182px;padding:10px}.dashboard-card>header{padding-bottom:6px}.mini-row{min-height:29px;padding-block:4px}.discover-item{min-height:46px;padding-block:4px}.discover-thumb{width:46px;height:34px}.start-right>section{min-height:0}.weather-card{height:124px;padding:12px 14px}.weather-main{margin-top:6px;gap:10px}.weather-main span{font-size:32px}.weather-main strong{font-size:23px}.quote-card{height:122px;padding:21px 16px;font-size:14px}.workspace-card{min-height:188px;padding:12px 10px}.workspace-row{min-height:35px;padding-block:4px}.promo-card{min-height:145px;padding:22px 16px 12px}
+  .panel{padding-top:18px;padding-bottom:24px}.compact-panel{padding-top:20px;padding-bottom:24px}.card{padding:14px;margin-bottom:10px}.setwrap{gap:14px}.setnav{gap:5px}.setnav button{padding:9px 11px}
+}

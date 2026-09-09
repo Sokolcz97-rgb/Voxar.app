@@ -138,6 +138,9 @@ const defaultSettings = {
   notifications: true,
   hardwareAcceleration: true,
   startMinimized: false,
+  // Poslední bezpečné rozměry nativních oken. Nikdy neukládáme údaje o
+  // uživateli ani obsah oken; jen lokální geometrii pro lepší Windows UX.
+  windowState: {},
   // Kanál aktualizací: "stable" = veřejný Release, "beta" = předběžné Alpha buildy.
   // Beta vyžaduje odemčení přístupovým kódem (viz `betaUnlocked`).
   updateChannel: "stable",
@@ -158,6 +161,72 @@ function saveSettings(s) {
 
 let settings = loadSettings();
 if (!settings.hardwareAcceleration) app.disableHardwareAcceleration();
+
+function isVisibleBounds(bounds) {
+  if (!bounds || ![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)) return false;
+  if (bounds.width < 240 || bounds.height < 180) return false;
+  try {
+    return screen.getAllDisplays().some(({ workArea }) =>
+      bounds.x < workArea.x + workArea.width && bounds.x + bounds.width > workArea.x &&
+      bounds.y < workArea.y + workArea.height && bounds.y + bounds.height > workArea.y,
+    );
+  } catch {
+    return false;
+  }
+}
+
+function savedWindowState(key) {
+  const value = settings.windowState?.[key];
+  return isVisibleBounds(value?.bounds) ? value : null;
+}
+
+function windowOptions(key, defaults) {
+  const saved = savedWindowState(key);
+  return saved ? { ...defaults, ...saved.bounds } : defaults;
+}
+
+function rememberWindowState(key, win) {
+  if (!win || win.isDestroyed()) return;
+  try {
+    const bounds = win.isMaximized() ? win.getNormalBounds() : win.getBounds();
+    if (!isVisibleBounds(bounds)) return;
+    settings = {
+      ...settings,
+      windowState: {
+        ...(settings.windowState || {}),
+        [key]: { bounds, maximized: win.isMaximized() },
+      },
+    };
+    saveSettings(settings);
+  } catch (error) {
+    startupLog(`Uložení velikosti okna ${key} selhalo`, error);
+  }
+}
+
+function restoreWindowState(key, win) {
+  const saved = savedWindowState(key);
+  if (!saved?.maximized || !win || win.isDestroyed()) return;
+  try { win.maximize(); } catch {}
+}
+
+function trackWindowState(key, win) {
+  let timer = null;
+  const schedule = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => rememberWindowState(key, win), 500);
+    timer.unref?.();
+  };
+  win.on("move", schedule);
+  win.on("resize", schedule);
+  win.on("maximize", schedule);
+  win.on("unmaximize", schedule);
+  win.on("close", () => {
+    if (timer) clearTimeout(timer);
+    rememberWindowState(key, win);
+  });
+  win.on("closed", () => { if (timer) clearTimeout(timer); });
+  win.once("ready-to-show", () => restoreWindowState(key, win));
+}
 
 // Single instance
 const gotLock = app.requestSingleInstanceLock();
@@ -323,7 +392,7 @@ async function loadMainTarget(targetUrl) {
 
 function createMainWindow(startUrl) {
   const targetUrl = startUrl || MODULE_URLS[pendingModule] || APP_URL;
-  mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow(windowOptions("main", {
     width: 1400,
     height: 900,
     minWidth: 900,
@@ -346,7 +415,8 @@ function createMainWindow(startUrl) {
       devTools: !app.isPackaged,
       webSecurity: true,
     },
-  });
+  }));
+  trackWindowState("main", mainWindow);
   startupLog(`Hlavní okno vytvořeno (${targetUrl})`);
 
   // Načítáme vždy čerstvou verzi (jinak Electron drží starý HTML/JS v cache
@@ -698,12 +768,13 @@ function createProtectWindow() {
     revealWindow(protectWindow);
     return protectWindow;
   }
-  protectWindow = new BrowserWindow({
+  protectWindow = new BrowserWindow(windowOptions("protect", {
     width: 1060, height: 720, minWidth: 840, minHeight: 580, show: false,
     autoHideMenuBar: true, backgroundColor: "#03111b", title: "VoxarioProtect",
     icon: path.join(__dirname, "assets", "icon.png"),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
-  });
+  }));
+  trackWindowState("protect", protectWindow);
   protectWindow.loadFile(path.join(__dirname, "protect.html"));
   protectWindow.once("ready-to-show", () => revealWindow(protectWindow));
   protectWindow.on("closed", () => { protectWindow = null; });
@@ -1172,7 +1243,7 @@ function createBrowserWindow() {
     revealWindow(browserWindow);
     return browserWindow;
   }
-  browserWindow = new BrowserWindow({
+  browserWindow = new BrowserWindow(windowOptions("browser", {
     width: 1536,
     height: 864,
     minWidth: 900,
@@ -1189,7 +1260,8 @@ function createBrowserWindow() {
       backgroundThrottling: true,
       spellcheck: false,
     },
-  });
+  }));
+  trackWindowState("browser", browserWindow);
   startupLog("Okno VoxarioBrowseru vytvořeno");
   browserWindow.loadFile(path.join(__dirname, "browser.html")).catch((error) => {
     startupLog("VoxarioBrowser se nepodařilo načíst", error);
@@ -1399,7 +1471,7 @@ function createLauncher() {
     revealWindow(launcherWindow);
     return launcherWindow;
   }
-  launcherWindow = new BrowserWindow({
+  launcherWindow = new BrowserWindow(windowOptions("launcher", {
     width: 1080,
     height: 680,
     minWidth: 920,
@@ -1412,7 +1484,8 @@ function createLauncher() {
       contextIsolation: false,
       nodeIntegration: true,
     },
-  });
+  }));
+  trackWindowState("launcher", launcherWindow);
   startupLog("Launcher vytvořen");
   launcherWindow.loadFile(path.join(__dirname, "launcher.html")).catch((error) => {
     startupLog("Launcher se nepodařilo načíst", error);
@@ -1469,8 +1542,12 @@ async function runLauncherSequence() {
   setLauncherStatus("Vyberte modul");
   try {
     launcherWindow?.setMinimumSize(920, 560);
-    launcherWindow?.setSize(1080, 680);
-    launcherWindow?.center();
+    // Při prvním spuštění zachováme vyváženou výchozí velikost. Později už
+    // nesmíme přepsat uživatelovu uloženou pozici nebo maximalizovaný stav.
+    if (!savedWindowState("launcher")) {
+      launcherWindow?.setSize(1080, 680);
+      launcherWindow?.center();
+    }
   } catch {}
   sendLauncherChoose();
 
