@@ -20,6 +20,8 @@
     "verify:renderer": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.html'))throw Error('Missing electron/dist/index.html')\"",
     "dist:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish never",
     "release:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish always",
+    "dist:browser:win": "npm run verify:renderer && electron-builder --config browser-builder.json --win nsis --x64 --publish never",
+    "release:browser:win": "npm run verify:renderer && electron-builder --config browser-builder.json --win nsis --x64 --publish always",
     "pack:win": "npm run verify:renderer && @electron/packager . Voxar.app --platform=win32 --arch=x64 --out=release --overwrite --asar --icon=assets/icon.ico --ignore=^/release",
     "pack:linux": "npm run verify:renderer && @electron/packager . Voxar.app --platform=linux --arch=x64 --out=release --overwrite --asar --ignore=^/release"
   },
@@ -42,6 +44,7 @@
       "pinning.cjs",
       "bookmarks.cjs",
       "browser-settings.cjs",
+      "products.cjs",
       "browser.html",
       "launcher.html",
       "protect.html",

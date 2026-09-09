@@ -33,3 +33,79 @@ jobs:
 
       - name: Build web app
         run: npm run build
+
+  windows-desktop-distribution:
+    name: Windows desktop distribution (no publish)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Clean install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Clean install Electron dependencies
+        working-directory: electron
+        run: npm ci --no-audit --no-fund
+
+      - name: Clean install custom installer dependencies
+        working-directory: installer
+        run: npm ci --no-audit --no-fund
+
+      - name: Prepare packaged renderer
+        run: npm run desktop:prepare
+
+      - name: Verify desktop syntax and product registry
+        shell: pwsh
+        run: |
+          node --check electron/main.cjs
+          node --check electron/updater.cjs
+          node --check electron/rollback.cjs
+          node --check electron/products.cjs
+          node --check installer/main.cjs
+          node --check installer/build.cjs
+          node -e "const p=require('./electron/products.cjs'); const x=p.productDefinitions(); if(x.app.executable===x.browser.executable || x.app.downloadUrl===x.browser.downloadUrl) throw Error('Product registry is not independent'); console.log('Product registry is independent.')"
+          node -e "const fs=require('fs'); const config=JSON.parse(fs.readFileSync('electron/browser-builder.json')); const publish=config.publish?.[0]; if(config.productName!=='VoxarioBrowser'||config.appId==='com.studiovoxario.voxarapp'||publish?.channel!=='browser') throw Error('Invalid Browser product/update-channel metadata'); console.log('Browser product metadata and update channel are valid.')"
+
+      - name: Build Voxar.app update payload without publishing
+        working-directory: electron
+        run: npm run dist:win
+
+      - name: Build VoxarioBrowser update payload without publishing
+        working-directory: electron
+        run: npm run dist:browser:win
+
+      - name: Build StudioVoxario HUD installers
+        working-directory: installer
+        run: |
+          node build.cjs
+          node build.cjs --product=browser
+
+      - name: Verify Windows artifacts and product metadata
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = node -p "require('./electron/package.json').version"
+          $required = @(
+            'electron/release/win-unpacked/Voxar.app.exe',
+            'electron/release/win-unpacked/resources/app-update.yml',
+            'electron/release/browser/win-unpacked/VoxarioBrowser.exe',
+            'electron/release/browser/win-unpacked/resources/app-update.yml',
+            'installer/dist/StudioVoxarioInstaller-win32-x64/StudioVoxarioInstaller.exe',
+            'installer/dist/VoxarioBrowserInstaller-win32-x64/VoxarioBrowserInstaller.exe'
+          )
+          foreach ($file in $required) { if (!(Test-Path $file)) { throw "Missing expected artifact: $file" } }
+          if (!(Select-String -Path 'electron/release/browser/win-unpacked/resources/app-update.yml' -Pattern 'channel: browser' -Quiet)) { throw 'Browser updater channel is missing' }
+          node scripts/verify-release-artifacts.cjs $version
+          node scripts/verify-release-artifacts.cjs $version browser
+          Write-Host 'All non-publishing Windows distribution artifacts are valid.'

@@ -1,0 +1,7 @@
+provider: github
+owner: Sokolcz97-rgb
+repo: Voxar.app
+# A separate cache avoids collisions between two independently installable
+# Electron products which share the same GitHub release.
+updaterCacheDirName: voxario-browser-updater
+channel: browser

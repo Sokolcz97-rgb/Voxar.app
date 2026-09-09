@@ -1,0 +1,40 @@
+{
+  "appId": "com.studiovoxario.voxariobrowser",
+  "productName": "VoxarioBrowser",
+  "copyright": "Copyright © StudioVoxario",
+  "directories": { "output": "release/browser", "buildResources": "assets" },
+  "files": [
+    "bootstrap.cjs", "rtmp.cjs", "main.cjs", "preload.cjs", "settings-preload.cjs",
+    "updater.cjs", "rollback.cjs", "pinning.cjs", "bookmarks.cjs", "browser-settings.cjs",
+    "products.cjs", "browser.html", "launcher.html", "protect.html", "settings.html",
+    "package.json", "assets/**/*", "dist/**/*", "node_modules/**/*"
+  ],
+  "extraResources": [{ "from": "browser-app-update.yml", "to": "app-update.yml" }],
+  "extraMetadata": { "name": "voxario-browser", "productName": "VoxarioBrowser", "browserOnly": true },
+  "asar": true,
+  "asarUnpack": ["node_modules/ffmpeg-static/**/*"],
+  "compression": "maximum",
+  "generateUpdatesFilesForAllChannels": true,
+  "publish": [{ "provider": "github", "owner": "Sokolcz97-rgb", "repo": "Voxar.app", "releaseType": "draft", "channel": "browser" }],
+  "win": {
+    "target": [{ "target": "nsis", "arch": ["x64"] }],
+    "icon": "assets/icon.ico",
+    "artifactName": "VoxarioBrowserUpdate-${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": true,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": false,
+    "createStartMenuShortcut": false,
+    "shortcutName": "VoxarioBrowser",
+    "menuCategory": "StudioVoxario",
+    "runAfterFinish": false,
+    "deleteAppDataOnUninstall": false,
+    "differentialPackage": false,
+    "installerIcon": "assets/icon.ico",
+    "uninstallerIcon": "assets/icon.ico",
+    "uninstallDisplayName": "StudioVoxario (VoxarioBrowser)"
+  }
+}

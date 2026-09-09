@@ -152,7 +152,7 @@ async function performRollback({ manifest, parentWindow, reason, installVerified
     detail:
       (reason ? `Důvod: ${reason}\n\n` : "") +
       `Chcete stáhnout a nainstalovat naposledy funkční verzi ${target}?\n\n` +
-      `Instalátor bude ověřen kontrolním součtem SHA-256 i digitálním podpisem.`,
+      `Instalátor bude před spuštěním ověřen kontrolním součtem SHA-256.`,
     buttons: [`Vrátit na ${target}`, "Ne, zůstat"],
     defaultId: 0,
     cancelId: 1,

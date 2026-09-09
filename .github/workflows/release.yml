@@ -140,6 +140,22 @@ jobs:
           echo "Packaged updater config:"
           cat electron/release/win-unpacked/resources/app-update.yml
 
+      # VoxarioBrowser is a separate product: its executable, updater cache,
+      # update channel and release asset must never be shared with Voxar.app.
+      - name: Build & publish VoxarioBrowser update payload
+        working-directory: electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EP_GH_IGNORE_TIME: 'true'
+        run: npm run release:browser:win
+
+      - name: Verify VoxarioBrowser updater payload
+        shell: bash
+        run: |
+          node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}" browser
+          test -f electron/release/browser/win-unpacked/resources/app-update.yml
+          grep -q 'channel: browser' electron/release/browser/win-unpacked/resources/app-update.yml
+
       # ---------------- VLASTNÍ VISIBLE INSTALLER ----------------
       # Zachovává původní StudioVoxario HUD/Electron UI. Je to primární .exe,
       # které se nabízí na webu. Payload bere z electron-builder win-unpacked,
@@ -163,6 +179,41 @@ jobs:
       - name: Build custom StudioVoxario HUD installer runtime
         working-directory: installer
         run: node build.cjs
+
+      - name: Build custom VoxarioBrowser installer runtime
+        working-directory: installer
+        run: node build.cjs --product=browser
+
+      - name: Build single-file VoxarioBrowser Setup EXE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ steps.appver.outputs.version }}"
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
+          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $extraDir = Join-Path $env:RUNNER_TEMP "lzma-sdk-browser"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
+          if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
+          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
+          & $sevenZip x $extraArchive "-o$extraDir" -y
+          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
+          $sfx = Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1
+          if ($null -eq $sfx) { throw "7zSD.sfx not found" }
+          $payloadDir = Resolve-Path "installer/dist/VoxarioBrowserInstaller-win32-x64"
+          $installerExe = Join-Path $payloadDir "VoxarioBrowserInstaller.exe"
+          if (!(Test-Path $installerExe)) { throw "Custom Browser installer runtime missing: $installerExe" }
+          $archive = Join-Path $env:RUNNER_TEMP "voxariobrowser-custom-installer.7z"
+          if (Test-Path $archive) { Remove-Item $archive -Force }
+          Push-Location $payloadDir
+          try { & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"; if ($LASTEXITCODE -ne 0) { throw "7z pack failed" } } finally { Pop-Location }
+          $cfg = Join-Path $env:RUNNER_TEMP "voxariobrowser-sfx-config.txt"
+          $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+          [System.IO.File]::WriteAllText($cfg, (';!@Install@!UTF-8!','Title="VoxarioBrowser"','RunProgram="VoxarioBrowserInstaller.exe"','GUIMode="2"',';!@InstallEnd@!' -join "`r`n") + "`r`n", $utf8Bom)
+          $outFile = "electron/release/browser/VoxarioBrowserSetup-$version.exe"
+          $out = [System.IO.File]::Open($outFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+          try { foreach ($part in @($sfx.FullName, $cfg, $archive)) { $stream = [System.IO.File]::OpenRead($part); try { $stream.CopyTo($out) } finally { $stream.Dispose() } } } finally { $out.Dispose() }
+          if (!(Test-Path $outFile)) { throw "Browser Setup EXE was not created" }
 
       - name: Build single-file custom Setup EXE
         shell: pwsh
@@ -244,6 +295,19 @@ jobs:
           cp "$FILE" "$STABLE_FILE"
           gh release upload "v$VERSION" "$STABLE_FILE" --clobber --repo "${{ github.repository }}"
 
+      - name: Upload VoxarioBrowser Setup to version release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.appver.outputs.version }}"
+          FILE="electron/release/browser/VoxarioBrowserSetup-$VERSION.exe"
+          STABLE_FILE="electron/release/browser/VoxarioBrowserSetup.exe"
+          test -f "$FILE"
+          cp "$FILE" "$STABLE_FILE"
+          gh release upload "v$VERSION" "$FILE" "$STABLE_FILE" --clobber --repo "${{ github.repository }}"
+
       - name: Verify custom + updater artifacts
         shell: bash
         run: |
@@ -252,6 +316,9 @@ jobs:
           test -f "electron/release/StudioVoxarioSetup-$VERSION.exe"
           test -f "electron/release/StudioVoxarioSetup.exe"
           test -f "electron/release/StudioVoxarioUpdate-$VERSION.exe"
+          test -f "electron/release/browser/VoxarioBrowserUpdate-$VERSION.exe"
+          test -f "electron/release/browser/VoxarioBrowserSetup-$VERSION.exe"
+          test -f "electron/release/browser/browser.yml"
           test -f electron/release/latest.yml
           echo "✓ Custom visible setup + stable web alias + hidden updater payload are present"
 
@@ -266,6 +333,10 @@ jobs:
             electron/release/latest.yml
             electron/release/*.blockmap
             electron/release/win-unpacked/resources/app-update.yml
+            electron/release/browser/VoxarioBrowserSetup-*.exe
+            electron/release/browser/VoxarioBrowserSetup.exe
+            electron/release/browser/VoxarioBrowserUpdate-*.exe
+            electron/release/browser/browser.yml
           if-no-files-found: error
 
       # electron-builder vytváří release nejdřív jako draft. `/releases/latest`
@@ -289,13 +360,15 @@ jobs:
             exit 1
           fi
 
-          DOWNLOAD_URL="https://github.com/$REPO/releases/latest/download/StudioVoxarioSetup.exe"
-          STATUS=$(curl --head --location --silent --show-error --output /dev/null --write-out '%{http_code}' "$DOWNLOAD_URL")
-          if [ "$STATUS" != "200" ]; then
-            echo "Stable installer URL returned HTTP $STATUS"
-            exit 1
-          fi
-          echo "✓ $TAG is public, complete and downloadable through the stable URL"
+          for FILE in StudioVoxarioSetup.exe VoxarioBrowserSetup.exe; do
+            DOWNLOAD_URL="https://github.com/$REPO/releases/latest/download/$FILE"
+            STATUS=$(curl --head --location --silent --show-error --output /dev/null --write-out '%{http_code}' "$DOWNLOAD_URL")
+            if [ "$STATUS" != "200" ]; then
+              echo "Stable installer URL for $FILE returned HTTP $STATUS"
+              exit 1
+            fi
+          done
+          echo "✓ $TAG is public, complete and both stable installers are downloadable"
 
       # desktop-version.json + website pointer odkazují na VLASTNÍ Setup EXE.
       # public/latest.yml + public/beta.yml jsou migrační feed pro staré klienty

@@ -21,6 +21,7 @@ const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelA
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
 const browserSettings = require("./browser-settings.cjs");
+const { inspectProducts, launchProduct } = require("./products.cjs");
 const { registerRtmpHandlers, stopProcesses: stopRtmpProcesses } = require("./rtmp.cjs");
 browserSettings.applyHardwareAcceleration();
 
@@ -36,13 +37,15 @@ const MODULE_URLS = { app: APP_URL, hub: HUB_URL };
 const LOCAL_RENDERER = path.join(__dirname, "dist", "index.html");
 let pendingModule = "app";
 
-// Samostatná instalace VoxarioBrowseru: product.json vedle exe (nebo --browser)
-// znamená, že se má rovnou otevřít nativní prohlížeč, bez rozcestníku.
+// Samostatná instalace VoxarioBrowseru: metadata v zabalené aplikaci (nebo
+// --browser ve starém společném balíčku) znamenají, že se má rovnou otevřít
+// nativní prohlížeč, bez rozcestníku.
 const BROWSER_ONLY = (() => {
   if (process.argv.slice(1).some((a) => a === "--browser")) return true;
   for (const p of [
     path.join(path.dirname(process.execPath), "product.json"),
     path.join(__dirname, "product.json"),
+    path.join(__dirname, "package.json"),
   ]) {
     try {
       if (fs.existsSync(p)) return !!JSON.parse(fs.readFileSync(p, "utf8")).browserOnly;
@@ -50,6 +53,14 @@ const BROWSER_ONLY = (() => {
   }
   return false;
 })();
+
+function getInstalledProducts() {
+  return inspectProducts({
+    currentExecutable: app.isPackaged ? process.execPath : null,
+    currentVersion: app.getVersion(),
+    browserOnly: BROWSER_ONLY,
+  });
+}
 
 // -------- Moduly (VoxarioBrowser) --------
 // Instalátor zapíše `modules.json` vedle exe. Když modul chybí, rozcestník
@@ -84,17 +95,20 @@ function readModulesState() {
 }
 
 function writeModulesState(state) {
+  // VOXARIO_MODULE_STATE_DURABLE_V1: stav zapisujeme vedle exe i do userData, aby přežil NSIS update.
+  let wrote = false;
   let lastErr = null;
   for (const p of modulesPathCandidates()) {
     try {
+      fs.mkdirSync(path.dirname(p), { recursive: true });
       fs.writeFileSync(p, JSON.stringify(state, null, 2));
-      return true;
+      wrote = true;
     } catch (e) {
       lastErr = e;
     }
   }
-  console.error("modules.json zápis selhal", lastErr);
-  return false;
+  if (!wrote) console.error("modules.json zápis selhal", lastErr);
+  return wrote;
 }
 
 // Engine prohlížeče je součástí balíčku (browser.html) — pokud existuje,
@@ -371,6 +385,30 @@ async function showRendererFailure(targetUrl, remoteError, localError) {
 }
 
 async function loadMainTarget(targetUrl) {
+  // STUDIO_HUB_LOCAL_RENDERER_V1: HUB načítáme vždy z verze zabalené v desktop aktualizaci.
+  // Tím webový deploy/cache nemůže vrátit starý dvojitý výběr modulů.
+  if (targetUrl === HUB_URL) {
+    if (!fs.existsSync(LOCAL_RENDERER)) {
+      await showRendererFailure(
+        targetUrl,
+        new Error("StudioVoxario Hub používá zabalený desktop renderer"),
+        new Error("dist/index.html není součástí balíčku")
+      );
+      return false;
+    }
+    try {
+      await mainWindow.loadFile(LOCAL_RENDERER, { hash: localRouteFor(targetUrl) });
+      return true;
+    } catch (localError) {
+      await showRendererFailure(
+        targetUrl,
+        new Error("StudioVoxario Hub používá zabalený desktop renderer"),
+        localError
+      );
+      return false;
+    }
+  }
+
   try {
     await mainWindow.loadURL(targetUrl, { extraHeaders: "pragma: no-cache\nCache-Control: no-cache\n" });
     return true;
@@ -992,6 +1030,30 @@ ipcMain.handle("launcher:recheck", () =>
 ipcMain.handle("launcher:cancel-download", () => cancelActiveDownload());
 ipcMain.handle("launcher:pins", () => getPinState());
 ipcMain.handle("launcher:pins-reset", () => resetPinState());
+// Product registry is deliberately separate from the legacy in-payload module
+// state.  The launcher can therefore launch a genuinely installed Browser EXE
+// rather than merely opening a second window in Voxar.app.
+ipcMain.handle("products:state", () => getInstalledProducts());
+ipcMain.handle("products:launch", (_e, id) => {
+  const product = getInstalledProducts()[id];
+  if (!product) return { ok: false, error: "Neznámý produkt" };
+  if (!product.installed) return { ok: false, needsInstall: true, product };
+  if ((id === "app" && !BROWSER_ONLY) || (id === "browser" && BROWSER_ONLY)) {
+    return { ok: true, alreadyRunning: true, product };
+  }
+  const result = launchProduct(product);
+  if (result.ok && id === "browser") {
+    try { launcherWindow?.close(); } catch {}
+    launcherWindow = null;
+  }
+  return result;
+});
+ipcMain.handle("products:download-installer", (_e, id) => {
+  const product = getInstalledProducts()[id];
+  if (!product?.downloadUrl) return { ok: false, error: "Instalátor produktu není nakonfigurován" };
+  shell.openExternal(product.downloadUrl);
+  return { ok: true, url: product.downloadUrl };
+});
 ipcMain.handle("launcher:open-logs", () => {
   try {
     const p = path.join(app.getPath("userData"), "launcher-diagnostics.json");
@@ -1045,6 +1107,15 @@ ipcMain.handle("launcher:continue", (_e, payload) => {
     return { ok: true };
   }
   if (mod === "browser") {
+    const standaloneBrowser = getInstalledProducts().browser;
+    if (standaloneBrowser.installed && !BROWSER_ONLY) {
+      const launched = launchProduct(standaloneBrowser);
+      if (launched.ok) {
+        try { launcherWindow?.close(); } catch {}
+        launcherWindow = null;
+      }
+      return launched;
+    }
     const info = getModulesInfo();
     if (!info.browser.installed) {
       if (!info.browser.available) {
@@ -1103,6 +1174,8 @@ ipcMain.handle("app:open-module", (_e, mod) => {
     return { ok: true };
   }
   if (key === "browser") {
+    const standaloneBrowser = getInstalledProducts().browser;
+    if (standaloneBrowser.installed && !BROWSER_ONLY) return launchProduct(standaloneBrowser);
     const info = getModulesInfo();
     if (!info.browser.installed) {
       if (!info.browser.available) {
