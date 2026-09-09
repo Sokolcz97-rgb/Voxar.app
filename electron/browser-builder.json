@@ -15,7 +15,7 @@
   "asarUnpack": ["node_modules/ffmpeg-static/**/*"],
   "compression": "maximum",
   "generateUpdatesFilesForAllChannels": true,
-  "publish": [{ "provider": "github", "owner": "Sokolcz97-rgb", "repo": "Voxar.app", "releaseType": "draft" }],
+  "publish": [{ "provider": "github", "owner": "Sokolcz97-rgb", "repo": "Voxar.app", "releaseType": "draft", "channel": "browser" }],
   "win": {
     "target": [{ "target": "nsis", "arch": ["x64"] }],
     "icon": "assets/icon.ico",

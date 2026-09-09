@@ -75,7 +75,7 @@ jobs:
           node --check installer/main.cjs
           node --check installer/build.cjs
           node -e "const p=require('./electron/products.cjs'); const x=p.productDefinitions(); if(x.app.executable===x.browser.executable || x.app.downloadUrl===x.browser.downloadUrl) throw Error('Product registry is not independent'); console.log('Product registry is independent.')"
-          node -e "const fs=require('fs'); const config=JSON.parse(fs.readFileSync('electron/browser-builder.json')); if(config.productName!=='VoxarioBrowser'||config.appId==='com.studiovoxario.voxarapp') throw Error('Invalid Browser product metadata'); console.log('Browser metadata is valid.')"
+          node -e "const fs=require('fs'); const config=JSON.parse(fs.readFileSync('electron/browser-builder.json')); const publish=config.publish?.[0]; if(config.productName!=='VoxarioBrowser'||config.appId==='com.studiovoxario.voxarapp'||publish?.channel!=='browser') throw Error('Invalid Browser product/update-channel metadata'); console.log('Browser product metadata and update channel are valid.')"
 
       - name: Build Voxar.app update payload without publishing
         working-directory: electron
