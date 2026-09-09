@@ -6,7 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
+  generateWithVoxarioBrowserAI,
+  interruptVoxarioBrowserAI,
+  supportsVoxarioBrowserAI,
+} from "@/lib/voxarioBrowserRuntime";
+import {
   Bot,
+  Cpu,
   Loader2,
   MessageSquare,
   Pencil,
@@ -33,9 +39,16 @@ type ChatMessage = {
   created_at: string;
 };
 
+type AiRuntimeMode = "auto" | "local" | "engine" | "compat";
+type ResolvedAiRuntimeMode = Exclude<AiRuntimeMode, "auto">;
+
 const db = supabase as any;
 const ENGINE_URL = (import.meta.env.VITE_VOXARIO_AI_API_URL as string | undefined)?.replace(/\/$/, "");
 const FALLBACK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-helper`;
+const RUNTIME_STORAGE_KEY = "voxario-ai-runtime";
+
+const isRuntimeMode = (value: string | null): value is AiRuntimeMode =>
+  value === "auto" || value === "local" || value === "engine" || value === "compat";
 
 const AI = () => {
   const { user, session } = useAuth();
@@ -46,8 +59,31 @@ const AI = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [localProgress, setLocalProgress] = useState("");
+  const [runtimeMode, setRuntimeMode] = useState<AiRuntimeMode>(() => {
+    if (typeof window === "undefined") return "auto";
+    const saved = window.localStorage.getItem(RUNTIME_STORAGE_KEY);
+    return isRuntimeMode(saved) ? saved : "auto";
+  });
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const webGpuAvailable = useMemo(() => supportsVoxarioBrowserAI(), []);
+
+  const resolvedMode: ResolvedAiRuntimeMode = useMemo(() => {
+    if (runtimeMode === "local") {
+      if (webGpuAvailable) return "local";
+      return ENGINE_URL ? "engine" : "compat";
+    }
+    if (runtimeMode === "engine") return ENGINE_URL ? "engine" : "compat";
+    if (runtimeMode === "compat") return "compat";
+    return ENGINE_URL ? "engine" : "compat";
+  }, [runtimeMode, webGpuAvailable]);
+
+  const runtimeLabel = useMemo(() => {
+    if (resolvedMode === "local") return "Voxario Local · WebGPU";
+    if (resolvedMode === "engine") return "Voxario AI Engine";
+    return "StudioVoxario AI · kompatibilní režim";
+  }, [resolvedMode]);
 
   const filteredConversations = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -99,14 +135,36 @@ const AI = () => {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, localProgress]);
+
+  const changeRuntimeMode = (mode: AiRuntimeMode) => {
+    if (mode === "local" && !webGpuAvailable) {
+      toast({
+        title: "WebGPU není dostupné",
+        description: "Voxario Local potřebuje prohlížeč a grafiku s podporou WebGPU.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (mode === "engine" && !ENGINE_URL) {
+      toast({
+        title: "Voxario AI Engine zatím není nasazený",
+        description: "Nejdřív musíme nastavit produkční URL enginu.",
+      });
+      return;
+    }
+    setRuntimeMode(mode);
+    setLocalProgress("");
+    window.localStorage.setItem(RUNTIME_STORAGE_KEY, mode);
+  };
 
   const createConversation = async (seed?: string) => {
     if (!user) return null;
     const title = seed?.trim() ? seed.trim().slice(0, 64) : "Nový chat";
+    const model = resolvedMode === "local" ? "voxario-local" : resolvedMode === "engine" ? "voxario-engine" : "voxario-compat";
     const { data, error } = await db
       .from("ai_conversations")
-      .insert({ user_id: user.id, title, model: "voxario-auto" })
+      .insert({ user_id: user.id, title, model })
       .select("id,title,model,created_at,updated_at")
       .single();
     if (error || !data) {
@@ -122,7 +180,9 @@ const AI = () => {
 
   const newChat = async () => {
     abortRef.current?.abort();
+    void interruptVoxarioBrowserAI();
     setLoading(false);
+    setLocalProgress("");
     setInput("");
     setActiveId(null);
     setMessages([]);
@@ -154,7 +214,22 @@ const AI = () => {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    if (ENGINE_URL) {
+    if (resolvedMode === "local") {
+      return generateWithVoxarioBrowserAI(
+        nextMessages
+          .filter((message) => message.role === "user" || message.role === "assistant")
+          .map((message) => ({ role: message.role as "user" | "assistant", content: message.content })),
+        (progress) => {
+          const percent =
+            typeof progress.progress === "number" && progress.progress >= 0 && progress.progress < 1
+              ? ` ${Math.round(progress.progress * 100)} %`
+              : "";
+          setLocalProgress(`${progress.text}${percent}`);
+        },
+      );
+    }
+
+    if (resolvedMode === "engine" && ENGINE_URL) {
       const response = await fetch(`${ENGINE_URL}/v1/chat`, {
         method: "POST",
         headers: {
@@ -177,8 +252,8 @@ const AI = () => {
       },
       body: JSON.stringify({
         messages: nextMessages
-          .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role, content: m.content })),
+          .filter((message) => message.role === "user" || message.role === "assistant")
+          .map((message) => ({ role: message.role, content: message.content })),
       }),
       signal: controller.signal,
     });
@@ -191,6 +266,7 @@ const AI = () => {
     const text = input.trim();
     if (!text || loading || !user) return;
     setLoading(true);
+    setLocalProgress(resolvedMode === "local" ? "Připravuji Voxario Local…" : "");
     setInput("");
 
     try {
@@ -241,12 +317,16 @@ const AI = () => {
         console.error(error);
         toast({
           title: "Voxario AI neodpovědělo",
-          description: "Zkus to prosím znovu. Připojení k AI enginu může být ještě nedostupné.",
+          description:
+            resolvedMode === "local"
+              ? "Lokální model se nepodařilo načíst nebo spustit. Zkontroluj podporu WebGPU a volnou grafickou paměť."
+              : "Zkus to prosím znovu. Připojení k AI enginu může být ještě nedostupné.",
           variant: "destructive",
         });
       }
     } finally {
       abortRef.current = null;
+      setLocalProgress("");
       setLoading(false);
     }
   };
@@ -254,6 +334,8 @@ const AI = () => {
   const stop = () => {
     abortRef.current?.abort();
     abortRef.current = null;
+    void interruptVoxarioBrowserAI();
+    setLocalProgress("");
     setLoading(false);
   };
 
@@ -274,7 +356,7 @@ const AI = () => {
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Hledat v chatech"
                   className="w-full h-10 pl-9 pr-3 bg-background/50 border border-border/70 text-sm outline-none focus:border-primary/60"
                 />
@@ -308,8 +390,8 @@ const AI = () => {
           </aside>
 
           <section className={`${sidebarOpen ? "hidden lg:flex" : "flex"} flex-1 min-w-0 flex-col`}>
-            <header className="h-14 px-3 sm:px-5 border-b border-border/60 flex items-center gap-3 bg-background/20">
-              <button onClick={() => setSidebarOpen((v) => !v)} className="lg:hidden p-2 border border-border/60 text-muted-foreground hover:text-primary" aria-label="Chaty">
+            <header className="min-h-14 px-3 sm:px-5 py-2 border-b border-border/60 flex items-center gap-3 bg-background/20">
+              <button onClick={() => setSidebarOpen((value) => !value)} className="lg:hidden p-2 border border-border/60 text-muted-foreground hover:text-primary" aria-label="Chaty">
                 <MessageSquare className="h-4 w-4" />
               </button>
               <div className="relative">
@@ -318,9 +400,22 @@ const AI = () => {
               </div>
               <div className="min-w-0">
                 <div className="font-display font-bold tracking-wide truncate">Voxario AI</div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {ENGINE_URL ? "Voxario AI Engine" : "StudioVoxario AI · kompatibilní režim"}
-                </div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{runtimeLabel}</div>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                {resolvedMode === "local" && <Cpu className="h-4 w-4 text-primary hidden sm:block" />}
+                <select
+                  value={runtimeMode}
+                  onChange={(event) => changeRuntimeMode(event.target.value as AiRuntimeMode)}
+                  disabled={loading}
+                  aria-label="AI runtime"
+                  className="h-9 max-w-[11rem] bg-background/60 border border-border/70 px-2 text-xs outline-none focus:border-primary/60"
+                >
+                  <option value="auto">Automaticky</option>
+                  <option value="local" disabled={!webGpuAvailable}>Voxario Local</option>
+                  <option value="engine" disabled={!ENGINE_URL}>Voxario Engine</option>
+                  <option value="compat">Kompatibilní</option>
+                </select>
               </div>
             </header>
 
@@ -329,12 +424,17 @@ const AI = () => {
                 <div className="min-h-[55vh] flex items-center justify-center">
                   <div className="max-w-xl text-center">
                     <div className="mx-auto mb-5 h-16 w-16 web-panel web-panel-accent flex items-center justify-center">
-                      <Bot className="h-7 w-7 text-primary" />
+                      {resolvedMode === "local" ? <Cpu className="h-7 w-7 text-primary" /> : <Bot className="h-7 w-7 text-primary" />}
                     </div>
                     <h1 className="font-display font-black text-2xl sm:text-3xl web-title-metal">Voxario AI</h1>
                     <p className="mt-3 text-sm sm:text-base text-muted-foreground web-copy">
                       Tvůj AI prostor přímo ve StudioVoxario. Chaty se ukládají k tvému účtu a jsou dostupné po dalším přihlášení.
                     </p>
+                    {resolvedMode === "local" && (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Lokální režim počítá odpovědi přímo na tvém zařízení. Při prvním použití se stáhne bootstrap model do cache prohlížeče; žádné AI tokeny se neúčtují.
+                      </p>
+                    )}
                     <div className="grid sm:grid-cols-3 gap-2 mt-6">
                       {["Pomoz mi s kódem", "Poradíš mi se serverem?", "Vysvětli mi něco krok za krokem"].map((text) => (
                         <button key={text} onClick={() => setInput(text)} className="web-panel p-3 text-xs text-left hover:border-primary/50 transition-colors">
@@ -346,7 +446,7 @@ const AI = () => {
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto space-y-5">
-                  {messages.filter((m) => m.role === "user" || m.role === "assistant").map((message) => (
+                  {messages.filter((message) => message.role === "user" || message.role === "assistant").map((message) => (
                     <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[92%] sm:max-w-[82%] px-4 py-3 text-sm leading-relaxed ${message.role === "user" ? "bg-primary text-primary-foreground web-cut" : "web-panel"}`}>
                         {message.role === "assistant" ? <Markdown content={message.content} /> : <p className="whitespace-pre-wrap break-words">{message.content}</p>}
@@ -356,7 +456,8 @@ const AI = () => {
                   {loading && (
                     <div className="flex justify-start">
                       <div className="web-panel px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" /> Voxario přemýšlí…
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <span>{resolvedMode === "local" && localProgress ? localProgress : "Voxario přemýšlí…"}</span>
                       </div>
                     </div>
                   )}
@@ -370,10 +471,10 @@ const AI = () => {
                 <div className="web-panel p-2 flex items-end gap-2">
                   <textarea
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
                         void send();
                       }
                     }}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "runtime": "webllm",
+  "channel": "bootstrap",
+  "displayName": "Voxario Local Bootstrap",
+  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "ownModel": false,
+  "targetOwnModelId": "Voxario-Mini-v0.1-q4f16_1-MLC",
+  "notes": "Bootstrap model only. The browser runtime is intentionally model-neutral so this can be replaced by the first StudioVoxario-owned model without rewriting the chat UI."
+}
