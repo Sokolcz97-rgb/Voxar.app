@@ -12,6 +12,7 @@ import { useNavPages } from "@/hooks/usePages";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  Bot,
   LogOut,
   Shield,
   User as UserIcon,
@@ -119,6 +120,7 @@ export function Navbar() {
 
   const secondaryNav: NavItem[] = user
     ? [
+        { to: "/ai", label: "Voxario AI", icon: Bot, primary: true },
         { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
         { to: "/desktop", label: "Ke stažení", icon: Download },
       ]
@@ -145,14 +147,12 @@ export function Navbar() {
   return (
     <header className="web-nav sticky top-0 z-50">
       <div className="container flex h-16 items-center gap-1 lg:gap-2">
-        {/* Brand */}
         <Link to="/" className="flex items-center gap-1.5 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
           <span className="font-display font-black text-base sm:text-lg tracking-[0.12em] uppercase text-primary">
             {settings.site_name || "StudioVoxario"}
           </span>
         </Link>
 
-        {/* Desktop links */}
         <nav className="hidden md:flex items-center gap-0 ml-0.5 lg:ml-1 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
           {primaryNav.map((item, idx) => (
             <Link
@@ -200,6 +200,17 @@ export function Navbar() {
           </button>
 
           <div className="hidden sm:flex items-center gap-1">
+            {user && (
+              <Link
+                to="/ai"
+                data-active={isActive("/ai")}
+                className={cn(navLinkBase, "relative text-primary")}
+                aria-label="Voxario AI"
+              >
+                <span className="hidden xl:inline">Voxario AI</span>
+                <Bot className="h-4 w-4 xl:hidden" />
+              </Link>
+            )}
             <Link
               to="/desktop"
               data-active={isActive("/desktop")}
@@ -215,7 +226,6 @@ export function Navbar() {
             <LanguageSwitcher />
           </div>
 
-          {/* Account */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -281,7 +291,6 @@ export function Navbar() {
             </Button>
           )}
 
-          {/* Mobile hamburger */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden min-h-11 min-w-11" aria-label="Menu">
@@ -340,5 +349,4 @@ export function Navbar() {
       <BackgroundRemoverDialog open={bgRemoverOpen} onOpenChange={setBgRemoverOpen} />
     </header>
   );
-
 }
