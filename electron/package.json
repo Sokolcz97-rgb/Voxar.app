@@ -45,6 +45,8 @@
       "bookmarks.cjs",
       "browser-settings.cjs",
       "products.cjs",
+      "protect-background.cjs",
+      "protect-trust-engine.cjs",
       "browser.html",
       "launcher.html",
       "protect.html",
