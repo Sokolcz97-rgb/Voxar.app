@@ -120,7 +120,7 @@ export function Navbar() {
 
   const secondaryNav: NavItem[] = user
     ? [
-        { to: "/ai", label: "Voxario AI", icon: Bot, primary: true },
+        ...(isAdmin ? [{ to: "/ai", label: "Voxario AI", icon: Bot, primary: true }] : []),
         { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
         { to: "/desktop", label: "Ke stažení", icon: Download },
       ]
@@ -200,7 +200,7 @@ export function Navbar() {
           </button>
 
           <div className="hidden sm:flex items-center gap-1">
-            {user && (
+            {isAdmin && (
               <Link
                 to="/ai"
                 data-active={isActive("/ai")}
