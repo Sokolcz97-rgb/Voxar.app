@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-let state = { dir: "", channel: "stable", desktopShortcut: true, mode: "install", browserOnly: false, components: { app: true, browser: true } };
+let state = { dir: "", channel: "stable", desktopShortcut: true, startShortcut: true, mode: "install", browserOnly: false, components: { app: true, browser: true } };
 let operationRunning = false;
 
 async function boot() {
@@ -17,6 +17,8 @@ async function boot() {
   state.productId = d.productId || "app";
   state.browserOnly = !!d.browserOnly;
   $("verLbl").textContent = d.version;
+  $("versionWelcome").textContent = `v${d.version}`;
+  $("requiredSpace").textContent = d.requiredBytes ? `${Math.ceil(d.requiredBytes / 1024 / 1024)} MB` : "zjistí se při instalaci";
   $("pathInput").value = state.dir;
   if (d.browserOnly) {
     state.components = { app: false, browser: true };
@@ -51,6 +53,7 @@ async function boot() {
     if (picked) { state.dir = picked; $("pathInput").value = picked; }
   });
   $("chkDesktop").addEventListener("change", (e) => (state.desktopShortcut = e.target.checked));
+  $("chkStart").addEventListener("change", (e) => (state.startShortcut = e.target.checked));
 
   // Komponenty
   const syncComponents = () => {
@@ -68,18 +71,13 @@ async function boot() {
   $("chkApp").addEventListener("change", syncComponents);
   $("chkBrowser").addEventListener("change", syncComponents);
 
-  qsa('input[name="channel"]').forEach((r) =>
-    r.addEventListener("change", () => {
-      state.channel = r.value;
-      qsa('.panel[data-step="channel"] .card').forEach((c) => c.classList.remove("selected"));
-      r.closest(".card").classList.add("selected");
-    }),
-  );
+  qsa('input[name="channel"]').forEach((r) => r.addEventListener("change", () => { state.channel = r.value; }));
 
   $("startBtn").addEventListener("click", startInstall);
+  $("detailsBtn").addEventListener("click", () => { $("logBox").hidden = !$("logBox").hidden; $("detailsBtn").textContent = $("logBox").hidden ? "Podrobnosti instalace" : "Skrýt podrobnosti"; });
   $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: d.browserOnly ? "browser" : "app" }));
   $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
-  $("closeBtn").addEventListener("click", () => window.installer.close());
+  $("closeBtn").addEventListener("click", () => { if ($("launchAfter").checked) window.installer.launch({ dir: state.dir, target: d.browserOnly ? "browser" : "app" }); else window.installer.close(); });
   $("btnMin").addEventListener("click", () => window.installer.minimize?.());
   $("btnClose").addEventListener("click", () => { if (!operationRunning) window.installer.close(); });
   $("uninCancel").addEventListener("click", () => window.installer.close());

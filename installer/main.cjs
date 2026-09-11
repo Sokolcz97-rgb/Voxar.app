@@ -84,6 +84,7 @@ ipcMain.handle("installer:defaults", () => ({
   productId: PRODUCT.id,
   browserOnly: !!PRODUCT.browserOnly,
   version: app.getVersion(),
+  requiredBytes: payloadSize(),
   defaultDir: isUninstall ? uninstallTarget : DEFAULT_DIR,
   mode: isUninstall ? "uninstall" : "install",
 }));
@@ -123,6 +124,7 @@ ipcMain.handle("installer:install", async (_e, opts) => {
   const dir = opts?.dir || DEFAULT_DIR;
   const channel = opts?.channel === "beta" ? "beta" : "stable";
   const createDesktopShortcut = opts?.desktopShortcut !== false;
+  const createStartShortcut = opts?.startShortcut !== false;
   const components = PRODUCT.browserOnly
     ? { app: false, browser: true }
     : { app: opts?.components?.app !== false, browser: !!opts?.components?.browser };
@@ -152,9 +154,13 @@ ipcMain.handle("installer:install", async (_e, opts) => {
 
   // 1b) modules.json — launcher podle něj pozná, jestli je modul prohlížeče
   //     nainstalovaný (a případně nabídne doinstalování).
-  if (!PRODUCT.browserOnly) writeJson(path.join(dir, "modules.json"), {
-    browser: { installed: !!components.browser, installedAt: components.browser ? new Date().toISOString() : null },
-  });
+  if (!PRODUCT.browserOnly) {
+    const existing = readJson(path.join(dir, "modules.json"));
+    writeJson(path.join(dir, "modules.json"), {
+      ...existing,
+      browser: { ...(existing.browser || {}), installed: !!components.browser, installedAt: components.browser ? new Date().toISOString() : null },
+    });
+  }
 
   // 2) Zapsat channel.json.
   writeJson(path.join(dir, "channel.json"), { channel, chosenAt: new Date().toISOString() });
@@ -162,7 +168,7 @@ ipcMain.handle("installer:install", async (_e, opts) => {
   // 3) Zkratky — selhání nesmí shodit instalaci.
   send("progress", { phase: "shortcuts", pct: 0.9 });
   try {
-    await createShortcuts(dir, createDesktopShortcut, components);
+    await createShortcuts(dir, createDesktopShortcut, createStartShortcut, components);
   } catch (err) {
     send("log", `! Zkratky se nepodařilo vytvořit: ${err?.message || err}`);
   }
@@ -183,7 +189,7 @@ ipcMain.handle("installer:install", async (_e, opts) => {
     version: app.getVersion(),
     installedAt: new Date().toISOString(),
     installDir: dir,
-    desktopShortcut: createDesktopShortcut,
+    desktopShortcut: createDesktopShortcut, startShortcut: createStartShortcut,
     components,
     product: PRODUCT.id,
   });
@@ -215,6 +221,14 @@ function writeJson(file, data) {
   } catch (err) {
     send("log", `! ${path.basename(file)} se nepodařilo zapsat: ${err?.message || err}`);
   }
+}
+
+function readJson(file) {
+  try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return {}; }
+}
+
+function payloadSize() {
+  try { return fs.statSync(path.join(process.resourcesPath || __dirname, "app.7z")).size; } catch { return 0; }
 }
 
 function assertSafeInstallDir(dir) {
@@ -311,22 +325,22 @@ function getRunnableSevenZipBinary() {
   return found;
 }
 
-function createShortcuts(dir, desktop, components) {
+function createShortcuts(dir, desktop, start, components) {
   const exe = path.join(dir, APP_EXE);
   const startMenu = path.join(process.env.APPDATA || os.homedir(), "Microsoft", "Windows", "Start Menu", "Programs", APP_NAME);
-  fs.mkdirSync(startMenu, { recursive: true });
+  if (start) fs.mkdirSync(startMenu, { recursive: true });
   const desktopDir = path.join(os.homedir(), "Desktop");
 
   const tasks = [];
   if (PRODUCT.browserOnly) {
-    tasks.push({ path: path.join(startMenu, `${BROWSER_NAME}.lnk`), args: "", desc: `Otevřít ${BROWSER_NAME}` });
+    if (start) tasks.push({ path: path.join(startMenu, `${BROWSER_NAME}.lnk`), args: "", desc: `Otevřít ${BROWSER_NAME}` });
     if (desktop) tasks.push({ path: path.join(desktopDir, `${BROWSER_NAME}.lnk`), args: "", desc: `Otevřít ${BROWSER_NAME}` });
   } else if (components.app) {
-    tasks.push({ path: path.join(startMenu, `${APP_NAME}.lnk`), args: "", desc: `Otevřít ${APP_NAME}` });
+    if (start) tasks.push({ path: path.join(startMenu, `${APP_NAME}.lnk`), args: "", desc: `Otevřít ${APP_NAME}` });
     if (desktop) tasks.push({ path: path.join(desktopDir, `${APP_NAME}.lnk`), args: "", desc: `Otevřít ${APP_NAME}` });
   }
   if (components.browser) {
-    tasks.push({ path: path.join(startMenu, `${BROWSER_NAME}.lnk`), args: "--browser", desc: `Otevřít ${BROWSER_NAME}` });
+    if (start) tasks.push({ path: path.join(startMenu, `${BROWSER_NAME}.lnk`), args: "--browser", desc: `Otevřít ${BROWSER_NAME}` });
     if (desktop) tasks.push({ path: path.join(desktopDir, `${BROWSER_NAME}.lnk`), args: "--browser", desc: `Otevřít ${BROWSER_NAME}` });
   }
 

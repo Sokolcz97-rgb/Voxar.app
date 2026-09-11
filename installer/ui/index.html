@@ -18,7 +18,7 @@
     <!-- Sidebar / HUD brand -->
     <aside class="side">
       <div class="brand">
-        <div class="logo" aria-hidden="true"><span>SV</span></div>
+        <div class="logo" aria-label="Voxario V"><span>V</span></div>
         <div class="brand-text">
           <div class="brand-name">Voxar.app</div>
           <div class="brand-sub" id="brandSub">Instalátor</div>
@@ -28,8 +28,6 @@
         <li data-step="welcome" class="active">Vítejte</li>
         <li data-step="components">Komponenty</li>
         <li data-step="location">Umístění</li>
-
-        <li data-step="channel">Kanál</li>
         <li data-step="install">Instalace</li>
         <li data-step="done">Hotovo</li>
       </ol>
@@ -41,7 +39,8 @@
       <!-- Welcome -->
       <section class="panel active" data-step="welcome">
         <h1>Vítejte v Voxar.app</h1>
-        <p class="muted">Samostatný instalátor StudioVoxario s vlastním rozhraním. Nejde o klasický NSIS průvodce; aplikace se nainstaluje jen pro tento účet Windows.</p>
+        <p class="muted">Samostatný StudioVoxario Installer s vlastním futuristickým rozhraním. Instalace chrání existující data, nastavení i moduly.</p>
+        <div class="install-summary"><span>VERZE <b id="versionWelcome">--</b></span><span>POTŘEBNÉ MÍSTO <b id="requiredSpace">Zjišťuji</b></span></div>
         <ul class="bullets">
           <li>Jeden instalátor pro Voxar.app i VoxarioBrowser</li>
           <li>Bez potřeby administrátorských práv</li>
@@ -87,31 +86,11 @@
           <input type="checkbox" id="chkDesktop" checked />
           <span>Vytvořit zástupce na ploše</span>
         </label>
+        <label class="check"><input type="checkbox" id="chkStart" checked /><span>Vytvořit zástupce v nabídce Start</span></label>
+        <div class="channel-inline"><span>AKTUALIZAČNÍ KANÁL</span><label><input type="radio" name="channel" value="stable" checked /> Stable</label><label><input type="radio" name="channel" value="beta" /> Beta</label></div>
         <div class="actions">
           <button class="btn ghost" data-next="components">Zpět</button>
 
-          <button class="btn primary" data-next="channel">Pokračovat</button>
-        </div>
-      </section>
-
-      <!-- Channel -->
-      <section class="panel" data-step="channel">
-        <h1>Kanál aktualizací</h1>
-        <p class="muted">Zvolte, jaké verze budete dostávat. Kanál lze později přepnout v launcheru.</p>
-        <div class="cards">
-          <label class="card selected">
-            <input type="radio" name="channel" value="stable" checked />
-            <div class="card-title">Stable <span class="tag">doporučeno</span></div>
-            <div class="card-desc">Ověřené vydané verze. Bez rizika experimentálních chyb.</div>
-          </label>
-          <label class="card">
-            <input type="radio" name="channel" value="beta" />
-            <div class="card-title">Beta <span class="tag warn">test</span></div>
-            <div class="card-desc">Nejnovější Alpha buildy. Vyžaduje beta přístupový kód (odemknete přímo v aplikaci).</div>
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn ghost" data-next="location">Zpět</button>
           <button class="btn primary" id="startBtn">Nainstalovat</button>
         </div>
       </section>
@@ -124,7 +103,7 @@
           <span id="progLabel">Připravuji…</span>
           <span id="progPct">0 %</span>
         </div>
-        <pre class="log" id="logBox"></pre>
+        <button class="details" id="detailsBtn" type="button">Podrobnosti instalace</button><pre class="log" id="logBox" hidden></pre>
       </section>
 
       <!-- Done -->
@@ -132,7 +111,7 @@
         <h1 id="doneTitle">Instalace dokončena</h1>
         <p class="muted" id="doneMsg">Voxar.app je připraveno k použití.</p>
         <div class="actions">
-          <button class="btn ghost" id="closeBtn">Zavřít</button>
+          <label class="check"><input type="checkbox" id="launchAfter" checked /><span>Spustit po zavření instalátoru</span></label><button class="btn ghost" id="closeBtn">Zavřít</button>
           <button class="btn" id="launchBrowserBtn" style="display:none;">Spustit prohlížeč</button>
           <button class="btn primary" id="launchBtn">Spustit aplikaci</button>
 
