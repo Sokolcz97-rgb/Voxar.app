@@ -63,16 +63,49 @@ function publicProtectPreferences() {
 }
 
 function protectSettingsInjection(prefs) {
+  const previousTab =
+    document.querySelector("#voxarioProtectTabs .vp24-tab.active")?.dataset.tab ||
+    document.body.dataset.voxarioProtectTab ||
+    "overview";
+
+  document.getElementById("voxarioProtectTabs")?.remove();
   document.getElementById("voxarioProtectSettingsV23")?.remove();
   document.getElementById("voxarioProtectSettingsV23Style")?.remove();
+  document.getElementById("voxarioProtectTabsStyle")?.remove();
+
   const layout = document.querySelector(".layout");
-  if (!layout) return;
+  const header = document.querySelector(".topbar");
+  if (!layout || !header) return;
+
+  const basePanels = Array.from(layout.children).filter((node) =>
+    node instanceof HTMLElement &&
+    (node.matches("section.panel") || node.matches("aside.panel")) &&
+    node.id !== "voxarioProtectSettingsV23"
+  );
+  const panelTabs = ["overview", "overview", "files", "system", "events", "system"];
+  basePanels.forEach((panel, index) => {
+    panel.dataset.vpTabPanel = panelTabs[index] || "overview";
+  });
+
+  const tabs = document.createElement("nav");
+  tabs.id = "voxarioProtectTabs";
+  tabs.className = "vp24-tabs";
+  tabs.setAttribute("aria-label", "Kategorie VoxarioProtect");
+  tabs.innerHTML = `
+    <button class="vp24-tab" type="button" data-tab="overview">Přehled</button>
+    <button class="vp24-tab" type="button" data-tab="files">Soubory</button>
+    <button class="vp24-tab" type="button" data-tab="system">Systém</button>
+    <button class="vp24-tab" type="button" data-tab="events">Události</button>
+    <button class="vp24-tab" type="button" data-tab="settings">Nastavení</button>
+  `;
+  header.insertAdjacentElement("afterend", tabs);
 
   const section = document.createElement("section");
   section.id = "voxarioProtectSettingsV23";
   section.className = "panel wide";
+  section.dataset.vpTabPanel = "settings";
   section.innerHTML = `
-    <div class="panel-title"><span>NASTAVENÍ VOXARIOPROTECT v2.3</span><span class="muted">LOKÁLNÍ PREFERENCE</span></div>
+    <div class="panel-title"><span>NASTAVENÍ VOXARIOPROTECT</span><span class="muted">LOKÁLNÍ PREFERENCE</span></div>
     <div class="vp23-grid">
       <div class="vp23-card vp23-profile-card">
         <small>INTENZITA OCHRANY</small>
@@ -103,8 +136,39 @@ function protectSettingsInjection(prefs) {
     @media(max-width:700px){.vp23-grid{grid-template-columns:1fr}.vp23-profile-card{grid-column:1}}
   `;
   document.head.appendChild(style);
+
+  const tabsStyle = document.createElement("style");
+  tabsStyle.id = "voxarioProtectTabsStyle";
+  tabsStyle.textContent = `
+    .vp24-tabs{position:sticky;top:73px;z-index:4;display:flex;align-items:center;gap:4px;padding:0 22px;min-height:48px;overflow-x:auto;border-bottom:1px solid rgba(89,231,185,.2);background:rgba(2,13,22,.94);backdrop-filter:blur(14px);scrollbar-width:thin}
+    .vp24-tab{position:relative;min-height:47px;padding:0 17px;border:0;border-bottom:2px solid transparent;background:transparent;color:#7fa7aa;font:750 11px/1 ui-monospace,Consolas,monospace;letter-spacing:.08em;white-space:nowrap}
+    .vp24-tab:hover{color:#c7eee4;background:rgba(75,205,170,.05)}
+    .vp24-tab.active{color:#7df3bc;border-bottom-color:#62efad;background:linear-gradient(180deg,rgba(54,203,148,.05),rgba(54,203,148,.13))}
+    [data-vp-tab-panel][hidden]{display:none!important}
+    @media(max-width:900px){.vp24-tabs{top:73px;padding:0 12px}.vp24-tab{padding:0 13px}}
+  `;
+  document.head.appendChild(tabsStyle);
+
   const footer = layout.querySelector(".foot");
   layout.insertBefore(section, footer || null);
+
+  const activateTab = (name) => {
+    const valid = ["overview", "files", "system", "events", "settings"].includes(name) ? name : "overview";
+    document.body.dataset.voxarioProtectTab = valid;
+    document.querySelectorAll("[data-vp-tab-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.vpTabPanel !== valid;
+    });
+    document.querySelectorAll("#voxarioProtectTabs .vp24-tab").forEach((button) => {
+      const active = button.dataset.tab === valid;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-current", active ? "page" : "false");
+    });
+    layout.scrollIntoView({ block: "start" });
+  };
+
+  tabs.querySelectorAll(".vp24-tab").forEach((button) => {
+    button.addEventListener("click", () => activateTab(button.dataset.tab || "overview"));
+  });
 
   const profileHints = {
     eco: "Úsporný: stav Defenderu přibližně po 15 min, automatický SHA-256 do 32 MB. Nejnižší režie.",
@@ -123,6 +187,7 @@ function protectSettingsInjection(prefs) {
 
   function setPatch(patch) {
     try {
+      document.body.dataset.voxarioProtectTab = "settings";
       console.log("__VOXARIO_PROTECT_PREF__" + JSON.stringify(patch));
       flashSaved();
     } catch {
@@ -130,26 +195,26 @@ function protectSettingsInjection(prefs) {
     }
   }
 
-  function render(prefs) {
+  function render(currentPrefs) {
     const profiles = document.getElementById("vp23Profiles");
     profiles.innerHTML = "";
-    (prefs.profiles || []).forEach((profile) => {
+    (currentPrefs.profiles || []).forEach((profile) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "vp23-profile" + (prefs.profile === profile.id ? " active" : "");
+      b.className = "vp23-profile" + (currentPrefs.profile === profile.id ? " active" : "");
       b.textContent = profile.label;
       b.title = "Kontrola stavu: " + profile.defenderRefreshMinutes + " min · SHA-256 do " + profile.maxAutoHashMb + " MB";
       b.onclick = () => setPatch({ profile: profile.id });
       profiles.appendChild(b);
     });
-    const active = (prefs.profiles || []).find((p) => p.id === prefs.profile);
-    document.getElementById("vp23ProfileLabel").textContent = active?.label || prefs.profile;
-    document.getElementById("vp23ProfileHint").textContent = profileHints[prefs.profile] || profileHints.balanced;
-    document.getElementById("vp23Minimize").checked = prefs.minimizeToTray !== false;
-    document.getElementById("vp23CloseTray").checked = prefs.closeAction !== "close";
-    document.getElementById("vp23Startup").checked = prefs.startWithWindows !== false;
-    document.getElementById("vp23Notifications").checked = prefs.notifications !== false;
-    document.getElementById("vp23Downloads").checked = prefs.monitorDownloads !== false;
+    const active = (currentPrefs.profiles || []).find((p) => p.id === currentPrefs.profile);
+    document.getElementById("vp23ProfileLabel").textContent = active?.label || currentPrefs.profile;
+    document.getElementById("vp23ProfileHint").textContent = profileHints[currentPrefs.profile] || profileHints.balanced;
+    document.getElementById("vp23Minimize").checked = currentPrefs.minimizeToTray !== false;
+    document.getElementById("vp23CloseTray").checked = currentPrefs.closeAction !== "close";
+    document.getElementById("vp23Startup").checked = currentPrefs.startWithWindows !== false;
+    document.getElementById("vp23Notifications").checked = currentPrefs.notifications !== false;
+    document.getElementById("vp23Downloads").checked = currentPrefs.monitorDownloads !== false;
   }
 
   document.getElementById("vp23Minimize").onchange = (e) => setPatch({ minimizeToTray: e.target.checked });
@@ -159,6 +224,7 @@ function protectSettingsInjection(prefs) {
   document.getElementById("vp23Downloads").onchange = (e) => setPatch({ monitorDownloads: e.target.checked });
 
   render(prefs);
+  activateTab(previousTab);
 }
 
 function injectProtectSettings(win) {
