@@ -5,162 +5,585 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VoxarioProtect</title>
   <style>
-    :root { color-scheme: dark; font-family: Inter, "Segoe UI", system-ui, sans-serif; background: #020d16; color: #e8f8fb; }
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background: #020d16;
+      color: #e8f8fb;
+      --ok: #62efad;
+      --ok-2: #3cc59a;
+      --warn: #f5c76a;
+      --bad: #fb7185;
+      --muted: #83a9a9;
+      --panel: rgba(4, 27, 39, .94);
+      --line: rgba(84, 204, 184, .24);
+    }
     * { box-sizing: border-box; }
-    body { min-height: 100vh; margin: 0; overflow-x: hidden; background: radial-gradient(circle at 85% 0%, rgba(53, 188, 143, .18), transparent 26%), radial-gradient(circle at 7% 87%, rgba(15, 162, 204, .13), transparent 30%), linear-gradient(135deg, #020d16, #041b29 54%, #06152a); }
-    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .42; background-image: linear-gradient(rgba(92, 238, 195, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(92, 238, 195, .035) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(#000, transparent 80%); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(53, 188, 143, .18), transparent 26%),
+        radial-gradient(circle at 7% 87%, rgba(15, 162, 204, .13), transparent 30%),
+        linear-gradient(135deg, #020d16, #041b29 54%, #06152a);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        linear-gradient(rgba(92, 238, 195, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(92, 238, 195, .035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(#000, transparent 80%);
+    }
     button { font: inherit; cursor: pointer; }
     button:focus-visible { outline: 2px solid #85ffca; outline-offset: 3px; }
-    .topbar { position: relative; z-index: 1; min-width: 0; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px clamp(16px, 4vw, 52px); border-bottom: 1px solid rgba(89, 231, 185, .23); background: rgba(2, 13, 22, .72); }
-    .identity { display: flex; align-items: center; gap: 13px; }
-    .mark { width: 42px; height: 42px; display: grid; place-items: center; color: #62efad; font-size: 23px; border: 1px solid rgba(102, 242, 180, .68); background: linear-gradient(145deg, #073124, #061b25); clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%); box-shadow: inset 0 0 18px rgba(78, 237, 169, .15), 0 0 18px rgba(78, 237, 169, .13); }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 15px clamp(16px, 4vw, 52px);
+      border-bottom: 1px solid rgba(89, 231, 185, .23);
+      background: rgba(2, 13, 22, .88);
+      backdrop-filter: blur(18px);
+    }
+    .identity { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .mark {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      color: var(--ok);
+      font-size: 23px;
+      border: 1px solid rgba(102, 242, 180, .68);
+      background: linear-gradient(145deg, #073124, #061b25);
+      clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%);
+      box-shadow: inset 0 0 18px rgba(78, 237, 169, .15), 0 0 18px rgba(78, 237, 169, .13);
+    }
     .eyebrow { margin: 0 0 3px; color: #78ddbf; font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .19em; }
     h1 { margin: 0; font-size: clamp(19px, 2vw, 25px); letter-spacing: -.03em; }
-    h1 b { color: #65f0b2; }
-    .mode { display: inline-flex; align-items: center; gap: 8px; color: #9ec5c1; font: 700 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .1em; }
-    .mode i { width: 7px; height: 7px; border-radius: 50%; background: #67efad; box-shadow: 0 0 12px #67efad; }
-    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 16px; width: min(1240px, 100%); margin: 0 auto; padding: clamp(16px, 3vw, 40px); }
-    .hero, .panel, .side { min-width: 0; } .hero, .panel { border: 1px solid rgba(84, 204, 184, .29); background: linear-gradient(145deg, rgba(5, 34, 46, .95), rgba(2, 16, 28, .95)); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
-    .hero { position: relative; min-height: 0; display: flex; flex-direction: column; padding: clamp(22px, 4vw, 48px); overflow: hidden; }
-    .hero::after { content: ""; position: absolute; width: 430px; height: 430px; right: -150px; bottom: -200px; border: 1px solid rgba(99, 239, 177, .2); border-radius: 50%; box-shadow: 0 0 0 35px rgba(99, 239, 177, .025), 0 0 0 70px rgba(99, 239, 177, .018); pointer-events: none; }
+    h1 b { color: var(--ok); }
+    .mode { display: inline-flex; align-items: center; gap: 8px; color: #9ec5c1; font: 700 10px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .1em; white-space: nowrap; }
+    .mode i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 12px var(--ok); }
+    .mode.warn i { background: var(--warn); box-shadow: 0 0 12px var(--warn); }
+
+    .layout {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(340px, .82fr);
+      gap: 16px;
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 40px);
+    }
+    .stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(5, 34, 46, .96), rgba(2, 16, 28, .96));
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+      padding: 19px;
+    }
+    .hero {
+      position: relative;
+      min-height: 300px;
+      padding: clamp(24px, 4vw, 46px);
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 430px;
+      height: 430px;
+      right: -150px;
+      bottom: -210px;
+      border: 1px solid rgba(99, 239, 177, .2);
+      border-radius: 50%;
+      box-shadow: 0 0 0 35px rgba(99, 239, 177, .025), 0 0 0 70px rgba(99, 239, 177, .018);
+      pointer-events: none;
+    }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
     .badge { width: fit-content; padding: 6px 9px; border: 1px solid rgba(90, 238, 177, .39); color: #7cf3bb; background: rgba(10, 79, 66, .28); font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .16em; }
-    .hero h2 { max-width: 620px; margin: 22px 0 10px; overflow-wrap: anywhere; font-size: clamp(28px, 4vw, 47px); line-height: 1.03; letter-spacing: -.055em; }
-    .hero h2 span { color: #69efb1; }
-    .hero p { max-width: 610px; margin: 0; color: #9abcbf; line-height: 1.65; font-size: 14px; }
-    .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: auto; padding-top: 32px; }
-    .principle { min-height: 94px; padding: 13px; border: 1px solid rgba(76, 173, 167, .19); background: rgba(3, 24, 34, .56); }
+    .hero h2 { max-width: 650px; margin: 20px 0 10px; overflow-wrap: anywhere; font-size: clamp(28px, 4vw, 48px); line-height: 1.03; letter-spacing: -.055em; }
+    .hero h2 span { color: var(--ok); }
+    .hero p { max-width: 680px; margin: 0; color: #9abcbf; line-height: 1.65; font-size: 14px; }
+    .score {
+      position: relative;
+      z-index: 1;
+      width: 136px;
+      height: 136px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(98, 239, 173, .46);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(22, 120, 89, .2), rgba(2, 16, 28, .9) 66%);
+      box-shadow: inset 0 0 36px rgba(98, 239, 173, .08), 0 0 34px rgba(98, 239, 173, .08);
+    }
+    .score.warn { border-color: rgba(245, 199, 106, .64); box-shadow: inset 0 0 36px rgba(245, 199, 106, .08), 0 0 34px rgba(245, 199, 106, .07); }
+    .score.bad { border-color: rgba(251, 113, 133, .68); box-shadow: inset 0 0 36px rgba(251, 113, 133, .08), 0 0 34px rgba(251, 113, 133, .08); }
+    .score strong { display: block; font-size: 36px; line-height: 1; text-align: center; }
+    .score small { display: block; margin-top: 5px; color: #86aaa9; font: 700 9px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .12em; text-align: center; }
+    .principles { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 28px; }
+    .principle { min-height: 98px; padding: 13px; border: 1px solid rgba(76, 173, 167, .19); background: rgba(3, 24, 34, .56); }
     .principle strong { display: block; color: #d9fff0; font-size: 12px; }
-    .principle span { display: block; margin-top: 5px; color: #83a9a9; font-size: 11px; line-height: 1.4; }
-    .side { display: grid; grid-template-rows: auto auto minmax(180px, 1fr); gap: 16px; align-content: stretch; }
-    .panel { padding: 19px; }
+    .principle span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+
     .panel-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #a7d8d1; font: 700 10px/1.3 ui-monospace, Consolas, monospace; letter-spacing: .13em; }
-    .status-main { display: flex; align-items: center; gap: 12px; margin-top: 19px; }
-    .status-orb { width: 43px; height: 43px; border: 1px solid #4ae69f; border-radius: 50%; background: rgba(26, 177, 117, .15); box-shadow: 0 0 22px rgba(74, 230, 159, .24), inset 0 0 20px rgba(76, 238, 171, .12); }
-    .status-orb.warn { border-color: #f5c76a; background: rgba(245, 169, 61, .13); box-shadow: 0 0 22px rgba(245, 185, 79, .18); }
-    .status-orb.bad { border-color: #fb7185; background: rgba(251, 113, 133, .13); box-shadow: 0 0 22px rgba(251, 113, 133, .18); }
+    .status-main { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+    .status-orb { width: 43px; height: 43px; flex: 0 0 auto; border: 1px solid #4ae69f; border-radius: 50%; background: rgba(26, 177, 117, .15); box-shadow: 0 0 22px rgba(74, 230, 159, .24), inset 0 0 20px rgba(76, 238, 171, .12); }
+    .status-orb.warn { border-color: var(--warn); background: rgba(245, 169, 61, .13); box-shadow: 0 0 22px rgba(245, 185, 79, .18); }
+    .status-orb.bad { border-color: var(--bad); background: rgba(251, 113, 133, .13); box-shadow: 0 0 22px rgba(251, 113, 133, .18); }
     .status-main strong { display: block; font-size: 18px; }
-    .status-main span { display: block; margin-top: 3px; color: #87aab0; font-size: 12px; }
-    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; }
-    .metric { padding: 10px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); }
-    .metric small { display: block; color: #77959b; font-size: 10px; }
+    .status-main span { display: block; margin-top: 3px; color: #87aab0; font-size: 12px; line-height: 1.4; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+    .metric { padding: 10px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); min-width: 0; }
+    .metric small { display: block; color: #77959b; font-size: 9px; letter-spacing: .04em; }
     .metric strong { display: block; margin-top: 4px; color: #d4f3ed; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .metric strong.ok { color: #8ef5c7; }
+    .metric strong.warn { color: var(--warn); }
+    .metric strong.bad { color: var(--bad); }
+
     .actions { display: grid; gap: 9px; margin-top: 17px; }
-    .action { min-height: 46px; padding: 0 14px; border: 1px solid rgba(92, 237, 178, .55); color: #052418; background: linear-gradient(135deg, #62efad, #3cc59a); font-weight: 750; text-align: left; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
+    .action { min-height: 46px; padding: 0 14px; border: 1px solid rgba(92, 237, 178, .55); color: #052418; background: linear-gradient(135deg, var(--ok), var(--ok-2)); font-weight: 750; text-align: left; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
     .action:hover { filter: brightness(1.08); }
     .action.secondary { color: #c7eee4; border-color: rgba(86, 185, 177, .38); background: rgba(5, 48, 59, .78); }
     .action:disabled { opacity: .55; cursor: wait; }
-    .notice { margin: 15px 0 0; color: #779ba1; font-size: 11px; line-height: 1.45; }
-    .activity-list { display: grid; gap: 8px; margin-top: 13px; max-height: 235px; overflow: auto; }
-    .activity { padding: 10px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); }
-    .activity.threat { border-color: rgba(251, 113, 133, .58); } .activity.warning { border-color: rgba(245, 199, 106, .48); }
-    .activity strong { display: block; color: #d8f5ed; font-size: 11px; } .activity span { display: block; margin-top: 4px; color: #86a8aa; font-size: 10px; line-height: 1.4; }
-    .activity button { margin-top: 8px; padding: 5px 8px; border: 1px solid rgba(91, 234, 176, .42); color: #8df5c8; background: rgba(5, 62, 65, .55); font-size: 10px; }
+    .notice { margin: 14px 0 0; color: #779ba1; font-size: 11px; line-height: 1.5; }
+    .notice strong { color: #aeddd5; }
+
+    .assistant-box { margin-top: 14px; padding: 13px; border: 1px solid rgba(245, 199, 106, .22); background: rgba(51, 42, 13, .14); }
+    .assistant-box strong { display: block; color: #f5ddb0; font-size: 12px; }
+    .assistant-box p { margin: 7px 0 0; color: #a8aaa0; font-size: 11px; line-height: 1.5; }
+    .assistant-box em { color: #82d8bc; font-style: normal; }
+
+    .activity-toolbar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+    .filter { padding: 6px 9px; border: 1px solid rgba(79, 170, 163, .24); color: #8db7b5; background: rgba(2, 22, 31, .5); font-size: 10px; }
+    .filter.active { color: #d9fff0; border-color: rgba(98, 239, 173, .55); background: rgba(18, 93, 72, .22); }
+    .activity-list { display: grid; gap: 8px; margin-top: 12px; max-height: 470px; overflow: auto; padding-right: 3px; }
+    .activity { padding: 11px; border: 1px solid rgba(71, 167, 161, .17); background: rgba(1, 16, 27, .48); }
+    .activity.threat { border-color: rgba(251, 113, 133, .58); }
+    .activity.warning { border-color: rgba(245, 199, 106, .48); }
+    .activity.ready, .activity.complete { border-color: rgba(98, 239, 173, .32); }
+    .activity-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .activity strong { display: block; color: #d8f5ed; font-size: 11px; line-height: 1.35; }
+    .activity span { display: block; margin-top: 4px; color: #86a8aa; font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
+    .pill { flex: 0 0 auto; padding: 3px 6px; border: 1px solid rgba(95, 177, 168, .24); color: #8fb7b2; font: 700 8px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .05em; }
+    .pill.ok { color: #8ef5c7; border-color: rgba(98, 239, 173, .38); }
+    .pill.warn { color: var(--warn); border-color: rgba(245, 199, 106, .38); }
+    .pill.bad { color: #ff9baa; border-color: rgba(251, 113, 133, .42); }
+    .hash { margin-top: 7px; padding: 6px 7px; color: #6fa7a7; background: rgba(0, 0, 0, .2); font: 9px/1.35 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+    .activity button { margin-top: 8px; padding: 6px 8px; border: 1px solid rgba(91, 234, 176, .42); color: #8df5c8; background: rgba(5, 62, 65, .55); font-size: 10px; }
+
+    .integrity { display: grid; gap: 8px; margin-top: 14px; }
+    .integrity-row { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(74, 155, 151, .12); font-size: 10px; }
+    .integrity-row:last-child { border-bottom: 0; }
+    .integrity-row span { color: #789a9e; }
+    .integrity-row strong { color: #cdebe5; text-align: right; overflow-wrap: anywhere; }
+    .integrity-row strong.ok { color: #8ef5c7; }
+    .integrity-row strong.bad { color: #ff9baa; }
+
     .foot { grid-column: 1 / -1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 0 3px; color: #78979b; font-size: 11px; line-height: 1.45; }
     .foot strong { color: #a5d8cd; }
     .back { border: 0; padding: 0; color: #85efd0; background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
-    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; padding: 16px; } .principles { grid-template-columns: 1fr; } .hero { min-height: auto; } .foot { grid-column: 1; flex-direction: column; } .mode { display: none; } }
+
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: 1fr; padding: 16px; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .score { width: 116px; height: 116px; }
+      .principles { grid-template-columns: 1fr; }
+      .foot { grid-column: 1; flex-direction: column; }
+      .mode { display: none; }
+    }
+    @media (max-width: 520px) {
+      .metrics { grid-template-columns: 1fr; }
+      .hero { padding: 22px; }
+      .panel { padding: 15px; }
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="identity"><div class="mark">⌾</div><div><p class="eyebrow">STUDIOVOXARIO / OPTIONAL PROTECTION</p><h1>Voxario<b>Protect</b></h1></div></div>
-    <div class="mode"><i></i><span id="backgroundMode">OCHRANA NA POZADÍ · OVĚŘUJI</span></div>
+    <div class="identity">
+      <div class="mark" aria-hidden="true">⌾</div>
+      <div><p class="eyebrow">STUDIOVOXARIO / DEFENDER COMPANION</p><h1>Voxario<b>Protect</b></h1></div>
+    </div>
+    <div id="mode" class="mode"><i></i><span id="backgroundMode">OCHRANA NA POZADÍ · OVĚŘUJI</span></div>
   </header>
+
   <main class="layout">
-    <section class="hero">
-      <span class="badge">MICROSOFT DEFENDER · LOCAL INTEGRATION</span>
-      <h2>Ochrana, která <span>nepřekáží.</span></h2>
-      <p>VoxarioProtect nepřidává druhý antivir ani vlastní neustálé skenování. Na tvoje vyžádání zobrazí stav vestavěného Microsoft Defenderu a předá mu rychlou kontrolu. Žádné výjimky, žádné vypínání ochrany, žádná data mimo počítač.</p>
-      <div class="principles">
-        <div class="principle"><strong>Úsporně na pozadí</strong><span>Po zavření okna zůstane hlídač aktivní v system tray.</span></div>
-        <div class="principle"><strong>Jen oficiální Defender</strong><span>Kontrolu provádí Windows, ne druhý AV engine.</span></div>
-        <div class="principle"><strong>Pod kontrolou uživatele</strong><span>Kontrola se spouští jen tlačítkem níže.</span></div>
-      </div>
-    </section>
-    <aside class="side">
+    <div class="stack">
+      <section class="panel hero">
+        <div class="hero-grid">
+          <div>
+            <span class="badge">MICROSOFT DEFENDER · INTELLIGENT LOCAL LAYER</span>
+            <h2>Silnější ochrana bez <span>druhého antiviru.</span></h2>
+            <p>VoxarioProtect spolupracuje s Microsoft Defenderem místo toho, aby mu konkuroval. Hlídá rizikové stažené soubory, kontroluje jejich digitální podpis a SHA‑256 a nechává samotnou antivirovou kontrolu na Windows. Cílem je lepší kontext u podezřelých souborů a méně unáhlených rozhodnutí při falešném poplachu.</p>
+          </div>
+          <div id="score" class="score" aria-label="Skóre ochrany">
+            <div><strong id="scoreValue">—</strong><small id="scoreLabel">VYHODNOCUJI</small></div>
+          </div>
+        </div>
+        <div class="principles">
+          <div class="principle"><strong>Defender zůstává hlavní</strong><span>Žádné vypínání real-time ochrany, žádný druhý rezidentní AV engine a žádné automatické výjimky.</span></div>
+          <div class="principle"><strong>Kontext proti false-positive</strong><span>Platný podpis a hash jsou další důkazy pro rozhodnutí, nikdy ale nejsou automatickým „povolit“.</span></div>
+          <div class="principle"><strong>Výkon před duplicitou</strong><span>Protect používá lehký hlídač Stažených souborů a kontroly předává Defenderu, takže neskenuje celý disk podruhé.</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><span>INTELIGENTNÍ ASISTENT SOUBORŮ</span><span>LOKÁLNĚ</span></div>
+        <div class="assistant-box">
+          <strong>Co dělat, když Defender označí soubor, který znáš?</strong>
+          <p>Nejdřív ověř <em>digitální podpis vydavatele</em>, název souboru a SHA‑256. Potom porovnej, zda detekci opravdu hlásí Defender. Protect nic automaticky neobnovuje z karantény a nepřidává výjimky — konečné rozhodnutí zůstává ve Windows Zabezpečení.</p>
+        </div>
+        <div class="actions">
+          <button id="chooseFileButton" class="action" type="button">Analyzovat a zkontrolovat soubor</button>
+          <button id="quickScanButton" class="action secondary" type="button">Spustit rychlou kontrolu Defenderu</button>
+          <button id="securityButton" class="action secondary" type="button">Otevřít historii ve Windows Zabezpečení</button>
+        </div>
+        <p class="notice" id="notice">Analýza probíhá lokálně. SHA‑256 ani názvy souborů se neposílají na server Voxaria.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><span>UDÁLOSTI A ANALÝZA</span><button id="activityRefresh" class="back" type="button">Obnovit</button></div>
+        <div class="activity-toolbar" role="group" aria-label="Filtr událostí">
+          <button class="filter active" type="button" data-filter="all">Vše</button>
+          <button class="filter" type="button" data-filter="file">Soubory</button>
+          <button class="filter" type="button" data-filter="defender">Defender</button>
+          <button class="filter" type="button" data-filter="important">Důležité</button>
+        </div>
+        <div class="activity-list" id="activityList" aria-live="polite"><span class="notice">Načítám lokální historii ochrany…</span></div>
+      </section>
+    </div>
+
+    <aside class="stack">
       <section class="panel">
         <div class="panel-title"><span>STAV MICROSOFT DEFENDERU</span><button id="refresh" class="back" type="button">Obnovit</button></div>
-        <div class="status-main"><i id="orb" class="status-orb"></i><div><strong id="statusTitle">Načítám stav…</strong><span id="statusCopy">Probíhá lokální kontrola přes Windows.</span></div></div>
+        <div class="status-main">
+          <i id="orb" class="status-orb" aria-hidden="true"></i>
+          <div><strong id="statusTitle">Načítám stav…</strong><span id="statusCopy">Probíhá lokální kontrola přes Windows.</span></div>
+        </div>
         <div class="metrics">
           <div class="metric"><small>REŽIM</small><strong id="runningMode">—</strong></div>
           <div class="metric"><small>REAL-TIME</small><strong id="realtime">—</strong></div>
-          <div class="metric"><small>POSLEDNÍ SIGNATURY</small><strong id="signatures">—</strong></div>
+          <div class="metric"><small>BEHAVIOR MONITOR</small><strong id="behavior">—</strong></div>
+          <div class="metric"><small>STAŽENÉ SOUBORY / IOAV</small><strong id="ioav">—</strong></div>
+          <div class="metric"><small>STÁŘÍ SIGNATUR</small><strong id="signatures">—</strong></div>
           <div class="metric"><small>POSLEDNÍ RYCHLÁ KONTROLA</small><strong id="quickScan">—</strong></div>
         </div>
+        <p class="notice"><strong>Výkon:</strong> Protect nespouští druhý antivirový engine. Stav se načítá lokálně a kontrolu souborů provádí Microsoft Defender.</p>
       </section>
+
       <section class="panel">
-        <div class="panel-title"><span>AKCE OCHRANY</span><span>RUČNĚ</span></div>
-        <div class="actions">
-          <button id="quickScanButton" class="action" type="button">Spustit rychlou kontrolu Defenderu</button>
-          <button id="chooseFileButton" class="action secondary" type="button">Vybrat soubor pro kontrolu</button>
-          <button id="securityButton" class="action secondary" type="button">Otevřít Windows Zabezpečení</button>
+        <div class="panel-title"><span>INTEGRITA VOXARIA</span><span>DIAGNOSTIKA</span></div>
+        <div class="integrity">
+          <div class="integrity-row"><span>Verze aplikace</span><strong id="appVersion">—</strong></div>
+          <div class="integrity-row"><span>Platforma</span><strong id="platform">—</strong></div>
+          <div class="integrity-row"><span>Lokální otisk</span><strong id="integrityHash">—</strong></div>
+          <div class="integrity-row"><span>Bezpečnostní signály</span><strong id="securityFlags">Načítám…</strong></div>
         </div>
-        <p class="notice" id="notice">Rychlá kontrola používá standardní Windows Defender. Pokud systém vyžádá oprávnění, rozhodnutí zůstává na tobě.</p>
+        <p class="notice">Lokální otisk je diagnostický fingerprint souborů Protectu. Není to náhrada podpisu instalačního balíčku ani důkaz, že je soubor bezpečný.</p>
       </section>
-      <section class="panel"><div class="panel-title"><span>PRŮBĚH A UPOZORNĚNÍ</span><span>LOKÁLNĚ</span></div><div class="activity-list" id="activityList"><span class="notice">Načítám lokální historii ochrany…</span></div></section>
+
+      <section class="panel">
+        <div class="panel-title"><span>PRAVIDLA ROZHODOVÁNÍ</span><span>SAFE-BY-DESIGN</span></div>
+        <div class="integrity">
+          <div class="integrity-row"><span>Platný Authenticode podpis</span><strong class="ok">Snižuje podezření</strong></div>
+          <div class="integrity-row"><span>Neznámý / bez podpisu</span><strong>Vyžaduje kontrolu</strong></div>
+          <div class="integrity-row"><span>Detekce Defenderu</span><strong class="bad">Vysoká priorita</strong></div>
+          <div class="integrity-row"><span>Automatická výjimka</span><strong class="bad">Zakázána</strong></div>
+          <div class="integrity-row"><span>Automatické obnovení</span><strong class="bad">Zakázáno</strong></div>
+        </div>
+      </section>
     </aside>
-    <footer class="foot"><span><strong>Soukromí:</strong> stav Defenderu se čte lokálně a neposílá se do Voxar.app ani na externí server.</span><button id="back" class="back" type="button">← Zpět do rozcestníku</button></footer>
+
+    <footer class="foot">
+      <span><strong>Soukromí:</strong> stav Defenderu, podpisy, hash a historie ochrany zůstávají lokálně na počítači.</span>
+      <button id="back" class="back" type="button">← Zpět do rozcestníku</button>
+    </footer>
   </main>
+
   <script>
     const api = window.studioVoxarioDesktop;
     const byId = (id) => document.getElementById(id);
-    const setText = (id, value) => { byId(id).textContent = value || '—'; };
+    const setText = (id, value) => { const node = byId(id); if (node) node.textContent = value ?? '—'; };
+    let latestStatus = null;
+    let latestBackground = null;
+    let latestActivities = [];
+    let currentFilter = 'all';
+
     const formatDate = (value) => {
       if (!value || value === '1/1/0001 12:00:00 AM') return 'Nikdy';
-      const ticks = String(value).match(/\/Date\((\d+)/); const date = ticks ? new Date(Number(ticks[1])) : new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('cs-CZ');
+      const ticks = String(value).match(/\/Date\((\d+)/);
+      const date = ticks ? new Date(Number(ticks[1])) : new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('cs-CZ');
     };
-    function render(status) {
-      const limited = status.AccessLimited === true;
-      const protectedNow = status.AntivirusEnabled && status.RealTimeProtectionEnabled;
-      const orb = byId('orb'); orb.className = 'status-orb' + (limited || !protectedNow ? ' warn' : '');
-      setText('statusTitle', limited ? 'Defender je nalezen' : (protectedNow ? 'Ochrana je aktivní' : 'Ochrana vyžaduje pozornost'));
-      setText('statusCopy', limited ? 'Windows omezil detailní stav. Otevři Windows Zabezpečení pro úplný přehled.' : (protectedNow ? 'Microsoft Defender chrání tento počítač v reálném čase.' : 'Zkontroluj stav ve Windows Zabezpečení.'));
-      setText('runningMode', status.AMRunningMode || '—');
-      setText('realtime', limited ? 'Vyžaduje oprávnění' : (status.RealTimeProtectionEnabled ? 'Aktivní' : 'Vypnuto'));
-      setText('signatures', status.AntivirusSignatureAge === undefined || status.AntivirusSignatureAge === null ? formatDate(status.AntivirusSignatureLastUpdated) : `${status.AntivirusSignatureAge} dní`);
-      setText('quickScan', formatDate(status.QuickScanEndTime || status.QuickScanStartTime));
-    }
-    async function refresh() {
-      byId('refresh').disabled = true; setText('statusTitle', 'Načítám stav…');
-      const result = await api.protectGetStatus();
-      byId('refresh').disabled = false;
-      if (result?.ok) {
-        render(result.status || {});
-        setText('backgroundMode', result?.background?.active ? 'OCHRANA NA POZADÍ · AKTIVNÍ' : 'OCHRANA NA POZADÍ · NEAKTIVNÍ');
-        setText('notice', result?.background?.mode || 'Stav byl načten lokálně z Microsoft Defenderu.');
+
+    const metricState = (id, value, limited = false) => {
+      const node = byId(id);
+      if (!node) return;
+      node.className = '';
+      if (limited || value === null || value === undefined) {
+        node.textContent = limited ? 'Omezený přístup' : 'Neznámé';
+        node.classList.add('warn');
         return;
       }
-      byId('orb').className = 'status-orb bad'; setText('statusTitle', 'Stav se nepodařilo načíst'); setText('statusCopy', result?.error || 'Microsoft Defender není v tomto systému dostupný.');
+      node.textContent = value ? 'Aktivní' : 'Vypnuto';
+      node.classList.add(value ? 'ok' : 'bad');
+    };
+
+    function calculateScore(status, background) {
+      if (!status) return null;
+      let score = 100;
+      if (status.AntivirusEnabled === false) score -= 35;
+      if (status.RealTimeProtectionEnabled === false) score -= 30;
+      if (status.BehaviorMonitorEnabled === false) score -= 15;
+      if (status.IoavProtectionEnabled === false) score -= 10;
+      const age = Number(status.AntivirusSignatureAge);
+      if (Number.isFinite(age) && age > 7) score -= 15;
+      else if (Number.isFinite(age) && age > 3) score -= 8;
+      if (background?.active === false) score -= 5;
+      return Math.max(0, Math.min(100, score));
     }
+
+    function renderScore(status, background) {
+      const score = calculateScore(status, background);
+      const node = byId('score');
+      node.className = 'score';
+      if (score === null) {
+        setText('scoreValue', '—');
+        setText('scoreLabel', 'NEDOSTUPNÉ');
+        node.classList.add('warn');
+        return;
+      }
+      setText('scoreValue', String(score));
+      if (score >= 85) setText('scoreLabel', 'DOBRÁ OCHRANA');
+      else if (score >= 60) { setText('scoreLabel', 'ZKONTROLUJ STAV'); node.classList.add('warn'); }
+      else { setText('scoreLabel', 'VYŽADUJE POZORNOST'); node.classList.add('bad'); }
+    }
+
+    function renderStatus(status, background) {
+      latestStatus = status;
+      latestBackground = background;
+      const limited = status?.AccessLimited === true;
+      const protectedNow = status?.AntivirusEnabled !== false && status?.RealTimeProtectionEnabled !== false;
+      const orb = byId('orb');
+      orb.className = 'status-orb' + (limited ? ' warn' : (!protectedNow ? ' bad' : ''));
+      setText('statusTitle', limited ? 'Defender je nalezen' : (protectedNow ? 'Ochrana je aktivní' : 'Ochrana vyžaduje pozornost'));
+      setText('statusCopy', limited
+        ? 'Windows omezil detailní stav. Úplný přehled otevři ve Windows Zabezpečení.'
+        : (protectedNow ? 'Microsoft Defender chrání počítač v reálném čase.' : 'Některá důležitá vrstva Defenderu je vypnutá.'));
+      setText('runningMode', status?.AMRunningMode || '—');
+      metricState('realtime', status?.RealTimeProtectionEnabled, limited);
+      metricState('behavior', status?.BehaviorMonitorEnabled, limited);
+      metricState('ioav', status?.IoavProtectionEnabled, limited);
+      const sigAge = status?.AntivirusSignatureAge;
+      setText('signatures', sigAge === undefined || sigAge === null ? formatDate(status?.AntivirusSignatureLastUpdated) : `${sigAge} dní`);
+      const signaturesNode = byId('signatures');
+      signaturesNode.className = Number(sigAge) > 7 ? 'bad' : (Number(sigAge) > 3 ? 'warn' : 'ok');
+      setText('quickScan', formatDate(status?.QuickScanEndTime || status?.QuickScanStartTime));
+
+      const mode = byId('mode');
+      mode.className = 'mode' + (background?.active ? '' : ' warn');
+      setText('backgroundMode', background?.active ? 'OCHRANA NA POZADÍ · AKTIVNÍ' : 'OCHRANA NA POZADÍ · NEAKTIVNÍ');
+      renderScore(status, background);
+    }
+
+    async function refresh() {
+      byId('refresh').disabled = true;
+      setText('statusTitle', 'Načítám stav…');
+      try {
+        const result = await api.protectGetStatus();
+        if (result?.ok) {
+          renderStatus(result.status || {}, result.background || {});
+          setText('notice', result?.background?.mode || 'Stav byl načten lokálně z Microsoft Defenderu.');
+        } else {
+          byId('orb').className = 'status-orb bad';
+          setText('statusTitle', 'Stav se nepodařilo načíst');
+          setText('statusCopy', result?.error || 'Microsoft Defender není v tomto systému dostupný.');
+          renderScore(null, null);
+        }
+      } catch (error) {
+        byId('orb').className = 'status-orb bad';
+        setText('statusTitle', 'Protect bridge není dostupný');
+        setText('statusCopy', error?.message || 'Nepodařilo se spojit s lokální vrstvou Protectu.');
+      } finally {
+        byId('refresh').disabled = false;
+      }
+    }
+
+    function activityLabel(item) {
+      if (item.status === 'threat') return ['DETEKCE', 'bad'];
+      if (item.status === 'warning') return ['OVĚŘIT', 'warn'];
+      if (item.status === 'ready') return ['PODEPSÁNO', 'ok'];
+      if (item.status === 'complete') return ['HOTOVO', 'ok'];
+      if (item.status === 'scanning') return ['KONTROLA', ''];
+      if (item.status === 'queued') return ['ČEKÁ', ''];
+      if (item.status === 'checking') return ['ANALÝZA', ''];
+      return [String(item.status || 'INFO').toUpperCase(), ''];
+    }
+
+    function passesFilter(item) {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'important') return item.status === 'threat' || item.status === 'warning' || item.severity === 'high';
+      return item.type === currentFilter;
+    }
+
     function renderActivities(items) {
-      const list = byId('activityList'); list.replaceChildren();
-      if (!items?.length) { const empty = document.createElement('span'); empty.className = 'notice'; empty.textContent = 'Zatím žádné lokální události ochrany.'; list.appendChild(empty); return; }
-      items.forEach((item) => {
-        const row = document.createElement('article'); row.className = `activity ${item.status || ''}`;
-        const title = document.createElement('strong'); title.textContent = item.title || 'Událost ochrany';
-        const detail = document.createElement('span'); detail.textContent = item.detail || '';
-        row.append(title, detail);
+      latestActivities = Array.isArray(items) ? items : [];
+      const list = byId('activityList');
+      list.replaceChildren();
+      const visible = latestActivities.filter(passesFilter);
+      if (!visible.length) {
+        const empty = document.createElement('span');
+        empty.className = 'notice';
+        empty.textContent = latestActivities.length ? 'V tomto filtru nejsou žádné události.' : 'Zatím žádné lokální události ochrany.';
+        list.appendChild(empty);
+        return;
+      }
+
+      visible.forEach((item) => {
+        const row = document.createElement('article');
+        row.className = `activity ${item.status || ''}`;
+        const head = document.createElement('div');
+        head.className = 'activity-head';
+        const text = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = item.title || 'Událost ochrany';
+        const detail = document.createElement('span');
+        detail.textContent = item.detail || '';
+        text.append(title, detail);
+        const [label, level] = activityLabel(item);
+        const pill = document.createElement('b');
+        pill.className = `pill ${level}`;
+        pill.textContent = label;
+        head.append(text, pill);
+        row.appendChild(head);
+
+        if (item.fileName) {
+          const file = document.createElement('span');
+          file.textContent = `Soubor: ${item.fileName}`;
+          row.appendChild(file);
+        }
+        if (item.sha256) {
+          const hash = document.createElement('div');
+          hash.className = 'hash';
+          hash.textContent = `SHA-256 ${item.sha256}`;
+          row.appendChild(hash);
+        }
+
         if (item.type === 'file' && ['warning', 'ready', 'queued'].includes(item.status)) {
-          const scan = document.createElement('button'); scan.type = 'button'; scan.textContent = 'Zkontrolovat Microsoft Defenderem';
-          scan.addEventListener('click', async () => { scan.disabled = true; const result = await api.protectScanActivity(item.id); if (!result?.ok) setText('notice', result?.error || 'Kontrolu se nepodařilo spustit.'); }); row.appendChild(scan);
+          const scan = document.createElement('button');
+          scan.type = 'button';
+          scan.textContent = item.status === 'ready' ? 'Potvrdit kontrolou Microsoft Defenderu' : 'Zkontrolovat Microsoft Defenderem';
+          scan.addEventListener('click', async () => {
+            scan.disabled = true;
+            scan.textContent = 'Předávám Defenderu…';
+            try {
+              const result = await api.protectScanActivity(item.id);
+              setText('notice', result?.ok
+                ? 'Soubor byl předán Microsoft Defenderu. Protect ho sám nepovoluje ani neodstraňuje.'
+                : (result?.error || 'Kontrolu se nepodařilo spustit.'));
+            } finally {
+              scan.disabled = false;
+              scan.textContent = 'Zkontrolovat Microsoft Defenderem';
+            }
+          });
+          row.appendChild(scan);
         }
         list.appendChild(row);
       });
     }
-    byId('refresh').addEventListener('click', refresh);
-    byId('quickScanButton').addEventListener('click', async () => {
-      const button = byId('quickScanButton'); button.disabled = true; button.textContent = 'Spouštím rychlou kontrolu…';
-      const result = await api.protectQuickScan();
-      button.disabled = false; button.textContent = 'Spustit rychlou kontrolu Defenderu';
-      setText('notice', result?.ok ? 'Rychlá kontrola byla předána Microsoft Defenderu. Výsledky zobrazí Windows Zabezpečení.' : (result?.error || 'Kontrolu se nepodařilo spustit.'));
-      if (result?.ok) setTimeout(refresh, 1200);
+
+    async function refreshActivities() {
+      byId('activityRefresh').disabled = true;
+      try { renderActivities(await api.protectGetActivity()); }
+      catch { renderActivities([]); }
+      finally { byId('activityRefresh').disabled = false; }
+    }
+
+    async function refreshIntegrity() {
+      try {
+        const result = await api.protectGetIntegrity();
+        setText('appVersion', result?.appVersion || '—');
+        setText('platform', result?.platform || '—');
+        const hash = String(result?.integrityHash || '');
+        setText('integrityHash', hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : '—');
+        const flags = Array.isArray(result?.securityFlags) ? result.securityFlags : [];
+        const target = byId('securityFlags');
+        target.className = flags.length ? 'bad' : 'ok';
+        target.textContent = flags.length ? `${flags.length} signál(ů) vyžaduje kontrolu` : 'Bez aktuálního signálu';
+      } catch {
+        setText('securityFlags', 'Nedostupné');
+      }
+    }
+
+    document.querySelectorAll('.filter').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.filter').forEach((node) => node.classList.remove('active'));
+        button.classList.add('active');
+        currentFilter = button.dataset.filter || 'all';
+        renderActivities(latestActivities);
+      });
     });
-    byId('chooseFileButton').addEventListener('click', async () => { const result = await api.protectChooseFile(); if (!result?.ok && !result?.canceled) setText('notice', result?.error || 'Soubor se nepodařilo připravit ke kontrole.'); });
-    byId('securityButton').addEventListener('click', async () => { const result = await api.protectOpenWindowsSecurity(); if (!result?.ok) setText('notice', result?.error || 'Windows Zabezpečení se nepodařilo otevřít.'); });
+
+    byId('refresh').addEventListener('click', () => { refresh(); refreshIntegrity(); });
+    byId('activityRefresh').addEventListener('click', refreshActivities);
+    byId('quickScanButton').addEventListener('click', async () => {
+      const button = byId('quickScanButton');
+      button.disabled = true;
+      button.textContent = 'Spouštím rychlou kontrolu…';
+      try {
+        const result = await api.protectQuickScan();
+        setText('notice', result?.ok
+          ? 'Rychlá kontrola byla předána Microsoft Defenderu. Výsledek se zobrazí ve Windows Zabezpečení.'
+          : (result?.error || 'Kontrolu se nepodařilo spustit.'));
+        if (result?.ok) setTimeout(() => { refresh(); refreshActivities(); }, 1200);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Spustit rychlou kontrolu Defenderu';
+      }
+    });
+
+    byId('chooseFileButton').addEventListener('click', async () => {
+      const button = byId('chooseFileButton');
+      button.disabled = true;
+      button.textContent = 'Analyzuji soubor…';
+      try {
+        const result = await api.protectChooseFile();
+        if (result?.ok) {
+          setText('notice', 'Soubor byl lokálně analyzován. Zkontroluj podpis, SHA‑256 a doporučení v seznamu událostí.');
+          currentFilter = 'file';
+          document.querySelectorAll('.filter').forEach((node) => node.classList.toggle('active', node.dataset.filter === 'file'));
+          await refreshActivities();
+        } else if (!result?.canceled) {
+          setText('notice', result?.error || 'Soubor se nepodařilo připravit ke kontrole.');
+        }
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Analyzovat a zkontrolovat soubor';
+      }
+    });
+
+    byId('securityButton').addEventListener('click', async () => {
+      const result = await api.protectOpenWindowsSecurity();
+      if (!result?.ok) setText('notice', result?.error || 'Windows Zabezpečení se nepodařilo otevřít.');
+    });
     byId('back').addEventListener('click', () => api.protectReturnToLauncher());
-    api.onProtectActivity(renderActivities);
-    api.protectGetActivity().then(renderActivities).catch(() => renderActivities([]));
-    refresh();
+
+    api.onProtectActivity((items) => renderActivities(items));
+    Promise.allSettled([refresh(), refreshIntegrity(), refreshActivities()]);
   </script>
 </body>
 </html>
