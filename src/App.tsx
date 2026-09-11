@@ -132,7 +132,7 @@ const AppRoutes = () => {
         <Route path="/desktop" element={<DownloadDesktop />} />
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
-        <Route path="/ai" element={<ProtectedRoute><AI /></ProtectedRoute>} />
+        <Route path="/ai" element={<ProtectedRoute requireAdmin><AI /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
         <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
         <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
