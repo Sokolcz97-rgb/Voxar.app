@@ -1,7 +1,7 @@
-version: 0.0.54
+version: 0.0.55
 files:
-  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.54/StudioVoxarioUpdate-0.0.54.exe
-    sha512: KNYyB21j3nAmMPrEIUJviNyzwq5V6iaKXVG2VIWyKFuQ4OUiurGXCwiQIx8Y+LgSZ1KMYCAHPpyMW352mZhdjg==
-path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.54/StudioVoxarioUpdate-0.0.54.exe
-sha512: KNYyB21j3nAmMPrEIUJviNyzwq5V6iaKXVG2VIWyKFuQ4OUiurGXCwiQIx8Y+LgSZ1KMYCAHPpyMW352mZhdjg==
-releaseDate: '2026-09-11T18:28:02.348Z'
+  - url: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.55/StudioVoxarioUpdate-0.0.55.exe
+    sha512: ojNKB8EiKfLiw/4f4bksiIR3ygioNpju5SoqBWjwSeoCEqRODrjEOqrcZhZzPbv4+W6cUmngWRLsKfUzVwNfog==
+path: https://github.com/Sokolcz97-rgb/Voxar.app/releases/download/v0.0.55/StudioVoxarioUpdate-0.0.55.exe
+sha512: ojNKB8EiKfLiw/4f4bksiIR3ygioNpju5SoqBWjwSeoCEqRODrjEOqrcZhZzPbv4+W6cUmngWRLsKfUzVwNfog==
+releaseDate: '2026-09-11T19:43:10.714Z'
