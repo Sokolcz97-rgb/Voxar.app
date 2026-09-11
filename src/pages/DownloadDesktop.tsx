@@ -60,7 +60,7 @@ export default function Download() {
               </a>
             </Button>
             <p className="text-xs text-muted-foreground mt-3 text-center">
-              StudioVoxarioSetup.exe · nejnovější stabilní verze
+              StudioVoxarioSetup.exe · vlastní StudioVoxario Setup · nejnovější stabilní verze
             </p>
           </Card>
 
@@ -86,7 +86,7 @@ export default function Download() {
               </a>
             </Button>
             <p className="text-xs text-muted-foreground mt-3 text-center">
-              VoxarioBrowserSetup.exe · nejnovější stabilní verze
+              VoxarioBrowserSetup.exe · samostatný StudioVoxario Setup · nejnovější stabilní verze
             </p>
           </Card>
         </div>
@@ -119,6 +119,7 @@ export default function Download() {
               Pro hlavní aplikaci spusť <code className="bg-muted px-1 rounded">StudioVoxarioSetup.exe</code>, pro prohlížeč <code className="bg-muted px-1 rounded">VoxarioBrowserSetup.exe</code>.
             </li>
             <li>Produkty můžeš mít nainstalované oba zároveň; Voxar.app umí samostatně nainstalovaný VoxarioBrowser rozpoznat a spustit.</li>
+            <li>Po spuštění se otevře moderní StudioVoxario Setup s výběrem komponent, umístění a aktualizačního kanálu; nejde o klasický NSIS průvodce.</li>
             <li>Další aktualizace se řeší přes vlastní aktualizační kanál každého produktu.</li>
           </ol>
           <p className="mt-4 text-xs text-muted-foreground">

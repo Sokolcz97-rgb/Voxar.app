@@ -659,6 +659,7 @@ const protectFiles = new Map();
 const protectSeenEvents = new Set();
 let protectWatcher = null;
 let protectPollTimer = null;
+let protectRegistryBaseline = null;
 
 function publicProtectActivity(entry) {
   const { path: _path, ...safe } = entry;
@@ -778,10 +779,48 @@ async function pollDefenderEvents() {
   }
 }
 
+// Read-only system context.  This is intentionally a narrow set of security
+// related values, not a general registry monitor and never writes a key.
+const SYSTEM_SAFETY_SCRIPT = [
+  "$ErrorActionPreference='SilentlyContinue'",
+  "$os=Get-CimInstance Win32_OperatingSystem",
+  "$paths=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System','HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender','HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection','HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon')",
+  "$registry=@{}; foreach($p in $paths){$item=Get-ItemProperty -Path $p; if($null -ne $item){$registry[$p]=@{EnableLUA=$item.EnableLUA;ConsentPromptBehaviorAdmin=$item.ConsentPromptBehaviorAdmin;DisableAntiSpyware=$item.DisableAntiSpyware;DisableRealtimeMonitoring=$item.DisableRealtimeMonitoring;Shell=$item.Shell}}}",
+  "$ring=$null; foreach($p in @('HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\UI\Selection','HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\Applicability')){$v=Get-ItemProperty -Path $p; if($v){$ring=($v.UIBranch,$v.BranchName,$v.Ring | Where-Object {$_} | Select-Object -First 1); if($ring){break}}}",
+  "$updates=@(); try{$session=New-Object -ComObject Microsoft.Update.Session; $searcher=$session.CreateUpdateSearcher(); $result=$searcher.Search('IsInstalled=0 and IsHidden=0'); foreach($u in @($result.Updates | Select-Object -First 12)){$updates+=@{title=$u.Title;preview=($u.Title -match '(?i)preview|insider|canary|dev channel|beta channel|release preview');rebootRequired=$u.RebootRequired}}}catch{}",
+  "[pscustomobject]@{osCaption=$os.Caption;osBuild=$os.BuildNumber;insiderRing=$ring;updates=$updates;registry=$registry}|ConvertTo-Json -Depth 6 -Compress",
+].join(";");
+
+async function getSystemSafety() {
+  const result = await runDefenderPowerShell(SYSTEM_SAFETY_SCRIPT, 20_000);
+  if (!result.ok) return result;
+  let payload;
+  try { payload = JSON.parse(result.output || "{}"); }
+  catch { return { ok: false, error: "Windows vrátil nečitelný stav systému." }; }
+  const registry = payload.registry || {};
+  const fingerprint = crypto.createHash("sha256").update(JSON.stringify(registry)).digest("hex");
+  const changed = !!protectRegistryBaseline && protectRegistryBaseline !== fingerprint;
+  if (changed) addProtectActivity({ type: "system", status: "warning", severity: "medium", title: "Změna v citlivém nastavení Windows", detail: "Protect zjistil změnu v jedné ze sledovaných bezpečnostních hodnot registru. Nezná autora změny a nic automaticky nevrací." });
+  protectRegistryBaseline = fingerprint;
+  const updates = Array.isArray(payload.updates) ? payload.updates : (payload.updates ? [payload.updates] : []);
+  const previewUpdates = updates.filter((item) => item?.preview === true).length;
+  const insiderRing = String(payload.insiderRing || "").trim();
+  return { ok: true, system: {
+    osCaption: payload.osCaption || "Windows", osBuild: payload.osBuild || "—", insiderRing: insiderRing || null,
+    isPreviewChannel: /canary|dev|beta|release preview|insider/i.test(insiderRing),
+    updateCount: updates.length, previewUpdates, updates: updates.map((item) => ({ title: String(item?.title || "Aktualizace Windows"), preview: item?.preview === true, rebootRequired: item?.rebootRequired === true })),
+    registry: { monitored: Object.keys(registry).length, changed, fingerprint: fingerprint.slice(0, 12) },
+  }};
+}
+
 function startProtectMonitor() {
   if (protectPollTimer) return;
   void pollDefenderEvents();
-  protectPollTimer = setInterval(() => void pollDefenderEvents(), 5 * 60 * 1000);
+  void getSystemSafety();
+  protectPollTimer = setInterval(() => {
+    void pollDefenderEvents();
+    void getSystemSafety();
+  }, 5 * 60 * 1000);
   protectPollTimer.unref?.();
   try {
     const downloads = app.getPath("downloads");
@@ -898,6 +937,12 @@ ipcMain.handle("protect:open-windows-security", async () => {
   if (process.platform !== "win32") return { ok: false, error: "Windows Zabezpečení je dostupné pouze ve Windows." };
   try { await shell.openExternal("windowsdefender:"); return { ok: true }; }
   catch (error) { return { ok: false, error: error?.message || "Windows Zabezpečení se nepodařilo otevřít." }; }
+});
+ipcMain.handle("protect:system-safety", () => getSystemSafety());
+ipcMain.handle("protect:open-windows-update", async () => {
+  if (process.platform !== "win32") return { ok: false, error: "Windows Update je dostupný pouze ve Windows." };
+  try { await shell.openExternal("ms-settings:windowsupdate"); return { ok: true }; }
+  catch (error) { return { ok: false, error: error?.message || "Windows Update se nepodařilo otevřít." }; }
 });
 ipcMain.handle("protect:return-to-launcher", () => {
   try { protectWindow?.close(); } catch {}

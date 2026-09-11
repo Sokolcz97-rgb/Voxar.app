@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8" />
-  <title>Voxar.app Installer</title>
+  <title>StudioVoxario Setup</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -10,14 +10,15 @@
     <!-- Custom titlebar (drag region) -->
     <div class="titlebar">
       <div class="drag"></div>
-      <button class="tb-btn" id="btnMin" title="Minimalizovat">–</button>
-      <button class="tb-btn close" id="btnClose" title="Zavřít">×</button>
+      <span class="title">STUDIOVOXARIO SETUP</span>
+      <button class="tb-btn" id="btnMin" title="Minimalizovat">-</button>
+      <button class="tb-btn close" id="btnClose" title="Zavřít">Zavřít</button>
     </div>
 
     <!-- Sidebar / HUD brand -->
     <aside class="side">
       <div class="brand">
-        <div class="logo">SV</div>
+        <div class="logo" aria-hidden="true"><span>SV</span></div>
         <div class="brand-text">
           <div class="brand-name">Voxar.app</div>
           <div class="brand-sub" id="brandSub">Instalátor</div>
@@ -40,7 +41,7 @@
       <!-- Welcome -->
       <section class="panel active" data-step="welcome">
         <h1>Vítejte v Voxar.app</h1>
-        <p class="muted">Vlastní HUD instalátor — bez klasického Windows okna. Instalace neprobíhá pod administrátorem, aplikace se nainstaluje jen pro vás.</p>
+        <p class="muted">Samostatný instalátor StudioVoxario s vlastním rozhraním. Nejde o klasický NSIS průvodce; aplikace se nainstaluje jen pro tento účet Windows.</p>
         <ul class="bullets">
           <li>Jeden instalátor pro Voxar.app i VoxarioBrowser</li>
           <li>Bez potřeby administrátorských práv</li>
@@ -48,7 +49,7 @@
           <li>Snadná odinstalace přes Ovládací panely</li>
         </ul>
         <div class="actions">
-          <button class="btn primary" data-next="components">Pokračovat →</button>
+          <button class="btn primary" data-next="components">Pokračovat</button>
         </div>
       </section>
 
@@ -69,8 +70,8 @@
           </label>
         </div>
         <div class="actions">
-          <button class="btn ghost" data-next="welcome">← Zpět</button>
-          <button class="btn primary" data-next="location">Pokračovat →</button>
+          <button class="btn ghost" data-next="welcome">Zpět</button>
+          <button class="btn primary" data-next="location">Pokračovat</button>
         </div>
       </section>
 
@@ -87,9 +88,9 @@
           <span>Vytvořit zástupce na ploše</span>
         </label>
         <div class="actions">
-          <button class="btn ghost" data-next="components">← Zpět</button>
+          <button class="btn ghost" data-next="components">Zpět</button>
 
-          <button class="btn primary" data-next="channel">Pokračovat →</button>
+          <button class="btn primary" data-next="channel">Pokračovat</button>
         </div>
       </section>
 
@@ -110,7 +111,7 @@
           </label>
         </div>
         <div class="actions">
-          <button class="btn ghost" data-next="location">← Zpět</button>
+          <button class="btn ghost" data-next="location">Zpět</button>
           <button class="btn primary" id="startBtn">Nainstalovat</button>
         </div>
       </section>
