@@ -11,22 +11,27 @@ const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
 const { calculateProtectionScore, calculateFileTrust } = require("./protect-trust-engine.cjs");
+const {
+  loadProtectPreferences,
+  preferencesPath,
+  profileConfig,
+} = require("./protect-preferences.cjs");
 
 const RISKY_EXTENSIONS = new Set([
   ".exe", ".msi", ".msix", ".com", ".scr", ".bat", ".cmd", ".ps1",
   ".js", ".jse", ".vbs", ".vbe", ".dll", ".jar",
 ]);
-const MAX_AUTO_HASH_BYTES = 128 * 1024 * 1024;
-const DEFENDER_REFRESH_MS = 5 * 60 * 1000;
 const DOWNLOAD_DEBOUNCE_MS = 1800;
 const MAX_ACTIVITY = 120;
 
 let tray = null;
 let downloadWatcher = null;
 let defenderTimer = null;
+let settingsWatcherActive = false;
 let cachedDefenderStatus = { AccessLimited: true };
 let protectionScore = 55;
 let activities = [];
+let preferences = null;
 const pendingFiles = new Map();
 
 function stateFile() {
@@ -50,6 +55,7 @@ function saveState() {
       updatedAt: new Date().toISOString(),
       protectionScore,
       defenderStatus: cachedDefenderStatus,
+      profile: preferences?.profile || "balanced",
       activities: activities.slice(0, MAX_ACTIVITY),
     }, null, 2));
   } catch {}
@@ -106,7 +112,7 @@ async function refreshDefenderStatus({ notify = false } = {}) {
   }
 }
 
-function hashFile(filePath, maxBytes = MAX_AUTO_HASH_BYTES) {
+function hashFile(filePath, maxBytes) {
   return new Promise((resolve) => {
     let settled = false;
     const finish = (value) => {
@@ -132,7 +138,8 @@ async function inspectDownloadedFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
     if (!RISKY_EXTENSIONS.has(ext)) return;
 
-    const sha256 = await hashFile(filePath);
+    const profile = profileConfig(preferences);
+    const sha256 = await hashFile(filePath, profile.maxAutoHashBytes);
     const trust = calculateFileTrust({
       fileName: path.basename(filePath),
       size: stat.size,
@@ -150,6 +157,7 @@ async function inspectDownloadedFile(filePath) {
       trustScore: trust.score,
       verdict: trust.verdict,
       reasons: trust.reasons,
+      profile: profile.id,
     });
   } catch {}
 }
@@ -165,18 +173,25 @@ function scheduleDownloadInspection(filePath) {
   pendingFiles.set(key, timer);
 }
 
+function stopDownloadsWatcher() {
+  try { downloadWatcher?.close(); } catch {}
+  downloadWatcher = null;
+}
+
 function startDownloadsWatcher() {
+  if (!preferences?.monitorDownloads || downloadWatcher) return;
   try {
     const downloads = app.getPath("downloads");
     downloadWatcher = fs.watch(downloads, { persistent: true }, (_event, fileName) => {
       if (!fileName) return;
       scheduleDownloadInspection(path.join(downloads, String(fileName)));
     });
-    downloadWatcher.on("error", () => {});
+    downloadWatcher.on("error", () => { downloadWatcher = null; });
   } catch {}
 }
 
 function showNotification(title, body) {
+  if (preferences?.notifications === false) return;
   try {
     if (Notification.isSupported()) new Notification({ title, body }).show();
   } catch {}
@@ -199,15 +214,17 @@ function latestActivityLabel() {
 function refreshTray() {
   if (!tray || tray.isDestroyed?.()) return;
   try {
-    tray.setToolTip(`VoxarioProtect · aktivní · skóre ${protectionScore}/100`);
+    const profile = profileConfig(preferences);
+    tray.setToolTip(`VoxarioProtect · ${profile.label} · skóre ${protectionScore}/100`);
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: "VoxarioProtect je aktivní", enabled: false },
+      { label: `Profil: ${profile.label}`, enabled: false },
       { label: `Protection Score: ${protectionScore}/100`, enabled: false },
       { label: latestActivityLabel(), enabled: false },
       { type: "separator" },
+      { label: "Otevřít VoxarioProtect / Nastavení", click: launchMainApp },
       { label: "Obnovit stav Defenderu", click: () => void refreshDefenderStatus({ notify: true }) },
       { label: "Otevřít Windows Security", click: () => shell.openExternal("windowsdefender:") },
-      { label: "Otevřít Voxar.app / Protect", click: launchMainApp },
       { type: "separator" },
       { label: "Ukončit Protect pro tuto relaci", click: () => app.quit() },
     ]));
@@ -228,26 +245,53 @@ function createTray() {
   }
   if (!icon.isEmpty()) icon = icon.resize({ width: 20, height: 20 });
   tray = new Tray(icon);
-  tray.on("click", () => refreshTray());
+  tray.on("click", launchMainApp);
   refreshTray();
 }
 
+function scheduleDefenderRefresh() {
+  if (defenderTimer) clearInterval(defenderTimer);
+  const interval = profileConfig(preferences).defenderRefreshMs;
+  defenderTimer = setInterval(() => void refreshDefenderStatus({ notify: true }), interval);
+  defenderTimer.unref?.();
+}
+
+function applyPreferences() {
+  const previous = preferences;
+  preferences = loadProtectPreferences(app);
+  if (!previous || previous.profile !== preferences.profile) scheduleDefenderRefresh();
+  if (preferences.monitorDownloads) startDownloadsWatcher();
+  else stopDownloadsWatcher();
+  refreshTray();
+  saveState();
+}
+
+function watchPreferences() {
+  if (settingsWatcherActive) return;
+  settingsWatcherActive = true;
+  const target = preferencesPath(app);
+  try {
+    fs.watchFile(target, { interval: 1500, persistent: false }, () => applyPreferences());
+  } catch {}
+}
+
 function cleanup() {
-  try { downloadWatcher?.close(); } catch {}
+  stopDownloadsWatcher();
   if (defenderTimer) clearInterval(defenderTimer);
   for (const timer of pendingFiles.values()) clearTimeout(timer);
   pendingFiles.clear();
+  try { fs.unwatchFile(preferencesPath(app)); } catch {}
   saveState();
 }
 
 app.whenReady().then(async () => {
+  preferences = loadProtectPreferences(app);
   loadState();
   createTray();
-  startDownloadsWatcher();
+  if (preferences.monitorDownloads) startDownloadsWatcher();
+  watchPreferences();
   await refreshDefenderStatus({ notify: false });
-  defenderTimer = setInterval(() => void refreshDefenderStatus({ notify: true }), DEFENDER_REFRESH_MS);
-  showNotification("VoxarioProtect", "Ochrana běží na pozadí s Microsoft Defenderem.");
+  scheduleDefenderRefresh();
 });
 
-app.on("window-all-closed", (event) => event.preventDefault());
 app.on("before-quit", cleanup);
