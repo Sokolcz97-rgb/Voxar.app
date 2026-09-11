@@ -4,7 +4,7 @@
   "copyright": "Copyright © StudioVoxario",
   "directories": { "output": "release/browser", "buildResources": "assets" },
   "files": [
-    "bootstrap.cjs", "rtmp.cjs", "main.cjs", "preload.cjs", "settings-preload.cjs",
+    "bootstrap-utf8.cjs", "bootstrap.cjs", "rtmp.cjs", "main.cjs", "preload.cjs", "settings-preload.cjs",
     "updater.cjs", "rollback.cjs", "pinning.cjs", "bookmarks.cjs", "browser-settings.cjs",
     "products.cjs", "browser.html", "launcher.html", "protect.html", "settings.html",
     "package.json", "assets/**/*", "dist/**/*", "node_modules/**/*"
