@@ -9,6 +9,37 @@ permissions:
   contents: read
 
 jobs:
+  repository-guard:
+    name: Repository guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reject tracked environment secret files
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_env="$({ git ls-files | grep -E '(^|/)\.env($|\.)|(^|/)[^/]+\.env$' || true; } | grep -Ev '(^|/)\.env\.(example|sample|template)$|(^|/)[^/]+\.env\.(example|sample|template)$' || true)"
+          if [ -n "$tracked_env" ]; then
+            echo "Tracked environment files are forbidden:"
+            echo "$tracked_env"
+            echo "Keep real environment files outside Git and commit only .env.example/.sample/.template files."
+            exit 1
+          fi
+          echo "No tracked secret environment files found."
+
+      - name: Verify repository ownership policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .github/CODEOWNERS
+          grep -q '@Sokolcz97-rgb' .github/CODEOWNERS
+          echo "CODEOWNERS policy is present."
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,0 +1,37 @@
+# Voxar.app repository ownership
+# Keep a default owner so every pull request has an accountable reviewer.
+* @Sokolcz97-rgb
+
+# Web / community application
+/src/ @Sokolcz97-rgb
+/public/ @Sokolcz97-rgb
+/supabase/ @Sokolcz97-rgb
+
+# Voxar.app desktop runtime
+/electron/main.cjs @Sokolcz97-rgb
+/electron/preload.cjs @Sokolcz97-rgb
+/electron/bootstrap.cjs @Sokolcz97-rgb
+/electron/bootstrap-utf8.cjs @Sokolcz97-rgb
+
+# VoxarioBrowser
+/electron/browser.html @Sokolcz97-rgb
+/electron/browser-*.cjs @Sokolcz97-rgb
+/electron/browser-builder.json @Sokolcz97-rgb
+/electron/browser-app-update.yml @Sokolcz97-rgb
+
+# VoxarioProtect
+/electron/protect.html @Sokolcz97-rgb
+/electron/protect-*.cjs @Sokolcz97-rgb
+
+# Installer / releases / automation
+/installer/ @Sokolcz97-rgb
+/scripts/ @Sokolcz97-rgb
+/.github/ @Sokolcz97-rgb
+
+# Dependency manifests
+/package.json @Sokolcz97-rgb
+/package-lock.json @Sokolcz97-rgb
+/electron/package.json @Sokolcz97-rgb
+/electron/package-lock.json @Sokolcz97-rgb
+/installer/package.json @Sokolcz97-rgb
+/installer/package-lock.json @Sokolcz97-rgb
