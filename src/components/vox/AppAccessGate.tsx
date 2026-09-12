@@ -37,17 +37,58 @@ function Crest({ icon }: { icon: ReactNode }) {
 
 export function AppAccessGate({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, session, loading } = useAuth();
+  const [identityChecking, setIdentityChecking] = useState(true);
+  const [identityVerified, setIdentityVerified] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [checkingIp, setCheckingIp] = useState(true);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Přístup je vázaný na přihlášeného uživatele – po odhlášení se zámek vrátí.
+  // Desktop shell nesmí odemknout aplikaci jen podle lokálně uložené session.
+  // getUser() ověří aktuální access token u Supabase Auth serveru a potvrdí,
+  // že relace skutečně patří stejnému účtu, který drží AuthContext.
   useEffect(() => {
-    // Dokud se session načítá, nic nemažeme – jinak bychom smazali klíč
-    // právě přihlášeného uživatele hned po reloadu.
     if (loading) return;
+    if (!user || !session?.access_token) {
+      setIdentityVerified(false);
+      setIdentityChecking(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIdentityChecking(true);
+
+    supabase.auth
+      .getUser()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        const verified = !error && data.user?.id === user.id;
+        setIdentityVerified(verified);
+        if (!verified) {
+          setUnlocked(false);
+          void supabase.auth.signOut();
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setIdentityVerified(false);
+        setUnlocked(false);
+        void supabase.auth.signOut();
+      })
+      .finally(() => {
+        if (!cancelled) setIdentityChecking(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, session?.access_token, loading]);
+
+  // Přístup je vázaný na serverově ověřeného přihlášeného uživatele – po
+  // odhlášení, vypršení nebo zneplatnění relace se zámek okamžitě vrátí.
+  useEffect(() => {
+    if (loading || identityChecking) return;
     try {
       // Vyčistíme všechny staré (trvalé) odemčené stavy – kód nesmí přežít odhlášení.
       for (const k of LEGACY_KEYS) localStorage.removeItem(k);
@@ -60,17 +101,19 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    if (!user) {
+    if (!user || !identityVerified) {
       setUnlocked(false);
       return;
     }
     setUnlocked(sessionStorage.getItem(keyFor(user.id)) === "1");
-  }, [user?.id, loading]);
+  }, [user?.id, loading, identityChecking, identityVerified]);
 
   // Ověření podle IP – pokud z této IP už byl kód jednou použit, pustíme dál.
+  // Volání proběhne až po serverovém ověření účtu, takže samotná IP nikdy
+  // nenahrazuje přihlášení.
   useEffect(() => {
-    if (loading) return;
-    if (!user) {
+    if (loading || identityChecking) return;
+    if (!user || !identityVerified) {
       setCheckingIp(false);
       return;
     }
@@ -90,9 +133,9 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, loading]);
+  }, [user?.id, loading, identityChecking, identityVerified]);
 
-  if (loading || (user && checkingIp && !unlocked)) {
+  if (loading || identityChecking || (user && identityVerified && checkingIp && !unlocked)) {
     return (
       <Frame>
         <div className="flex items-center justify-center py-8 text-primary">
@@ -102,19 +145,16 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     );
   }
 
-  // Nepřihlášený uživatel dostane rovnou in-app přihlašovací obrazovku.
-  // (Odkaz na /auth v desktop shellu způsoboval probliknutí – DesktopRouteGuard
-  // uživatele okamžitě vracel zpět na /app.)
-  if (!user) {
+  // Bez serverově ověřeného účtu se desktop shell nikdy nevykreslí.
+  if (!user || !identityVerified) {
     return <AppAuthGate />;
   }
-
 
   if (unlocked) return <>{children}</>;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) return;
+    if (!code.trim() || !identityVerified) return;
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("app-access", {
       body: { action: "redeem", code: code.trim() },

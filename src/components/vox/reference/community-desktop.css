@@ -54,3 +54,94 @@
   #voxar-community .sv-right-signature { flex-basis: 58px !important; min-height: 58px !important; padding-block: 6px !important; }
   #voxar-community .sv-utility-overlay { top: calc(var(--chrome-height) + 6px) !important; bottom: 10px !important; }
 }
+
+/*
+ * Desktop recovery layer.
+ *
+ * community-structured-shell.css gives every direct topbar child z-index: 2.
+ * The v29 skin then lowered .sv-topbar-tools to z-index: 1 while the decorative
+ * scene kept z-index: 2, so search/profile/notifications were painted behind
+ * the scene.  Keep decoration at the back and all interactive chrome above it.
+ */
+#voxar-community .sv-topbar-scene {
+  z-index: 0 !important;
+}
+
+#voxar-community .sv-topbar-brand,
+#voxar-community .sv-topbar-nav,
+#voxar-community .sv-topbar-tools {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+#voxar-community .sv-topbar-tools {
+  z-index: 3 !important;
+}
+
+/* Empty-community states used by AppShellReference need their own layout.
+ * Without this, the fallback text/buttons render as raw inline content in the
+ * top-left corner of each panel (the broken state visible in the desktop app). */
+#voxar-community .vox-reference-empty {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  color: #8fb5c7;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(38, 192, 228, .08), transparent 34%),
+    linear-gradient(180deg, rgba(3, 24, 39, .72), rgba(2, 15, 27, .82));
+}
+
+#voxar-community .vox-reference-empty > strong {
+  display: block;
+  color: #e7f9ff;
+  font: 700 14px/1.2 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(63, 224, 250, .14);
+}
+
+#voxar-community .vox-reference-empty > span {
+  display: block;
+  max-width: 320px;
+  color: #8fb5c7;
+  font: 400 12px/1.55 Inter, "Segoe UI", sans-serif;
+}
+
+#voxar-community .vox-ref-inline-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#voxar-community .vox-ref-inline-actions button {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(59, 218, 247, .45);
+  border-radius: 3px;
+  color: #bceefa;
+  background: rgba(5, 54, 75, .46);
+  font: 600 10px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: .04em;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+
+#voxar-community .vox-ref-inline-actions button:hover {
+  color: #f2fdff;
+  border-color: rgba(80, 229, 255, .82);
+  background: rgba(8, 101, 131, .5);
+}
+
+#voxar-community .sv-workspace-sidebar > .vox-reference-empty,
+#voxar-community .sv-workspace-right > .vox-reference-empty {
+  border: 1px solid rgba(39, 209, 244, .34);
+}
