@@ -1,7 +1,7 @@
 {
   "name": "voxar-app-desktop",
   "productName": "Voxar.app",
-  "version": "0.0.57",
+  "version": "0.0.58",
   "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
   "main": "bootstrap-utf8.cjs",
