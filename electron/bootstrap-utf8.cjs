@@ -29,4 +29,8 @@ if (process.platform === "win32") {
   };
 }
 
+// Register the foreground VoxarioProtect Firewall bridge before the main
+// bootstrap creates windows. In --protect-background mode the bridge is a no-op.
+require("./protect-firewall.cjs").installForegroundBridge();
+
 require("./bootstrap.cjs");
