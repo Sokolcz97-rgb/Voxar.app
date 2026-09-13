@@ -11,8 +11,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   // Přímé přepnutí modulu (Voxar.app <-> VoxarioBrowser) bez návratu do launcheru.
   openModule: (mod) => ipcRenderer.invoke("app:open-module", mod),
 
-  // VoxarioProtect is an opt-in, read-only bridge to Microsoft Defender.
-  // It never changes Defender preferences or creates exclusions.
+  // VoxarioProtect bridge to Microsoft Defender and Windows Defender Firewall.
+  // Defender remains authoritative. Firewall writes are limited to explicit,
+  // user-confirmed per-program outbound BLOCK rules owned by VoxarioProtect.
   protectGetStatus: () => ipcRenderer.invoke("protect:status"),
   protectGetIntegrity: () => ipcRenderer.invoke("protect:integrity"),
   protectGetActivity: () => ipcRenderer.invoke("protect:activity"),
@@ -28,6 +29,15 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   protectGetSystemSafety: () => ipcRenderer.invoke("protect:system-safety"),
   protectOpenWindowsUpdate: () => ipcRenderer.invoke("protect:open-windows-update"),
   protectReturnToLauncher: () => ipcRenderer.invoke("protect:return-to-launcher"),
+
+  // VoxarioProtect Firewall category. Renderer never sends an arbitrary path to
+  // a privileged operation: selection is performed in main and exchanged for a
+  // short-lived token before a user-confirmed UAC-protected BLOCK operation.
+  protectFirewallGetStatus: () => ipcRenderer.invoke("protect:firewall-status"),
+  protectFirewallSelectProgram: () => ipcRenderer.invoke("protect:firewall-select-program"),
+  protectFirewallBlockSelected: (token) => ipcRenderer.invoke("protect:firewall-block-selected", token),
+  protectFirewallRemoveRule: (ruleName) => ipcRenderer.invoke("protect:firewall-remove-rule", ruleName),
+  protectFirewallOpenWindows: () => ipcRenderer.invoke("protect:firewall-open-windows"),
 
   // Screen sharing: vlastní HUD picker v aplikaci.
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
