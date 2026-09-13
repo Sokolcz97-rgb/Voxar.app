@@ -59,6 +59,16 @@ jobs:
       - name: Check Electron RTMP syntax
         run: node --check electron/rtmp.cjs
 
+      - name: Validate VoxarioProtect layered engine
+        run: |
+          node --check electron/protect-background.cjs
+          node --check electron/protect-preferences.cjs
+          node --check electron/protect-trust-engine.cjs
+          node --check electron/protect-layered-engine.cjs
+          node --check electron/protect-firewall.cjs
+          cd electron
+          npm run test:protect
+
       - name: Run focused community tests
         run: npm test -- src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx src/contexts/VoiceCallContext.test.tsx
 
@@ -103,6 +113,14 @@ jobs:
           node --check electron/updater.cjs
           node --check electron/rollback.cjs
           node --check electron/products.cjs
+          node --check electron/protect-background.cjs
+          node --check electron/protect-preferences.cjs
+          node --check electron/protect-trust-engine.cjs
+          node --check electron/protect-layered-engine.cjs
+          node --check electron/protect-firewall.cjs
+          Push-Location electron
+          npm run test:protect
+          Pop-Location
           node --check installer/main.cjs
           node --check installer/build.cjs
           node -e "const p=require('./electron/products.cjs'); const x=p.productDefinitions(); if(x.app.executable===x.browser.executable || x.app.downloadUrl===x.browser.downloadUrl) throw Error('Product registry is not independent'); console.log('Product registry is independent.')"
