@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    # Web/Lovable UI se v desktopu načítá z živé /app routy. Kvůli CSS/React
-    # změnám proto nevyrábíme nový 200+ MB instalátor a neotravujeme uživatele
-    # falešnou binární aktualizací. Release běží jen při změně desktop runtime.
     paths:
       - 'electron/**'
       - 'installer/**'
@@ -16,15 +13,15 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: 'Version bump for electron/package.json (patch|minor|major|none)'
+        description: 'Release version bump (patch|minor|major)'
         required: false
         default: 'patch'
 
 permissions:
   contents: write
 
-# Desktop release mění main (version bump + veřejná metadata). Dvě souběžné
-# release úlohy by si jinak mohly navzájem odmítnout non-fast-forward push.
+# Release nikdy nezapisuje přímo do chráněného main. Verze se odvozuje z
+# posledního publikovaného GitHub Release a mění se pouze v pracovním runneru.
 concurrency:
   group: studiovoxario-desktop-release
   cancel-in-progress: false
@@ -34,10 +31,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout protected main snapshot
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -45,104 +42,105 @@ jobs:
         with:
           node-version: '22.22.0'
 
-      # Kanonická verze desktopu je VÝHRADNĚ electron/package.json.
-      - name: Bump canonical desktop version (electron/package.json)
-        if: github.event_name == 'push' || inputs.bump != 'none'
+      - name: Resolve release version without modifying main
+        id: appver
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           BUMP="${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'patch' }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm --prefix electron version "$BUMP" --no-git-tag-version
-          VERSION=$(node -p "require('./electron/package.json').version")
-          git add electron/package.json electron/package-lock.json || true
-          git commit -m "ci: desktop v$VERSION [skip ci]" || echo "nothing to commit"
+          case "$BUMP" in
+            patch|minor|major) ;;
+            *) echo "Unsupported version bump: $BUMP"; exit 1 ;;
+          esac
 
-          # Mezi checkoutem a bumpem může na main přistát jiný commit. Nikdy
-          # nepoužíváme force push; vlastní malý commit bezpečně přehrajeme na
-          # aktuální origin/main a push několikrát zopakujeme.
-          pushed=false
-          for attempt in 1 2 3; do
-            git fetch origin main
-            if ! git rebase origin/main; then
-              echo "Desktop version rebase failed; refusing to overwrite main."
-              git rebase --abort || true
-              exit 1
-            fi
-            if git push origin HEAD:main; then
-              pushed=true
-              break
-            fi
-            echo "Version push raced with main (attempt $attempt/3); retrying..."
-            sleep 2
-          done
-          if [ "$pushed" != true ]; then
-            echo "Desktop version push failed after 3 safe attempts."
-            exit 1
+          PACKAGE_VERSION=$(node -p "require('./electron/package.json').version")
+          LATEST_TAG=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+          RELEASE_VERSION="${LATEST_TAG#v}"
+          BASE_VERSION="$PACKAGE_VERSION"
+
+          if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            BASE_VERSION=$(node - "$PACKAGE_VERSION" "$RELEASE_VERSION" <<'NODE'
+          const versions = process.argv.slice(2).map((value) => {
+            const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(value);
+            if (!match) throw new Error(`Invalid semver: ${value}`);
+            return { raw: value, parts: match.slice(1).map(Number) };
+          });
+          versions.sort((a, b) => {
+            for (let i = 0; i < 3; i += 1) {
+              if (a.parts[i] !== b.parts[i]) return a.parts[i] - b.parts[i];
+            }
+            return 0;
+          });
+          console.log(versions.at(-1).raw);
+          NODE
+            )
           fi
 
-      - name: Resolve desktop version
-        id: appver
+          VERSION=$(node - "$BASE_VERSION" "$BUMP" <<'NODE'
+          const [base, bump] = process.argv.slice(2);
+          const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(base);
+          if (!match) throw new Error(`Invalid semver: ${base}`);
+          let [major, minor, patch] = match.slice(1).map(Number);
+          if (bump === 'major') { major += 1; minor = 0; patch = 0; }
+          if (bump === 'minor') { minor += 1; patch = 0; }
+          if (bump === 'patch') { patch += 1; }
+          console.log(`${major}.${minor}.${patch}`);
+          NODE
+          )
+
+          # Verzi nastavíme jen lokálně v runneru. Žádný commit ani push do main.
+          npm --prefix electron version "$VERSION" --no-git-tag-version --allow-same-version
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "latest_release=${RELEASE_VERSION:-none}" >> "$GITHUB_OUTPUT"
+          echo "Desktop release: $VERSION (source package: $PACKAGE_VERSION, latest release: ${RELEASE_VERSION:-none})"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend and prepare renderer
+        run: npm run desktop:prepare
+
+      - name: Verify packaged renderer and Protect v2.4
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(node -p "require('./electron/package.json').version")
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid semver: $VERSION"; exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Desktop version: $VERSION"
+          test -f electron/dist/index.html
+          test -d electron/dist/assets
+          test -f electron/app-update.yml
+          test -f electron/assets/installer.nsh
+          test -f electron/protect-layered-engine.cjs
+          test -f electron/protect-firewall.cjs
+          node --check electron/protect-layered-engine.cjs
+          node --check electron/protect-firewall.cjs
+          npm --prefix electron run test:protect
+          grep -q "VOXARIO_NATIVE_TAB_DRAG_V1" electron/browser.html
+          grep -q "VOXARIO_MODULE_STATE_DURABLE_V1" electron/main.cjs
+          echo "Protect v2.4 and desktop renderer are ready for packaging."
 
-      - name: Install root deps
-        run: npm ci || npm install
-
-      - name: Build frontend (Vite) + prepare renderer
-        run: npm run desktop:prepare
-
-      - name: Verify packaged renderer
-        shell: bash
-        run: |
-          test -f electron/dist/index.html || { echo "Missing electron/dist/index.html"; exit 1; }
-          test -d electron/dist/assets || { echo "Missing electron/dist/assets"; exit 1; }
-          test -f electron/app-update.yml || { echo "Missing electron/app-update.yml"; exit 1; }
-          test -f electron/assets/installer.nsh || { echo "Missing NSIS migration hook"; exit 1; }
-          grep -q "VOXARIO_NATIVE_TAB_DRAG_V1" electron/browser.html || {
-            echo "Native VoxarioBrowser drag patch was not applied"; exit 1;
-          }
-          grep -q "VOXARIO_MODULE_STATE_DURABLE_V1" electron/main.cjs || {
-            echo "Durable VoxarioBrowser module-state patch was not applied"; exit 1;
-          }
-          echo "✓ Native browser UI + durable module state are prepared for packaging"
-
-      - name: Install electron deps
+      - name: Install Electron dependencies
         working-directory: electron
-        run: npm install
+        run: npm install --no-audit --no-fund
 
-      # Technický update balíček. Uživatel tento instalátor běžně NEVIDÍ.
-      # latest.yml odkazuje právě na StudioVoxarioUpdate-<version>.exe.
-      - name: Build & publish silent NSIS update payload
+      - name: Build and publish Voxar.app update payload
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EP_GH_IGNORE_TIME: 'true'
         run: npm run release:win
 
-      - name: Verify electron-updater payload
+      - name: Verify Voxar.app updater payload
         shell: bash
         run: |
+          set -euo pipefail
           node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}"
-          test -f electron/release/win-unpacked/resources/app-update.yml || {
-            echo "Missing packaged resources/app-update.yml — updater would fail at runtime"
-            exit 1
-          }
-          echo "Packaged updater config:"
-          cat electron/release/win-unpacked/resources/app-update.yml
+          test -f electron/release/win-unpacked/resources/app-update.yml
 
-      # VoxarioBrowser is a separate product: its executable, updater cache,
-      # update channel and release asset must never be shared with Voxar.app.
-      - name: Build & publish VoxarioBrowser update payload
+      - name: Build and publish VoxarioBrowser update payload
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -152,14 +150,11 @@ jobs:
       - name: Verify VoxarioBrowser updater payload
         shell: bash
         run: |
+          set -euo pipefail
           node scripts/verify-release-artifacts.cjs "${{ steps.appver.outputs.version }}" browser
           test -f electron/release/browser/win-unpacked/resources/app-update.yml
           grep -q 'channel: browser' electron/release/browser/win-unpacked/resources/app-update.yml
 
-      # ---------------- VLASTNÍ VISIBLE INSTALLER ----------------
-      # Zachovává původní StudioVoxario HUD/Electron UI. Je to primární .exe,
-      # které se nabízí na webu. Payload bere z electron-builder win-unpacked,
-      # takže obsahuje úplně stejnou aplikaci jako auto-update.
       - name: Prepare custom installer
         shell: pwsh
         run: |
@@ -172,9 +167,9 @@ jobs:
           $pkg | ConvertTo-Json -Depth 20 | Set-Content $pkgPath -Encoding UTF8
           Write-Host "Custom installer version: $version"
 
-      - name: Install custom installer deps
+      - name: Install custom installer dependencies
         working-directory: installer
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Build custom StudioVoxario HUD installer runtime
         working-directory: installer
@@ -184,69 +179,71 @@ jobs:
         working-directory: installer
         run: node build.cjs --product=browser
 
+      - name: Download 7-Zip SFX module
+        id: sfx
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
+          $archive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $directory = Join-Path $env:RUNNER_TEMP "lzma-sdk"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $archive
+          if (Test-Path $directory) { Remove-Item -Recurse -Force $directory }
+          New-Item -ItemType Directory -Force -Path $directory | Out-Null
+          & $sevenZip x $archive "-o$directory" -y
+          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
+          $sfx = Get-ChildItem -Recurse $directory -Filter "7zSD.sfx" -File | Select-Object -First 1
+          if ($null -eq $sfx) { throw "7zSD.sfx not found" }
+          "path=$($sfx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Build single-file VoxarioBrowser Setup EXE
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $version = "${{ steps.appver.outputs.version }}"
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
-          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
-          $extraDir = Join-Path $env:RUNNER_TEMP "lzma-sdk-browser"
-          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
-          if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
-          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
-          & $sevenZip x $extraArchive "-o$extraDir" -y
-          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
-          $sfx = Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1
-          if ($null -eq $sfx) { throw "7zSD.sfx not found" }
+          $sfx = "${{ steps.sfx.outputs.path }}"
           $payloadDir = Resolve-Path "installer/dist/VoxarioBrowserInstaller-win32-x64"
           $installerExe = Join-Path $payloadDir "VoxarioBrowserInstaller.exe"
           if (!(Test-Path $installerExe)) { throw "Custom Browser installer runtime missing: $installerExe" }
           $archive = Join-Path $env:RUNNER_TEMP "voxariobrowser-custom-installer.7z"
           if (Test-Path $archive) { Remove-Item $archive -Force }
           Push-Location $payloadDir
-          try { & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"; if ($LASTEXITCODE -ne 0) { throw "7z pack failed" } } finally { Pop-Location }
+          try {
+            & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
+            if ($LASTEXITCODE -ne 0) { throw "7z pack failed" }
+          } finally { Pop-Location }
           $cfg = Join-Path $env:RUNNER_TEMP "voxariobrowser-sfx-config.txt"
           $utf8Bom = New-Object System.Text.UTF8Encoding($true)
           [System.IO.File]::WriteAllText($cfg, (';!@Install@!UTF-8!','Title="VoxarioBrowser"','RunProgram="VoxarioBrowserInstaller.exe"','GUIMode="2"',';!@InstallEnd@!' -join "`r`n") + "`r`n", $utf8Bom)
           $outFile = "electron/release/browser/VoxarioBrowserSetup-$version.exe"
           $out = [System.IO.File]::Open($outFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
-          try { foreach ($part in @($sfx.FullName, $cfg, $archive)) { $stream = [System.IO.File]::OpenRead($part); try { $stream.CopyTo($out) } finally { $stream.Dispose() } } } finally { $out.Dispose() }
+          try {
+            foreach ($part in @($sfx, $cfg, $archive)) {
+              $stream = [System.IO.File]::OpenRead($part)
+              try { $stream.CopyTo($out) } finally { $stream.Dispose() }
+            }
+          } finally { $out.Dispose() }
           if (!(Test-Path $outFile)) { throw "Browser Setup EXE was not created" }
 
-      - name: Build single-file custom Setup EXE
+      - name: Build single-file StudioVoxario Setup EXE
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $version = "${{ steps.appver.outputs.version }}"
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-          if (!(Test-Path $sevenZip)) { throw "7-Zip not installed at $sevenZip" }
-
-          # 7zSD.sfx = pouze tichý self-extractor. Po rozbalení se spustí
-          # StudioVoxarioInstaller.exe a uživatel vidí výhradně naše vlastní UI.
-          $extraArchive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
-          $extraDir = Join-Path $env:RUNNER_TEMP "lzma-sdk"
-          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $extraArchive
-          if (Test-Path $extraDir) { Remove-Item -Recurse -Force $extraDir }
-          New-Item -ItemType Directory -Force -Path $extraDir | Out-Null
-          & $sevenZip x $extraArchive "-o$extraDir" -y
-          if ($LASTEXITCODE -ne 0) { throw "7z extract failed with code $LASTEXITCODE" }
-          $sfx = (Get-ChildItem -Recurse $extraDir -Filter "7zSD.sfx" -File | Select-Object -First 1)
-          if ($null -eq $sfx) { throw "7zSD.sfx not found" }
-
+          $sfx = "${{ steps.sfx.outputs.path }}"
           $payloadDir = Resolve-Path "installer/dist/StudioVoxarioInstaller-win32-x64"
           $installerExe = Join-Path $payloadDir "StudioVoxarioInstaller.exe"
           if (!(Test-Path $installerExe)) { throw "Custom HUD installer runtime missing: $installerExe" }
-
           $archive = Join-Path $env:RUNNER_TEMP "studiovoxario-custom-installer.7z"
           if (Test-Path $archive) { Remove-Item $archive -Force }
           Push-Location $payloadDir
           try {
             & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
-            if ($LASTEXITCODE -ne 0) { throw "7z pack failed with code $LASTEXITCODE" }
+            if ($LASTEXITCODE -ne 0) { throw "7z pack failed" }
           } finally { Pop-Location }
-
           $cfg = Join-Path $env:RUNNER_TEMP "studiovoxario-sfx-config.txt"
           $configLines = @(
             ';!@Install@!UTF-8!',
@@ -257,58 +254,36 @@ jobs:
           )
           $utf8Bom = New-Object System.Text.UTF8Encoding($true)
           [System.IO.File]::WriteAllText($cfg, ($configLines -join "`r`n") + "`r`n", $utf8Bom)
-
           $outFile = "electron/release/StudioVoxarioSetup-$version.exe"
           if (Test-Path $outFile) { Remove-Item $outFile -Force }
           $out = [System.IO.File]::Open($outFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
           try {
-            foreach ($part in @($sfx.FullName, $cfg, $archive)) {
+            foreach ($part in @($sfx, $cfg, $archive)) {
               $stream = [System.IO.File]::OpenRead($part)
               try { $stream.CopyTo($out) } finally { $stream.Dispose() }
             }
           } finally { $out.Dispose() }
+          if (!(Test-Path $outFile)) { throw "StudioVoxario Setup EXE was not created" }
+          Write-Host "SHA256: $((Get-FileHash $outFile -Algorithm SHA256).Hash.ToLower())"
 
-          if (!(Test-Path $outFile)) { throw "Custom Setup EXE was not created" }
-          $size = (Get-Item $outFile).Length
-          $hash = (Get-FileHash $outFile -Algorithm SHA256).Hash.ToLower()
-          Write-Host "Custom Setup: $outFile"
-          Write-Host "Size: $size"
-          Write-Host "SHA256: $hash"
-
-      - name: Upload custom Setup to version release
+      - name: Upload stable Setup aliases to version release
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           VERSION="${{ steps.appver.outputs.version }}"
-          FILE="electron/release/StudioVoxarioSetup-$VERSION.exe"
-          STABLE_FILE="electron/release/StudioVoxarioSetup.exe"
-          test -f "$FILE"
+          APP_FILE="electron/release/StudioVoxarioSetup-$VERSION.exe"
+          APP_STABLE="electron/release/StudioVoxarioSetup.exe"
+          BROWSER_FILE="electron/release/browser/VoxarioBrowserSetup-$VERSION.exe"
+          BROWSER_STABLE="electron/release/browser/VoxarioBrowserSetup.exe"
+          test -f "$APP_FILE"
+          test -f "$BROWSER_FILE"
+          cp "$APP_FILE" "$APP_STABLE"
+          cp "$BROWSER_FILE" "$BROWSER_STABLE"
+          gh release upload "v$VERSION" "$APP_FILE" "$APP_STABLE" "$BROWSER_FILE" "$BROWSER_STABLE" --clobber --repo "${{ github.repository }}"
 
-          # Versionovaný soubor zůstává kvůli historii a ručnímu dohledání releasu.
-          gh release upload "v$VERSION" "$FILE" --clobber --repo "${{ github.repository }}"
-
-          # Stejný binární soubor nahrajeme do téhož releasu také pod STÁLÝM názvem.
-          # Web pak může navždy používat /releases/latest/download/StudioVoxarioSetup.exe
-          # a kvůli každé desktop verzi se nemusí znovu publikovat Lovable web.
-          cp "$FILE" "$STABLE_FILE"
-          gh release upload "v$VERSION" "$STABLE_FILE" --clobber --repo "${{ github.repository }}"
-
-      - name: Upload VoxarioBrowser Setup to version release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          VERSION="${{ steps.appver.outputs.version }}"
-          FILE="electron/release/browser/VoxarioBrowserSetup-$VERSION.exe"
-          STABLE_FILE="electron/release/browser/VoxarioBrowserSetup.exe"
-          test -f "$FILE"
-          cp "$FILE" "$STABLE_FILE"
-          gh release upload "v$VERSION" "$FILE" "$STABLE_FILE" --clobber --repo "${{ github.repository }}"
-
-      - name: Verify custom + updater artifacts
+      - name: Verify custom and updater artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -320,9 +295,8 @@ jobs:
           test -f "electron/release/browser/VoxarioBrowserSetup-$VERSION.exe"
           test -f "electron/release/browser/browser.yml"
           test -f electron/release/latest.yml
-          echo "✓ Custom visible setup + stable web alias + hidden updater payload are present"
 
-      - name: Upload artifacts (CI debug)
+      - name: Upload release artifacts for diagnostics
         uses: actions/upload-artifact@v4
         with:
           name: StudioVoxario-win-${{ steps.appver.outputs.version }}
@@ -339,9 +313,6 @@ jobs:
             electron/release/browser/browser.yml
           if-no-files-found: error
 
-      # electron-builder vytváří release nejdřív jako draft. `/releases/latest`
-      # proto po celou dobu buildu dál ukazuje na poslední kompletní verzi a
-      # nikdy neodkáže na release, ve kterém ještě chybí webový Setup.
       - name: Publish complete release atomically
         shell: bash
         env:
@@ -351,75 +322,37 @@ jobs:
           VERSION="${{ steps.appver.outputs.version }}"
           TAG="v$VERSION"
           REPO="${{ github.repository }}"
-
           gh release edit "$TAG" --draft=false --prerelease=false --latest --repo "$REPO"
-
           LATEST_TAG=$(gh api "repos/$REPO/releases/latest" --jq '.tag_name')
           if [ "$LATEST_TAG" != "$TAG" ]; then
             echo "Latest release mismatch: expected $TAG, got $LATEST_TAG"
             exit 1
           fi
-
           for FILE in StudioVoxarioSetup.exe VoxarioBrowserSetup.exe; do
-            DOWNLOAD_URL="https://github.com/$REPO/releases/latest/download/$FILE"
-            STATUS=$(curl --head --location --silent --show-error --output /dev/null --write-out '%{http_code}' "$DOWNLOAD_URL")
+            URL="https://github.com/$REPO/releases/latest/download/$FILE"
+            STATUS=$(curl --head --location --silent --show-error --output /dev/null --write-out '%{http_code}' "$URL")
             if [ "$STATUS" != "200" ]; then
               echo "Stable installer URL for $FILE returned HTTP $STATUS"
               exit 1
             fi
           done
-          echo "✓ $TAG is public, complete and both stable installers are downloadable"
+          echo "$TAG is public and both stable installers are downloadable."
 
-      # desktop-version.json + website pointer odkazují na VLASTNÍ Setup EXE.
-      # public/latest.yml + public/beta.yml jsou migrační feed pro staré klienty
-      # a zůstávají navázané na technický StudioVoxarioUpdate EXE.
-      - name: Update website download metadata and legacy bootstrap feed
+      - name: Generate website and legacy metadata without pushing main
         shell: bash
         run: |
           set -euo pipefail
           VERSION="${{ steps.appver.outputs.version }}"
           node scripts/write-desktop-metadata.cjs "$VERSION" "${{ github.repository }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            public/desktop-version.json \
-            public/latest.yml \
-            public/beta.yml \
+          echo "Metadata generated locally. Protected main remains untouched."
+
+      - name: Upload generated metadata for follow-up PR
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudioVoxario-metadata-${{ steps.appver.outputs.version }}
+          path: |
+            public/desktop-version.json
+            public/latest.yml
+            public/beta.yml
             src/assets/downloads/windows-installer.asset.json
-          if git diff --cached --quiet; then
-            echo "No metadata changes."
-          else
-            git commit -m "ci: update desktop metadata and custom installer v$VERSION [skip ci]"
-
-            # Build mezitím může trvat několik minut a main se může posunout.
-            # Zahodíme pouze zbylé build-time změny pracovního stromu; metadata
-            # už jsou v samostatném commitu. Poté commit bezpečně rebasujeme na
-            # nejnovější main a zkusíme push bez force až třikrát.
-            git reset --hard HEAD
-            pushed=false
-            for attempt in 1 2 3; do
-              git fetch origin main
-              if ! git rebase origin/main; then
-                echo "Metadata rebase failed; refusing to overwrite main."
-                git rebase --abort || true
-                exit 1
-              fi
-              if git push origin HEAD:main; then
-                pushed=true
-                break
-              fi
-              echo "Metadata push raced with main (attempt $attempt/3); retrying..."
-              sleep 2
-            done
-            if [ "$pushed" != true ]; then
-              echo "Metadata push failed after 3 safe attempts."
-              exit 1
-            fi
-
-            REMOTE_VERSION=$(git show origin/main:public/desktop-version.json | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).version || ''))")
-            if [ "$REMOTE_VERSION" != "$VERSION" ]; then
-              echo "Remote desktop metadata mismatch: expected $VERSION, got $REMOTE_VERSION"
-              exit 1
-            fi
-            echo "✓ Remote desktop metadata is synchronized to $VERSION"
-          fi
+          if-no-files-found: error
