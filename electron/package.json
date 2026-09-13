@@ -18,7 +18,7 @@
   "scripts": {
     "start": "electron .",
     "verify:renderer": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.html'))throw Error('Missing electron/dist/index.html')\"",
-    "test:protect": "node protect-layered-engine.test.cjs",
+    "test:protect": "node protect-layered-engine.test.cjs && node protect-ui-version.test.cjs",
     "dist:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish never",
     "release:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish always",
     "dist:browser:win": "npm run verify:renderer && electron-builder --config browser-builder.json --win nsis --x64 --publish never",
@@ -52,6 +52,7 @@
       "protect-trust-engine.cjs",
       "protect-layered-engine.cjs",
       "protect-firewall.cjs",
+      "protect-version.cjs",
       "browser.html",
       "launcher.html",
       "protect.html",

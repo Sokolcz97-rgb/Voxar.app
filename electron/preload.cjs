@@ -1,9 +1,11 @@
 // Preload for the main app window – exposes a small API to studiovoxario.com
 const { contextBridge, ipcRenderer } = require("electron");
+const { version: protectVersion } = require("./protect-version.cjs");
 
 contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   isDesktop: true,
   platform: process.platform,
+  protectVersion,
   // Návrat na rozcestník modulů (Voxar.app / VoxarioBrowser)
   returnToLauncher: () => ipcRenderer.invoke("app:return-to-launcher"),
   // Přímé přepnutí modulu (Voxar.app <-> VoxarioBrowser) bez návratu do launcheru.
