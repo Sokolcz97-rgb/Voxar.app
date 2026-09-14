@@ -32,6 +32,19 @@ jobs:
           fi
           echo "No tracked secret environment files found."
 
+      - name: Reject tracked password vaults and exports
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_credentials="$(git ls-files | grep -Ei '(^|/)browser-(secure-)?vault[^/]*\.json$|(^|/)[^/]*(passwords|hesla)[^/]*\.csv$' || true)"
+          if [ -n "$tracked_credentials" ]; then
+            echo "Tracked credential material is forbidden:"
+            echo "$tracked_credentials"
+            echo "Runtime vaults and plaintext browser password exports must never enter Git."
+            exit 1
+          fi
+          echo "No tracked password vaults or plaintext password exports found."
+
       - name: Verify repository ownership policy
         shell: bash
         run: |
