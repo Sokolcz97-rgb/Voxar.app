@@ -25,6 +25,12 @@ dist-ssr
 !**/.env.sample
 !**/.env.template
 
+# Runtime credential vaults and plaintext password exports
+browser-secure-vault*.json
+browser-vault*.json
+*passwords*.csv
+*hesla*.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
