@@ -10,6 +10,11 @@ require("./browser-password-security.cjs").installBrowserPasswordSecurity();
 // first navigation. It only observes the dedicated persist:voxario session.
 require("./browser-resource-monitor.cjs").installBrowserResourceMonitor();
 
+// Keep browser chrome sizing independent from the resource monitor. This only
+// compacts the native VoxarioBrowser shell and keeps the new-tab button visible;
+// loaded web pages are never zoomed or restyled by this module.
+require("./browser-chrome-fit.cjs").installBrowserChromeFit();
+
 // Load the regular desktop bootstrap next. That registers browser-settings.cjs
 // and the rest of the application lifecycle.
 require("../bootstrap-utf8.cjs");
