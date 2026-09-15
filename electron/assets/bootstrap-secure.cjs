@@ -1,5 +1,15 @@
 "use strict";
 
+// Recover the encrypted Secure Vault before the password manager resolves its
+// profile paths. This keeps AES-GCM + DPAPI data durable across installer/update
+// transitions without ever exporting plaintext credentials.
+require("./browser-profile-recovery.cjs").installBrowserProfileRecovery();
+
+// Install commerce compatibility before browser-settings registers session
+// filters. This preserves same-site cart updates, trusted payment/pickup widgets
+// and real popup semantics while keeping unsafe external schemes user-confirmed.
+require("./browser-commerce-compat.cjs").installBrowserCommerceCompatibility();
+
 // Password security must register before browser windows/webviews are created.
 // The actual implementation lives in assets so both Voxar.app and the
 // standalone VoxarioBrowser package receive exactly the same hardened vault.
