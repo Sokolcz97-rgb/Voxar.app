@@ -150,29 +150,13 @@ async function statsForWebContents(app, webContents, id) {
 }
 
 function browserHudRenderer() {
-  if (window.__voxarioResourceHudV1) return;
-  window.__voxarioResourceHudV1 = true;
   const { ipcRenderer } = require("electron");
 
-  const style = document.createElement("style");
-  style.id = "voxario-resource-hud-style";
-  style.textContent = `
-    /* VOXARIO_BROWSER_COMPACT_UI_V1: chrome only; web page zoom is untouched. */
-    .dock{width:54px!important;flex-basis:54px!important;padding:8px 0!important;gap:6px!important}
-    .dock .brand{width:31px!important;height:31px!important;font-size:14px!important;margin-bottom:6px!important}
-    .dockbtn{width:35px!important;height:35px!important;font-size:15px!important}
-    .tabbar{gap:3px!important;padding:5px 7px 0!important}
-    .tab{min-width:124px!important;max-width:208px!important;gap:7px!important;padding:6px 9px!important;font-size:11px!important}
-    .newtab{padding:0 10px!important;font-size:15px!important}
-    .wctl button{width:34px!important;height:26px!important;font-size:12px!important}
-    .navbar{gap:5px!important;padding:6px 7px!important}
-    .navbtn{width:30px!important;height:30px!important;font-size:13px!important}
-    .urlwrap{gap:7px!important;padding:5px 12px!important}
-    #url{font-size:12px!important}
-    .bmbar{padding:3px 7px!important}.bmbar .chip{font-size:10px!important;padding:3px 8px!important}
-    .panel{padding:16px 20px!important}.card{padding:12px!important;margin-bottom:10px!important}
-    .setnav{width:180px!important;flex-basis:180px!important}.setnav button{font-size:10px!important;padding:8px 10px!important}
-    .pbtn{font-size:10px!important;padding:6px 11px!important}.opt{padding:7px 0!important}
+  if (!document.getElementById("voxario-resource-hud-style")) {
+    const style = document.createElement("style");
+    style.id = "voxario-resource-hud-style";
+    style.textContent = `
+    /* HUD-only styles: browser shell geometry belongs to browser UI CSS. */
     #vbResourceHud{display:flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;margin-left:1px;cursor:pointer}
     #vbResourceHud .vb-r{min-width:51px;height:24px;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 6px;border:1px solid rgba(34,211,238,.18);background:rgba(6,11,20,.82);color:#7f9aa9;font-size:9px;border-radius:5px}
     #vbResourceHud .vb-r b{color:#c7e9ed;font-size:9.5px;font-weight:700}.vb-r.gpu b{color:#f4cf65}.vb-r.net b{color:#70e5bd}
@@ -183,11 +167,14 @@ function browserHudRenderer() {
     @media(max-width:1180px){#vbResourceHud .vb-r{min-width:45px;padding:0 4px}#vbResourceHud .vb-r span{display:none}.vbPerfGrid{grid-template-columns:1fr 1fr}}
     @media(max-width:920px){#vbResourceHud{display:none}}
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
 
   const navbar = document.querySelector(".navbar");
   const anchor = document.getElementById("btnStar");
   if (!navbar || !anchor) return;
+  if (document.getElementById("vbResourceHud") || window.__voxarioResourceHudV1) return;
+  window.__voxarioResourceHudV1 = true;
   const hud = document.createElement("div");
   hud.id = "vbResourceHud";
   hud.title = "Živé využití aktivního webu. Kliknutím otevřeš Výkon & síť.";
