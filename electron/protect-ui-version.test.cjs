@@ -9,7 +9,7 @@ const html = fs.readFileSync(path.join(__dirname, "protect.html"), "utf8");
 const preload = fs.readFileSync(path.join(__dirname, "preload.cjs"), "utf8");
 const bootstrapUtf8 = fs.readFileSync(path.join(__dirname, "bootstrap-utf8.cjs"), "utf8");
 
-assert.equal(version, "2.6", "VoxarioProtect canonical version must be 2.6");
+assert.equal(version, "2.7", "VoxarioProtect canonical version must be 2.6");
 assert.match(html, /id="protectVersion"/, "Protect UI must render the canonical version slot");
 assert.match(html, /api\?\.protectVersion/, "Protect UI must read the version from preload");
 assert.doesNotMatch(html, /VoxarioProtect v2\.[12]/, "Protect UI contains a stale v2.1/v2.2 label");
