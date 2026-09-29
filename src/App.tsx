@@ -60,7 +60,7 @@ import PublicForm from "./pages/PublicForm.tsx";
 import DownloadDesktop from "./pages/DownloadDesktop.tsx";
 import VoxarioBrowser from "./pages/VoxarioBrowser.tsx";
 import GameLauncher from "./pages/GameLauncher.tsx";
-import AI from "./pages/AI.tsx";
+import VoxarioTools from "./pages/AI.tsx";
 import AdminDownloadCodes from "./pages/AdminDownloadCodes.tsx";
 import AdminConsole from "./pages/AdminConsole.tsx";
 import AdminCosmetics from "./pages/AdminCosmetics.tsx";
@@ -132,7 +132,7 @@ const AppRoutes = () => {
         <Route path="/desktop" element={<DownloadDesktop />} />
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
-        <Route path="/ai" element={<ProtectedRoute requireAdmin><AI /></ProtectedRoute>} />
+        <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
         <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
         <Route path="/admin/nakupy" element={<ProtectedRoute requireEditor><AdminPurchases /></ProtectedRoute>} />
