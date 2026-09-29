@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   protectQuickScan: () => ipcRenderer.invoke("protect:quick-scan"),
   protectOpenWindowsSecurity: () => ipcRenderer.invoke("protect:open-windows-security"),
   protectGetSystemSafety: () => ipcRenderer.invoke("protect:system-safety"),
+  protectGetRuntimeHealth: () => ipcRenderer.invoke("protect:runtime-health"),
   protectOpenWindowsUpdate: () => ipcRenderer.invoke("protect:open-windows-update"),
   protectReturnToLauncher: () => ipcRenderer.invoke("protect:return-to-launcher"),
 
