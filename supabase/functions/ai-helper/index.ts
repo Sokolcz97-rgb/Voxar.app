@@ -366,9 +366,22 @@ async function callAI(messages: ChatMsg[], _apiKey: string) {
   });
 }
 
+const AI_TEMPORARILY_DISABLED = true;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (AI_TEMPORARILY_DISABLED) {
+    return new Response(
+      JSON.stringify({
+        disabled: true,
+        mode: "local-tools",
+        content: "StudioVoxario AI je dočasně vypnuté. Použij Voxario Tools na /ai nebo rychlou pomoc na webu.",
+      }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   try {
