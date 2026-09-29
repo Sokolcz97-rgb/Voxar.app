@@ -1,51 +1,21 @@
 "use strict";
 
-// Force Windows PowerShell output to UTF-8 before the real desktop bootstrap
-// loads. Node decodes child-process stdout as UTF-8, while Windows PowerShell
-// can otherwise emit the active legacy console code page when stdout is piped.
-if (process.platform === "win32") {
-  const childProcess = require("child_process");
-  const originalSpawn = childProcess.spawn;
-  const utf8Prelude = [
-    "$__voxarioUtf8 = New-Object System.Text.UTF8Encoding($false)",
-    "[Console]::OutputEncoding = $__voxarioUtf8",
-    "$OutputEncoding = $__voxarioUtf8",
-  ].join(";") + ";";
-
-  childProcess.spawn = function voxarioUtf8Spawn(command, args, options) {
-    const argv = Array.isArray(args) ? [...args] : args;
-    const executable = String(command || "").replace(/^.*[\\/]/, "").toLowerCase();
-    if ((executable === "powershell.exe" || executable === "powershell" || executable === "pwsh.exe" || executable === "pwsh") && Array.isArray(argv)) {
-      const commandIndex = argv.findIndex((arg) => String(arg).toLowerCase() === "-command");
-      if (commandIndex >= 0 && typeof argv[commandIndex + 1] === "string") {
-        argv[commandIndex + 1] = utf8Prelude + argv[commandIndex + 1];
-      }
-    }
-    return originalSpawn.call(childProcess, command, argv, options);
-  };
-}
-
-// IPC + safe Windows Defender Firewall companion. The bridge itself owns only
-// VoxarioProtect.Block.* outbound BLOCK rules and keeps Defender authoritative.
-require("./protect-firewall.cjs").installForegroundBridge();
-
-// Renderer-side supervisor for Protect-only UI. The previous v2.5 fallback ran
-// only once and could lose its tab when bootstrap.cjs rebuilt the navigation.
-// This supervisor is deliberately idempotent: it watches the final DOM and
-// restores Firewall + Stability after every navigation/settings rebuild.
-function protectUiSupervisorV26() {
+// VoxarioProtect v2.7 renderer-owned UI. Loaded directly by protect.html so
+// Firewall + Stability/Lifetime cannot disappear when main-process injection
+// timing changes. Uses only the contextBridge API exposed by preload.cjs.
+function protectUiV27() {
   const api = window.studioVoxarioDesktop;
   if (!api) return;
 
-  if (window.__voxarioProtectUiSupervisorV26?.ensure) {
-    window.__voxarioProtectUiSupervisorV26.ensure();
+  if (window.__voxarioProtectUiV27?.ensure) {
+    window.__voxarioProtectUiV27.ensure();
     return;
   }
 
   let ensuring = false;
   let firewallBusy = false;
   let stabilityBusy = false;
-  const protectVersion = String(api.protectVersion || "2.6");
+  const protectVersion = String(api.protectVersion || "2.7");
 
   function setText(id, value) {
     const node = document.getElementById(id);
@@ -127,7 +97,7 @@ function protectUiSupervisorV26() {
     const tabs = document.getElementById("voxarioProtectTabs");
     if (!tabs) return false;
     ensureTab(tabs, "firewall", "Firewall");
-    ensureTab(tabs, "stability", "Stabilita");
+    ensureTab(tabs, "stability", "Stabilita / životnost");
     return true;
   }
 
@@ -336,14 +306,14 @@ function protectUiSupervisorV26() {
   function ensureStabilityPanel() {
     const layout = document.querySelector(".layout");
     if (!layout) return null;
-    let panel = document.getElementById("voxarioProtectStabilityV26");
+    let panel = document.getElementById("voxarioProtectStabilityV27");
     if (!panel) {
       panel = document.createElement("div");
       panel.id = "voxarioProtectStabilityV26";
       panel.className = "panel wide";
       panel.dataset.vpTabPanel = "stability";
       panel.innerHTML = `
-        <div class="panel-title"><span>STABILITA VOXARIOPROTECT</span><span class="muted">LIVE SELF-CHECK · ODEMČENO</span></div>
+        <div class="panel-title"><span>STABILITA / ŽIVOTNOST VOXARIOPROTECT</span><span class="muted">LIVE SELF-CHECK · ODEMČENO</span></div>
         <div class="vp26-banner" id="vpstableStatus">Načítám diagnostiku stability…</div>
         <div class="vp26-grid">
           <div class="vp26-card"><small>UI SUPERVISOR</small><strong id="vpstableUi">Aktivní</strong><p>Hlídá, aby se kategorie po přestavbě UI neztratily.</p></div>
@@ -351,6 +321,8 @@ function protectUiSupervisorV26() {
           <div class="vp26-card"><small>OCHRANA NA POZADÍ</small><strong id="vpstableBackground">—</strong><p id="vpstableBackgroundDetail">Čekám na stav.</p></div>
           <div class="vp26-card"><small>FIREWALL COMPANION</small><strong id="vpstableFirewall">—</strong><p id="vpstableFirewallDetail">Čekám na stav.</p></div>
           <div class="vp26-card"><small>INTEGRITA DESKTOPU</small><strong id="vpstableIntegrity">—</strong><p id="vpstableIntegrityDetail">Čekám na manifest.</p></div>
+          <div class="vp26-card"><small>ŽIVOTNOST / UPTIME</small><strong id="vpstableUptime">—</strong><p id="vpstableUptimeDetail">Doba běhu ochranného procesu.</p></div>
+          <div class="vp26-card"><small>AKTUALIZACE</small><strong id="vpstableUpdateState">Ověřuji…</strong><p id="vpstableUpdateDetail">Kontrola GitHub release kanálu.</p></div>
           <div class="vp26-card"><small>VERZE</small><strong id="vpstableVersions">Protect v${protectVersion}</strong><p id="vpstableVersionDetail">Desktop verze se načte z balíčku.</p></div>
         </div>
         <div class="vp26-actions">
@@ -373,14 +345,18 @@ function protectUiSupervisorV26() {
     if (stabilityBusy) return;
     stabilityBusy = true;
     try {
-      const [statusResult, integrityResult, firewallResult] = await Promise.allSettled([
+      const [statusResult, integrityResult, firewallResult, runtimeResult, updateResult] = await Promise.allSettled([
         api.protectGetStatus?.(),
         api.protectGetIntegrity?.(),
         api.protectFirewallGetStatus?.(),
+        api.protectGetRuntimeHealth?.(),
+        api.checkUpdatesQuiet?.(),
       ]);
       const status = statusResult.status === "fulfilled" ? statusResult.value : null;
       const integrity = integrityResult.status === "fulfilled" ? integrityResult.value : null;
       const firewall = firewallResult.status === "fulfilled" ? firewallResult.value : null;
+      const runtime = runtimeResult.status === "fulfilled" ? runtimeResult.value : null;
+      const update = updateResult.status === "fulfilled" ? updateResult.value : null;
 
       const defenderOk = status?.ok === true;
       const defender = status?.status || {};
@@ -399,7 +375,19 @@ function protectUiSupervisorV26() {
       setText("vpstableIntegrity", integrityOk ? "Manifest načten" : "Nedostupné");
       const hash = String(integrity?.integrityHash || "");
       setText("vpstableIntegrityDetail", integrityOk ? `Platforma ${integrity.platform || "—"}${hash ? ` · hash ${hash.slice(0, 12)}…` : ""}` : "Integrita desktopu se nepodařila načíst.");
-      setText("vpstableVersions", `Protect v${protectVersion} · Desktop ${integrity?.appVersion || "—"}`);
+      const uptimeSec = Math.max(0, Number(runtime?.uptimeSec || 0));
+      const hours = Math.floor(uptimeSec / 3600);
+      const minutes = Math.floor((uptimeSec % 3600) / 60);
+      setText("vpstableUptime", runtime?.ok ? `${hours} h ${minutes} min` : "Nedostupné");
+      setText("vpstableUptimeDetail", runtime?.ok ? `RAM procesu ${runtime.processMemoryMB || "—"} MB · ${runtime.arch || "—"}` : "Runtime diagnostika neodpověděla.");
+
+      const updateAvailable = update?.available === true;
+      setText("vpstableUpdateState", updateAvailable ? `Dostupná ${update.remote || "nová verze"}` : (update?.error ? "Kontrola selhala" : "Aktuální"));
+      setText("vpstableUpdateDetail", updateAvailable
+        ? `Nainstalováno ${update.current || integrity?.appVersion || "—"} · aktualizace se stáhne a nainstaluje automaticky.`
+        : (update?.error || `Release kanál je aktuální · Desktop ${update?.current || integrity?.appVersion || "—"}`));
+
+      setText("vpstableVersions", `Protect v${protectVersion} · Desktop ${integrity?.appVersion || runtime?.appVersion || "—"}`);
       setText("vpstableVersionDetail", `Poslední self-check: ${new Date().toLocaleTimeString("cs-CZ")}`);
 
       const healthy = [defenderOk, firewallOk, integrityOk].filter(Boolean).length;
@@ -438,33 +426,17 @@ function protectUiSupervisorV26() {
   observer.observe(document.documentElement, { childList: true, subtree: true });
   const interval = setInterval(ensure, 1200);
   window.addEventListener("beforeunload", () => clearInterval(interval), { once: true });
-  window.__voxarioProtectUiSupervisorV26 = { ensure, activateTab, refreshFirewall, refreshStability };
+  window.__voxarioProtectUiV27 = { ensure, activateTab, refreshFirewall, refreshStability };
   ensure();
 }
 
-function installProtectUiSupervisor() {
-  if (process.argv.slice(1).includes("--protect-background")) return;
-  const { app } = require("electron");
-  app.on("browser-window-created", (_event, win) => {
-    const inject = () => {
-      try {
-        const url = win.webContents.getURL();
-        const title = win.getTitle();
-        if (!(url.endsWith("/protect.html") || url.includes("protect.html") || title === "VoxarioProtect")) return;
-      } catch {
-        return;
-      }
-      win.webContents.executeJavaScript(`(${protectUiSupervisorV26.toString()})()`, true).catch((error) => {
-        console.error("VoxarioProtect UI supervisor failed", error);
-      });
-    };
-    win.webContents.on("did-finish-load", inject);
-    win.on("ready-to-show", inject);
-    setTimeout(inject, 300).unref?.();
-    setTimeout(inject, 900).unref?.();
-    setTimeout(inject, 2200).unref?.();
-  });
+
+function startVoxarioProtectUiV27() {
+  const run = () => {
+    try { protectUiV27(); } catch (error) { console.error("VoxarioProtect v2.7 UI failed", error); }
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
+  else run();
 }
 
-// PROTECT_UI_V27_RENDERER_CANONICAL: protect.html loads assets/protect-ui-v27.js directly.
-require("./bootstrap.cjs");
+startVoxarioProtectUiV27();

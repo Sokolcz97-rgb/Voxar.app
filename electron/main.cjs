@@ -853,6 +853,12 @@ function createProtectWindow() {
   }));
   trackWindowState("protect", protectWindow);
   protectWindow.loadFile(path.join(__dirname, "protect.html"));
+  protectWindow.webContents.once("did-finish-load", () => {
+    // Protect may be the only visible StudioVoxario surface. Check the stable
+    // GitHub release channel here too so old Protect builds do not stay stale.
+    setTimeout(() => runAppAutoUpdate().catch(() => {}), 2_500).unref?.();
+    scheduleAppAutoUpdate();
+  });
   protectWindow.once("ready-to-show", () => revealWindow(protectWindow));
   protectWindow.on("closed", () => { protectWindow = null; });
   return protectWindow;
@@ -917,6 +923,14 @@ ipcMain.handle("protect:status", async () => ({
   },
 }));
 ipcMain.handle("protect:integrity", () => desktopIntegrityManifest());
+ipcMain.handle("protect:runtime-health", () => ({
+  ok: true,
+  uptimeSec: Math.round(process.uptime()),
+  appVersion: app.getVersion(),
+  processMemoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+  platform: process.platform,
+  arch: process.arch,
+}));
 ipcMain.handle("protect:activity", () => protectActivities.map(publicProtectActivity));
 ipcMain.handle("protect:choose-file", async () => {
   const choice = await dialog.showOpenDialog(protectWindow || mainWindow || undefined, {
@@ -1282,7 +1296,7 @@ async function runAppAutoUpdate({ manual = false } = {}) {
   try {
     const info = await checkForUpdatesQuiet({ channel });
     if (!info?.available) return { status: "up-to-date", current: app.getVersion() };
-    return await installUpdateFromRenderer({ parentWindow: mainWindow, channel });
+    return await installUpdateFromRenderer({ parentWindow: mainWindow || protectWindow || launcherWindow, channel });
   } catch (e) {
     return { status: "error", error: String(e?.message || e) };
   } finally {
@@ -1294,8 +1308,12 @@ async function runAppAutoUpdate({ manual = false } = {}) {
 function scheduleAppAutoUpdate() {
   if (appUpdateTimer) clearInterval(appUpdateTimer);
   appUpdateTimer = setInterval(() => {
-    if (mainWindow && !mainWindow.isDestroyed()) runAppAutoUpdate().catch(() => {});
+    const surfaceAlive = [mainWindow, protectWindow, launcherWindow].some((win) => win && !win.isDestroyed());
+    if (!BROWSER_ONLY && (surfaceAlive || getModulesInfo().protect.installed)) {
+      runAppAutoUpdate().catch(() => {});
+    }
   }, 3 * 60 * 60 * 1000);
+  appUpdateTimer.unref?.();
 }
 
 ipcMain.handle("app:version-history", () => ({
@@ -1686,6 +1704,10 @@ app.whenReady().then(async () => {
     // Defenderu jednou za pět minut, bez druhého AV enginu.
     startProtectMonitor();
     createTray();
+    // Background-only Protect must also receive releases even when the user
+    // never opens Voxar.app or the launcher.
+    setTimeout(() => runAppAutoUpdate().catch(() => {}), 6_000).unref?.();
+    scheduleAppAutoUpdate();
   }
   // Zahodíme HTTP cache (ne cookies/localStorage – přihlášení zůstává),
   // ale nikdy kvůli tomu neblokujeme vytvoření prvního okna.
