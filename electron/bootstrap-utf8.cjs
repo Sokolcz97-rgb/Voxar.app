@@ -466,5 +466,5 @@ function installProtectUiSupervisor() {
   });
 }
 
-installProtectUiSupervisor();
+// PROTECT_UI_V27_RENDERER_CANONICAL: protect.html loads assets/protect-ui-v27.js directly.
 require("./bootstrap.cjs");
