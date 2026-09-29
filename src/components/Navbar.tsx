@@ -12,7 +12,7 @@ import { useNavPages } from "@/hooks/usePages";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Bot,
+  Wrench,
   LogOut,
   Shield,
   User as UserIcon,
@@ -120,7 +120,7 @@ export function Navbar() {
 
   const secondaryNav: NavItem[] = user
     ? [
-        ...(isAdmin ? [{ to: "/ai", label: "Voxario AI", icon: Bot, primary: true }] : []),
+        ...(isAdmin ? [{ to: "/ai", label: "Voxario Tools", icon: Wrench, primary: true }] : []),
         { to: "/messages", label: t("nav.messages"), icon: MessageSquare, badge: unreadMessages },
         { to: "/desktop", label: "Ke stažení", icon: Download },
       ]
@@ -205,10 +205,10 @@ export function Navbar() {
                 to="/ai"
                 data-active={isActive("/ai")}
                 className={cn(navLinkBase, "relative text-primary")}
-                aria-label="Voxario AI"
+                aria-label="Voxario Tools"
               >
-                <span className="hidden xl:inline">Voxario AI</span>
-                <Bot className="h-4 w-4 xl:hidden" />
+                <span className="hidden xl:inline">Voxario Tools</span>
+                <Wrench className="h-4 w-4 xl:hidden" />
               </Link>
             )}
             <Link
