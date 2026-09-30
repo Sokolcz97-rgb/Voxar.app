@@ -3,26 +3,36 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { calculateProtectionScore } = require("./protect-trust-engine.cjs");
+const { normalizeDefenderStatus } = require("./protect-status.cjs");
 
-const healthy = {
+const complete = normalizeDefenderStatus({
   AntivirusEnabled: true,
   RealTimeProtectionEnabled: true,
   BehaviorMonitorEnabled: true,
   IoavProtectionEnabled: true,
   AntivirusSignatureAge: 0,
-};
+  AccessLimited: false,
+});
 
-assert.equal(calculateProtectionScore(healthy), 100, "a complete healthy Defender status must score 100");
-assert.equal(calculateProtectionScore({ ...healthy, RealTimeProtectionEnabled: false }), 75, "real-time protection must affect the system score");
-assert.equal(calculateProtectionScore({ ...healthy, AntivirusSignatureAge: 4 }), 90, "old signatures must not receive the freshness bonus");
+assert.equal(complete.scoreAvailable, true, "complete Get-MpComputerStatus data must make the score available");
+assert.equal(complete.protectionScore, 100, "healthy complete Defender data must produce the canonical score");
+assert.equal(complete.diagnostic, null);
+assert.equal(complete.AccessLimited, false);
+
+const limited = normalizeDefenderStatus({
+  AntivirusEnabled: true,
+  RealTimeProtectionEnabled: null,
+  AccessLimited: true,
+});
+
+assert.equal(limited.AccessLimited, true, "SecurityCenter fallback must retain AccessLimited");
+assert.equal(limited.scoreAvailable, false, "limited fallback must not offer a score");
+assert.equal(limited.protectionScore, null, "limited fallback must not fabricate a score");
+assert.match(limited.diagnostic, /omezený|neúplný/i);
+assert.equal(limited.BehaviorMonitorEnabled, null, "missing Defender booleans must be normalized to null");
 
 const main = fs.readFileSync(path.join(__dirname, "main.cjs"), "utf8");
-const html = fs.readFileSync(path.join(__dirname, "protect.html"), "utf8");
-assert.match(main, /scoreAvailable = complete/, "main must mark incomplete Defender data as unavailable");
-assert.match(main, /protectionScore = complete \? calculateProtectionScore/, "main must calculate the canonical score before IPC");
-assert.match(html, /status\.protectionScore/, "renderer must render the score returned by IPC");
-assert.match(html, /scoreAvailable===false/, "renderer must show a diagnostic rather than fabricate a score");
+assert.match(main, /require\(["']\.\/protect-status\.cjs["']\)/, "main process must import the executable normalizer");
+assert.match(main, /ok: true, status: normalizeDefenderStatus\(/, "valid Defender JSON must return ok:true after normalization");
 
-console.log("Protection Score calculation and unavailable-Defender contract passed");
-
+console.log("Protection Score normalizer and main-process Defender status regression passed");
