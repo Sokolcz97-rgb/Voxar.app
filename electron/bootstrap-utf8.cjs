@@ -49,7 +49,7 @@ function protectUiSupervisorV26() {
 
   function setText(id, value) {
     const node = document.getElementById(id);
-    if (node && node.textContent !== String(value ?? "â€”")) node.textContent = String(value ?? "â€”");
+    if (node && node.textContent !== String(value ?? "—")) node.textContent = String(value ?? "—");
   }
 
   function ensureStyle() {
@@ -84,8 +84,8 @@ function protectUiSupervisorV26() {
       const strong = firewallCard.querySelector("strong");
       const paragraph = firewallCard.querySelector("p");
       const tag = firewallCard.querySelector(".tag");
-      if (strong) strong.textContent = "VlastnĂ­ Firewall companion";
-      if (paragraph) paragraph.textContent = "Protect ÄŤte stav Windows Defender Firewallu a po vĂ˝slovnĂ©m potvrzenĂ­ umĂ­ vytvoĹ™it pouze vlastnĂ­ per-program Outbound BLOCK pravidlo.";
+      if (strong) strong.textContent = "Vlastní Firewall companion";
+      if (paragraph) paragraph.textContent = "Protect čte stav Windows Defender Firewallu a po výslovném potvrzení umí vytvořit pouze vlastní per-program Outbound BLOCK pravidlo.";
       if (tag) tag.textContent = "USER-CONFIRMED BLOCK";
     }
   }
@@ -177,31 +177,31 @@ function protectUiSupervisorV26() {
       panel.dataset.vp26Built = "1";
       panel.innerHTML = `
         <div class="panel-title"><span>VOXARIO FIREWALL</span><span class="muted">WINDOWS DEFENDER FIREWALL COMPANION</span></div>
-        <div class="vp26-banner" id="vpfwStatus">NaÄŤĂ­tĂˇm stav Windows Defender Firewalluâ€¦</div>
+        <div class="vp26-banner" id="vpfwStatus">Načítám stav Windows Defender Firewallu…</div>
         <div class="vp26-grid" id="vpfwProfiles"></div>
         <div class="vp26-grid">
-          <div class="vp26-card"><small>WINDOWS FIREWALL SERVICE</small><strong id="vpfwService">â€”</strong><p>Protect sluĹľbu nevypĂ­nĂˇ ani nenahrazuje.</p></div>
-          <div class="vp26-card"><small>AKTIVNĂŤ SĂŤĹ¤</small><strong id="vpfwNetwork">â€”</strong><p>Read-only informace z Windows Network Profile.</p></div>
-          <div class="vp26-card"><small>PRAVIDLA PROTECT</small><strong id="vpfwRuleCount">â€”</strong><p>Pouze per-program Outbound BLOCK. Ĺ˝ĂˇdnĂ© ALLOW rules ani globĂˇlnĂ­ policy.</p></div>
+          <div class="vp26-card"><small>WINDOWS FIREWALL SERVICE</small><strong id="vpfwService">—</strong><p>Protect službu nevypíná ani nenahrazuje.</p></div>
+          <div class="vp26-card"><small>AKTIVNÍ SÍŤ</small><strong id="vpfwNetwork">—</strong><p>Read-only informace z Windows Network Profile.</p></div>
+          <div class="vp26-card"><small>PRAVIDLA PROTECT</small><strong id="vpfwRuleCount">—</strong><p>Pouze per-program Outbound BLOCK. Žádné ALLOW rules ani globální policy.</p></div>
         </div>
         <div class="vp26-actions">
-          <button class="vp26-button primary" id="vpfwBlockProgram" type="button">Vybrat aplikaci a zablokovat odchozĂ­ sĂ­ĹĄ</button>
+          <button class="vp26-button primary" id="vpfwBlockProgram" type="button">Vybrat aplikaci a zablokovat odchozí síť</button>
           <button class="vp26-button" id="vpfwRefresh" type="button">Obnovit stav</button>
-          <button class="vp26-button" id="vpfwOpenWindows" type="button">OtevĹ™Ă­t Windows Firewall</button>
-          <button class="vp26-button" id="vpfwOpenSecurity" type="button">OtevĹ™Ă­t Windows ZabezpeÄŤenĂ­</button>
+          <button class="vp26-button" id="vpfwOpenWindows" type="button">Otevřít Windows Firewall</button>
+          <button class="vp26-button" id="vpfwOpenSecurity" type="button">Otevřít Windows Zabezpečení</button>
         </div>
-        <p class="notice">ZmÄ›na pravidla vyĹľaduje potvrzenĂ­ uĹľivatele a UAC. Protect nevypĂ­nĂˇ Windows Firewall, neotevĂ­rĂˇ porty, nevytvĂˇĹ™Ă­ ALLOW pravidla a nemaĹľe cizĂ­ pravidla.</p>
-        <div class="vp26-section"><h3>VLASTNĂŤ BLOKOVACĂŤ PRAVIDLA</h3><div class="vp26-list" id="vpfwRules"></div></div>
-        <div class="vp26-section"><h3>PROTECT â†” DEFENDER CROSS-CHECK</h3><div class="vp26-list" id="vpfwCrossChecks"></div><p class="notice">KdyĹľ Defender hrozbu potvrdĂ­, nĂˇpravu a karantĂ©nu Ĺ™Ă­dĂ­ Defender. Protect nepĹ™edstĂ­rĂˇ Defender karantĂ©nu.</p></div>
+        <p class="notice">Změna pravidla vyžaduje potvrzení uživatele a UAC. Protect nevypíná Windows Firewall, neotevírá porty, nevytváří ALLOW pravidla a nemaže cizí pravidla.</p>
+        <div class="vp26-section"><h3>VLASTNÍ BLOKOVACÍ PRAVIDLA</h3><div class="vp26-list" id="vpfwRules"></div></div>
+        <div class="vp26-section"><h3>PROTECT ↔ DEFENDER CROSS-CHECK</h3><div class="vp26-list" id="vpfwCrossChecks"></div><p class="notice">Když Defender hrozbu potvrdí, nápravu a karanténu řídí Defender. Protect nepředstírá Defender karanténu.</p></div>
       `;
       panel.querySelector("#vpfwRefresh").onclick = () => refreshFirewall();
       panel.querySelector("#vpfwOpenWindows").onclick = async () => {
         const result = await api.protectFirewallOpenWindows();
-        if (!result?.ok) setText("vpfwStatus", result?.error || "Windows Firewall se nepodaĹ™ilo otevĹ™Ă­t.");
+        if (!result?.ok) setText("vpfwStatus", result?.error || "Windows Firewall se nepodařilo otevřít.");
       };
       panel.querySelector("#vpfwOpenSecurity").onclick = async () => {
         const result = await api.protectOpenWindowsSecurity();
-        if (!result?.ok) setText("vpfwStatus", result?.error || "Windows ZabezpeÄŤenĂ­ se nepodaĹ™ilo otevĹ™Ă­t.");
+        if (!result?.ok) setText("vpfwStatus", result?.error || "Windows Zabezpečení se nepodařilo otevřít.");
       };
       panel.querySelector("#vpfwBlockProgram").onclick = async () => {
         const button = panel.querySelector("#vpfwBlockProgram");
@@ -209,17 +209,17 @@ function protectUiSupervisorV26() {
         try {
           const selected = await api.protectFirewallSelectProgram();
           if (!selected?.ok) {
-            if (!selected?.canceled) setText("vpfwStatus", selected?.error || "Aplikaci se nepodaĹ™ilo vybrat.");
+            if (!selected?.canceled) setText("vpfwStatus", selected?.error || "Aplikaci se nepodařilo vybrat.");
             return;
           }
           const confirmed = await confirmAction(
-            "Zablokovat odchozĂ­ pĹ™ipojenĂ­?",
-            `VoxarioProtect vytvoĹ™Ă­ ve Windows Defender Firewallu jedno odchozĂ­ BLOCK pravidlo pro:\n${selected.path}\n\nWindows zobrazĂ­ UAC.`,
+            "Zablokovat odchozí připojení?",
+            `VoxarioProtect vytvoří ve Windows Defender Firewallu jedno odchozí BLOCK pravidlo pro:\n${selected.path}\n\nWindows zobrazí UAC.`,
           );
           if (!confirmed) return;
-          setText("vpfwStatus", "ÄŚekĂˇm na UAC a vytvĂˇĹ™Ă­m odchozĂ­ BLOCK pravidloâ€¦");
+          setText("vpfwStatus", "Čekám na UAC a vytvářím odchozí BLOCK pravidlo…");
           const result = await api.protectFirewallBlockSelected(selected.token);
-          setText("vpfwStatus", result?.ok ? `${result.fileName || "Aplikace"} byla odĹ™Ă­znuta od odchozĂ­ sĂ­tÄ›.` : (result?.error || "Blokaci se nepodaĹ™ilo vytvoĹ™it."));
+          setText("vpfwStatus", result?.ok ? `${result.fileName || "Aplikace"} byla odříznuta od odchozí sítě.` : (result?.error || "Blokaci se nepodařilo vytvořit."));
           await refreshFirewall();
         } finally {
           button.disabled = false;
@@ -238,7 +238,7 @@ function protectUiSupervisorV26() {
     if (!values.length) {
       const empty = document.createElement("div");
       empty.className = "notice";
-      empty.textContent = "Protect zatĂ­m nevytvoĹ™il ĹľĂˇdnĂ© vlastnĂ­ blokovacĂ­ pravidlo.";
+      empty.textContent = "Protect zatím nevytvořil žádné vlastní blokovací pravidlo.";
       list.appendChild(empty);
       return;
     }
@@ -249,18 +249,18 @@ function protectUiSupervisorV26() {
       const title = document.createElement("b");
       title.textContent = rule.displayName || "VoxarioProtect blokace";
       const detail = document.createElement("span");
-      detail.textContent = `${rule.direction || "Outbound"} Â· ${rule.action || "Block"} Â· ${rule.enabled ? "aktivnĂ­" : "vypnutĂ©"}${rule.program ? ` Â· ${rule.program}` : ""}`;
+      detail.textContent = `${rule.direction || "Outbound"} · ${rule.action || "Block"} · ${rule.enabled ? "aktivní" : "vypnuté"}${rule.program ? ` · ${rule.program}` : ""}`;
       info.append(title, detail);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "vp26-button danger";
       remove.textContent = "Odblokovat";
       remove.onclick = async () => {
-        const confirmed = await confirmAction("Odstranit blokaci?", "Protect odstranĂ­ pouze svĂ© vlastnĂ­ Outbound BLOCK pravidlo.");
+        const confirmed = await confirmAction("Odstranit blokaci?", "Protect odstraní pouze své vlastní Outbound BLOCK pravidlo.");
         if (!confirmed) return;
         remove.disabled = true;
         const result = await api.protectFirewallRemoveRule(rule.name);
-        setText("vpfwStatus", result?.ok ? "Blokace byla odstranÄ›na." : (result?.error || "OdblokovĂˇnĂ­ selhalo."));
+        setText("vpfwStatus", result?.ok ? "Blokace byla odstraněna." : (result?.error || "Odblokování selhalo."));
         await refreshFirewall();
       };
       row.append(info, remove);
@@ -276,7 +276,7 @@ function protectUiSupervisorV26() {
     if (!values.length) {
       const empty = document.createElement("div");
       empty.className = "notice";
-      empty.textContent = "ZatĂ­m nenĂ­ ĹľĂˇdnĂ˝ Protect â†” Defender rozpor ani firewall udĂˇlost.";
+      empty.textContent = "Zatím není žádný Protect ↔ Defender rozpor ani firewall událost.";
       list.appendChild(empty);
       return;
     }
@@ -285,10 +285,10 @@ function protectUiSupervisorV26() {
       row.className = "vp26-row";
       const info = document.createElement("div");
       const title = document.createElement("b");
-      title.textContent = item.title || "BezpeÄŤnostnĂ­ udĂˇlost";
+      title.textContent = item.title || "Bezpečnostní událost";
       const detail = document.createElement("span");
-      const score = Number.isFinite(Number(item.protectRiskScore)) ? ` Â· Protect ${item.protectRiskScore}/100` : "";
-      detail.textContent = `${item.fileName ? `${item.fileName} Â· ` : ""}${item.detail || item.type || "udĂˇlost"}${score}`;
+      const score = Number.isFinite(Number(item.protectRiskScore)) ? ` · Protect ${item.protectRiskScore}/100` : "";
+      detail.textContent = `${item.fileName ? `${item.fileName} · ` : ""}${item.detail || item.type || "událost"}${score}`;
       info.append(title, detail);
       row.appendChild(info);
       list.appendChild(row);
@@ -301,7 +301,7 @@ function protectUiSupervisorV26() {
     try {
       const result = await api.protectFirewallGetStatus();
       if (!result?.ok) {
-        setText("vpfwStatus", result?.error || "Stav Windows Firewallu se nepodaĹ™ilo naÄŤĂ­st.");
+        setText("vpfwStatus", result?.error || "Stav Windows Firewallu se nepodařilo načíst.");
         return;
       }
       const profiles = document.getElementById("vpfwProfiles");
@@ -313,17 +313,17 @@ function protectUiSupervisorV26() {
           const label = document.createElement("small");
           label.textContent = `${String(profile.name || "PROFILE").toUpperCase()} PROFILE`;
           const strong = document.createElement("strong");
-          strong.textContent = profile.enabled ? "AktivnĂ­" : "Vypnuto";
+          strong.textContent = profile.enabled ? "Aktivní" : "Vypnuto";
           const detail = document.createElement("p");
-          detail.textContent = `PĹ™Ă­chozĂ­: ${profile.defaultInboundAction || "â€”"} Â· OdchozĂ­: ${profile.defaultOutboundAction || "â€”"}`;
+          detail.textContent = `Příchozí: ${profile.defaultInboundAction || "—"} · Odchozí: ${profile.defaultOutboundAction || "—"}`;
           card.append(label, strong, detail);
           profiles.appendChild(card);
         }
       }
-      setText("vpfwService", result.firewall?.serviceRunning ? "SluĹľba bÄ›ĹľĂ­" : "SluĹľba nebÄ›ĹľĂ­");
+      setText("vpfwService", result.firewall?.serviceRunning ? "Služba běží" : "Služba neběží");
       const connections = Array.isArray(result.firewall?.connections) ? result.firewall.connections : [];
-      setText("vpfwNetwork", connections.length ? connections.map((c) => `${c.name}: ${c.category}`).join(" Â· ") : "SĂ­ĹĄovĂ˝ profil nezjiĹˇtÄ›n");
-      setText("vpfwStatus", result.firewall?.allEnabled ? "Windows Defender Firewall je aktivnĂ­ ve vĹˇech profilech. Protect ho doplĹuje vlastnĂ­mi pravidly." : "NÄ›kterĂ˝ profil Windows Firewallu je vypnutĂ˝ nebo nedostupnĂ˝.");
+      setText("vpfwNetwork", connections.length ? connections.map((c) => `${c.name}: ${c.category}`).join(" · ") : "Síťový profil nezjištěn");
+      setText("vpfwStatus", result.firewall?.allEnabled ? "Windows Defender Firewall je aktivní ve všech profilech. Protect ho doplňuje vlastními pravidly." : "Některý profil Windows Firewallu je vypnutý nebo nedostupný.");
       renderFirewallRules(result.rules);
       renderCrossChecks(result.background?.crossChecks);
     } catch (error) {
@@ -343,22 +343,22 @@ function protectUiSupervisorV26() {
       panel.className = "panel wide";
       panel.dataset.vpTabPanel = "stability";
       panel.innerHTML = `
-        <div class="panel-title"><span>STABILITA VOXARIOPROTECT</span><span class="muted">LIVE SELF-CHECK Â· ODEMÄŚENO</span></div>
-        <div class="vp26-banner" id="vpstableStatus">NaÄŤĂ­tĂˇm diagnostiku stabilityâ€¦</div>
+        <div class="panel-title"><span>STABILITA VOXARIOPROTECT</span><span class="muted">LIVE SELF-CHECK · ODEMČENO</span></div>
+        <div class="vp26-banner" id="vpstableStatus">Načítám diagnostiku stability…</div>
         <div class="vp26-grid">
-          <div class="vp26-card"><small>UI SUPERVISOR</small><strong id="vpstableUi">AktivnĂ­</strong><p>HlĂ­dĂˇ, aby se kategorie po pĹ™estavbÄ› UI neztratily.</p></div>
-          <div class="vp26-card"><small>MICROSOFT DEFENDER</small><strong id="vpstableDefender">â€”</strong><p id="vpstableDefenderDetail">ÄŚekĂˇm na stav.</p></div>
-          <div class="vp26-card"><small>OCHRANA NA POZADĂŤ</small><strong id="vpstableBackground">â€”</strong><p id="vpstableBackgroundDetail">ÄŚekĂˇm na stav.</p></div>
-          <div class="vp26-card"><small>FIREWALL COMPANION</small><strong id="vpstableFirewall">â€”</strong><p id="vpstableFirewallDetail">ÄŚekĂˇm na stav.</p></div>
-          <div class="vp26-card"><small>INTEGRITA DESKTOPU</small><strong id="vpstableIntegrity">â€”</strong><p id="vpstableIntegrityDetail">ÄŚekĂˇm na manifest.</p></div>
-          <div class="vp26-card"><small>VERZE</small><strong id="vpstableVersions">Protect v${protectVersion}</strong><p id="vpstableVersionDetail">Desktop verze se naÄŤte z balĂ­ÄŤku.</p></div>
+          <div class="vp26-card"><small>UI SUPERVISOR</small><strong id="vpstableUi">Aktivní</strong><p>Hlídá, aby se kategorie po přestavbě UI neztratily.</p></div>
+          <div class="vp26-card"><small>MICROSOFT DEFENDER</small><strong id="vpstableDefender">—</strong><p id="vpstableDefenderDetail">Čekám na stav.</p></div>
+          <div class="vp26-card"><small>OCHRANA NA POZADÍ</small><strong id="vpstableBackground">—</strong><p id="vpstableBackgroundDetail">Čekám na stav.</p></div>
+          <div class="vp26-card"><small>FIREWALL COMPANION</small><strong id="vpstableFirewall">—</strong><p id="vpstableFirewallDetail">Čekám na stav.</p></div>
+          <div class="vp26-card"><small>INTEGRITA DESKTOPU</small><strong id="vpstableIntegrity">—</strong><p id="vpstableIntegrityDetail">Čekám na manifest.</p></div>
+          <div class="vp26-card"><small>VERZE</small><strong id="vpstableVersions">Protect v${protectVersion}</strong><p id="vpstableVersionDetail">Desktop verze se načte z balíčku.</p></div>
         </div>
         <div class="vp26-actions">
           <button class="vp26-button primary" id="vpstableRefresh" type="button">Obnovit stabilitu</button>
-          <button class="vp26-button" id="vpstableSecurity" type="button">OtevĹ™Ă­t Windows ZabezpeÄŤenĂ­</button>
-          <button class="vp26-button" id="vpstableUpdate" type="button">OtevĹ™Ă­t Windows Update</button>
+          <button class="vp26-button" id="vpstableSecurity" type="button">Otevřít Windows Zabezpečení</button>
+          <button class="vp26-button" id="vpstableUpdate" type="button">Otevřít Windows Update</button>
         </div>
-        <p class="notice">Stabilita je read-only self-check Protectu. Nic nevypĂ­nĂˇ, nemÄ›nĂ­ Defender exclusions ani globĂˇlnĂ­ Windows Firewall policy.</p>
+        <p class="notice">Stabilita je read-only self-check Protectu. Nic nevypíná, nemění Defender exclusions ani globální Windows Firewall policy.</p>
       `;
       insertSupervisorPanel(panel);
       panel.querySelector("#vpstableRefresh").onclick = () => refreshStability();
@@ -384,26 +384,26 @@ function protectUiSupervisorV26() {
 
       const defenderOk = status?.ok === true;
       const defender = status?.status || {};
-      setText("vpstableDefender", defenderOk ? (defender.RealTimeProtectionEnabled ? "Real-time aktivnĂ­" : "Defender odpovĂ­dĂˇ") : "NedostupnĂ©");
-      setText("vpstableDefenderDetail", defenderOk ? `Antivirus ${defender.AntivirusEnabled ? "aktivnĂ­" : "neaktivnĂ­"} Â· Behavior ${defender.BehaviorMonitorEnabled ? "aktivnĂ­" : "neaktivnĂ­"}` : (status?.error || "Defender bridge neodpovÄ›dÄ›l."));
+      setText("vpstableDefender", defenderOk ? (defender.RealTimeProtectionEnabled ? "Real-time aktivní" : "Defender odpovídá") : "Nedostupné");
+      setText("vpstableDefenderDetail", defenderOk ? `Antivirus ${defender.AntivirusEnabled ? "aktivní" : "neaktivní"} · Behavior ${defender.BehaviorMonitorEnabled ? "aktivní" : "neaktivní"}` : (status?.error || "Defender bridge neodpověděl."));
 
       const backgroundActive = status?.background?.active === true;
-      setText("vpstableBackground", backgroundActive ? "AktivnĂ­" : "NeaktivnĂ­");
-      setText("vpstableBackgroundDetail", status?.background?.mode || "Stav background companion nenĂ­ dostupnĂ˝.");
+      setText("vpstableBackground", backgroundActive ? "Aktivní" : "Neaktivní");
+      setText("vpstableBackgroundDetail", status?.background?.mode || "Stav background companion není dostupný.");
 
       const firewallOk = firewall?.ok === true;
-      setText("vpstableFirewall", firewallOk ? (firewall.firewall?.allEnabled ? "VĹˇechny profily aktivnĂ­" : "VyĹľaduje pozornost") : "NedostupnĂ©");
-      setText("vpstableFirewallDetail", firewallOk ? `${firewall.rules?.length || 0} vlastnĂ­ch pravidel Protect Â· sluĹľba ${firewall.firewall?.serviceRunning ? "bÄ›ĹľĂ­" : "nebÄ›ĹľĂ­"}` : (firewall?.error || "Firewall bridge neodpovÄ›dÄ›l."));
+      setText("vpstableFirewall", firewallOk ? (firewall.firewall?.allEnabled ? "Všechny profily aktivní" : "Vyžaduje pozornost") : "Nedostupné");
+      setText("vpstableFirewallDetail", firewallOk ? `${firewall.rules?.length || 0} vlastních pravidel Protect · služba ${firewall.firewall?.serviceRunning ? "běží" : "neběží"}` : (firewall?.error || "Firewall bridge neodpověděl."));
 
       const integrityOk = !!integrity && typeof integrity === "object";
-      setText("vpstableIntegrity", integrityOk ? "Manifest naÄŤten" : "NedostupnĂ©");
+      setText("vpstableIntegrity", integrityOk ? "Manifest načten" : "Nedostupné");
       const hash = String(integrity?.integrityHash || "");
-      setText("vpstableIntegrityDetail", integrityOk ? `Platforma ${integrity.platform || "â€”"}${hash ? ` Â· hash ${hash.slice(0, 12)}â€¦` : ""}` : "Integrita desktopu se nepodaĹ™ila naÄŤĂ­st.");
-      setText("vpstableVersions", `Protect v${protectVersion} Â· Desktop ${integrity?.appVersion || "â€”"}`);
-      setText("vpstableVersionDetail", `PoslednĂ­ self-check: ${new Date().toLocaleTimeString("cs-CZ")}`);
+      setText("vpstableIntegrityDetail", integrityOk ? `Platforma ${integrity.platform || "—"}${hash ? ` · hash ${hash.slice(0, 12)}…` : ""}` : "Integrita desktopu se nepodařila načíst.");
+      setText("vpstableVersions", `Protect v${protectVersion} · Desktop ${integrity?.appVersion || "—"}`);
+      setText("vpstableVersionDetail", `Poslední self-check: ${new Date().toLocaleTimeString("cs-CZ")}`);
 
       const healthy = [defenderOk, firewallOk, integrityOk].filter(Boolean).length;
-      const stateText = healthy === 3 ? "VĹˇechny hlavnĂ­ diagnostickĂ© vrstvy odpovĂ­dajĂ­." : `${healthy}/3 hlavnĂ­ch diagnostickĂ˝ch vrstev odpovĂ­dĂˇ. Zkontroluj zvĂ˝raznÄ›nĂ© poloĹľky.`;
+      const stateText = healthy === 3 ? "Všechny hlavní diagnostické vrstvy odpovídají." : `${healthy}/3 hlavních diagnostických vrstev odpovídá. Zkontroluj zvýrazněné položky.`;
       setText("vpstableStatus", stateText);
       const banner = document.getElementById("vpstableStatus");
       if (banner) banner.className = `vp26-banner${healthy === 3 ? "" : " warn"}`;
@@ -468,4 +468,3 @@ function installProtectUiSupervisor() {
 
 // PROTECT_UI_V27_RENDERER_CANONICAL: protect.html loads assets/protect-ui-v27.js directly.
 require("./bootstrap.cjs");
-

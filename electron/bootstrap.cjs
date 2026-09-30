@@ -96,6 +96,8 @@ function protectSettingsInjection(prefs) {
     <button class="vp24-tab" type="button" data-tab="files">Soubory</button>
     <button class="vp24-tab" type="button" data-tab="system">Systém</button>
     <button class="vp24-tab" type="button" data-tab="events">Události</button>
+    <button class="vp24-tab" type="button" data-tab="firewall">Firewall</button>
+    <button class="vp24-tab" type="button" data-tab="stability">Stabilita</button>
     <button class="vp24-tab" type="button" data-tab="settings">Nastavení</button>
   `;
   header.insertAdjacentElement("afterend", tabs);
@@ -153,7 +155,7 @@ function protectSettingsInjection(prefs) {
   layout.insertBefore(section, footer || null);
 
   const activateTab = (name) => {
-    const valid = ["overview", "files", "system", "events", "settings"].includes(name) ? name : "overview";
+    const valid = ["overview", "files", "system", "events", "firewall", "stability", "settings"].includes(name) ? name : "overview";
     document.body.dataset.voxarioProtectTab = valid;
     document.querySelectorAll("[data-vp-tab-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.vpTabPanel !== valid;
