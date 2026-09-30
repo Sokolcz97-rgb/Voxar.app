@@ -8,7 +8,7 @@
     "updater.cjs", "rollback.cjs", "pinning.cjs", "bookmarks.cjs", "browser-settings.cjs",
     "products.cjs",
     "protect-background.cjs", "protect-preferences.cjs", "protect-trust-engine.cjs", "protect-layered-engine.cjs",
-    "protect-firewall.cjs", "protect-version.cjs",
+    "protect-firewall.cjs", "protect-version.cjs", "protect-status.cjs",
     "browser.html", "launcher.html", "protect.html", "settings.html",
     "package.json", "assets/**/*", "dist/**/*", "node_modules/**/*"
   ],
