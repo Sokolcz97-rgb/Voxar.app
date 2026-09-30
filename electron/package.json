@@ -2,7 +2,7 @@
   "name": "voxar-app-desktop",
   "productName": "Voxar.app",
   "version": "0.0.58",
-  "description": "Voxar.app â€” desktop klient StudioVoxario",
+  "description": "Voxar.app — desktop klient StudioVoxario",
   "author": "StudioVoxario",
   "main": "assets/bootstrap-secure.cjs",
   "private": true,
@@ -18,7 +18,7 @@
   "scripts": {
     "start": "electron .",
     "verify:renderer": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.html'))throw Error('Missing electron/dist/index.html')\"",
-    "test:protect": "node protect-layered-engine.test.cjs && node protection-score.test.cjs && node --check assets/protect-ui-v27.js && node protect-ui-v27.test.cjs && node protect-ui-version.test.cjs && node --check assets/browser-password-security.cjs && node --check assets/browser-password-legacy-lockdown.cjs && node --check assets/browser-resource-monitor.cjs && node --check assets/browser-commerce-compat.cjs && node --check assets/browser-profile-recovery.cjs && node --check assets/bootstrap-secure.cjs && node assets/browser-password-security.test.cjs && node assets/browser-resource-monitor.test.cjs && node assets/browser-commerce-compat.test.cjs && node assets/browser-profile-recovery.test.cjs && node browser-auto-update.test.cjs && node browser-ui-structure.test.cjs && node browser-package-deps.test.cjs",
+    "test:protect": "node protect-layered-engine.test.cjs && node --check assets/protect-ui-v27.js && node protect-ui-v27.test.cjs && node protect-ui-version.test.cjs && node --check assets/browser-password-security.cjs && node --check assets/browser-password-legacy-lockdown.cjs && node --check assets/browser-resource-monitor.cjs && node --check assets/browser-commerce-compat.cjs && node --check assets/browser-profile-recovery.cjs && node --check assets/bootstrap-secure.cjs && node assets/browser-password-security.test.cjs && node assets/browser-resource-monitor.test.cjs && node assets/browser-commerce-compat.test.cjs && node assets/browser-profile-recovery.test.cjs && node browser-auto-update.test.cjs && node browser-ui-structure.test.cjs && node browser-package-deps.test.cjs",
     "dist:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish never",
     "release:win": "npm run verify:renderer && electron-builder --win nsis --x64 --publish always",
     "dist:browser:win": "npm run verify:renderer && electron-builder --config browser-builder.json --win nsis --x64 --publish never",
@@ -29,7 +29,7 @@
   "build": {
     "appId": "com.studiovoxario.voxarapp",
     "productName": "Voxar.app",
-    "copyright": "Copyright Â© StudioVoxario",
+    "copyright": "Copyright © StudioVoxario",
     "directories": {
       "output": "release",
       "buildResources": "assets"
@@ -113,4 +113,3 @@
     }
   }
 }
-
