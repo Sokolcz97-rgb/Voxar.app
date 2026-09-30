@@ -1,4 +1,4 @@
-// Preload for the main app window â€“ exposes a small API to studiovoxario.com
+// Preload for the main app window – exposes a small API to studiovoxario.com
 const { contextBridge, ipcRenderer } = require("electron");
 const { version: protectVersion } = require("./protect-version.cjs");
 
@@ -6,9 +6,9 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   isDesktop: true,
   platform: process.platform,
   protectVersion,
-  // NĂˇvrat na rozcestnĂ­k modulĹŻ (Voxar.app / VoxarioBrowser)
+  // Návrat na rozcestník modulů (Voxar.app / VoxarioBrowser)
   returnToLauncher: () => ipcRenderer.invoke("app:return-to-launcher"),
-  // PĹ™Ă­mĂ© pĹ™epnutĂ­ modulu (Voxar.app <-> VoxarioBrowser) bez nĂˇvratu do launcheru.
+  // Přímé přepnutí modulu (Voxar.app <-> VoxarioBrowser) bez návratu do launcheru.
   openModule: (mod) => ipcRenderer.invoke("app:open-module", mod),
 
   // VoxarioProtect bridge to Microsoft Defender and Windows Defender Firewall.
@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   protectFirewallRemoveRule: (ruleName) => ipcRenderer.invoke("protect:firewall-remove-rule", ruleName),
   protectFirewallOpenWindows: () => ipcRenderer.invoke("protect:firewall-open-windows"),
 
-  // Screen sharing: vlastnĂ­ HUD picker v aplikaci.
+  // Screen sharing: vlastní HUD picker v aplikaci.
   getCaptureSources: () => ipcRenderer.invoke("capture:sources"),
   selectCaptureSource: (id) => ipcRenderer.invoke("capture:select", id),
 
@@ -68,14 +68,14 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   nodeVersion: process.versions.node,
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdates: () => ipcRenderer.invoke("app:check-updates"),
-  // â€žTichĂˇ" kontrola pro FAB v aplikaci â€” vracĂ­ { available, current, remote, notes }.
+  // „Tichá" kontrola pro FAB v aplikaci — vrací { available, current, remote, notes }.
   checkUpdatesQuiet: () => ipcRenderer.invoke("app:check-updates-quiet"),
-  // SpuĹˇtÄ›nĂ­ instalace pĹ™Ă­mo z rendereru (kliknutĂ­ na ikonku).
+  // Spuštění instalace přímo z rendereru (kliknutí na ikonku).
   installUpdateNow: () => ipcRenderer.invoke("app:install-update-now"),
-  // Historie nainstalovanĂ˝ch verzĂ­ (kdy byla kterĂˇ verze poprvĂ© spuĹˇtÄ›na).
+  // Historie nainstalovaných verzí (kdy byla která verze poprvé spuštěna).
   getVersionHistory: () => ipcRenderer.invoke("app:version-history"),
 
-  // OdbÄ›r live oznĂˇmenĂ­ o dostupnĂ© aktualizaci (broadcast z main procesu).
+  // Odběr live oznámení o dostupné aktualizaci (broadcast z main procesu).
   onUpdateAvailability: (cb) => {
     const listener = (_e, payload) => { try { cb(payload); } catch {} };
     ipcRenderer.on("update:availability", listener);
@@ -84,10 +84,10 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   setBadge: (count) => ipcRenderer.send("set-badge", Number(count) || 0),
   notify: (title, body, url) =>
     ipcRenderer.send("show-notification", { title, body, url }),
-  // App-level (Electron) preferences â€” surfaced in the in-app Settings.
+  // App-level (Electron) preferences — surfaced in the in-app Settings.
   getAppSettings: () => ipcRenderer.invoke("settings:get"),
   setAppSettings: (patch) => ipcRenderer.invoke("settings:set", patch),
-  // Beta unlock: renderer ovÄ›Ĺ™Ă­ kĂłd pĹ™es Supabase RPC a pĹ™edĂˇ vĂ˝sledek main procesu.
+  // Beta unlock: renderer ověří kód přes Supabase RPC a předá výsledek main procesu.
   unlockBeta: (ok) => ipcRenderer.invoke("settings:unlock-beta", ok === true),
   quitApp: () => ipcRenderer.invoke("app:quit"),
   reloadApp: () => ipcRenderer.invoke("app:reload"),
@@ -97,4 +97,3 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   getDiagnostics: () => ipcRenderer.invoke("app:diagnostics"),
   rollbackApp: () => ipcRenderer.invoke("app:rollback"),
 });
-
