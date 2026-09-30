@@ -83,7 +83,7 @@ jobs:
           npm run test:protect
 
       - name: Run focused community tests
-        run: npm test -- src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx src/contexts/VoiceCallContext.test.tsx
+        run: npm test -- src/components/GuildResourceSelect.test.tsx src/components/vox/ChatView.test.tsx src/components/vox/reference/CommunityComposer.test.tsx src/contexts/VoiceCallContext.test.tsx
 
       - name: Build web app
         run: npm run build
