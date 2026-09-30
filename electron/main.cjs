@@ -17,6 +17,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const crypto = require("crypto");
+const { normalizeDefenderStatus } = require("./protect-status.cjs");
 const { calculateProtectionScore } = require("./protect-trust-engine.cjs");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
@@ -623,10 +624,10 @@ async function getDefenderStatus() {
   if (!result.ok) {
     const fallback = await runDefenderPowerShell(DEFENDER_FALLBACK_SCRIPT);
     if (!fallback.ok) return result;
-    try { return normalizeDefenderStatus(JSON.parse(fallback.output || "{}")); }
+    try { return { ok: true, status: normalizeDefenderStatus(JSON.parse(fallback.output || "{}")) }; }
     catch { return result; }
   }
-  try { return normalizeDefenderStatus(JSON.parse(result.output || "{}")); }
+  try { return { ok: true, status: normalizeDefenderStatus(JSON.parse(result.output || "{}")) }; }
   catch { return { ok: false, error: "Defender vrátil nečitelný stav." }; }
 }
 
