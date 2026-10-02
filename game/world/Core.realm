@@ -1,0 +1,23 @@
+{
+  "realmFormat": 1,
+  "id": "core",
+  "name": "Unnamed Fantasy World",
+  "version": "0.1.0",
+  "type": "world",
+  "status": "foundation",
+  "rules": {
+    "multiplayerFirst": true,
+    "authoritativeWorldState": "server",
+    "localStoryAI": true,
+    "aiMayMutateAuthoritativeState": false,
+    "staticLinearCampaignRequired": false,
+    "playerFactionChoiceRequired": true
+  },
+  "storyPillars": {
+    "eryon": "reserved",
+    "kalidra": "reserved",
+    "conquerorFaction": "reserved",
+    "playerMaySupportAnySide": true,
+    "playerMayRemainIndependent": true
+  }
+}
