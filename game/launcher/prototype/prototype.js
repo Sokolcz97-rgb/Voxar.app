@@ -1,7 +1,10 @@
 (() => {
-  const root = document.querySelector(".launcher");
+  "use strict";
+
   const REFERENCE_WIDTH = 1920;
   const REFERENCE_HEIGHT = 1080;
+
+  const root = document.querySelector(".launcher");
   const primary = document.getElementById("primaryAction");
   const secondary = document.getElementById("secondaryAction");
   const accountName = document.getElementById("accountName");
@@ -13,6 +16,9 @@
   const progressDetail = document.getElementById("progressDetail");
   const progressFill = document.getElementById("progressFill");
   const progressValue = document.getElementById("progressValue");
+
+  const desktop = window.ashesLauncher;
+  const isDesktop = Boolean(desktop?.isDesktop);
 
   const states = {
     signed_out: {
@@ -73,7 +79,12 @@
     progressFill.style.width = state.progress + "%";
     progressValue.textContent = state.progressValue;
 
-    function fitReferenceCanvas() {
+    document.querySelectorAll("[data-demo-state]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.demoState === name);
+    });
+  }
+
+  function fitReferenceCanvas() {
     const scale = Math.min(
       window.innerWidth / REFERENCE_WIDTH,
       window.innerHeight / REFERENCE_HEIGHT
@@ -81,33 +92,41 @@
     root.style.transform = `translate(-50%, -50%) scale(${scale})`;
   }
 
-  fitReferenceCanvas();
-  window.addEventListener("resize", fitReferenceCanvas);
+  function bindWindowControls() {
+    const controls = document.querySelector(".window-controls");
+    const minimizeButton = document.getElementById("windowMinimize");
+    const maximizeButton = document.getElementById("windowMaximize");
+    const closeButton = document.getElementById("windowClose");
 
-  const desktop = window.ashesLauncher;
-  const minimizeButton = document.getElementById("windowMinimize");
-  const maximizeButton = document.getElementById("windowMaximize");
-  const closeButton = document.getElementById("windowClose");
+    if (!isDesktop) {
+      controls?.classList.add("browser-preview");
+      return;
+    }
 
-  if (desktop?.isDesktop) {
-    minimizeButton?.addEventListener("click", () => void desktop.window.minimize());
-    maximizeButton?.addEventListener("click", () => void desktop.window.toggleMaximize());
-    closeButton?.addEventListener("click", () => void desktop.window.close());
+    minimizeButton?.addEventListener("click", () => {
+      void desktop.window.minimize();
+    });
 
-    desktop.window.getState().then((state) => {
-      if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
-    }).catch(() => {});
+    maximizeButton?.addEventListener("click", () => {
+      void desktop.window.toggleMaximize();
+    });
+
+    closeButton?.addEventListener("click", () => {
+      void desktop.window.close();
+    });
+
+    desktop.window.getState()
+      .then((state) => {
+        if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
+      })
+      .catch(() => {});
 
     desktop.window.onState((state) => {
       if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
     });
-  } else {
-    document.querySelector(".window-controls")?.classList.add("browser-preview");
-  }
 
-  document.querySelectorAll("[data-demo-state]").forEach((button) => {
-      button.classList.toggle("active", button.dataset.demoState === name);
-    });
+    const demoControls = document.querySelector(".prototype-controls");
+    if (demoControls) demoControls.hidden = true;
   }
 
   document.querySelectorAll("[data-demo-state]").forEach((button) => {
@@ -116,8 +135,24 @@
 
   primary.addEventListener("click", () => {
     const current = root.dataset.state;
-    if (current === "signed_out") applyState("ready_to_install");
-    else if (current === "ready_to_install") {
+
+    if (isDesktop) {
+      if (current === "signed_out") {
+        progressTitle.textContent = "StudioVoxario přihlášení";
+        progressDetail.textContent = "Bezpečný browser login bude připojen v další fázi.";
+      } else if (current === "ready_to_install") {
+        progressTitle.textContent = "Instalace ještě není aktivní";
+        progressDetail.textContent = "Downloader a ověřování souborů budou připojeny v další fázi.";
+      } else if (current === "ready_to_play") {
+        progressTitle.textContent = "Herní klient ještě není připojen";
+        progressDetail.textContent = "Tlačítko Hrát zatím nespouští Game.exe.";
+      }
+      return;
+    }
+
+    if (current === "signed_out") {
+      applyState("ready_to_install");
+    } else if (current === "ready_to_install") {
       progressTitle.textContent = "Instalace bude implementována v další fázi";
       progressDetail.textContent = "Tento build je pouze vizuální reference.";
     } else if (current === "ready_to_play") {
@@ -126,5 +161,8 @@
     }
   });
 
+  window.addEventListener("resize", fitReferenceCanvas);
+  fitReferenceCanvas();
+  bindWindowControls();
   applyState("signed_out");
 })();
