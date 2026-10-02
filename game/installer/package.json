@@ -7,9 +7,10 @@
   "main": "main.cjs",
   "private": true,
   "scripts": {
-    "start": "electron .",
-    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check build.cjs",
-    "build": "npm run check && node build.cjs"
+    "start": "npm run prepare:assets && electron .",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check build.cjs && node --check prepare-assets.cjs",
+    "build": "npm run prepare:assets && npm run check && node build.cjs",
+    "prepare:assets": "node prepare-assets.cjs"
   },
   "dependencies": {
     "7zip-bin": "^5.2.0",
