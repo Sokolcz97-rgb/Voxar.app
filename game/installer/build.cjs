@@ -2,7 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { execFileSync } = require("node:child_process");
+const packager = require("@electron/packager");
 const Seven = require("node-7z");
 const sevenBin = require("7zip-bin");
 
@@ -26,8 +26,9 @@ async function archiveLauncher() {
   await new Promise((resolve, reject) => {
     const task = Seven.add(ARCHIVE, path.join(LAUNCHER_PAYLOAD, "*"), {
       $bin: sevenBin.path7za,
-      method: ["x=9"]
+      method: ["x=5"]
     });
+
     task.on("end", resolve);
     task.on("error", reject);
     task.on("progress", (progress) => {
@@ -38,37 +39,48 @@ async function archiveLauncher() {
   process.stdout.write("\n");
 }
 
-async function main() {
-  await archiveLauncher();
-
+async function packageInstaller() {
   fs.rmSync(DIST, { recursive: true, force: true });
 
-  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-  execFileSync(
-    npx,
-    [
-      "@electron/packager",
-      ".",
-      "AshesOfEryonInstaller",
-      "--platform=win32",
-      "--arch=x64",
-      "--out=dist",
-      "--overwrite",
-      "--asar",
-      "--ignore=^/resources/(launcher\\.7z|7za\\.exe)$",
-      "--extra-resource=resources/launcher.7z",
-      "--extra-resource=resources/7za.exe"
+  const paths = await packager({
+    dir: ROOT,
+    name: "AshesOfEryonInstaller",
+    platform: "win32",
+    arch: "x64",
+    out: DIST,
+    overwrite: true,
+    asar: true,
+    ignore: [
+      /^\/resources\/launcher\.7z$/,
+      /^\/resources\/7za\.exe$/,
+      /^\/dist($|\/)/,
+      /^\/out($|\/)/
     ],
-    {
-      cwd: ROOT,
-      stdio: "inherit",
-      shell: process.platform === "win32"
-    }
-  );
+    extraResource: [
+      ARCHIVE,
+      SEVEN_ZIP
+    ]
+  });
 
-  const runtimeExe = path.join(DIST, "AshesOfEryonInstaller-win32-x64", "AshesOfEryonInstaller.exe");
+  if (!Array.isArray(paths) || !paths.length) {
+    throw new Error("Electron Packager did not return an output directory.");
+  }
+
+  return paths[0];
+}
+
+async function main() {
+  await archiveLauncher();
+  const runtimeDir = await packageInstaller();
+
+  const runtimeExe = path.join(runtimeDir, "AshesOfEryonInstaller.exe");
   if (!fs.existsSync(runtimeExe)) {
     throw new Error(`Installer runtime not created: ${runtimeExe}`);
+  }
+
+  const payload = path.join(runtimeDir, "resources", "launcher.7z");
+  if (!fs.existsSync(payload)) {
+    throw new Error(`Packaged launcher payload missing: ${payload}`);
   }
 
   console.log(`Installer runtime ready: ${runtimeExe}`);
