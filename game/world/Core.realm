@@ -1,7 +1,7 @@
 {
   "realmFormat": 1,
   "id": "core",
-  "name": "Unnamed Fantasy World",
+  "name": "Ashes of Kalidra",
   "version": "0.1.0",
   "type": "world",
   "status": "foundation",
@@ -19,5 +19,10 @@
     "conquerorFaction": "reserved",
     "playerMaySupportAnySide": true,
     "playerMayRemainIndependent": true
+  },
+  "brand": {
+    "title": "Ashes of Kalidra",
+    "status": "approved-creative-direction-legal-clearance-pending",
+    "tagline": "Every choice leaves a scar."
   }
 }
