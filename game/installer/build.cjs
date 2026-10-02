@@ -55,6 +55,7 @@ async function main() {
       "--out=dist",
       "--overwrite",
       "--asar",
+      "--ignore=^/resources/(launcher\\.7z|7za\\.exe)$",
       "--extra-resource=resources/launcher.7z",
       "--extra-resource=resources/7za.exe"
     ],
