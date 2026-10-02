@@ -1,7 +1,7 @@
 {
   "realmFormat": 1,
   "id": "core",
-  "name": "Ashes of Kalidra",
+  "name": "Ashes of Eryon",
   "version": "0.1.0",
   "type": "world",
   "status": "foundation",
@@ -21,7 +21,7 @@
     "playerMayRemainIndependent": true
   },
   "brand": {
-    "title": "Ashes of Kalidra",
+    "title": "Ashes of Eryon",
     "status": "approved-creative-direction-legal-clearance-pending",
     "tagline": "Every choice leaves a scar."
   }
