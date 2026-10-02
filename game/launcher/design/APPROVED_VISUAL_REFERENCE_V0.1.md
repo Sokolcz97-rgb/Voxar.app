@@ -80,3 +80,8 @@ For those products:
 3. implement without improvisational redesign
 4. compare screenshots against the approved reference
 5. iterate until differences are intentional and documented
+
+
+## Installer workflow reuse
+
+The approved installer reference process is also mandatory for the future **Voxar.app installer** redesign. Functional code may be reused where safe, but its UI must first receive its own approved visual reference and then be implemented with screenshot comparison rather than freeform redesign.
