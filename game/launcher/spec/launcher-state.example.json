@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "state": "signed_out",
+  "account": null,
+  "installation": {
+    "installed": false,
+    "path": null,
+    "version": null,
+    "channel": "alpha"
+  },
+  "update": {
+    "available": false,
+    "targetVersion": null,
+    "progress": null
+  },
+  "service": {
+    "status": "unknown",
+    "message": null
+  },
+  "primaryAction": {
+    "id": "sign_in",
+    "enabled": true
+  }
+}
