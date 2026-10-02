@@ -276,3 +276,11 @@ Not frozen yet:
 - final character art
 
 These may change without changing the approved layout geometry.
+
+## Brand identity
+
+Working title: **ASHES OF ERYON**
+
+Working tagline: **Every choice leaves a scar.**
+
+Formal legal/name clearance remains pending before commercial release.
