@@ -1,0 +1,24 @@
+{
+  "name": "ashes-of-eryon-installer",
+  "productName": "Ashes of Eryon Installer",
+  "version": "0.1.0",
+  "description": "Custom bootstrap installer for Ashes of Eryon",
+  "author": "StudioVoxario",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check build.cjs",
+    "build": "npm run check && node build.cjs"
+  },
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "node-7z": "^3.0.0",
+    "winreg": "^1.2.5",
+    "windows-shortcuts": "^0.1.6"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.3",
+    "electron": "31.7.7"
+  }
+}
