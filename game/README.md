@@ -1,6 +1,6 @@
-# Voxar.app Game
+# Ashes of Kalidra
 
-This directory is the isolated home of the new multiplayer fantasy RPG project.
+This directory is the isolated home of **Ashes of Kalidra**, the new multiplayer dark-fantasy RPG project inside Voxar.app. The title is the approved creative working title pending formal name/trademark clearance.
 
 ## Planned structure
 
