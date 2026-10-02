@@ -2,7 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const packager = require("@electron/packager");
+const { packager } = require("@electron/packager");
 const Seven = require("node-7z");
 const sevenBin = require("7zip-bin");
 
