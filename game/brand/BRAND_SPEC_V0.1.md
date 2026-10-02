@@ -1,29 +1,32 @@
-# Ashes of Kalidra — Brand Spec v0.1
+# Ashes of Eryon — Brand Spec v0.1
 
 Status: APPROVED CREATIVE DIRECTION / LEGAL CLEARANCE PENDING
 
 ## Primary title
 
-**ASHES OF KALIDRA**
+**ASHES OF ERYON**
 
 Display casing:
-- launcher / key art / logo: `ASHES OF KALIDRA`
-- prose / store text: `Ashes of Kalidra`
+- launcher / key art / logo: `ASHES OF ERYON`
+- prose / store text: `Ashes of Eryon`
 
 ## Story focus
 
-The brand is centered on the fall, legacy and unresolved conflict of Kalidra, with Eryon as one of the defining legendary figures around which the main narrative develops.
+The brand is centered directly on Eryon: his legacy, choices, enemies, allies and the consequences of the fall of Kalidra.
 
-The title must not imply that the player is forced to support Eryon. The player may:
+Kalidra remains one of the defining places/events of the setting, but the title makes Eryon the main narrative anchor.
+
+The title does not imply that the player is forced to support Eryon. The player may:
 - support Eryon and the surviving Kalidran cause
 - support the faction that conquered Kalidra
 - remain independent
-- betray a faction later
-- discover evidence that changes their interpretation of the past
+- betray either faction later
+- discover evidence that changes their interpretation of Eryon
+- potentially oppose Eryon depending on their path
 
 ## Brand promise
 
-A multiplayer dark-fantasy RPG where the world remembers player decisions and the local Story Director adapts personal narrative paths without overriding authoritative multiplayer state.
+A multiplayer dark-fantasy RPG where the world remembers player decisions and a local Story Director adapts personal narrative paths without overriding authoritative multiplayer state.
 
 ## Working tagline
 
@@ -34,6 +37,7 @@ This tagline is provisional and can change without changing the title.
 ## Tone
 
 - dark fantasy
+- Eryon-centered mythology
 - mysterious rather than grim for its own sake
 - cinematic
 - ancient conflict and ruined grandeur
@@ -65,7 +69,7 @@ This tagline is provisional and can change without changing the title.
 
 Primary wordmark:
 - `ASHES` smaller
-- `OF KALIDRA` dominant
+- `OF ERYON` dominant
 - elegant, sharp fantasy serif or custom lettering
 - subtle erosion / ash damage
 - restrained metallic-gold edge/light treatment
@@ -73,7 +77,7 @@ Primary wordmark:
 
 Possible emblem directions:
 - broken crown
-- fractured Kalidran sigil
+- fractured sigil tied to Eryon
 - split flame / ash plume
 - broken shield
 - shattered circular seal
@@ -87,7 +91,7 @@ The approved launcher v0.1 layout uses the brand name in the top-left product id
 Reference text:
 
 ```
-ASHES OF KALIDRA
+ASHES OF ERYON
 Every choice leaves a scar.
 ```
 
@@ -99,7 +103,9 @@ KAPITOLA I • BEZEJMENNÝ BŘEH
 
 ## Naming caution
 
-`Kalidra` is not assumed to be legally exclusive or cleared merely because the exact game title appears unused in a quick web check.
+The exact phrase `Ashes of Eryon` was not found as an obvious current game title in a quick web check on 2026-10-02, but `Eryon` is already used by other fantasy/game projects.
+
+Therefore this is an approved creative working title, not a statement of legal exclusivity.
 
 Before public commercial release:
 - perform a proper trademark/name clearance in target markets
@@ -107,4 +113,4 @@ Before public commercial release:
 - check domain/social availability
 - review store/platform naming conflicts
 
-Until then, repository metadata should treat the title as the approved creative working title, not as a legal clearance statement.
+Until then, repository metadata must treat the title as pending formal legal clearance.
