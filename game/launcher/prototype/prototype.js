@@ -1,5 +1,7 @@
 (() => {
   const root = document.querySelector(".launcher");
+  const REFERENCE_WIDTH = 1920;
+  const REFERENCE_HEIGHT = 1080;
   const primary = document.getElementById("primaryAction");
   const secondary = document.getElementById("secondaryAction");
   const accountName = document.getElementById("accountName");
@@ -33,7 +35,7 @@
       accountState: "Přihlášen",
       badge: "READY TO INSTALL",
       installed: "—",
-      path: "C:\\Games\\ProjectUnnamed",
+      path: "C:\\Games\\AshesOfEryon",
       progressTitle: "Připraveno k instalaci",
       progressDetail: "Je potřeba stáhnout přibližně 11.4 GB.",
       progress: 0,
@@ -46,7 +48,7 @@
       accountState: "Online",
       badge: "READY TO PLAY",
       installed: "0.1.0-alpha",
-      path: "C:\\Games\\ProjectUnnamed",
+      path: "C:\\Games\\AshesOfEryon",
       progressTitle: "Hra je aktuální",
       progressDetail: "Všechny soubory jsou připravené.",
       progress: 100,
@@ -71,7 +73,39 @@
     progressFill.style.width = state.progress + "%";
     progressValue.textContent = state.progressValue;
 
-    document.querySelectorAll("[data-demo-state]").forEach((button) => {
+    function fitReferenceCanvas() {
+    const scale = Math.min(
+      window.innerWidth / REFERENCE_WIDTH,
+      window.innerHeight / REFERENCE_HEIGHT
+    );
+    root.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+
+  fitReferenceCanvas();
+  window.addEventListener("resize", fitReferenceCanvas);
+
+  const desktop = window.ashesLauncher;
+  const minimizeButton = document.getElementById("windowMinimize");
+  const maximizeButton = document.getElementById("windowMaximize");
+  const closeButton = document.getElementById("windowClose");
+
+  if (desktop?.isDesktop) {
+    minimizeButton?.addEventListener("click", () => void desktop.window.minimize());
+    maximizeButton?.addEventListener("click", () => void desktop.window.toggleMaximize());
+    closeButton?.addEventListener("click", () => void desktop.window.close());
+
+    desktop.window.getState().then((state) => {
+      if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
+    }).catch(() => {});
+
+    desktop.window.onState((state) => {
+      if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
+    });
+  } else {
+    document.querySelector(".window-controls")?.classList.add("browser-preview");
+  }
+
+  document.querySelectorAll("[data-demo-state]").forEach((button) => {
       button.classList.toggle("active", button.dataset.demoState === name);
     });
   }
