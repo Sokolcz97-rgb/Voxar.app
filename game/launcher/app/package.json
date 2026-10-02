@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "check": "node --check main.cjs && node --check preload.cjs",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ../prototype/prototype.js",
     "pack:win": "npm run check && electron-builder --win --x64 --dir"
   },
   "devDependencies": {
