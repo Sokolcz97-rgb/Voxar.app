@@ -1,6 +1,6 @@
-# Ashes of Kalidra
+# Ashes of Eryon
 
-This directory is the isolated home of **Ashes of Kalidra**, the new multiplayer dark-fantasy RPG project inside Voxar.app. The title is the approved creative working title pending formal name/trademark clearance.
+This directory is the isolated home of **Ashes of Eryon**, the new multiplayer dark-fantasy RPG project inside Voxar.app. The title is the approved creative working title pending formal name/trademark clearance.
 
 ## Planned structure
 
