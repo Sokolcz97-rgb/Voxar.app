@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game Launcher Prototype v0.1</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="launcher" data-state="signed_out">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">V</div>
+        <div>
+          <div class="brand-kicker">StudioVoxario Games</div>
+          <div class="brand-name">PROJECT: UNNAMED</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Hlavní navigace">
+        <button class="nav-item active" type="button">Domů</button>
+        <button class="nav-item" type="button">Novinky</button>
+        <button class="nav-item" type="button">Nastavení</button>
+        <button class="nav-item" type="button">Podpora</button>
+      </nav>
+
+      <div class="account">
+        <div class="server">
+          <span class="status-dot"></span>
+          <span>Servery online</span>
+        </div>
+        <div class="avatar" aria-hidden="true">?</div>
+        <div class="account-copy">
+          <strong id="accountName">Nepřihlášen</strong>
+          <span id="accountState">StudioVoxario účet</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-art" aria-hidden="true">
+        <div class="mountain mountain-a"></div>
+        <div class="mountain mountain-b"></div>
+        <div class="mist mist-a"></div>
+        <div class="mist mist-b"></div>
+        <div class="rune rune-a">ᚱ</div>
+        <div class="rune rune-b">ᛉ</div>
+      </div>
+      <div class="hero-overlay"></div>
+
+      <div class="hero-copy">
+        <div class="eyebrow">KAPITOLA I • BEZEJMENNÝ BŘEH</div>
+        <h1 id="heroTitle">Svět, který si pamatuje tvoje rozhodnutí.</h1>
+        <p id="heroText">Probouzíš se na neznámém kontinentu. Vyber svůj talent, najdi cestu k civilizaci a rozhodni, komu budeš věřit.</p>
+      </div>
+
+      <div class="hero-action">
+        <button id="primaryAction" class="primary-action" type="button">Přihlásit se</button>
+        <button id="secondaryAction" class="secondary-action" type="button">Vytvořit účet</button>
+      </div>
+    </section>
+
+    <section class="lower-grid">
+      <article class="panel news-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">SVĚT & VÝVOJ</span>
+            <h2>Novinky</h2>
+          </div>
+          <button type="button" class="text-button">Zobrazit vše</button>
+        </div>
+
+        <div class="news-list">
+          <article class="news-item featured">
+            <span class="news-tag">FOUNDATION</span>
+            <div>
+              <h3>Nový svět vzniká</h3>
+              <p>Multiplayer, lokální Story Director a dynamické větvení příběhu.</p>
+            </div>
+            <time>v0.1</time>
+          </article>
+
+          <article class="news-item">
+            <span class="news-tag">LORE</span>
+            <div>
+              <h3>Kalidra</h3>
+              <p>První pilíře konfliktu mezi Eryonem a dobyvateli jsou rezervované v Core.realm.</p>
+            </div>
+            <time>DNES</time>
+          </article>
+
+          <article class="news-item">
+            <span class="news-tag">LAUNCHER</span>
+            <div>
+              <h3>Vlastní instalace</h3>
+              <p>Launcher dostane samostatný update a repair systém.</p>
+            </div>
+            <time>ALPHA</time>
+          </article>
+        </div>
+      </article>
+
+      <aside class="panel status-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">STAV HRY</span>
+            <h2>Instalace</h2>
+          </div>
+          <span id="stateBadge" class="state-badge">SIGNED OUT</span>
+        </div>
+
+        <dl class="status-list">
+          <div><dt>Kanál</dt><dd>Alpha</dd></div>
+          <div><dt>Nainstalovaná verze</dt><dd id="installedVersion">—</dd></div>
+          <div><dt>Dostupná verze</dt><dd>0.1.0-alpha</dd></div>
+          <div><dt>Umístění</dt><dd id="installPath">Nenainstalováno</dd></div>
+          <div><dt>Velikost</dt><dd>11.4 GB</dd></div>
+          <div><dt>Stav serveru</dt><dd class="positive">Online</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <footer class="progress-strip" id="progressStrip">
+      <div class="progress-copy">
+        <strong id="progressTitle">Launcher připraven</strong>
+        <span id="progressDetail">Přihlaste se svým StudioVoxario účtem.</span>
+      </div>
+      <div class="progress-track" aria-hidden="true"><span id="progressFill"></span></div>
+      <div class="progress-value" id="progressValue">—</div>
+    </footer>
+
+    <div class="prototype-controls" aria-label="Prototype state controls">
+      <span>Prototype:</span>
+      <button type="button" data-demo-state="signed_out" class="active">Signed out</button>
+      <button type="button" data-demo-state="ready_to_install">Ready to install</button>
+      <button type="button" data-demo-state="ready_to_play">Ready to play</button>
+    </div>
+  </main>
+
+  <script src="./prototype.js"></script>
+</body>
+</html>
