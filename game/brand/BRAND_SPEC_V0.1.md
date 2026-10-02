@@ -75,14 +75,26 @@ Primary wordmark:
 - restrained metallic-gold edge/light treatment
 - readable at launcher scale and on dark backgrounds
 
-Possible emblem directions:
-- broken crown
-- fractured sigil tied to Eryon
-- split flame / ash plume
-- broken shield
-- shattered circular seal
+## Approved logo v0.1
 
-No emblem is approved yet.
+Status: **APPROVED**
+
+Selected visual:
+- fractured dark shield
+- vertical gold spear/sigil
+- ruined citadel silhouette
+- torn dark-red cloth
+- ember-lit cracks and broken stone
+- metallic stone-and-gold wordmark
+- tagline integrated below the wordmark
+
+Approved prototype asset:
+
+`game/launcher/prototype/assets/ashes-of-eryon-logo-v0.1.svg`
+
+The original selected artwork remains the visual master reference. The repository prototype asset is an optimized transparent derivative for launcher display.
+
+The logo may be adapted into smaller icon/emblem variants later, but the main logo composition must not be redesigned without an explicit brand-spec revision.
 
 ## Launcher usage
 
