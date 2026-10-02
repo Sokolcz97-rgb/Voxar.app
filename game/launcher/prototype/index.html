@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Ashes of Eryon — Launcher Prototype v0.1</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <div class="launcher-viewport">
   <main class="launcher" data-state="signed_out">
     <header class="topbar">
       <div class="brand">
@@ -29,6 +31,11 @@
         <div class="account-copy">
           <strong id="accountName">Nepřihlášen</strong>
           <span id="accountState">StudioVoxario účet</span>
+        </div>
+        <div class="window-controls" aria-label="Ovládání okna">
+          <button id="windowMinimize" class="window-control" type="button" aria-label="Minimalizovat">—</button>
+          <button id="windowMaximize" class="window-control" type="button" aria-label="Maximalizovat">□</button>
+          <button id="windowClose" class="window-control close" type="button" aria-label="Zavřít">×</button>
         </div>
       </div>
     </header>
@@ -133,6 +140,7 @@
       <button type="button" data-demo-state="ready_to_play">Ready to play</button>
     </div>
   </main>
+  </div>
 
   <script src="./prototype.js"></script>
 </body>
