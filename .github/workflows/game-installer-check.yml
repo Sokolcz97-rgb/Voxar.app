@@ -1,0 +1,155 @@
+name: Ashes of Eryon GameSetup Check
+
+on:
+  pull_request:
+    paths:
+      - 'game/installer/**'
+      - 'game/launcher/**'
+      - '.github/workflows/game-installer-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ashes-gamesetup-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+
+      - name: Install launcher dependencies
+        working-directory: game/launcher/app
+        run: npm install --no-audit --no-fund
+
+      - name: Build launcher runtime
+        working-directory: game/launcher/app
+        run: npm run pack:win
+
+      - name: Verify launcher payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = "game/launcher/app/dist/win-unpacked/Ashes of Eryon Launcher.exe"
+          if (!(Test-Path $exe)) { throw "Launcher payload missing: $exe" }
+
+      - name: Install GameSetup dependencies
+        working-directory: game/installer
+        run: npm install --no-audit --no-fund
+
+      - name: Verify installer JavaScript
+        working-directory: game/installer
+        run: npm run check
+
+      - name: Build custom installer runtime
+        working-directory: game/installer
+        run: npm run build
+
+      - name: Verify custom installer runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = "game/installer/dist/AshesOfEryonInstaller-win32-x64/AshesOfEryonInstaller.exe"
+          $payload = "game/installer/dist/AshesOfEryonInstaller-win32-x64/resources/launcher.7z"
+          if (!(Test-Path $exe)) { throw "Custom installer runtime missing: $exe" }
+          if (!(Test-Path $payload)) { throw "Launcher payload missing from installer runtime: $payload" }
+
+      - name: Download 7-Zip SFX module
+        id: sfx
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          if (!(Test-Path $sevenZip)) { throw "7-Zip is not available on the runner." }
+
+          $archive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $directory = Join-Path $env:RUNNER_TEMP "lzma-sdk"
+
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $archive
+          if (Test-Path $directory) { Remove-Item -Recurse -Force $directory }
+          New-Item -ItemType Directory -Force -Path $directory | Out-Null
+
+          & $sevenZip x $archive "-o$directory" -y
+          if ($LASTEXITCODE -ne 0) { throw "7-Zip SDK extraction failed." }
+
+          $sfx = Get-ChildItem -Recurse $directory -Filter "7zSD.sfx" -File | Select-Object -First 1
+          if ($null -eq $sfx) { throw "7zSD.sfx was not found." }
+
+          "path=$($sfx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build single-file GameSetup.exe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          $sfx = "${{ steps.sfx.outputs.path }}"
+          $runtime = Resolve-Path "game/installer/dist/AshesOfEryonInstaller-win32-x64"
+          $runtimeExe = Join-Path $runtime "AshesOfEryonInstaller.exe"
+          if (!(Test-Path $runtimeExe)) { throw "Installer runtime executable missing." }
+
+          $archive = Join-Path $env:RUNNER_TEMP "ashes-of-eryon-gamesetup.7z"
+          if (Test-Path $archive) { Remove-Item $archive -Force }
+
+          Push-Location $runtime
+          try {
+            & $sevenZip a -t7z -mx=5 -ms=on -r $archive ".\*"
+            if ($LASTEXITCODE -ne 0) { throw "GameSetup runtime compression failed." }
+          } finally {
+            Pop-Location
+          }
+
+          $config = Join-Path $env:RUNNER_TEMP "ashes-of-eryon-gamesetup-config.txt"
+          $lines = @(
+            ';!@Install@!UTF-8!',
+            'Title="Ashes of Eryon"',
+            'RunProgram="AshesOfEryonInstaller.exe"',
+            'GUIMode="2"',
+            ';!@InstallEnd@!'
+          )
+          $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+          [System.IO.File]::WriteAllText($config, ($lines -join "`r`n") + "`r`n", $utf8Bom)
+
+          $outputDir = "game/installer/out"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+          $output = Join-Path $outputDir "GameSetup.exe"
+
+          $stream = [System.IO.File]::Open($output, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+          try {
+            foreach ($part in @($sfx, $config, $archive)) {
+              $input = [System.IO.File]::OpenRead($part)
+              try { $input.CopyTo($stream) } finally { $input.Dispose() }
+            }
+          } finally {
+            $stream.Dispose()
+          }
+
+          if (!(Test-Path $output)) { throw "GameSetup.exe was not created." }
+          if ((Get-Item $output).Length -lt 1000000) { throw "GameSetup.exe is unexpectedly small." }
+
+          $hash = (Get-FileHash $output -Algorithm SHA256).Hash.ToLower()
+          $hash | Set-Content "$output.sha256" -Encoding ascii
+
+          Write-Host "GameSetup.exe built successfully."
+          Write-Host "SHA256: $hash"
+          Write-Host "This CI job does not publish a GitHub Release."
+
+      - name: Upload test GameSetup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ashes-of-Eryon-GameSetup-test
+          path: |
+            game/installer/out/GameSetup.exe
+            game/installer/out/GameSetup.exe.sha256
+          if-no-files-found: error
+          retention-days: 7
