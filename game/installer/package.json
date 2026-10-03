@@ -8,9 +8,10 @@
   "private": true,
   "scripts": {
     "start": "npm run prepare:assets && electron .",
-    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check build.cjs && node --check prepare-assets.cjs",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check build.cjs && node --check prepare-assets.cjs && node --check visual-preload.cjs && node --check visual-test.cjs",
     "build": "npm run prepare:assets && npm run check && node build.cjs",
-    "prepare:assets": "node prepare-assets.cjs"
+    "prepare:assets": "node prepare-assets.cjs",
+    "visual:shots": "electron visual-test.cjs"
   },
   "dependencies": {
     "7zip-bin": "^5.2.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@electron/packager": "^20.0.3",
-    "electron": "31.7.7"
+    "electron": "31.7.7",
+    "sharp": "^0.34.4"
   }
 }
