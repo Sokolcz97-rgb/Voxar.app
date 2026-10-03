@@ -30,6 +30,8 @@
   const progressPercent = document.getElementById("progressPercent");
   const progressFill = document.getElementById("progressFill");
   const progressDetail = document.getElementById("progressDetail");
+  const progressPayload = document.getElementById("progressPayload");
+  const progressState = document.getElementById("progressState");
 
   const launchAfterInstall = document.getElementById("launchAfterInstall");
   const openFolderAfterInstall = document.getElementById("openFolderAfterInstall");
@@ -178,6 +180,7 @@
     progressPercent.textContent = `${pct} %`;
     progressPhase.textContent = value?.detail || "Instalace";
     progressDetail.textContent = value?.detail || "";
+    if (progressState) progressState.textContent = value?.phase || "instalace";
 
     if (mode === "uninstall") {
       uninstallProgressFill.style.width = `${pct}%`;
@@ -195,6 +198,7 @@
     requiredSpace.textContent = formatBytes(defaults.requiredBytes);
     freeSpace.textContent = formatBytes(defaults.freeBytes);
     launcherPayloadSize.textContent = formatBytes(defaults.payloadBytes);
+    if (progressPayload) progressPayload.textContent = `Launcher payload: ${formatBytes(defaults.payloadBytes)}`;
 
     const insufficient = defaults.freeBytes !== null && defaults.freeBytes < defaults.requiredBytes;
     diskWarning.hidden = !insufficient;
