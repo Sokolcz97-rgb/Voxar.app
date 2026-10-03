@@ -1,0 +1,41 @@
+{
+  "name": "ashes-of-eryon-launcher",
+  "productName": "Ashes of Eryon Launcher",
+  "version": "0.1.0",
+  "description": "Desktop launcher runtime for Ashes of Eryon",
+  "author": "StudioVoxario",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ../prototype/prototype.js",
+    "pack:win": "npm run check && electron-builder --win --x64 --dir"
+  },
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.studiovoxario.ashesofeyron.launcher",
+    "productName": "Ashes of Eryon Launcher",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../prototype",
+        "to": "launcher-ui",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}
