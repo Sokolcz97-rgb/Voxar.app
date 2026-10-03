@@ -51,6 +51,21 @@ jobs:
         working-directory: game/installer
         run: npm run check
 
+      - name: Render six-step installer visual snapshots
+        working-directory: game/installer
+        run: npm run visual:shots
+
+      - name: Upload installer visual comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ashes-of-Eryon-Installer-Visual-Check
+          path: |
+            game/installer/visual-output/actual-step-*.png
+            game/installer/visual-output/actual-grid.png
+            game/installer/visual-output/reference-vs-actual.png
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Build custom installer runtime
         working-directory: game/installer
         run: npm run build
