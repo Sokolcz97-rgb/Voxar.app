@@ -85,3 +85,25 @@ For Voxar.app installer work:
 5. iterate until remaining differences are intentional and documented
 
 Do not simply reuse the current Voxar.app installer UI because it exists. Its functionality may be reused where technically sound, but its future visual implementation must go through the same approved-reference workflow used for Ashes of Eryon.
+
+
+## Stored master reference
+
+The exact approved 3×2 visual reference is stored at:
+
+`game/launcher/design/reference/installer-approved-v0.1.webp`
+
+Reference geometry:
+- full image: 1536×1024
+- grid: 3 columns × 2 rows
+- each reference cell: 512×512
+
+Cell mapping:
+- step 1 Vítejte: x=0, y=0
+- step 2 Komponenty: x=512, y=0
+- step 3 Cíl instalace: x=1024, y=0
+- step 4 Možnosti: x=0, y=512
+- step 5 Instalace: x=512, y=512
+- step 6 Dokončení: x=1024, y=512
+
+The installer also bundles a visual-only copy at `game/installer/assets/installer-approved-v0.1.webp`. It may be used only as a blurred/darkened atmospheric layer. Interactive controls, labels, progress state and data must remain real UI and must never be baked into the screenshot image.
