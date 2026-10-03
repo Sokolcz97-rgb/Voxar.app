@@ -11,6 +11,8 @@ const REFERENCE = path.join(ROOT, "assets", "installer-approved-v0.1.webp");
 const WIDTH = 1120;
 const HEIGHT = 720;
 
+app.disableHardwareAcceleration();
+
 async function waitForReady(win) {
   const timeoutAt = Date.now() + 15000;
 
@@ -29,8 +31,8 @@ async function waitForReady(win) {
   throw new Error("Installer visual preview did not become ready.");
 }
 
-async function captureStep(step) {
-  const win = new BrowserWindow({
+function createCaptureWindow() {
+  return new BrowserWindow({
     width: WIDTH,
     height: HEIGHT,
     show: false,
@@ -46,26 +48,25 @@ async function captureStep(step) {
       offscreen: true
     }
   });
+}
 
-  try {
-    await win.loadFile(path.join(ROOT, "ui", "index.html"), {
-      query: {
-        mode: "install",
-        visualTest: "1",
-        previewStep: String(step)
-      }
-    });
+async function captureStep(win, step) {
+  await win.loadFile(path.join(ROOT, "ui", "index.html"), {
+    query: {
+      mode: "install",
+      visualTest: "1",
+      previewStep: String(step)
+    }
+  });
 
-    await waitForReady(win);
-    await new Promise((resolve) => setTimeout(resolve, 350));
+  await waitForReady(win);
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const image = await win.capturePage();
-    const output = path.join(OUTPUT, `actual-step-${step + 1}.png`);
-    fs.writeFileSync(output, image.toPNG());
-    return output;
-  } finally {
-    win.destroy();
-  }
+  const image = await win.capturePage();
+  const output = path.join(OUTPUT, `actual-step-${step + 1}.png`);
+  fs.writeFileSync(output, image.toPNG());
+  console.log(`Captured step ${step + 1}: ${output}`);
+  return output;
 }
 
 async function buildActualGrid(images) {
@@ -133,25 +134,32 @@ async function buildComparison(actualGrid) {
   return output;
 }
 
-app.disableHardwareAcceleration();
-
 async function main() {
   fs.rmSync(OUTPUT, { recursive: true, force: true });
   fs.mkdirSync(OUTPUT, { recursive: true });
 
-  const screenshots = [];
-  for (let step = 0; step < 6; step += 1) {
-    screenshots.push(await captureStep(step));
+  const win = createCaptureWindow();
+  try {
+    const screenshots = [];
+    for (let step = 0; step < 6; step += 1) {
+      screenshots.push(await captureStep(win, step));
+    }
+
+    const actualGrid = await buildActualGrid(screenshots);
+    const comparison = await buildComparison(actualGrid);
+
+    console.log("Installer visual snapshots created:");
+    for (const file of screenshots) console.log(` - ${file}`);
+    console.log(` - ${actualGrid}`);
+    console.log(` - ${comparison}`);
+  } finally {
+    if (!win.isDestroyed()) win.destroy();
   }
-
-  const actualGrid = await buildActualGrid(screenshots);
-  const comparison = await buildComparison(actualGrid);
-
-  console.log("Installer visual snapshots created:");
-  for (const file of screenshots) console.log(` - ${file}`);
-  console.log(` - ${actualGrid}`);
-  console.log(` - ${comparison}`);
 }
+
+app.on("window-all-closed", () => {
+  // The visual harness intentionally owns the app lifecycle.
+});
 
 app.whenReady()
   .then(main)
