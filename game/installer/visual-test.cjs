@@ -133,8 +133,9 @@ async function buildComparison(actualGrid) {
   return output;
 }
 
+app.disableHardwareAcceleration();
+
 async function main() {
-  app.disableHardwareAcceleration();
   fs.rmSync(OUTPUT, { recursive: true, force: true });
   fs.mkdirSync(OUTPUT, { recursive: true });
 
