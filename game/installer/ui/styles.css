@@ -1102,3 +1102,46 @@ h1 {
 .step-complete {
   text-shadow: 0 2px 14px rgba(0,0,0,.7);
 }
+
+
+.component-list {
+  max-height: 430px;
+  overflow: hidden;
+}
+
+.component-row .component-icon {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.component-row.future {
+  opacity: .72;
+}
+
+.component-row.future input[type="checkbox"] {
+  opacity: .52;
+}
+
+.component-row.future .component-size {
+  color: #8f9499;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.progress-metrics {
+  margin-top: 10px;
+  padding-top: 9px;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  border-top: 1px solid rgba(214,164,76,.15);
+  color: #a6aaae;
+  font-size: 10px;
+}
+
+.progress-metrics span:last-child {
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
