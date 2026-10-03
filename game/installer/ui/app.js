@@ -4,6 +4,8 @@
   const api = window.ashesInstaller;
   const params = new URLSearchParams(window.location.search);
   const mode = params.get("mode") === "uninstall" ? "uninstall" : "install";
+  const visualTest = params.get("visualTest") === "1";
+  const previewStep = Math.max(0, Math.min(5, Number(params.get("previewStep") || 0)));
 
   const installWizard = document.getElementById("installWizard");
   const uninstallView = document.getElementById("uninstallView");
@@ -204,7 +206,25 @@
     diskWarning.hidden = !insufficient;
     if (insufficient) freeSpace.style.color = "#ff8b82";
 
-    setStep(0);
+    if (visualTest) {
+      setStep(previewStep);
+
+      if (previewStep === 4) {
+        progressFill.style.width = "45%";
+        progressPercent.textContent = "45 %";
+        progressPhase.textContent = "Kopírování souborů…";
+        progressDetail.textContent = "Připravuji launcher a ověřuji balíček.";
+        if (progressState) progressState.textContent = "instalace";
+      }
+
+      if (previewStep === 5) {
+        statusText.textContent = "Launcher je připraven.";
+      }
+    } else {
+      setStep(0);
+    }
+
+    window.__ASHES_VISUAL_READY__ = true;
   }
 
   async function initUninstall() {
@@ -237,6 +257,11 @@
     });
   }
 
-  if (mode === "uninstall") void initUninstall();
-  else void initInstall();
+  if (mode === "uninstall") {
+    void initUninstall().then(() => {
+      window.__ASHES_VISUAL_READY__ = true;
+    });
+  } else {
+    void initInstall();
+  }
 })();
