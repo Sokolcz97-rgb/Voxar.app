@@ -1145,3 +1145,180 @@ h1 {
   text-transform: uppercase;
   letter-spacing: .05em;
 }
+
+
+/* ------------------------------------------------------------------
+   Reference alignment pass v0.3
+   Make the approved cinematic art visible instead of burying it below
+   opaque utility panels.
+   ------------------------------------------------------------------ */
+
+.world-art::before {
+  inset: -22px;
+  opacity: .98;
+  filter: blur(5px) saturate(1.18) contrast(1.08) brightness(.76);
+  transform: scale(1.07);
+}
+
+.world-art::after {
+  background:
+    linear-gradient(90deg,
+      rgba(2,5,8,.68) 0%,
+      rgba(2,5,8,.48) 32%,
+      rgba(2,5,8,.21) 65%,
+      rgba(2,5,8,.34) 100%),
+    linear-gradient(0deg, rgba(2,4,7,.62) 0%, transparent 42%),
+    radial-gradient(circle at 82% 84%, rgba(238,75,25,.23), transparent 25%);
+}
+
+.sky-glow,
+.moon,
+.mountains,
+.citadel-bg,
+.ember-field {
+  opacity: .16;
+}
+
+.sidebar {
+  background:
+    linear-gradient(180deg, rgba(3,7,10,.80), rgba(2,5,8,.88));
+}
+
+.sidebar-embers {
+  position: absolute;
+  z-index: 0;
+  inset: -18px;
+  background-image: url("../assets/installer-approved-v0.1.webp");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  background-position: 0% 0%;
+  opacity: .38;
+  filter: blur(7px) saturate(1.12) brightness(.58);
+  transform: scale(1.09);
+}
+
+.installer-layout[data-step="0"] .sidebar-embers { background-position: 0% 0%; }
+.installer-layout[data-step="1"] .sidebar-embers { background-position: 50% 0%; }
+.installer-layout[data-step="2"] .sidebar-embers { background-position: 100% 0%; }
+.installer-layout[data-step="3"] .sidebar-embers { background-position: 0% 100%; }
+.installer-layout[data-step="4"] .sidebar-embers { background-position: 50% 100%; }
+.installer-layout[data-step="5"] .sidebar-embers { background-position: 100% 100%; }
+
+.steps,
+.sidebar-brand {
+  z-index: 3;
+}
+
+.steps li {
+  background: rgba(2,5,8,.20);
+  text-shadow: 0 2px 9px rgba(0,0,0,.84);
+}
+
+.steps li.active {
+  background:
+    linear-gradient(90deg, rgba(194,127,33,.35), rgba(29,20,10,.38) 72%, rgba(4,7,10,.16));
+}
+
+.step:not(.step-welcome):not(.step-complete) {
+  background:
+    linear-gradient(180deg, rgba(3,7,10,.58), rgba(2,5,8,.45));
+  border-color: rgba(224,171,80,.34);
+  box-shadow:
+    0 20px 44px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.018);
+  backdrop-filter: blur(1.5px);
+}
+
+.component-row,
+.path-row input,
+.disk-card,
+.options-list label,
+.completion-options label,
+.remove-data {
+  background:
+    linear-gradient(90deg, rgba(3,7,10,.78), rgba(3,7,10,.59));
+}
+
+.component-row.required {
+  background:
+    linear-gradient(90deg, rgba(126,78,21,.27), rgba(3,7,10,.66));
+}
+
+.privacy-note,
+.info-note {
+  background:
+    linear-gradient(90deg, rgba(105,62,17,.21), rgba(3,7,10,.58));
+}
+
+.welcome-art {
+  height: 400px;
+  margin-top: -27px;
+}
+
+.welcome-art::before {
+  inset: 16px 56px 4px;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 47%, rgba(225,143,48,.08), transparent 37%),
+    linear-gradient(180deg, transparent, rgba(2,5,8,.13));
+  box-shadow: none;
+}
+
+.welcome-art img {
+  width: 510px;
+  height: 414px;
+  filter:
+    drop-shadow(0 18px 28px rgba(0,0,0,.72))
+    drop-shadow(0 0 14px rgba(230,145,43,.16));
+}
+
+.welcome-copy {
+  margin-top: -8px;
+}
+
+.welcome-copy .eyebrow {
+  display: none;
+}
+
+.welcome-copy h1 {
+  font-size: 29px;
+}
+
+.install-stage {
+  background:
+    linear-gradient(180deg, rgba(4,9,13,.27), rgba(2,5,8,.39));
+  border-color: rgba(224,171,80,.32);
+}
+
+.install-stage .citadel {
+  opacity: .28;
+}
+
+.progress-card {
+  background:
+    linear-gradient(180deg, rgba(3,7,10,.90), rgba(2,5,8,.88));
+}
+
+.step-complete .complete-logo-wrap {
+  height: 325px;
+}
+
+.step-complete .complete-logo-wrap img {
+  width: 470px;
+  height: 324px;
+}
+
+.step-complete h1 {
+  font-size: 27px;
+  text-shadow: 0 4px 18px rgba(0,0,0,.9);
+}
+
+.step-complete > p {
+  color: #d0d1cd;
+  text-shadow: 0 2px 10px rgba(0,0,0,.9);
+}
+
+.wizard-footer {
+  background:
+    linear-gradient(180deg, rgba(3,6,9,.82), rgba(2,4,6,.94));
+}
