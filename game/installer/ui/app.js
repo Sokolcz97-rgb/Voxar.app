@@ -61,6 +61,7 @@
 
   function setStep(value) {
     step = Math.max(0, Math.min(5, value));
+    installWizard.dataset.step = String(step);
 
     document.querySelectorAll("[data-step]").forEach((node) => {
       node.classList.toggle("active", Number(node.dataset.step) === step);
