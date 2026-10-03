@@ -1037,3 +1037,68 @@ h1 {
 .brand-v {
   text-shadow: 0 0 12px rgba(224,171,78,.22);
 }
+
+
+/* Approved reference-backed atmosphere.
+   The reference is blurred/darkened only; functional UI remains live HTML. */
+.world-art::before {
+  content: "";
+  position: absolute;
+  inset: -34px;
+  z-index: -1;
+  background-image: url("../assets/installer-approved-v0.1.webp");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  background-position: 0% 0%;
+  filter: blur(10px) saturate(.92) contrast(1.06);
+  transform: scale(1.05);
+  opacity: .72;
+}
+
+.installer-layout[data-step="0"] .world-art::before { background-position: 0% 0%; }
+.installer-layout[data-step="1"] .world-art::before { background-position: 50% 0%; }
+.installer-layout[data-step="2"] .world-art::before { background-position: 100% 0%; }
+.installer-layout[data-step="3"] .world-art::before { background-position: 0% 100%; }
+.installer-layout[data-step="4"] .world-art::before { background-position: 50% 100%; }
+.installer-layout[data-step="5"] .world-art::before { background-position: 100% 100%; }
+
+.world-art::after {
+  background:
+    linear-gradient(90deg, rgba(2,5,8,.86) 0%, rgba(2,5,8,.67) 35%, rgba(2,5,8,.34) 68%, rgba(2,5,8,.58) 100%),
+    linear-gradient(0deg, rgba(2,4,7,.9) 0%, transparent 36%),
+    radial-gradient(circle at 82% 84%, rgba(238,75,25,.18), transparent 22%);
+}
+
+.sky-glow,
+.moon,
+.mountains,
+.citadel-bg,
+.ember-field {
+  opacity: .36;
+}
+
+.step:not(.step-welcome):not(.step-complete) {
+  max-width: 805px;
+  min-height: 500px;
+  background:
+    linear-gradient(180deg, rgba(4,8,12,.82), rgba(3,6,9,.66));
+  backdrop-filter: blur(2px);
+}
+
+.component-row {
+  min-height: 68px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.step-welcome .welcome-art {
+  background: transparent;
+}
+
+.step-welcome .welcome-art::before {
+  background: linear-gradient(180deg, rgba(2,5,8,.12), rgba(2,5,8,.36));
+}
+
+.step-complete {
+  text-shadow: 0 2px 14px rgba(0,0,0,.7);
+}
