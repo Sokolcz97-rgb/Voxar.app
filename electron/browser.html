@@ -234,7 +234,8 @@
     <button class="dockbtn" id="dockNotes" title="Poznámky"><span class="dockico" data-icon="note"></span><span>Poznámky</span></button>
     <button class="dockbtn" id="btnPerf" title="Nástroje a výkon"><span class="dockico" data-icon="grid"></span><span>Nástroje</span></button>
     <div class="spacer"></div>
-    <button class="dockbtn dock-mini" id="goApp" title="Otevřít Voxar.app"><span class="dockico vox-mark">V</span></button>
+    <div class="dock-promo" aria-hidden="true"><span>VÍCE NEŽ<br>PROHLÍŽEČ</span><b>SPOJUJE<br>SVĚTY</b></div>
+    <button class="dockbtn dock-mini" id="goApp" title="Otevřít Voxar.app"><img class="dock-app-logo" src="assets/icon.png" alt="Voxar.app" /></button>
     <button class="dockbtn dock-mini" id="btnSettings" title="Nastavení VoxarioBrowser (Ctrl+,)"><span class="dockico" data-icon="settings"></span></button>
     <button class="dockbtn dock-mini" id="btnLauncher" title="Zpět do rozcestníku"><span class="dockico" data-icon="exit"></span></button>
     <button class="sr-only" id="goHub" title="StudioVoxario HUB">Hub</button>
@@ -272,6 +273,7 @@
     </div>
     <div class="bookmark-shell">
       <div class="bmbar" id="bmbar"></div>
+      <button class="bm-add" id="bmAdd" type="button" title="Přidat aktuální stránku do záložek (Ctrl+D)">＋ Přidat záložku</button>
       <div class="sync-state"><span>☁</span> Synchronizováno <button id="btnNotifications" title="Oznámení">♧</button></div>
     </div>
     <div class="prog" id="prog"></div>
@@ -286,9 +288,9 @@
             <form class="hero-search" id="startSearch"><span data-icon="search"></span><input id="startSearchInput" placeholder="Hledat nebo zadat adresu" autocomplete="off" /><button type="submit" title="Přejít"><span data-icon="forward"></span></button></form>
             <div class="hero-actions">
               <button data-start-action="focus-search"><i data-icon="search"></i><span>Hledat na webu</span></button>
-              <button data-start-url="https://www.youtube.com"><i data-icon="play"></i><span>YouTube</span></button>
-              <button data-start-url="https://mapy.com"><i data-icon="pin"></i><span>Mapy</span></button>
-              <button data-start-url="https://translate.google.com"><i data-icon="translate"></i><span>Přeložit</span></button>
+              <button data-start-url="https://www.youtube.com"><i class="brand-ico" data-brand="youtube"></i><span>YouTube</span></button>
+              <button data-start-url="https://mapy.com"><i class="brand-ico" data-brand="maps"></i><span>Mapy</span></button>
+              <button data-start-url="https://translate.google.com"><i class="brand-ico" data-brand="translate"></i><span>Přeložit</span></button>
               <button data-start-url="https://chatgpt.com"><i data-icon="sparkle"></i><span>AI asistent</span></button>
             </div>
             <div class="hero-motto">GOOD<br>PEOPLE<br>BETTER<br>WORLDS<i></i></div>
@@ -317,12 +319,11 @@
         </div>
 
         <aside class="start-right">
-          <section class="weather-card hud-cut"><div class="weather-city" id="weatherCity">Praha</div><div class="weather-main"><span id="weatherIcon">☾</span><strong id="weatherTemp">-- °C</strong></div><div id="weatherState">Načítám počasí…</div><small id="weatherNext">Aktuální předpověď</small></section>
+          <section class="weather-card hud-cut"><div class="weather-city" id="weatherCity">Praha</div><div class="weather-main"><span id="weatherIcon">☾</span><strong id="weatherTemp">-- °C</strong></div><div id="weatherState">Načítám počasí…</div><small id="weatherNext">Aktuální předpověď</small><button class="weather-more" id="weatherMore" title="Podrobná předpověď" data-start-url="https://www.yr.no/cs">›</button></section>
           <section class="quote-card hud-cut">„ Velké věci<br>začínají zvědavostí.“<small>— STUDIOVOXARIO</small></section>
           <section class="workspace-card hud-cut"><header><strong>▱ Pracovní prostory</strong><button id="workspaceAdd" title="Přidat pracovní prostor">＋</button></header><div id="workspaceList"></div></section>
           <section class="promo-card hud-cut"><span>PROHLÍŽEJ<br>TVOŘ<br>OBJEVUJ</span><i></i><small>STUDIOVOXARIO</small></section>
         </aside>
-        <div class="start-signature">VOICE NEŽ PROHLÍŽEČ<br><span>SPOJUJE SVĚTY</span></div>
       </div>
       <div class="panel compact-panel" id="workspacePanel"><div class="panel-head"><div><h2>// Pracovní prostory</h2><div class="sub">Skupiny stránek otevřené úsporně na vyžádání</div></div><button class="pbtn" id="workspaceClose">Zavřít</button></div><div id="workspaceManager" class="workspace-manager"></div></div>
       <div class="panel compact-panel" id="notesPanel"><div class="panel-head"><div><h2>// Poznámky</h2><div class="sub">Ukládají se automaticky pouze v tomto počítači</div></div><button class="pbtn" id="notesClose">Zavřít</button></div><textarea id="notesText" class="notes-text" placeholder="Napiš si poznámku, odkaz nebo plán ke hře…"></textarea><div class="notes-status" id="notesStatus">Uloženo lokálně</div></div>
@@ -575,6 +576,32 @@
       play: '<svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5z"/></svg>', pin: '<svg viewBox="0 0 24 24"><path d="M12 21s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11z"/><circle cx="12" cy="10" r="2"/></svg>', translate: '<svg viewBox="0 0 24 24"><path d="M4 5h10M9 3v2m-4 0c.5 4 2 6 5 8m4-8c-.4 3-1.5 5.4-3.5 7.2M13 19h7m-3.5-3.5L13 21m3.5-5.5L20 21"/></svg>', sparkle: '<svg viewBox="0 0 24 24"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5zM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg>'
     };
     const icon = (name) => ICONS[name] || ICONS.grid;
+    const BRAND_ICONS = {
+      youtube: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" fill="#ff1f1f"/><path d="m10 9 5 3-5 3z" fill="#fff"/></svg>',
+      maps: '<svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="#34a853"/><path d="M12 22s7-6.2 7-12a7 7 0 0 0-3.2-5.9L8 14.5c1.9 3.7 4 7.5 4 7.5z" fill="#fbbc04"/><path d="M5.2 8.3A7 7 0 0 1 15.8 4.1L8 14.5C6.4 11.6 5 9.6 5.2 8.3z" fill="#4285f4"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>',
+      translate: '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="13" height="13" rx="2" fill="#4285f4"/><rect x="9" y="8" width="13" height="13" rx="2" fill="#e8eaed"/><path d="M5.5 12.5 8.5 6l3 6.5M6.4 10.6h4.2" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 12.5h6M15.5 11v1.5c-.3 2.6-1.6 4.4-3.3 5.5m1.4-3.3c.9 1.4 2.3 2.6 4 3.3" stroke="#4285f4" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>',
+      folder: '<svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2.2h8.4A1.5 1.5 0 0 1 21 8.7v9.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    };
+    document.querySelectorAll('[data-brand]').forEach((node) => { node.innerHTML = BRAND_ICONS[node.dataset.brand] || ''; });
+    // Ikona webu: písmeno jako záloha, přes něj favicon webu (zmizí, když se nenačte).
+    function siteIcon(url, host) {
+      host.textContent = '';
+      let label = '◈';
+      try { label = new URL(url).hostname.replace(/^www\./, '').charAt(0).toUpperCase() || '◈'; } catch {}
+      const letter = document.createElement('span');
+      letter.className = 'favico-letter';
+      letter.textContent = label;
+      host.appendChild(letter);
+      try {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = new URL('/favicon.ico', url).toString();
+        img.onload = () => host.classList.add('has-img');
+        img.onerror = () => img.remove();
+        host.appendChild(img);
+      } catch {}
+    }
     document.querySelectorAll('[data-icon]').forEach((node) => { node.innerHTML = icon(node.dataset.icon); });
     let HOME = START;
     let SEARCH_TPL = 'https://www.google.com/search?q=%s';
@@ -662,6 +689,10 @@
         saveSession();
         render();
       };
+      wv.addEventListener('page-favicon-updated', (e) => {
+        const favicon = Array.isArray(e.favicons) ? e.favicons.find((item) => /^(https?:|data:image\/)/i.test(item)) : null;
+        if (favicon && favicon !== tab.favicon) { tab.favicon = favicon; render(); }
+      });
       wv.addEventListener('page-title-updated', (e) => {
         tab.title = e.title;
         try { ipcRenderer.invoke('vb:history:push', { url: tab.url, title: e.title }); } catch {}
@@ -789,6 +820,12 @@
           saveSession();
           render();
         });
+        const tabIco = document.createElement('img');
+        tabIco.className = 'tab-ico';
+        tabIco.alt = '';
+        tabIco.src = t.url === START ? 'assets/icon.png' : (t.favicon || '');
+        tabIco.onerror = () => { tabIco.remove(); el.classList.remove('has-ico'); };
+        if (tabIco.getAttribute('src')) { el.classList.add('has-ico'); el.appendChild(tabIco); }
         const label = document.createElement('span');
         label.className = 't';
         label.textContent = (t.suspended ? '◌ ' : t.loading ? '· ' : '') + (t.title || t.url);
@@ -806,7 +843,7 @@
       $('back').disabled = !t || !t.back;
       $('fwd').disabled = !t || !t.fwd;
       $('prog').className = 'prog' + (t && t.loading ? ' on' : '');
-      if (t && document.activeElement !== $('url')) $('url').value = t.url;
+      if (t && document.activeElement !== $('url')) $('url').value = t.url === START ? '' : t.url;
       $('lock').innerHTML = icon(t && t.url.startsWith('https://') ? 'lock' : 'privacy');
       $('startpage').classList.toggle('on', !!t && t.url === START);
       $('dockHome')?.classList.toggle('active', !!t && t.url === START);
@@ -843,9 +880,9 @@
       { id: 'research', name: 'Výzkum / AI', icon: '⌘', urls: ['https://chatgpt.com', 'https://www.google.com', 'https://www.perplexity.ai'] },
     ];
     const DISCOVER_ITEMS = [
-      { title: 'Budoucnost internetu: rychlejší, chytřejší, otevřenější', source: 'Voxario Magazín', url: 'https://studiovoxario.com', icon: '◉' },
-      { title: 'Nejlepší hry, které stojí za pozornost', source: 'Herní přehled', url: 'https://store.steampowered.com/charts/mostplayed', icon: '🎮' },
-      { title: 'Novinky z technologií a světa počítačů', source: 'Google Zprávy', url: 'https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSkwyMHZNRGRqTVhZMUVnVmpjeWdBUAE', icon: '⌁' },
+      { title: 'Budoucnost internetu: rychlejší, chytřejší, otevřenější', source: 'Voxario Magazín', url: 'https://studiovoxario.com', thumb: 'assets/discover-planet.webp' },
+      { title: 'Nejlepší hry, které stojí za pozornost', source: 'Herní přehled', url: 'https://store.steampowered.com/charts/mostplayed', thumb: 'assets/discover-portal.webp' },
+      { title: 'Novinky z technologií a světa počítačů', source: 'Google Zprávy', url: 'https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSkwyMHZNRGRqTVhZMUVnVmpjeWdBUAE', thumb: 'assets/discover-horizon.webp' },
     ];
     let workspaces = [];
     let notesTimer = null;
@@ -911,6 +948,7 @@
         if (compact) {
           const row = document.createElement('button');
           row.className = 'workspace-row';
+          row.dataset.ws = ['personal', 'work', 'gaming', 'research'].includes(workspace.id) ? workspace.id : 'custom';
           row.innerHTML = '<i></i><span><strong></strong><small></small></span>';
           row.querySelector('i').innerHTML = workspaceIcon(workspace);
           row.querySelector('strong').textContent = workspace.name;
@@ -955,8 +993,8 @@
       items.forEach((item) => {
         const row = document.createElement('button');
         row.className = 'mini-row';
-        row.innerHTML = '<span class="favico"></span><span class="favcopy"><strong></strong><small></small></span><em>☆</em>';
-        row.querySelector('.favico').textContent = siteLabel(item.url).charAt(0).toUpperCase();
+        row.innerHTML = '<span class="favico"></span><span class="favcopy"><strong></strong><small></small></span><em>★</em>';
+        siteIcon(item.url, row.querySelector('.favico'));
         row.querySelector('strong').textContent = item.title || siteLabel(item.url);
         row.querySelector('small').textContent = item.url;
         row.onclick = () => navigate(activeTab(), item.url);
@@ -973,7 +1011,7 @@
         const row = document.createElement('button');
         row.className = 'mini-row';
         row.innerHTML = '<span class="favico"></span><span class="favcopy"><strong></strong><small></small></span><time></time>';
-        row.querySelector('.favico').textContent = siteLabel(item.url).charAt(0).toUpperCase();
+        siteIcon(item.url, row.querySelector('.favico'));
         row.querySelector('strong').textContent = item.title || siteLabel(item.url);
         row.querySelector('small').textContent = siteLabel(item.url);
         row.querySelector('time').textContent = relativeTime(item.at);
@@ -989,7 +1027,9 @@
         const row = document.createElement('button');
         row.className = 'discover-item';
         row.innerHTML = '<span class="discover-thumb"></span><span><strong></strong><small></small></span>';
-        row.querySelector('.discover-thumb').innerHTML = item.icon === '🎮' ? icon('play') : item.icon === '⌁' ? icon('sparkle') : icon('grid');
+        const thumb = document.createElement('img');
+        thumb.src = item.thumb; thumb.alt = ''; thumb.loading = 'lazy';
+        row.querySelector('.discover-thumb').appendChild(thumb);
         row.querySelector('strong').textContent = item.title;
         row.querySelector('small').textContent = item.source;
         row.onclick = () => navigate(activeTab(), item.url);
@@ -1196,7 +1236,9 @@
         wrap.className = 'bmfolder';
         const chip = document.createElement('button');
         chip.className = 'chip dir';
-        chip.textContent = '📁 ' + child.name;
+        chip.innerHTML = '<i class="chip-ico"></i><span></span>';
+        chip.querySelector('i').innerHTML = BRAND_ICONS.folder;
+        chip.querySelector(':scope > span').textContent = child.name;
         chip.title = child.name + ' — ' + countTree(child) + ' záložek';
         const menu = document.createElement('div');
         menu.className = 'bmmenu';
@@ -1217,7 +1259,9 @@
       tree.items.slice(0, 40).forEach(({ b }) => {
         const chip = document.createElement('button');
         chip.className = 'chip';
-        chip.textContent = b.title || b.url;
+        chip.innerHTML = '<i class="chip-ico favico"></i><span></span>';
+        siteIcon(b.url, chip.querySelector('i'));
+        chip.querySelector(':scope > span').textContent = b.title || b.url;
         chip.title = b.url;
         chip.onclick = () => navigate(activeTab(), b.url);
         bar.appendChild(chip);
@@ -1334,6 +1378,7 @@
       if (r?.ok) { bookmarks = r.bookmarks; renderBookmarks(); }
     };
     $('bmExport').onclick = () => ipcRenderer.invoke('bookmarks:export-file');
+    $('bmAdd').onclick = () => $('btnStar').click();
     $('btnStar').onclick = async () => {
       const t = activeTab();
       if (!t) return;
