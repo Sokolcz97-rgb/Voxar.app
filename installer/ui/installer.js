@@ -85,9 +85,11 @@ function applyBrowserOnly() {
   state.productName = "VoxarioBrowser";
   document.title = "VoxarioBrowser Setup";
   $("windowTitle").textContent = "VoxarioBrowser Setup";
-  $("brandName").textContent = "VoxarioBrowser";
+  $("brandName").classList.add("wordmark-long");
+  $("brandName").querySelector(".wm-a").textContent = "VOXARIO";
+  $("brandName").querySelector(".wm-b").textContent = "BROWSER";
   $("welcomeTitle").textContent = "Vítejte ve VoxarioBrowseru";
-  $("welcomeLead").textContent = "Nainstalujeme samostatný prohlížeč StudioVoxario. Aktualizuje se nezávisle na Voxar.app a instalace proběhne jen pro váš účet ve Windows.";
+  $("welcomeLead").textContent = "Nainstalujeme samostatný prohlížeč StudioVoxario. Aktualizuje se sám, nezávisle na Voxar.app.";
   $("uninTitle").textContent = "Odinstalovat VoxarioBrowser";
   document.querySelector('.track li[data-step="components"]').hidden = true;
   $("welcomeNext").dataset.next = "location";

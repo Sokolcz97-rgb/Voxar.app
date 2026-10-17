@@ -10,7 +10,7 @@
   <div class="window" id="window">
     <header class="titlebar">
       <div class="titlebar-brand">
-        <span class="mark mark-sm" aria-hidden="true"></span>
+        <img class="tb-logo" src="assets/voxar-logo-sm.png" alt="" aria-hidden="true" />
         <span id="windowTitle">StudioVoxario Setup</span>
       </div>
       <div class="titlebar-drag"></div>
@@ -24,11 +24,10 @@
 
     <aside class="rail">
       <div class="brand">
-        <span class="mark" aria-hidden="true"></span>
-        <div>
-          <div class="brand-name" id="brandName">Voxar.app</div>
-          <div class="brand-sub" id="brandSub">Instalátor</div>
-        </div>
+        <img class="brand-logo" src="assets/voxar-logo.webp" alt="" aria-hidden="true" />
+        <div class="wordmark" id="brandName"><span class="wm-a">VOXAR</span><span class="wm-b">.APP</span></div>
+        <div class="wordmark-sub">STUDIOVOXARIO</div>
+        <div class="brand-sub" id="brandSub">Instalátor</div>
       </div>
 
       <ol class="track" id="steps">
@@ -48,7 +47,11 @@
     <main class="stage">
       <!-- Vítejte -->
       <section class="screen screen-welcome" data-step="welcome">
-        <div class="portal" aria-hidden="true"></div>
+        <div class="scene" aria-hidden="true">
+          <div class="scene-land"></div>
+          <div class="scene-shade"></div>
+          <img class="scene-logo" src="assets/voxar-logo.webp" alt="" />
+        </div>
         <div class="screen-body">
           <h1 id="welcomeTitle">Vítejte ve Voxar.app</h1>
           <p class="lead" id="welcomeLead">Nainstalujeme komunitní aplikaci StudioVoxario. Instalace proběhne jen pro váš účet ve Windows a zachová vaše data i nastavení.</p>
