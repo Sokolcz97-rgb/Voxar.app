@@ -15,6 +15,7 @@ Schválené podklady od StudioVoxario (říjen 2026).
 - HUD prvky: tenké linky s diagonálními zlomy, v rozích, nikdy přes text.
 - Logo vždy se září na tmavém podkladu.
 
-Ikona instalátoru (`installer/assets/icon.ico`) a ikona staženého Setupu
-(7-Zip SFX, viz `scripts/brand-sfx.cjs`) používají nové logo. Ikona samotné
-aplikace (`electron/assets/icon.ico`) zatím zůstává původní.
+Nové logo používají: ikona aplikace (`electron/assets/icon.ico`, `icon.png`,
+`tray.png` – exe, okna, zástupci, tray, VoxarioProtect), ikona instalátoru
+(`installer/assets/icon.ico`) a ikona staženého Setupu (7-Zip SFX, viz
+`scripts/brand-sfx.cjs`).
