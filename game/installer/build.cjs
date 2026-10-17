@@ -51,10 +51,13 @@ async function packageInstaller() {
     overwrite: true,
     asar: true,
     ignore: [
-      /^\/resources\/launcher\.7z$/,
-      /^\/resources\/7za\.exe$/,
+      // resources/ se přibaluje jen přes extraResource; visual-output/ jsou
+      // CI screenshoty (visual:shots běží před buildem) a do GameSetupu nepatří.
+      /^\/resources($|\/)/,
       /^\/dist($|\/)/,
-      /^\/out($|\/)/
+      /^\/out($|\/)/,
+      /^\/visual-output($|\/)/,
+      /^\/README\.md$/
     ],
     extraResource: [
       ARCHIVE,
@@ -81,6 +84,16 @@ async function main() {
   const payload = path.join(runtimeDir, "resources", "launcher.7z");
   if (!fs.existsSync(payload)) {
     throw new Error(`Packaged launcher payload missing: ${payload}`);
+  }
+
+  // Pojistka: build výstupy se nesmí dostat do app.asar instalátoru.
+  const asarPath = path.join(runtimeDir, "resources", "app.asar");
+  let listPackage = null;
+  try { ({ listPackage } = require("@electron/asar")); } catch {}
+  if (listPackage && fs.existsSync(asarPath)) {
+    const leaked = listPackage(asarPath).find((entry) =>
+      /^[\\/](visual-output|resources|out|dist)([\\/]|$)/.test(entry));
+    if (leaked) throw new Error(`Build output leaked into installer app.asar: ${leaked}`);
   }
 
   console.log(`Installer runtime ready: ${runtimeExe}`);

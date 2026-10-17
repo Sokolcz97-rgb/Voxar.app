@@ -56,6 +56,44 @@ function safeTarget(value) {
   return resolved;
 }
 
+const PRODUCT_DIR_NAME = "Ashes of Eryon";
+const PRODUCT_ID = "ashes-of-eryon";
+
+function readInstallerMeta(root) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(root, "installer.json"), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function isOwnInstall(root) {
+  return readInstallerMeta(root)?.product === PRODUCT_ID;
+}
+
+// Hra se vždy instaluje do vlastní složky "Ashes of Eryon". Když uživatel
+// vybere obecnou složku (např. D:\Games), přidáme podsložku – jinak by
+// odinstalace s "smazat data" mazala D:\Games\Saves apod. cizích her.
+function resolveInstallRoot(value) {
+  const chosen = safeTarget(value || DEFAULT_ROOT);
+  if (path.basename(chosen).toLowerCase() === PRODUCT_DIR_NAME.toLowerCase()) return chosen;
+  if (isOwnInstall(chosen)) return chosen;
+
+  let entries = [];
+  try { entries = fs.readdirSync(chosen); } catch { entries = []; }
+  if (!entries.length) return chosen;
+
+  return safeTarget(path.join(chosen, PRODUCT_DIR_NAME));
+}
+
+function launcherLockedError(error) {
+  const code = error?.code;
+  if (code === "EBUSY" || code === "EPERM" || code === "EACCES") {
+    return new Error("Soubory launcheru jsou používány. Zavřete Ashes of Eryon Launcher a zkuste to znovu.");
+  }
+  return error;
+}
+
 function findExistingParent(target) {
   let current = path.resolve(target);
   while (!fs.existsSync(current)) {
@@ -312,7 +350,8 @@ function removeUninstallRegistry() {
 }
 
 async function installLauncher(options = {}) {
-  const root = safeTarget(options.target || DEFAULT_ROOT);
+  if (installInProgress) throw new Error("Instalace už probíhá.");
+  const root = resolveInstallRoot(options.target || DEFAULT_ROOT);
   const launcherDir = path.join(root, "Launcher");
   const parent = path.dirname(root);
   const staging = path.join(parent, `.AshesOfEryon-staging-${process.pid}`);
@@ -347,12 +386,16 @@ async function installLauncher(options = {}) {
     progress("commit", 0.78, "Aktivace launcheru");
     fs.mkdirSync(root, { recursive: true });
 
-    if (fs.existsSync(launcherDir)) fs.renameSync(launcherDir, backup);
+    try {
+      if (fs.existsSync(launcherDir)) fs.renameSync(launcherDir, backup);
+    } catch (error) {
+      throw launcherLockedError(error);
+    }
     try {
       fs.renameSync(staging, launcherDir);
     } catch (error) {
       if (fs.existsSync(backup) && !fs.existsSync(launcherDir)) fs.renameSync(backup, launcherDir);
-      throw error;
+      throw launcherLockedError(error);
     }
     fs.rmSync(backup, { recursive: true, force: true });
 
@@ -404,12 +447,20 @@ async function installLauncher(options = {}) {
 }
 
 async function uninstallProduct(options = {}) {
+  if (installInProgress) throw new Error("Odinstalace už probíhá.");
   const root = safeTarget(options.target || uninstallTarget);
+  // Uživatelská data mažeme jen ve složce, kterou prokazatelně vytvořil
+  // tento instalátor (installer.json s product = ashes-of-eryon).
+  const ownInstall = isOwnInstall(root);
   installInProgress = true;
 
   try {
     progress("remove", 0.15, "Odstraňování launcheru");
-    fs.rmSync(path.join(root, "Launcher"), { recursive: true, force: true });
+    try {
+      fs.rmSync(path.join(root, "Launcher"), { recursive: true, force: true });
+    } catch (error) {
+      throw launcherLockedError(error);
+    }
 
     progress("shortcuts", 0.55, "Odstraňování zástupců");
     removeShortcuts();
@@ -418,10 +469,12 @@ async function uninstallProduct(options = {}) {
     await removeUninstallRegistry();
 
     const preserve = ["UserData", "Saves", "Screenshots"];
-    if (options.removeUserData) {
+    if (options.removeUserData && ownInstall) {
       for (const name of preserve) {
         fs.rmSync(path.join(root, name), { recursive: true, force: true });
       }
+    } else if (options.removeUserData) {
+      log("Uživatelská data nebyla smazána: složka nebyla vytvořena tímto instalátorem.");
     }
 
     fs.rmSync(path.join(root, "installer.json"), { force: true });
@@ -460,7 +513,10 @@ function registerIpc() {
       defaultPath: current || DEFAULT_ROOT,
       properties: ["openDirectory", "createDirectory"]
     });
-    return result.canceled ? null : result.filePaths[0];
+    if (result.canceled || !result.filePaths[0]) return null;
+    const picked = result.filePaths[0];
+    if (path.basename(picked).toLowerCase() === PRODUCT_DIR_NAME.toLowerCase() || isOwnInstall(picked)) return picked;
+    return path.join(picked, PRODUCT_DIR_NAME);
   });
 
   ipcMain.handle("installer:disk-info", (_event, target) => getDiskInfo(target || DEFAULT_ROOT));
@@ -490,9 +546,20 @@ function registerIpc() {
   });
 }
 
-app.whenReady().then(() => {
-  registerIpc();
-  createMainWindow();
-});
+// Dvojí spuštění GameSetupu by mohlo instalovat do stejné složky současně.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  });
+
+  app.whenReady().then(() => {
+    registerIpc();
+    createMainWindow();
+  });
+}
 
 app.on("window-all-closed", () => app.quit());
