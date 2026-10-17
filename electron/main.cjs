@@ -1826,7 +1826,7 @@ app.on("before-quit", (event) => {
   isQuitting = true;
   // Nezanechávej při ukončení aplikace žádný běžící lokální RTMP proces.
   // Funkce je idempotentní, takže je bezpečná i při ukončení kvůli aktualizaci.
-  try { stopRtmpProcesses(); } catch {}
+  try { stopRtmpProcesses({ immediate: true }); } catch {}
   // Při ukončení kvůli aktualizaci nesmíme quit odkládat — instalátor
   // navazuje na quit a sám aplikaci po dokončení znovu spustí.
   if (app.isQuittingForUpdate) {
