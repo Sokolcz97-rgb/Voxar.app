@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Ashes of Eryon — Launcher Prototype v0.1</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="launcher-viewport">
+  <main class="launcher" data-state="signed_out">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="./assets/ashes-of-eryon-logo-v0.1.webp" alt="Ashes of Eryon" />
+      </div>
+
+      <nav class="nav" aria-label="Hlavní navigace">
+        <button class="nav-item active" type="button">Domů</button>
+        <button class="nav-item" type="button">Novinky</button>
+        <button class="nav-item" type="button">Nastavení</button>
+        <button class="nav-item" type="button">Podpora</button>
+      </nav>
+
+      <div class="account">
+        <div class="server">
+          <span class="status-dot"></span>
+          <span>Servery online</span>
+        </div>
+        <div class="avatar" aria-hidden="true">?</div>
+        <div class="account-copy">
+          <strong id="accountName">Nepřihlášen</strong>
+          <span id="accountState">StudioVoxario účet</span>
+        </div>
+        <div class="window-controls" aria-label="Ovládání okna">
+          <button id="windowMinimize" class="window-control" type="button" aria-label="Minimalizovat">—</button>
+          <button id="windowMaximize" class="window-control" type="button" aria-label="Maximalizovat">□</button>
+          <button id="windowClose" class="window-control close" type="button" aria-label="Zavřít">×</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-art" aria-hidden="true">
+        <div class="mountain mountain-a"></div>
+        <div class="mountain mountain-b"></div>
+        <div class="mist mist-a"></div>
+        <div class="mist mist-b"></div>
+        <div class="rune rune-a">ᚱ</div>
+        <div class="rune rune-b">ᛉ</div>
+      </div>
+      <div class="hero-overlay"></div>
+
+      <div class="hero-copy">
+        <div class="eyebrow">ASHES OF ERYON • KAPITOLA I</div>
+        <h1 id="heroTitle">Every choice<br />leaves a <span>scar.</span></h1>
+        <div class="hero-rule" aria-hidden="true"></div>
+        <p id="heroText">Probouzíš se na Bezejmenném břehu.<br />Kalidra je v troskách a jméno Eryon<br />rozděluje celý kontinent.</p>
+      </div>
+
+      <div class="hero-action">
+        <button id="primaryAction" class="primary-action" type="button">Přihlásit se</button>
+        <button id="secondaryAction" class="secondary-action" type="button">Vytvořit účet</button>
+      </div>
+    </section>
+
+    <section class="lower-grid">
+      <article class="panel news-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">SVĚT & VÝVOJ</span>
+            <h2>Novinky</h2>
+          </div>
+          <button type="button" class="text-button">Zobrazit vše</button>
+        </div>
+
+        <div class="news-list">
+          <article class="news-item featured">
+            <div class="news-art news-art-world" aria-hidden="true"></div>
+            <time>28. 4. 2025</time>
+            <div>
+              <h3>Nekonečný svět Eryonu</h3>
+              <p>Objev rozlehlé oblasti, tajemství minulosti a místa, která ještě nikdo neprozkoumal.</p>
+            </div>
+          </article>
+
+          <article class="news-item">
+            <div class="news-art news-art-kalidra" aria-hidden="true"></div>
+            <time>25. 4. 2025</time>
+            <div>
+              <h3>Pád Kalidry</h3>
+              <p>Příběh největšího města kontinentu a události, které navždy změnily osud Eryonu.</p>
+            </div>
+          </article>
+
+          <article class="news-item">
+            <div class="news-art news-art-launcher" aria-hidden="true"></div>
+            <time>22. 4. 2025</time>
+            <div>
+              <h3>Nová verze launcheru</h3>
+              <p>Vylepšená stabilita, rychlejší stahování a několik užitečných funkcí.</p>
+            </div>
+          </article>
+        </div>
+      </article>
+
+      <aside class="panel status-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">STAV HRY</span>
+            <h2>Instalace</h2>
+          </div>
+          <span id="stateBadge" class="state-badge">SIGNED OUT</span>
+        </div>
+
+        <dl class="status-list">
+          <div><dt>Kanál</dt><dd>Alpha</dd></div>
+          <div><dt>Nainstalovaná verze</dt><dd id="installedVersion">—</dd></div>
+          <div><dt>Dostupná verze</dt><dd>0.1.0-alpha</dd></div>
+          <div><dt>Umístění</dt><dd id="installPath">Nenainstalováno</dd></div>
+          <div><dt>Velikost</dt><dd>11.4 GB</dd></div>
+          <div><dt>Stav serveru</dt><dd class="positive">Online</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <footer class="progress-strip" id="progressStrip">
+      <div class="progress-copy">
+        <strong id="progressTitle">Launcher připraven</strong>
+        <span id="progressDetail">Přihlaste se svým StudioVoxario účtem.</span>
+      </div>
+      <div class="progress-track" aria-hidden="true"><span id="progressFill"></span></div>
+      <div class="progress-value" id="progressValue">—</div>
+    </footer>
+
+    <div class="prototype-controls" aria-label="Prototype state controls">
+      <span>Prototype:</span>
+      <button type="button" data-demo-state="signed_out" class="active">Signed out</button>
+      <button type="button" data-demo-state="ready_to_install">Ready to install</button>
+      <button type="button" data-demo-state="ready_to_play">Ready to play</button>
+    </div>
+  </main>
+  </div>
+
+  <script src="./prototype.js"></script>
+</body>
+</html>

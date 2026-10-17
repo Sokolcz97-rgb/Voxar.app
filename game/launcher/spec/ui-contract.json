@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "status": "awaiting-approved-reference",
+  "referenceViewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "rules": {
+    "implementationMayRedesign": false,
+    "referenceScreenshotRequired": true,
+    "componentMeasurementsRequired": true,
+    "interactionStatesRequired": true,
+    "screenshotRegressionRequired": true
+  },
+  "requiredStates": [
+    "signed_out",
+    "auth_in_progress",
+    "ready_to_install",
+    "installing",
+    "ready_to_play",
+    "checking_update",
+    "updating",
+    "verifying",
+    "repair_required",
+    "repairing",
+    "offline",
+    "maintenance",
+    "error"
+  ],
+  "tokens": {
+    "colors": {},
+    "typography": {},
+    "spacing": {},
+    "radii": {},
+    "effects": {}
+  },
+  "components": {}
+}
