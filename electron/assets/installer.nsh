@@ -14,19 +14,41 @@
 ; VoxarioBrowser. NSIS pri update muze cizi soubory v instalacni slozce odstranit,
 ; proto stav pred aktualizaci zalohujeme a po instalaci vratime.
 
+; Produkt urcujeme podle PRODUCT_NAME z electron-builderu. Stejny soubor
+; pouziva Voxar.app i samostatny VoxarioBrowser (browser-builder.json).
+!if "${PRODUCT_NAME}" == "VoxarioBrowser"
+  !define SV_BROWSER_PRODUCT
+  !define SV_CUSTOM_UNINSTALL_KEY "StudioVoxario.browser"
+!else
+  !define SV_CUSTOM_UNINSTALL_KEY "StudioVoxario.app"
+!endif
+
 !macro preInit
   StrCpy $R9 ""
   StrCpy $R8 "0"
   Delete "$TEMP\StudioVoxario-modules.json"
 
   ; 1) Prvni prechod z vlastniho HUD instalatoru.
+  ;    Od 0.0.51 zapisuje HUD instalator klic StudioVoxario.<produkt>
+  ;    (app / browser). Starsi verze pouzivaly Uninstall\Voxar.app.
+  ;    Bez cteni noveho klice se prvni auto-update instaloval jinam.
   SetRegView 64
-  ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app" "InstallLocation"
+  ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${SV_CUSTOM_UNINSTALL_KEY}" "InstallLocation"
+  ${If} $R9 == ""
+    SetRegView 32
+    ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${SV_CUSTOM_UNINSTALL_KEY}" "InstallLocation"
+  ${EndIf}
 
+!ifndef SV_BROWSER_PRODUCT
+  ${If} $R9 == ""
+    SetRegView 64
+    ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app" "InstallLocation"
+  ${EndIf}
   ${If} $R9 == ""
     SetRegView 32
     ReadRegStr $R9 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app" "InstallLocation"
   ${EndIf}
+!endif
 
   ; 2) Dalsi aktualizace uz pouzivaji standardni electron-builder registry klic.
   ${If} $R9 == ""
@@ -61,6 +83,7 @@
 ; nevznikaly dve polozky stejne aplikace. Samotna instalacni cesta a uzivatelska
 ; data zustavaji zachovana.
 !macro customInstall
+!ifndef SV_BROWSER_PRODUCT
   ; Vrat modules.json, ktery mohl NSIS pri prepisu instalace odstranit.
   ${If} $R8 == "1"
     IfFileExists "$TEMP\StudioVoxario-modules.json" 0 sv_modules_restore_done
@@ -78,12 +101,21 @@
       StrCpy $R8 "1"
     sv_modules_migration_done:
   ${EndIf}
+!endif
 
   ${If} ${isUpdated}
+    ; Po prvnim NSIS updatu ma aplikace standardni electron-builder zaznam.
+    ; Stare custom zaznamy odstranime, aby ve Windows nebyly dve polozky.
     SetRegView 64
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${SV_CUSTOM_UNINSTALL_KEY}"
+!ifndef SV_BROWSER_PRODUCT
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app"
+!endif
     SetRegView 32
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${SV_CUSTOM_UNINSTALL_KEY}"
+!ifndef SV_BROWSER_PRODUCT
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Voxar.app"
+!endif
     SetRegView 64
   ${EndIf}
 !macroend

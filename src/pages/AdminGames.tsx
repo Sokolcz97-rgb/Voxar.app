@@ -105,13 +105,22 @@ const AdminGames = () => {
   const searchSteam = async () => {
     if (!steamQ.trim()) return;
     setSearching(true);
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/steam-search?q=${encodeURIComponent(steamQ)}`,
-      { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } }
-    );
-    const json = await res.json();
-    setSteamResults(json.results ?? []);
-    setSearching(false);
+    try {
+      // supabase.functions.invoke používá stejnou URL/klíč jako hlavní klient
+      // (včetně PUBLIC_SUPABASE_CONFIG fallbacku) a posílá token přihlášeného
+      // admina – steam-search má verify_jwt, bez tokenu vracel 401.
+      const { data, error } = await supabase.functions.invoke(
+        `steam-search?q=${encodeURIComponent(steamQ.trim())}`,
+        { method: "GET" },
+      );
+      if (error) throw error;
+      setSteamResults(Array.isArray(data?.results) ? data.results : []);
+    } catch (e) {
+      setSteamResults([]);
+      toast.error(`Hledání na Steamu selhalo: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const pickSteam = (it: { appid: number; name: string; icon_url: string | null }) => {

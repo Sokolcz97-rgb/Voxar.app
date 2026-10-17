@@ -17,16 +17,25 @@ function safeSend(sender, channel, payload) {
   } catch {}
 }
 
-function stopProcesses() {
-  for (const session of sessions) {
+// immediate = true se používá při ukončení aplikace / aktualizaci. Odložený
+// (unref) SIGKILL by se při quitu už nemusel spustit a FFmpeg by dál držel
+// soubory v resources/app.asar.unpacked → NSIS update pak hlásí kód 2.
+// Při běžném "Stop" streamu necháme FFmpeg 1,2 s na korektní ukončení FLV.
+function stopProcesses({ immediate = false } = {}) {
+  const activeSessions = sessions.slice();
+  sessions = [];
+  for (const session of activeSessions) {
     try { session.proc.stdin?.end(); } catch {}
+    if (immediate) {
+      try { if (!session.proc.killed) session.proc.kill("SIGKILL"); } catch {}
+      continue;
+    }
     try {
       setTimeout(() => {
-        if (!session.proc.killed) session.proc.kill("SIGKILL");
+        try { if (!session.proc.killed) session.proc.kill("SIGKILL"); } catch {}
       }, 1200).unref?.();
     } catch {}
   }
-  sessions = [];
   state = { active: false, startedAt: null, destinations: [], error: null };
 }
 
@@ -154,6 +163,6 @@ function registerRtmpHandlers() {
   });
 }
 
-process.once("exit", stopProcesses);
+process.once("exit", () => stopProcesses({ immediate: true }));
 
 module.exports = { registerRtmpHandlers, stopProcesses };

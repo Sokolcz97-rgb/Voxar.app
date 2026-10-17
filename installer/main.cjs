@@ -40,7 +40,14 @@ const APP_NAME = PRODUCT.name;
 const APP_EXE = PRODUCT.executable;
 const BROWSER_NAME = "VoxarioBrowser";
 const DEFAULT_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), PRODUCT.installDirName);
-const UNINSTALL_DIR = path.join(process.env.LOCALAPPDATA || os.homedir(), ".StudioVoxario-uninstaller");
+// Každý produkt má vlastní runtime odinstalátoru. Dřív sdílely jednu složku:
+// instalace VoxarioBrowseru ji smazala a přepsala, takže odinstalace Voxar.app
+// z Windows pak spouštěla neexistující exe (nebo browser runtime).
+// Voxar.app ponechává původní cestu kvůli existujícím registry záznamům.
+const UNINSTALL_DIR = path.join(
+  process.env.LOCALAPPDATA || os.homedir(),
+  PRODUCT.id === "app" ? ".StudioVoxario-uninstaller" : `.StudioVoxario-uninstaller-${PRODUCT.id}`,
+);
 const REG_UNINSTALL = `\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\StudioVoxario.${PRODUCT.id}`;
 
 const isUninstall = process.argv.includes("--uninstall");

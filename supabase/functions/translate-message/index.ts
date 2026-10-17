@@ -11,6 +11,11 @@ async function authorize(req: Request): Promise<boolean> {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) return false;
   const token = authHeader.slice(7);
+  // Discord bot (discord-bot/src/translate.js) volá funkci se service-role
+  // klíčem. Ten nemá `sub`, takže by getClaims níže vždy vrátil 401.
+  // Stejná výjimka jako v moderate / moderate-image.
+  const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (svc && token === svc) return true;
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
