@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PUBLIC_SUPABASE_CONFIG } from "@/integrations/supabase/public-config";
 import {
   Select,
   SelectContent,
@@ -25,32 +26,76 @@ export type GuildResources = { channels: GuildChannel[]; roles: GuildRole[] };
 
 const cache = new Map<string, Promise<GuildResources>>();
 
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || PUBLIC_SUPABASE_CONFIG.url).replace(/\/+$/, "");
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || PUBLIC_SUPABASE_CONFIG.publishableKey;
+
 export function invalidateGuildResources(guildId: string) {
   cache.delete(guildId);
 }
 
+function readApiError(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { error?: unknown; message?: unknown };
+    if (typeof parsed.error === "string" && parsed.error.trim()) return parsed.error;
+    if (typeof parsed.message === "string" && parsed.message.trim()) return parsed.message;
+  } catch {
+    // The body may be HTML/plain text. A safe generic message is returned below.
+  }
+
+  const trimmed = body.trim();
+  if (/^<!doctype\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) {
+    return "API vrátilo HTML místo JSON";
+  }
+  return trimmed.slice(0, 240) || "prázdná odpověď serveru";
+}
+
+function isGuildResources(value: unknown): value is GuildResources {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<GuildResources>;
+  return Array.isArray(candidate.channels) && Array.isArray(candidate.roles);
+}
+
 export async function fetchGuildResources(guildId: string): Promise<GuildResources> {
   if (!cache.has(guildId)) {
-    cache.set(
-      guildId,
-      (async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discord-guild-resources?guild_id=${guildId}`;
-        const res = await fetch(url, {
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        if (!res.ok) {
-          cache.delete(guildId);
-          const t = await res.text();
-          throw new Error(`Discord resources: ${t}`);
-        }
-        return res.json();
-      })(),
-    );
+    const request = (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const url = `${SUPABASE_URL}/functions/v1/discord-guild-resources?guild_id=${encodeURIComponent(guildId)}`;
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const body = await res.text();
+
+      if (!res.ok) {
+        throw new Error(`Discord resources (${res.status}): ${readApiError(body)}`);
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(body);
+      } catch {
+        throw new Error(
+          `Discord resources: ${readApiError(body)}. Zkontroluj nasazení Edge Function a veřejnou Supabase konfiguraci.`,
+        );
+      }
+
+      if (!isGuildResources(parsed)) {
+        throw new Error("Discord resources: API vrátilo neočekávaný formát dat.");
+      }
+
+      return parsed;
+    })().catch((error) => {
+      // A transient deployment/network/JSON failure must not stay cached forever.
+      cache.delete(guildId);
+      throw error;
+    });
+
+    cache.set(guildId, request);
   }
   return cache.get(guildId)!;
 }
