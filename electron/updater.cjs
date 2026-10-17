@@ -214,6 +214,13 @@ function configureUpdater(channel = "stable") {
   autoUpdater.disableWebInstaller = true;
   autoUpdater.disableDifferentialDownload = true;
   autoUpdater.channel = updaterChannel;
+  // Tichý NSIS update musí přepsat PRÁVĚ BĚŽÍCÍ instalaci. Bez toho NSIS
+  // hledá cestu jen v registry; u instalací z vlastního HUD instalátoru
+  // (klíč Uninstall\StudioVoxario.<produkt>) ji nenašel a nainstaloval
+  // aktualizaci jinam, zatímco zástupci dál spouštěli starou verzi.
+  if (app.isPackaged && process.platform === "win32") {
+    try { autoUpdater.installDirectory = path.dirname(process.execPath); } catch {}
+  }
   autoUpdater.requestHeaders = {
     "Cache-Control": "no-cache, no-store, max-age=0",
     Pragma: "no-cache",
