@@ -5,9 +5,12 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Electron otevírá produkční renderer přes file://, proto musí být všechny
-  // odkazy na JS/CSS relativní k dist/index.html.
-  base: "./",
+  // Web (Lovable hosting) musí používat absolutní "/" – jinak se při přímém
+  // otevření/obnovení vnořené adresy (např. /admin/badges, /forum/x/y) načítají
+  // skripty z /admin/assets/… a stránka zůstane bílá.
+  // Electron otevírá renderer přes file://, proto desktop build spouští
+  // `npm run build:desktop`, který předá --base ./ (relativní cesty).
+  base: "/",
   server: {
     host: "::",
     port: 8080,

@@ -8,7 +8,17 @@ const nativeBrowser = path.join(root, "electron", "browser.html");
 const mainProcess = path.join(root, "electron", "main.cjs");
 
 if (!fs.existsSync(path.join(source, "index.html"))) {
-  throw new Error("Chybí dist/index.html. Nejdříve spusťte npm run build.");
+  throw new Error("Chybí dist/index.html. Nejdříve spusťte npm run build:desktop.");
+}
+
+// Electron načítá renderer přes file://, takže build musí mít relativní cesty
+// k assetům (vite build --base ./). Web build s base "/" by v desktopu skončil
+// prázdným oknem, proto tady raději selžeme hned.
+{
+  const builtIndex = fs.readFileSync(path.join(source, "index.html"), "utf8");
+  if (/(?:src|href)="\/assets\//.test(builtIndex)) {
+    throw new Error("dist/index.html odkazuje na /assets/ (web build). Pro desktop použijte npm run build:desktop.");
+  }
 }
 
 fs.rmSync(target, { recursive: true, force: true });
