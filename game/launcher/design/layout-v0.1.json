@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "status": "approved-base-layout",
+  "referenceViewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "safeArea": {
+    "left": 48,
+    "right": 48,
+    "top": 24,
+    "bottom": 24
+  },
+  "components": {
+    "topBar": {
+      "x": 48,
+      "y": 24,
+      "width": 1824,
+      "height": 72
+    },
+    "hero": {
+      "x": 48,
+      "y": 112,
+      "width": 1824,
+      "height": 548
+    },
+    "heroText": {
+      "x": 112,
+      "y": 330,
+      "maxWidth": 680
+    },
+    "primaryCta": {
+      "x": 1460,
+      "y": 550,
+      "width": 320,
+      "height": 72,
+      "radius": 12
+    },
+    "newsPanel": {
+      "x": 48,
+      "y": 680,
+      "width": 1160,
+      "height": 280,
+      "radius": 14
+    },
+    "gameStatusPanel": {
+      "x": 1232,
+      "y": 680,
+      "width": 640,
+      "height": 280,
+      "radius": 14
+    },
+    "progressStrip": {
+      "x": 48,
+      "y": 980,
+      "width": 1824,
+      "height": 76
+    }
+  },
+  "initialStates": [
+    "signed_out",
+    "ready_to_install",
+    "ready_to_play"
+  ],
+  "rules": {
+    "codexMayRedesign": false,
+    "passwordFieldsInLauncher": false,
+    "onePrimaryCta": true,
+    "screenshotRegressionRequired": true
+  }
+}

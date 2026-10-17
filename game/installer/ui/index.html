@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Ashes of Eryon — Instalace</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="window-shell">
+    <header class="titlebar">
+      <div class="titlebar-product">
+        <span class="mini-sigil">✦</span>
+        <span>Ashes of Eryon — <span id="windowModeLabel">Instalace</span></span>
+      </div>
+      <div class="window-controls">
+        <button id="minimizeButton" type="button" aria-label="Minimalizovat">—</button>
+        <button id="closeButton" class="close" type="button" aria-label="Zavřít">×</button>
+      </div>
+    </header>
+
+    <div id="installWizard" class="installer-layout">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <span class="brand-v">V</span>
+          <small>STUDIOVOXARIO</small>
+        </div>
+        <ol class="steps">
+          <li data-step-indicator="0" class="active"><span>1</span>Vítejte</li>
+          <li data-step-indicator="1"><span>2</span>Komponenty</li>
+          <li data-step-indicator="2"><span>3</span>Cíl instalace</li>
+          <li data-step-indicator="3"><span>4</span>Možnosti</li>
+          <li data-step-indicator="4"><span>5</span>Instalace</li>
+          <li data-step-indicator="5"><span>6</span>Dokončení</li>
+        </ol>
+        <div class="sidebar-embers" aria-hidden="true"></div>
+      </aside>
+
+      <main class="content">
+        <div class="world-art" aria-hidden="true">
+          <div class="sky-glow"></div>
+          <div class="moon"></div>
+          <div class="mountains back"></div>
+          <div class="mountains front"></div>
+          <div class="citadel-bg">
+            <span class="spire s1"></span><span class="spire s2"></span><span class="spire s3"></span><span class="spire s4"></span><span class="spire s5"></span>
+          </div>
+          <div class="ember-field"></div>
+        </div>
+        <section class="step step-welcome active" data-step="0">
+          <div class="welcome-art">
+            <img src="../assets/ashes-of-eryon-logo-v0.1.webp" alt="Ashes of Eryon" />
+          </div>
+          <div class="welcome-copy">
+            <p class="eyebrow">ASHES OF ERYON</p>
+            <h1>Vítejte v instalátoru</h1>
+            <p>Připravte si launcher pro svět, kde každé rozhodnutí zanechá stopu.</p>
+            <div class="info-note">
+              GameSetup v0.1 instaluje launcher. Herní data se budou později bezpečně stahovat a opravovat přímo přes něj.
+            </div>
+          </div>
+        </section>
+
+        <section class="step" data-step="1">
+          <p class="eyebrow">KROK 2</p>
+          <h1>Výběr komponent</h1>
+          <p class="lead">Vyberte, co se má připravit při první instalaci.</p>
+
+          <div class="component-list">
+            <label class="component-row required">
+              <input type="checkbox" checked disabled />
+              <span class="component-icon">A</span>
+              <span class="component-copy">
+                <strong>Ashes of Eryon Launcher</strong>
+                <small>Povinná součást — instalace, aktualizace, opravy a spuštění hry.</small>
+              </span>
+              <span id="launcherPayloadSize" class="component-size">—</span>
+            </label>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">◆</span>
+              <span class="component-copy">
+                <strong>Herní data</strong>
+                <small>Budou spravována launcherem po jeho prvním spuštění.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">◫</span>
+              <span class="component-copy">
+                <strong>HD textury</strong>
+                <small>Volitelný balíček textur ve vysokém rozlišení.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">CZ</span>
+              <span class="component-copy">
+                <strong>Čeština</strong>
+                <small>České rozhraní a titulky budou řízené launcherem.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">EN</span>
+              <span class="component-copy">
+                <strong>English</strong>
+                <small>Anglické rozhraní a titulky.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">✦</span>
+              <span class="component-copy">
+                <strong>Local Story Director</strong>
+                <small>Lokální AI modul se přidá v další vývojové fázi.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+
+            <div class="component-row future">
+              <input type="checkbox" disabled />
+              <span class="component-icon">★</span>
+              <span class="component-copy">
+                <strong>Bonusový obsah</strong>
+                <small>Wallpapery, soundtrack a další doplňky budou volitelné.</small>
+              </span>
+              <span class="component-size">připravuje se</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" data-step="2">
+          <p class="eyebrow">KROK 3</p>
+          <h1>Cílová složka</h1>
+          <p class="lead">Vyberte, kam se má Ashes of Eryon připravit.</p>
+
+          <label class="field-label" for="installPath">Umístění instalace</label>
+          <div class="path-row">
+            <input id="installPath" type="text" spellcheck="false" />
+            <button id="browseButton" class="button secondary" type="button">Procházet…</button>
+          </div>
+
+          <div class="disk-card">
+            <div><span>Požadované místo</span><strong id="requiredSpace">—</strong></div>
+            <div><span>Volné místo na disku</span><strong id="freeSpace" class="healthy">—</strong></div>
+          </div>
+
+          <p id="diskWarning" class="warning" hidden>Na zvoleném disku není dostatek volného místa.</p>
+        </section>
+
+        <section class="step" data-step="3">
+          <p class="eyebrow">KROK 4</p>
+          <h1>Další možnosti</h1>
+          <p class="lead">Nastavte chování instalace a launcheru.</p>
+
+          <div class="options-list">
+            <label><input id="desktopShortcut" type="checkbox" checked /> <span>Vytvořit zástupce na ploše</span></label>
+            <label><input id="startShortcut" type="checkbox" checked /> <span>Vytvořit zástupce v nabídce Start</span></label>
+            <label><input id="autoUpdate" type="checkbox" checked /> <span>Povolit automatické aktualizace, až bude updater aktivní</span></label>
+            <label><input id="diagnostics" type="checkbox" /> <span>Povolit anonymní diagnostická data</span></label>
+          </div>
+
+          <div class="privacy-note">
+            Instalátor nevyžaduje přihlášení a nikdy neukládá heslo. Účet StudioVoxario se bude řešit až v launcheru přes bezpečný browser login.
+          </div>
+        </section>
+
+        <section class="step" data-step="4">
+          <p class="eyebrow">KROK 5</p>
+          <h1>Instalace probíhá</h1>
+          <p class="lead">Nevypínejte počítač, dokud nebude launcher připraven.</p>
+
+          <div class="install-stage">
+            <div class="citadel" aria-hidden="true">
+              <span class="tower t1"></span>
+              <span class="tower t2"></span>
+              <span class="tower t3"></span>
+              <span class="tower t4"></span>
+            </div>
+
+            <div class="progress-card">
+              <div class="progress-header">
+                <strong id="progressPhase">Příprava instalace…</strong>
+                <span id="progressPercent">0 %</span>
+              </div>
+              <div class="progress-track"><span id="progressFill"></span></div>
+              <div id="progressDetail" class="progress-detail">Připravuji soubory launcheru.</div>
+              <div class="progress-metrics">
+                <span id="progressPayload">Launcher payload: —</span>
+                <span>Lokální instalace</span>
+                <span id="progressState">čeká se</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="step step-complete" data-step="5">
+          <div class="complete-logo-wrap">
+            <img src="../assets/ashes-of-eryon-logo-v0.1.webp" alt="Ashes of Eryon" />
+          </div>
+          <div class="success-mark">✓</div>
+          <h1>Instalace byla úspěšně dokončena!</h1>
+          <p>Launcher Ashes of Eryon je připraven.</p>
+
+          <div class="completion-options">
+            <label><input id="launchAfterInstall" type="checkbox" checked /> <span>Spustit launcher</span></label>
+            <label><input id="openFolderAfterInstall" type="checkbox" /> <span>Otevřít instalační složku</span></label>
+          </div>
+        </section>
+
+        <footer class="wizard-footer">
+          <div id="statusText" class="status-text">Připraveno.</div>
+          <div class="wizard-actions">
+            <button id="backButton" class="button secondary" type="button">‹ Zpět</button>
+            <button id="nextButton" class="button primary" type="button">Pokračovat ›</button>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <div id="uninstallView" class="uninstall-view" hidden>
+      <div class="uninstall-card">
+        <img src="../assets/ashes-of-eryon-logo-v0.1.webp" alt="Ashes of Eryon" />
+        <p class="eyebrow">ODINSTALACE</p>
+        <h1>Odebrat Ashes of Eryon?</h1>
+        <p>Launcher a systémové zástupce budou odstraněny. Uživatelská data zůstanou zachována, pokud nezvolíte jinak.</p>
+
+        <label class="remove-data">
+          <input id="removeUserData" type="checkbox" />
+          <span>Odstranit také UserData, Saves a Screenshots</span>
+        </label>
+
+        <div class="progress-track uninstall-progress"><span id="uninstallProgressFill"></span></div>
+        <div id="uninstallStatus" class="status-text">Připraveno k odinstalaci.</div>
+
+        <div class="uninstall-actions">
+          <button id="uninstallCancel" class="button secondary" type="button">Zrušit</button>
+          <button id="uninstallConfirm" class="button danger" type="button">Odinstalovat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

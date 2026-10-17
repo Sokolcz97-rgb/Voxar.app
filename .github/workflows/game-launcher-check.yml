@@ -1,0 +1,56 @@
+name: Ashes of Eryon Launcher Check
+
+on:
+  pull_request:
+    paths:
+      - 'game/launcher/**'
+      - '.github/workflows/game-launcher-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ashes-launcher-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-runtime:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+
+      - name: Install launcher dependencies
+        working-directory: game/launcher/app
+        run: npm install --no-audit --no-fund
+
+      - name: Verify launcher JavaScript
+        working-directory: game/launcher/app
+        run: npm run check
+
+      - name: Build unpacked Windows launcher
+        working-directory: game/launcher/app
+        run: npm run pack:win
+
+      - name: Verify unpacked runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $exe = "game/launcher/app/dist/win-unpacked/Ashes of Eryon Launcher.exe"
+          $renderer = "game/launcher/app/dist/win-unpacked/resources/launcher-ui/index.html"
+          $logo = "game/launcher/app/dist/win-unpacked/resources/launcher-ui/assets/ashes-of-eryon-logo-v0.1.svg"
+
+          if (!(Test-Path $exe)) { throw "Launcher executable missing: $exe" }
+          if (!(Test-Path $renderer)) { throw "Packaged launcher renderer missing: $renderer" }
+          if (!(Test-Path $logo)) { throw "Packaged launcher logo missing: $logo" }
+
+          Write-Host "Ashes of Eryon launcher runtime built successfully."
+          Write-Host "No installer or release asset was published."

@@ -1,0 +1,7 @@
+# Build výstupy Ashes of Eryon (vznikají v CI / lokálním buildu)
+node_modules/
+launcher/app/dist/
+installer/dist/
+installer/out/
+installer/resources/
+installer/visual-output/

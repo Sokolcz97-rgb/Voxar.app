@@ -1,0 +1,11 @@
+{
+  "product": "game",
+  "channel": "alpha",
+  "version": "0.1.0-alpha",
+  "tag": "game-v0.1.0-alpha",
+  "installer": null,
+  "clientArtifact": null,
+  "serverProtocol": 1,
+  "realmFormat": 1,
+  "notes": "Foundation example only. No installer is published yet."
+}
