@@ -1,165 +1,289 @@
-/* Renderer — kroky, progress, IPC bridge. Bez shellu, bez cmd. */
+/* StudioVoxario Setup — renderer. Kroky, průběh a IPC přes window.installer. */
 const $ = (id) => document.getElementById(id);
-const qs = (s, r = document) => r.querySelector(s);
-const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
+const qsa = (selector) => Array.from(document.querySelectorAll(selector));
 
-let state = { dir: "", channel: "stable", desktopShortcut: true, startShortcut: true, mode: "install", browserOnly: false, components: { app: true, browser: true } };
-let operationRunning = false;
+const ORDER = ["welcome", "components", "location", "install", "done"];
+const PHASES = {
+  extract: "Rozbaluji soubory…",
+  shortcuts: "Vytvářím zástupce…",
+  registry: "Registruji aplikaci ve Windows…",
+  remove: "Odstraňuji soubory…",
+  done: "Dokončeno",
+};
+const CHANNEL_HINTS = {
+  stable: "Ověřené verze. Doporučeno pro většinu uživatelů.",
+  beta: "Novinky dřív, ale mohou obsahovat chyby.",
+};
 
-async function boot() {
-  if (!window.installer) {
-    document.body.innerHTML = '<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor nelze spustit: komunikační rozhraní nebylo načteno.</main>';
-    return;
-  }
-  const d = await window.installer.defaults();
-  state.dir = d.defaultDir;
-  state.mode = d.mode;
-  state.productId = d.productId || "app";
-  state.browserOnly = !!d.browserOnly;
-  $("verLbl").textContent = d.version;
-  $("versionWelcome").textContent = `v${d.version}`;
-  $("requiredSpace").textContent = d.requiredBytes ? `${Math.ceil(d.requiredBytes / 1024 / 1024)} MB` : "zjistí se při instalaci";
-  $("pathInput").value = state.dir;
-  if (d.browserOnly) {
-    state.components = { app: false, browser: true };
-    $("brandSub").textContent = "VoxarioBrowser · instalátor";
-    document.title = "VoxarioBrowser Installer";
-    const componentsStep = document.querySelector('.steps li[data-step="components"]');
-    const componentsPanel = document.querySelector('.panel[data-step="components"]');
-    if (componentsStep) componentsStep.style.display = "none";
-    if (componentsPanel) componentsPanel.style.display = "none";
-    const welcome = document.querySelector('.panel[data-step="welcome"]');
-    if (welcome) {
-      welcome.querySelector("h1").textContent = "Vítejte ve VoxarioBrowseru";
-      welcome.querySelector("p").textContent = "Samostatný StudioVoxario prohlížeč se nainstaluje jen pro vás a bude se aktualizovat nezávisle na Voxar.app.";
-      welcome.querySelector('[data-next="components"]').dataset.next = "location";
-    }
-    document.querySelectorAll('[data-next="components"]').forEach((button) => { button.dataset.next = "location"; });
-  }
-  if (d.mode === "uninstall") {
-    $("brandSub").textContent = "Odinstalace";
-    $("uninPath").textContent = state.dir;
-    document.title = "StudioVoxario — Odinstalace";
-    activate("uninstall");
-    document.querySelector(".steps").style.display = "none";
-  } else {
-    activate("welcome");
-  }
+const state = {
+  dir: "",
+  channel: "stable",
+  desktopShortcut: true,
+  startShortcut: true,
+  mode: "install",
+  browserOnly: false,
+  productName: "Voxar.app",
+  components: { app: true, browser: true },
+  result: null, // "installed" | "uninstalled" | "failed"
+  requiredBytes: 0,
+};
+let busy = false;
 
-  qsa("[data-next]").forEach((b) => b.addEventListener("click", () => activate(b.dataset.next)));
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "–";
+  const mb = bytes / 1024 / 1024;
+  if (mb < 1000) return `${Math.ceil(mb)} MB`;
+  return `${(mb / 1024).toFixed(1).replace(".", ",")} GB`;
+}
 
-  $("pickBtn").addEventListener("click", async () => {
-    const picked = await window.installer.pickDir(state.dir);
-    if (picked) { state.dir = picked; $("pathInput").value = picked; }
-  });
-  $("chkDesktop").addEventListener("change", (e) => (state.desktopShortcut = e.target.checked));
-  $("chkStart").addEventListener("change", (e) => (state.startShortcut = e.target.checked));
+function cleanError(err) {
+  return String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*(Error:\s*)?/, "");
+}
 
-  // Komponenty
-  const syncComponents = () => {
-    state.components.app = $("chkApp").checked;
-    state.components.browser = $("chkBrowser").checked;
-    $("cardApp").classList.toggle("selected", state.components.app);
-    $("cardBrowser").classList.toggle("selected", state.components.browser);
-    // Alespoň jedna komponenta musí zůstat zaškrtnutá.
-    if (!state.components.app && !state.components.browser) {
-      $("chkApp").checked = true;
-      state.components.app = true;
-      $("cardApp").classList.add("selected");
-    }
-  };
-  $("chkApp").addEventListener("change", syncComponents);
-  $("chkBrowser").addEventListener("change", syncComponents);
-
-  qsa('input[name="channel"]').forEach((r) => r.addEventListener("change", () => { state.channel = r.value; }));
-
-  $("startBtn").addEventListener("click", startInstall);
-  $("detailsBtn").addEventListener("click", () => { $("logBox").hidden = !$("logBox").hidden; $("detailsBtn").textContent = $("logBox").hidden ? "Podrobnosti instalace" : "Skrýt podrobnosti"; });
-  $("launchBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: d.browserOnly ? "browser" : "app" }));
-  $("launchBrowserBtn").addEventListener("click", () => window.installer.launch({ dir: state.dir, target: "browser" }));
-  $("closeBtn").addEventListener("click", () => { if ($("launchAfter").checked) window.installer.launch({ dir: state.dir, target: d.browserOnly ? "browser" : "app" }); else window.installer.close(); });
-  $("btnMin").addEventListener("click", () => window.installer.minimize?.());
-  $("btnClose").addEventListener("click", () => { if (!operationRunning) window.installer.close(); });
-  $("uninCancel").addEventListener("click", () => window.installer.close());
-  $("uninGo").addEventListener("click", startUninstall);
-
-
-  window.installer.onLog((line) => {
-    const el = $("logBox"); el.textContent += (el.textContent ? "\n" : "") + line; el.scrollTop = el.scrollHeight;
-  });
-  window.installer.onProgress((p) => {
-    if (!p) return;
-    const pct = Math.max(0, Math.min(1, p.pct || 0));
-    $("progFill").style.width = (pct * 100).toFixed(1) + "%";
-    $("progPct").textContent = Math.round(pct * 100) + " %";
-    const labels = { extract: "Rozbaluji soubory…", shortcuts: "Vytvářím zkratky…", registry: "Zapisuji záznamy…", remove: "Odstraňuji soubory…", done: "Hotovo" };
-    $("progLabel").textContent = labels[p.phase] || p.phase;
-  });
+function showFatal(message) {
+  document.body.textContent = "";
+  const main = document.createElement("main");
+  main.className = "fatal";
+  main.textContent = message;
+  document.body.appendChild(main);
 }
 
 function activate(step) {
-  qsa(".panel").forEach((p) => p.classList.toggle("active", p.dataset.step === step));
-  qsa(".steps li").forEach((li) => {
-    if (li.dataset.step === step) li.classList.add("active");
-    else li.classList.remove("active");
+  qsa(".screen").forEach((screen) => screen.classList.toggle("active", screen.dataset.step === step));
+  const index = ORDER.indexOf(step);
+  qsa(".track li").forEach((li) => {
+    const i = ORDER.indexOf(li.dataset.step);
+    li.classList.toggle("active", li.dataset.step === step);
+    li.classList.toggle("done", index > -1 && i > -1 && i < index);
   });
 }
 
+function setBusy(value) {
+  busy = value;
+  $("btnClose").disabled = value;
+}
+
+async function refreshDisk() {
+  const box = $("diskInfo");
+  if (!window.installer.diskInfo) { box.textContent = ""; return; }
+  try {
+    const info = await window.installer.diskInfo(state.dir);
+    if (!info || !Number.isFinite(info.freeBytes)) { box.textContent = ""; return; }
+    const enough = !state.requiredBytes || info.freeBytes >= state.requiredBytes;
+    box.classList.toggle("warn", !enough);
+    box.textContent = enough
+      ? `Volné místo: ${formatBytes(info.freeBytes)} · potřeba ${formatBytes(state.requiredBytes)}`
+      : `Na disku je jen ${formatBytes(info.freeBytes)} volného místa, potřeba je ${formatBytes(state.requiredBytes)}.`;
+    $("startBtn").disabled = !enough;
+  } catch {
+    box.textContent = "";
+  }
+}
+
+function applyBrowserOnly() {
+  state.components = { app: false, browser: true };
+  state.productName = "VoxarioBrowser";
+  document.title = "VoxarioBrowser Setup";
+  $("windowTitle").textContent = "VoxarioBrowser Setup";
+  $("brandName").classList.add("wordmark-long");
+  $("brandName").querySelector(".wm-a").textContent = "VOXARIO";
+  $("brandName").querySelector(".wm-b").textContent = "BROWSER";
+  $("welcomeTitle").textContent = "Vítejte ve VoxarioBrowseru";
+  $("welcomeLead").textContent = "Nainstalujeme samostatný prohlížeč StudioVoxario. Aktualizuje se sám, nezávisle na Voxar.app.";
+  $("uninTitle").textContent = "Odinstalovat VoxarioBrowser";
+  document.querySelector('.track li[data-step="components"]').hidden = true;
+  $("welcomeNext").dataset.next = "location";
+  $("locationBack").dataset.next = "welcome";
+}
+
+async function boot() {
+  if (!window.installer) {
+    showFatal("Instalátor nelze spustit: komunikační rozhraní se nenačetlo. Stáhněte instalátor znovu.");
+    return;
+  }
+
+  const d = await window.installer.defaults();
+  state.dir = d.defaultDir;
+  state.mode = d.mode;
+  state.browserOnly = !!d.browserOnly;
+  state.requiredBytes = Number(d.installedBytes || d.requiredBytes) || 0;
+
+  $("verLbl").textContent = d.version;
+  $("factVersion").textContent = d.version;
+  $("factSize").textContent = formatBytes(state.requiredBytes);
+  $("pathInput").value = state.dir;
+  $("pathInput").title = state.dir;
+
+  if (state.browserOnly) applyBrowserOnly();
+  $("launchAfterLabel").textContent = `Spustit ${state.productName}`;
+
+  // Navigace
+  qsa("[data-next]").forEach((button) => button.addEventListener("click", () => {
+    const next = button.dataset.next;
+    if (next === "location") void refreshDisk();
+    activate(next);
+  }));
+
+  // Komponenty – alespoň jedna musí zůstat vybraná.
+  const syncComponents = (changed) => {
+    if (!$("chkApp").checked && !$("chkBrowser").checked) {
+      changed.checked = true;
+      $("componentsHint").hidden = false;
+      return;
+    }
+    $("componentsHint").hidden = true;
+    state.components = { app: $("chkApp").checked, browser: $("chkBrowser").checked };
+  };
+  $("chkApp").addEventListener("change", (e) => syncComponents(e.target));
+  $("chkBrowser").addEventListener("change", (e) => syncComponents(e.target));
+
+  // Umístění
+  $("pickBtn").addEventListener("click", async () => {
+    const picked = await window.installer.pickDir(state.dir);
+    if (!picked) return;
+    state.dir = picked;
+    $("pathInput").value = picked;
+    $("pathInput").title = picked;
+    void refreshDisk();
+  });
+  $("chkDesktop").addEventListener("change", (e) => { state.desktopShortcut = e.target.checked; });
+  $("chkStart").addEventListener("change", (e) => { state.startShortcut = e.target.checked; });
+  qsa('input[name="channel"]').forEach((radio) => radio.addEventListener("change", () => {
+    state.channel = radio.value;
+    $("channelHint").textContent = CHANNEL_HINTS[radio.value] || "";
+  }));
+
+  $("startBtn").addEventListener("click", startInstall);
+  $("uninGo").addEventListener("click", startUninstall);
+  $("uninCancel").addEventListener("click", () => window.installer.close());
+
+  $("detailsBtn").addEventListener("click", () => {
+    const box = $("logBox");
+    box.hidden = !box.hidden;
+    $("detailsBtn").setAttribute("aria-expanded", String(!box.hidden));
+    $("detailsBtn").textContent = box.hidden ? "Zobrazit podrobnosti" : "Skrýt podrobnosti";
+  });
+
+  $("finishBtn").addEventListener("click", finish);
+  $("launchBrowserBtn").addEventListener("click", () => launch("browser"));
+
+  $("btnMin").addEventListener("click", () => window.installer.minimize?.());
+  $("btnClose").addEventListener("click", () => { if (!busy) window.installer.close(); });
+
+  window.installer.onLog((line) => {
+    const box = $("logBox");
+    box.textContent += (box.textContent ? "\n" : "") + line;
+    box.scrollTop = box.scrollHeight;
+  });
+  window.installer.onProgress((p) => {
+    if (!p) return;
+    const pct = Math.max(0, Math.min(1, Number(p.pct) || 0));
+    $("progFill").style.width = `${(pct * 100).toFixed(1)}%`;
+    $("meter").setAttribute("aria-valuenow", String(Math.round(pct * 100)));
+    $("progPct").textContent = `${Math.round(pct * 100)} %`;
+    $("progLabel").textContent = PHASES[p.phase] || p.phase || "";
+  });
+
+  if (state.mode === "uninstall") {
+    $("brandSub").textContent = "Odinstalace";
+    $("uninPath").textContent = state.dir;
+    document.title = `${state.productName} — odinstalace`;
+    $("steps").hidden = true;
+    activate("uninstall");
+  } else {
+    activate("welcome");
+  }
+}
+
+async function launch(target) {
+  try {
+    await window.installer.launch({ dir: state.dir, target });
+  } catch (err) {
+    $("doneMsg").textContent = `Aplikaci se nepodařilo spustit: ${cleanError(err)}`;
+  }
+}
+
+function finish() {
+  if (state.result === "installed" && $("launchAfter").checked) {
+    void launch(state.browserOnly ? "browser" : (state.components.app ? "app" : "browser"));
+    return; // hlavní proces po spuštění instalátor zavře
+  }
+  window.installer.close();
+}
+
+function showResult({ ok, title, message, canLaunch }) {
+  $("resultIcon").classList.toggle("error", !ok);
+  $("doneTitle").textContent = title;
+  $("doneMsg").textContent = message;
+  $("launchAfterRow").hidden = !canLaunch;
+  $("launchBrowserBtn").hidden = !(canLaunch && !state.browserOnly && state.components.app && state.components.browser);
+  $("finishBtn").textContent = ok ? "Dokončit" : "Zavřít";
+  activate("done");
+}
+
 async function startInstall() {
-  operationRunning = true;
-  $("btnClose").disabled = true;
+  setBusy(true);
+  $("progressTitle").textContent = `Instaluji ${state.productName}`;
+  $("progressLead").textContent = "Může to trvat minutu. Instalátor nezavírejte.";
   activate("install");
   try {
     await window.installer.install({
       dir: state.dir,
       channel: state.channel,
       desktopShortcut: state.desktopShortcut,
+      startShortcut: state.startShortcut,
       components: state.components,
     });
+    state.result = "installed";
     const parts = [state.components.app && "Voxar.app", state.components.browser && "VoxarioBrowser"].filter(Boolean);
-    $("doneTitle").textContent = "Hotovo!";
-    $("doneMsg").textContent = `${parts.join(" + ")} je nainstalováno v ${state.dir}. Kanál: ${state.channel}.`;
-    $("launchBtn").style.display = (state.components.app || state.browserOnly) ? "" : "none";
-    if (state.browserOnly) $("launchBtn").textContent = "Spustit VoxarioBrowser";
-    $("launchBrowserBtn").style.display = state.components.browser ? "" : "none";
-    activate("done");
+    showResult({
+      ok: true,
+      title: "Instalace dokončena",
+      message: `${parts.join(" a ")} – nainstalováno do složky ${state.dir}. Kanál aktualizací: ${state.channel === "beta" ? "Beta" : "Stable"}.`,
+      canLaunch: true,
+    });
   } catch (err) {
-    $("doneTitle").textContent = "Instalace se nezdařila";
-    // Electron IPC obaluje chybu prefixem "Error invoking remote method ... :" — uklidíme ho.
-    $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
-
-    $("launchBtn").style.display = "none";
-    $("launchBrowserBtn").style.display = "none";
-    activate("done");
+    state.result = "failed";
+    showResult({
+      ok: false,
+      title: "Instalace se nezdařila",
+      message: `${cleanError(err)} Zavřete prosím ${state.productName}, pokud běží, a spusťte instalátor znovu.`,
+      canLaunch: false,
+    });
   } finally {
-    operationRunning = false;
-    $("btnClose").disabled = false;
+    setBusy(false);
   }
 }
 
-
 async function startUninstall() {
-  operationRunning = true;
-  $("btnClose").disabled = true;
+  setBusy(true);
+  $("progressTitle").textContent = `Odinstalovávám ${state.productName}`;
+  $("progressLead").textContent = "Odstraňuji soubory, zástupce a záznam ve Windows.";
+  $("steps").hidden = true;
   activate("install");
   try {
     await window.installer.uninstall({ dir: state.dir });
-    $("doneTitle").textContent = "Odinstalováno";
-    $("doneMsg").textContent = "StudioVoxario bylo odstraněno.";
-    $("launchBtn").style.display = "none";
-    activate("done");
+    state.result = "uninstalled";
+    showResult({
+      ok: true,
+      title: "Odinstalováno",
+      message: `Aplikace ${state.productName} byla z tohoto počítače odebrána.`,
+      canLaunch: false,
+    });
   } catch (err) {
-    $("doneTitle").textContent = "Odinstalace se nezdařila";
-    $("doneMsg").textContent = String(err?.message || err).replace(/^Error invoking remote method '[^']+':\s*/, "");
-    activate("done");
+    state.result = "failed";
+    showResult({
+      ok: false,
+      title: "Odinstalace se nezdařila",
+      message: `${cleanError(err)} Zavřete ${state.productName}, pokud běží, a zkuste to znovu.`,
+      canLaunch: false,
+    });
   } finally {
-    operationRunning = false;
-    $("btnClose").disabled = false;
+    setBusy(false);
   }
 }
 
 boot().catch((err) => {
   console.error(err);
-  const message = String(err?.message || err);
-  document.body.innerHTML = `<main style="padding:32px;color:#fca5a5;font:16px Segoe UI;background:#060812;min-height:100vh">Instalátor se nepodařilo inicializovat.<br><br>${message}</main>`;
+  showFatal(`Instalátor se nepodařilo spustit. ${cleanError(err)}`);
 });

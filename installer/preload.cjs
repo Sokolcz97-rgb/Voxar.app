@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("installer", {
   defaults: () => ipcRenderer.invoke("installer:defaults"),
   pickDir: (current) => ipcRenderer.invoke("installer:pick-dir", current),
+  diskInfo: (target) => ipcRenderer.invoke("installer:disk-info", target),
   install: (opts) => ipcRenderer.invoke("installer:install", opts),
   uninstall: (opts) => ipcRenderer.invoke("installer:uninstall", opts),
   launch: (dir) => ipcRenderer.invoke("installer:launch", dir),

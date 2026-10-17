@@ -153,6 +153,27 @@ jobs:
           node build.cjs
           node build.cjs --product=browser
 
+      - name: Verify Setup branding (icon + file details on 7-Zip SFX)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+          $archive = Join-Path $env:RUNNER_TEMP "lzma-sdk.7z"
+          $directory = Join-Path $env:RUNNER_TEMP "lzma-sdk"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://www.7-zip.org/a/lzma2602.7z" -OutFile $archive
+          & $sevenZip x $archive "-o$directory" -y | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "7-Zip SDK extraction failed" }
+          $sfx = (Get-ChildItem -Recurse $directory -Filter "7zSD.sfx" -File | Select-Object -First 1).FullName
+          if (!$sfx) { throw "7zSD.sfx not found" }
+          $version = node -p "require('./electron/package.json').version"
+          node scripts/brand-sfx.cjs $sfx installer/assets/icon.ico (Join-Path $env:RUNNER_TEMP "app.sfx") "StudioVoxario Setup" $version
+          if ($LASTEXITCODE -ne 0) { throw "StudioVoxario SFX branding failed" }
+          node scripts/brand-sfx.cjs $sfx installer/assets/icon.ico (Join-Path $env:RUNNER_TEMP "browser.sfx") "VoxarioBrowser Setup" $version
+          if ($LASTEXITCODE -ne 0) { throw "VoxarioBrowser SFX branding failed" }
+          $info = (Get-Item (Join-Path $env:RUNNER_TEMP "app.sfx")).VersionInfo
+          Write-Host "FileDescription: $($info.FileDescription) | ProductName: $($info.ProductName) | Company: $($info.CompanyName)"
+          if ($info.ProductName -ne "StudioVoxario Setup") { throw "Windows does not report the branded product name" }
+
       - name: Verify Windows artifacts and product metadata
         shell: pwsh
         run: |

@@ -31,6 +31,20 @@ const PRODUCT = productId === "browser"
       installerName: "StudioVoxarioInstaller", browserOnly: false,
     };
 
+function folderSize(dir) {
+  let total = 0;
+  const pending = [dir];
+  while (pending.length) {
+    const current = pending.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) pending.push(full);
+      else if (entry.isFile()) total += fs.statSync(full).size;
+    }
+  }
+  return total;
+}
+
 async function main() {
   if (!fs.existsSync(PRODUCT.payload)) {
     console.error(`✗ Payload nenalezen: ${PRODUCT.payload}`);
@@ -52,7 +66,10 @@ async function main() {
 
   fs.mkdirSync(RESOURCES, { recursive: true });
   if (fs.existsSync(OUT_ARCHIVE)) fs.rmSync(OUT_ARCHIVE);
-  fs.writeFileSync(path.join(RESOURCES, "product.json"), JSON.stringify(PRODUCT, null, 2));
+  // Velikost po instalaci – UI ji ukazuje jako "Místo na disku" (dřív se
+  // ukazovala velikost komprimovaného app.7z, tj. asi třetina skutečnosti).
+  const installedBytes = folderSize(PRODUCT.payload);
+  fs.writeFileSync(path.join(RESOURCES, "product.json"), JSON.stringify({ ...PRODUCT, installedBytes }, null, 2));
   fs.copyFileSync(sevenBin.path7za, OUT_7ZA);
 
   console.log(`→ Balím ${PRODUCT.name} payload do vlastního instalátoru:`, PRODUCT.payload);

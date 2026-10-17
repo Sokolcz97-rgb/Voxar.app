@@ -159,7 +159,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          Copy-Item electron/assets/icon.ico installer/assets/icon.ico -Force
+          # Instalátor má vlastní ikonu (nové logo Voxar) v installer/assets/icon.ico.
           $version = "${{ steps.appver.outputs.version }}"
           $pkgPath = "installer/package.json"
           $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
@@ -203,7 +203,9 @@ jobs:
           $ErrorActionPreference = "Stop"
           $version = "${{ steps.appver.outputs.version }}"
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-          $sfx = "${{ steps.sfx.outputs.path }}"
+          $sfx = Join-Path $env:RUNNER_TEMP "voxariobrowser-setup.sfx"
+          node scripts/brand-sfx.cjs "${{ steps.sfx.outputs.path }}" installer/assets/icon.ico $sfx "VoxarioBrowser Setup" $version
+          if ($LASTEXITCODE -ne 0) { throw "SFX branding failed" }
           $payloadDir = Resolve-Path "installer/dist/VoxarioBrowserInstaller-win32-x64"
           $installerExe = Join-Path $payloadDir "VoxarioBrowserInstaller.exe"
           if (!(Test-Path $installerExe)) { throw "Custom Browser installer runtime missing: $installerExe" }
@@ -233,7 +235,9 @@ jobs:
           $ErrorActionPreference = "Stop"
           $version = "${{ steps.appver.outputs.version }}"
           $sevenZip = "C:\Program Files\7-Zip\7z.exe"
-          $sfx = "${{ steps.sfx.outputs.path }}"
+          $sfx = Join-Path $env:RUNNER_TEMP "studiovoxario-setup.sfx"
+          node scripts/brand-sfx.cjs "${{ steps.sfx.outputs.path }}" installer/assets/icon.ico $sfx "StudioVoxario Setup" $version
+          if ($LASTEXITCODE -ne 0) { throw "SFX branding failed" }
           $payloadDir = Resolve-Path "installer/dist/StudioVoxarioInstaller-win32-x64"
           $installerExe = Join-Path $payloadDir "StudioVoxarioInstaller.exe"
           if (!(Test-Path $installerExe)) { throw "Custom HUD installer runtime missing: $installerExe" }
