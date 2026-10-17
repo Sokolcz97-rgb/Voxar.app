@@ -11,7 +11,6 @@
  */
 const path = require("path");
 const fs = require("fs");
-const { execFileSync } = require("child_process");
 const Seven = require("node-7z");
 const sevenBin = require("7zip-bin");
 
@@ -71,25 +70,49 @@ async function main() {
   console.log("\n✓ app.7z:", (fs.statSync(OUT_ARCHIVE).size / 1e6).toFixed(1), "MB");
   console.log("→ Balím vlastní HUD installer runtime");
 
-  execFileSync(
-    process.platform === "win32" ? "npx.cmd" : "npx",
-    [
-      "@electron/packager", ".", PRODUCT.installerName,
-      "--platform=win32", "--arch=x64",
-      "--out=dist", "--overwrite",
-      "--icon=assets/icon.ico",
-      "--extra-resource=resources/app.7z",
-      "--extra-resource=resources/7za.exe",
-      "--extra-resource=resources/product.json",
+  // Programové API místo `npx … --ignore=…`: na Windows běželo CLI přes
+  // cmd.exe (shell: true), kde `^` a `|` v regexech nefungují spolehlivě.
+  const { packager } = await import("@electron/packager");
+  await packager({
+    dir: ROOT,
+    name: PRODUCT.installerName,
+    platform: "win32",
+    arch: "x64",
+    out: path.join(ROOT, "dist"),
+    overwrite: true,
+    icon: path.join(ROOT, "assets", "icon.ico"),
+    // resources/ (app.7z ~100 MB) a dist/ se NESMÍ dostat do samotné aplikace
+    // instalátoru – app.7z se přibaluje jen jednou jako extraResource.
+    // Dřív byl payload v Setupu dvakrát (~280 MB místo ~180 MB) a kopíroval
+    // se i do runtime odinstalátoru.
+    ignore: [/^\/resources($|\/)/, /^\/dist($|\/)/, /^\/README\.md$/],
+    extraResource: [
+      path.join(RESOURCES, "app.7z"),
+      path.join(RESOURCES, "7za.exe"),
+      path.join(RESOURCES, "product.json"),
     ],
-    { stdio: "inherit", cwd: ROOT, shell: process.platform === "win32" },
-  );
+  });
 
   const exe = path.join(ROOT, "dist", `${PRODUCT.installerName}-win32-x64`, `${PRODUCT.installerName}.exe`);
   if (!fs.existsSync(exe)) {
     console.error(`✗ Vlastní installer.exe nebyl vytvořen: ${exe}`);
     process.exit(1);
   }
+  // Pojistka proti zdvojenému payloadu (viz --ignore výše).
+  const packagedResources = path.join(ROOT, "dist", `${PRODUCT.installerName}-win32-x64`, "resources");
+  const duplicate = [
+    path.join(packagedResources, "app", "resources", "app.7z"),
+    path.join(packagedResources, "app", "dist"),
+  ].find((candidate) => fs.existsSync(candidate));
+  if (duplicate) {
+    console.error(`✗ Do aplikace instalátoru se přibalil build výstup: ${duplicate}`);
+    process.exit(1);
+  }
+  if (!fs.existsSync(path.join(packagedResources, "app.7z"))) {
+    console.error("✗ V instalátoru chybí resources/app.7z");
+    process.exit(1);
+  }
+
   console.log(`\n✓ Vlastní HUD instalátor: ${exe}`);
 }
 

@@ -38,6 +38,7 @@
     "differentialPackage": false,
     "installerIcon": "assets/icon.ico",
     "uninstallerIcon": "assets/icon.ico",
-    "uninstallDisplayName": "StudioVoxario (VoxarioBrowser)"
+    "uninstallDisplayName": "StudioVoxario (VoxarioBrowser)",
+    "include": "assets/installer.nsh"
   }
 }
