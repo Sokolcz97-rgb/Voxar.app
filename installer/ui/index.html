@@ -2,130 +2,189 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'" />
   <title>StudioVoxario Setup</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="frame">
-    <!-- Custom titlebar (drag region) -->
-    <div class="titlebar">
-      <div class="drag"></div>
-      <span class="title">STUDIOVOXARIO SETUP</span>
-      <button class="tb-btn" id="btnMin" title="Minimalizovat">-</button>
-      <button class="tb-btn close" id="btnClose" title="Zavřít">Zavřít</button>
-    </div>
+  <div class="window" id="window">
+    <header class="titlebar">
+      <div class="titlebar-brand">
+        <span class="mark mark-sm" aria-hidden="true"></span>
+        <span id="windowTitle">StudioVoxario Setup</span>
+      </div>
+      <div class="titlebar-drag"></div>
+      <button class="win-btn" id="btnMin" type="button" aria-label="Minimalizovat" title="Minimalizovat">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8" /></svg>
+      </button>
+      <button class="win-btn win-close" id="btnClose" type="button" aria-label="Zavřít" title="Zavřít">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" /></svg>
+      </button>
+    </header>
 
-    <!-- Sidebar / HUD brand -->
-    <aside class="side">
+    <aside class="rail">
       <div class="brand">
-        <div class="logo" aria-label="Voxario V"><span>V</span></div>
-        <div class="brand-text">
-          <div class="brand-name">Voxar.app</div>
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <div class="brand-name" id="brandName">Voxar.app</div>
           <div class="brand-sub" id="brandSub">Instalátor</div>
         </div>
       </div>
-      <ol class="steps" id="steps">
-        <li data-step="welcome" class="active">Vítejte</li>
-        <li data-step="components">Komponenty</li>
-        <li data-step="location">Umístění</li>
-        <li data-step="install">Instalace</li>
-        <li data-step="done">Hotovo</li>
+
+      <ol class="track" id="steps">
+        <li data-step="welcome"><span class="dot"></span><span class="track-label">Vítejte</span></li>
+        <li data-step="components"><span class="dot"></span><span class="track-label">Komponenty</span></li>
+        <li data-step="location"><span class="dot"></span><span class="track-label">Umístění</span></li>
+        <li data-step="install"><span class="dot"></span><span class="track-label">Instalace</span></li>
+        <li data-step="done"><span class="dot"></span><span class="track-label">Hotovo</span></li>
       </ol>
-      <div class="foot">v<span id="verLbl">0.0.9</span></div>
+
+      <div class="rail-foot">
+        <span>StudioVoxario</span>
+        <span>verze <b id="verLbl">–</b></span>
+      </div>
     </aside>
 
-    <!-- Main content -->
-    <main class="main">
-      <!-- Welcome -->
-      <section class="panel active" data-step="welcome">
-        <h1>Vítejte v Voxar.app</h1>
-        <p class="muted">Samostatný StudioVoxario Installer s vlastním futuristickým rozhraním. Instalace chrání existující data, nastavení i moduly.</p>
-        <div class="install-summary"><span>VERZE <b id="versionWelcome">--</b></span><span>POTŘEBNÉ MÍSTO <b id="requiredSpace">Zjišťuji</b></span></div>
-        <ul class="bullets">
-          <li>Jeden instalátor pro Voxar.app i VoxarioBrowser</li>
-          <li>Bez potřeby administrátorských práv</li>
-          <li>Zvolíte si kanál aktualizací (Stable / Beta)</li>
-          <li>Snadná odinstalace přes Ovládací panely</li>
-        </ul>
-        <div class="actions">
-          <button class="btn primary" data-next="components">Pokračovat</button>
+    <main class="stage">
+      <!-- Vítejte -->
+      <section class="screen screen-welcome" data-step="welcome">
+        <div class="portal" aria-hidden="true"></div>
+        <div class="screen-body">
+          <h1 id="welcomeTitle">Vítejte ve Voxar.app</h1>
+          <p class="lead" id="welcomeLead">Nainstalujeme komunitní aplikaci StudioVoxario. Instalace proběhne jen pro váš účet ve Windows a zachová vaše data i nastavení.</p>
+
+          <dl class="facts">
+            <div><dt>Verze</dt><dd id="factVersion">–</dd></div>
+            <div><dt>Místo na disku</dt><dd id="factSize">–</dd></div>
+            <div><dt>Oprávnění</dt><dd>Bez správce</dd></div>
+          </dl>
+
+          <ul class="points" id="welcomePoints">
+            <li>Aktualizace se stahují a instalují samy</li>
+            <li>Kanál aktualizací si vyberete: Stable nebo Beta</li>
+            <li>Odinstalace přes Nastavení Windows → Aplikace</li>
+          </ul>
+        </div>
+        <footer class="actions">
+          <button class="btn btn-primary" type="button" data-next="components" id="welcomeNext">Pokračovat</button>
+        </footer>
+      </section>
+
+      <!-- Komponenty -->
+      <section class="screen" data-step="components">
+        <div class="screen-body">
+          <h1>Co nainstalovat</h1>
+          <p class="lead">Obě části sdílejí stejný základ, takže prohlížeč navíc nezabere téměř žádné místo.</p>
+
+          <div class="options">
+            <label class="option" id="cardApp">
+              <input type="checkbox" id="chkApp" checked />
+              <span class="option-box" aria-hidden="true"></span>
+              <span class="option-text">
+                <span class="option-title">Voxar.app <span class="badge">Doporučeno</span></span>
+                <span class="option-desc">Komunita, hlasové kanály, zprávy a rozcestník modulů StudioVoxario.</span>
+              </span>
+            </label>
+            <label class="option" id="cardBrowser">
+              <input type="checkbox" id="chkBrowser" checked />
+              <span class="option-box" aria-hidden="true"></span>
+              <span class="option-text">
+                <span class="option-title">VoxarioBrowser</span>
+                <span class="option-desc">Prohlížeč s trezorem hesel a přehledem výkonu karet. Lze doinstalovat i později z rozcestníku.</span>
+              </span>
+            </label>
+          </div>
+          <p class="hint" id="componentsHint" hidden>Vyberte alespoň jednu část.</p>
+        </div>
+        <footer class="actions">
+          <button class="btn btn-ghost" type="button" data-next="welcome">Zpět</button>
+          <button class="btn btn-primary" type="button" data-next="location">Pokračovat</button>
+        </footer>
+      </section>
+
+      <!-- Umístění -->
+      <section class="screen" data-step="location">
+        <div class="screen-body">
+          <h1>Kam nainstalovat</h1>
+          <p class="lead">Doporučená složka nevyžaduje oprávnění správce.</p>
+
+          <div class="field">
+            <label for="pathInput">Instalační složka</label>
+            <div class="pathbox">
+              <input id="pathInput" type="text" readonly spellcheck="false" />
+              <button class="btn btn-quiet" id="pickBtn" type="button">Změnit…</button>
+            </div>
+            <div class="disk" id="diskInfo"></div>
+          </div>
+
+          <fieldset class="field">
+            <legend>Zástupci</legend>
+            <label class="check"><input type="checkbox" id="chkDesktop" checked /><span>Na ploše</span></label>
+            <label class="check"><input type="checkbox" id="chkStart" checked /><span>V nabídce Start</span></label>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Aktualizace</legend>
+            <div class="segmented" role="radiogroup">
+              <label><input type="radio" name="channel" value="stable" checked /><span>Stable</span></label>
+              <label><input type="radio" name="channel" value="beta" /><span>Beta</span></label>
+            </div>
+            <p class="hint" id="channelHint">Ověřené verze. Doporučeno pro většinu uživatelů.</p>
+          </fieldset>
+        </div>
+        <footer class="actions">
+          <button class="btn btn-ghost" type="button" data-next="components" id="locationBack">Zpět</button>
+          <button class="btn btn-primary" type="button" id="startBtn">Nainstalovat</button>
+        </footer>
+      </section>
+
+      <!-- Instalace / odinstalace probíhá -->
+      <section class="screen" data-step="install">
+        <div class="screen-body">
+          <h1 id="progressTitle">Instaluji</h1>
+          <p class="lead" id="progressLead">Může to trvat minutu. Instalátor nezavírejte.</p>
+
+          <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="meter">
+            <div class="meter-fill" id="progFill"></div>
+          </div>
+          <div class="meter-meta">
+            <span id="progLabel">Připravuji…</span>
+            <span id="progPct">0 %</span>
+          </div>
+
+          <button class="link" id="detailsBtn" type="button" aria-expanded="false">Zobrazit podrobnosti</button>
+          <pre class="log" id="logBox" hidden></pre>
         </div>
       </section>
 
-      <!-- Components -->
-      <section class="panel" data-step="components">
-        <h1>Co chcete nainstalovat?</h1>
-        <p class="muted">Obě komponenty sdílejí stejný engine, takže instalace obou nezabere navíc téměř žádné místo.</p>
-        <div class="cards">
-          <label class="card selected" id="cardApp">
-            <input type="checkbox" id="chkApp" checked />
-            <div class="card-title">Voxar.app <span class="tag">doporučeno</span></div>
-            <div class="card-desc">Komunikační aplikace, HUB a rozcestník s moduly.</div>
-          </label>
-          <label class="card selected" id="cardBrowser">
-            <input type="checkbox" id="chkBrowser" checked />
-            <div class="card-title">VoxarioBrowser <span class="tag">modul</span></div>
-            <div class="card-desc">Chromium prohlížeč. Lze doinstalovat i později přímo z rozcestníku.</div>
-          </label>
+      <!-- Hotovo -->
+      <section class="screen" data-step="done">
+        <div class="screen-body">
+          <div class="result" id="resultIcon" aria-hidden="true"></div>
+          <h1 id="doneTitle">Hotovo</h1>
+          <p class="lead" id="doneMsg"></p>
+          <label class="check" id="launchAfterRow"><input type="checkbox" id="launchAfter" checked /><span id="launchAfterLabel">Spustit Voxar.app</span></label>
         </div>
-        <div class="actions">
-          <button class="btn ghost" data-next="welcome">Zpět</button>
-          <button class="btn primary" data-next="location">Pokračovat</button>
-        </div>
+        <footer class="actions">
+          <button class="btn btn-ghost" type="button" id="launchBrowserBtn" hidden>Spustit VoxarioBrowser</button>
+          <button class="btn btn-primary" type="button" id="finishBtn">Dokončit</button>
+        </footer>
       </section>
 
-      <!-- Location -->
-      <section class="panel" data-step="location">
-        <h1>Kam nainstalovat?</h1>
-        <p class="muted">Doporučené umístění (žádná UAC výzva):</p>
-        <div class="pathbox">
-          <input id="pathInput" type="text" readonly />
-          <button class="btn" id="pickBtn">Vybrat…</button>
+      <!-- Odinstalace -->
+      <section class="screen" data-step="uninstall">
+        <div class="screen-body">
+          <h1 id="uninTitle">Odinstalovat Voxar.app</h1>
+          <p class="lead">Odstraníme aplikaci, její zástupce a záznam ve Windows. Váš účet StudioVoxario ani data uložená v aplikaci tím neztratíte.</p>
+          <div class="field">
+            <span class="field-label">Složka</span>
+            <code class="path" id="uninPath"></code>
+          </div>
         </div>
-        <label class="check">
-          <input type="checkbox" id="chkDesktop" checked />
-          <span>Vytvořit zástupce na ploše</span>
-        </label>
-        <label class="check"><input type="checkbox" id="chkStart" checked /><span>Vytvořit zástupce v nabídce Start</span></label>
-        <div class="channel-inline"><span>AKTUALIZAČNÍ KANÁL</span><label><input type="radio" name="channel" value="stable" checked /> Stable</label><label><input type="radio" name="channel" value="beta" /> Beta</label></div>
-        <div class="actions">
-          <button class="btn ghost" data-next="components">Zpět</button>
-
-          <button class="btn primary" id="startBtn">Nainstalovat</button>
-        </div>
-      </section>
-
-      <!-- Install -->
-      <section class="panel" data-step="install">
-        <h1>Instaluji…</h1>
-        <div class="progress"><div class="fill" id="progFill"></div></div>
-        <div class="progress-meta">
-          <span id="progLabel">Připravuji…</span>
-          <span id="progPct">0 %</span>
-        </div>
-        <button class="details" id="detailsBtn" type="button">Podrobnosti instalace</button><pre class="log" id="logBox" hidden></pre>
-      </section>
-
-      <!-- Done -->
-      <section class="panel" data-step="done">
-        <h1 id="doneTitle">Instalace dokončena</h1>
-        <p class="muted" id="doneMsg">Voxar.app je připraveno k použití.</p>
-        <div class="actions">
-          <label class="check"><input type="checkbox" id="launchAfter" checked /><span>Spustit po zavření instalátoru</span></label><button class="btn ghost" id="closeBtn">Zavřít</button>
-          <button class="btn" id="launchBrowserBtn" style="display:none;">Spustit prohlížeč</button>
-          <button class="btn primary" id="launchBtn">Spustit aplikaci</button>
-
-        </div>
-      </section>
-
-      <!-- Uninstall -->
-      <section class="panel" data-step="uninstall">
-        <h1>Odinstalovat Voxar.app?</h1>
-        <p class="muted">Odstraníme aplikaci ze <code id="uninPath"></code>, zkratky a registrační záznamy. Vaše přihlášení a lokální nastavení zůstanou v cloudu.</p>
-        <div class="actions">
-          <button class="btn ghost" id="uninCancel">Zrušit</button>
-          <button class="btn danger" id="uninGo">Odinstalovat</button>
-        </div>
+        <footer class="actions">
+          <button class="btn btn-ghost" type="button" id="uninCancel">Zrušit</button>
+          <button class="btn btn-danger" type="button" id="uninGo">Odinstalovat</button>
+        </footer>
       </section>
     </main>
   </div>

@@ -58,12 +58,13 @@ let win;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 760,
-    height: 520,
+    width: 860,
+    height: 540,
     frame: false,
-    transparent: true,
+    transparent: false,
     resizable: false,
-    backgroundColor: "#00000000",
+    backgroundColor: "#050a18",
+    show: false,
     icon: path.join(__dirname, "assets", "icon.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -72,6 +73,7 @@ function createWindow() {
     },
   });
   win.setMenu(null);
+  win.once("ready-to-show", () => win?.show());
   const installerUi = path.join(__dirname, "ui", "index.html");
   if (!fs.existsSync(installerUi)) {
     console.error(`Installer UI nebylo nalezeno: ${installerUi}`);
@@ -92,6 +94,8 @@ ipcMain.handle("installer:defaults", () => ({
   browserOnly: !!PRODUCT.browserOnly,
   version: app.getVersion(),
   requiredBytes: payloadSize(),
+  // Skutečná velikost po rozbalení (zapisuje build.cjs do product.json).
+  installedBytes: Number(PRODUCT.installedBytes) || Math.round(payloadSize() * 2.8),
   defaultDir: isUninstall ? uninstallTarget : DEFAULT_DIR,
   mode: isUninstall ? "uninstall" : "install",
 }));
@@ -106,6 +110,8 @@ ipcMain.handle("installer:pick-dir", async (_e, current) => {
   if (res.canceled || !res.filePaths[0]) return null;
   return path.join(res.filePaths[0], APP_NAME);
 });
+
+ipcMain.handle("installer:disk-info", (_e, target) => diskInfo(target || DEFAULT_DIR));
 
 ipcMain.handle("installer:minimize", () => {
   try { win?.minimize(); } catch {}
@@ -232,6 +238,21 @@ function writeJson(file, data) {
 
 function readJson(file) {
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return {}; }
+}
+
+function diskInfo(target) {
+  try {
+    let probe = path.resolve(String(target || DEFAULT_DIR));
+    while (!fs.existsSync(probe)) {
+      const parent = path.dirname(probe);
+      if (parent === probe) break;
+      probe = parent;
+    }
+    const stat = fs.statfsSync(probe);
+    return { freeBytes: Number(stat.bavail) * Number(stat.bsize) };
+  } catch {
+    return { freeBytes: null };
+  }
 }
 
 function payloadSize() {
