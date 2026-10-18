@@ -1188,6 +1188,20 @@
       if (!e.target.closest('.bmfolder') && !e.target.closest('.bmmenu')) closeMenus();
     });
     window.addEventListener('resize', closeMenus);
+
+    // Startovní stránka je navržená pro okno ~1672 × 941 px (předloha). Na
+    // větších monitorech se celá úměrně zvětší, místo aby se jen roztáhla do
+    // šířky s drobným písmem a prázdným místem dole. Panely prohlížeče
+    // (karty, adresní řádek) ani otevřené weby se tím nemění.
+    const START_DESIGN = { width: 1672, height: 941, maxZoom: 1.8 };
+    function fitStartPage() {
+      const page = document.getElementById('startpage');
+      if (!page) return;
+      const zoom = Math.max(1, Math.min(window.innerWidth / START_DESIGN.width, window.innerHeight / START_DESIGN.height, START_DESIGN.maxZoom));
+      page.style.setProperty('--start-zoom', zoom.toFixed(3));
+    }
+    window.addEventListener('resize', fitStartPage);
+    fitStartPage();
     document.addEventListener('scroll', closeMenus, true);
 
     function buildMenu(node, container) {

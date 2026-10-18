@@ -78,3 +78,11 @@ button,input,textarea,select { font:inherit; } button { cursor:pointer; } button
 @media (max-width:1120px) {
   .startpage { padding-left:calc(var(--vb-sidebar-offset) + 22px); }
 }
+
+/* Úměrné zvětšení startovní stránky na velkých monitorech (viz fitStartPage
+   v browser.html). Odsazení od postranního panelu se dělí stejným faktorem,
+   aby po zvětšení zůstalo stejně široké jako panel. */
+.startpage { zoom:var(--start-zoom,1); padding-left:calc((var(--vb-sidebar-offset) + 28px) / var(--start-zoom,1)); }
+@media (max-width:1120px) {
+  .startpage { padding-left:calc((var(--vb-sidebar-offset) + 22px) / var(--start-zoom,1)); }
+}
