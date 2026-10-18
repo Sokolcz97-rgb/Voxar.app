@@ -18,17 +18,18 @@ function getRendererPath() {
 function createMainWindow() {
   const { workAreaSize } = require("electron").screen.getPrimaryDisplay();
 
-  const width = Math.min(1600, Math.max(1180, workAreaSize.width - 80));
-  const height = Math.min(900, Math.max(720, workAreaSize.height - 80));
+  // Poměr stran předlohy launcheru (1672 × 941); obsah se škáluje do okna.
+  const width = Math.max(1180, Math.min(1672, workAreaSize.width - 80, Math.round((workAreaSize.height - 80) * 1672 / 941)));
+  const height = Math.round(width * 941 / 1672);
 
   mainWindow = new BrowserWindow({
     width,
     height,
     minWidth: 1180,
-    minHeight: 720,
+    minHeight: 664,
     show: false,
     frame: false,
-    backgroundColor: "#05070a",
+    backgroundColor: "#070607",
     title: "Ashes of Eryon",
     autoHideMenuBar: true,
     webPreferences: {

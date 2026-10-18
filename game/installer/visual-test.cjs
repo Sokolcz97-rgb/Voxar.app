@@ -7,9 +7,9 @@ const sharp = require("sharp");
 
 const ROOT = __dirname;
 const OUTPUT = path.join(ROOT, "visual-output");
-const REFERENCE = path.join(ROOT, "assets", "installer-approved-v0.1.webp");
-const WIDTH = 1120;
-const HEIGHT = 720;
+const REFERENCE = path.join(ROOT, "..", "launcher", "design", "reference", "installer-reference-v0.2.webp");
+const WIDTH = 780;
+const HEIGHT = 760;
 
 app.disableHardwareAcceleration();
 

@@ -166,16 +166,17 @@ function writeJson(file, value) {
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1120,
-    height: 720,
-    minWidth: 1120,
-    minHeight: 720,
-    maxWidth: 1120,
-    maxHeight: 720,
+    // Rozměr podle předlohy instalátoru (game/launcher/design/reference).
+    width: 780,
+    height: 760,
+    minWidth: 780,
+    minHeight: 760,
+    maxWidth: 780,
+    maxHeight: 760,
     resizable: false,
     frame: false,
     show: false,
-    backgroundColor: "#06090d",
+    backgroundColor: "#0a0708",
     title: isUninstall ? "Ashes of Eryon — Odinstalace" : "Ashes of Eryon — Instalace",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
