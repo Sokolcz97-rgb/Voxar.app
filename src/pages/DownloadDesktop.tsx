@@ -2,6 +2,7 @@ import { Download as DownloadIcon, Monitor, Info, Shield, Bell, Package, Refresh
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import { AshesDownloadCard } from "@/components/download/AshesDownloadCard";
 
 const features = [
   { icon: Bell, title: "Desktop notifikace", desc: "Zprávy, zakázky a stream alerty přímo v systému." },
@@ -90,6 +91,8 @@ export default function Download() {
             </p>
           </Card>
         </div>
+
+        <AshesDownloadCard />
 
         <Card className="p-6 mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
