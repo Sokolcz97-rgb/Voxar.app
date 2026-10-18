@@ -21,7 +21,19 @@
     .activity-list{display:grid;gap:8px;margin-top:12px;max-height:420px;overflow:auto;padding-right:2px}.activity{padding:11px;border:1px solid rgba(71,167,161,.17);background:rgba(1,16,27,.48)}.activity.warning{border-color:rgba(245,199,106,.5)}.activity.threat{border-color:rgba(251,113,133,.62)}.activity.ready,.activity.complete{border-color:rgba(98,239,173,.3)}.activity-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.activity strong{font-size:11px}.activity .detail{display:block;margin-top:5px;color:#86a8aa;font-size:10px;line-height:1.45}.pill{white-space:nowrap;border:1px solid rgba(114,180,171,.26);padding:3px 6px;font:700 8px ui-monospace,Consolas,monospace;letter-spacing:.08em}.pill.good{color:#7df3bc}.pill.medium{color:#f3c96c}.pill.high{color:#fb8998}.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.meta span{font-size:9px;color:#8fb0af;border:1px solid rgba(71,167,161,.15);padding:3px 6px}.activity button{margin-top:8px;padding:5px 8px;border:1px solid rgba(91,234,176,.42);color:#8df5c8;background:rgba(5,62,65,.55);font-size:10px}
     .system-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.update-list{display:grid;gap:7px;margin-top:10px}.update-row{padding:9px;border:1px solid rgba(71,167,161,.17);background:rgba(1,16,27,.48);font-size:11px;color:#b8d8d6;line-height:1.45}.update-row.preview{border-color:rgba(245,199,106,.52)}.system-note{margin:8px 0 0;color:#8ca9a9;font-size:11px;line-height:1.5}
     .integrity{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:13px}.foot{grid-column:1/-1;color:#78979b;font-size:10px;line-height:1.5;display:flex;justify-content:space-between;gap:12px}.back{border:0;background:transparent;color:#85efd0;text-decoration:underline;text-underline-offset:4px}
-    .confirm{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:20px;background:rgba(0,8,14,.76);backdrop-filter:blur(8px)}.confirm.on{display:grid}.confirm-card{width:min(490px,100%);padding:22px;border:1px solid rgba(105,239,177,.56);background:linear-gradient(145deg,#062d32,#06151e);box-shadow:0 22px 80px rgba(0,0,0,.48)}.confirm-card h3{margin:0 0 9px;font-size:18px}.confirm-card p{margin:0;color:#b2d0ce;font-size:13px;line-height:1.55}.confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.confirm-actions button{padding:10px 13px;border:1px solid rgba(97,232,175,.48);background:#0c3a3b;color:#d8fff0}.confirm-actions .danger{border-color:#62efad;background:linear-gradient(135deg,#62efad,#3cc59a);color:#052418;font-weight:750}
+    .confirm{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:20px;background:rgba(0,8,14,.76);backdrop-filter:blur(8px)}.confirm.on{display:grid}.confirm-card{width:min(490px,100%);padding:22px;border:1px solid rgba(105,239,177,.56);background:linear-gradient(145deg,#062d32,#06151e);box-shadow:0 22px 80px rgba(0,0,0,.48)}.confirm-card h3{margin:0 0 9px;font-size:18px}.confirm-card p{margin:0;color:#b2d0ce;font-size:13px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere;max-height:52vh;overflow:auto}.confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.confirm-actions button{padding:10px 13px;border:1px solid rgba(97,232,175,.48);background:#0c3a3b;color:#d8fff0}.confirm-actions .danger{border-color:#62efad;background:linear-gradient(135deg,#62efad,#3cc59a);color:#052418;font-weight:750}
+    .vg-summary{display:grid;gap:10px;margin-top:14px;padding:12px;border:1px solid rgba(98,239,173,.28);background:rgba(4,34,36,.55)}.vg-summary small{display:block;color:#78979b;font-size:9px;letter-spacing:.08em}.vg-summary strong{display:block;margin-top:4px;font-size:18px;color:#7df3bc}.vg-summary p{margin:5px 0 0;color:#91b2b4;font-size:11px;line-height:1.5}.vg-summary.warn strong{color:#f3c96c}.vg-summary.bad strong{color:#fb7f91}
+    .vg-lead{margin:10px 0 0;color:#91b2b4;font-size:11px;line-height:1.6;max-width:880px}
+    .vg-banner{margin-top:12px;padding:11px 12px;border:1px solid rgba(98,239,173,.3);background:rgba(9,49,51,.45);color:#b5dcd5;font-size:11px;line-height:1.55}.vg-banner.warn{border-color:rgba(243,201,108,.55);color:#efd796;background:rgba(58,44,10,.35)}.vg-banner.bad{border-color:rgba(251,127,145,.6);color:#ffb7c1;background:rgba(80,19,31,.4)}
+    .vg-status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}.vg-stat{padding:11px;border:1px solid rgba(71,167,161,.17);background:rgba(1,16,27,.48);min-width:0}.vg-stat small{display:block;color:#78979b;font-size:9px;letter-spacing:.08em}.vg-stat strong{display:block;margin-top:5px;font-size:14px;overflow-wrap:anywhere}
+    .vg-groups{display:grid;gap:14px;margin-top:16px}.vg-group h3{margin:0 0 8px;font-size:11px;letter-spacing:.1em;color:#78ddbf;font-family:ui-monospace,Consolas,monospace}
+    .vg-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px;border:1px solid rgba(71,167,161,.18);background:rgba(1,16,27,.48);margin-top:7px}.vg-item input{margin-top:3px;width:16px;height:16px;accent-color:#62efad}.vg-item b{display:block;font-size:12px;color:#e2faf5}.vg-item p{margin:4px 0 0;color:#87a8aa;font-size:10.5px;line-height:1.5}.vg-item.ok{border-color:rgba(98,239,173,.35)}.vg-item.drift{border-color:rgba(243,201,108,.6)}
+    .vg-pill{white-space:nowrap;padding:4px 8px;font:700 9px/1.2 ui-monospace,Consolas,monospace;letter-spacing:.06em;border:1px solid rgba(120,151,155,.4);color:#9bbcbe}.vg-pill.ok{border-color:rgba(98,239,173,.55);color:#7df3bc}.vg-pill.off{border-color:rgba(243,201,108,.55);color:#f3c96c}.vg-pill.bad{border-color:rgba(251,127,145,.6);color:#ffb7c1}
+    .vg-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.vg-actions .action{width:auto;min-height:40px;font-size:13px}
+    .vg-section{margin-top:22px;padding-top:14px;border-top:1px solid rgba(84,204,184,.16)}
+    .vg-list{display:grid;gap:8px;margin-top:12px}.vg-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 12px;border:1px solid rgba(71,167,161,.18);background:rgba(1,16,27,.48)}.vg-row.high{border-color:rgba(251,127,145,.55)}.vg-row.medium{border-color:rgba(243,201,108,.5)}.vg-row b{display:block;font-size:11.5px;color:#e2faf5}.vg-row span{display:block;margin-top:4px;color:#87a8aa;font-size:10px;line-height:1.45;overflow-wrap:anywhere}.vg-row-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+    .vg-btn{padding:7px 10px;border:1px solid rgba(86,185,177,.4);background:rgba(5,48,59,.78);color:#c7eee4;font-size:10px}.vg-btn.primary{border-color:#62efad;background:linear-gradient(135deg,#62efad,#3cc59a);color:#052418;font-weight:800}.vg-btn.danger{border-color:rgba(251,127,145,.55);color:#ffb7c1;background:rgba(80,19,31,.45)}.vg-btn:disabled,.vg-actions .action:disabled{opacity:.55;cursor:wait}
+    @media(max-width:900px){.vg-status{grid-template-columns:1fr 1fr}.vg-row{grid-template-columns:1fr}.vg-row-actions{justify-content:flex-start}}
     @media(max-width:900px){.layout{grid-template-columns:1fr;padding:12px}.wide,.foot{grid-column:1}.hero{grid-template-columns:1fr}.score-ring{width:145px;height:145px}.checks,.trust-grid,.capabilities,.integrity{grid-template-columns:1fr 1fr}.mode{display:none}}@media(max-width:560px){.checks,.trust-grid,.capabilities,.integrity,.system-grid{grid-template-columns:1fr}.topbar{padding:13px 16px}}
   </style>
 </head>
@@ -35,11 +47,11 @@
 </header>
 
 <main class="layout">
-  <section class="panel hero">
+  <section class="panel hero" data-vp-tab-panel="overview">
     <div>
       <div class="panel-title"><span>INTELIGENTNÍ OCHRANA WINDOWS</span><button class="back" id="refresh" type="button">Obnovit</button></div>
       <h2>Defender zůstává hlavní. <span>Protect přidává druhý názor.</span></h2>
-      <p>VoxarioProtect v2.7 kombinuje stav Microsoft Defenderu, podpisy, SHA‑256, lokální rizikové signály a read-only dohled Windows Defender Firewallu. Defender a Windows Security zůstávají autoritou; Protect je nevypíná, nenahrazuje ani automaticky nevytváří výjimky.</p>
+      <p>VoxarioProtect v2.8 zapne ochrany Windows, které jsou ve výchozím stavu vypnuté, hlídá, aby je aktualizace nevrátily, a sleduje autostart, registr, výjimky Defenderu a firewall. Defender a Windows Security zůstávají autoritou; Protect je nevypíná, nenahrazuje a nic nemění bez tvého potvrzení.</p>
       <div class="checks">
         <div class="check"><small>REAL-TIME</small><strong id="realtime">—</strong></div>
         <div class="check"><small>BEHAVIOR MONITOR</small><strong id="behavior">—</strong></div>
@@ -50,26 +62,30 @@
     <div class="score-ring" id="scoreRing"><div class="score-value"><strong id="score">—</strong><span>PROTECTION SCORE</span></div></div>
   </section>
 
-  <aside class="panel">
+  <aside class="panel" data-vp-tab-panel="overview">
     <div class="panel-title"><span>AKCE</span><span class="muted">WINDOWS DEFENDER</span></div>
     <div class="actions">
       <button class="action" id="quickScanButton" type="button">Spustit rychlou kontrolu Defenderu</button>
       <button class="action secondary" id="chooseFileButton" type="button">Analyzovat a zkontrolovat soubor</button>
       <button class="action secondary" id="securityButton" type="button">Otevřít Windows Zabezpečení</button>
     </div>
-    <p class="notice" id="notice">Protect nic automaticky nepovoluje, nevytváří Defender exclusions a neobnovuje položky z karantény.</p>
+    <div class="vg-summary" id="vgSummary">
+      <div><small>POSÍLENÍ WINDOWS</small><strong id="vgSummaryScore">—</strong><p id="vgSummaryText">Načítám stav Defenderu a Firewallu…</p></div>
+      <button class="action" id="vgSummaryOpen" type="button">Zobrazit posílení</button>
+    </div>
+    <p class="notice" id="notice">Protect nic automaticky nepovoluje ani neobnovuje z karantény. Nastavení Defenderu a Firewallu mění jen po tvém potvrzení a umí ho vrátit.</p>
   </aside>
 
-  <section class="panel wide">
+  <section class="panel wide" data-vp-tab-panel="overview">
     <div class="panel-title"><span>VRSTVY VOXARIOPROTECT v2.7</span><span class="muted">REZIDENTNÍ DOPROVOD WINDOWS SECURITY</span></div>
     <div class="capabilities">
       <div class="capability"><small>LAYERED SECOND OPINION</small><strong>Lokální rizikové signály</strong><p>Nová vrstva vyhodnocuje maskované dvojité přípony, rizikové skriptové vzory, podpis a změnu hash bez spouštění analyzovaného souboru.</p><span class="tag">v2.7 ENGINE</span></div>
       <div class="capability"><small>DEFENDER CROSS-CHECK</small><strong>Defender má poslední slovo</strong><p>Při významném lokálním riziku Protect eskaluje kontrolu Microsoft Defenderu a porovnává výsledek, místo aby soubor automaticky povolil.</p><span class="tag">DEFENDER AUTHORITATIVE</span></div>
-      <div class="capability"><small>WINDOWS FIREWALL</small><strong>Read-only health monitoring</strong><p>Rezidentní Protect kontroluje stav profilů Windows Defender Firewallu. Pravidla ani porty sám nemění a firewall nenahrazuje.</p><span class="tag">READ ONLY</span></div>
+      <div class="capability"><small>WINDOWS FIREWALL</small><strong>Firewall companion</strong><p>Protect hlídá profily Windows Defender Firewallu, po tvém potvrzení je umí zapnout a nastavit blokování nevyžádaných příchozích spojení. Umí také zablokovat odchozí síť vybrané aplikace.</p><span class="tag">PO POTVRZENÍ</span></div>
     </div>
   </section>
 
-  <section class="panel wide">
+  <section class="panel wide" data-vp-tab-panel="files">
     <div class="panel-title"><span>TRUST ENGINE</span><span id="trustSummary" class="muted">LOKÁLNÍ VYHODNOCENÍ</span></div>
     <div class="trust-grid">
       <div class="trust-card"><small>DŮVĚRYHODNÉ SIGNÁLY</small><strong id="trustedSignals">0</strong><p>Platný podpis, čistý stav Defenderu a aktivní ochranné vrstvy zvyšují důvěru, ale nejsou absolutní záruka.</p></div>
@@ -87,7 +103,7 @@
     </div>
   </section>
 
-  <section class="panel wide">
+  <section class="panel wide" data-vp-tab-panel="system">
     <div class="panel-title"><span>SYSTÉM A WINDOWS UPDATE</span><span class="muted">READ-ONLY KONTROLA</span></div>
     <div class="system-grid">
       <div class="trust-card"><small>AKTUALIZACE WINDOWS</small><strong id="updateSummary">Načítám stav</strong><p id="updateDetail">Kontrola rozezná aktualizace Preview a ukáže je dříve, než je otevřeš ve Windows Update.</p><div class="update-list" id="updateList"></div><div class="actions"><button class="action secondary" id="openUpdateButton" type="button">Otevřít Windows Update</button></div></div>
@@ -95,7 +111,7 @@
     </div>
   </section>
 
-  <section class="panel wide">
+  <section class="panel wide" data-vp-tab-panel="events">
     <div class="panel-title"><span>UDÁLOSTI OCHRANY</span><button class="back" id="activityRefresh" type="button">Obnovit historii</button></div>
     <div class="filters">
       <button class="filter active" data-filter="all">Vše</button>
@@ -106,7 +122,7 @@
     <div class="activity-list" id="activityList"><span class="notice">Načítám lokální historii ochrany…</span></div>
   </section>
 
-  <section class="panel wide">
+  <section class="panel wide" data-vp-tab-panel="system">
     <div class="panel-title"><span>INTEGRITA VOXARIOPROTECT</span><span class="muted">READ-ONLY DIAGNOSTIKA</span></div>
     <div class="integrity">
       <div class="metric"><small>PROTECT VERZE</small><strong id="protectVersionMetric">—</strong></div>
@@ -126,7 +142,41 @@
     <div class="panel-title"><span>STABILITA / ŽIVOTNOST</span><span class="muted">RUNTIME DIAGNOSTIKA</span></div>
     <p class="notice" id="vpstableStatus">Načítám stav Protectu, Defenderu a Firewallu…</p>
   </section>
-  <footer class="foot"><span><strong>Soukromí:</strong> hodnocení probíhá lokálně. Protect neposílá obsah kontrolovaných souborů na externí server a nemění Defender exclusions ani Windows Firewall policy.</span><button id="back" class="back" type="button">← Zpět do rozcestníku</button></footer>
+  <section class="panel wide" id="voxarioGuard" data-vp-tab-panel="guard">
+    <div class="panel-title"><span>POSÍLENÍ DEFENDERU A FIREWALLU</span><button class="back" id="vgRefresh" type="button">Zkontrolovat</button></div>
+    <p class="vg-lead">Windows má řadu silných ochran, které nechává ve výchozím stavu vypnuté. Protect je zapne za tebe – vždy až po potvrzení správce (UAC). Původní nastavení se zálohuje a jde vrátit jedním klikem.</p>
+    <div class="vg-banner" id="vgBanner" hidden></div>
+    <div class="vg-status">
+      <div class="vg-stat"><small>DOPORUČENÉ OCHRANY</small><strong id="vgScore">—</strong></div>
+      <div class="vg-stat"><small>DEFINICE DEFENDERU</small><strong id="vgSignatures">—</strong></div>
+      <div class="vg-stat"><small>OCHRANA PŘED FALŠOVÁNÍM</small><strong id="vgTamper">—</strong></div>
+      <div class="vg-stat"><small>POSLEDNÍ KONTROLA</small><strong id="vgLastCheck">—</strong></div>
+    </div>
+    <div class="vg-groups" id="vgItems"><span class="notice">Načítám…</span></div>
+    <div class="vg-actions">
+      <button class="action" id="vgApply" type="button">Zapnout vybrané ochrany</button>
+      <button class="action secondary" id="vgSignatureUpdate" type="button">Aktualizovat definice teď</button>
+      <button class="action secondary" id="vgRevertAll" type="button">Vrátit vše na původní nastavení</button>
+    </div>
+    <div class="vg-section">
+      <div class="panel-title"><span>CO DEFENDER ZABLOKOVAL</span><button class="back" id="vgBlockedRefresh" type="button">Načíst</button></div>
+      <p class="vg-lead">Přehled zásahů za posledních 14 dní. Pokud ochrana zablokovala program, kterému věříš (např. hru ukládající do Dokumentů), můžeš ho povolit jen pro tuto jednu ochranu – Defender ho dál kontroluje.</p>
+      <div class="vg-list" id="vgBlocked"><span class="notice">Klikni na „Načíst“.</span></div>
+    </div>
+  </section>
+
+  <section class="panel wide" id="voxarioWatch" data-vp-tab-panel="watch">
+    <div class="panel-title"><span>HLÍDÁNÍ REGISTRU, AUTOSTARTU A FIREWALLU</span><button class="back" id="vwRefresh" type="button">Zkontrolovat teď</button></div>
+    <p class="vg-lead">Protect si zapamatoval, co se ve Windows spouští po startu, které zásady a výjimky platí pro Defender, obsah souboru hosts a povolená příchozí pravidla firewallu. Když se něco nového objeví, dá ti vědět. Ty rozhodneš: ponechat, nebo odebrat (se zálohou, jde vrátit).</p>
+    <div class="vg-banner" id="vwBanner" hidden></div>
+    <div class="vg-list" id="vwPending"><span class="notice">Načítám…</span></div>
+    <div class="vg-section">
+      <div class="panel-title"><span>ODEBRANÉ POLOŽKY</span><span class="muted">LZE VRÁTIT</span></div>
+      <div class="vg-list" id="vwRemoved"><span class="notice">Zatím nic.</span></div>
+    </div>
+  </section>
+
+  <footer class="foot"><span><strong>Soukromí:</strong> hodnocení probíhá lokálně. Protect neposílá obsah kontrolovaných souborů na externí server. Nastavení Defenderu a Firewallu mění jen po tvém potvrzení (UAC) a se zálohou pro vrácení.</span><button id="back" class="back" type="button">← Zpět do rozcestníku</button></footer>
 </main>
 
 <div class="confirm" id="confirmDialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="confirm-card"><h3 id="confirmTitle">Potvrdit akci</h3><p id="confirmText"></p><div class="confirm-actions"><button id="confirmCancel" type="button">Zrušit</button><button id="confirmAccept" class="danger" type="button">Pokračovat</button></div></div></div>
@@ -278,5 +328,6 @@
   Promise.allSettled([refresh(),refreshIntegrity(),refreshActivities(),refreshSystemSafety()]);
 </script>
   <script src="assets/protect-ui-v27.js"></script>
+  <script src="assets/protect-guard-ui.js"></script>
 </body>
 </html>

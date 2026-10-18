@@ -84,7 +84,9 @@ function protectSettingsInjection(prefs) {
   );
   const panelTabs = ["overview", "overview", "files", "system", "events", "system"];
   basePanels.forEach((panel, index) => {
-    panel.dataset.vpTabPanel = panelTabs[index] || "overview";
+    // Panely s explicitní kategorií v protect.html si ji ponechají; pořadové
+    // mapování je jen záloha pro starší markup.
+    if (!panel.dataset.vpTabPanel) panel.dataset.vpTabPanel = panelTabs[index] || "overview";
   });
 
   const tabs = document.createElement("nav");
@@ -93,6 +95,8 @@ function protectSettingsInjection(prefs) {
   tabs.setAttribute("aria-label", "Kategorie VoxarioProtect");
   tabs.innerHTML = `
     <button class="vp24-tab" type="button" data-tab="overview">Přehled</button>
+    <button class="vp24-tab" type="button" data-tab="guard">Posílení</button>
+    <button class="vp24-tab" type="button" data-tab="watch">Hlídání</button>
     <button class="vp24-tab" type="button" data-tab="files">Soubory</button>
     <button class="vp24-tab" type="button" data-tab="system">Systém</button>
     <button class="vp24-tab" type="button" data-tab="events">Události</button>
@@ -155,7 +159,7 @@ function protectSettingsInjection(prefs) {
   layout.insertBefore(section, footer || null);
 
   const activateTab = (name) => {
-    const valid = ["overview", "files", "system", "events", "firewall", "stability", "settings"].includes(name) ? name : "overview";
+    const valid = ["overview", "guard", "watch", "files", "system", "events", "firewall", "stability", "settings"].includes(name) ? name : "overview";
     document.body.dataset.voxarioProtectTab = valid;
     document.querySelectorAll("[data-vp-tab-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.vpTabPanel !== valid;

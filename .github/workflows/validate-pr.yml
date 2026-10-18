@@ -79,6 +79,10 @@ jobs:
           node --check electron/protect-trust-engine.cjs
           node --check electron/protect-layered-engine.cjs
           node --check electron/protect-firewall.cjs
+          node --check electron/protect-windows.cjs
+          node --check electron/protect-guard.cjs
+          node --check electron/protect-watch.cjs
+          node --check electron/protect-guard-service.cjs
           cd electron
           npm run test:protect
 
@@ -131,8 +135,10 @@ jobs:
           node --check electron/protect-trust-engine.cjs
           node --check electron/protect-layered-engine.cjs
           node --check electron/protect-firewall.cjs
+          node --check electron/protect-guard-service.cjs
           Push-Location electron
           npm run test:protect
+          node protect-guard.windows-test.cjs
           Pop-Location
           node --check installer/main.cjs
           node --check installer/build.cjs

@@ -27,6 +27,7 @@ const {
   preferencesPath,
   profileConfig,
 } = require("./protect-preferences.cjs");
+const { createGuardService } = require("./protect-guard-service.cjs");
 
 const RISKY_EXTENSIONS = new Set([
   ".exe", ".msi", ".msix", ".com", ".scr", ".bat", ".cmd", ".ps1",
@@ -534,9 +535,26 @@ function watchPreferences() {
   } catch {}
 }
 
+// Guard kontrola (drift posílení, stáří definic, nové položky autostartu a
+// registru) běží i se zavřeným oknem. Sdílený stav zabrání dvojím notifikacím.
+let guardTimer = null;
+function startGuardChecks() {
+  if (process.platform !== "win32" || guardTimer) return;
+  const service = createGuardService({
+    userDataDir: app.getPath("userData"),
+    notify: (title, body) => showNotification(title, body),
+    addActivity: (entry) => addActivity(entry),
+  });
+  const run = () => service.check().catch(() => {});
+  setTimeout(run, 60_000).unref?.();
+  guardTimer = setInterval(run, 15 * 60 * 1000);
+  guardTimer.unref?.();
+}
+
 function cleanup() {
   stopDownloadsWatcher();
   if (defenderTimer) clearInterval(defenderTimer);
+  if (guardTimer) clearInterval(guardTimer);
   for (const timer of pendingFiles.values()) clearTimeout(timer);
   pendingFiles.clear();
   try { fs.unwatchFile(preferencesPath(app)); } catch {}
@@ -554,6 +572,7 @@ app.whenReady().then(async () => {
     refreshFirewallStatus({ notify: false }),
   ]);
   scheduleDefenderRefresh();
+  startGuardChecks();
 });
 
 app.on("before-quit", cleanup);

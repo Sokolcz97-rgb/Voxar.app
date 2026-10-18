@@ -31,6 +31,25 @@ contextBridge.exposeInMainWorld("studioVoxarioDesktop", {
   protectOpenWindowsUpdate: () => ipcRenderer.invoke("protect:open-windows-update"),
   protectReturnToLauncher: () => ipcRenderer.invoke("protect:return-to-launcher"),
 
+  // VoxarioProtect Guard – posílení Defenderu/Firewallu a hlídání autostartu.
+  // Každá změna vyžaduje potvrzení správce (UAC) a jde vrátit.
+  protectGuardCatalog: () => ipcRenderer.invoke("protect:guard-catalog"),
+  protectGuardState: () => ipcRenderer.invoke("protect:guard-state"),
+  protectGuardCheck: () => ipcRenderer.invoke("protect:guard-check"),
+  protectGuardHarden: (ids) => ipcRenderer.invoke("protect:guard-harden", ids),
+  protectGuardRevert: (ids) => ipcRenderer.invoke("protect:guard-revert", ids),
+  protectGuardUpdateSignatures: () => ipcRenderer.invoke("protect:guard-update-signatures"),
+  protectGuardBlocked: (days) => ipcRenderer.invoke("protect:guard-blocked", days),
+  protectGuardAllow: (id, allowUnsigned) => ipcRenderer.invoke("protect:guard-allow", { id, allowUnsigned: allowUnsigned === true }),
+  protectWatchApprove: (id) => ipcRenderer.invoke("protect:watch-approve", id),
+  protectWatchRemove: (id) => ipcRenderer.invoke("protect:watch-remove", id),
+  protectWatchRestore: (id) => ipcRenderer.invoke("protect:watch-restore", id),
+  onProtectGuardState: (cb) => {
+    const listener = (_e, payload) => { try { cb(payload); } catch {} };
+    ipcRenderer.on("protect:guard-state", listener);
+    return () => ipcRenderer.removeListener("protect:guard-state", listener);
+  },
+
   // VoxarioProtect Firewall category. Renderer never sends an arbitrary path to
   // a privileged operation: selection is performed in main and exchanged for a
   // short-lived token before a user-confirmed UAC-protected BLOCK operation.
