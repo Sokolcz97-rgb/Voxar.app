@@ -3654,6 +3654,15 @@ export type Database = {
           refund_notice: string
         }[]
       }
+      get_platform_stats: { Args: never; Returns: Json }
+      get_public_team: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          display_name: string | null
+          role: string
+        }[]
+      }
       get_public_site_settings: {
         Args: never
         Returns: {
