@@ -1,4 +1,4 @@
-:root { --vb-bg:#020a12; --vb-panel:#061625; --vb-panel-hi:#08273a; --vb-line:rgba(38,214,246,.46); --vb-line-soft:rgba(85,163,190,.25); --vb-cyan:#29e2f7; --vb-blue:#64baff; --vb-violet:#a65cff; --vb-text:#d9eff8; --vb-muted:#8caec1; --vb-sidebar-width:104px; --vb-sidebar-left:5px; --vb-sidebar-offset:calc(var(--vb-sidebar-width) + var(--vb-sidebar-left)); }
+:root { --vb-bg:#020a12; --vb-panel:#061625; --vb-panel-hi:#08273a; --vb-line:rgba(38,214,246,.46); --vb-line-soft:rgba(85,163,190,.25); --vb-cyan:#29e2f7; --vb-blue:#64baff; --vb-violet:#a65cff; --vb-text:#d9eff8; --vb-muted:#8caec1; --vb-sidebar-width:106px; --vb-sidebar-left:6px; --vb-sidebar-offset:calc(var(--vb-sidebar-width) + var(--vb-sidebar-left)); }
 * { box-sizing:border-box; scrollbar-color:rgba(41,219,245,.42) transparent; scrollbar-width:thin; }
 /* The native window can be reduced to 900 px.  Keep the shell inside that
    contract instead of forcing a wider document that is then clipped by the
@@ -246,3 +246,148 @@ body .startpage { padding-left:calc((var(--vb-sidebar-offset) * var(--ui-zoom,1)
   body .startpage { padding-left:calc((var(--vb-sidebar-offset) * var(--ui-zoom,1) + 22px) / var(--start-zoom,1)); }
 }
 body .panel { padding-left:calc(var(--vb-sidebar-offset) * var(--ui-zoom,1) + 30px); }
+
+/* ===================================================================
+   1:1 podle předlohy (okno 1672 × 941 px). Rozměry a polohy jsou
+   změřené z obrázku; na větších oknech je zvětšuje --start-zoom/--ui-zoom.
+   Písmo Lexend (SIL OFL, assets/fonts) – geometrické jako v předloze,
+   s českou diakritikou, přibalené lokálně.
+   =================================================================== */
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:300;src:url('./fonts/lexend-latin-300-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:300;src:url('./fonts/lexend-latin-ext-300-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:400;src:url('./fonts/lexend-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:400;src:url('./fonts/lexend-latin-ext-400-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:500;src:url('./fonts/lexend-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:500;src:url('./fonts/lexend-latin-ext-500-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:600;src:url('./fonts/lexend-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:600;src:url('./fonts/lexend-latin-ext-600-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:700;src:url('./fonts/lexend-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lexend';font-style:normal;font-display:swap;font-weight:700;src:url('./fonts/lexend-latin-ext-700-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+body, body button, body input, body textarea, body select { font-family:'Lexend','Segoe UI',system-ui,sans-serif; }
+
+/* Lišty */
+body .tabbar { height:50px; min-height:50px; padding-top:10px; }
+body .window-brand { gap:12px; padding-left:30px; font-size:18px; }
+body .window-brand img { width:28px; height:28px; }
+body .window-brand strong { font-weight:400; color:#e1f3fb; }
+body .tab { height:40px; max-width:215px; flex-basis:200px; font-size:14px; font-weight:400; }
+body .bookmark-shell { height:36px; min-height:36px; }
+body .bmbar { height:35px; min-height:35px; }
+body .bmbar .chip { height:28px; font-size:13.5px; font-weight:400; }
+
+/* Levý panel */
+body .dock { padding:14px 10px 12px; gap:4px; }
+body .dock .brand { height:70px; flex-basis:70px; margin-bottom:10px; }
+body .dock .brand img { width:56px; height:56px; }
+body .dockbtn { width:80px; height:70px; min-height:70px; flex-basis:70px; font-size:13.5px; font-weight:400; }
+body .dock-sep { width:64px; margin:6px 0; }
+
+/* Mřížka startovní stránky */
+body .startpage { padding:5px 12px 20px calc((var(--vb-sidebar-offset) * var(--ui-zoom,1) + 1px) / var(--start-zoom,1)); }
+body .startpage.on { grid-template-columns:minmax(0,1fr) 213px; gap:12px; }
+body .start-main { gap:0; }
+body .start-right { padding-top:12px; gap:15px; }
+
+/* Hero */
+body .browser-hero { height:365px; margin-bottom:2px; padding:0; }
+body .hero-brand { left:47px; top:25px; gap:28px; }
+body .hero-brand img { width:56px; height:56px; }
+body .hero-brand div { gap:9px; }
+body .hero-brand strong { font-size:18px; font-weight:400; letter-spacing:.3em; }
+body .hero-brand strong b { font-weight:600; }
+body .hero-brand span { font-size:11.5px; font-weight:400; letter-spacing:.27em; }
+body .browser-hero blockquote { right:34px; top:22px; font-size:13.5px; font-weight:300; line-height:1.5; color:#c4def0; }
+body .browser-hero blockquote small { font-size:9.5px; letter-spacing:.2em; margin-top:9px; }
+body .hero-copy { left:50px; top:127px; }
+body .hero-copy h1 { font-size:44px; font-weight:700; letter-spacing:.012em; line-height:1.12; background:linear-gradient(95deg,#25e3f7 0%,#3fd2ff 25%,#7f8bff 48%,#b36bff 75%,#c561ff 100%); -webkit-background-clip:text; background-clip:text; }
+body .hero-copy p { margin-top:4px; font-size:20px; font-weight:400; letter-spacing:.055em; color:#3ee0f2; }
+body .hero-search { left:50px; top:225px; width:785px; height:54px; padding-left:22px; border-radius:10px; }
+body .hero-search > span svg { width:24px; height:24px; }
+body .hero-search input { padding-left:8px; font-size:18.5px; font-weight:300; }
+body .hero-search button { width:42px; height:40px; margin-right:7px; border-radius:8px; }
+body .hero-actions { left:52px; top:293px; gap:16px; }
+body .hero-actions button { height:36px; padding:0 18px; gap:10px; font-size:14px; font-weight:400; border-radius:18px; }
+body .hero-motto { right:40px; bottom:auto; top:262px; font-size:14px; font-weight:400; letter-spacing:.32em; line-height:1.55; }
+body .hero-motto i { width:38px; margin-top:10px; }
+
+/* Rychlé odkazy */
+body .quick-panel { height:203px; margin:0 30px 13px 37px; padding:12px 228px 12px 28px; }
+body .quick-panel > header { height:24px; margin-left:-3px; font-size:15px; }
+body .quick-panel > header strong { font-weight:400; }
+body .quick-panel header button { margin-right:-188px; font-size:13.5px; font-weight:400; }
+body .quick-panel .dial { grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(2,67px); column-gap:9px; row-gap:10px; margin-top:10px; }
+body .dialtile, body .dialadd { height:67px; gap:7px; }
+body .dialtile .dt { font-size:13px; font-weight:400; }
+body .dialadd span { font-size:12.5px; font-weight:400; }
+body .quick-art { inset:46px 25px auto auto; width:182px; height:144px; }
+
+/* Dolní karty */
+body .start-lower { margin:0 30px 0 37px; grid-template-columns:400fr 427fr 395fr; gap:16px; }
+body .dashboard-card { padding:12px 22px 10px; }
+body .dashboard-card > header { height:34px; font-size:15px; }
+body .dashboard-card > header strong { font-weight:400; }
+body .dashboard-card header button { font-size:12px; font-weight:400; }
+body .favcopy strong, body .discover-item strong { font-size:13px; font-weight:400; }
+body .favcopy small, body .discover-item small { font-size:11.5px; font-weight:300; }
+body .mini-row time { font-size:12px; font-weight:300; }
+body .discover-item { grid-template-columns:110px minmax(0,1fr); gap:14px; }
+body .discover-thumb { width:110px; height:56px; flex-basis:110px; }
+
+/* Pravý sloupec */
+body .weather-card { height:148px; padding:22px 20px 14px; }
+body .weather-city { font-size:15px; font-weight:400; }
+body .weather-main { margin-top:10px; gap:18px; }
+body .weather-ico, body .weather-ico svg { width:50px; height:50px; }
+body .weather-read strong { font-size:28px; font-weight:400; }
+body .weather-read div { font-size:15.5px; font-weight:400; }
+body .weather-card small { margin-top:10px; font-size:13px; font-weight:400; }
+body .quote-card { height:148px; padding:38px 20px 16px; font-size:18px; font-weight:300; }
+body .workspace-card { min-height:242px; padding:14px 14px 10px; }
+body .workspace-card > header { font-size:14px; }
+body .workspace-card > header strong { font-weight:400; }
+body .workspace-row { min-height:48px; }
+body .workspace-row i { width:32px; height:32px; flex-basis:32px; }
+body .workspace-row strong { font-weight:400; }
+body .workspace-row small { font-weight:300; }
+body .promo-card { min-height:200px; padding:38px 20px 16px; font-weight:400; }
+body .hero-copy h1 { font-size:49px; letter-spacing:.008em; }
+body .hero-copy p { font-size:21px; }
+body .start-right > section { flex-shrink:0; }
+body .start-right > .promo-card { flex-shrink:1; }
+body .dashboard-card { display:flex; flex-direction:column; }
+body .dashboard-card > header { position:static; flex:0 0 34px; }
+body .mini-list, body .discover-list { margin-top:8px; }
+body .mini-row { min-height:39px; padding:5px 2px; }
+body .discover-item { min-height:58px; padding:1px 0; }
+body .bookmark-shell { padding-left:calc(var(--vb-sidebar-offset) + 8px); }
+body .weather-card, body .quote-card { flex:0 0 148px; }
+body .workspace-card { flex:0 0 242px; }
+body .mini-row { padding:1px 2px; }
+body .favcopy { line-height:1.25; }
+body .mini-list, body .discover-list { gap:0; margin-top:0; padding-top:6px; }
+body .mini-list, body .discover-list { padding-top:0; } body .dashboard-card > header { flex-basis:30px; height:30px; }
+
+/* Detaily z předlohy */
+body .navbtn:disabled { color:#a9c7d6; opacity:.85; }
+body .navbtn { color:#d6eef8; }
+body #btnStar { width:38px; height:34px; flex-basis:38px; margin-left:-62px; border:1px solid rgba(60,190,230,.45); border-radius:7px; background:rgba(8,40,62,.7); position:relative; z-index:2; }
+body .urlwrap { padding-right:56px; }
+body .sync-state { display:flex; align-items:center; gap:8px; }
+body .sync-ico svg { width:20px; height:20px; color:#6fd8ee; }
+body .sync-state button svg { width:18px; height:18px; }
+body .hero-search > span { width:44px; height:42px; margin-left:-14px; border-radius:9px; border:1px solid rgba(64,225,247,.35); background:rgba(10,52,80,.55); box-shadow:inset 0 0 12px rgba(41,226,247,.15); }
+body .browser-hero { clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px)); }
+body .browser-hero::before { width:3px; height:120px; }
+body .quick-art::after { content:''; position:absolute; left:50%; top:16px; width:58px; height:58px; margin-left:-29px; border-radius:50%; border:1px solid rgba(170,110,255,.75); box-shadow:0 0 14px rgba(166,92,255,.55),inset 0 0 12px rgba(166,92,255,.4); }
+body .quick-art::before { content:''; position:absolute; left:50%; top:44px; width:2px; height:2px; border-radius:50%; background:#e3c8ff; box-shadow:0 0 8px 3px rgba(190,130,255,.9); }
+body .workspace-row i { background:color-mix(in srgb,currentColor 16%,#041422); }
+body .dock-promo { background:linear-gradient(180deg,rgba(6,18,40,.55),rgba(6,14,36,.2) 55%,rgba(6,14,36,.1)),url('./discover-planet.webp') 70% 100%/240% no-repeat; }
+body .dock-promo span { color:#b88cff; }
+body .dock-promo b { color:#d9ecf6; }
+body #workspaceList { margin-top:0; padding-top:14px; }
+body .workspace-row i { background:color-mix(in srgb,currentColor 28%,#06182a); box-shadow:0 0 14px -3px currentColor,inset 0 0 8px -2px currentColor; }
+body .favico img { inset:0; width:100%; height:100%; }
+body .dock-promo { width:86px; padding:14px 6px 12px 9px; }
+body .dock-promo span, body .dock-promo b { font-size:9.5px; letter-spacing:.12em; }
+body .dock-promo span, body .dock-promo b { letter-spacing:.06em; }

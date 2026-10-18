@@ -24,6 +24,6 @@ assert.match(chromeFit, /\.navbar\{[\s\S]*height:54px!important/, "Top navigatio
 assert.match(chromeFit, /\.newtab\{[\s\S]*position:sticky!important[\s\S]*right:112px!important/, "New-tab control must stay visible next to overflowing tabs");
 assert.match(chromeFit, /\.tabbar\{padding-right:116px!important\}/, "Tab strip must reserve only the Windows control area");
 assert.doesNotMatch(chromeFit, /zoom\s*:/i, "Chrome fit must never zoom loaded web pages");
-assert.match(css, /--vb-sidebar-width:104px/, "Sidebar width must have one central 104px token");
+assert.match(css, /--vb-sidebar-width:106px/, "Sidebar width must have one central 106px token");
 
 console.log("✓ VoxarioBrowser UI shell, compact chrome and HUD injection structure passed");
