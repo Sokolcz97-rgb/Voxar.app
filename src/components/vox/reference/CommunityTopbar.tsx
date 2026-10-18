@@ -148,37 +148,13 @@ export function CommunityTopbar({
 
   return (
     <>
-      <header className="sv-topbar sv-topbar-v17 sv-topbar-v18 sv-topbar-v19 sv-topbar-v24 sv-topbar-v25 sv-topbar-v29">
+      <header className="sv-topbar">
         <div className="sv-topbar-scene" aria-hidden="true">
           <img className="sv-topbar-scene-image" src="/vox/reference/topbar-space-v30.webp" alt="" />
-          <span className="sv-topbar-deep-space" />
-          <span className="sv-topbar-stars sv-topbar-stars-a" />
-          <span className="sv-topbar-stars sv-topbar-stars-b" />
-          <span className="sv-topbar-constellation"><i /><i /><i /><i /><i /></span>
-          <span className="sv-topbar-horizon" />
-          <span className="sv-topbar-ridge sv-topbar-ridge-back" />
-          <span className="sv-topbar-ridge sv-topbar-ridge-front" />
-          <span className="sv-topbar-skyline" />
-          <span className="sv-topbar-planet"><i /><b /><em /></span>
-          <span className="sv-topbar-planet-glow" />
-          <span className="sv-topbar-orbit sv-topbar-orbit-a" />
-          <span className="sv-topbar-orbit sv-topbar-orbit-b" />
-          <span className="sv-topbar-beam sv-topbar-beam-a" />
-          <span className="sv-topbar-beam sv-topbar-beam-b" />
-          <span className="sv-topbar-comet sv-topbar-comet-a" />
-          <span className="sv-topbar-comet sv-topbar-comet-b" />
-          <span className="sv-topbar-scan" />
-          <span className="sv-topbar-grid" />
         </div>
 
         <div className="sv-topbar-brand">
-          <span className="sv-brand-symbol" aria-hidden="true">
-            <i className="sv-brand-wing sv-brand-wing-left" />
-            <i className="sv-brand-wing sv-brand-wing-right" />
-            <b className="sv-brand-core" />
-            <em className="sv-brand-spark" />
-            <span className="sv-brand-inner-cut" />
-          </span>
+          <img className="sv-brand-logo" src="/vox/brand/voxar-logo.webp" alt="" aria-hidden="true" />
           <div className="sv-brand-copy">
             <strong>VOXAR.APP</strong>
             <span>STUDIOVOXARIO</span>
@@ -254,7 +230,6 @@ export function CommunityTopbar({
           </button>
 
           <div className="sv-topbar-profile-cluster">
-            <span className="sv-topbar-presence-label" aria-hidden="true">LIVE</span>
             <button type="button" className="sv-topbar-avatar" onClick={() => { closeTransientUi(); onProfile(); }} title="Nastavení profilu" aria-label={`Profil ${displayName}`}>
               {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : <span>{displayName.slice(0, 2).toUpperCase()}</span>}
               <i className="sv-topbar-avatar-ring" aria-hidden="true" />
@@ -262,9 +237,6 @@ export function CommunityTopbar({
             </button>
           </div>
 
-          <div className="sv-topbar-motto" aria-hidden="true">
-            <span>People</span><span>Ideas</span><span>Games</span><span>Together</span>
-          </div>
         </div>
       </header>
 

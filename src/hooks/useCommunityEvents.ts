@@ -139,8 +139,12 @@ export function useCommunityEvents(guildId?: string | null) {
 
   useEffect(() => {
     if (!resolvedGuildId) return;
+    // Hook používá zároveň pravý panel i panel Událostí. Supabase vrací pro
+    // stejné jméno už přihlášený kanál a přidání .on() pak shodí panel
+    // ("cannot add postgres_changes callbacks after subscribe()"), proto má
+    // každé použití vlastní jméno kanálu.
     const eventChannel = supabase
-      .channel(`vox_events_${resolvedGuildId}`)
+      .channel(`vox_events_${resolvedGuildId}_${Math.random().toString(36).slice(2, 10)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_events", filter: `guild_id=eq.${resolvedGuildId}` }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "vox_event_attendees" }, () => void load())
       .subscribe();

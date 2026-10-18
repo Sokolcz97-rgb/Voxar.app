@@ -1,6 +1,5 @@
 import { BookOpen, Mic2, UserRound } from "lucide-react";
 import type { VoxChannel } from "../ChannelSidebar";
-import "./community-welcome-v31.css";
 
 interface Props {
   guildName: string;
@@ -29,11 +28,7 @@ export function CommunityWelcomeBanner({
   const canShowRules = !!rulesChannel || !!onShowRules;
 
   return (
-    <section className="sv-welcome sv-welcome-v17 sv-welcome-v18 sv-welcome-v19 sv-welcome-v24 sv-welcome-v31-readable" aria-label="Vítej v komunitě">
-      <span className="sv-welcome-corner sv-welcome-corner-left" aria-hidden="true" />
-      <span className="sv-welcome-corner sv-welcome-corner-right" aria-hidden="true" />
-      <span className="sv-welcome-edge sv-welcome-edge-top" aria-hidden="true" />
-      <span className="sv-welcome-edge sv-welcome-edge-bottom" aria-hidden="true" />
+    <section className="sv-welcome" aria-label="Vítej v komunitě">
 
       <div className="sv-welcome-copy">
         <div className="sv-welcome-eyebrow">
@@ -84,25 +79,6 @@ export function CommunityWelcomeBanner({
 
       <div className="sv-welcome-art" aria-hidden="true">
         <img className="sv-welcome-scene-image" src="/vox/reference/welcome-world-v30.webp" alt="" />
-        <div className="sv-welcome-stars" />
-        <div className="sv-welcome-starfield" />
-        <div className="sv-welcome-clouds" />
-        <div className="sv-welcome-nebula" />
-        <div className="sv-welcome-aurora" />
-        <div className="sv-welcome-planet-shadow" />
-        <div className="sv-welcome-beam sv-welcome-beam-a" />
-        <div className="sv-welcome-beam sv-welcome-beam-b" />
-        <div className="sv-welcome-gateway" />
-        <div className="sv-welcome-portal"><i /><b /><em /><span /></div>
-        <div className="sv-welcome-spires sv-welcome-spires-back" />
-        <div className="sv-welcome-spires sv-welcome-spires-front" />
-        <div className="sv-welcome-cityline" />
-        <div className="sv-welcome-city-glow" />
-        <div className="sv-welcome-ridge sv-welcome-ridge-a" />
-        <div className="sv-welcome-ridge sv-welcome-ridge-b" />
-        <div className="sv-welcome-reflection" />
-        <div className="sv-welcome-lightline" />
-        <div className="sv-welcome-scan" />
         <div className="sv-welcome-motto">GOOD<br />PEOPLE<br />BETTER<br />WORLDS</div>
       </div>
     </section>

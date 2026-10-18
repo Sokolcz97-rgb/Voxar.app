@@ -24,7 +24,7 @@ import { useVoxHeartbeat } from "@/hooks/useVoxPresence";
 import { openVoxUtility } from "@/lib/voxCommunityBridge";
 import { attestDesktopProtect } from "@/lib/voxProtectAttestation";
 import { Loader2 } from "lucide-react";
-import "@/components/vox/reference/community-desktop.css";
+import "@/components/vox/reference/community.css";
 
 export default function AppShellReference() {
   useVoxHeartbeat("online");

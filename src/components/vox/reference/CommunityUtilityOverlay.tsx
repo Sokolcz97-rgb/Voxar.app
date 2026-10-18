@@ -8,7 +8,6 @@ import { CommunityNotifications } from "./CommunityNotifications";
 import { CommunityShop } from "./CommunityShop";
 import { getVoxCommunityContext, openVoxChannel } from "@/lib/voxCommunityBridge";
 import "./community-suite-v25.css";
-import "./community-topbar-v25.css";
 import "./community-events-v26.css";
 import "./community-members-v27.css";
 import "./community-notifications-v28.css";

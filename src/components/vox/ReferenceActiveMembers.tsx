@@ -31,7 +31,7 @@ export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSe
     .slice(0, 7);
 
   return (
-    <div className="vox-ref-active-members vox-ref-active-members-v18">
+    <div className="vox-ref-active-members">
       {visible.map((member) => {
         const name = member.nickname || member.display_name || member.user_id.slice(0, 8);
         const topRole = member.roles?.[0];
@@ -57,14 +57,9 @@ export function ReferenceActiveMembers({ members, currentUserId, onMessage, onSe
                 {topRole && <em>{topRole.name}</em>}
                 {!topRole && (member.role === "owner" || member.role === "mod") && <ShieldCheck />}
               </span>
-              <span className="vox-ref-member-activity">
-                <small>{activityText[status] || statusText[status] || "Offline"}</small>
-                <i aria-hidden="true" />
-                <small>{statusText[status] || "Offline"}</small>
-              </span>
+              <span className="vox-ref-member-activity">{activityText[status] || statusText[status] || "Offline"}</span>
             </span>
             {!isSelf && <MessageCircle className="vox-ref-member-message" />}
-            <span className="vox-ref-member-edge" aria-hidden="true" />
           </button>
         );
       })}

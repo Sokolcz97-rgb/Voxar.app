@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { HelpCircle, Search, X, Wrench } from "lucide-react";
 import { findQuickHelp, QUICK_HELP_ITEMS } from "@/lib/quickHelp";
@@ -8,13 +8,21 @@ export function QuickHelp({ variant = "web" }: { variant?: "web" | "holo" }) {
   const [query, setQuery] = useState("");
   const results = useMemo(() => findQuickHelp(query, 6), [query]);
 
+  // V komunitě (/app) ji otevírá tlačítko "AI asistent" v poli pro psaní
+  // (událost vox:open-ai). Plovoucí spouštěč tam není, aby nepřekrýval panely.
+  useEffect(() => {
+    const openHelp = () => setOpen(true);
+    window.addEventListener("vox:open-ai", openHelp);
+    return () => window.removeEventListener("vox:open-ai", openHelp);
+  }, []);
+
   const shell = variant === "holo"
     ? "bg-[hsl(222_40%_7%/0.82)] border-primary/45 backdrop-blur-xl shadow-[0_0_28px_hsl(var(--primary)/0.35)]"
     : "glass border-primary/30 shadow-[var(--glow-primary)]";
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
-      {!open ? (
+      {!open ? (variant === "holo" ? null : (
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -24,7 +32,7 @@ export function QuickHelp({ variant = "web" }: { variant?: "web" | "holo" }) {
           <Wrench className="h-4 w-4 text-primary" />
           <span className="font-display text-[10px] tracking-[0.2em] uppercase text-primary">Rychlá pomoc</span>
         </button>
-      ) : (
+      )) : (
         <div className={`pointer-events-auto w-[min(390px,calc(100vw-3rem))] max-h-[min(560px,calc(100vh-3rem))] overflow-hidden border flex flex-col ${shell}`}>
           <div className="flex items-center justify-between gap-3 p-4 border-b border-border/60">
             <div>

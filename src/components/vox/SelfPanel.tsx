@@ -30,8 +30,7 @@ export function SelfPanel({
     : status;
 
   return (
-    <div className="vox-self-panel vox-self-panel-v19 border-t border-primary/15 bg-transparent">
-      <span className="vox-self-panel-edge" aria-hidden="true" />
+    <div className="vox-self-panel">
       {connectedChannelName && (
         <div className="vox-self-call-state px-3 py-1.5 border-b border-primary/15 flex items-center gap-2 bg-emerald-500/10">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_hsl(160_84%_45%)]" />
