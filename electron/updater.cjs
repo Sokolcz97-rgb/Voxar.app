@@ -587,14 +587,20 @@ function setupEvents() {
       pct: 1,
     });
 
+    // Oznámení je jen informativní. Bridge vrací null, když není otevřený
+    // rozcestník (samostatný VoxarioBrowser, zavřené okno) – dřív tu volání
+    // `.catch` na null shodilo celý handler a instalace se nikdy nespustila
+    // („Cannot read properties of null (reading 'catch')“).
     if (uiBridge) {
-      uiBridge({
-        kind: "installing",
-        title: "Instaluji aktualizaci",
-        message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
-        detail: "Aplikace se ukončí, aktualizace přepíše stávající instalaci a potom se Voxar.app znovu spustí.",
-        version: downloadedVersion,
-      }).catch(() => {});
+      Promise.resolve()
+        .then(() => uiBridge({
+          kind: "installing",
+          title: "Instaluji aktualizaci",
+          message: `StudioVoxario ${downloadedVersion || ""}`.trim(),
+          detail: "Aplikace se ukončí, aktualizace přepíše stávající instalaci a potom se znovu spustí.",
+          version: downloadedVersion,
+        }))
+        .catch(() => {});
     }
 
     isQuittingForUpdate();
