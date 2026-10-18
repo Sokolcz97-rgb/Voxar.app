@@ -45,6 +45,17 @@ function stageScript(script) {
   return { command: loader, cleanup: () => { try { fs.rmSync(file, { force: true }); } catch {} } };
 }
 
+// Windows PowerShell 5.1 nesmí zdědit PSModulePath z PowerShellu 7 (např.
+// když aplikaci spustí pwsh). Jinak načte nekompatibilní moduly a příkazy
+// jako Get-AuthenticodeSignature selžou.
+function windowsPowerShellEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === "psmodulepath") delete env[key];
+  }
+  return env;
+}
+
 function runPowerShell(script, timeoutMs = 20_000) {
   if (!IS_WINDOWS) return Promise.resolve({ ok: false, unsupported: true, error: "Dostupné pouze ve Windows." });
   const staged = stageScript(script);
@@ -66,6 +77,7 @@ function runPowerShellInline(script, timeoutMs) {
     try {
       child = spawn("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encode(script)], {
         windowsHide: true,
+        env: windowsPowerShellEnv(),
         stdio: ["ignore", "pipe", "pipe"],
       });
     } catch (error) {

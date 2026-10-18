@@ -121,7 +121,7 @@ async function main() {
     const again = await watch.collect();
     const entry = again.entries.find((row) => row.kind === "run" && row.name === name);
     assert.ok(entry, "New HKCU Run value is detected");
-    assert.equal(entry.signature, "Valid", "notepad.exe target is resolved and its signature verified");
+    assert.equal(entry.signature, "Valid", `notepad.exe target is resolved and its signature verified: ${JSON.stringify(entry)}`);
     assert.equal(watch.needsElevation(entry), false);
     const removed = await watch.removeEntry(entry, tmp);
     assert.equal(removed.ok, true, removed.error);
