@@ -17,7 +17,6 @@ import { CommunityMessageList, type CommunityReaction } from "./reference/Commun
 import { CommunityComposer } from "./reference/CommunityComposer";
 import { useCommunityChatBridge } from "./reference/communityChatBridge";
 import type { CommunityMessage, CommunityProfileLite } from "./reference/chatTypes";
-import "./reference/community-structured-chat.css";
 
 interface Props {
   channel: VoxChannel;

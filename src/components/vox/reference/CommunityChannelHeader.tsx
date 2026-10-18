@@ -26,15 +26,11 @@ export function CommunityChannelHeader({
   const topic = channel.topic || `Místo pro vše, co patří do #${channel.name}. Chat, novinky, nápady i každodenní pokec.`;
 
   return (
-    <header className="sv-channel-header sv-channel-header-v18 sv-channel-header-v19">
-      <span className="sv-channel-header-edge sv-channel-header-edge-a" aria-hidden="true" />
-      <span className="sv-channel-header-edge sv-channel-header-edge-b" aria-hidden="true" />
-      <span className="sv-channel-header-grid" aria-hidden="true" />
+    <header className="sv-channel-header">
 
       <div className="sv-channel-header-main">
         <div className="sv-channel-header-icon" aria-hidden="true">
           <MessageCircle />
-          <i />
         </div>
         <div className="sv-channel-header-copy">
           <div className="sv-channel-header-title-row">

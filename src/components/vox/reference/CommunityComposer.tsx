@@ -74,13 +74,7 @@ export function CommunityComposer({
   const canSend = !!input.trim() || pending.length > 0;
 
   return (
-    <footer className="sv-composer sv-composer-v3 sv-composer-v17 sv-composer-v19">
-      <span className="sv-composer-corner sv-composer-corner-tl" aria-hidden="true" />
-      <span className="sv-composer-corner sv-composer-corner-tr" aria-hidden="true" />
-      <span className="sv-composer-corner sv-composer-corner-bl" aria-hidden="true" />
-      <span className="sv-composer-corner sv-composer-corner-br" aria-hidden="true" />
-      <span className="sv-composer-edge sv-composer-edge-left" aria-hidden="true" />
-      <span className="sv-composer-edge sv-composer-edge-right" aria-hidden="true" />
+    <footer className="sv-composer">
 
       {pending.length > 0 && (
         <div className="sv-composer-pending">

@@ -34,7 +34,7 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
   const otherGuilds = guilds.filter((guild) => guild.id !== activeGuild?.id);
 
   return (
-    <div className="sv-guild-rail sv-guild-rail-v18" aria-label="Komunity">
+    <div className="sv-guild-rail" aria-label="Komunity">
       {activeGuild ? (
         <button
           type="button"
@@ -93,10 +93,6 @@ export function GuildRail({ guilds, activeId, onSelect, onCreate, onJoin }: Prop
         <LogIn />
       </button>
 
-      <div className="sv-guild-rail-status" aria-hidden="true">
-        <span />
-        <small>LINK</small>
-      </div>
     </div>
   );
 }

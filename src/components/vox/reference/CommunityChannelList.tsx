@@ -76,10 +76,9 @@ export function CommunityChannelList({
   };
 
   return (
-    <div className="sv-channel-list sv-channel-list-v19">
+    <div className="sv-channel-list">
       <div className="sv-channel-list-tools">
         <span>Kanály komunity</span>
-        <small aria-hidden="true">UPLINK</small>
         <div>
           {inviteCode && (
             <button type="button" onClick={() => void copyInvite()} title="Kopírovat pozvánku">

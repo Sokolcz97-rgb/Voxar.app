@@ -10,7 +10,7 @@ const channels = [
 afterEach(cleanup);
 
 describe("community welcome banner", () => {
-  it("keeps the V31 readability authority and readable welcome copy", () => {
+  it("renders the welcome banner with readable copy and working actions", () => {
     const { container } = render(
       <CommunityWelcomeBanner
         guildName="StudioVoxario"
@@ -19,7 +19,8 @@ describe("community welcome banner", () => {
       />,
     );
 
-    expect(container.querySelector(".sv-welcome-v31-readable")).toBeTruthy();
+    expect(container.querySelector("section.sv-welcome")).toBeTruthy();
+    expect(container.querySelector(".sv-welcome-scene-image")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Vítej v komunitě!" })).toBeInTheDocument();
     expect(screen.getByText(/Voxar\.app je místo pro hráče/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Připojit se na hlas/ })).toBeEnabled();

@@ -42,12 +42,8 @@ export function CommunityRightPanel({
   const openChannel = onOpenChannel ?? openVoxChannel;
 
   return (
-    <div className="sv-right-shell sv-right-shell-v3 sv-right-shell-v17 sv-right-shell-v18 sv-right-shell-v19 sv-right-shell-v24">
-      <section className="sv-right-card sv-right-about sv-right-about-v3 sv-right-about-v18 sv-right-about-v19">
-        <span className="sv-right-card-cut" aria-hidden="true" />
-        <span className="sv-right-card-grid" aria-hidden="true" />
-        <span className="sv-right-card-orbit" aria-hidden="true" />
-        <span className="sv-right-card-beacon" aria-hidden="true" />
+    <div className="sv-right-shell">
+      <section className="sv-right-card sv-right-about">
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">O komunitě</div>
           <Sparkles className="sv-right-head-icon" aria-hidden="true" />
@@ -59,7 +55,7 @@ export function CommunityRightPanel({
         </div>
         <p>Herní komunita, kde se potkávají lidé, nápady a nové světy. Spojujeme hráče, tvůrce a přátele. Buď součástí.</p>
 
-        <div className="sv-right-stats sv-right-stats-v3">
+        <div className="sv-right-stats">
           <div><UsersRound /><span className="sv-right-stat-copy"><strong>{memberCount}</strong><small>členů</small></span></div>
           <div><i className="sv-right-online-dot" /><span className="sv-right-stat-copy"><strong>{onlineCount}</strong><small>online</small></span></div>
           <div><CalendarDays /><span className="sv-right-stat-copy"><strong>{activeEvents.length}</strong><small>událostí</small></span></div>
@@ -70,18 +66,15 @@ export function CommunityRightPanel({
         </div>
       </section>
 
-      <section className="sv-right-card sv-right-now sv-right-now-v3 sv-right-now-v18 sv-right-now-v19">
-        <span className="sv-right-card-cut" aria-hidden="true" />
-        <span className="sv-right-now-scan" aria-hidden="true" />
-        <span className="sv-right-now-beam" aria-hidden="true" />
+      <section className="sv-right-card sv-right-now">
         <div className="sv-right-card-head">
           <div className="sv-right-card-title">Právě se děje</div>
           <button type="button" className="sv-right-link-button" onClick={showEvents}>Zobrazit vše <ChevronRight /></button>
         </div>
 
         {upcomingEvent ? (
-          <div className="sv-right-event sv-right-event-v3 sv-right-event-v18 sv-right-event-v19">
-            <div className="sv-right-event-icon"><Gamepad2 /><span className="sv-right-event-live">EVENT</span></div>
+          <div className="sv-right-event">
+            <div className="sv-right-event-icon"><Gamepad2 /></div>
             <div className="sv-right-event-copy">
               <strong>{upcomingEvent.title}</strong>
               <span>{eventLabel(upcomingEvent.starts_at)}{upcomingEvent.location ? ` · ${upcomingEvent.location}` : ""}</span>
@@ -100,7 +93,7 @@ export function CommunityRightPanel({
             </button>
           </div>
         ) : (
-          <div className="sv-right-event sv-right-event-v3 sv-right-event-v18 sv-right-event-v19 is-empty">
+          <div className="sv-right-event is-empty">
             <div className="sv-right-event-icon"><CalendarDays /></div>
             <div className="sv-right-event-copy"><strong>Zatím nic naplánováno</strong><span>Nové komunitní akce se objeví automaticky.</span></div>
             <button type="button" className="sv-right-event-join" onClick={showEvents}>Události</button>
@@ -108,9 +101,7 @@ export function CommunityRightPanel({
         )}
       </section>
 
-      <section className="sv-right-card sv-right-members sv-right-members-v3 sv-right-members-v18 sv-right-members-v19">
-        <span className="sv-right-members-line" aria-hidden="true" />
-        <span className="sv-right-members-grid" aria-hidden="true" />
+      <section className="sv-right-card sv-right-members">
         <div className="sv-right-members-head">
           <div><div className="sv-right-card-title">Aktivní členové</div></div>
           <button type="button" onClick={onShowMembers ?? (() => openVoxUtility("members"))}>Zobrazit vše <ChevronRight /></button>
