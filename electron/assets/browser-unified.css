@@ -1,4 +1,4 @@
-:root { --vb-bg:#020a12; --vb-panel:#061625; --vb-panel-hi:#08273a; --vb-line:rgba(38,214,246,.46); --vb-line-soft:rgba(85,163,190,.25); --vb-cyan:#29e2f7; --vb-blue:#64baff; --vb-violet:#a65cff; --vb-text:#d9eff8; --vb-muted:#8caec1; --vb-sidebar-width:84px; --vb-sidebar-left:5px; --vb-sidebar-offset:calc(var(--vb-sidebar-width) + var(--vb-sidebar-left)); }
+:root { --vb-bg:#020a12; --vb-panel:#061625; --vb-panel-hi:#08273a; --vb-line:rgba(38,214,246,.46); --vb-line-soft:rgba(85,163,190,.25); --vb-cyan:#29e2f7; --vb-blue:#64baff; --vb-violet:#a65cff; --vb-text:#d9eff8; --vb-muted:#8caec1; --vb-sidebar-width:104px; --vb-sidebar-left:5px; --vb-sidebar-offset:calc(var(--vb-sidebar-width) + var(--vb-sidebar-left)); }
 * { box-sizing:border-box; scrollbar-color:rgba(41,219,245,.42) transparent; scrollbar-width:thin; }
 /* The native window can be reduced to 900 px.  Keep the shell inside that
    contract instead of forcing a wider document that is then clipped by the
@@ -71,7 +71,7 @@ button,input,textarea,select { font:inherit; } button { cursor:pointer; } button
 .dock .brand img { width:46px; height:46px; }
 .dockbtn { width:74px; }
 .bookmark-shell { padding-left:calc(var(--vb-sidebar-offset) + 20px); }
-.viewport > webview { left:var(--vb-sidebar-offset)!important; width:calc(100% - var(--vb-sidebar-offset))!important; }
+.viewport > webview { left:calc(var(--vb-sidebar-offset) * var(--ui-zoom,1))!important; width:calc(100% - var(--vb-sidebar-offset) * var(--ui-zoom,1))!important; }
 .startpage { padding-left:calc(var(--vb-sidebar-offset) + 28px); }
 .status { left:calc(var(--vb-sidebar-offset) + 10px); }
 
@@ -86,3 +86,163 @@ button,input,textarea,select { font:inherit; } button { cursor:pointer; } button
 @media (max-width:1120px) {
   .startpage { padding-left:calc((var(--vb-sidebar-offset) + 22px) / var(--start-zoom,1)); }
 }
+
+/* ===================================================================
+   Vzhled podle předlohy VoxarioBrowseru (docs/brand, obrázek 3).
+   Vyšší specifičnost přes `body` místo !important.
+   =================================================================== */
+
+/* --- Karty --------------------------------------------------------- */
+body .tabbar { height:50px; min-height:50px; padding-top:6px; }
+body .tab { height:40px; max-width:200px; flex-basis:180px; gap:10px; padding:0 14px; font-size:14px; color:#a9c6d6; border-radius:8px 8px 0 0; clip-path:none; border-color:rgba(49,144,176,.32); background:linear-gradient(180deg,rgba(4,24,40,.9),rgba(2,15,28,.86)); }
+body .tab.active { color:#f2fcff; border:1px solid rgba(48,222,249,.72); border-bottom:0; background:linear-gradient(180deg,rgba(9,64,92,.95),rgba(4,30,50,.95)); box-shadow:inset 0 2px 0 rgba(41,226,247,.9),inset 0 -14px 26px rgba(36,214,245,.12),0 0 16px rgba(41,226,247,.18); }
+body .tab-ico { flex-basis:18px; width:18px; height:18px; }
+body .tab .x { font-size:14px; color:#7fa9bd; }
+
+/* --- Adresní řádek -------------------------------------------------- */
+body .urlwrap { border-radius:9px; border-color:rgba(46,214,245,.7); background:linear-gradient(90deg,rgba(4,26,44,.96),rgba(3,20,36,.96)); box-shadow:inset 0 0 22px rgba(35,177,215,.08),0 0 16px rgba(41,226,247,.14); }
+body .urlwrap .lock { color:#a7dcee; }
+body .urlwrap .lock svg { width:20px; height:20px; }
+body #url::placeholder { color:#8fb3c6; }
+body .navbtn svg { width:22px; height:22px; }
+
+/* --- Lišta záložek -------------------------------------------------- */
+body .bookmark-shell { height:42px; min-height:42px; }
+body .bmbar { height:41px; min-height:41px; gap:12px; }
+body .bmbar .chip { height:30px; gap:9px; padding:3px 10px; font-size:13.5px; color:#c7e0ec; }
+body .bmbar .chip:hover { background:rgba(41,226,247,.08); color:#f0fbff; }
+body .chip-ico, body .chip-ico svg { width:18px; height:18px; flex-basis:18px; }
+body .bmbar .chip.dir .chip-ico { color:#9cd8ee; }
+body .bm-add { font-size:13.5px; color:#95c3d6; }
+body .sync-state { font-size:13px; color:#7fd6e8; }
+
+/* --- Levý panel ----------------------------------------------------- */
+body .dock { width:var(--vb-sidebar-width); padding:12px 9px 12px; gap:6px; border-color:rgba(46,214,245,.5); background:linear-gradient(180deg,rgba(4,30,48,.99),rgba(2,13,23,.99)); box-shadow:inset 0 0 36px rgba(30,192,230,.06); }
+body .dock .brand { width:84px; height:66px; flex-basis:66px; margin-bottom:8px; }
+body .dock .brand img { width:54px; height:54px; filter:drop-shadow(0 0 12px rgba(38,220,249,.55)); }
+body .dockbtn { width:86px; height:72px; min-height:72px; flex-basis:72px; gap:6px; font-size:13px; line-height:1.2; color:#b5d1df; }
+body .dockbtn::after { display:none; }
+body .dockbtn .dockico { height:26px; }
+body .dockbtn .dockico svg { width:26px; height:26px; }
+body .dockbtn.active, body .dockbtn:hover { color:#f2fdff; border-color:rgba(52,228,252,.8); background:linear-gradient(145deg,rgba(8,104,134,.92),rgba(5,44,66,.96)); box-shadow:inset 0 0 22px rgba(47,220,248,.2),0 0 22px rgba(21,204,240,.25); }
+body .dockbtn.active .dockico, body .dockbtn:hover .dockico { color:#e9fcff; filter:drop-shadow(0 0 6px rgba(41,226,247,.8)); }
+body .dock-sep { display:block; flex:0 0 1px; width:58px; height:1px; margin:3px 0; background:linear-gradient(90deg,transparent,rgba(80,170,200,.45),transparent); }
+body .dock-promo { width:92px; min-height:118px; padding:16px 10px 12px; border:1px solid rgba(52,214,245,.55); background:linear-gradient(180deg,rgba(6,22,44,.35),rgba(6,14,36,.75)),url('./browser-world.webp') 70% 60%/320% no-repeat; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); box-shadow:inset 0 0 22px rgba(41,226,247,.12); }
+body .dock-promo span { display:block; color:#c09bff; font-size:11px; letter-spacing:.18em; line-height:1.6; }
+body .dock-promo b { display:block; margin-top:10px; color:#7fe6f6; font-size:11px; font-weight:600; letter-spacing:.18em; line-height:1.6; }
+body .dock-mini { width:86px; height:44px; min-height:44px; flex-basis:44px; }
+
+/* --- Hero ----------------------------------------------------------- */
+body .browser-hero { border-color:rgba(52,226,250,.78); background:linear-gradient(90deg,rgba(3,17,33,.82) 0%,rgba(3,20,38,.42) 34%,rgba(8,14,48,.08) 62%,rgba(30,8,70,.12)),url('./browser-world.webp') center 50%/cover no-repeat; box-shadow:inset 0 0 0 1px rgba(41,226,247,.12),inset 0 0 70px rgba(16,190,232,.1); }
+body .browser-hero::after { background:radial-gradient(260px 160px at 0% 100%,rgba(150,70,255,.28),transparent 70%),radial-gradient(420px 220px at 72% 45%,rgba(120,70,255,.12),transparent 70%); }
+body .browser-hero::before { content:''; position:absolute; z-index:1; left:0; bottom:0; width:4px; height:90px; background:linear-gradient(180deg,transparent,#a65cff); box-shadow:0 0 14px rgba(166,92,255,.8); pointer-events:none; }
+body .hero-brand strong { color:#e9f8ff; letter-spacing:.3em; }
+body .hero-brand strong b { color:#3fe6f8; }
+body .hero-brand span { color:#b9d6e6; letter-spacing:.28em; }
+body .hero-copy h1 { font-size:46px; filter:drop-shadow(0 0 18px rgba(41,226,247,.25)); }
+body .hero-copy p { color:#47e3f3; }
+body .hero-search { right:auto; width:min(790px,calc(100% - 300px)); padding-left:20px; border-radius:12px; border:1.5px solid rgba(52,226,250,.88); background:linear-gradient(90deg,rgba(6,32,56,.82),rgba(5,24,46,.7)); box-shadow:0 0 26px rgba(41,226,247,.28),inset 0 0 22px rgba(46,190,231,.12); backdrop-filter:blur(6px); }
+body .hero-search input { font-size:19px; color:#e6f6ff; }
+body .hero-search input::placeholder { color:#9cc0d2; }
+body .hero-search button { width:46px; height:42px; margin-right:6px; border:1px solid rgba(64,225,247,.65); border-radius:9px; background:rgba(8,52,78,.7); box-shadow:0 0 12px rgba(41,226,247,.25); }
+body .hero-actions { gap:14px; }
+body .hero-actions button { height:40px; padding:0 20px; gap:10px; font-size:14px; color:#d7eef8; border:1px solid rgba(52,206,240,.6); background:rgba(4,26,44,.72); box-shadow:inset 0 0 12px rgba(41,226,247,.06); }
+body .hero-actions button:first-child { color:#4fe8f8; }
+body .hero-actions button:last-child { color:#e6dcff; border-color:rgba(166,92,255,.85); background:linear-gradient(90deg,rgba(78,38,170,.45),rgba(45,26,110,.5)); box-shadow:0 0 16px rgba(166,92,255,.35); }
+body .hero-actions button:last-child i { color:#d6b8ff; }
+body .hero-actions button:hover { border-color:rgba(64,232,252,.95); box-shadow:0 0 14px rgba(41,226,247,.3); }
+body .hero-motto { color:#d9ecf8; font-size:14px; letter-spacing:.32em; }
+
+/* --- Panely: společný rámeček se září ------------------------------- */
+body .quick-panel, body .dashboard-card, body .start-right > section { border:1px solid rgba(46,214,245,.62); box-shadow:inset 0 0 0 1px rgba(41,226,247,.07),inset 0 0 40px rgba(16,190,232,.06); }
+body .hdr-ico { display:inline-grid; place-items:center; width:20px; height:20px; margin-right:8px; vertical-align:-4px; color:#8fdcf0; font-style:normal; }
+body .hdr-ico svg { width:20px; height:20px; }
+
+/* --- Rychlé odkazy -------------------------------------------------- */
+body .quick-panel { height:216px; padding:14px 210px 14px 18px; background:linear-gradient(120deg,rgba(4,26,44,.96),rgba(5,36,58,.9)); }
+body .quick-panel > header { height:30px; font-size:15px; }
+body .quick-panel > header strong { font-weight:500; color:#e6f6fc; }
+body .quick-panel header button { font-size:13.5px; color:#8fd5ea; display:inline-flex; align-items:center; }
+body .quick-panel header button .hdr-ico { width:17px; height:17px; margin-right:6px; }
+body .quick-panel header button .hdr-ico svg { width:17px; height:17px; }
+body .quick-panel .dial { grid-template-rows:repeat(2,70px); gap:8px; margin-top:8px; }
+body .dialtile, body .dialadd { height:70px; gap:6px; border-radius:7px; clip-path:none; border:1px solid rgba(48,150,186,.42); background:linear-gradient(160deg,rgba(9,46,70,.82),rgba(4,24,40,.94)); }
+body .dialtile:hover, body .dialadd:hover { border-color:rgba(52,228,252,.85); box-shadow:inset 0 0 18px rgba(43,216,245,.14),0 0 14px rgba(41,226,247,.18); }
+body .dialtile .ico, body .dialtile .ico img { width:30px; height:30px; }
+body .dialtile .ico svg { width:28px; height:28px; }
+body .dialtile .ico img { background:transparent; }
+body .dialtile .dt { font-size:13px; color:#d8eef7; }
+body .dialadd { color:#8fdcf0; }
+body .dialadd b { font-size:26px; font-weight:300; line-height:1; }
+body .dialadd span { font-size:12.5px; }
+body .quick-art { inset:14px 14px 14px auto; width:178px; border:1px solid rgba(46,190,230,.4); border-radius:6px; background:radial-gradient(60px 60px at 50% 30%,rgba(166,92,255,.35),transparent 70%),linear-gradient(180deg,rgba(6,14,40,.2),rgba(6,10,36,.55)),url('./browser-portal.webp') center/cover; box-shadow:inset 0 0 26px rgba(120,70,255,.25); }
+
+/* --- Dolní karty ---------------------------------------------------- */
+body .start-lower { gap:14px; }
+body .dashboard-card { padding:16px 18px; background:linear-gradient(150deg,rgba(4,26,44,.97),rgba(3,16,30,.97)); }
+body .dashboard-card > header { height:32px; font-size:15px; }
+body .dashboard-card > header strong { font-weight:500; color:#e6f6fc; }
+body .dashboard-card header button { font-size:12.5px; color:#8fd5ea; }
+body .mini-row { min-height:40px; gap:12px; padding:6px 2px; border-bottom-color:rgba(58,135,158,.14); }
+body .favico { width:26px; height:26px; flex:0 0 26px; border-radius:6px; }
+body .favico.has-brand { background:transparent; }
+body .favico.has-brand svg { position:absolute; inset:2px; width:22px; height:22px; }
+body .favcopy strong { font-size:13.5px; font-weight:500; color:#e2f2f9; }
+body .favcopy small { font-size:11.5px; color:#7fb6cc; }
+body .mini-row time { font-size:12px; color:#8fbfd2; }
+body .mini-row em { display:grid; place-items:center; width:22px; height:22px; color:#a98bff; }
+body .mini-row em svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; }
+body .mini-row:first-child em svg { fill:#9b7bff; stroke:#9b7bff; }
+body .discover-item { min-height:66px; gap:14px; padding:7px 0; }
+body .discover-thumb { width:96px; height:54px; flex:0 0 96px; border-radius:6px; border-color:rgba(70,170,215,.4); }
+body .discover-item strong { font-size:13.5px; font-weight:500; line-height:1.3; color:#e2f2f9; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+body .discover-item small { margin-top:3px; font-size:11.5px; color:#7fb6cc; }
+
+/* --- Pravý sloupec -------------------------------------------------- */
+body .start-right > section { background:linear-gradient(150deg,rgba(5,32,52,.97),rgba(3,16,30,.98)); }
+body .weather-card { height:158px; padding:16px 20px; }
+body .weather-city { font-size:15px; color:#e6f6fc; }
+body .weather-main { display:flex; align-items:center; gap:16px; margin-top:10px; }
+body .weather-ico { display:grid; place-items:center; width:56px; height:56px; }
+body .weather-ico svg { width:56px; height:56px; filter:drop-shadow(0 0 10px rgba(190,220,255,.65)); }
+body .weather-read strong { display:block; font-size:30px; font-weight:500; line-height:1.05; color:#f2fbff; }
+body .weather-read div { margin-top:4px; font-size:15px; color:#cfe6f2; }
+body .weather-card small { display:block; margin-top:12px; font-size:13px; color:#8ccfe6; }
+body .quote-card { height:150px; padding:30px 22px; font-size:17px; line-height:1.4; color:#a6dcf4; }
+body .quote-card small { font-size:10px; color:#5fd6ec; }
+body .workspace-card { padding:16px 14px; }
+body .workspace-card > header { font-size:14.5px; }
+body .workspace-card > header strong { font-weight:500; color:#e6f6fc; }
+body .workspace-card header button { width:30px; height:30px; border-radius:6px; }
+body .workspace-row { min-height:48px; gap:12px; }
+body .workspace-row i { width:34px; height:34px; flex:0 0 34px; border-radius:7px; background:rgba(4,22,38,.9); border:1.5px solid currentColor; box-shadow:0 0 12px -2px currentColor,inset 0 0 10px -4px currentColor; }
+body .workspace-row i svg { width:19px; height:19px; }
+body .workspace-row[data-ws=personal] i { color:#38d9f2; background:rgba(4,30,44,.9); }
+body .workspace-row[data-ws=work] i { color:#c36bff; background:rgba(34,10,52,.9); }
+body .workspace-row[data-ws=gaming] i { color:#5b8dff; background:rgba(10,22,58,.9); }
+body .workspace-row[data-ws=research] i { color:#34e0bd; background:rgba(4,36,34,.9); }
+body .workspace-row[data-ws=custom] i { color:#29e2f7; }
+body .workspace-row strong { font-size:14px; font-weight:500; color:#e2f2f9; }
+body .workspace-row small { font-size:12px; color:#7fb6cc; }
+body .promo-card { font-size:12px; color:#c99cff; }
+body .promo-card::after { content:''; position:absolute; right:-18px; top:22px; width:120px; height:150px; border-radius:50%; border:3px solid rgba(190,120,255,.9); box-shadow:0 0 22px rgba(166,92,255,.8),inset 0 0 22px rgba(166,92,255,.6); transform:rotate(16deg); pointer-events:none; }
+body .promo-card small { font-size:9px; color:#b98bea; }
+body svg.brand-svg, body .weather-ico svg { stroke:none; }
+body .workspace-card > header strong { white-space:nowrap; }
+body .workspace-card > header .hdr-ico { margin-right:6px; }
+body .discover-item > span:last-child { min-width:0; padding-left:2px; }
+body .discover-item { grid-template-columns:96px minmax(0,1fr); align-items:center; }
+body svg.brand-svg *, body .weather-ico svg path:not([stroke]), body .weather-ico svg circle { stroke:none; }
+body #workspaceList { margin-top:8px; }
+body .mini-list, body .discover-list { margin-top:6px; }
+body .workspace-card > header { margin-bottom:10px; }
+
+/* Zvětšení lišt na velkých monitorech (--ui-zoom nastavuje fitStartPage).
+   `zoom` násobí i vlastní top/šířku prvku, proto navazující odsazení
+   (webview, startovní stránka) násobíme stejným faktorem. */
+body .tabbar, body .navbar, body .bookmark-shell, body .dock, body .prog, body .status { zoom:var(--ui-zoom,1); }
+body .startpage { padding-left:calc((var(--vb-sidebar-offset) * var(--ui-zoom,1) + 28px) / var(--start-zoom,1)); }
+@media (max-width:1120px) {
+  body .startpage { padding-left:calc((var(--vb-sidebar-offset) * var(--ui-zoom,1) + 22px) / var(--start-zoom,1)); }
+}
+body .panel { padding-left:calc(var(--vb-sidebar-offset) * var(--ui-zoom,1) + 30px); }

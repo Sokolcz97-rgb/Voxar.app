@@ -8,32 +8,33 @@ function browserChromeFitRenderer() {
   const style = document.createElement("style");
   style.id = "voxario-browser-chrome-fit-style";
   style.textContent = `
-    /* Compact only the native browser chrome; loaded web pages stay at 100% zoom. */
+    /* Rozměry lišt podle předlohy VoxarioBrowseru (okno 1672 × 941).
+       Načtené weby zůstávají na 100 % zoomu. */
     .navbar{
-      height:46px!important;
-      min-height:46px!important;
-      gap:5px!important;
-      padding:5px 12px!important;
+      height:54px!important;
+      min-height:54px!important;
+      gap:8px!important;
+      padding:6px 16px!important;
     }
     .navbtn{
-      width:32px!important;
-      height:32px!important;
-      flex:0 0 32px!important;
-      font-size:16px!important;
+      width:40px!important;
+      height:40px!important;
+      flex:0 0 40px!important;
+      font-size:20px!important;
     }
     .urlwrap{
-      height:34px!important;
+      height:42px!important;
       min-width:0!important;
-      margin-left:8px!important;
-      padding:0 10px!important;
-      gap:6px!important;
+      margin-left:10px!important;
+      padding:0 14px!important;
+      gap:10px!important;
     }
-    .urlwrap .lock{width:18px!important;font-size:13px!important}
-    #url{min-width:0!important;font-size:12px!important}
+    .urlwrap .lock{width:22px!important;font-size:16px!important}
+    #url{min-width:0!important;font-size:15px!important}
     .avatar-button{
-      width:34px!important;
-      height:34px!important;
-      flex-basis:34px!important;
+      width:42px!important;
+      height:42px!important;
+      flex-basis:42px!important;
     }
 
     /* Keep + next to the tab strip, but sticky before the Windows controls when tabs overflow. */
@@ -55,10 +56,10 @@ function browserChromeFitRenderer() {
     .newtab:hover{border-color:rgba(42,218,246,.55)!important;background:rgba(6,48,70,.98)!important}
     .wctl{z-index:9!important}
 
-    /* Navbar is 10px shorter, so dependent overlays follow the new geometry. */
-    .dock{top:95px!important}
-    .prog{top:133px!important}
-    .status{top:98px!important}
+    /* Navazující prvky sledují výšku lišt (karty 50 + adresa 54 + záložky 42). */
+    .dock{top:104px!important}
+    .prog{top:146px!important}
+    .status{top:108px!important}
 
     /* Make the live resource HUD give space back to the address field sooner. */
     @media(max-width:1500px){

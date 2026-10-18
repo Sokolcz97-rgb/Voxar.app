@@ -20,10 +20,10 @@ assert.match(monitor, /document\.getElementById\("vbResourceHud"\)/, "HUD inject
 assert.match(monitor, /document\.getElementById\("voxario-resource-hud-style"\)/, "HUD styles must be idempotent");
 assert.match(bootstrap, /require\(["']\.\/browser-resource-monitor\.cjs["']\)/, "Secure bootstrap must load the resource monitor");
 assert.match(bootstrap, /require\(["']\.\/browser-chrome-fit\.cjs["']\)/, "Secure bootstrap must load browser chrome fit");
-assert.match(chromeFit, /\.navbar\{[\s\S]*height:46px!important/, "Top navigation must stay compact");
+assert.match(chromeFit, /\.navbar\{[\s\S]*height:54px!important/, "Top navigation follows the reference height");
 assert.match(chromeFit, /\.newtab\{[\s\S]*position:sticky!important[\s\S]*right:112px!important/, "New-tab control must stay visible next to overflowing tabs");
 assert.match(chromeFit, /\.tabbar\{padding-right:116px!important\}/, "Tab strip must reserve only the Windows control area");
 assert.doesNotMatch(chromeFit, /zoom\s*:/i, "Chrome fit must never zoom loaded web pages");
-assert.match(css, /--vb-sidebar-width:84px/, "Sidebar width must have one central 84px token");
+assert.match(css, /--vb-sidebar-width:104px/, "Sidebar width must have one central 104px token");
 
 console.log("✓ VoxarioBrowser UI shell, compact chrome and HUD injection structure passed");
