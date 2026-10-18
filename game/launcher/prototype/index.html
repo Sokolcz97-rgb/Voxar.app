@@ -3,141 +3,117 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Ashes of Eryon — Launcher Prototype v0.1</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Ashes of Eryon</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div class="launcher-viewport">
   <main class="launcher" data-state="signed_out">
+    <div class="backdrop" aria-hidden="true"></div>
+    <div class="embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
     <header class="topbar">
-      <div class="brand">
-        <img class="brand-logo" src="./assets/ashes-of-eryon-logo-v0.1.webp" alt="Ashes of Eryon" />
-      </div>
+      <img class="brand-logo" src="./assets/ashes-wordmark.webp" alt="Ashes of Eryon" />
 
       <nav class="nav" aria-label="Hlavní navigace">
-        <button class="nav-item active" type="button">Domů</button>
-        <button class="nav-item" type="button">Novinky</button>
-        <button class="nav-item" type="button">Nastavení</button>
-        <button class="nav-item" type="button">Podpora</button>
+        <button class="nav-item active" type="button"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h5v-6h3v6h5V10"/></svg>Domů</button>
+        <button class="nav-item" type="button"><svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>Novinky</button>
+        <button class="nav-item" type="button"><svg viewBox="0 0 24 24"><path d="M10.3 3h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6V11L4.2 9.4l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="3"/></svg>Nastavení</button>
+        <button class="nav-item" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.8v.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>Podpora</button>
       </nav>
 
       <div class="account">
-        <div class="server">
-          <span class="status-dot"></span>
-          <span>Servery online</span>
-        </div>
-        <div class="avatar" aria-hidden="true">?</div>
+        <div class="server"><span class="status-dot" id="serverDot"></span><span id="serverLabel">Servery online</span></div>
+        <span class="divider" aria-hidden="true"></span>
+        <div class="avatar" aria-hidden="true"><img src="./assets/ashes-logo.webp" alt="" /></div>
         <div class="account-copy">
           <strong id="accountName">Nepřihlášen</strong>
-          <span id="accountState">StudioVoxario účet</span>
+          <span id="accountState"><i class="status-dot"></i>StudioVoxario účet</span>
         </div>
-        <div class="window-controls" aria-label="Ovládání okna">
-          <button id="windowMinimize" class="window-control" type="button" aria-label="Minimalizovat">—</button>
-          <button id="windowMaximize" class="window-control" type="button" aria-label="Maximalizovat">□</button>
-          <button id="windowClose" class="window-control close" type="button" aria-label="Zavřít">×</button>
-        </div>
+        <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+      </div>
+
+      <div class="window-controls" aria-label="Ovládání okna">
+        <button id="windowMinimize" class="window-control" type="button" aria-label="Minimalizovat">—</button>
+        <button id="windowMaximize" class="window-control" type="button" aria-label="Maximalizovat" hidden>□</button>
+        <button id="windowClose" class="window-control close" type="button" aria-label="Zavřít">✕</button>
       </div>
     </header>
 
     <section class="hero" aria-labelledby="heroTitle">
-      <div class="hero-art" aria-hidden="true">
-        <div class="mountain mountain-a"></div>
-        <div class="mountain mountain-b"></div>
-        <div class="mist mist-a"></div>
-        <div class="mist mist-b"></div>
-        <div class="rune rune-a">ᚱ</div>
-        <div class="rune rune-b">ᛉ</div>
-      </div>
-      <div class="hero-overlay"></div>
+      <div class="eyebrow">ASHES OF ERYON <b>•</b> KAPITOLA I<i></i></div>
+      <h1 id="heroTitle">Every choice<br />leaves a <span>scar.</span></h1>
+      <div class="hero-rule" aria-hidden="true"><i></i></div>
+      <p id="heroText">Probouzíš se na Bezejmenném břehu.<br />Kalidra je v troskách a jméno Eryon<br />rozděluje celý kontinent.</p>
+    </section>
 
-      <div class="hero-copy">
-        <div class="eyebrow">ASHES OF ERYON • KAPITOLA I</div>
-        <h1 id="heroTitle">Every choice<br />leaves a <span>scar.</span></h1>
-        <div class="hero-rule" aria-hidden="true"></div>
-        <p id="heroText">Probouzíš se na Bezejmenném břehu.<br />Kalidra je v troskách a jméno Eryon<br />rozděluje celý kontinent.</p>
-      </div>
+    <div class="hero-action">
+      <button id="primaryAction" class="primary-action" type="button"><span>Přihlásit se</span></button>
+      <button id="secondaryAction" class="secondary-action" type="button"><svg viewBox="0 0 24 24"><path d="M10.3 3h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6V11L4.2 9.4l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="3"/></svg><span>Vytvořit účet</span></button>
+    </div>
 
-      <div class="hero-action">
-        <button id="primaryAction" class="primary-action" type="button">Přihlásit se</button>
-        <button id="secondaryAction" class="secondary-action" type="button">Vytvořit účet</button>
+    <section class="panel news-panel">
+      <header class="panel-heading">
+        <svg class="panel-icon" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M7 9h6M7 12.5h10M7 16h10M15.5 8.5h2v2h-2z"/></svg>
+        <h2>Novinky</h2>
+        <i class="heading-rule"></i>
+        <button type="button" class="text-button">Zobrazit všechny novinky <span>→</span></button>
+      </header>
+      <div class="news-list">
+        <article class="news-item">
+          <img src="./assets/news-coast.webp" alt="" />
+          <time>28. 4. 2025</time>
+          <h3>Nekonečný svět Eryonu</h3>
+          <p>Objev rozlehlé oblasti, tajemství minulosti a místa, která ještě nikdo neprozkoumal.</p>
+        </article>
+        <article class="news-item">
+          <img src="./assets/news-citadel.webp" alt="" />
+          <time>25. 4. 2025</time>
+          <h3>Pád Kalidry</h3>
+          <p>Příběh největšího města kontinentu a události, které navždy změnily osud Eryonu.</p>
+        </article>
+        <article class="news-item">
+          <img src="./assets/news-ruins.webp" alt="" />
+          <time>22. 4. 2025</time>
+          <h3>Nová verze launcheru</h3>
+          <p>Vylepšená stabilita, rychlejší stahování a několik užitečných funkcí.</p>
+        </article>
       </div>
     </section>
 
-    <section class="lower-grid">
-      <article class="panel news-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="panel-kicker">SVĚT & VÝVOJ</span>
-            <h2>Novinky</h2>
-          </div>
-          <button type="button" class="text-button">Zobrazit vše</button>
-        </div>
-
-        <div class="news-list">
-          <article class="news-item featured">
-            <div class="news-art news-art-world" aria-hidden="true"></div>
-            <time>28. 4. 2025</time>
-            <div>
-              <h3>Nekonečný svět Eryonu</h3>
-              <p>Objev rozlehlé oblasti, tajemství minulosti a místa, která ještě nikdo neprozkoumal.</p>
-            </div>
-          </article>
-
-          <article class="news-item">
-            <div class="news-art news-art-kalidra" aria-hidden="true"></div>
-            <time>25. 4. 2025</time>
-            <div>
-              <h3>Pád Kalidry</h3>
-              <p>Příběh největšího města kontinentu a události, které navždy změnily osud Eryonu.</p>
-            </div>
-          </article>
-
-          <article class="news-item">
-            <div class="news-art news-art-launcher" aria-hidden="true"></div>
-            <time>22. 4. 2025</time>
-            <div>
-              <h3>Nová verze launcheru</h3>
-              <p>Vylepšená stabilita, rychlejší stahování a několik užitečných funkcí.</p>
-            </div>
-          </article>
-        </div>
-      </article>
-
-      <aside class="panel status-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="panel-kicker">STAV HRY</span>
-            <h2>Instalace</h2>
-          </div>
-          <span id="stateBadge" class="state-badge">SIGNED OUT</span>
-        </div>
-
-        <dl class="status-list">
-          <div><dt>Kanál</dt><dd>Alpha</dd></div>
-          <div><dt>Nainstalovaná verze</dt><dd id="installedVersion">—</dd></div>
-          <div><dt>Dostupná verze</dt><dd>0.1.0-alpha</dd></div>
-          <div><dt>Umístění</dt><dd id="installPath">Nenainstalováno</dd></div>
-          <div><dt>Velikost</dt><dd>11.4 GB</dd></div>
-          <div><dt>Stav serveru</dt><dd class="positive">Online</dd></div>
-        </dl>
-      </aside>
-    </section>
+    <aside class="panel status-panel">
+      <header class="panel-heading">
+        <svg class="panel-icon" viewBox="0 0 24 24"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>
+        <h2>Stav hry</h2>
+        <i class="heading-rule"></i>
+        <span id="stateBadge" class="state-badge" hidden></span>
+      </header>
+      <dl class="status-list">
+        <div><dt><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>Kanál:</dt><dd>Alpha</dd></div>
+        <div><dt><svg viewBox="0 0 24 24"><path d="m12 3 8 9-8 9-8-9z"/><circle cx="12" cy="12" r="2.5"/></svg>Nainstalovaná verze:</dt><dd id="installedVersion">—</dd></div>
+        <div><dt><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v8M8.5 12.5 12 16l3.5-3.5"/></svg>Dostupná verze:</dt><dd>0.1.0-alpha</dd></div>
+        <div><dt><svg viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4.5l2 2H19a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/></svg>Umístění:</dt><dd id="installPath">Nenainstalováno</dd></div>
+        <div><dt><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6.5" rx="7" ry="2.5"/><path d="M5 6.5v11c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-11M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg>Velikost:</dt><dd id="gameSize">11.4 GB</dd></div>
+        <div><dt><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 4"/></svg>Stav serveru:</dt><dd id="serverState" class="positive"><i class="status-dot"></i>Online</dd></div>
+      </dl>
+      <svg class="compass" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="30"/><circle cx="50" cy="50" r="22"/><path d="M50 2 55 45 98 50 55 55 50 98 45 55 2 50 45 45z"/></svg>
+    </aside>
 
     <footer class="progress-strip" id="progressStrip">
-      <div class="progress-copy">
-        <strong id="progressTitle">Launcher připraven</strong>
-        <span id="progressDetail">Přihlaste se svým StudioVoxario účtem.</span>
-      </div>
+      <span class="progress-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9"/></svg></span>
+      <strong id="progressTitle">Launcher připraven</strong>
+      <span class="divider" aria-hidden="true"></span>
+      <span id="progressDetail">Přihlaste se svým StudioVoxario účtem.</span>
       <div class="progress-track" aria-hidden="true"><span id="progressFill"></span></div>
       <div class="progress-value" id="progressValue">—</div>
     </footer>
 
-    <div class="prototype-controls" aria-label="Prototype state controls">
-      <span>Prototype:</span>
-      <button type="button" data-demo-state="signed_out" class="active">Signed out</button>
-      <button type="button" data-demo-state="ready_to_install">Ready to install</button>
-      <button type="button" data-demo-state="ready_to_play">Ready to play</button>
+    <div class="prototype-controls" aria-label="Ukázka stavů launcheru" hidden>
+      <span>Ukázka:</span>
+      <button type="button" data-demo-state="signed_out" class="active">Nepřihlášen</button>
+      <button type="button" data-demo-state="ready_to_install">K instalaci</button>
+      <button type="button" data-demo-state="ready_to_play">Připraveno</button>
     </div>
   </main>
   </div>

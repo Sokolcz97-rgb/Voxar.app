@@ -22,6 +22,10 @@
   const freeSpace = document.getElementById("freeSpace");
   const diskWarning = document.getElementById("diskWarning");
   const launcherPayloadSize = document.getElementById("launcherPayloadSize");
+  const totalSize = document.getElementById("totalSize");
+  const windowShell = document.getElementById("windowShell");
+  const desktopShortcutTarget = document.getElementById("desktopShortcutTarget");
+  const startShortcutTarget = document.getElementById("startShortcutTarget");
 
   const desktopShortcut = document.getElementById("desktopShortcut");
   const startShortcut = document.getElementById("startShortcut");
@@ -60,12 +64,13 @@
       size /= 1024;
       unit = units[index];
     }
-    return `${size.toFixed(size >= 100 ? 0 : size >= 10 ? 1 : 2)} ${unit}`;
+    return `${size.toFixed(size >= 100 ? 0 : 1).replace(".", ",")} ${unit}`;
   }
 
   function setStep(value) {
     step = Math.max(0, Math.min(5, value));
     installWizard.dataset.step = String(step);
+    if (windowShell) windowShell.dataset.step = String(step);
 
     document.querySelectorAll("[data-step]").forEach((node) => {
       node.classList.toggle("active", Number(node.dataset.step) === step);
@@ -79,6 +84,7 @@
 
     backButton.disabled = installing || step === 0 || step >= 4;
 
+    backButton.textContent = step === 4 ? "Zrušit" : "‹ Zpět";
     if (step === 3) nextButton.textContent = "Instalovat";
     else if (step === 4) nextButton.textContent = "Instaluji…";
     else if (step === 5) nextButton.textContent = "Dokončit";
@@ -181,7 +187,10 @@
     progressFill.style.width = `${pct}%`;
     progressPercent.textContent = `${pct} %`;
     progressPhase.textContent = value?.detail || "Instalace";
-    progressDetail.textContent = value?.detail || "";
+    if (defaults?.payloadBytes && progressPayload) {
+      progressPayload.textContent = `${formatBytes(defaults.payloadBytes * pct / 100)} / ${formatBytes(defaults.payloadBytes)}`;
+    }
+    progressDetail.textContent = pct >= 100 ? "Dokončuji…" : "";
     if (progressState) progressState.textContent = value?.phase || "instalace";
 
     if (mode === "uninstall") {
@@ -199,8 +208,16 @@
     installPath.value = defaults.defaultTarget;
     requiredSpace.textContent = formatBytes(defaults.requiredBytes);
     freeSpace.textContent = formatBytes(defaults.freeBytes);
-    launcherPayloadSize.textContent = formatBytes(defaults.payloadBytes);
-    if (progressPayload) progressPayload.textContent = `Launcher payload: ${formatBytes(defaults.payloadBytes)}`;
+    launcherPayloadSize.textContent = `~ ${formatBytes(defaults.payloadBytes)}`;
+    if (totalSize) totalSize.textContent = `~ ${formatBytes(defaults.payloadBytes)}`;
+    if (progressPayload) progressPayload.textContent = `0 B / ${formatBytes(defaults.payloadBytes)}`;
+
+    // Zástupce lze zvolit v kroku 3 i 4; obě volby jsou propojené.
+    for (const [a, b] of [[desktopShortcutTarget, desktopShortcut], [startShortcutTarget, startShortcut]]) {
+      if (!a || !b) continue;
+      a.addEventListener("change", () => { b.checked = a.checked; });
+      b.addEventListener("change", () => { a.checked = b.checked; });
+    }
 
     const insufficient = defaults.freeBytes !== null && defaults.freeBytes < defaults.requiredBytes;
     diskWarning.hidden = !insufficient;
@@ -212,14 +229,13 @@
       if (previewStep === 4) {
         progressFill.style.width = "45%";
         progressPercent.textContent = "45 %";
-        progressPhase.textContent = "Kopírování souborů…";
-        progressDetail.textContent = "Připravuji launcher a ověřuji balíček.";
+        progressPhase.textContent = "Kopírování souborů launcheru…";
+        progressPayload.textContent = `${formatBytes(defaults.payloadBytes * 0.45)} / ${formatBytes(defaults.payloadBytes)}`;
+        progressDetail.textContent = "";
         if (progressState) progressState.textContent = "instalace";
       }
 
-      if (previewStep === 5) {
-        statusText.textContent = "Launcher je připraven.";
-      }
+      if (previewStep === 5) statusText.textContent = "";
     } else {
       setStep(0);
     }

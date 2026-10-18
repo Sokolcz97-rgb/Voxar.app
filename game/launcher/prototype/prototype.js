@@ -1,8 +1,10 @@
 (() => {
   "use strict";
 
-  const REFERENCE_WIDTH = 1920;
-  const REFERENCE_HEIGHT = 1080;
+  // Rozměr předlohy launcheru; celé plátno se úměrně škáluje do okna.
+  const REFERENCE_WIDTH = 1672;
+  const REFERENCE_HEIGHT = 941;
+  const params = new URLSearchParams(window.location.search);
 
   const root = document.querySelector(".launcher");
   const primary = document.getElementById("primaryAction");
@@ -67,10 +69,10 @@
     if (!state) return;
 
     root.dataset.state = name;
-    primary.textContent = state.primary;
-    secondary.textContent = state.secondary;
+    primary.querySelector("span").textContent = state.primary;
+    secondary.querySelector("span").textContent = state.secondary;
     accountName.textContent = state.account;
-    accountState.textContent = state.accountState;
+    accountState.lastChild.textContent = state.accountState;
     stateBadge.textContent = state.badge;
     installedVersion.textContent = state.installed;
     installPath.textContent = state.path;
@@ -125,8 +127,6 @@
       if (maximizeButton) maximizeButton.textContent = state?.maximized ? "❐" : "□";
     });
 
-    const demoControls = document.querySelector(".prototype-controls");
-    if (demoControls) demoControls.hidden = true;
   }
 
   document.querySelectorAll("[data-demo-state]").forEach((button) => {
@@ -164,5 +164,9 @@
   window.addEventListener("resize", fitReferenceCanvas);
   fitReferenceCanvas();
   bindWindowControls();
-  applyState("signed_out");
+  // Přepínač ukázkových stavů jen v náhledu v prohlížeči (?demo=1).
+  const demoControls = document.querySelector(".prototype-controls");
+  if (demoControls) demoControls.hidden = isDesktop || params.get("demo") !== "1";
+  const initial = !isDesktop && states[params.get("state")] ? params.get("state") : "signed_out";
+  applyState(initial);
 })();
