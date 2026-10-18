@@ -33,6 +33,12 @@ import {
   Download,
   ShoppingBag,
   Eraser,
+  Sparkles,
+  Globe,
+  ShieldCheck,
+  Swords,
+  Users,
+  ChevronDown,
 } from "lucide-react";
 import { BackgroundRemoverDialog } from "@/components/BackgroundRemoverDialog";
 import {
@@ -139,53 +145,81 @@ export function Navbar() {
 
   const allMobileItems = [...primaryNav, ...secondaryNav, ...profileMenuItems];
 
-  const compactNavCount = 2;
+  // Hlavní navigace seskupená podle toho, co platforma nabízí.
+  type MenuEntry = { to: string; label: string; desc: string; icon: React.ComponentType<{ className?: string }>; external?: boolean };
+  const navGroups: { label: string; items: MenuEntry[] }[] = [
+    {
+      label: "Platforma",
+      items: [
+        { to: "/app", label: "Voxar.app", desc: "Komunita, hlas, události a obchod v jednom okně", icon: Sparkles },
+        { to: "/browser", label: "VoxarioBrowser", desc: "Herní prohlížeč s ochranou soukromí", icon: Globe },
+        { to: "/desktop", label: "VoxarioProtect", desc: "Posílení Windows Defenderu a hlídání systému", icon: ShieldCheck },
+        { to: "/launcher", label: "Ashes of Eryon", desc: "Temné fantasy RPG – připravuje se", icon: Swords },
+        { to: "/desktop", label: "Ke stažení", desc: "Ověřené instalátory pro Windows", icon: Download },
+      ],
+    },
+    {
+      label: "Komunita",
+      items: [
+        { to: "/forum", label: t("nav.forum"), desc: "Diskuze, návody a nápady", icon: MessageCircle },
+        { to: "/live", label: "Live", desc: "Kdo právě streamuje", icon: Radio },
+        { to: "/leaderboard", label: t("nav.leaderboard"), desc: "Nejaktivnější hráči", icon: Trophy },
+        { to: "/servery", label: "Servery", desc: "Herní servery komunity", icon: Server },
+        { to: "/kontrakty", label: "Bounty Board", desc: "Kontrakty a odměny", icon: Target },
+        ...navPages.map((page) => ({ to: `/${page.slug}`, label: page.nav_label, desc: "Stránka komunity", icon: ChevronRight })),
+      ],
+    },
+    {
+      label: "Novinky",
+      items: [
+        { to: "/novinky", label: "Novinky", desc: "Co je nového na platformě", icon: Newspaper },
+        { to: "/verze", label: "Historie verzí", desc: "Transparentní seznam změn", icon: History },
+      ],
+    },
+  ];
+  const groupActive = (items: MenuEntry[]) => items.some((item) => isActive(item.to));
 
   const navLinkBase =
     "web-navlink px-1.5 py-1.5 text-sm lg:text-base font-medium text-muted-foreground leading-relaxed whitespace-nowrap";
 
   return (
-    <header className="web-nav sticky top-0 z-50">
-      <div className="container flex h-16 items-center gap-1 lg:gap-2">
-        <Link to="/" className="flex items-center gap-1.5 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
-          <span className="font-display font-black text-base sm:text-lg tracking-[0.12em] uppercase text-primary">
-            {settings.site_name || "StudioVoxario"}
+    <header className="holo-nav sticky top-0 z-50">
+      <div className="container flex h-[68px] items-center gap-2 lg:gap-4">
+        <Link to="/" className="holo-brand flex items-center gap-2.5 shrink-0" aria-label={settings.site_name || "StudioVoxario"}>
+          <img src="/vox/brand/voxar-logo.webp" alt="" className="h-9 w-9 object-contain" />
+          <span className="hidden sm:flex flex-col leading-none">
+            <span className="font-display font-bold text-[15px] tracking-[0.2em] uppercase">
+              <span className="text-primary">Studio</span>Voxario
+            </span>
+            <span className="mt-1 text-[9.5px] tracking-[0.32em] uppercase text-muted-foreground">Herní platforma</span>
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-0 ml-0.5 lg:ml-1 min-w-0 flex-nowrap" aria-label="Hlavní navigace">
-          {primaryNav.map((item, idx) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              data-active={isActive(item.to)}
-              className={cn(navLinkBase, idx >= compactNavCount && "hidden")}
-            >
-              {item.label}
-            </Link>
-          ))}
-
-          {primaryNav.length > compactNavCount && (
-            <DropdownMenu>
+        <nav className="hidden md:flex items-center gap-1 ml-2 min-w-0" aria-label="Hlavní navigace">
+          {navGroups.map((group) => (
+            <DropdownMenu key={group.label}>
               <DropdownMenuTrigger asChild>
-                <button className={cn(navLinkBase, "hover:text-primary")}>Více</button>
+                <button className="holo-navlink" data-active={groupActive(group.items)}>
+                  {group.label}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[10rem] p-1">
-                {primaryNav.slice(compactNavCount).map((item) => (
-                  <DropdownMenuItem key={item.to} asChild className="cursor-pointer">
-                    <Link
-                      to={item.to}
-                      data-active={isActive(item.to)}
-                      className="web-navlink flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground leading-relaxed"
-                    >
-                      <item.icon className="h-4 w-4 text-muted-foreground" />
-                      <span>{item.label}</span>
+              <DropdownMenuContent align="start" sideOffset={10} className="holo-mega w-[340px] p-2">
+                {group.items.map((item) => (
+                  <DropdownMenuItem key={item.label} asChild className="cursor-pointer rounded-lg p-0 focus:bg-transparent">
+                    <Link to={item.to} className="holo-mega-item">
+                      <span className="holo-mega-icon"><item.icon className="h-[18px] w-[18px]" /></span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">{item.label}</span>
+                        <span className="block text-xs text-muted-foreground truncate">{item.desc}</span>
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          ))}
+          <Link to="/obchod" className="holo-navlink" data-active={isActive("/obchod")}>Obchod</Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-0.5">
@@ -211,14 +245,9 @@ export function Navbar() {
                 <Wrench className="h-4 w-4 xl:hidden" />
               </Link>
             )}
-            <Link
-              to="/desktop"
-              data-active={isActive("/desktop")}
-              className={cn(navLinkBase, "relative")}
-              aria-label="Ke stažení"
-            >
-              <span className="hidden xl:inline">Ke stažení</span>
-              <Download className="h-4 w-4 xl:hidden" />
+            <Link to="/desktop" className="holo-nav-cta" aria-label="Ke stažení">
+              <Download className="h-4 w-4" />
+              <span className="hidden lg:inline">Ke stažení</span>
             </Link>
           </div>
 
@@ -283,10 +312,10 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" className="web-cut hidden sm:inline-flex text-sm px-2 py-1 xl:px-3">
+            <Button asChild size="sm" className="holo-btn-primary hidden sm:inline-flex h-10 px-4 rounded-[10px]">
               <Link to="/auth" aria-label={t("nav.signIn")}>
-                <LogIn className="h-4 w-4 xl:mr-1.5" />
-                <span className="hidden xl:inline">{t("nav.signIn")}</span>
+                <LogIn className="h-4 w-4" />
+                <span>{t("nav.signIn")}</span>
               </Link>
             </Button>
           )}

@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+// Holografický design systém veřejného webu (aktivní jen mimo /app).
+import "./styles/holo.css";
 // One authoritative community skin.  Previous visual experiments remain in
 // the repository for history, but must never be imported globally together.
 import "./i18n";
