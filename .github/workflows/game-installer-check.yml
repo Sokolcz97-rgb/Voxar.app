@@ -6,6 +6,12 @@ on:
       - 'game/installer/**'
       - 'game/launcher/**'
       - '.github/workflows/game-installer-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'game/installer/**'
+      - 'game/launcher/**'
+      - '.github/workflows/game-installer-check.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,6 +24,8 @@ concurrency:
 jobs:
   windows-installer:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout source
@@ -168,3 +176,24 @@ jobs:
             game/installer/out/GameSetup.exe.sha256
           if-no-files-found: error
           retention-days: 7
+
+      # Interní build pro administrátory: GameSetup.exe se nahraje do
+      # NEVEŘEJNÉHO konceptu vydání (draft). Koncepty vidí jen správci
+      # repozitáře; veřejně se nic nepublikuje. Z konceptu se instalátor
+      # přenáší do privátního úložiště webu (jen pro adminy).
+      - name: Store internal GameSetup build (draft release, main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = "ashes-internal-build"
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --draft --title "Ashes of Eryon – interní build (neveřejné)" --notes "Automatický interní build GameSetup.exe. Koncept, není veřejný."
+            if ($LASTEXITCODE -ne 0) { throw "Draft release creation failed." }
+          }
+          gh release upload $tag game/installer/out/GameSetup.exe game/installer/out/GameSetup.exe.sha256 --repo $env:GITHUB_REPOSITORY --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Draft asset upload failed." }
+          Write-Host "Internal GameSetup build stored in draft release $tag ($env:GITHUB_SHA)."
