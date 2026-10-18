@@ -13,8 +13,8 @@ function browserChromeFitRenderer() {
     .navbar{
       height:54px!important;
       min-height:54px!important;
-      gap:8px!important;
-      padding:6px 16px!important;
+      gap:12px!important;
+      padding:6px 16px 6px 20px!important;
     }
     .navbtn{
       width:40px!important;
@@ -25,8 +25,8 @@ function browserChromeFitRenderer() {
     .urlwrap{
       height:42px!important;
       min-width:0!important;
-      margin-left:10px!important;
-      padding:0 14px!important;
+      margin-left:14px!important;
+      padding:0 16px!important;
       gap:10px!important;
     }
     .urlwrap .lock{width:22px!important;font-size:16px!important}
@@ -56,9 +56,9 @@ function browserChromeFitRenderer() {
     .newtab:hover{border-color:rgba(42,218,246,.55)!important;background:rgba(6,48,70,.98)!important}
     .wctl{z-index:9!important}
 
-    /* Navazující prvky sledují výšku lišt (karty 50 + adresa 54 + záložky 42). */
+    /* Navazující prvky sledují výšku lišt (karty 50 + adresa 54 + záložky 36). */
     .dock{top:104px!important}
-    .prog{top:146px!important}
+    .prog{top:140px!important}
     .status{top:108px!important}
 
     /* Make the live resource HUD give space back to the address field sooner. */
