@@ -40,23 +40,28 @@ function protectUiV27() {
     document.head.appendChild(style);
   }
 
+  // Zapisuje jen při skutečné změně. Supervisor běží z MutationObserveru,
+  // takže každý zbytečný zápis textu by ho znovu spustil a okno by zamrzlo
+  // v nekonečné smyčce.
+  function assignText(node, value) {
+    if (node && node.textContent !== value) node.textContent = value;
+  }
+
   function syncVersionCopy() {
-    document.title = `VoxarioProtect v${protectVersion}`;
+    const title = `VoxarioProtect v${protectVersion}`;
+    if (document.title !== title) document.title = title;
     setText("protectVersion", `v${protectVersion}`);
     setText("protectVersionMetric", `v${protectVersion}`);
     const heroText = document.querySelector(".hero p");
-    if (heroText) heroText.textContent = heroText.textContent.replace(/VoxarioProtect v2\.\d+/g, `VoxarioProtect v${protectVersion}`);
+    if (heroText) assignText(heroText, heroText.textContent.replace(/VoxarioProtect v2\.\d+/g, `VoxarioProtect v${protectVersion}`));
     for (const node of document.querySelectorAll(".panel-title span,.capability .tag")) {
-      if (/v2\.\d+/i.test(node.textContent || "")) node.textContent = node.textContent.replace(/v2\.\d+/gi, `v${protectVersion}`);
+      if (/v2\.\d+/i.test(node.textContent || "")) assignText(node, node.textContent.replace(/v2\.\d+/gi, `v${protectVersion}`));
     }
     const firewallCard = Array.from(document.querySelectorAll(".capability")).find((card) => /WINDOWS FIREWALL/i.test(card.querySelector("small")?.textContent || ""));
     if (firewallCard) {
-      const strong = firewallCard.querySelector("strong");
-      const paragraph = firewallCard.querySelector("p");
-      const tag = firewallCard.querySelector(".tag");
-      if (strong) strong.textContent = "Vlastní Firewall companion";
-      if (paragraph) paragraph.textContent = "Protect čte stav Windows Defender Firewallu a po výslovném potvrzení umí vytvořit pouze vlastní per-program Outbound BLOCK pravidlo.";
-      if (tag) tag.textContent = "USER-CONFIRMED BLOCK";
+      assignText(firewallCard.querySelector("strong"), "Firewall companion");
+      assignText(firewallCard.querySelector("p"), "Protect hlídá profily Windows Defender Firewallu, po tvém potvrzení je umí zapnout a nastavit blokování nevyžádaných příchozích spojení. Umí také zablokovat odchozí síť vybrané aplikace.");
+      assignText(firewallCard.querySelector(".tag"), "PO POTVRZENÍ");
     }
   }
 

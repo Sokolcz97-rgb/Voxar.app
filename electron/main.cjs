@@ -19,6 +19,7 @@ const { spawn } = require("child_process");
 const crypto = require("crypto");
 const { normalizeDefenderStatus } = require("./protect-status.cjs");
 const { calculateProtectionScore } = require("./protect-trust-engine.cjs");
+const { createGuardService } = require("./protect-guard-service.cjs");
 const { checkForUpdates, getDiagnostics, installVerified, fetchManifest, cancelActiveDownload, getPinState, resetPinState, setUiBridge, checkForUpdatesQuiet, installUpdateFromRenderer } = require("./updater.cjs");
 const rollback = require("./rollback.cjs");
 const bookmarks = require("./bookmarks.cjs");
@@ -783,12 +784,14 @@ async function pollDefenderEvents() {
 
 // Read-only system context.  This is intentionally a narrow set of security
 // related values, not a general registry monitor and never writes a key.
+// String.raw: zpětná lomítka v cestách registru se jinak v JS řetězci ztratí
+// (HKLM:\SOFTWARE\… se změnilo na HKLM:SOFTWARE… a nic se nečetlo).
 const SYSTEM_SAFETY_SCRIPT = [
   "$ErrorActionPreference='SilentlyContinue'",
   "$os=Get-CimInstance Win32_OperatingSystem",
-  "$paths=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System','HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender','HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection','HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon')",
+  String.raw`$paths=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System','HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender','HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection','HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon')`,
   "$registry=@{}; foreach($p in $paths){$item=Get-ItemProperty -Path $p; if($null -ne $item){$registry[$p]=@{EnableLUA=$item.EnableLUA;ConsentPromptBehaviorAdmin=$item.ConsentPromptBehaviorAdmin;DisableAntiSpyware=$item.DisableAntiSpyware;DisableRealtimeMonitoring=$item.DisableRealtimeMonitoring;Shell=$item.Shell}}}",
-  "$ring=$null; foreach($p in @('HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\UI\Selection','HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\Applicability')){$v=Get-ItemProperty -Path $p; if($v){$ring=($v.UIBranch,$v.BranchName,$v.Ring | Where-Object {$_} | Select-Object -First 1); if($ring){break}}}",
+  String.raw`$ring=$null; foreach($p in @('HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\UI\Selection','HKLM:\SOFTWARE\Microsoft\WindowsSelfHost\Applicability')){$v=Get-ItemProperty -Path $p; if($v){$ring=($v.UIBranch,$v.BranchName,$v.Ring | Where-Object {$_} | Select-Object -First 1); if($ring){break}}}`,
   "$updates=@(); try{$session=New-Object -ComObject Microsoft.Update.Session; $searcher=$session.CreateUpdateSearcher(); $result=$searcher.Search('IsInstalled=0 and IsHidden=0'); foreach($u in @($result.Updates | Select-Object -First 12)){$updates+=@{title=$u.Title;preview=($u.Title -match '(?i)preview|insider|canary|dev channel|beta channel|release preview');rebootRequired=$u.RebootRequired}}}catch{}",
   "[pscustomobject]@{osCaption=$os.Caption;osBuild=$os.BuildNumber;insiderRing=$ring;updates=$updates;registry=$registry}|ConvertTo-Json -Depth 6 -Compress",
 ].join(";");
@@ -815,6 +818,39 @@ async function getSystemSafety() {
   }};
 }
 
+// VoxarioProtect Guard: posílení Defenderu/Firewallu a hlídání autostartu
+// a registru. Změny se dělají jen po potvrzení uživatele (UAC).
+let protectGuard = null;
+let protectGuardTimer = null;
+function getProtectGuard() {
+  if (!protectGuard) {
+    protectGuard = createGuardService({
+      userDataDir: app.getPath("userData"),
+      addActivity: (entry) => addProtectActivity(entry),
+      notify: (title, body) => {
+        if (!Notification.isSupported()) return;
+        try {
+          const n = new Notification({ title, body, icon: path.join(__dirname, "assets", "icon.png") });
+          n.on("click", () => { createProtectWindow(); });
+          n.show();
+        } catch {}
+      },
+    });
+  }
+  return protectGuard;
+}
+
+function publishProtectGuardState(result) {
+  try { protectWindow?.webContents?.send("protect:guard-state", result?.state || getProtectGuard().publicState()); } catch {}
+}
+
+async function runProtectGuardCheck(options) {
+  if (process.platform !== "win32") return { ok: false, unsupported: true, error: "Dostupné pouze ve Windows." };
+  const result = await getProtectGuard().check(options).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+  if (!result.skipped) publishProtectGuardState(result);
+  return result;
+}
+
 function startProtectMonitor() {
   if (protectPollTimer) return;
   void pollDefenderEvents();
@@ -823,6 +859,11 @@ function startProtectMonitor() {
     void pollDefenderEvents();
     void getSystemSafety();
   }, 5 * 60 * 1000);
+  if (!protectGuardTimer && process.platform === "win32") {
+    setTimeout(() => void runProtectGuardCheck(), 30_000).unref?.();
+    protectGuardTimer = setInterval(() => void runProtectGuardCheck(), 15 * 60 * 1000);
+    protectGuardTimer.unref?.();
+  }
   protectPollTimer.unref?.();
   try {
     const downloads = app.getPath("downloads");
@@ -960,6 +1001,37 @@ ipcMain.handle("protect:open-windows-update", async () => {
   try { await shell.openExternal("ms-settings:windowsupdate"); return { ok: true }; }
   catch (error) { return { ok: false, error: error?.message || "Windows Update se nepodařilo otevřít." }; }
 });
+ipcMain.handle("protect:guard-state", () => getProtectGuard().publicState());
+ipcMain.handle("protect:guard-check", () => runProtectGuardCheck({ force: true, notify: false }));
+ipcMain.handle("protect:guard-catalog", () => require("./protect-guard.cjs").HARDENING_ITEMS.map(({ id, group, recommended, title, description }) => ({ id, group, recommended, title, description })));
+const guardAction = (fn) => async (...args) => {
+  if (process.platform !== "win32") return { ok: false, unsupported: true, error: "Dostupné pouze ve Windows." };
+  try {
+    const result = await fn(...args);
+    publishProtectGuardState(result);
+    return result;
+  } catch (error) {
+    return { ok: false, error: error?.message || "Akci se nepodařilo provést." };
+  }
+};
+const guardIds = (ids) => (Array.isArray(ids) ? ids.filter((id) => typeof id === "string").slice(0, 32) : []);
+ipcMain.handle("protect:guard-harden", guardAction((_e, ids) => getProtectGuard().harden(guardIds(ids))));
+ipcMain.handle("protect:guard-revert", guardAction((_e, ids) => getProtectGuard().revert(guardIds(ids))));
+ipcMain.handle("protect:guard-update-signatures", guardAction(() => getProtectGuard().updateSignatures()));
+ipcMain.handle("protect:guard-blocked", guardAction((_e, days) => getProtectGuard().blocked(Number(days) || 14)));
+ipcMain.handle("protect:guard-allow", guardAction(async (_e, payload) => {
+  // Cestu nebereme z rendereru: povolit lze jen soubor z aktuálního záznamu
+  // Defenderu, dohledaný podle jeho ID.
+  const id = String(payload?.id || "");
+  const list = await getProtectGuard().blocked(30);
+  const item = list.ok ? list.items.find((row) => row.id === id) : null;
+  if (!item || !item.canAllow) return { ok: false, error: "Záznam blokace už není k dispozici." };
+  const target = item.kind === "folders" ? item.process : item.target;
+  return getProtectGuard().allow(item.kind, target, payload?.allowUnsigned === true);
+}));
+ipcMain.handle("protect:watch-approve", guardAction((_e, id) => getProtectGuard().approve(String(id || ""))));
+ipcMain.handle("protect:watch-remove", guardAction((_e, id) => getProtectGuard().removeFinding(String(id || ""))));
+ipcMain.handle("protect:watch-restore", guardAction((_e, id) => getProtectGuard().restoreRemoved(String(id || ""))));
 ipcMain.handle("protect:return-to-launcher", () => {
   try { protectWindow?.close(); } catch {}
   createLauncher();

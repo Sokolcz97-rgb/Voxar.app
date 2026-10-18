@@ -9,6 +9,7 @@
     "products.cjs",
     "protect-background.cjs", "protect-preferences.cjs", "protect-trust-engine.cjs", "protect-layered-engine.cjs",
     "protect-firewall.cjs", "protect-version.cjs", "protect-status.cjs",
+    "protect-windows.cjs", "protect-guard.cjs", "protect-watch.cjs", "protect-guard-service.cjs",
     "browser.html", "launcher.html", "protect.html", "settings.html",
     "package.json", "assets/**/*", "dist/**/*", "node_modules/**/*"
   ],
