@@ -22,3 +22,7 @@ This directory is the isolated home of **Ashes of Eryon**, the new multiplayer d
 7. The game's lore is original and only inspired by broad fantasy traditions.
 
 See `docs/GAME_FOUNDATION.md` for the current architecture contract.
+
+## Current state
+
+Act I (alpha) is playable as a 3D browser game at `/hra` (Three.js client in `src/game/ashes/`, authoritative server logic as Supabase RPCs). The launcher opens it in its own window. See `docs/ASHES_ACT1.md`.

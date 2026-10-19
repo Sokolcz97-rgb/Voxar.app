@@ -1,3 +1,4 @@
+import { lazy, Suspense, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WebSurface } from "@/components/holo/WebSurface";
 import { SiteFooter } from "@/components/holo/SiteFooter";
@@ -79,6 +80,8 @@ import { AppAccessGate } from "@/components/vox/AppAccessGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
 
+const AshesGame = lazy(() => import("./game/ashes/AshesGame.tsx"));
+
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -134,6 +137,7 @@ const AppRoutes = () => {
         <Route path="/desktop" element={<DownloadDesktop />} />
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
+        <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
         <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
         <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
@@ -149,8 +153,17 @@ const AppRoutes = () => {
 };
 
 /** Root-level AI layer: a sibling of the router layout, never nested in app grids. */
+const isGameRoute = (pathname: string) => pathname === "/hra" || pathname.startsWith("/hra/");
+
+/** Plovoucí pomocníci webu se ve hře nezobrazují. */
+const WebOnly = ({ children }: { children: ReactNode }) => {
+  const { pathname } = useLocation();
+  return isGameRoute(pathname) ? null : <>{children}</>;
+};
+
 const RootAIHelper = () => {
   const { pathname } = useLocation();
+  if (isGameRoute(pathname)) return null;
   if (pathname === "/ai" || pathname.startsWith("/ai/")) return null;
   if (pathname === "/app" || pathname.startsWith("/app/")) return <AIHelperHolo />;
   return <AIHelper />;
@@ -175,10 +188,12 @@ const App = () => (
                     <SiteFooter />
                     <InlineEditorChrome />
                     <RootAIHelper />
-                    <ShortcutsHelp />
-                    <LiveNowHud />
-                    <LfgHud />
-                    <SystemUpdateAlert />
+                    <WebOnly>
+                      <ShortcutsHelp />
+                      <LiveNowHud />
+                      <LfgHud />
+                      <SystemUpdateAlert />
+                    </WebOnly>
                   </InlineEditorProvider>
                 </VoiceCallProvider>
               </PresenceProvider>

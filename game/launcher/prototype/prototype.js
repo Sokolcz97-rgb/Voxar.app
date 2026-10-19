@@ -61,6 +61,20 @@
       progressDetail: "Všechny soubory jsou připravené.",
       progress: 100,
       progressValue: "100 %"
+    },
+    // Alfa: 1. akt běží jako 3D hra ze serveru StudioVoxario – nic se nestahuje.
+    online: {
+      primary: "Hrát",
+      secondary: "Můj účet",
+      account: "StudioVoxario účet",
+      accountState: "Přihlášení ve hře",
+      badge: "ALPHA · ONLINE",
+      installed: "0.1.0-alpha · 1. akt",
+      path: "Online ze studiovoxario.com",
+      progressTitle: "Svět je online",
+      progressDetail: "1. akt: od Bezejmenného břehu po Pochod bronzu.",
+      progress: 100,
+      progressValue: "Online"
     }
   };
 
@@ -133,8 +147,27 @@
     button.addEventListener("click", () => applyState(button.dataset.demoState));
   });
 
+  secondary.addEventListener("click", () => {
+    if (isDesktop && root.dataset.state === "online") void desktop.game?.openAccount();
+  });
+
   primary.addEventListener("click", () => {
     const current = root.dataset.state;
+
+    if (isDesktop && current === "online") {
+      progressTitle.textContent = "Otevírám svět Ashes of Eryon…";
+      progressDetail.textContent = "Hra se otevře v novém okně.";
+      desktop.game?.play()
+        .then(() => {
+          progressTitle.textContent = "Hra běží";
+          progressDetail.textContent = "Launcher počká, až herní okno zavřeš.";
+        })
+        .catch(() => {
+          progressTitle.textContent = "Hru se nepodařilo otevřít";
+          progressDetail.textContent = "Zkontroluj připojení k internetu a zkus to znovu.";
+        });
+      return;
+    }
 
     if (isDesktop) {
       if (current === "signed_out") {
@@ -167,6 +200,11 @@
   // Přepínač ukázkových stavů jen v náhledu v prohlížeči (?demo=1).
   const demoControls = document.querySelector(".prototype-controls");
   if (demoControls) demoControls.hidden = isDesktop || params.get("demo") !== "1";
-  const initial = !isDesktop && states[params.get("state")] ? params.get("state") : "signed_out";
+  const initial = !isDesktop && states[params.get("state")] ? params.get("state") : isDesktop ? "online" : "signed_out";
   applyState(initial);
+  desktop?.game?.onClosed?.(() => {
+    applyState("online");
+    progressTitle.textContent = "Vítej zpět";
+    progressDetail.textContent = "Svět Kalidry na tebe počká.";
+  });
 })();

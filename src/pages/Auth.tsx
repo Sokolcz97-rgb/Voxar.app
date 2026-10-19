@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -13,6 +13,10 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Návrat po přihlášení (např. zpět do hry /hra). Povoleny jen relativní cesty na tomto webu.
+  const nextParam = searchParams.get("next") ?? "";
+  const next = /^\/(?!\/)[\w\-/]*$/.test(nextParam) ? nextParam : "/dashboard";
   const { t } = useTranslation();
   const { settings } = useSiteSettings();
   const siteName = settings.site_name || "StudioVoxario";
@@ -28,7 +32,7 @@ const Auth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}${next}`,
         data: { display_name: displayName || email.split("@")[0] },
       },
     });
@@ -38,7 +42,7 @@ const Auth = () => {
       return;
     }
     toast({ title: t("auth.accountCreated"), description: t("auth.welcome") });
-    navigate("/dashboard");
+    navigate(next);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -50,19 +54,19 @@ const Auth = () => {
       toast({ title: t("auth.signInFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    navigate("/dashboard");
+    navigate(next);
   };
 
   const handleGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+      redirect_uri: `${window.location.origin}${next}`,
     });
     if (result.error) {
       toast({ title: t("auth.googleFailed"), description: result.error.message, variant: "destructive" });
       return;
     }
     if (result.redirected) return;
-    navigate("/dashboard");
+    navigate(next);
   };
 
   return (

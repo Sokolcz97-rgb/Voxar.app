@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download as DownloadIcon, Lock, Upload, ShieldCheck, Loader2 } from "lucide-react";
+import { Download as DownloadIcon, Lock, Upload, ShieldCheck, Loader2, Swords } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -165,6 +166,9 @@ export function AshesDownloadCard() {
                 <Button size="lg" variant="hero" className="btn-3d" onClick={download} disabled={busy !== null || manifestState !== "ready"}>
                   {busy === "download" ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <DownloadIcon className="h-5 w-5 mr-2" />}
                   {busy === "download" ? `Stahuji ${Math.round(progress * 100)} %` : "Stáhnout GameSetup.exe"}
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/hra"><Swords className="h-5 w-5 mr-2" />Hrát 1. akt v prohlížeči</Link>
                 </Button>
                 <span className="inline-flex items-center gap-1.5 text-xs text-amber-200/80">
                   <ShieldCheck className="h-4 w-4" /> Viditelné jen pro administrátory

@@ -7,6 +7,57 @@ const REFERENCE_WIDTH = 1920;
 const REFERENCE_HEIGHT = 1080;
 
 let mainWindow = null;
+let gameWindow = null;
+
+// Ashes of Eryon běží jako 3D webová hra na studiovoxario.com (stejný účet,
+// autoritativní server v databázi). Launcher ji otevírá ve vlastním okně.
+const GAME_URL = process.env.ASHES_GAME_URL || "https://studiovoxario.com/hra";
+const GAME_ORIGIN = new URL(GAME_URL).origin;
+
+function openGameWindow() {
+  if (gameWindow && !gameWindow.isDestroyed()) {
+    if (gameWindow.isMinimized()) gameWindow.restore();
+    gameWindow.focus();
+    return { opened: true, url: GAME_URL };
+  }
+  gameWindow = new BrowserWindow({
+    width: 1600,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 640,
+    backgroundColor: "#0b0908",
+    title: "Ashes of Eryon",
+    autoHideMenuBar: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      devTools: !app.isPackaged
+    }
+  });
+  gameWindow.once("ready-to-show", () => gameWindow?.show());
+  gameWindow.on("closed", () => {
+    gameWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.webContents.send("launcher:game-closed");
+    }
+  });
+  // Uvnitř herního okna jen stránky hry a přihlášení přes https; vše ostatní do systémového prohlížeče.
+  gameWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  gameWindow.webContents.on("will-navigate", (event, url) => {
+    if (!/^https:\/\//i.test(url)) event.preventDefault();
+  });
+  void gameWindow.loadURL(GAME_URL);
+  mainWindow?.minimize();
+  return { opened: true, url: GAME_URL };
+}
 
 function getRendererPath() {
   if (app.isPackaged) {
@@ -89,6 +140,12 @@ function registerIpc() {
 
   ipcMain.handle("launcher:window:close", () => {
     mainWindow?.close();
+  });
+
+  ipcMain.handle("launcher:game:play", () => openGameWindow());
+
+  ipcMain.handle("launcher:open-account", () => {
+    void shell.openExternal(`${GAME_ORIGIN}/auth?next=/hra`);
   });
 
   ipcMain.handle("launcher:window:get-state", () => ({
