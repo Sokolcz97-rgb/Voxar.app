@@ -4,7 +4,7 @@ import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHe
 import { assets, createFigure, QUALITY, type HeroFigure, type ModelSlot, type QualitySettings } from "./assets";
 import {
   AQUEDUCT, BEACONS, BUILDINGS, CITY, CAMP, ENEMY_CAMPS, MEMORIAL, NPCS, REGION_ENEMIES, RESPAWN, SAFE, SHIPS, SPAWN, WORLD_HALF, WRECKS,
-  cityWalls, fbm, heightAt, inCity, regionAt, roadDistance, type Box, type EnemyDef, type NpcDef, type NpcId, type RegionId,
+  cityWalls, fbm, heightAt, inCity, inSafeZone, regionAt, roadDistance, SAFE_ZONES, type Box, type EnemyDef, type NpcDef, type NpcId, type RegionId,
 } from "./map";
 
 /**
@@ -25,6 +25,8 @@ export type WorldFrame = {
   enemies: { key: string; name: string; level: string; p: ScreenPoint }[];
   others: Record<string, ScreenPoint>;
   near: Interactable | null;
+  /** Hráč stojí v bezpečné zóně (u místa zrození). */
+  safe: boolean;
 };
 
 export type EnemyInfo = { key: string; region: RegionId; def: EnemyDef };
@@ -146,6 +148,7 @@ export class OpenWorld {
     this.buildCity();
     this.buildCountryside();
     this.buildVegetation();
+    this.buildSafeZones();
 
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 24), new THREE.MeshBasicMaterial({ color: "#f0d39a", transparent: true, opacity: 0.8, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2;
@@ -427,11 +430,24 @@ export class OpenWorld {
 
     // agora: kašna, bronzová socha a korouhve
     const fy = heightAt(74, 15);
-    const basin = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.6, 0.7, 20), stone);
-    basin.position.set(74, fy + 0.35, 15);
+    // kašna: nízké dno + obruba (prstenec) + hladina mezi nimi – žádné dvě plochy
+    // ve stejné výšce, takže voda už neproblikává (z-fighting)
+    const basin = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.6, 0.4, 28), stone);
+    basin.position.set(74, fy + 0.2, 15);
+    basin.receiveShadow = true;
     this.scene.add(basin);
-    const pool = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.1, 20), new THREE.MeshStandardMaterial({ color: "#2a5a6a", roughness: 0.1, metalness: 0.3 }));
-    pool.position.set(74, fy + 0.65, 15);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.2, 8, 36), stone);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(74, fy + 0.62, 15);
+    rim.castShadow = true;
+    this.scene.add(rim);
+    const rimWall = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.26, 28, 1, true), stone);
+    rimWall.position.set(74, fy + 0.52, 15);
+    this.scene.add(rimWall);
+    const poolMat = new THREE.MeshStandardMaterial({ color: "#2a5a6a", roughness: 0.08, metalness: 0.3, normalMap: this.waterNormal, normalScale: new THREE.Vector2(0.25, 0.25), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(2.18, 28), poolMat);
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.set(74, fy + 0.5, 15);
     this.scene.add(pool);
     const plinth = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 1.4, 10), stone);
     plinth.position.set(74, fy + 1.4, 15);
@@ -467,7 +483,7 @@ export class OpenWorld {
     this.scene.add(cloth);
     if (sun) {
       const disc = new THREE.Mesh(new THREE.CircleGeometry(0.35, 16), new THREE.MeshStandardMaterial({ color: "#d2492b", emissive: "#5a1006", side: THREE.DoubleSide }));
-      disc.position.set(x + 0.6, y + 4.9, z + 0.01);
+      disc.position.set(x + 0.6, y + 4.9, z + 0.04);
       this.scene.add(disc);
     }
   }
@@ -540,7 +556,7 @@ export class OpenWorld {
       sl.position.set(0, 5.3, 0.2);
       g.add(sl);
       const disc = new THREE.Mesh(new THREE.CircleGeometry(0.8, 16), new THREE.MeshStandardMaterial({ color: "#a8261a", side: THREE.DoubleSide }));
-      disc.position.set(0, 5.4, 0.25);
+      disc.position.set(0, 5.4, 0.3);
       g.add(disc);
       g.position.set(s.x, 0, s.z);
       g.rotation.y = s.r;
@@ -582,6 +598,28 @@ export class OpenWorld {
     this.addFire(-46, heightAt(-46, -52) + 0.1, -52, 0.9);
     this.addBanner(-40, -50, "#140806", true);
     this.addBanner(48, -58, "#140806", true);
+  }
+
+  /** Hranice bezpečných zón: řada nízkých bílých kamenů s modravou září. */
+  private buildSafeZones() {
+    const mat = new THREE.MeshStandardMaterial({ color: "#e8e2d4", emissive: "#3a5a7a", emissiveIntensity: 0.35, roughness: 0.8, flatShading: true });
+    const geo = new THREE.DodecahedronGeometry(0.28, 0);
+    const mats: THREE.Matrix4[] = [];
+    for (const z of SAFE_ZONES) {
+      if (inCity(z.x, z.z)) continue;
+      const n = Math.round((2 * Math.PI * z.r) / 3.2);
+      for (let i = 0; i < n; i += 1) {
+        const a = (i / n) * Math.PI * 2;
+        const x = z.x + Math.cos(a) * z.r, zz = z.z + Math.sin(a) * z.r;
+        const h = heightAt(x, zz);
+        if (h < 0.3) continue;
+        mats.push(new THREE.Matrix4().compose(new THREE.Vector3(x, h + 0.1, zz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, a, 0)), new THREE.Vector3(1, 1.6, 1)));
+      }
+    }
+    const im = new THREE.InstancedMesh(geo, mat, mats.length);
+    mats.forEach((m, i) => im.setMatrixAt(i, m));
+    im.castShadow = true;
+    this.scene.add(im);
   }
 
   private buildVegetation() {
@@ -1012,7 +1050,12 @@ export class OpenWorld {
       const toPlayer = Math.hypot(this.pos.x - e.pos.x, this.pos.y - e.pos.y);
       const homeDist = e.pos.distanceTo(e.home);
       let speed = 0;
-      if (this.mode === "explore" && now > e.calmUntil && toPlayer < 7 && homeDist < 18) {
+      const playerSafe = inSafeZone(this.pos.x, this.pos.y);
+      if (inSafeZone(e.pos.x, e.pos.y, 1)) {
+        // nepřítel zabloudil do bezpečné zóny → vrací se domů
+        e.target.copy(e.home);
+        speed = 2.6;
+      } else if (this.mode === "explore" && !playerSafe && now > e.calmUntil && toPlayer < 7 && homeDist < 18) {
         e.target.copy(this.pos);
         speed = 3.4;
         if (toPlayer < 1.5) {
@@ -1025,6 +1068,7 @@ export class OpenWorld {
         e.wait -= dt;
         if (e.wait <= 0 && e.pos.distanceTo(e.target) < 0.5) {
           e.target.set(e.home.x + (Math.random() - 0.5) * 14, e.home.y + (Math.random() - 0.5) * 14);
+          if (inSafeZone(e.target.x, e.target.y, 2)) e.target.copy(e.home);
           e.wait = 2 + Math.random() * 4;
         }
         if (homeDist > 18) e.target.copy(e.home);
@@ -1258,11 +1302,19 @@ export class OpenWorld {
       this.onFrame({
         player: { x: this.pos.x, z: this.pos.y, ry: this.facing, region: regionAt(this.pos.x, this.pos.y) },
         npcs, enemies, others, near: this.mode === "explore" ? this.nearest() : null,
+        safe: inSafeZone(this.pos.x, this.pos.y),
       });
     }
     if (this.composer && this.mode !== "create") this.composer.render();
     else this.renderer.render(this.scene, this.camera);
   };
+
+  /** Rozlišení vykreslování: 0.5–1 = podíl nativního rozlišení okna (výkon vs. ostrost). */
+  setRenderScale(scale: number) {
+    const s = Math.max(0.4, Math.min(1, scale));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio) * s);
+    this.resize();
+  }
 
   /** Pozice pro minimapu. */
   minimap() {

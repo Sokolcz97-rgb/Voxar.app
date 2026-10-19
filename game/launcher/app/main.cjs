@@ -1,7 +1,7 @@
 "use strict";
 
 const path = require("node:path");
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
 
 const REFERENCE_WIDTH = 1920;
 const REFERENCE_HEIGHT = 1080;
@@ -30,6 +30,7 @@ function openGameWindow() {
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
+      preload: path.join(__dirname, "game-preload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -39,6 +40,7 @@ function openGameWindow() {
     }
   });
   gameWindow.once("ready-to-show", () => gameWindow?.show());
+  gameWindow.on("leave-full-screen", () => gameWindow?.setMenuBarVisibility(false));
   gameWindow.on("closed", () => {
     gameWindow = null;
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -126,7 +128,58 @@ function createMainWindow() {
   });
 }
 
+// Požadavky z herního okna přijímáme jen od stránky hry (stejný původ jako GAME_URL).
+function fromGame(event) {
+  if (!gameWindow || gameWindow.isDestroyed() || event.sender !== gameWindow.webContents) return false;
+  try {
+    return new URL(event.senderFrame?.url || event.sender.getURL()).origin === GAME_ORIGIN;
+  } catch {
+    return false;
+  }
+}
+
+function displayState() {
+  if (!gameWindow || gameWindow.isDestroyed()) return null;
+  const [width, height] = gameWindow.getContentSize();
+  const display = screen.getDisplayMatching(gameWindow.getBounds());
+  return {
+    mode: gameWindow.isFullScreen() ? "fullscreen" : gameWindow.isMaximized() ? "maximized" : "windowed",
+    width,
+    height,
+    screen: { width: display.size.width, height: display.size.height, scale: display.scaleFactor }
+  };
+}
+
 function registerIpc() {
+  ipcMain.handle("game:exit", (event) => {
+    if (!fromGame(event)) return false;
+    gameWindow.close();
+    return true;
+  });
+
+  ipcMain.handle("game:display:get", (event) => (fromGame(event) ? displayState() : null));
+
+  ipcMain.handle("game:display:set", (event, options) => {
+    if (!fromGame(event)) return null;
+    const mode = options?.mode;
+    if (mode === "fullscreen") {
+      gameWindow.setFullScreen(true);
+    } else {
+      if (gameWindow.isFullScreen()) gameWindow.setFullScreen(false);
+      if (mode === "maximized") {
+        gameWindow.maximize();
+      } else {
+        if (gameWindow.isMaximized()) gameWindow.unmaximize();
+        const work = screen.getDisplayMatching(gameWindow.getBounds()).workAreaSize;
+        const width = Math.round(Number(options?.width) || 1600);
+        const height = Math.round(Number(options?.height) || 900);
+        gameWindow.setContentSize(Math.max(1024, Math.min(width, work.width)), Math.max(640, Math.min(height, work.height)));
+        gameWindow.center();
+      }
+    }
+    return displayState();
+  });
+
   ipcMain.handle("launcher:window:minimize", () => {
     mainWindow?.minimize();
   });

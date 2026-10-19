@@ -123,6 +123,21 @@ export const SAFE: Record<Faction, RegionId[]> = { kalidra: ["kalidra"], legie: 
 export const SPAWN: Record<Faction, Pt> = { kalidra: [-52, 50], legie: [-44, -50] };
 export const RESPAWN: Record<Faction, Pt> = { kalidra: [62, 15], legie: [56, -60] };
 
+/**
+ * Bezpečné zóny: okolí míst, kde se hráč rodí a probouzí. Nepřátelé sem nevstoupí
+ * a nikoho tu nenapadnou – nováček má u prvního NPC klid.
+ */
+export const SAFE_ZONES: { x: number; z: number; r: number }[] = [
+  { x: SPAWN.kalidra[0], z: SPAWN.kalidra[1], r: 20 },
+  { x: SPAWN.legie[0], z: SPAWN.legie[1], r: 18 },
+  { x: RESPAWN.kalidra[0], z: RESPAWN.kalidra[1], r: 14 },
+  { x: RESPAWN.legie[0], z: RESPAWN.legie[1], r: 14 },
+];
+
+export function inSafeZone(x: number, z: number, margin = 0) {
+  return SAFE_ZONES.some((s) => Math.hypot(x - s.x, z - s.z) < s.r + margin);
+}
+
 export const BEACONS: { id: "b1" | "b2" | "b3"; x: number; z: number }[] = [
   { id: "b1", x: -22, z: -58 },
   { id: "b2", x: 2, z: -72 },
@@ -153,13 +168,13 @@ export const REGION_ENEMIES: Record<Faction, Partial<Record<RegionId, EnemyDef[]
 
 /** Místa, kde se nepřátelé objevují (střed + poloměr toulání). */
 export const ENEMY_CAMPS: { region: RegionId; x: number; z: number }[] = [
-  { region: "shore", x: -60, z: 62 }, { region: "shore", x: -48, z: 72 }, { region: "shore", x: -66, z: 40 }, { region: "shore", x: -40, z: 58 },
+  { region: "shore", x: -64, z: 80 }, { region: "shore", x: -46, z: 82 }, { region: "shore", x: -72, z: 32 }, { region: "shore", x: -32, z: 72 },
   { region: "aqueduct", x: -46, z: 18 }, { region: "aqueduct", x: -28, z: 2 }, { region: "aqueduct", x: -56, z: -4 }, { region: "aqueduct", x: -20, z: -18 },
-  { region: "hills", x: -30, z: -50 }, { region: "hills", x: -8, z: -64 }, { region: "hills", x: 16, z: -68 }, { region: "hills", x: 36, z: -46 }, { region: "hills", x: -2, z: -42 },
+  { region: "hills", x: -24, z: -40 }, { region: "hills", x: -8, z: -64 }, { region: "hills", x: 16, z: -68 }, { region: "hills", x: 36, z: -46 }, { region: "hills", x: -2, z: -42 },
   { region: "plain", x: 12, z: 26 }, { region: "plain", x: 34, z: 0 }, { region: "plain", x: 34, z: 36 }, { region: "plain", x: 8, z: -6 },
-  { region: "cove", x: -52, z: -50 }, { region: "cove", x: -38, z: -62 },
-  { region: "camp", x: 50, z: -58 }, { region: "camp", x: 68, z: -60 },
-  { region: "kalidra", x: 58, z: 6 }, { region: "kalidra", x: 58, z: 24 },
+  { region: "cove", x: -64, z: -44 }, { region: "cove", x: -30, z: -74 },
+  { region: "camp", x: 44, z: -76 }, { region: "camp", x: 72, z: -56 },
+  { region: "kalidra", x: 86, z: 2 }, { region: "kalidra", x: 86, z: 36 },
 ];
 
 // ---------------------------------------------------------------- NPC

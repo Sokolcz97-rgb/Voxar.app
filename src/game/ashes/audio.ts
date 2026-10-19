@@ -19,6 +19,8 @@ export type Album = { album: string; artist: string; tracks: Track[] };
 const BUCKET = "ashes-music";
 const VOLUME_KEY = "ashes.music.volume";
 const MUTED_KEY = "ashes.music.muted";
+const MASTER_KEY = "ashes.audio.master";
+const SFX_KEY = "ashes.audio.sfx";
 
 function readNumber(key: string, fallback: number) {
   try {
@@ -44,8 +46,23 @@ class MusicDirector {
   album: Album | null = null;
   current: Track | null = null;
   playing = false;
+  /** Hlasitost hudby (0–1). */
   volume = readNumber(VOLUME_KEY, 0.55);
+  /** Celková hlasitost (0–1) – násobí hudbu i efekty. */
+  master = readNumber(MASTER_KEY, 1);
+  /** Hlasitost zvukových efektů (0–1). */
+  sfx = readNumber(SFX_KEY, 0.7);
+  /** Ztlumí vše (hudbu i efekty). */
   muted = readNumber(MUTED_KEY, 0) === 1;
+
+  /** Skutečná hlasitost hudby po započtení celkové hlasitosti a ztlumení. */
+  get musicLevel() {
+    return this.muted ? 0 : this.master * this.volume;
+  }
+  /** Skutečná hlasitost efektů. */
+  get sfxLevel() {
+    return this.muted ? 0 : this.master * this.sfx;
+  }
   private audio: HTMLAudioElement | null = null;
   private urls = new Map<string, string>();
   private listeners = new Set<Listener>();
@@ -121,7 +138,7 @@ class MusicDirector {
 
   private fade(next: HTMLAudioElement, previous: HTMLAudioElement | null) {
     if (this.fadeTimer) window.clearInterval(this.fadeTimer);
-    const target = this.muted ? 0 : this.volume;
+    const target = this.musicLevel;
     let step = 0;
     this.fadeTimer = window.setInterval(() => {
       step += 1;
@@ -156,14 +173,31 @@ class MusicDirector {
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
     write(VOLUME_KEY, String(this.volume));
-    if (this.audio && !this.muted) this.audio.volume = this.volume;
+    if (this.audio) this.audio.volume = this.musicLevel;
     this.emit();
+  }
+
+  setMaster(volume: number) {
+    this.master = Math.max(0, Math.min(1, volume));
+    write(MASTER_KEY, String(this.master));
+    if (this.audio) this.audio.volume = this.musicLevel;
+    this.emit();
+  }
+
+  setSfx(volume: number) {
+    this.sfx = Math.max(0, Math.min(1, volume));
+    write(SFX_KEY, String(this.sfx));
+    this.emit();
+  }
+
+  setMuted(muted: boolean) {
+    if (muted !== this.muted) this.toggleMute();
   }
 
   toggleMute() {
     this.muted = !this.muted;
     write(MUTED_KEY, this.muted ? "1" : "0");
-    if (this.audio) this.audio.volume = this.muted ? 0 : this.volume;
+    if (this.audio) this.audio.volume = this.musicLevel;
     this.emit();
   }
 
