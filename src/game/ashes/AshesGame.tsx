@@ -607,7 +607,7 @@ export default function AshesGame() {
                 <p className="ashes-prose">{L("Bezejmenný břeh se teprve probouzí. Brzy otevřeme brány Kalidry všem hráčům.", "The Nameless Shore is only just waking. Soon we will open the gates of Kalidra to all players.")}</p>
               </>
             )}
-            <Link to="/hra/roadmap" className="text-sm text-[var(--ash-gold)] underline">{L("Roadmapa – co a kdy čekat", "Roadmap – what to expect and when")}</Link>
+            <Link to="/ashes" className="text-sm text-[var(--ash-gold)] underline">{L("Roadmapa – co a kdy čekat", "Roadmap – what to expect and when")}</Link>
             <div className="flex gap-2">
               {user && <button className="ash-btn ghost small" onClick={() => void logout()}>{L("Odhlásit se", "Sign out")}</button>}
               <button className="ash-btn ghost small" onClick={exitGame}>{isDesktop() ? L("Ukončit hru", "Quit game") : L("Zpět na StudioVoxario", "Back to StudioVoxario")}</button>
@@ -888,7 +888,7 @@ export default function AshesGame() {
             <button className="ash-btn" onClick={enter}>{character ? L("Vstoupit do světa", "Enter the world") : L("Začít dobrodružství", "Begin the adventure")}</button>
             <div className="flex items-center gap-2">
               <span className="text-xs text-[var(--ash-muted)]">{L("Alfa · otevřený svět · hudba: album „Eryon“", "Alpha · open world · music: the “Eryon” album")}</span>
-              <Link to="/hra/roadmap" className="text-xs text-[var(--ash-gold)] underline">{L("Roadmapa", "Roadmap")}</Link>
+              <Link to="/ashes" className="text-xs text-[var(--ash-gold)] underline">{L("Roadmapa", "Roadmap")}</Link>
               {langToggle}
             </div>
           </div>

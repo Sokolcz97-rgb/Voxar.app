@@ -154,7 +154,7 @@ export function Navbar() {
         { to: "/app", label: "Voxar.app", desc: "Komunita, hlas, události a obchod v jednom okně", icon: Sparkles },
         { to: "/browser", label: "VoxarioBrowser", desc: "Herní prohlížeč s ochranou soukromí", icon: Globe },
         { to: "/desktop", label: "VoxarioProtect", desc: "Posílení Windows Defenderu a hlídání systému", icon: ShieldCheck },
-        { to: "/launcher", label: "Ashes of Eryon", desc: "Temné fantasy RPG – připravuje se", icon: Swords },
+        { to: "/ashes", label: "Ashes of Eryon", desc: "Temné fantasy RPG – roadmapa a první test", icon: Swords },
         { to: "/desktop", label: "Ke stažení", desc: "Ověřené instalátory pro Windows", icon: Download },
       ],
     },

@@ -11,7 +11,7 @@ const columns = [
       { to: "/app", label: "Voxar.app" },
       { to: "/browser", label: "VoxarioBrowser" },
       { to: "/desktop", label: "VoxarioProtect" },
-      { to: "/launcher", label: "Ashes of Eryon" },
+      { to: "/ashes", label: "Ashes of Eryon" },
       { to: "/desktop", label: "Ke stažení" },
     ],
   },

@@ -56,13 +56,13 @@ const products: { to: string; name: string; tag: string; desc: string; image: st
     icon: Globe,
   },
   {
-    to: "/launcher",
+    to: "/ashes",
     name: "Ashes of Eryon",
     tag: "Hra",
     desc: "Temné fantasy RPG s vlastním launcherem. Každé rozhodnutí zanechává stopu.",
     image: "/web/shot-ashes.webp",
     icon: Swords,
-    status: "Připravuje se",
+    status: "První test 24. 10.",
   },
 ];
 
