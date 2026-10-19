@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Appearance, Fighter, FightResult, GameState, HeroClass, Item, StatKey } from "./types";
+import type { Appearance, Faction, Fighter, FightResult, GameState, HeroClass, Item, StatKey } from "./types";
 
 /**
  * Tenká vrstva nad serverovými RPC Ashes of Eryon.
@@ -20,8 +20,8 @@ function cleanError(message: string) {
 
 export const ashesApi = {
   state: () => call<GameState>("ashes_state"),
-  createCharacter: (name: string, cls: HeroClass, appearance: Appearance) =>
-    call<GameState>("ashes_create_character", { p_name: name, p_class: cls, p_appearance: appearance }),
+  createCharacter: (name: string, cls: HeroClass, appearance: Appearance, faction: Faction) =>
+    call<GameState>("ashes_create_character", { p_name: name, p_class: cls, p_appearance: appearance, p_faction: faction }),
   startQuest: (id: string) => call<GameState>("ashes_start_quest", { p_quest: id }),
   finishQuest: (skip = false) => call<FightResult>("ashes_finish_quest", { p_skip: skip }),
   fightBoss: () => call<FightResult>("ashes_fight_boss"),
@@ -32,8 +32,8 @@ export const ashesApi = {
   buy: (id: string) => call<GameState>("ashes_buy", { p_item: id }),
   opponents: () => call<Fighter[]>("ashes_arena_opponents"),
   arenaFight: (id: string) => call<FightResult>("ashes_arena_fight", { p_target: id }),
-  hallOfFame: () => call<{ name: string; class: HeroClass; level: number; honor: number; chapter: number; eryon: boolean }[]>("ashes_hall_of_fame"),
-  claimEryon: (on: boolean) => call<GameState>("ashes_claim_eryon", { p_on: on }),
-  eryonSay: (text: string) => call<GameState>("ashes_eryon_say", { p_text: text }),
+  hallOfFame: () => call<{ name: string; class: HeroClass; level: number; honor: number; chapter: number; faction: Faction; eryon: boolean; azkar: boolean }[]>("ashes_hall_of_fame"),
+  claimHero: (on: boolean) => call<GameState>("ashes_claim_hero", { p_on: on }),
+  heroSay: (text: string) => call<GameState>("ashes_hero_say", { p_text: text }),
   adminWorld: (open: boolean) => call<GameState>("ashes_admin_world", { p_open: open }),
 };

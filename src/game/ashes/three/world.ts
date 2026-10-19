@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { Figure } from "./figure";
-import type { Appearance, Fight, Fighter, HeroClass, PresenceHero } from "../types";
+import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHero } from "../types";
 
 /**
  * 3D svět Bezejmenného břehu. Malířské pozadí (wallpaper Kalidry) tvoří
@@ -22,7 +22,7 @@ export const LOCATIONS: { id: LocationId; label: string; pos: [number, number, n
 ];
 
 export type ScreenPoint = { x: number; y: number; visible: boolean };
-export type FrameAnchors = { locations: Record<string, ScreenPoint>; others: Record<string, ScreenPoint>; eryon: ScreenPoint | null };
+export type FrameAnchors = { locations: Record<string, ScreenPoint>; others: Record<string, ScreenPoint>; hero: ScreenPoint | null };
 
 export type BattleEvent =
   | { type: "start"; f1: Fighter; f2: Fighter; hp1: number; hp2: number }
@@ -115,7 +115,10 @@ export class AshesWorld {
   private fires: Fire[] = [];
   private figures: Figure[] = [];
   private player: Figure | null = null;
+  /** Legendární hrdina strany u brány (Eryon nebo Azkar). */
   private eryon: Figure | null = null;
+  private faction: Faction = "kalidra";
+  private banner: THREE.Mesh | null = null;
   private others = new Map<string, Figure>();
   private battleFigures: Figure[] = [];
   private embers: THREE.Points;
@@ -169,11 +172,7 @@ export class AshesWorld {
     this.embers = this.buildEmbers();
     this.buildHitAreas();
 
-    this.eryon = new Figure({ cls: "hoplit", eryon: true });
-    this.eryon.group.position.set(2.75, 0, -4.1);
-    this.eryon.face(-0.25);
-    this.scene.add(this.eryon.group);
-    this.figures.push(this.eryon);
+    this.setFaction("kalidra");
 
     this.camera.position.copy(VIEWS.hub.pos);
     this.camera.lookAt(VIEWS.hub.look);
@@ -342,6 +341,7 @@ export class AshesWorld {
     const banner = new THREE.Mesh(bannerGeo, new THREE.MeshStandardMaterial({ color: "#6a1610", roughness: 0.95, side: THREE.DoubleSide }));
     banner.position.set(archX + 1.5, 3.2, archZ + 0.5);
     add(banner);
+    this.banner = banner;
 
     // Krčma: plachtový stan s lucernou
     const tentMat = new THREE.MeshStandardMaterial({ color: "#5a4c3c", roughness: 0.95, side: THREE.DoubleSide, flatShading: true });
@@ -513,19 +513,37 @@ export class AshesWorld {
     this.onSelect?.(this.hovered);
   };
 
-  setPlayer(cls: HeroClass, appearance: Appearance, isEryon: boolean, shield: boolean) {
+  /** Tábor podle strany: u brány stojí Eryon (Kalidra), nebo Azkar (Legie), a mění se korouhev. */
+  setFaction(faction: Faction) {
+    if (faction === this.faction && this.eryon) return;
+    this.faction = faction;
+    if (this.eryon) {
+      this.scene.remove(this.eryon.group);
+      this.eryon.dispose();
+      this.figures = this.figures.filter((f) => f !== this.eryon);
+    }
+    this.eryon = new Figure({ cls: "hoplit", eryon: faction === "kalidra", azkar: faction === "legie" });
+    this.eryon.group.position.set(2.75, 0, -4.1);
+    this.eryon.face(-0.25);
+    this.eryon.group.visible = this.view === "hub" || this.view === "portrait";
+    this.scene.add(this.eryon.group);
+    this.figures.push(this.eryon);
+    if (this.banner) (this.banner.material as THREE.MeshStandardMaterial).color.set(faction === "legie" ? "#1c1210" : "#6a1610");
+  }
+
+  setPlayer(cls: HeroClass, appearance: Appearance, hero: HeroId | null, shield: boolean, legion = false) {
     if (this.player) {
       this.scene.remove(this.player.group);
       this.player.dispose();
       this.figures = this.figures.filter((f) => f !== this.player);
     }
-    this.player = new Figure({ cls, appearance, eryon: isEryon, shield });
+    this.player = new Figure({ cls, appearance, eryon: hero === "eryon", azkar: hero === "azkar", legion: legion && !hero, shield });
     this.player.group.position.set(1.0, 0, 3.0);
     this.player.face(-0.2);
     this.player.group.visible = this.view !== "battle";
     this.scene.add(this.player.group);
     this.figures.push(this.player);
-    if (this.eryon) this.eryon.group.visible = !isEryon && this.view !== "battle";
+    if (this.eryon) this.eryon.group.visible = !hero && (this.view === "hub" || this.view === "portrait");
   }
 
   setOthers(heroes: PresenceHero[]) {
@@ -541,7 +559,7 @@ export class AshesWorld {
     heroes.slice(0, 10).forEach((hero, index) => {
       let fig = this.others.get(hero.key);
       if (!fig) {
-        fig = new Figure({ cls: hero.cls, appearance: hero.appearance, eryon: hero.eryon });
+        fig = new Figure({ cls: hero.cls, appearance: hero.appearance, eryon: hero.eryon, azkar: hero.azkar, legion: hero.faction === "legie" && !hero.azkar });
         this.others.set(hero.key, fig);
         this.figures.push(fig);
         this.scene.add(fig.group);
@@ -561,7 +579,7 @@ export class AshesWorld {
     this.camK = 0;
     const hubVisible = mode !== "battle";
     if (this.player) this.player.group.visible = hubVisible;
-    if (this.eryon) this.eryon.group.visible = hubVisible && mode !== "create" && !(this.player?.opts.eryon);
+    if (this.eryon) this.eryon.group.visible = hubVisible && mode !== "create" && !(this.player?.opts.eryon || this.player?.opts.azkar);
     for (const fig of this.others.values()) fig.group.visible = hubVisible;
     if (mode !== "battle") this.clearBattle();
   }
@@ -584,7 +602,7 @@ export class AshesWorld {
   }
 
   /** Přehraje souboj vypočtený serverem. */
-  async playFight(fight: Fight, onEvent: (e: BattleEvent) => void, allyEryon = false) {
+  async playFight(fight: Fight, onEvent: (e: BattleEvent) => void, ally: HeroId | null = null) {
     this.setView("battle");
     this.clearBattle();
     this.battleAbort = false;
@@ -593,8 +611,10 @@ export class AshesWorld {
       const fig = new Figure({
         cls: f.class,
         appearance: f.appearance ?? {},
-        eryon: !!f.eryon,
-        enemy: side === 2 && !!f.npc,
+        eryon: !!f.eryon || f.appearance?.hero === "eryon",
+        azkar: !!f.azkar || f.appearance?.hero === "azkar",
+        legion: f.faction === "legie" && !f.azkar,
+        enemy: side === 2 && !!f.npc && !f.appearance?.kalidran && !f.appearance?.hero,
         boss: !!f.appearance?.boss,
         shield: f.shield,
       });
@@ -607,13 +627,13 @@ export class AshesWorld {
     };
     const a = make(fight.f1, 1);
     const b = make(fight.f2, 2);
-    if (allyEryon) {
-      const ally = new Figure({ cls: "hoplit", eryon: true });
-      ally.group.position.set(-2.3, 0, 1.0);
-      ally.face(Math.PI / 2 - 0.4);
-      this.scene.add(ally.group);
-      this.figures.push(ally);
-      this.battleFigures.push(ally);
+    if (ally) {
+      const allyFig = new Figure({ cls: "hoplit", eryon: ally === "eryon", azkar: ally === "azkar" });
+      allyFig.group.position.set(-2.3, 0, 1.0);
+      allyFig.face(Math.PI / 2 - 0.4);
+      this.scene.add(allyFig.group);
+      this.figures.push(allyFig);
+      this.battleFigures.push(allyFig);
     }
     onEvent({ type: "start", f1: fight.f1, f2: fight.f2, hp1: fight.hp1, hp2: fight.hp2 });
     await this.wait(0.9);
@@ -749,8 +769,8 @@ export class AshesWorld {
       for (const loc of LOCATIONS) locations[loc.id] = this.project(new THREE.Vector3(...loc.pos));
       const others: Record<string, ScreenPoint> = {};
       for (const [key, fig] of this.others) others[key] = this.project(fig.group.position.clone().add(new THREE.Vector3(0, 2.15, 0)));
-      const eryon = this.eryon && this.eryon.group.visible ? this.project(this.eryon.group.position.clone().add(new THREE.Vector3(0, 2.4, 0))) : null;
-      this.onFrame({ locations, others, eryon });
+      const hero = this.eryon && this.eryon.group.visible ? this.project(this.eryon.group.position.clone().add(new THREE.Vector3(0, 2.4, 0))) : null;
+      this.onFrame({ locations, others, hero });
     }
 
     this.renderer.render(this.scene, this.camera);

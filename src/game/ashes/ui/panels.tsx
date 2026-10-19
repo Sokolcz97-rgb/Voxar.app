@@ -5,8 +5,8 @@ import {
 import { ashesApi } from "../api";
 import { music, type Album, type Track } from "../audio";
 import {
-  CLASS_LABEL, CLASS_MAIN, RARITY, SLOT_LABEL, STAT_LABEL,
-  type Appearance, type Fighter, type GameState, type HeroClass, type Item, type PresenceHero, type Slot, type StatKey,
+  CLASS_LABEL, CLASS_MAIN, FACTION, RARITY, SLOT_LABEL, STAT_LABEL,
+  type Appearance, type Faction, type Fighter, type GameState, type HeroClass, type Item, type PresenceHero, type Slot, type StatKey,
 } from "../types";
 
 export type Act = (fn: () => Promise<GameState>, success?: string) => Promise<void>;
@@ -93,9 +93,15 @@ export function TavernPanel({ state, now, act, onFinish, onClose, busy }: {
   const quests = state.quests ?? [];
   const active = quests.find((q) => q.state === "active");
   return (
-    <PanelShell title="Krčma U Zlomeného vesla" kicker={`Kapitola ${ch.chapter > 6 ? "VI" : ["I", "II", "III", "IV", "V", "VI"][ch.chapter - 1]} · výpravy`} onClose={onClose}>
+    <PanelShell
+      title={ch.faction === "legie" ? "Markytánka u černých plachet" : "Krčma U Zlomeného vesla"}
+      kicker={`Kapitola ${ch.chapter > 6 ? "VI" : ["I", "II", "III", "IV", "V", "VI"][ch.chapter - 1]} · výpravy`}
+      onClose={onClose}
+    >
       <p className="ashes-prose mb-3">
-        Hostinský utírá cínové poháry a kývne k tabuli. „Práce je dost. Lidí, co se vrátí, málo.“
+        {ch.faction === "legie"
+          ? "Markytánka nalévá kyselé víno z měchu a ukáže na rozkazy přibité ke stěžni. „Azkar platí bronzem. Mrtví neplatí nic.“"
+          : "Hostinský utírá cínové poháry a kývne k tabuli. „Práce je dost. Lidí, co se vrátí, málo.“"}
       </p>
       <div className="mb-4">
         <div className="ash-meta mb-1"><span>Odvaha na dnešek</span><b>{ch.courage} / 100</b>{state.admin && <span>(správce bez omezení)</span>}</div>
@@ -175,7 +181,7 @@ export function HeroPanel({ state, act, onClose, busy }: { state: GameState; act
   const dmg = (k: number) => Math.round(k * (1 + f[main] / 10));
   const [selected, setSelected] = useState<string | null>(null);
   return (
-    <PanelShell title={ch.display_name} kicker={`${CLASS_LABEL[ch.class]} · úroveň ${ch.level}${ch.is_eryon ? " · Eryon" : ""}`} onClose={onClose}>
+    <PanelShell title={ch.display_name} kicker={`${FACTION[ch.faction ?? "kalidra"].name} · ${CLASS_LABEL[ch.class]} · úroveň ${ch.level}`} onClose={onClose}>
       <div className="mb-3">
         <div className="ash-meta mb-1"><span>Zkušenosti</span><b>{fmtNum(ch.xp)} / {fmtNum(ch.xp_need)}</b></div>
         <div className="ash-bar"><i style={{ width: `${(ch.xp / ch.xp_need) * 100}%` }} /></div>
@@ -261,8 +267,12 @@ export function SmithyPanel({ state, act, onClose, busy }: { state: GameState; a
   }, [state.character?.gold]);
 
   return (
-    <PanelShell title="Kovárna u výhně" kicker="Bronz, kůže a talismany" onClose={onClose}>
-      <p className="ashes-prose mb-3">Kovář Tharos ani nezvedne hlavu od kovadliny. „Bronz se nevrací. Bronz jde jen vpřed. Vyber si.“</p>
+    <PanelShell title={ch.faction === "legie" ? "Polní kovárna Legie" : "Kovárna u výhně"} kicker="Bronz, kůže a talismany" onClose={onClose}>
+      <p className="ashes-prose mb-3">
+        {ch.faction === "legie"
+          ? "Kovář Rukmar kalí čepele v moři. „Bronz Legie je černý od kouře. O to líp se v něm odráží oheň.“"
+          : "Kovář Tharos ani nezvedne hlavu od kovadliny. „Bronz se nevrací. Bronz jde jen vpřed. Vyber si.“"}
+      </p>
       <div className="ash-meta mb-3"><span>Tvé zlato <b>{fmtNum(ch.gold)}</b></span><span>Zboží se obměňuje každý den</span>{bagFull && <b className="text-[#e07a5f]">Batoh je plný</b>}</div>
       {error && <p className="ash-toast-error text-sm">{error}</p>}
       {!stock && !error && <p className="text-sm text-[var(--ash-muted)]">Kovář vykládá zboží…</p>}
@@ -301,7 +311,7 @@ export function ArenaPanel({ state, now, onFight, onClose, busy }: {
 
   return (
     <PanelShell title="Kruh kamenů" kicker="Aréna · souboje hráčů" onClose={onClose}>
-      <p className="ashes-prose mb-3">V kruhu menhirů se obránci Kalidry měří mezi sebou. Vítěz bere čest, poražený poučení.</p>
+      <p className="ashes-prose mb-3">V kruhu menhirů se měří obránci Kalidry i vojáci Legie. Vítěz bere čest, poražený poučení. Souboj s nepřítelem z druhé strany dává o polovinu víc cti a pohne hradbami.</p>
       <div className="ash-meta mb-3"><span>Tvá čest <b>{fmtNum(ch.honor)}</b></span>{wait > 0 && !state.admin && <span>Další souboj za <b>{fmtTime(wait)}</b></span>}</div>
       <div className="ash-tabs">
         <button data-active={tab === "souperi"} onClick={() => setTab("souperi")}>Soupeři</button>
@@ -312,12 +322,12 @@ export function ArenaPanel({ state, now, onFight, onClose, busy }: {
           {!foes && <p className="text-sm text-[var(--ash-muted)]">Hledám soupeře…</p>}
           {foes?.length === 0 && <p className="text-sm text-[var(--ash-muted)]">Zatím tu nejsou jiní hrdinové. Až se probudí další, objeví se tady.</p>}
           {foes?.map((foe) => (
-            <div key={foe.id} className={`ash-card ${foe.eryon ? "hl" : ""}`}>
+            <div key={foe.id} className={`ash-card ${foe.eryon || foe.azkar ? "hl" : ""}`}>
               <div className="flex items-center gap-3">
-                {foe.eryon ? <Crown className="h-5 w-5 text-[#ffcf8a]" /> : <Shield className="h-5 w-5 text-[var(--ash-gold)]" />}
+                {foe.eryon || foe.azkar ? <Crown className="h-5 w-5 text-[#ffcf8a]" /> : <Shield className="h-5 w-5" style={{ color: FACTION[foe.faction ?? "kalidra"].color }} />}
                 <div className="min-w-0 flex-1">
-                  <div className="ash-title">{foe.name}{foe.eryon && <span className="ml-2 text-xs text-[#ffb27a]">legenda</span>}</div>
-                  <div className="ash-meta"><span>{CLASS_LABEL[foe.class]}</span><span>úroveň <b>{foe.level}</b></span><span>čest <b>{fmtNum(foe.honor)}</b></span></div>
+                  <div className="ash-title">{foe.name}{(foe.eryon || foe.azkar) && <span className="ml-2 text-xs text-[#ffb27a]">legenda</span>}</div>
+                  <div className="ash-meta"><span style={{ color: FACTION[foe.faction ?? "kalidra"].color }}>{FACTION[foe.faction ?? "kalidra"].short}{foe.faction !== ch.faction ? " · nepřítel" : ""}</span><span>{CLASS_LABEL[foe.class]}</span><span>úroveň <b>{foe.level}</b></span><span>čest <b>{fmtNum(foe.honor)}</b></span></div>
                 </div>
                 <button className="ash-btn blood small" disabled={busy || (wait > 0 && !state.admin)} onClick={() => foe.id && onFight(foe.id)}>
                   <Swords className="h-3.5 w-3.5" /> Vyzvat
@@ -331,7 +341,7 @@ export function ArenaPanel({ state, now, onFight, onClose, busy }: {
         <div>
           {fame?.map((row, i) => (
             <div key={`${row.name}-${i}`} className="ash-stat">
-              <span className="name">{i + 1}. {row.eryon ? "👑 " : ""}{row.name} <small className="text-[var(--ash-muted)]">{CLASS_LABEL[row.class]} · úr. {row.level}</small></span>
+              <span className="name">{i + 1}. {row.eryon || row.azkar ? "👑 " : ""}{row.name} <small style={{ color: FACTION[row.faction ?? "kalidra"].color }}>{FACTION[row.faction ?? "kalidra"].short}</small> <small className="text-[var(--ash-muted)]">{CLASS_LABEL[row.class]} · úr. {row.level}</small></span>
               <span className="val">{fmtNum(row.honor)}</span>
               <Trophy className="h-4 w-4 text-[var(--ash-gold)]" />
             </div>
@@ -342,8 +352,11 @@ export function ArenaPanel({ state, now, onFight, onClose, busy }: {
   );
 }
 
-/* ------------------------------ HRADBY A ERYON ------------------------------ */
-const CHAPTER_NAMES = ["Bezejmenný břeh", "Strážní ohně", "Tisíc kopí", "Poslední štít", "Oheň Kalidry", "Pochod bronzu"];
+/* ------------------------------ HRADBY / TÁBOR ------------------------------ */
+const CHAPTER_NAMES: Record<Faction, string[]> = {
+  kalidra: ["Bezejmenný břeh", "Strážní ohně", "Tisíc kopí", "Poslední štít", "Oheň Kalidry", "Pochod bronzu"],
+  legie: ["Vylodění", "Strážní ohně", "Tisíc kopí", "Poslední štít", "Ohně na horách", "Pochod k moři"],
+};
 
 export function WallsPanel({ state, now, act, onBoss, onClose, busy }: {
   state: GameState; now: number; act: Act; onBoss: () => void; onClose: () => void; busy: boolean;
@@ -351,16 +364,26 @@ export function WallsPanel({ state, now, act, onBoss, onClose, busy }: {
   const ch = state.character!;
   const chapter = state.chapter!;
   const world = state.world!;
+  const faction: Faction = ch.faction ?? "kalidra";
+  const legion = faction === "legie";
   const [shout, setShout] = useState("");
   const actDone = ch.chapter > 6;
   const bossReady = new Date(ch.boss_ready_at).getTime() - now;
   const canBoss = !actDone && ch.chapter_progress >= chapter.need && (bossReady <= 0 || state.admin);
   const wallPct = (world.wall / world.wall_max) * 100;
+  const ally = chapter.ally ?? (chapter.eryon ? "eryon" : null);
+  const isHero = ch.is_eryon || ch.is_azkar;
+  const canClaim = legion ? !!state.editor : !!state.admin;
+  const heroShout = legion ? world.azkar_shout : world.eryon_shout;
 
   return (
-    <PanelShell title="Hradby Kalidry" kicker={actDone ? "1. akt dohrán" : `Kapitola ${ch.chapter} z 6 · ${chapter.title}`} onClose={onClose}>
+    <PanelShell
+      title={legion ? "Tábor Legie" : "Hradby Kalidry"}
+      kicker={actDone ? "1. akt dohrán" : `${FACTION[faction].name} · kapitola ${ch.chapter} z 6 · ${chapter.title}`}
+      onClose={onClose}
+    >
       <div className="ash-chapters mb-4">
-        {CHAPTER_NAMES.map((name, i) => (
+        {CHAPTER_NAMES[faction].map((name, i) => (
           <div key={name} data-state={i + 1 < ch.chapter ? "done" : i + 1 === ch.chapter ? "now" : "todo"}>{i + 1}. {name}</div>
         ))}
       </div>
@@ -377,7 +400,9 @@ export function WallsPanel({ state, now, act, onBoss, onClose, busy }: {
             <h3 className="ash-title text-lg">{chapter.boss.t}</h3>
             <p className="ashes-prose">{chapter.boss.s}</p>
             <div className="ash-enemy"><Skull className="h-4 w-4 text-[#d2492b]" /><span><b>{chapter.boss.e}</b> · {CLASS_LABEL[chapter.boss.c]}</span></div>
-            {chapter.eryon && <p className="text-sm text-[#ffcf8a]"><Crown className="mr-1 inline h-4 w-4" />Eryon bojuje po tvém boku: +25 % poškození.</p>}
+            {ally && (
+              <p className="text-sm text-[#ffcf8a]"><Crown className="mr-1 inline h-4 w-4" />{ally === "azkar" ? "Azkar" : "Eryon"} bojuje po tvém boku: +25 % poškození.</p>
+            )}
             <button className="ash-btn blood mt-3" disabled={busy || !canBoss} onClick={onBoss}>
               {ch.chapter_progress < chapter.need ? `Nejdřív splň výpravy (${ch.chapter_progress}/${chapter.need})` : bossReady > 0 && !state.admin ? `Odpočinek ${fmtTime(bossReady)}` : <><Flame className="h-4 w-4" /> Vyrazit do bitvy</>}
             </button>
@@ -385,46 +410,61 @@ export function WallsPanel({ state, now, act, onBoss, onClose, busy }: {
         </>
       ) : (
         <div className="ash-card hl">
-          <p className="ashes-prose">Došli jsme k moři. A moře… už čekalo.</p>
+          <p className="ashes-prose">{legion ? "Moře je černé… zítra bude rudé." : "Došli jsme k moři. A moře… už čekalo."}</p>
           <p className="text-sm text-[var(--ash-muted)]">1. akt je dohrán. Další akt se připravuje – zatím můžeš sílit na výpravách a v aréně.</p>
         </div>
       )}
 
       <div className="ash-rule my-5" />
-      <div className="ash-kicker mb-1">Společná obrana · všichni hráči</div>
-      <div className="ash-meta mb-1"><span>Síla hradeb</span><b>{wallPct.toFixed(1)} %</b><span>{fmtNum(world.heroes)} hrdinů</span></div>
+      <div className="ash-kicker mb-1">Válka o Kalidru · všichni hráči</div>
+      <div className="ash-meta mb-1">
+        <span>Síla hradeb</span><b>{wallPct.toFixed(1)} %</b>
+        <span style={{ color: FACTION.kalidra.color }}>Obránci {fmtNum(world.kalidra)}</span>
+        <span style={{ color: FACTION.legie.color }}>Legie {fmtNum(world.legie)}</span>
+      </div>
       <div className="ash-bar wall"><i style={{ width: `${wallPct}%` }} /></div>
-      <p className="mt-2 text-xs text-[var(--ash-muted)]">Každá vítězná výprava a bitva kteréhokoli hráče hradby zpevní. Bez obránců se pomalu rozpadají. Dokud stojí, stojí Kalidra.</p>
+      <p className="mt-2 text-xs text-[var(--ash-muted)]">
+        {legion
+          ? "Každé vítězství Legie hradby oslabí, každé vítězství obránců je zpevní. Zbořte je dřív, než je Kalidra znovu postaví."
+          : "Každé vítězství obránců hradby zpevní, každé vítězství Legie je oslabí. Dokud stojí, stojí Kalidra."}
+      </p>
 
       <div className="ash-rule my-5" />
-      <div className="ash-kicker mb-2">Eryon, poslední štít</div>
-      {world.eryon_shout ? (
-        <blockquote className="ashes-prose border-l-2 border-[#b3160d] pl-3 italic">„{world.eryon_shout}“</blockquote>
+      <div className="ash-kicker mb-2">{FACTION[faction].heroFull}</div>
+      {heroShout ? (
+        <blockquote className="ashes-prose border-l-2 border-[#b3160d] pl-3 italic">„{heroShout}“</blockquote>
       ) : (
-        <p className="ashes-prose italic text-[var(--ash-muted)]">Eryon mlčí na hradbách a hledí k horám.</p>
+        <p className="ashes-prose italic text-[var(--ash-muted)]">
+          {legion ? "Azkar stojí u ohně a mlčky brousí meč." : "Eryon mlčí na hradbách a hledí k horám."}
+        </p>
       )}
-      {state.admin && (
+      {(canClaim || state.admin) && (
         <div className="ash-card mt-3">
-          <div className="ash-kicker mb-2">Správce</div>
+          <div className="ash-kicker mb-2">{state.admin ? "Správce" : "Editor"}</div>
           <div className="flex flex-wrap gap-2">
-            <button className="ash-btn small" disabled={busy} onClick={() => act(() => ashesApi.claimEryon(!ch.is_eryon), ch.is_eryon ? "Eryon je opět legendou." : "Teď jsi Eryon.")}>
-              <Crown className="h-3.5 w-3.5" /> {ch.is_eryon ? "Vrátit Eryona legendě" : "Hrát za Eryona"}
-            </button>
-            <button className="ash-btn ghost small" disabled={busy} onClick={() => act(() => ashesApi.adminWorld(!world.open_to_all), world.open_to_all ? "Hra je opět jen pro tým." : "Hra je otevřená všem přihlášeným hráčům.")}>
-              {world.open_to_all ? "Zavřít hru (jen tým)" : "Otevřít hru všem hráčům"}
-            </button>
+            {canClaim && (
+              <button className="ash-btn small" disabled={busy} onClick={() => act(() => ashesApi.claimHero(!isHero), isHero ? `${FACTION[faction].hero} je opět legendou.` : `Teď jsi ${FACTION[faction].hero}.`)}>
+                <Crown className="h-3.5 w-3.5" /> {isHero ? `Vrátit ${legion ? "Azkara" : "Eryona"} legendě` : `Hrát za ${legion ? "Azkara" : "Eryona"}`}
+              </button>
+            )}
+            {state.admin && (
+              <button className="ash-btn ghost small" disabled={busy} onClick={() => act(() => ashesApi.adminWorld(!world.open_to_all), world.open_to_all ? "Hra je opět jen pro tým." : "Hra je otevřená všem přihlášeným hráčům.")}>
+                {world.open_to_all ? "Zavřít hru (jen tým)" : "Otevřít hru všem hráčům"}
+              </button>
+            )}
           </div>
-          {ch.is_eryon && (
+          {isHero && (
             <div className="mt-3">
-              <textarea className="ash-textarea" maxLength={240} placeholder="Co Eryon řekne všem obráncům Kalidry?" value={shout} onChange={(e) => setShout(e.target.value)} />
-              <button className="ash-btn small mt-2" disabled={busy || shout.trim().length < 2} onClick={() => act(() => ashesApi.eryonSay(shout), "Eryon promluvil.").then(() => setShout(""))}>
+              <textarea className="ash-textarea" maxLength={240} placeholder={`Co ${FACTION[faction].hero} řekne všem hráčům?`} value={shout} onChange={(e) => setShout(e.target.value)} />
+              <button className="ash-btn small mt-2" disabled={busy || shout.trim().length < 2} onClick={() => act(() => ashesApi.heroSay(shout), `${FACTION[faction].hero} promluvil.`).then(() => setShout(""))}>
                 Promluvit ke všem
               </button>
             </div>
           )}
-          <p className="mt-2 text-xs text-[var(--ash-muted)]">
-            Hra je teď {world.open_to_all ? "otevřená všem přihlášeným" : "jen pro správce a editory"}.
-          </p>
+          {state.admin && (
+            <p className="mt-2 text-xs text-[var(--ash-muted)]">Hra je teď {world.open_to_all ? "otevřená všem přihlášeným" : "jen pro správce a editory"}.</p>
+          )}
+          {!canClaim && !legion && <p className="mt-2 text-xs text-[var(--ash-muted)]">Eryona může převzít jen správce.</p>}
         </div>
       )}
     </PanelShell>
@@ -499,18 +539,22 @@ export function BardPanel({ chapter, onClose }: { chapter: number; onClose: () =
 export function ChroniclePanel({ state, others, onClose }: { state: GameState; others: PresenceHero[]; onClose: () => void }) {
   return (
     <PanelShell title="Kronika Kalidry" kicker="Co se děje ve světě" onClose={onClose}>
-      <div className="ash-kicker mb-2">Na břehu právě teď ({others.length + 1})</div>
+      <div className="ash-meta mb-3">
+        <span style={{ color: FACTION.kalidra.color }}>Obránci Kalidry <b>{fmtNum(state.world?.kalidra)}</b></span>
+        <span style={{ color: FACTION.legie.color }}>Legie Rudého slunce <b>{fmtNum(state.world?.legie)}</b></span>
+      </div>
+      <div className="ash-kicker mb-2">V tvém táboře právě teď ({others.length + 1})</div>
       <div className="mb-4 flex flex-wrap gap-2">
         <span className="ash-card px-3 py-1 text-sm">{state.character?.display_name} <small className="text-[var(--ash-muted)]">(ty)</small></span>
         {others.map((o) => (
-          <span key={o.key} className={`ash-card px-3 py-1 text-sm ${o.eryon ? "hl" : ""}`}>{o.name} <small className="text-[var(--ash-muted)]">úr. {o.level}</small></span>
+          <span key={o.key} className={`ash-card px-3 py-1 text-sm ${o.eryon || o.azkar ? "hl" : ""}`}>{o.name} <small className="text-[var(--ash-muted)]">úr. {o.level}</small></span>
         ))}
       </div>
       <div className="ash-kicker mb-2">Zápisy</div>
       {(state.chronicle ?? []).length === 0 && <p className="text-sm text-[var(--ash-muted)]">Kronika je zatím prázdná.</p>}
       {(state.chronicle ?? []).map((entry, i) => (
         <div key={i} className="ash-stat">
-          <span className={entry.kind === "eryon" ? "ashes-prose italic text-[#ffcf8a]" : ""}>{entry.text}</span>
+          <span className={entry.kind === "eryon" ? "ashes-prose italic text-[#ffcf8a]" : entry.kind === "azkar" ? "ashes-prose italic text-[#ff8a6a]" : ""}>{entry.text}</span>
           <span className="text-xs text-[var(--ash-muted)]">{new Date(entry.created_at).toLocaleString("cs-CZ", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           <span />
         </div>
@@ -526,17 +570,22 @@ export const CRESTS = ["#8a1a12", "#1d1d1d", "#d8cdb8", "#2a4a7a"];
 
 export function CreateCharacter({ busy, onPreview, onCreate }: {
   busy: boolean;
-  onPreview: (cls: HeroClass, appearance: Appearance) => void;
-  onCreate: (name: string, cls: HeroClass, appearance: Appearance) => void;
+  onPreview: (cls: HeroClass, appearance: Appearance, faction: Faction) => void;
+  onCreate: (name: string, cls: HeroClass, appearance: Appearance, faction: Faction) => void;
 }) {
+  const [faction, setFaction] = useState<Faction>("kalidra");
   const [name, setName] = useState("");
   const [cls, setCls] = useState<HeroClass>("hoplit");
   const [skin, setSkin] = useState(SKINS[1]);
   const [cloak, setCloak] = useState(CLOAKS[0]);
   const [crest, setCrest] = useState(CRESTS[0]);
   const appearance = useMemo(() => ({ skin, cloak, crest }), [skin, cloak, crest]);
-  useEffect(() => onPreview(cls, appearance), [cls, appearance, onPreview]);
-  const valid = /^\p{L}[\p{L}\p{N} _-]{2,19}$/u.test(name.trim()) && name.trim().toLowerCase() !== "eryon";
+  useEffect(() => onPreview(cls, appearance, faction), [cls, appearance, faction, onPreview]);
+  const valid = /^\p{L}[\p{L}\p{N} _-]{2,19}$/u.test(name.trim()) && !["eryon", "azkar"].includes(name.trim().toLowerCase());
+  const sides: { id: Faction; title: string; hero: string; desc: string }[] = [
+    { id: "kalidra", title: "Obránci Kalidry", hero: "Eryon, poslední štít", desc: "Braň město na pobřeží. Dokud stojí jeden z vás, Kalidra nepadne." },
+    { id: "legie", title: "Legie Rudého slunce", hero: "Azkar, Syn Rudého slunce", desc: "Přišli jste z hor a z moře. Kalidra padne – nebo padnete vy." },
+  ];
 
   const classes: { id: HeroClass; desc: string }[] = [
     { id: "hoplit", desc: "Bronzový štít a kopí. Hodně životů, blokuje údery." },
@@ -547,14 +596,28 @@ export function CreateCharacter({ busy, onPreview, onCreate }: {
   return (
     <section className="ash-create ash-frame">
       <header className="border-b border-[var(--ash-line)] px-5 pb-3 pt-4">
-        <div className="ash-kicker">Bezejmenný břeh</div>
-        <h2 className="ash-title m-0 text-xl">Kdo se probouzí v příboji?</h2>
+        <div className="ash-kicker">{faction === "legie" ? "Zátoka černých plachet" : "Bezejmenný břeh"}</div>
+        <h2 className="ash-title m-0 text-xl">{faction === "legie" ? "Kdo vystupuje z černé lodi?" : "Kdo se probouzí v příboji?"}</h2>
       </header>
       <div className="flex-1 overflow-y-auto px-5 py-4">
-        <p className="ashes-prose mb-4">Moře tě vyplavilo mezi trosky. Pamatuješ si jen své jméno – a že v dálce hoří světla Kalidry.</p>
+        <div className="ash-kicker mb-2">Strana</div>
+        <div className="ash-factions mb-4">
+          {sides.map((side) => (
+            <button key={side.id} data-active={faction === side.id} data-faction={side.id} onClick={() => setFaction(side.id)}>
+              <b>{side.title}</b>
+              <span className="hero">{side.hero}</span>
+              <small>{side.desc}</small>
+            </button>
+          ))}
+        </div>
+        <p className="ashes-prose mb-4">
+          {faction === "legie"
+            ? "Černé lodě tě vysadily v zátoce. Azkar ukazuje mečem k městu na pobřeží: „Tam je Kalidra. Najdi mi k ní cestu.“"
+            : "Moře tě vyplavilo mezi trosky. Pamatuješ si jen své jméno – a že v dálce hoří světla Kalidry."}
+        </p>
         <label className="ash-kicker mb-1 block" htmlFor="ash-name">Jméno hrdiny</label>
         <input id="ash-name" className="ash-input mb-1" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="např. Tharion" autoComplete="off" />
-        <p className="mb-4 text-xs text-[var(--ash-muted)]">3–20 znaků. Jméno Eryon patří legendě.</p>
+        <p className="mb-4 text-xs text-[var(--ash-muted)]">3–20 znaků. Jména Eryon a Azkar patří legendám.</p>
 
         <div className="ash-kicker mb-2">Povolání</div>
         <div className="ash-classes mb-4">
@@ -578,8 +641,8 @@ export function CreateCharacter({ busy, onPreview, onCreate }: {
         )}
       </div>
       <footer className="border-t border-[var(--ash-line)] px-5 py-4">
-        <button className="ash-btn w-full" disabled={!valid || busy} onClick={() => onCreate(name.trim(), cls, appearance)}>
-          Probudit se na břehu
+        <button className={`ash-btn w-full ${faction === "legie" ? "blood" : ""}`} disabled={!valid || busy} onClick={() => onCreate(name.trim(), cls, appearance, faction)}>
+          {faction === "legie" ? "Vstoupit do Legie" : "Probudit se na břehu"}
         </button>
       </footer>
     </section>

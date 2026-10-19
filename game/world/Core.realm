@@ -16,7 +16,8 @@
   "storyPillars": {
     "eryon": "reserved",
     "kalidra": "reserved",
-    "conquerorFaction": "reserved",
+    "conquerorFaction": "Legie Rudého slunce",
+    "conquerorHero": "Azkar, Syn Rudého slunce",
     "playerMaySupportAnySide": true,
     "playerMayRemainIndependent": true
   },

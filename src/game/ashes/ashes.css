@@ -215,6 +215,7 @@
   padding: 10px 18px; text-align: center; font-family: "Ashes Cormorant", serif; font-size: 1.12rem; font-style: italic; color: #f6e2bd;
   background: linear-gradient(90deg, transparent, rgba(80, 18, 10, 0.85), transparent); border-top: 1px solid rgba(214, 120, 70, 0.5); border-bottom: 1px solid rgba(214, 120, 70, 0.5);
 }
+.ash-eryon-banner.legion { background: linear-gradient(90deg, transparent, rgba(30, 10, 8, 0.92), transparent); border-color: rgba(210, 73, 43, 0.6); }
 .ash-eryon-banner b { font-family: "Ashes Cinzel", serif; font-style: normal; font-size: 0.78rem; letter-spacing: 0.25em; color: #ffb27a; display: block; }
 
 .ash-create { position: absolute; z-index: 6; top: 88px; left: 16px; bottom: 16px; width: min(460px, calc(100vw - 32px)); display: flex; flex-direction: column; }
@@ -223,6 +224,15 @@
 .ash-classes button[data-active="true"] { border-color: var(--ash-gold); background: rgba(60, 44, 24, 0.7); box-shadow: inset 0 0 0 1px rgba(240, 210, 150, 0.3); }
 .ash-classes b { display: block; font-family: "Ashes Cinzel", serif; font-size: 0.85rem; color: var(--ash-gold-2); }
 .ash-classes small { display: block; margin-top: 4px; font-size: 0.7rem; color: var(--ash-muted); }
+.ash-factions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ash-factions button { padding: 12px; text-align: left; color: var(--ash-text); background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(201, 164, 92, 0.2); cursor: pointer; }
+.ash-factions b { display: block; font-family: "Ashes Cinzel", serif; font-size: 0.86rem; color: var(--ash-gold-2); }
+.ash-factions .hero { display: block; margin-top: 2px; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--ash-gold); }
+.ash-factions small { display: block; margin-top: 6px; font-size: 0.72rem; line-height: 1.35; color: var(--ash-muted); }
+.ash-factions button[data-faction="legie"] b { color: #f2a084; }
+.ash-factions button[data-faction="legie"] .hero { color: #d2492b; }
+.ash-factions button[data-active="true"] { border-color: var(--ash-gold); background: rgba(60, 44, 24, 0.7); box-shadow: inset 0 0 0 1px rgba(240, 210, 150, 0.3); }
+.ash-factions button[data-active="true"][data-faction="legie"] { border-color: #d2492b; background: rgba(70, 20, 12, 0.7); box-shadow: inset 0 0 0 1px rgba(240, 120, 90, 0.3); }
 .ash-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
 .ash-swatches button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.6); cursor: pointer; box-shadow: 0 0 0 1px rgba(201, 164, 92, 0.3); }
 .ash-swatches button[data-active="true"] { box-shadow: 0 0 0 2px var(--ash-gold-2); }
