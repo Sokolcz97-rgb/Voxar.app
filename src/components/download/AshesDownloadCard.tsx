@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download as DownloadIcon, Lock, Upload, ShieldCheck, Loader2, Swords } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +49,15 @@ export function AshesDownloadCard() {
   const [message, setMessage] = useState<string | null>(null);
   const [uploadVersion, setUploadVersion] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+
+  // studiovoxario.com/download → /desktop#ashes: rovnou ukázat kartu hry
+  useEffect(() => {
+    if (location.hash !== "#ashes") return;
+    const t = window.setTimeout(() => cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+    return () => window.clearTimeout(t);
+  }, [location.hash, loading]);
 
   const loadManifest = useCallback(async () => {
     setManifestState("loading");
@@ -143,7 +152,7 @@ export function AshesDownloadCard() {
   };
 
   return (
-    <Card className="mb-10 overflow-hidden border-amber-500/30 bg-card/80 relative">
+    <Card ref={cardRef} id="ashes" className="mb-10 scroll-mt-24 overflow-hidden border-amber-500/30 bg-card/80 relative">
       <div className="absolute inset-0 bg-cover bg-center opacity-35" style={{ backgroundImage: "url(/game/ashes-card-bg.webp)" }} aria-hidden />
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" aria-hidden />
       <div className="relative grid md:grid-cols-[260px_1fr] gap-6 p-6 items-center">
@@ -152,7 +161,7 @@ export function AshesDownloadCard() {
           <div className="text-[11px] uppercase tracking-[0.18em] text-amber-400 mb-1">Hra · StudioVoxario</div>
           <h2 className="text-2xl font-semibold text-amber-50">Ashes of Eryon</h2>
           <p className="text-sm text-amber-100/70 mt-1 max-w-xl">
-            Temné fantasy RPG s vlastním launcherem. Instalátor připraví launcher, přes který se bude hra stahovat a aktualizovat.
+            Temné fantasy RPG ve 3D – 1. akt „Poslední štít“ s otevřeným světem. Instalátor připraví launcher; hra se v něm načítá vždy v nejnovější verzi, takže po aktualizaci webu není potřeba nic stahovat znovu.
           </p>
 
           {loading ? null : !isAdmin ? (
