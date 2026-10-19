@@ -81,6 +81,7 @@ import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
 
 const AshesGame = lazy(() => import("./game/ashes/AshesGame.tsx"));
+const AshesRoadmap = lazy(() => import("./game/ashes/AshesRoadmap.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -139,6 +140,8 @@ const AppRoutes = () => {
         <Route path="/stazeni" element={<Navigate to="/desktop" replace />} />
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
+        <Route path="/hra/roadmap" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
+        <Route path="/roadmap" element={<Navigate to="/hra/roadmap" replace />} />
         <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
         <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />

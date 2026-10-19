@@ -165,10 +165,15 @@ export function AshesDownloadCard() {
           </p>
 
           {loading ? null : !isAdmin ? (
-            <Button size="lg" className="mt-5 w-full md:w-auto" disabled>
-              <Lock className="h-4 w-4 mr-2" />
-              Připravuje se…
-            </Button>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button size="lg" className="w-full md:w-auto" disabled>
+                <Lock className="h-4 w-4 mr-2" />
+                Připravuje se…
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/hra/roadmap">Roadmapa · první test v sobotu 24. 10. od 17:00</Link>
+              </Button>
+            </div>
           ) : (
             <div className="mt-5 space-y-3">
               <div className="flex flex-wrap items-center gap-3">
@@ -178,6 +183,9 @@ export function AshesDownloadCard() {
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/hra"><Swords className="h-5 w-5 mr-2" />Hrát 1. akt v prohlížeči</Link>
+                </Button>
+                <Button size="lg" variant="ghost" asChild>
+                  <Link to="/hra/roadmap">Roadmapa</Link>
                 </Button>
                 <span className="inline-flex items-center gap-1.5 text-xs text-amber-200/80">
                   <ShieldCheck className="h-4 w-4" /> Viditelné jen pro administrátory
