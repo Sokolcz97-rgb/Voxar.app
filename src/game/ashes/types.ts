@@ -143,7 +143,12 @@ export type GameState = {
   quests?: Quest[];
   chapter?: Chapter;
   bag_max?: number;
+  wquests?: WQuest[];
 };
+
+export type WQuest = { quest_id: string; state: "active" | "ready" | "done"; progress: number; targets: string[] };
+
+export type TurnInResult = { quest: string; xp: number; gold: number; levels: number; item: Item | null; state: GameState };
 
 export type Round = { a: 1 | 2; d: number; c: boolean; e: boolean; b: boolean; h1: number; h2: number };
 
@@ -170,6 +175,7 @@ export type FightResult = {
   eryon_ally?: boolean;
   ally?: HeroId | null;
   rival?: boolean;
+  quests?: string[];
   state: GameState;
 };
 

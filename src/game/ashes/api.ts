@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Appearance, Faction, Fighter, FightResult, GameState, HeroClass, Item, StatKey } from "./types";
+import type { Appearance, Faction, Fighter, FightResult, GameState, HeroClass, Item, StatKey, TurnInResult } from "./types";
+import { trError } from "./i18n";
 
 /**
  * Tenká vrstva nad serverovými RPC Ashes of Eryon.
@@ -10,7 +11,7 @@ const client = supabase as unknown as RpcClient;
 
 async function call<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   const { data, error } = await client.rpc(fn, args);
-  if (error) throw new Error(cleanError(error.message));
+  if (error) throw new Error(trError(cleanError(error.message)));
   return data as T;
 }
 
@@ -36,4 +37,8 @@ export const ashesApi = {
   claimHero: (on: boolean) => call<GameState>("ashes_claim_hero", { p_on: on }),
   heroSay: (text: string) => call<GameState>("ashes_hero_say", { p_text: text }),
   adminWorld: (open: boolean) => call<GameState>("ashes_admin_world", { p_open: open }),
+  wqAccept: (id: string) => call<GameState>("ashes_wq_accept", { p_quest: id }),
+  wqEvent: (kind: "talk" | "beacon" | "visit", target: string) => call<GameState>("ashes_wq_event", { p_kind: kind, p_target: target }),
+  wqTurnIn: (id: string) => call<TurnInResult>("ashes_wq_turnin", { p_quest: id }),
+  worldFight: (region: string, enemy: string) => call<FightResult>("ashes_world_fight", { p_region: region, p_enemy: enemy }),
 };

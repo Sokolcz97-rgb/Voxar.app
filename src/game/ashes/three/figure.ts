@@ -126,6 +126,10 @@ export class Figure {
   readonly root = new THREE.Group();
   readonly opts: FigureOptions;
   private torso = new THREE.Group();
+  private legsL: THREE.Group[] = [];
+  private legsR: THREE.Group[] = [];
+  private moveSpeed = 0;
+  private walkPhase = 0;
   private head = new THREE.Group();
   private armR = new THREE.Group();
   private armL = new THREE.Group();
@@ -171,16 +175,21 @@ export class Figure {
     this.flashMats.push(skin, bronze, leather, cloth);
 
     // Nohy
+    // Nohy visí z kyčle (skupina), aby se daly rozpohybovat při chůzi.
     for (const side of [-1, 1]) {
+      const hip = new THREE.Group();
+      hip.position.set(0.1 * side, 0.8, 0);
+      this.root.add(hip);
+      (side < 0 ? this.legsR : this.legsL).push(hip);
       const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.62, 4, 10), skin);
-      leg.position.set(0.1 * side, 0.43, 0);
-      this.root.add(leg);
+      leg.position.set(0, 0.43 - 0.8, 0);
+      hip.add(leg);
       const greave = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.075, 0.34, 12, 1, true), cls === "hoplit" ? bronze : leather);
-      greave.position.set(0.1 * side, 0.27, 0.005);
-      this.root.add(greave);
+      greave.position.set(0, 0.27 - 0.8, 0.005);
+      hip.add(greave);
       const sandal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.22), leather);
-      sandal.position.set(0.1 * side, 0.025, 0.04);
-      this.root.add(sandal);
+      sandal.position.set(0, 0.025 - 0.8, 0.04);
+      hip.add(sandal);
     }
 
     // Trup
@@ -531,8 +540,22 @@ export class Figure {
     return new THREE.Vector3(Math.sin(this.baseRot), 0, Math.cos(this.baseRot));
   }
 
+  /** Rychlost chůze (jednotky/s) – podle ní se hýbou nohy a paže. */
+  setMoving(speed: number) {
+    this.moveSpeed = speed;
+  }
+
   update(dt: number, time: number) {
     const t = time + this.phase;
+    if (!this.dead && this.anims.length === 0) {
+      const k = Math.min(1, this.moveSpeed / 5);
+      this.walkPhase += dt * (4 + this.moveSpeed * 1.6);
+      const swing = Math.sin(this.walkPhase) * 0.6 * k;
+      for (const leg of this.legsL) leg.rotation.x = swing;
+      for (const leg of this.legsR) leg.rotation.x = -swing;
+      this.armR.rotation.x = swing * 0.5;
+      this.root.position.y = Math.abs(Math.cos(this.walkPhase)) * 0.06 * k;
+    }
     if (!this.dead) {
       this.torso.position.y = 0.9 + Math.sin(t * 1.6) * 0.008;
       this.head.rotation.y = Math.sin(t * 0.4) * 0.12;
