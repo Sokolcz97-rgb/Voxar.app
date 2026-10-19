@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen, Check, Coins, Hammer, Beer, Music, Swords, Castle, X } from "lucide-react";
 import type { Faction, GameState } from "../types";
 import { L, getLang, setLang, useLang } from "../i18n";
@@ -6,6 +6,9 @@ import { NPCS, REGION_NAME, type NpcId, type RegionId } from "../world/map";
 import { NPC_TALK, WQUESTS, type WQuestDef } from "../world/npcContent";
 import { availableQuests, questMap, turnInNpc } from "../world/quests";
 import { getQuality, type Quality } from "../world/assets";
+import { music } from "../audio";
+import { playSfx } from "../sfx";
+import { RESOLUTIONS, applyDisplayMode, getDisplay, isDesktop, saveDisplay, type DisplayMode, type DisplaySettings } from "../display";
 import { PanelShell } from "./panels";
 
 const t = (x: { cs: string; en: string }) => (getLang() === "en" ? x.en : x.cs);
@@ -168,35 +171,152 @@ export function JournalPanel({ state, onClose }: { state: GameState; onClose: ()
   );
 }
 
-/** Nastavení: jazyk, kvalita grafiky, ovládání. */
-export function SettingsPanel({ onQuality, onClose }: { onQuality: (q: Quality) => void; onClose: () => void }) {
+type SettingsTab = "grafika" | "zvuk" | "hra" | "ucet";
+
+function Slider({ label, value, onChange, disabled }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean }) {
+  return (
+    <label className="ash-slider" data-disabled={disabled}>
+      <span>{label}</span>
+      <input type="range" min={0} max={100} step={1} value={Math.round(value * 100)} disabled={disabled} onChange={(e) => onChange(Number(e.target.value) / 100)} />
+      <b>{Math.round(value * 100)} %</b>
+    </label>
+  );
+}
+
+/** Nastavení rozdělené do záložek: Grafika, Zvuk, Hra, Účet. */
+export function SettingsPanel({
+  email, onQuality, onRenderScale, onLogout, onExit, onClose,
+}: {
+  email?: string | null;
+  onQuality: (q: Quality) => void;
+  onRenderScale: (scale: number) => void;
+  onLogout: () => void;
+  onExit: () => void;
+  onClose: () => void;
+}) {
   const lang = useLang();
+  const [tab, setTab] = useState<SettingsTab>("grafika");
   const [q, setQ] = useState<Quality>(getQuality());
+  const [disp, setDisp] = useState<DisplaySettings>(getDisplay());
+  const [, force] = useState(0);
+  useEffect(() => {
+    const off = music.subscribe(() => force((n) => n + 1));
+    return () => {
+      off();
+    };
+  }, []);
+  const desk = isDesktop();
+
+  const updateDisplay = (patch: Partial<DisplaySettings>) => {
+    const next = { ...disp, ...patch };
+    setDisp(next);
+    saveDisplay(next);
+    if (patch.renderScale !== undefined) onRenderScale(next.renderScale);
+    if (patch.mode !== undefined || patch.width !== undefined) void applyDisplayMode(next);
+  };
+
+  const modes: { id: DisplayMode; cs: string; en: string }[] = desk
+    ? [
+        { id: "windowed", cs: "Okno", en: "Windowed" },
+        { id: "maximized", cs: "Okno přes celou obrazovku", en: "Windowed fullscreen" },
+        { id: "fullscreen", cs: "Celá obrazovka", en: "Fullscreen" },
+      ]
+    : [
+        { id: "windowed", cs: "Okno prohlížeče", en: "Browser window" },
+        { id: "fullscreen", cs: "Celá obrazovka", en: "Fullscreen" },
+      ];
+
   return (
     <PanelShell title={L("Nastavení", "Settings")} kicker="Ashes of Eryon" onClose={onClose}>
-      <div className="ash-kicker mb-2">{L("Jazyk", "Language")}</div>
       <div className="ash-tabs">
-        <button data-active={lang === "cs"} onClick={() => setLang("cs")}>Čeština</button>
-        <button data-active={lang === "en"} onClick={() => setLang("en")}>English</button>
+        <button data-active={tab === "grafika"} onClick={() => setTab("grafika")}>{L("Grafika", "Graphics")}</button>
+        <button data-active={tab === "zvuk"} onClick={() => setTab("zvuk")}>{L("Zvuk", "Audio")}</button>
+        <button data-active={tab === "hra"} onClick={() => setTab("hra")}>{L("Hra", "Game")}</button>
+        <button data-active={tab === "ucet"} onClick={() => setTab("ucet")}>{L("Účet", "Account")}</button>
       </div>
-      <div className="ash-kicker mb-2 mt-4">{L("Kvalita grafiky", "Graphics quality")}</div>
-      <div className="ash-tabs">
-        {(["low", "medium", "high"] as Quality[]).map((x) => (
-          <button key={x} data-active={q === x} onClick={() => { setQ(x); onQuality(x); }}>
-            {x === "low" ? L("Nízká", "Low") : x === "medium" ? L("Střední", "Medium") : L("Vysoká", "High")}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs text-[var(--ash-muted)]">{L("Nízká kvalita vypne stíny a záři a zředí vegetaci – vhodné pro slabší počítače a mobily.", "Low quality disables shadows and bloom and thins vegetation – good for weaker computers and phones.")}</p>
-      <div className="ash-kicker mb-2 mt-4">{L("Ovládání", "Controls")}</div>
-      <div className="ash-card text-sm leading-7">
-        <div><b>WASD / {L("šipky", "arrows")}</b> – {L("chůze", "walk")}</div>
-        <div><b>{L("Klik / dotyk", "Click / tap")}</b> – {L("jdi na místo nebo k postavě", "walk to a spot or a character")}</div>
-        <div><b>E</b> – {L("mluvit / použít", "talk / use")}</div>
-        <div><b>Q · {L("pravé tlačítko + tah", "right-drag")}</b> – {L("otočit kameru", "rotate camera")}</div>
-        <div><b>{L("Kolečko", "Wheel")}</b> – {L("přiblížení", "zoom")}</div>
-        <div className="text-[var(--ash-muted)]">{L("Nepřítel, který tě dostihne, tě vyzve k souboji.", "An enemy that catches you starts a fight.")}</div>
-      </div>
+
+      {tab === "grafika" && (
+        <>
+          <div className="ash-kicker mb-2">{L("Režim zobrazení", "Display mode")}</div>
+          <div className="ash-tabs flex-wrap">
+            {modes.map((m) => (
+              <button key={m.id} data-active={disp.mode === m.id} onClick={() => updateDisplay({ mode: m.id })}>{lang === "en" ? m.en : m.cs}</button>
+            ))}
+          </div>
+          {desk && disp.mode === "windowed" && (
+            <>
+              <div className="ash-kicker mb-2 mt-4">{L("Velikost okna", "Window size")}</div>
+              <div className="ash-tabs flex-wrap">
+                {RESOLUTIONS.map(([w, h]) => (
+                  <button key={w} data-active={disp.width === w && disp.height === h} onClick={() => updateDisplay({ width: w, height: h })}>{w} × {h}</button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="ash-kicker mb-2 mt-4">{L("Rozlišení vykreslování", "Render resolution")}</div>
+          <div className="ash-tabs flex-wrap">
+            {[1, 0.85, 0.7, 0.5].map((r) => (
+              <button key={r} data-active={disp.renderScale === r} onClick={() => updateDisplay({ renderScale: r })}>{r === 1 ? L("Nativní", "Native") : `${Math.round(r * 100)} %`}</button>
+            ))}
+          </div>
+          <p className="text-xs text-[var(--ash-muted)]">{L("Nižší rozlišení vykreslování výrazně zrychlí hru na slabších počítačích za cenu ostrosti.", "A lower render resolution greatly speeds up the game on weaker computers at the cost of sharpness.")}</p>
+          <div className="ash-kicker mb-2 mt-4">{L("Kvalita grafiky", "Graphics quality")}</div>
+          <div className="ash-tabs">
+            {(["low", "medium", "high"] as Quality[]).map((x) => (
+              <button key={x} data-active={q === x} onClick={() => { setQ(x); onQuality(x); }}>
+                {x === "low" ? L("Nízká", "Low") : x === "medium" ? L("Střední", "Medium") : L("Vysoká", "High")}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-[var(--ash-muted)]">{L("Nízká kvalita vypne stíny a záři a zředí vegetaci.", "Low quality disables shadows and bloom and thins vegetation.")}</p>
+        </>
+      )}
+
+      {tab === "zvuk" && (
+        <>
+          <label className="ash-check">
+            <input type="checkbox" checked={music.muted} onChange={(e) => music.setMuted(e.target.checked)} />
+            <span>{L("Ztlumit vše", "Mute all")}</span>
+          </label>
+          <Slider label={L("Celková hlasitost", "Master volume")} value={music.master} disabled={music.muted} onChange={(v) => music.setMaster(v)} />
+          <Slider label={L("Hudba", "Music")} value={music.volume} disabled={music.muted} onChange={(v) => music.setVolume(v)} />
+          <Slider label={L("Efekty (souboje, úkoly)", "Effects (combat, quests)")} value={music.sfx} disabled={music.muted} onChange={(v) => music.setSfx(v)} />
+          <button className="ash-btn ghost small mt-3" onClick={() => playSfx("quest")}>{L("Vyzkoušet efekty", "Test effects")}</button>
+        </>
+      )}
+
+      {tab === "hra" && (
+        <>
+          <div className="ash-kicker mb-2">{L("Jazyk", "Language")}</div>
+          <div className="ash-tabs">
+            <button data-active={lang === "cs"} onClick={() => setLang("cs")}>Čeština</button>
+            <button data-active={lang === "en"} onClick={() => setLang("en")}>English</button>
+          </div>
+          <div className="ash-kicker mb-2 mt-4">{L("Ovládání", "Controls")}</div>
+          <div className="ash-card text-sm leading-7">
+            <div><b>WASD / {L("šipky", "arrows")}</b> – {L("chůze", "walk")}</div>
+            <div><b>{L("Klik / dotyk", "Click / tap")}</b> – {L("jdi na místo nebo k postavě", "walk to a spot or a character")}</div>
+            <div><b>E</b> – {L("mluvit / použít", "talk / use")}</div>
+            <div><b>Q · {L("pravé tlačítko + tah", "right-drag")}</b> – {L("otočit kameru", "rotate camera")}</div>
+            <div><b>{L("Kolečko", "Wheel")}</b> – {L("přiblížení", "zoom")}</div>
+            <div><b>Esc</b> – {L("zavřít okno / nastavení", "close window / settings")}</div>
+            <div className="text-[var(--ash-muted)]">{L("U místa zrození je bezpečná zóna (bílé kameny) – tam tě nikdo nenapadne.", "There is a safe zone around the spawn (white stones) – no one attacks you there.")}</div>
+          </div>
+        </>
+      )}
+
+      {tab === "ucet" && (
+        <>
+          <div className="ash-card">
+            <div className="ash-kicker mb-1">{L("Přihlášen jako", "Signed in as")}</div>
+            <div className="text-sm">{email ?? "—"}</div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="ash-btn ghost small" onClick={onLogout}>{L("Odhlásit se", "Sign out")}</button>
+            <button className="ash-btn small" onClick={onExit}>{desk ? L("Ukončit hru (zpět do launcheru)", "Quit game (back to launcher)") : L("Ukončit hru", "Quit game")}</button>
+          </div>
+        </>
+      )}
     </PanelShell>
   );
 }

@@ -17,6 +17,8 @@ import { Dialogue, JournalPanel, SettingsPanel, type NpcOpens } from "./ui/world
 import { Minimap } from "./ui/Minimap";
 import { FACTION, RARITY, type Appearance, type Faction, type FightResult, type Fighter, type GameState, type HeroClass, type PresenceHero } from "./types";
 import { L, classLabel, getLang, setLang, tr, trItem, useLang } from "./i18n";
+import { playSfx } from "./sfx";
+import { applyDisplayMode, exitGame, getDisplay, isDesktop, saveDisplay } from "./display";
 import "./ashes.css";
 
 type PanelId = NpcOpens | "postava" | "kronika" | "denik" | "nastaveni";
@@ -83,6 +85,7 @@ export default function AshesGame() {
   const [result, setResult] = useState<Result | null>(null);
   const [others, setOthers] = useState<PresenceHero[]>([]);
   const [near, setNear] = useState<Interactable | null>(null);
+  const [safe, setSafe] = useState(false);
   const [regionBanner, setRegionBanner] = useState<RegionId | null>(null);
   const [world, setWorld] = useState<OpenWorld | null>(null);
   const [worldGen, setWorldGen] = useState(0);
@@ -95,6 +98,8 @@ export default function AshesGame() {
   const stateRef = useRef<GameState | null>(null);
   const busyRef = useRef(false);
   const uiOpenRef = useRef(false);
+  const talkRef = useRef<NpcId | null>(null);
+  const panelRef = useRef<PanelId | null>(null);
   const positions = useRef<Record<string, Pos>>({});
   const myPos = useRef<Pos | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -110,6 +115,8 @@ export default function AshesGame() {
   uidRef.current = user?.id ?? null;
   busyRef.current = busy;
   uiOpenRef.current = !!(panel || talk || result || battle);
+  talkRef.current = talk;
+  panelRef.current = panel;
 
   // ------------------------------------------------------------ stav ze serveru
   const refresh = useCallback(async () => {
@@ -179,6 +186,7 @@ export default function AshesGame() {
         const text = e.evaded ? L("Úhyb!", "Dodge!") : e.blocked ? L("Blok!", "Block!") : `${e.crit ? L("Kritický! ", "Critical! ") : ""}-${fmtNum(e.damage)}`;
         setPops((list) => [...list, { id, x: e.at.x, y: e.at.y, text, kind: e.evaded || e.blocked ? "miss" : e.crit ? "crit" : "hit" }]);
         window.setTimeout(() => setPops((list) => list.filter((p) => p.id !== id)), 1200);
+        playSfx(e.evaded ? "evade" : e.blocked ? "block" : e.crit ? "crit" : "hit");
       } else {
         setBattle((b) => (b ? { ...b, done: true } : b));
       }
@@ -186,6 +194,7 @@ export default function AshesGame() {
     await w.playFight(res.fight, onEvent, res.ally ?? (res.eryon_ally ? "eryon" : null));
     if (encounterKey) w.resolveEncounter(encounterKey, res.won);
     setResult({ ...res, kind });
+    playSfx(res.won ? ((res.levels ?? 0) > 0 ? "level" : "victory") : "defeat");
     setState(res.state);
     setBusy(false);
   }, []);
@@ -228,6 +237,7 @@ export default function AshesGame() {
       if (q?.state === "active" && !q.targets.includes(target.id)) {
         const next = await act(() => ashesApi.wqEvent("beacon", target.id));
         const nq = next?.wquests?.find((x) => x.quest_id === q.quest_id);
+        if (next) playSfx("fire");
         if (next) toast.success(f === "legie" ? `${L("Vatra uhasla", "The beacon is out")} (${nq?.progress ?? q.progress + 1}/3)` : `${L("Vatra hoří", "The beacon blazes")} (${nq?.progress ?? q.progress + 1}/3)`);
       } else {
         toast(f === "legie" ? L("Strážní vatra obránců. Oren chce, aby zhasla.", "A defenders' watchfire. Oren wants it out.") : L("Strážní vatra na kopci. Damon chce, aby hořely všechny.", "A watchfire on the hill. Damon wants them all burning."));
@@ -266,6 +276,7 @@ export default function AshesGame() {
         setLoadError(L("Tvůj prohlížeč nepodporuje WebGL, bez kterého 3D svět nepoběží.", "Your browser does not support WebGL, which the 3D world needs."));
         return;
       }
+      w.setRenderScale(getDisplay().renderScale);
       worldRef.current = w;
       setWorld(w);
     });
@@ -306,11 +317,16 @@ export default function AshesGame() {
       }
     };
     let lastNear = "";
+    let lastSafe = false;
     world.onFrame = (frame: WorldFrame) => {
       const k = nearKey(frame.near);
       if (k !== lastNear) {
         lastNear = k;
         setNear(frame.near);
+      }
+      if (frame.safe !== lastSafe) {
+        lastSafe = frame.safe;
+        setSafe(frame.safe);
       }
       const overlay = overlayRef.current;
       if (!overlay) return;
@@ -465,6 +481,51 @@ export default function AshesGame() {
     w.setPlayer(cls, appearance, null, cls === "hoplit", f === "legie");
   }, []);
 
+  /** Odhlášení: zpět na přihlašovací obrazovku hry (svět se uvolní). */
+  const logout = useCallback(async () => {
+    if (myPos.current && stateRef.current?.character) savePos((stateRef.current.character.faction ?? "kalidra") as Faction, myPos.current);
+    music.stop();
+    setPanel(null);
+    setTalk(null);
+    setResult(null);
+    setBattle(null);
+    setEntered(false);
+    setState(null);
+    await supabase.auth.signOut();
+  }, []);
+
+  // uložený režim zobrazení (v aplikaci okno / celá obrazovka) při spuštění
+  useEffect(() => {
+    if (isDesktop()) void applyDisplayMode(getDisplay());
+  }, []);
+
+  // v prohlížeči: když hráč opustí celou obrazovku klávesou Esc, uložit režim okna
+  useEffect(() => {
+    if (isDesktop()) return;
+    const fn = () => {
+      if (!document.fullscreenElement && getDisplay().mode === "fullscreen") saveDisplay({ ...getDisplay(), mode: "windowed" });
+    };
+    document.addEventListener("fullscreenchange", fn);
+    return () => document.removeEventListener("fullscreenchange", fn);
+  }, []);
+
+  // Esc zavře rozhovor nebo panel, jinak otevře nastavení
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !stateRef.current?.character || busyRef.current) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (talkRef.current) {
+        setTalk(null);
+        worldRef.current?.setMode("explore");
+        worldRef.current?.setInputEnabled(true);
+      } else if (panelRef.current) setPanel(null);
+      else if (!uiOpenRef.current) setPanel("nastaveni");
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+
   const changeQuality = (q: Quality) => {
     setQuality(q);
     setWorldGen((n) => n + 1);
@@ -482,6 +543,7 @@ export default function AshesGame() {
       setState(res.state);
       const def = questDef(id);
       setTalk(null);
+      playSfx(res.levels > 0 ? "level" : "quest");
       setResult({ kind: "wq", won: true, xp: res.xp, gold: res.gold, levels: res.levels, item: res.item, questTitle: def?.title[getLang()], questText: def?.done[getLang()] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : L("Akce se nepodařila.", "The action failed."));
@@ -532,10 +594,7 @@ export default function AshesGame() {
           <div className="ash-title-inner">
             <img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" />
             {!user ? (
-              <>
-                <p className="ashes-prose">{L("Do světa Kalidry vstoupíš se svým účtem StudioVoxario.", "Enter the world of Kalidra with your StudioVoxario account.")}</p>
-                <Link className="ash-btn" to="/auth?next=/hra">{L("Přihlásit se", "Sign in")}</Link>
-              </>
+              <LoginForm />
             ) : loadError ? (
               <p className="ashes-prose">{loadError}</p>
             ) : (
@@ -545,7 +604,8 @@ export default function AshesGame() {
               </>
             )}
             <div className="flex gap-2">
-              <Link to="/" className="ash-btn ghost small">{L("Zpět na StudioVoxario", "Back to StudioVoxario")}</Link>
+              {user && <button className="ash-btn ghost small" onClick={() => void logout()}>{L("Odhlásit se", "Sign out")}</button>}
+              <button className="ash-btn ghost small" onClick={exitGame}>{isDesktop() ? L("Ukončit hru", "Quit game") : L("Zpět na StudioVoxario", "Back to StudioVoxario")}</button>
               {langToggle}
             </div>
           </div>
@@ -625,7 +685,7 @@ export default function AshesGame() {
           <button className="ash-icon-btn" onClick={() => (music.playing ? music.pause() : music.current ? void music.resume() : enter())} aria-label={L("Hudba", "Music")}>
             {music.playing && !music.muted ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </button>
-          <Link to="/" className="ash-icon-btn" aria-label={L("Odejít ze hry", "Leave the game")} title={L("Odejít ze hry", "Leave the game")}><LogOut className="h-4 w-4" /></Link>
+          <button className="ash-icon-btn" onClick={exitGame} aria-label={L("Ukončit hru", "Quit game")} title={isDesktop() ? L("Ukončit hru a vrátit se do launcheru", "Quit to the launcher") : L("Ukončit hru", "Quit game")}><LogOut className="h-4 w-4" /></button>
         </div>
       </header>
 
@@ -638,6 +698,10 @@ export default function AshesGame() {
           <small>{L("Vstupuješ", "Entering")}</small>
           <b>{REGION_NAME[regionBanner][lang]}</b>
         </div>
+      )}
+
+      {inWorld && safe && !talk && !panel && !regionBanner && (
+        <div className="ash-safe">{L("Bezpečná zóna", "Safe zone")}</div>
       )}
 
       {/* tvorba postavy */}
@@ -709,7 +773,16 @@ export default function AshesGame() {
       {inWorld && panel === "bard" && <BardPanel chapter={character.chapter} onClose={() => setPanel(null)} />}
       {inWorld && panel === "kronika" && <ChroniclePanel state={state} others={others} onClose={() => setPanel(null)} />}
       {inWorld && panel === "denik" && <JournalPanel state={state} onClose={() => setPanel(null)} />}
-      {inWorld && panel === "nastaveni" && <SettingsPanel onQuality={changeQuality} onClose={() => setPanel(null)} />}
+      {inWorld && panel === "nastaveni" && (
+        <SettingsPanel
+          email={user.email}
+          onQuality={changeQuality}
+          onRenderScale={(r) => worldRef.current?.setRenderScale(r)}
+          onLogout={() => void logout()}
+          onExit={exitGame}
+          onClose={() => setPanel(null)}
+        />
+      )}
 
       {/* souboj */}
       {battle && (
@@ -804,5 +877,34 @@ export default function AshesGame() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Přihlášení přímo ve hře (stejný účet StudioVoxario). */
+function LoginForm() {
+  useLang();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (err) setError(L("Přihlášení se nepodařilo. Zkontroluj e-mail a heslo.", "Sign-in failed. Check your e-mail and password."));
+  };
+  return (
+    <form className="ash-login" onSubmit={submit}>
+      <p className="ashes-prose text-center">{L("Do světa Kalidry vstoupíš se svým účtem StudioVoxario.", "Enter the world of Kalidra with your StudioVoxario account.")}</p>
+      <label htmlFor="ash-login-email">{L("E-mail", "E-mail")}</label>
+      <input id="ash-login-email" className="ash-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <label htmlFor="ash-login-pass">{L("Heslo", "Password")}</label>
+      <input id="ash-login-pass" className="ash-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      {error && <p className="text-sm text-[#ffb4a0]">{error}</p>}
+      <button className="ash-btn" type="submit" disabled={busy}>{busy ? L("Přihlašuji…", "Signing in…") : L("Přihlásit se", "Sign in")}</button>
+      <Link className="text-center text-xs text-[var(--ash-muted)] underline" to="/auth?next=/hra">{L("Nemáš účet nebo se přihlašuješ přes Google/Discord? Pokračuj sem.", "No account, or sign in with Google/Discord? Continue here.")}</Link>
+    </form>
   );
 }
