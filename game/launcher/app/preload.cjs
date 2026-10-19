@@ -5,6 +5,16 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("ashesLauncher", {
   isDesktop: true,
   platform: process.platform,
+  game: {
+    play: () => ipcRenderer.invoke("launcher:game:play"),
+    openAccount: () => ipcRenderer.invoke("launcher:open-account"),
+    onClosed: (callback) => {
+      if (typeof callback !== "function") return () => {};
+      const listener = () => callback();
+      ipcRenderer.on("launcher:game-closed", listener);
+      return () => ipcRenderer.removeListener("launcher:game-closed", listener);
+    }
+  },
   window: {
     minimize: () => ipcRenderer.invoke("launcher:window:minimize"),
     toggleMaximize: () => ipcRenderer.invoke("launcher:window:toggle-maximize"),
