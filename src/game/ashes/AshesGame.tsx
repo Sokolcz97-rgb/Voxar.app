@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { BookOpen, Castle, Coins, Flame, LogOut, ScrollText, Settings, Shield, Sparkles, Trophy, User, Volume2, VolumeX } from "lucide-react";
+import { BookOpen, Camera, Castle, Coins, Flame, LogOut, ScrollText, Settings, Shield, Sparkles, Trophy, User, Volume2, VolumeX } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ashesApi } from "./api";
 import { music } from "./audio";
-import { OpenWorld, type BattleEvent, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
+import { OpenWorld, getCameraMode, type BattleEvent, type CameraMode, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
 import { QUALITY, assets, getQuality, setQuality, type Quality } from "./world/assets";
 import { NPCS, REGION_NAME, SPAWN, type NpcId, type RegionId } from "./world/map";
 import { questDef, beaconsLit, npcMark } from "./world/quests";
@@ -86,6 +86,7 @@ export default function AshesGame() {
   const [others, setOthers] = useState<PresenceHero[]>([]);
   const [near, setNear] = useState<Interactable | null>(null);
   const [safe, setSafe] = useState(false);
+  const [camMode, setCamMode] = useState<CameraMode>(getCameraMode());
   const [regionBanner, setRegionBanner] = useState<RegionId | null>(null);
   const [world, setWorld] = useState<OpenWorld | null>(null);
   const [worldGen, setWorldGen] = useState(0);
@@ -277,6 +278,7 @@ export default function AshesGame() {
         return;
       }
       w.setRenderScale(getDisplay().renderScale);
+      if (import.meta.env.DEV) (window as unknown as { __ashesWorld?: OpenWorld }).__ashesWorld = w;
       worldRef.current = w;
       setWorld(w);
     });
@@ -298,6 +300,7 @@ export default function AshesGame() {
     if (!world) return;
     world.onInteract = (t) => void onInteract(t);
     world.onEncounter = onEncounter;
+    world.onCameraMode = setCamMode;
     world.onRegion = (r) => {
       setRegionBanner(r);
       window.setTimeout(() => setRegionBanner((x) => (x === r ? null : x)), 3200);
@@ -364,6 +367,7 @@ export default function AshesGame() {
     return () => {
       world.onInteract = null;
       world.onEncounter = null;
+      world.onCameraMode = null;
       world.onRegion = null;
       world.onMove = null;
       world.onFrame = null;
@@ -681,6 +685,16 @@ export default function AshesGame() {
               </div>
             </>
           )}
+          {character && (
+            <button
+              className="ash-icon-btn"
+              onClick={() => worldRef.current?.setCameraMode(camMode === "top" ? "third" : "top")}
+              aria-label={L("Přepnout kameru", "Switch camera")}
+              title={camMode === "top" ? L("Kamera: pohled shora (V = třetí osoba)", "Camera: top-down (V = third person)") : L("Kamera: třetí osoba (V = pohled shora)", "Camera: third person (V = top-down)")}
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+          )}
           {langToggle}
           <button className="ash-icon-btn" onClick={() => (music.playing ? music.pause() : music.current ? void music.resume() : enter())} aria-label={L("Hudba", "Music")}>
             {music.playing && !music.muted ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
@@ -776,6 +790,8 @@ export default function AshesGame() {
       {inWorld && panel === "nastaveni" && (
         <SettingsPanel
           email={user.email}
+          cameraMode={camMode}
+          onCameraMode={(m) => worldRef.current?.setCameraMode(m)}
           onQuality={changeQuality}
           onRenderScale={(r) => worldRef.current?.setRenderScale(r)}
           onLogout={() => void logout()}

@@ -38,6 +38,8 @@ Mapa pobřeží Kalidry (250 × 250 m): Bezejmenný břeh, Akvadukt, Kopce strá
 - NPC (9 za obránce, 7 za Legii) mají rozhovory, otázky na svět a úkoly; obchodník, hostinský, bard, mistr arény a hrdina otevírají příslušné panely.
 - Úkoly od NPC: obránci k1–k8, Legie l1–l7 (typy rozhovor, porážka nepřátel, vatry, návštěva místa). Pravidla jsou na serveru (`ashes_wq_catalog`, `ashes_wq_accept`, `ashes_wq_event`, `ashes_wq_turnin`), texty v `src/game/ashes/world/npcContent.ts`. Každý odevzdaný úkol posouvá kapitolu.
 - Minimapa, deník úkolů, značky ! a ? nad postavami, poloha se pamatuje v prohlížeči.
+- Kamera: pohled shora (výchozí) nebo třetí osoba za hrdinou – klávesa **V**, tlačítko s fotoaparátem v horní liště nebo Nastavení → Hra. Ve třetí osobě pravé tlačítko + tah otáčí a naklání kameru, kolečko mění vzdálenost.
+- Zvířata (`src/game/ashes/world/animals.ts`): ovce, kozy, jeleni, kanci, psi, slepice v Kalidře, koně u tábora Legie, racci nad pobřežím a vrány nad kopci. Plachá zvířata před hráčem utíkají; je to jen oživení světa, nebojuje se s nimi.
 - Bezpečné zóny u míst zrození a probuzení (hranice z bílých kamenů) – nepřátelé do nich nevstoupí a nikoho v nich nenapadnou.
 - Nastavení (Esc): Grafika (režim zobrazení okno / okno přes celou obrazovku / celá obrazovka, velikost okna, rozlišení vykreslování, kvalita), Zvuk (ztlumit vše, celková hlasitost, hudba, efekty), Hra (jazyk, ovládání), Účet (odhlásit, ukončit hru).
 - V aplikaci (launcher) zavře „Ukončit hru“ herní okno a vrátí hráče do launcheru (`game/launcher/app/game-preload.cjs`, `window.ashesDesktop`). Odhlášení vrací na přihlašovací obrazovku hry.
