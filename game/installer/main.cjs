@@ -86,6 +86,32 @@ function resolveInstallRoot(value) {
   return safeTarget(path.join(chosen, PRODUCT_DIR_NAME));
 }
 
+// fs.mkdirSync(..., { recursive: true }) na Windows u kořene disku (E:\)
+// nebo u existující složky bez práva zápisu do nadřazené složky hází EPERM.
+// Existující složky proto vynecháme a vytváříme jen chybějící části cesty.
+function ensureDir(dir) {
+  const target = path.resolve(dir);
+  const missing = [];
+  let current = target;
+  while (!fs.existsSync(current)) {
+    missing.unshift(current);
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  for (const part of missing) {
+    try {
+      fs.mkdirSync(part);
+    } catch (error) {
+      if (error?.code === "EEXIST") continue;
+      if (error?.code === "EPERM" || error?.code === "EACCES") {
+        throw new Error(`Do složky ${path.dirname(part)} nelze zapisovat. Zvolte jiné umístění (např. D:\\Hry) nebo spusťte instalaci jako správce.`);
+      }
+      throw error;
+    }
+  }
+}
+
 function launcherLockedError(error) {
   const code = error?.code;
   if (code === "EBUSY" || code === "EPERM" || code === "EACCES") {
@@ -160,7 +186,7 @@ function progress(phase, pct, detail = "") {
 }
 
 function writeJson(file, value) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
+  ensureDir(path.dirname(file));
   fs.writeFileSync(file, JSON.stringify(value, null, 2), "utf8");
 }
 
@@ -354,9 +380,10 @@ async function installLauncher(options = {}) {
   if (installInProgress) throw new Error("Instalace už probíhá.");
   const root = resolveInstallRoot(options.target || DEFAULT_ROOT);
   const launcherDir = path.join(root, "Launcher");
-  const parent = path.dirname(root);
-  const staging = path.join(parent, `.AshesOfEryon-staging-${process.pid}`);
-  const backup = path.join(parent, `.AshesOfEryon-backup-${process.pid}`);
+  // Dočasné složky leží uvnitř instalační složky (stejný disk pro rename),
+  // ne v nadřazené složce – tou bývá kořen disku (E:\), kam Windows zápis nepovolí.
+  const staging = path.join(root, `.staging-${process.pid}`);
+  const backup = path.join(root, `.backup-${process.pid}`);
   const archive = payloadPath();
 
   if (!fs.existsSync(archive)) throw new Error("Instalační balíček launcheru není dostupný.");
@@ -372,10 +399,10 @@ async function installLauncher(options = {}) {
     log(`Cíl instalace: ${root}`);
     progress("prepare", 0.03, "Příprava instalace");
 
-    fs.mkdirSync(parent, { recursive: true });
+    ensureDir(root);
     fs.rmSync(staging, { recursive: true, force: true });
     fs.rmSync(backup, { recursive: true, force: true });
-    fs.mkdirSync(staging, { recursive: true });
+    ensureDir(staging);
 
     await extractLauncher(archive, staging);
 
@@ -385,7 +412,6 @@ async function installLauncher(options = {}) {
     }
 
     progress("commit", 0.78, "Aktivace launcheru");
-    fs.mkdirSync(root, { recursive: true });
 
     try {
       if (fs.existsSync(launcherDir)) fs.renameSync(launcherDir, backup);
