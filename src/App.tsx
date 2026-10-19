@@ -135,6 +135,8 @@ const AppRoutes = () => {
         <Route path="/profile/formulare/:id/vysledky" element={<ProtectedRoute><FormResults /></ProtectedRoute>} />
         <Route path="/f/:slug" element={<PublicForm />} />
         <Route path="/desktop" element={<DownloadDesktop />} />
+        <Route path="/download" element={<Navigate to="/desktop#ashes" replace />} />
+        <Route path="/stazeni" element={<Navigate to="/desktop" replace />} />
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
         <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
