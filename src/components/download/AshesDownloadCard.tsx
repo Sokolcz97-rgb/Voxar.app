@@ -171,7 +171,7 @@ export function AshesDownloadCard() {
                 Připravuje se…
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/hra/roadmap">Roadmapa · první test v sobotu 24. 10. od 17:00</Link>
+                <Link to="/ashes">Roadmapa · první test v sobotu 24. 10. od 17:00</Link>
               </Button>
             </div>
           ) : (
@@ -185,7 +185,7 @@ export function AshesDownloadCard() {
                   <Link to="/hra"><Swords className="h-5 w-5 mr-2" />Hrát 1. akt v prohlížeči</Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
-                  <Link to="/hra/roadmap">Roadmapa</Link>
+                  <Link to="/ashes">Roadmapa</Link>
                 </Button>
                 <span className="inline-flex items-center gap-1.5 text-xs text-amber-200/80">
                   <ShieldCheck className="h-4 w-4" /> Viditelné jen pro administrátory

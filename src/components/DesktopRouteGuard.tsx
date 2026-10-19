@@ -44,6 +44,9 @@ export function DesktopRouteGuard() {
       path.startsWith("/messages/") ||
       path.startsWith("/browser") ||
       path.startsWith("/launcher") ||
+      path === "/ashes" ||
+      path === "/hra" ||
+      path.startsWith("/hra/") ||
       path.startsWith("/discord-oauth-complete") ||
       path.startsWith("/f/"); // veřejné formuláře přes deep link
     if (!allowed) {

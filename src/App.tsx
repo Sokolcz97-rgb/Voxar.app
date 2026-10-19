@@ -141,7 +141,8 @@ const AppRoutes = () => {
         <Route path="/browser" element={<VoxarioBrowser />} />
         <Route path="/launcher" element={<GameLauncher />} />
         <Route path="/hra/roadmap" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
-        <Route path="/roadmap" element={<Navigate to="/hra/roadmap" replace />} />
+        <Route path="/roadmap" element={<Navigate to="/ashes" replace />} />
+        <Route path="/ashes" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
         <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
         <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
@@ -158,7 +159,7 @@ const AppRoutes = () => {
 };
 
 /** Root-level AI layer: a sibling of the router layout, never nested in app grids. */
-const isGameRoute = (pathname: string) => pathname === "/hra" || pathname.startsWith("/hra/");
+const isGameRoute = (pathname: string) => pathname === "/hra" || pathname.startsWith("/hra/") || pathname === "/ashes";
 
 /** Plovoucí pomocníci webu se ve hře nezobrazují. */
 const WebOnly = ({ children }: { children: ReactNode }) => {
