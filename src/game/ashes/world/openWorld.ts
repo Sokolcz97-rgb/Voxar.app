@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Fire } from "../three/fx";
 import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHero } from "../types";
+import { Wildlife } from "./animals";
 import { assets, createFigure, QUALITY, type HeroFigure, type ModelSlot, type QualitySettings } from "./assets";
 import {
   AQUEDUCT, BEACONS, BUILDINGS, CITY, CAMP, ENEMY_CAMPS, MEMORIAL, NPCS, REGION_ENEMIES, RESPAWN, SAFE, SHIPS, SPAWN, WORLD_HALF, WRECKS,
@@ -37,6 +38,23 @@ export type BattleEvent =
   | { type: "end"; winner: 1 | 2 };
 
 type Mode = "explore" | "battle" | "create" | "portrait" | "talk";
+export type CameraMode = "top" | "third";
+
+const CAMERA_KEY = "ashes.camera";
+export function getCameraMode(): CameraMode {
+  try {
+    return localStorage.getItem(CAMERA_KEY) === "third" ? "third" : "top";
+  } catch {
+    return "top";
+  }
+}
+function saveCameraMode(mode: CameraMode) {
+  try {
+    localStorage.setItem(CAMERA_KEY, mode);
+  } catch {
+    /* bez úložiště */
+  }
+}
 type AABB = { x0: number; x1: number; z0: number; z1: number };
 
 type Enemy = {
@@ -85,6 +103,7 @@ export class OpenWorld {
   private beaconFires = new Map<string, Fire>();
   private colliders: AABB[] = [];
   private figures: HeroFigure[] = [];
+  private wildlife: Wildlife | null = null;
   private composer: { render: () => void; setSize: (w: number, h: number) => void } | null = null;
 
   // hráč
@@ -96,6 +115,15 @@ export class OpenWorld {
   private speed = 6;
   private yaw = 0;
   private zoom = 17;
+  /** Kamera: "top" = pohled shora (Vampire's Fall), "third" = třetí osoba za hrdinou. */
+  private camMode: CameraMode = getCameraMode();
+  private tpDist = 6.5;
+  private tpPitch = 0.3;
+  private dragY = 0;
+  private camInit = false;
+  private sYaw = 0;
+  private sPitch = 0.8;
+  private sDist = 17;
   private mode: Mode = "explore";
   private inputEnabled = true;
   private camPos = new THREE.Vector3();
@@ -124,6 +152,7 @@ export class OpenWorld {
   onRegion: ((region: RegionId) => void) | null = null;
   onInteract: ((target: Interactable) => void) | null = null;
   onMove: ((x: number, z: number, ry: number) => void) | null = null;
+  onCameraMode: ((mode: CameraMode) => void) | null = null;
 
   constructor(container: HTMLElement, faction: Faction, quality: QualitySettings = QUALITY.high) {
     this.container = container;
@@ -149,6 +178,7 @@ export class OpenWorld {
     this.buildCountryside();
     this.buildVegetation();
     this.buildSafeZones();
+    this.wildlife = new Wildlife(this.scene, quality.treeDensity, (x, z) => this.blocked(x, z));
 
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 24), new THREE.MeshBasicMaterial({ color: "#f0d39a", transparent: true, opacity: 0.8, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2;
@@ -883,6 +913,7 @@ export class OpenWorld {
         e.preventDefault();
       }
       if (k === "q") this.yaw += 0.15;
+      if (k === "v" && !e.repeat) this.setCameraMode(this.camMode === "top" ? "third" : "top");
       if (k === "e" && !e.repeat) {
         const near = this.nearest();
         if (near) this.onInteract?.(near);
@@ -896,6 +927,7 @@ export class OpenWorld {
       if (e.button === 2) {
         this.dragging = true;
         this.dragX = e.clientX;
+        this.dragY = e.clientY;
         return;
       }
       if (!this.inputEnabled || this.mode !== "explore") return;
@@ -923,13 +955,16 @@ export class OpenWorld {
     window.addEventListener("pointermove", (e) => {
       if (!this.dragging) return;
       this.yaw -= (e.clientX - this.dragX) * 0.006;
+      if (this.camMode === "third") this.tpPitch = Math.max(0.04, Math.min(1.1, this.tpPitch + (e.clientY - this.dragY) * 0.004));
       this.dragX = e.clientX;
+      this.dragY = e.clientY;
     });
     window.addEventListener("pointerup", () => {
       this.dragging = false;
     });
     el.addEventListener("wheel", (e) => {
-      this.zoom = Math.max(9, Math.min(34, this.zoom + e.deltaY * 0.012));
+      if (this.camMode === "third") this.tpDist = Math.max(3, Math.min(14, this.tpDist + e.deltaY * 0.006));
+      else this.zoom = Math.max(9, Math.min(34, this.zoom + e.deltaY * 0.012));
       e.preventDefault();
     }, { passive: false });
     this.unbind = () => {
@@ -1231,21 +1266,56 @@ export class OpenWorld {
       look = new THREE.Vector3(mid.x, heightAt(mid.x, mid.z) + 1.3, mid.z);
       dist = 7;
       pitch = 0.28;
+    } else if (this.camMode === "third") {
+      // třetí osoba: kamera za hrdinou ve výšce ramen
+      look = new THREE.Vector3(this.pos.x, heightAt(this.pos.x, this.pos.y) + 1.65, this.pos.y);
+      dist = this.tpDist;
+      pitch = this.tpPitch;
+      // při chůzi kliknutím se kamera pomalu natočí za hrdinu
+      if (this.moveTarget && !this.dragging) {
+        const want = this.facing + Math.PI;
+        let d = want - this.yaw;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        this.yaw += d * Math.min(1, dt * 2.2);
+      }
+      yaw = this.yaw;
     } else {
       look = new THREE.Vector3(this.pos.x, heightAt(this.pos.x, this.pos.y) + 1.2, this.pos.y);
       dist = this.zoom;
       pitch = 0.82;
     }
-    const target = new THREE.Vector3(
-      look.x + Math.sin(yaw) * Math.cos(pitch) * dist,
-      look.y + Math.sin(pitch) * dist,
-      look.z + Math.cos(yaw) * Math.cos(pitch) * dist,
-    );
-    const ground = heightAt(target.x, target.z) + 1.2;
-    if (target.y < ground) target.y = ground;
+    // plynulý přechod v kulových souřadnicích (úhel, sklon, vzdálenost) – kamera
+    // při přepnutí pohledu obkrouží hrdinu, místo aby proletěla nad ním
     const k = 1 - Math.pow(0.0015, dt);
-    this.camPos.lerp(target, this.camPos.lengthSq() === 0 ? 1 : k);
-    this.camLook.lerp(look, this.camLook.lengthSq() === 0 ? 1 : k);
+    if (!this.camInit) {
+      this.camInit = true;
+      this.sYaw = yaw;
+      this.sPitch = pitch;
+      this.sDist = dist;
+      this.camLook.copy(look);
+    } else {
+      this.sYaw += Math.atan2(Math.sin(yaw - this.sYaw), Math.cos(yaw - this.sYaw)) * k;
+      this.sPitch += (pitch - this.sPitch) * k;
+      this.sDist += (dist - this.sDist) * k;
+      this.camLook.lerp(look, k);
+    }
+    const lk = this.camLook;
+    const target = new THREE.Vector3(
+      lk.x + Math.sin(this.sYaw) * Math.cos(this.sPitch) * this.sDist,
+      lk.y + Math.sin(this.sPitch) * this.sDist,
+      lk.z + Math.cos(this.sYaw) * Math.cos(this.sPitch) * this.sDist,
+    );
+    // kamera nesmí pod terén (ani cestou k hrdinovi)
+    const third = this.camMode === "third" && this.mode === "explore";
+    let ground = heightAt(target.x, target.z) + (third ? 0.6 : 1.2);
+    if (third) {
+      for (let i = 1; i < 4; i += 1) {
+        const t = i / 4;
+        ground = Math.max(ground, heightAt(lk.x + (target.x - lk.x) * t, lk.z + (target.z - lk.z) * t) + 0.5);
+      }
+    }
+    if (target.y < ground) target.y = ground;
+    this.camPos.copy(target);
     this.camera.position.copy(this.camPos);
     this.camera.lookAt(this.camLook);
     // stíny následují hráče
@@ -1283,6 +1353,7 @@ export class OpenWorld {
       o.fig.group.visible = this.mode !== "battle";
     }
     this.updateCamera(dt);
+    this.wildlife?.update(dt, t, this.pos);
     for (const f of this.fires) f.update(dt, t);
     for (const fig of this.figures) fig.update(dt, t);
     this.waterNormal.offset.set(t * 0.004, t * 0.006);
@@ -1290,7 +1361,12 @@ export class OpenWorld {
 
     if (this.onFrame) {
       const npcs: Record<string, ScreenPoint> = {};
-      for (const [id, n] of this.npcs) npcs[id] = this.project(n.fig.group.position.clone().add(new THREE.Vector3(0, n.def.hero ? 2.6 : 2.3, 0)));
+      for (const [id, n] of this.npcs) {
+        const p = this.project(n.fig.group.position.clone().add(new THREE.Vector3(0, n.def.hero ? 2.6 : 2.3, 0)));
+        // jmenovky jen u blízkých postav (ve třetí osobě by jinak prosvítaly z dálky)
+        if (Math.hypot(n.def.x - this.pos.x, n.def.z - this.pos.y) > (this.camMode === "third" ? 28 : 45)) p.visible = false;
+        npcs[id] = p;
+      }
       const enemies: WorldFrame["enemies"] = [];
       for (const e of this.enemies) {
         if (!e.alive || this.mode === "battle") continue;
@@ -1308,6 +1384,17 @@ export class OpenWorld {
     if (this.composer && this.mode !== "create") this.composer.render();
     else this.renderer.render(this.scene, this.camera);
   };
+
+  /** Přepne pohled kamery (shora / třetí osoba). Klávesa V. */
+  setCameraMode(mode: CameraMode) {
+    this.camMode = mode;
+    saveCameraMode(mode);
+    if (mode === "third") this.yaw = this.facing + Math.PI;
+    this.onCameraMode?.(mode);
+  }
+  get cameraMode() {
+    return this.camMode;
+  }
 
   /** Rozlišení vykreslování: 0.5–1 = podíl nativního rozlišení okna (výkon vs. ostrost). */
   setRenderScale(scale: number) {
@@ -1329,6 +1416,7 @@ export class OpenWorld {
 
   dispose() {
     cancelAnimationFrame(this.raf);
+    this.wildlife?.dispose();
     this.unbind();
     this.resizeObserver.disconnect();
     this.scene.traverse((o) => {

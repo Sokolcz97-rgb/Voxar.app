@@ -185,9 +185,11 @@ function Slider({ label, value, onChange, disabled }: { label: string; value: nu
 
 /** Nastavení rozdělené do záložek: Grafika, Zvuk, Hra, Účet. */
 export function SettingsPanel({
-  email, onQuality, onRenderScale, onLogout, onExit, onClose,
+  email, cameraMode, onCameraMode, onQuality, onRenderScale, onLogout, onExit, onClose,
 }: {
   email?: string | null;
+  cameraMode: "top" | "third";
+  onCameraMode: (mode: "top" | "third") => void;
   onQuality: (q: Quality) => void;
   onRenderScale: (scale: number) => void;
   onLogout: () => void;
@@ -292,6 +294,11 @@ export function SettingsPanel({
             <button data-active={lang === "cs"} onClick={() => setLang("cs")}>Čeština</button>
             <button data-active={lang === "en"} onClick={() => setLang("en")}>English</button>
           </div>
+          <div className="ash-kicker mb-2 mt-4">{L("Kamera", "Camera")}</div>
+          <div className="ash-tabs">
+            <button data-active={cameraMode === "top"} onClick={() => onCameraMode("top")}>{L("Pohled shora", "Top-down")}</button>
+            <button data-active={cameraMode === "third"} onClick={() => onCameraMode("third")}>{L("Třetí osoba", "Third person")}</button>
+          </div>
           <div className="ash-kicker mb-2 mt-4">{L("Ovládání", "Controls")}</div>
           <div className="ash-card text-sm leading-7">
             <div><b>WASD / {L("šipky", "arrows")}</b> – {L("chůze", "walk")}</div>
@@ -299,6 +306,7 @@ export function SettingsPanel({
             <div><b>E</b> – {L("mluvit / použít", "talk / use")}</div>
             <div><b>Q · {L("pravé tlačítko + tah", "right-drag")}</b> – {L("otočit kameru", "rotate camera")}</div>
             <div><b>{L("Kolečko", "Wheel")}</b> – {L("přiblížení", "zoom")}</div>
+            <div><b>V</b> – {L("přepnout kameru (shora / třetí osoba); ve třetí osobě pravé tlačítko + tah otáčí i naklání", "switch camera (top-down / third person); in third person right-drag also tilts")}</div>
             <div><b>Esc</b> – {L("zavřít okno / nastavení", "close window / settings")}</div>
             <div className="text-[var(--ash-muted)]">{L("U místa zrození je bezpečná zóna (bílé kameny) – tam tě nikdo nenapadne.", "There is a safe zone around the spawn (white stones) – no one attacks you there.")}</div>
           </div>
