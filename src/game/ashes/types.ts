@@ -1,4 +1,6 @@
 export type HeroClass = "hoplit" | "lucistnik" | "vestec";
+export type Faction = "kalidra" | "legie";
+export type HeroId = "eryon" | "azkar";
 export type StatKey = "sila" | "obratnost" | "intelekt" | "vydrz" | "stesti";
 export type Slot = "zbran" | "stit" | "helma" | "zbroj" | "rukavice" | "boty" | "amulet";
 
@@ -7,7 +9,9 @@ export type Appearance = {
   cloak?: string;
   crest?: string;
   enemy?: boolean;
+  kalidran?: boolean;
   boss?: boolean;
+  hero?: HeroId | null;
   tint?: string;
 };
 
@@ -27,6 +31,8 @@ export type Fighter = {
   shield: boolean;
   appearance: Appearance;
   eryon?: boolean;
+  azkar?: boolean;
+  faction?: Faction;
   honor?: number;
   npc?: boolean;
 };
@@ -70,6 +76,7 @@ export type Character = {
   name: string;
   display_name: string;
   class: HeroClass;
+  faction: Faction;
   appearance: Appearance;
   level: number;
   xp: number;
@@ -89,6 +96,7 @@ export type Character = {
   wins: number;
   losses: number;
   is_eryon: boolean;
+  is_azkar: boolean;
 };
 
 export type Chapter = {
@@ -98,7 +106,8 @@ export type Chapter = {
   need: number;
   intro: string;
   eryon?: boolean;
-  boss: { t: string; s: string; e: string; c: HeroClass; win: string };
+  ally?: HeroId;
+  boss: { t: string; s: string; e: string; c: HeroClass; win: string; look?: HeroId };
 };
 
 export type ChronicleEntry = { created_at: string; kind: string; text: string };
@@ -109,14 +118,20 @@ export type World = {
   open_to_all: boolean;
   eryon_shout: string | null;
   eryon_shout_at: string | null;
+  azkar_shout: string | null;
+  azkar_shout_at: string | null;
   eryon_claimed: boolean;
+  azkar_claimed: boolean;
   heroes: number;
+  kalidra: number;
+  legie: number;
   arena_cooldown_s: number;
 };
 
 export type GameState = {
   allowed: boolean;
   admin?: boolean;
+  editor?: boolean;
   now?: string;
   world?: World;
   chronicle?: ChronicleEntry[];
@@ -153,6 +168,8 @@ export type FightResult = {
   title?: string;
   boss?: Chapter["boss"];
   eryon_ally?: boolean;
+  ally?: HeroId | null;
+  rival?: boolean;
   state: GameState;
 };
 
@@ -163,6 +180,8 @@ export type PresenceHero = {
   level: number;
   appearance: Appearance;
   eryon: boolean;
+  azkar?: boolean;
+  faction?: Faction;
 };
 
 export const CLASS_LABEL: Record<HeroClass, string> = {
@@ -202,3 +221,8 @@ export const RARITY = [
   { label: "Epický", color: "#b07ae8" },
   { label: "Legendární", color: "#f0a43a" },
 ];
+
+export const FACTION: Record<Faction, { name: string; short: string; hero: string; heroFull: string; color: string }> = {
+  kalidra: { name: "Obránci Kalidry", short: "Kalidra", hero: "Eryon", heroFull: "Eryon, poslední štít", color: "#d2ae68" },
+  legie: { name: "Legie Rudého slunce", short: "Legie", hero: "Azkar", heroFull: "Azkar, Syn Rudého slunce", color: "#d2492b" },
+};

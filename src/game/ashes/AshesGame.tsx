@@ -12,7 +12,7 @@ import { AshesWorld, LOCATIONS, type BattleEvent, type FrameAnchors, type Locati
 import {
   ArenaPanel, BardPanel, ChroniclePanel, CreateCharacter, HeroPanel, SmithyPanel, TavernPanel, WallsPanel, fmtNum,
 } from "./ui/panels";
-import { CLASS_LABEL, RARITY, type Appearance, type FightResult, type Fighter, type GameState, type HeroClass, type PresenceHero } from "./types";
+import { CLASS_LABEL, FACTION, RARITY, type Appearance, type Faction, type FightResult, type Fighter, type GameState, type HeroClass, type PresenceHero } from "./types";
 import "./ashes.css";
 
 type PanelId = LocationId | "kronika";
@@ -135,7 +135,7 @@ export default function AshesGame() {
       });
       const eryonEl = overlay.querySelector<HTMLElement>("[data-eryon]");
       if (eryonEl) {
-        const p = anchors.eryon;
+        const p = anchors.hero;
         eryonEl.style.display = p?.visible ? "" : "none";
         if (p) {
           eryonEl.style.left = `${p.x}px`;
@@ -154,8 +154,15 @@ export default function AshesGame() {
   useEffect(() => {
     const world = worldRef.current;
     if (!world || !character) return;
-    world.setPlayer(character.class, character.appearance ?? {}, character.is_eryon, shieldOn || character.class === "hoplit");
-  }, [character?.class, character?.appearance, character?.is_eryon, shieldOn, state?.allowed, character]);
+    world.setFaction(character.faction ?? "kalidra");
+    world.setPlayer(
+      character.class,
+      character.appearance ?? {},
+      character.is_eryon ? "eryon" : character.is_azkar ? "azkar" : null,
+      shieldOn || character.class === "hoplit",
+      character.faction === "legie",
+    );
+  }, [character?.class, character?.appearance, character?.is_eryon, character?.is_azkar, character?.faction, shieldOn, state?.allowed, character]);
 
   useEffect(() => {
     const world = worldRef.current;
@@ -167,7 +174,8 @@ export default function AshesGame() {
   // Ostatní hráči na břehu (realtime presence)
   useEffect(() => {
     if (!character || !user) return;
-    const channel = supabase.channel("ashes:shore", { config: { presence: { key: user.id } } });
+    // Každá strana má svůj tábor – vidíš jen spolubojovníky.
+    const channel = supabase.channel(`ashes:camp:${character.faction ?? "kalidra"}`, { config: { presence: { key: user.id } } });
     channel.on("presence", { event: "sync" }, () => {
       const raw = channel.presenceState<PresenceHero>();
       const list: PresenceHero[] = [];
@@ -186,13 +194,15 @@ export default function AshesGame() {
           level: character.level,
           appearance: character.appearance ?? {},
           eryon: character.is_eryon,
+          azkar: character.is_azkar,
+          faction: character.faction,
         });
       }
     });
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [character?.display_name, character?.level, character?.is_eryon, character?.class, user, character]);
+  }, [character?.display_name, character?.level, character?.is_eryon, character?.is_azkar, character?.faction, character?.class, user, character]);
 
   useEffect(() => {
     worldRef.current?.setOthers(others);
@@ -243,7 +253,7 @@ export default function AshesGame() {
         setBattle((b) => (b ? { ...b, done: true } : b));
       }
     };
-    await world.playFight(res.fight, onEvent, !!res.eryon_ally);
+    await world.playFight(res.fight, onEvent, res.ally ?? (res.eryon_ally ? "eryon" : null));
     setResult({ ...res, kind });
     setState(res.state);
     setBusy(false);
@@ -266,14 +276,23 @@ export default function AshesGame() {
     });
   };
 
-  const onPreview = useCallback((cls: HeroClass, appearance: Appearance) => {
-    worldRef.current?.setPlayer(cls, appearance, false, cls === "hoplit");
+  const onPreview = useCallback((cls: HeroClass, appearance: Appearance, faction: Faction) => {
+    worldRef.current?.setFaction(faction);
+    worldRef.current?.setPlayer(cls, appearance, null, cls === "hoplit", faction === "legie");
   }, []);
 
+  // Poslední vzkaz hrdiny z posledních 24 hodin (Eryon i Azkar mluví ke všem).
   const shoutFresh = useMemo(() => {
-    const at = state?.world?.eryon_shout_at ? new Date(state.world.eryon_shout_at).getTime() : 0;
-    return state?.world?.eryon_shout && now - at < 1000 * 60 * 60 * 24 ? state.world.eryon_shout : null;
-  }, [state?.world?.eryon_shout, state?.world?.eryon_shout_at, now]);
+    const w = state?.world;
+    if (!w) return null;
+    const day = 1000 * 60 * 60 * 24;
+    const list = [
+      { hero: "Eryon", text: w.eryon_shout, at: w.eryon_shout_at ? new Date(w.eryon_shout_at).getTime() : 0, legion: false },
+      { hero: "Azkar", text: w.azkar_shout, at: w.azkar_shout_at ? new Date(w.azkar_shout_at).getTime() : 0, legion: true },
+    ].filter((x) => x.text && now - x.at < day);
+    list.sort((a, b) => b.at - a.at);
+    return list[0] ?? null;
+  }, [state?.world, now]);
 
   const activeQuest = state?.quests?.find((q) => q.state === "active");
   const questReady = activeQuest?.ends_at ? new Date(activeQuest.ends_at).getTime() <= now : false;
@@ -311,6 +330,7 @@ export default function AshesGame() {
 
   if (!state) return null;
   const world = state.world;
+  const legion = character?.faction === "legie";
 
   return (
     <div className="ashes-root">
@@ -328,17 +348,17 @@ export default function AshesGame() {
             style={{ pointerEvents: "auto", display: "none" }}
             onClick={() => setPanel(loc.id)}
           >
-            {loc.id === "postava" ? character.display_name : loc.label}
+            {loc.id === "postava" ? character.display_name : loc.id === "hradby" && legion ? "Tábor a Azkar" : loc.id === "krcma" && legion ? "Markytánka" : loc.label}
             {loc.id === "krcma" && questReady && " ⚔"}
           </button>
         ))}
         {character && !battle && others.map((o) => (
-          <div key={o.key} data-other={o.key} className={`ash-tag ${o.eryon ? "eryon" : ""}`} style={{ display: "none" }}>
+          <div key={o.key} data-other={o.key} className={`ash-tag ${o.eryon || o.azkar ? "eryon" : ""}`} style={{ display: "none" }}>
             {o.name} · {o.level}
           </div>
         ))}
-        {character && !battle && !character.is_eryon && (
-          <div data-eryon className="ash-tag eryon" style={{ display: "none" }}>Eryon</div>
+        {character && !battle && !character.is_eryon && !character.is_azkar && (
+          <div data-eryon className="ash-tag eryon" style={{ display: "none" }}>{legion ? "Azkar" : "Eryon"}</div>
         )}
       </div>
 
@@ -347,7 +367,7 @@ export default function AshesGame() {
         <img className="wordmark" src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" />
         {character && state.chapter && (
           <div className="chapter">
-            <span>{character.chapter > 6 ? "1. akt dohrán" : `1. akt · kapitola ${ROMAN[character.chapter - 1]}`}</span>
+            <span style={{ color: FACTION[character.faction ?? "kalidra"].color }}>{FACTION[character.faction ?? "kalidra"].short} · {character.chapter > 6 ? "1. akt dohrán" : `1. akt · kapitola ${ROMAN[character.chapter - 1]}`}</span>
             <b>{state.chapter.title}</b>
           </div>
         )}
@@ -357,7 +377,7 @@ export default function AshesGame() {
               <span className="ash-pill" title="Zlato"><Coins />{fmtNum(character.gold)}</span>
               <span className="ash-pill hide-sm" title="Čest"><Trophy />{fmtNum(character.honor)}</span>
               <span className="ash-pill hide-sm" title="Odvaha"><Flame />{character.courage}</span>
-              <span className="ash-pill hide-sm" title="Síla hradeb Kalidry"><Shield />{world ? ((world.wall / world.wall_max) * 100).toFixed(0) : "—"} %</span>
+              <span className="ash-pill hide-sm" title={legion ? "Síla hradeb Kalidry – Legie je chce zbořit" : "Síla hradeb Kalidry"}><Shield />{world ? ((world.wall / world.wall_max) * 100).toFixed(0) : "—"} %</span>
               <div className="ash-hero-chip">
                 <div className="lvl">{character.level}</div>
                 <div className="hidden min-w-[120px] sm:block">
@@ -375,7 +395,7 @@ export default function AshesGame() {
       </header>
 
       {shoutFresh && !battle && (
-        <div className="ash-eryon-banner"><b>Eryon promlouvá</b>„{shoutFresh}“</div>
+        <div className={`ash-eryon-banner ${shoutFresh.legion ? "legion" : ""}`}><b>{shoutFresh.hero} promlouvá</b>„{shoutFresh.text}“</div>
       )}
 
       {/* tvorba postavy */}
@@ -383,7 +403,12 @@ export default function AshesGame() {
         <CreateCharacter
           busy={busy}
           onPreview={onPreview}
-          onCreate={(name, cls, appearance) => act(() => ashesApi.createCharacter(name, cls, appearance), `Vítej na Bezejmenném břehu, ${name}.`)}
+          onCreate={(name, cls, appearance, faction) =>
+            act(
+              () => ashesApi.createCharacter(name, cls, appearance, faction),
+              faction === "legie" ? `Vítej v Legii Rudého slunce, ${name}.` : `Vítej na Bezejmenném břehu, ${name}.`,
+            )
+          }
         />
       )}
 
@@ -393,7 +418,7 @@ export default function AshesGame() {
           {NAV.map((item) => (
             <button key={item.id} data-active={panel === item.id} onClick={() => setPanel(panel === item.id ? null : item.id)}>
               <item.icon />
-              <span>{item.label}</span>
+              <span>{item.id === "hradby" && legion ? "Tábor a Azkar" : item.id === "krcma" && legion ? "Markytánka" : item.label}</span>
               {item.id === "krcma" && questReady && <i className="badge">!</i>}
               {item.id === "hradby" && state.chapter && character.chapter <= 6 && character.chapter_progress >= state.chapter.need && <i className="badge">⚔</i>}
             </button>

@@ -11,6 +11,10 @@ export type FigureOptions = {
   cls: HeroClass;
   appearance?: Appearance;
   eryon?: boolean;
+  /** Azkar, Syn Rudého slunce – vojevůdce Legie. */
+  azkar?: boolean;
+  /** Voják Legie Rudého slunce (tmavý bronz, znak rudého slunce). */
+  legion?: boolean;
   enemy?: boolean;
   boss?: boolean;
   scale?: number;
@@ -144,7 +148,7 @@ export class Figure {
     this.opts = opts;
     this.build();
     this.group.add(this.root);
-    const s = opts.scale ?? (opts.eryon ? 1.12 : opts.boss ? 1.15 : 1);
+    const s = opts.scale ?? (opts.eryon ? 1.12 : opts.azkar ? 1.15 : opts.boss ? 1.15 : 1);
     this.root.scale.setScalar(s);
     this.group.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
@@ -155,13 +159,15 @@ export class Figure {
   }
 
   private build() {
-    const { cls, appearance = {}, eryon, enemy } = this.opts;
+    const { cls, appearance = {}, eryon, azkar, legion } = this.opts;
+    const enemy = !!this.opts.enemy || !!legion || !!azkar;
+    const hero = eryon || azkar;
     const skin = std(appearance.skin || SKIN_DEFAULT, 0, 0.75);
-    const bronzeColor = enemy ? "#4a3a2c" : eryon ? "#c58a3e" : "#a8743a";
-    const bronze = std(bronzeColor, 0.85, enemy ? 0.55 : 0.32);
+    const bronzeColor = azkar ? "#3d2c20" : legion ? "#5e4430" : this.opts.enemy ? "#4a3a2c" : eryon ? "#c58a3e" : "#a8743a";
+    const bronze = std(bronzeColor, 0.85, azkar ? 0.3 : enemy ? 0.5 : 0.32);
     const leather = std(enemy ? "#2a1f19" : "#5a3a22", 0, 0.9);
-    const cloth = std(appearance.cloak || (eryon ? "#8e1b14" : enemy ? appearance.tint || "#4a1414" : "#6b2a1e"), 0, 0.95, { side: THREE.DoubleSide });
-    const crestColor = appearance.crest || (eryon ? "#b3160d" : enemy ? "#1d1d1d" : "#8a1a12");
+    const cloth = std(azkar ? "#5e0d0a" : eryon ? "#8e1b14" : appearance.cloak || (enemy ? appearance.tint || "#4a1414" : "#6b2a1e"), 0, 0.95, { side: THREE.DoubleSide });
+    const crestColor = azkar ? "#140806" : eryon ? "#b3160d" : appearance.crest || (enemy ? "#1d1d1d" : "#8a1a12");
     this.flashMats.push(skin, bronze, leather, cloth);
 
     // Nohy
@@ -254,16 +260,27 @@ export class Figure {
       nose.position.set(0, 0.0, 0.118);
       this.head.add(nose);
       const crestMat = std(crestColor, 0, 1);
-      const crest = new THREE.Mesh(new THREE.TorusGeometry(eryon ? 0.15 : 0.13, eryon ? 0.04 : 0.03, 8, 20, Math.PI), crestMat);
+      const crest = new THREE.Mesh(new THREE.TorusGeometry(hero ? 0.15 : 0.13, hero ? 0.04 : 0.03, 8, 20, Math.PI), crestMat);
       crest.rotation.y = Math.PI / 2;
       crest.position.y = 0.09;
-      crest.scale.set(1, eryon ? 1.25 : 1, 0.6);
+      crest.scale.set(1, hero ? 1.25 : 1, 0.6);
       this.head.add(crest);
-      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.04, eryon ? 0.42 : 0.3, 8), crestMat);
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.04, hero ? 0.42 : 0.3, 8), crestMat);
       tail.position.set(0, -0.02, -0.17);
       tail.rotation.x = 0.35;
       this.head.add(tail);
       this.flashMats.push(crestMat);
+      if (azkar) {
+        // zlatá koruna paprsků rudého slunce na přilbě vojevůdce
+        const gold = std("#d8a24a", 0.9, 0.25, { emissive: "#3a1a00" });
+        for (let i = 0; i < 7; i += 1) {
+          const ray = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.09, 4), gold);
+          const a = -Math.PI / 2 + (i - 3) * 0.32;
+          ray.position.set(Math.sin(a + Math.PI / 2) * 0.13, 0.08 + Math.cos(a + Math.PI / 2) * 0.03, 0.08 + Math.abs(i - 3) * -0.02);
+          ray.rotation.z = -(i - 3) * 0.3;
+          this.head.add(ray);
+        }
+      }
     } else if (cls === "lucistnik") {
       const cap = new THREE.Mesh(new THREE.SphereGeometry(0.118, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), leather);
       cap.position.y = 0.02;
@@ -383,7 +400,7 @@ export class Figure {
     }
 
     if (this.opts.shield ?? cls === "hoplit") {
-      const shieldMat = std("#ffffff", 0.75, 0.38, { map: shieldTexture(bronzeColor, eryon ? "#2a1408" : enemy ? "#8a1c12" : "#3a2210", eryon ? "eryon" : enemy ? "redsun" : "sun") });
+      const shieldMat = std("#ffffff", 0.75, 0.38, { map: shieldTexture(bronzeColor, eryon ? "#2a1408" : azkar ? "#d8a24a" : enemy ? "#a8261a" : "#3a2210", eryon ? "eryon" : enemy ? "redsun" : "sun") });
       const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 32), [bronze, shieldMat, bronze]);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.025, 8, 32), bronze);
       rim.rotation.x = Math.PI / 2;
@@ -400,7 +417,7 @@ export class Figure {
     }
 
     // Plášť
-    if (cls !== "vestec" || eryon) {
+    if (cls !== "vestec" || hero) {
       const geo = new THREE.PlaneGeometry(0.56, 1.15, 6, 14);
       geo.translate(0, -0.575, 0);
       const pos = geo.attributes.position as THREE.BufferAttribute;

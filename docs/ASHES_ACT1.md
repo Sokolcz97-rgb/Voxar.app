@@ -13,6 +13,21 @@ První hratelná verze hry. Běží jako 3D hra v prohlížeči na `/hra` a laun
 | Hudba | Album „Eryon“ v soukromém bucketu `ashes-music`, čtení jen pro hráče (`ashes_can_play()`) |
 | Přístup | Zatím správci a editoři. Správce může hru otevřít všem v panelu Hradby → Správce |
 
+## Strany konfliktu
+
+Při tvorbě postavy si hráč vybírá stranu:
+
+| Strana | Hrdina | Kdo ho může převzít |
+| --- | --- | --- |
+| Obránci Kalidry | Eryon, poslední štít | správce |
+| Legie Rudého slunce | Azkar, Syn Rudého slunce | správce nebo editor |
+
+- Hradby Kalidry jsou přetahovaná: vítězství obránců je zpevňují, vítězství Legie je boří.
+- V aréně se mohou utkat hráči obou stran; souboj s nepřítelem z druhé strany dává 1,5× víc cti a pohne hradbami.
+- Každá strana má vlastní tábor (presence kanál `ashes:camp:<strana>`), vlastní kapitoly a hrdinu u brány.
+- Kapitoly Legie: Vylodění, Strážní ohně, Tisíc kopí, Poslední štít (boss Eryon, Azkar po boku), Ohně na horách, Pochod k moři (Azkar po boku). Obsah je ve funkci `ashes_chapter_legie()`.
+- Obráncům se ve 4. kapitole u brány postaví sám Azkar.
+
 ## Kapitoly a písně
 
 | # | Kapitola | Píseň | Boss |
@@ -20,12 +35,12 @@ První hratelná verze hry. Běží jako 3D hra v prohlížeči na `/hra` a laun
 | 1 | Bezejmenný břeh | Poslední štít | Kapitán Dorkas |
 | 2 | Strážní ohně | Poslední štít | Arhat, velitel zvědů |
 | 3 | Tisíc kopí | Poslední štít | Praporečník Rudého slunce |
-| 4 | Poslední štít (Eryon po boku, +25 %) | Poslední štít | Vojevůdce Rudého slunce |
+| 4 | Poslední štít (Eryon po boku, +25 %) | Poslední štít | Azkar, Syn Rudého slunce |
 | 5 | Oheň Kalidry | Oheň Kalidry | Pán horských ohňů |
 | 6 | Pochod bronzu (Eryon po boku, +25 %) | Pochod bronzu | Kapitán černé flotily |
 
 Obsah kapitol je ve funkci `ashes_chapter()` v migraci `supabase/migrations/20261019180000_ashes_act1.sql`.
-„Legie Rudého slunce“ je pracovní název dobyvatelské frakce.
+
 
 ## Server
 
@@ -35,7 +50,7 @@ Všechny tabulky (`ashes_characters`, `ashes_items`, `ashes_quests`, `ashes_worl
 - `ashes_start_quest`, `ashes_finish_quest`, `ashes_fight_boss` – souboj počítá `ashes_simulate`
 - `ashes_train`, `ashes_equip`, `ashes_sell`, `ashes_shop`, `ashes_buy`
 - `ashes_arena_opponents`, `ashes_arena_fight`, `ashes_hall_of_fame`
-- `ashes_claim_eryon`, `ashes_eryon_say`, `ashes_admin_world` (jen správce)
+- `ashes_claim_hero`, `ashes_hero_say` (Eryon – správce, Azkar – správce/editor), `ashes_admin_world` (jen správce)
 
 Pomocné funkce (`ashes_simulate`, `ashes_make_item`, `ashes_grant`, …) nejsou klientovi dostupné.
 
