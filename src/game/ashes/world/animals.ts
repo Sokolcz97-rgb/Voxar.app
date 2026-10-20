@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { furTex } from "../three/textures";
+import { assets, attachAnimalModel, type ModelSlot } from "./assets";
 import { CAMP, CITY, COVE, WORLD_HALF, heightAt, inCity, roadDistance } from "./map";
 
 /**
@@ -25,9 +26,10 @@ type Walker = {
   phase: number;
   heading: number;
   flee: number;
+  model: ReturnType<typeof attachAnimalModel> | null;
 };
 
-type Bird = { g: THREE.Group; wings: THREE.Object3D[]; cx: number; cz: number; r: number; h: number; a: number; speed: number; phase: number };
+type Bird = { g: THREE.Group; wings: THREE.Object3D[]; cx: number; cz: number; r: number; h: number; a: number; speed: number; phase: number; model: ReturnType<typeof attachAnimalModel> | null };
 
 type Ears = "floppy" | "pointy" | "round" | "cow" | "pig" | "none";
 type Horns = "goat" | "cow" | "antlers" | "none";
@@ -245,11 +247,16 @@ export class Wildlife {
   // ---------------------------------------------------------------- stavba zvířat
   private makeWalker(kind: Kind, pos: THREE.Vector2, home: THREE.Vector2, range: number, seed: number): Walker {
     const built = kind === "chicken" ? this.buildChicken() : kind === "squirrel" ? this.buildSquirrel() : this.buildQuadruped(SPECS[kind]);
+    // vlastní 3D model z manifestu (public/game/models) nahradí procedurální zvíře
+    const slot = `animal.${kind}` as ModelSlot;
+    const holder = new THREE.Group();
+    holder.add(built.g);
+    const model = assets.has(slot) ? attachAnimalModel(slot, holder, built.g) : null;
     const s = 0.9 + seed * 0.2;
-    built.g.scale.setScalar(s);
-    built.g.position.set(pos.x, heightAt(pos.x, pos.y), pos.y);
-    this.scene.add(built.g);
-    return { kind, ...built, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0 };
+    holder.scale.setScalar(s);
+    holder.position.set(pos.x, heightAt(pos.x, pos.y), pos.y);
+    this.scene.add(holder);
+    return { kind, ...built, g: holder, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0, model };
   }
 
   private buildQuadruped(sp: Spec): Built {
@@ -608,9 +615,13 @@ export class Wildlife {
     tail.scale.set(1, 1, 0.3);
     tail.position.set(0, 0, -0.24 * k);
     g.add(tail);
-    this.scene.add(g);
+    const holder = new THREE.Group();
+    holder.add(g);
+    const slot = `animal.${kind}` as ModelSlot;
+    const model = assets.has(slot) ? attachAnimalModel(slot, holder, g) : null;
+    this.scene.add(holder);
     const speed = (small ? 0.9 : 0.25) + seed * 0.2;
-    return { g, wings, cx, cz, r, h, a: seed * Math.PI * 2, speed: speed * (seed > 0.5 ? 1 : -1), phase: seed * 10 };
+    return { g: holder, wings, cx, cz, r, h, a: seed * Math.PI * 2, speed: speed * (seed > 0.5 ? 1 : -1), phase: seed * 10, model };
   }
 
   private okGround(x: number, z: number, kind: Kind) {
@@ -671,6 +682,10 @@ export class Wildlife {
       const hop = w.kind === "squirrel" && speed > 0 ? Math.abs(Math.sin(w.phase)) * 0.12 : 0;
       w.g.position.set(w.pos.x, heightAt(w.pos.x, w.pos.y) + hop, w.pos.y);
       w.g.rotation.y = w.heading;
+      if (w.model?.ready) {
+        w.model.update(dt, speed, w.speed * 0.6);
+        continue;
+      }
       w.phase += dt * (speed > 0 ? 4 + speed * 2.2 : 0);
       const swing = speed > 0 ? Math.min(0.7, 0.25 + speed * 0.08) : 0;
       w.legs.forEach((leg, i) => {
@@ -690,6 +705,10 @@ export class Wildlife {
       b.g.position.set(x, y, z);
       // směr letu = tečna ke kružnici
       b.g.rotation.y = Math.atan2(-Math.sin(b.a) * Math.sign(b.speed), Math.cos(b.a) * Math.sign(b.speed));
+      if (b.model?.ready) {
+        b.model.update(dt, 1, 0.5, "fly");
+        continue;
+      }
       const flap = Math.sin(time * 9 + b.phase) * 0.6;
       b.wings[0].rotation.z = flap;
       b.wings[1].rotation.z = -flap;
