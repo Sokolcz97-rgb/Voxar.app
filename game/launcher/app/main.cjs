@@ -1,8 +1,46 @@
 "use strict";
 
 const path = require("node:path");
-const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
+const fs = require("node:fs");
+const os = require("node:os");
+const { app, BrowserWindow, dialog, ipcMain, screen, session, shell } = require("electron");
 const { createUpdater } = require("./updater.cjs");
+const services = require("./services.cjs");
+
+// ------------------------------------------------------------------ odolný start
+// Když složku s daty launcheru vytvořil proces spuštěný jako správce (např. instalátor),
+// běžný uživatel do ní nemusí smět zapisovat a launcher by se bez práv správce nespustil.
+// V takovém případě použijeme náhradní složku.
+function ensureWritableUserData() {
+  const tryDir = (dir) => {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      const probe = path.join(dir, `.probe-${process.pid}`);
+      fs.writeFileSync(probe, "ok");
+      fs.rmSync(probe, { force: true });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (tryDir(app.getPath("userData"))) return;
+  const fallback = path.join(process.env.LOCALAPPDATA || os.homedir(), "StudioVoxario", "AshesLauncherData");
+  if (tryDir(fallback)) app.setPath("userData", fallback);
+}
+ensureWritableUserData();
+
+function log(message) {
+  try {
+    fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] ${message}\n`);
+  } catch {}
+}
+
+process.on("uncaughtException", (error) => {
+  log(`Chyba: ${error?.stack || error}`);
+  try {
+    dialog.showErrorBox("Ashes of Eryon", `Launcher narazil na chybu:\n${error?.message || error}\n\nPodrobnosti: ${path.join(app.getPath("userData"), "launcher.log")}`);
+  } catch {}
+});
 
 // Výkon hry: grafická karta i na kartách, které má Chromium na černé listině,
 // rasterizace na GPU a žádné omezování snímků na pozadí.
@@ -51,7 +89,12 @@ function openGameWindow() {
       devTools: !app.isPackaged
     }
   });
-  gameWindow.once("ready-to-show", () => gameWindow?.show());
+  const settings = services.loadSettings();
+  gameWindow.once("ready-to-show", () => {
+    if (!gameWindow) return;
+    if (settings.fullscreen) gameWindow.setFullScreen(true);
+    gameWindow.show();
+  });
   gameWindow.on("leave-full-screen", () => gameWindow?.setMenuBarVisibility(false));
   gameWindow.on("closed", () => {
     gameWindow = null;
@@ -74,7 +117,8 @@ function openGameWindow() {
     if (!/^https:\/\//i.test(url)) event.preventDefault();
   });
   void gameWindow.loadURL(GAME_URL);
-  mainWindow?.minimize();
+  if (settings.afterPlay === "hide") mainWindow?.hide();
+  else if (settings.afterPlay === "minimize") mainWindow?.minimize();
   return { opened: true, url: GAME_URL };
 }
 
@@ -218,6 +262,33 @@ function registerIpc() {
     void shell.openExternal(`${GAME_ORIGIN}/auth?next=/hra`);
   });
 
+  ipcMain.handle("launcher:info", () => services.info());
+  ipcMain.handle("launcher:settings:get", () => services.loadSettings());
+  ipcMain.handle("launcher:settings:set", (_event, next) => {
+    const saved = services.saveSettings(next);
+    services.syncShortcuts(saved);
+    services.applyLoginItem(saved);
+    return saved;
+  });
+  ipcMain.handle("launcher:news", () => services.loadNews());
+  ipcMain.handle("launcher:server", () => services.serverStatus());
+  ipcMain.handle("launcher:open", (_event, what) => {
+    const links = {
+      tickets: `${GAME_ORIGIN}/tickets`,
+      roadmap: `${GAME_ORIGIN}/ashes`,
+      download: `${GAME_ORIGIN}/download`,
+      web: GAME_ORIGIN,
+    };
+    if (what === "folder") return shell.openPath(services.info().installDir);
+    if (what === "logs") return shell.openPath(app.getPath("userData"));
+    if (links[what]) void shell.openExternal(links[what]);
+    return true;
+  });
+  ipcMain.handle("launcher:clear-cache", async () => {
+    // jen mezipaměť souborů hry (přihlášení a uložené nastavení hry zůstanou)
+    await session.defaultSession.clearCache();
+    return true;
+  });
   ipcMain.handle("launcher:update:status", () => updater?.status ?? null);
   ipcMain.handle("launcher:update:check", () => updater?.check() ?? null);
   ipcMain.handle("launcher:update:full", () => {
@@ -252,7 +323,12 @@ if (!app.requestSingleInstanceLock()) {
       },
       canRestart: () => !gameRunning()
     });
-    updater.start();
+    const settings = services.loadSettings();
+    if (settings.autoUpdate) updater.start();
+    // zástupce na ploše s ikonou hry (opraví i starší zástupce z instalace)
+    services.syncShortcuts(settings);
+    services.applyLoginItem(settings);
+    log(`Start ${app.getVersion()} (Electron ${process.versions.electron})`);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

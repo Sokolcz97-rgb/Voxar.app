@@ -118,6 +118,17 @@ jobs:
           $sfx = Get-ChildItem -Recurse $directory -Filter "7zSD.sfx" -File | Select-Object -First 1
           if ($null -eq $sfx) { throw "7zSD.sfx was not found." }
 
+          # GameSetup nesmí vyžadovat práva správce (instaluje se do profilu uživatele).
+          # Bez manifestu Windows u souboru "GameSetup.exe" práva správce vynutí a launcher
+          # spuštěný z instalace pak běží jako správce. Doplníme manifest asInvoker a ikonu hry.
+          $rcedit = Join-Path $env:RUNNER_TEMP "rcedit-x64.exe"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe" -OutFile $rcedit
+          $patched = Join-Path $env:RUNNER_TEMP "7zSD-asinvoker.sfx"
+          Copy-Item $sfx.FullName $patched -Force
+          & $rcedit $patched --set-requested-execution-level asInvoker --set-icon "game/launcher/app/build/icon.ico"
+          if ($LASTEXITCODE -ne 0) { throw "rcedit failed to patch the SFX module." }
+          $sfx = Get-Item $patched
+
           "path=$($sfx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Build single-file GameSetup.exe

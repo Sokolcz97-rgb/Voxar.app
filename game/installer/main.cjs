@@ -554,7 +554,9 @@ function registerIpc() {
     const root = safeTarget(target || DEFAULT_ROOT);
     const exe = path.join(root, "Launcher", LAUNCHER_EXE);
     if (!fs.existsSync(exe)) throw new Error("Launcher nebyl nalezen.");
-    const child = spawn(exe, [], { detached: true, windowsHide: true, stdio: "ignore" });
+    // Přes Průzkumníka: launcher se spustí s běžnými právy uživatele, i kdyby instalátor
+    // běžel jako správce (jinak by se pak launcher bez práv správce nespustil).
+    const child = spawn("explorer.exe", [exe], { detached: true, windowsHide: true, stdio: "ignore" });
     child.unref();
     return { ok: true };
   });

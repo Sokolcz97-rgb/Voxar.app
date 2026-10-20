@@ -173,3 +173,37 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round
 .prototype-controls button { padding: 4px 10px; border: 1px solid rgba(196,150,82,.4); }
 .prototype-controls button.active { color: #1a1206; background: var(--gold); }
 .prototype-controls[hidden] { display: none; }
+
+/* ---------- přehled novinek, nastavení a podpora (překryvné okno) ---------- */
+.overlay { position: absolute; inset: 92px 0 0 0; z-index: 20; display: flex; align-items: flex-start; justify-content: center; padding: 34px 60px 40px; background: rgba(5, 4, 5, .72); backdrop-filter: blur(3px); }
+.overlay[hidden] { display: none; }
+.overlay-card { position: relative; width: 1040px; max-height: 760px; display: flex; flex-direction: column; padding: 26px 34px 30px; }
+.overlay-close { margin-left: 8px; width: 40px; height: 40px; font-size: 22px; color: #d9cfbd; border: 1px solid var(--line); }
+.overlay-close:hover { color: var(--gold-hi); border-color: var(--gold); }
+.overlay-body { margin-top: 22px; overflow-y: auto; padding-right: 10px; font-size: 20px; line-height: 1.45; -webkit-app-region: no-drag; }
+.overlay-body::-webkit-scrollbar { width: 8px; }
+.overlay-body::-webkit-scrollbar-thumb { background: rgba(196,150,82,.45); }
+.feed-item { display: grid; grid-template-columns: 170px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px solid rgba(196,150,82,.2); }
+.feed-item img { width: 170px; height: 96px; object-fit: cover; border: 1px solid rgba(196,150,82,.35); }
+.feed-item time { font-size: 15.5px; font-weight: 600; color: #b7ab96; }
+.feed-item h3 { margin: 2px 0 4px; font-size: 24px; color: #f2eadc; }
+.feed-item p { margin: 0; color: #cfc4b0; }
+.feed-tag { display: inline-block; margin-left: 10px; padding: 1px 8px; font-family: var(--caps); font-size: 12px; letter-spacing: .12em; color: var(--gold-hi); border: 1px solid var(--line); vertical-align: 2px; }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 0; border-bottom: 1px solid rgba(196,150,82,.2); }
+.setting b { display: block; font-size: 22px; color: #f2eadc; }
+.setting small { display: block; font-size: 16px; color: #b9ad98; }
+.toggle { position: relative; flex: none; width: 62px; height: 32px; border: 1px solid var(--line); background: rgba(0,0,0,.5); }
+.toggle::after { content: ''; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; background: #8e826d; transition: left .15s, background .15s; }
+.toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(90,62,24,.6); }
+.toggle[aria-checked="true"]::after { left: 34px; background: var(--gold-hi); }
+.choice { display: flex; gap: 6px; flex: none; }
+.choice button { padding: 6px 14px; font-size: 16px; border: 1px solid var(--line); color: #d7cdbb; }
+.choice button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold-hi); background: rgba(90,62,24,.5); }
+.action-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.action-row button { padding: 10px 18px; font-family: var(--caps); font-size: 15px; letter-spacing: .08em; color: #f1e3c4; border: 1px solid var(--gold); background: linear-gradient(180deg, rgba(90,62,24,.55), rgba(40,28,12,.7)); }
+.action-row button:hover { color: #fff; box-shadow: 0 0 14px rgba(230,170,80,.4); }
+.about { margin-top: 20px; font-size: 16px; color: #a99d88; }
+.status-dot.offline { background: #d9534f; box-shadow: 0 0 8px rgba(217,83,79,.8); }
+.status-list dd.negative { display: flex; align-items: center; gap: 10px; color: #e07b6f; }
+.status-list dd.negative .status-dot { background: #d9534f; box-shadow: 0 0 8px rgba(217,83,79,.8); }
+#installPath { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
