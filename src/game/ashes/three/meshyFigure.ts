@@ -35,6 +35,8 @@ function load(cls: HeroClass, g: Gender) {
   return p;
 }
 
+const grown = new WeakSet<THREE.BufferGeometry>();
+
 type Anim = { t: number; dur: number; fn: (k: number) => void; done?: () => void };
 
 export class MeshyFigure {
@@ -79,7 +81,11 @@ export class MeshyFigure {
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      mesh.frustumCulled = false;
+      if (!grown.has(mesh.geometry)) {
+        grown.add(mesh.geometry);
+        if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere();
+        if (mesh.geometry.boundingSphere) mesh.geometry.boundingSphere.radius *= 1.3;
+      }
       const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
       mesh.material = mat;
       this.mats.push(mat);

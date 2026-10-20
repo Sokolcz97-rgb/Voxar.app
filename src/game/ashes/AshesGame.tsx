@@ -9,7 +9,7 @@ import { heroPortraitUrl } from "./three/meshyFigure";
 import { RoadmapCountdown } from "./AshesRoadmap";
 import { music } from "./audio";
 import { OpenWorld, getCameraMode, type BattleEvent, type CameraMode, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
-import { QUALITY, assets, getQuality, setQuality, type Quality } from "./world/assets";
+import { QUALITY, assets, getQuality, qualityChosen, setQuality, type Quality } from "./world/assets";
 import { NPCS, REGION_NAME, SPAWN, type NpcId, type RegionId } from "./world/map";
 import { questDef, beaconsLit, npcMark } from "./world/quests";
 import {
@@ -94,6 +94,7 @@ export default function AshesGame() {
   const [regionBanner, setRegionBanner] = useState<RegionId | null>(null);
   const [world, setWorld] = useState<OpenWorld | null>(null);
   const [worldGen, setWorldGen] = useState(0);
+  const [slow, setSlow] = useState<null | { software: boolean }>(null);
   const [, forceMusic] = useState(0);
   const hostRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -282,6 +283,15 @@ export default function AshesGame() {
         return;
       }
       w.setRenderScale(getDisplay().renderScale);
+      // bez grafické karty (vypnutá hardwarová akcelerace) rovnou nízká grafika
+      if (w.gpuInfo().software && !qualityChosen() && getQuality() !== "low") {
+        setQuality("low");
+        const old = w;
+        w = null;
+        old.dispose();
+        setWorldGen((n) => n + 1);
+        return;
+      }
       if (import.meta.env.DEV) (window as unknown as { __ashesWorld?: OpenWorld }).__ashesWorld = w;
       worldRef.current = w;
       setWorld(w);
@@ -298,6 +308,29 @@ export default function AshesGame() {
     // svět se staví jednou (nebo po změně kvality); strana se řeší přes populate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.allowed, worldGen]);
+
+  // hra se seká: po chvíli nabídnout nižší grafiku, zapnutí akcelerace nebo launcher
+  useEffect(() => {
+    if (!world) return;
+    let dismissed = false;
+    try {
+      dismissed = sessionStorage.getItem("ashes.slow.dismissed") === "1";
+    } catch {
+      /* bez úložiště */
+    }
+    if (dismissed) return;
+    const software = world.gpuInfo().software;
+    let bad = 0;
+    const t = window.setInterval(() => {
+      if (document.hidden) return;
+      bad = world.struggling || software ? bad + 1 : 0;
+      if (bad >= 3) {
+        setSlow({ software });
+        window.clearInterval(t);
+      }
+    }, 4000);
+    return () => window.clearInterval(t);
+  }, [world]);
 
   // napojení událostí
   useEffect(() => {
@@ -784,6 +817,38 @@ export default function AshesGame() {
         <div className="ash-region" key={regionBanner}>
           <small>{L("Vstupuješ", "Entering")}</small>
           <b>{REGION_NAME[regionBanner][lang]}</b>
+        </div>
+      )}
+
+      {slow && inWorld && !panel && (
+        <div className="ash-slow" role="status">
+          <b>{slow.software ? L("Hra běží bez grafické karty", "The game is running without your graphics card") : L("Hra se ti seká?", "Is the game stuttering?")}</b>
+          <span>
+            {slow.software
+              ? L("V prohlížeči je vypnutá hardwarová akcelerace. Zapni ji (Nastavení prohlížeče → Systém → Používat grafickou akceleraci) a prohlížeč restartuj – nebo si stáhni launcher.", "Hardware acceleration is off in your browser. Turn it on (browser Settings → System → Use graphics acceleration) and restart the browser – or download the launcher.")
+              : L("Sniž grafiku, nebo si stáhni launcher – běží plynuleji než prohlížeč s mnoha záložkami.", "Lower the graphics, or download the launcher – it runs smoother than a browser full of tabs.")}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {getQuality() !== "low" && (
+              <button className="ash-btn small" onClick={() => { changeQuality(getQuality() === "high" ? "medium" : "low"); setSlow(null); }}>
+                {L("Snížit grafiku", "Lower graphics")}
+              </button>
+            )}
+            {!isDesktop() && <Link className="ash-btn ghost small" to="/download">{L("Stáhnout launcher", "Download the launcher")}</Link>}
+            <button
+              className="ash-btn ghost small"
+              onClick={() => {
+                try {
+                  sessionStorage.setItem("ashes.slow.dismissed", "1");
+                } catch {
+                  /* bez úložiště */
+                }
+                setSlow(null);
+              }}
+            >
+              {L("Zavřít", "Close")}
+            </button>
+          </div>
         </div>
       )}
 

@@ -34,7 +34,8 @@ const QUALITY_KEY = "ashes.quality";
 export const QUALITY: Record<Quality, QualitySettings> = {
   low: { pixelRatio: 1, shadows: false, shadowSize: 512, treeDensity: 0.45, grass: 0, bloom: false, viewDistance: 110 },
   medium: { pixelRatio: 1.25, shadows: true, shadowSize: 1024, treeDensity: 0.75, grass: 1800, bloom: false, viewDistance: 150 },
-  high: { pixelRatio: 1.75, shadows: true, shadowSize: 2048, treeDensity: 1, grass: 4000, bloom: true, viewDistance: 190 },
+  // záře (bloom) stojí několik průchodů v plném rozlišení – zapnutá jen na „ultra“
+  high: { pixelRatio: 1.5, shadows: true, shadowSize: 2048, treeDensity: 1, grass: 3000, bloom: false, viewDistance: 170 },
 };
 
 export function getQuality(): Quality {
@@ -46,6 +47,15 @@ export function getQuality(): Quality {
   }
   // výchozí podle zařízení: mobil střední, desktop vysoká
   return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches ? "medium" : "high";
+}
+
+/** Hráč si kvalitu ještě nevybral (rozhoduje automatika). */
+export function qualityChosen() {
+  try {
+    return !!localStorage.getItem(QUALITY_KEY);
+  } catch {
+    return false;
+  }
 }
 
 export function setQuality(q: Quality) {

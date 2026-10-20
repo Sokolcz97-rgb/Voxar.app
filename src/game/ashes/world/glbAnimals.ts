@@ -135,6 +135,14 @@ function patchMaterial(mat: THREE.Material, u: MoveUniforms, mesh: { toModel: TH
   m.customProgramCacheKey = () => `ashes-glb-anim-${mode}`;
 }
 
+const grown = new WeakSet<THREE.BufferGeometry>();
+function grow(geo: THREE.BufferGeometry) {
+  if (grown.has(geo)) return;
+  grown.add(geo);
+  if (!geo.boundingSphere) geo.computeBoundingSphere();
+  if (geo.boundingSphere) geo.boundingSphere.radius *= 1.4;
+}
+
 export class GlbAnimal {
   readonly group = new THREE.Group();
   readonly cfg: Cfg;
@@ -182,7 +190,10 @@ export class GlbAnimal {
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = false;
-      mesh.frustumCulled = false;
+      // pohyb ve vertex shaderu posouvá vrcholy – zvětšit obalovou kouli, ať se zvíře
+      // neořízne, a ořezávání mimo záběr nechat zapnuté (výkon)
+      mesh.frustumCulled = !(mesh as THREE.SkinnedMesh).isSkinnedMesh;
+      grow(mesh.geometry);
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       const cloned = mats.map((mm) => mm.clone());
       mesh.material = Array.isArray(mesh.material) ? cloned : cloned[0];

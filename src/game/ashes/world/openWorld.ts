@@ -145,6 +145,18 @@ export class OpenWorld {
   private enemies: Enemy[] = [];
   private others = new Map<string, Other>();
   private battleFigures: HeroFigure[] = [];
+  /** Postavy daleko od hráče: nekreslí se, neanimují a nevrhají stín (výkon). */
+  private culled = new Set<HeroFigure>();
+  /** Velké stavby z modelů – za hranicí dohledu se skryjí. */
+  private farObjects: THREE.Object3D[] = [];
+  private shadowOff = new Set<HeroFigure>();
+  private cullTimer = 0;
+  /** Průměrná doba snímku a automatické snížení rozlišení, když hra nestíhá. */
+  private frameAvg = 1 / 60;
+  private autoScale = 1;
+  private userScale = 1;
+  private perfTimer = 0;
+  private frameNo = 0;
   private battleCenter = new THREE.Vector3();
   private battleSpeed = 1;
   private battleAbort = false;
@@ -167,7 +179,9 @@ export class OpenWorld {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
     this.renderer.shadowMap.enabled = quality.shadows;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // PCF (bez "soft") je výrazně levnější; stínová mapa se obnovuje ručně (viz loop)
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.autoUpdate = false;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -504,7 +518,7 @@ export class OpenWorld {
           ped.position.set(b.x, y + 0.8 + b.h + 0.9, b.z);
           ped.castShadow = true;
           this.scene.add(ped);
-        });
+        }, (h) => this.farObjects.push(h));
         this.colliders.push({ x0: b.x - b.w / 2 - 1, x1: b.x + b.w / 2 + 1, z0: b.z - b.d / 2 - 1, z1: b.z + b.d / 2 + 1 });
         continue;
       }
@@ -523,7 +537,7 @@ export class OpenWorld {
           rm.position.set(hb.x, y - 0.2 + hb.h + 0.8, hb.z);
           rm.castShadow = true;
           this.scene.add(rm);
-        });
+        }, (h) => this.farObjects.push(h));
         this.colliders.push({ x0: b.x - b.w / 2 - 0.4, x1: b.x + b.w / 2 + 0.4, z0: b.z - b.d / 2 - 0.4, z1: b.z + b.d / 2 + 0.4 });
         continue;
       }
@@ -566,7 +580,7 @@ export class OpenWorld {
 
     // tržiště: stánky po stranách cesty od brány k agoře
     for (const [sx, sz] of MARKET_STALLS) {
-      placeBuilding(this.scene, "stall", { x: sx, y: heightAt(sx, sz), z: sz, w: 3.2, d: 3.2, rotY: faceToward(sx, sz, 74, 15) }, () => undefined);
+      placeBuilding(this.scene, "stall", { x: sx, y: heightAt(sx, sz), z: sz, w: 3.2, d: 3.2, rotY: faceToward(sx, sz, 74, 15) }, () => undefined, (h) => this.farObjects.push(h));
       this.colliders.push({ x0: sx - 1.5, x1: sx + 1.5, z0: sz - 1.5, z1: sz + 1.5 });
     }
 
@@ -793,18 +807,34 @@ export class OpenWorld {
       }
       build(mats);
     };
+    // stromy a kameny po dlaždicích 3 × 3: dlaždice mimo záběr (a mimo stínovou kameru)
+    // se vůbec nekreslí – dřív se kreslily všechny stromy celé mapy v každém snímku
+    const CELL = (WORLD_HALF * 2) / 3;
     const inst = (geo: THREE.BufferGeometry, mat: THREE.Material, mats: THREE.Matrix4[]) => {
-      const im = new THREE.InstancedMesh(geo, mat, mats.length);
-      const tint = new THREE.Color();
+      const cells = new Map<number, { m: THREE.Matrix4; i: number }[]>();
+      const v = new THREE.Vector3();
       mats.forEach((m, i) => {
-        im.setMatrixAt(i, m);
-        // každý strom/kámen trochu jiný odstín
-        const k = 0.82 + ((i * 2654435761) % 1000) / 1000 * 0.3;
-        im.setColorAt(i, tint.setRGB(k, k * (0.97 + ((i * 7) % 5) * 0.012), k * 0.95));
+        v.setFromMatrixPosition(m);
+        const cx = Math.min(2, Math.max(0, Math.floor((v.x + WORLD_HALF) / CELL)));
+        const cz = Math.min(2, Math.max(0, Math.floor((v.z + WORLD_HALF) / CELL)));
+        const key = cx * 3 + cz;
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key)!.push({ m, i });
       });
-      im.castShadow = true;
-      im.receiveShadow = true;
-      this.scene.add(im);
+      const tint = new THREE.Color();
+      for (const list of cells.values()) {
+        const im = new THREE.InstancedMesh(geo, mat, list.length);
+        list.forEach(({ m, i }, j) => {
+          im.setMatrixAt(j, m);
+          // každý strom/kámen trochu jiný odstín
+          const k = 0.82 + ((i * 2654435761) % 1000) / 1000 * 0.3;
+          im.setColorAt(j, tint.setRGB(k, k * (0.97 + ((i * 7) % 5) * 0.012), k * 0.95));
+        });
+        im.computeBoundingSphere();
+        im.castShadow = true;
+        im.receiveShadow = true;
+        this.scene.add(im);
+      }
     };
     // organický tvar koruny: vrcholy posunuté šumem + tmavší spodek (vertex colors)
     const organic = (geo: THREE.BufferGeometry, amount: number, seed: number, dark: number) => {
@@ -855,7 +885,8 @@ export class OpenWorld {
         [0.1, 3.2, -0.6, 0.85],
         [-0.3, 2.3, 0.8, 0.8],
       ].map(([x, y, z, r], i) => {
-        const b = new THREE.IcosahedronGeometry(r, 1);
+        // hlavní koule jemnější, menší hrubé (koruna má 160 místo 400 trojúhelníků)
+        const b = new THREE.IcosahedronGeometry(r, i === 0 ? 1 : 0);
         b.scale(1.15, 0.75, 1.15);
         b.translate(x, y, z);
         return organic(b, 0.35, i * 3.1, 0.6);
@@ -1512,9 +1543,14 @@ export class OpenWorld {
       o.fig.group.visible = this.mode !== "battle";
     }
     this.updateCamera(dt);
+    this.cullTimer -= dt;
+    if (this.cullTimer <= 0) {
+      this.cullTimer = 0.25;
+      this.cullFigures();
+    }
     this.wildlife?.update(dt, t, this.pos, this.camera);
     for (const f of this.fires) f.update(dt, t);
-    for (const fig of this.figures) fig.update(dt, t);
+    for (const fig of this.figures) if (!this.culled.has(fig)) fig.update(dt, t);
     this.waterNormal.offset.set(t * 0.004, t * 0.006);
     this.clickMarker.rotation.z = t;
 
@@ -1540,9 +1576,85 @@ export class OpenWorld {
         safe: inSafeZone(this.pos.x, this.pos.y),
       });
     }
+    // stíny stačí přepočítat každý druhý snímek
+    this.frameNo += 1;
+    if (this.q.shadows) this.renderer.shadowMap.needsUpdate = this.frameNo % 2 === 0 || this.mode === "battle";
     if (this.composer && this.mode !== "create") this.composer.render();
     else this.renderer.render(this.scene, this.camera);
+    this.adaptResolution(dt);
   };
+
+  /** Skryje vzdálené postavy a vypne stíny u postav dál než pár desítek metrů. */
+  private cullFigures() {
+    const farObj = this.q.viewDistance * 0.8;
+    for (const o of this.farObjects) o.visible = Math.hypot(o.position.x - this.pos.x, o.position.z - this.pos.y) < farObj;
+    const far = this.camMode === "third" ? 62 : 55;
+    for (const fig of this.figures) {
+      const keep = fig === this.player || this.mode === "battle" || this.battleFigures.includes(fig);
+      const p = fig.group.position;
+      const d = keep ? 0 : Math.hypot(p.x - this.pos.x, p.z - this.pos.y);
+      const hide = d > far;
+      if (hide !== this.culled.has(fig)) {
+        if (hide) this.culled.add(fig);
+        else this.culled.delete(fig);
+      }
+      for (const c of fig.group.children) c.visible = !hide;
+      const shadow = d < 26;
+      if (shadow === this.shadowOff.has(fig)) {
+        if (shadow) this.shadowOff.delete(fig);
+        else this.shadowOff.add(fig);
+        fig.group.traverse((o) => {
+          if ((o as THREE.Mesh).isMesh) o.castShadow = shadow;
+        });
+      }
+    }
+  }
+
+  /**
+   * Automatické rozlišení: když průměrný snímek trvá déle než ~22 ms (pod 45 FPS),
+   * sníží se vykreslovací rozlišení; když je rezerva, vrátí se zpět (max. nastavení hráče).
+   */
+  private adaptResolution(dt: number) {
+    this.frameAvg += (dt - this.frameAvg) * 0.05;
+    this.perfTimer += dt;
+    if (this.perfTimer < 2) return;
+    this.perfTimer = 0;
+    let next = this.autoScale;
+    if (this.frameAvg > 1 / 45 && this.autoScale > 0.55) next = Math.max(0.55, this.autoScale - 0.1);
+    else if (this.frameAvg < 1 / 57 && this.autoScale < 1) next = Math.min(1, this.autoScale + 0.05);
+    if (next !== this.autoScale) {
+      this.autoScale = next;
+      this.applyPixelRatio();
+    }
+  }
+
+  private applyPixelRatio() {
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio) * this.userScale * this.autoScale);
+    this.resize();
+  }
+
+  /** Grafická karta podle WebGL; software = vykreslování bez grafické karty (hardwarová akcelerace vypnutá). */
+  gpuInfo() {
+    let name = "";
+    try {
+      const gl = this.renderer.getContext();
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      name = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || "");
+    } catch {
+      /* neznámé */
+    }
+    return { name, software: /swiftshader|llvmpipe|softpipe|software|basic render|microsoft basic/i.test(name) };
+  }
+
+  /** true, když hra ani při sníženém rozlišení nestíhá (pod ~30 FPS). */
+  get struggling() {
+    return this.autoScale <= 0.56 && this.frameAvg > 1 / 30;
+  }
+
+  /** Průměrné FPS (pro nastavení / ladění). */
+  get fps() {
+    return Math.round(1 / Math.max(1e-3, this.frameAvg));
+  }
 
   /** Přepne pohled kamery (shora / třetí osoba). Klávesa V. */
   setCameraMode(mode: CameraMode) {
@@ -1557,9 +1669,8 @@ export class OpenWorld {
 
   /** Rozlišení vykreslování: 0.5–1 = podíl nativního rozlišení okna (výkon vs. ostrost). */
   setRenderScale(scale: number) {
-    const s = Math.max(0.4, Math.min(1, scale));
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio) * s);
-    this.resize();
+    this.userScale = Math.max(0.4, Math.min(1, scale));
+    this.applyPixelRatio();
   }
 
   /** Pozice pro minimapu. */
