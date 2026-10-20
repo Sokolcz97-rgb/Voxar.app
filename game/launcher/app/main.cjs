@@ -42,12 +42,12 @@ process.on("uncaughtException", (error) => {
   } catch {}
 });
 
-// Výkon hry: grafická karta i na kartách, které má Chromium na černé listině,
-// rasterizace na GPU a žádné omezování snímků na pozadí.
-app.commandLine.appendSwitch("ignore-gpu-blocklist");
-app.commandLine.appendSwitch("enable-gpu-rasterization");
-app.commandLine.appendSwitch("enable-zero-copy");
-app.commandLine.appendSwitch("force_high_performance_gpu");
+// Pozor: přepínače jako ignore-gpu-blocklist / enable-zero-copy na některých ovladačích
+// shodí grafický proces a okno launcheru se pak vůbec neotevře – proto výchozí nastavení.
+
+// Pády podprocesů zapsat do logu (pro diagnostiku).
+app.on("child-process-gone", (_event, details) => log(`Podproces skončil: ${details.type} ${details.reason} (${details.exitCode})`));
+app.on("render-process-gone", (_event, _contents, details) => log(`Okno spadlo: ${details.reason} (${details.exitCode})`));
 
 const REFERENCE_WIDTH = 1920;
 const REFERENCE_HEIGHT = 1080;
@@ -159,10 +159,14 @@ function createMainWindow() {
 
   mainWindow.loadFile(getRendererPath());
 
-  mainWindow.once("ready-to-show", () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
+  const reveal = () => {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isVisible()) return;
     mainWindow.show();
-  });
+  };
+  mainWindow.once("ready-to-show", reveal);
+  // pojistka: okno ukázat i tehdy, když ready-to-show nepřijde (problém s grafikou)
+  mainWindow.webContents.once("did-finish-load", reveal);
+  setTimeout(reveal, 4000);
 
   mainWindow.on("maximize", () => {
     mainWindow?.webContents.send("launcher:window-state", { maximized: true });
@@ -305,6 +309,7 @@ function registerIpc() {
 // Jen jedna instance launcheru – druhé spuštění (zástupce, GameSetup
 // "Spustit") jen vyvolá existující okno.
 if (!app.requestSingleInstanceLock()) {
+  log("Launcher už běží – jen vyvolám jeho okno.");
   app.quit();
 } else {
   app.on("second-instance", () => {
