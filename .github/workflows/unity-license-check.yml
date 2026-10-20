@@ -1,0 +1,36 @@
+name: Unity license check
+
+on:
+  push:
+    branches:
+      - 'ci/unity-check'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Unity secrets (values are never printed)
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          ok=1
+          for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
+            if [ -n "${!name}" ]; then echo "$name: OK"; else echo "$name: CHYBÍ"; ok=0; fi
+          done
+          if [ -n "$UNITY_EMAIL" ] && ! echo "$UNITY_EMAIL" | grep -q "@"; then echo "UNITY_EMAIL: nevypadá jako e-mail"; ok=0; fi
+          if [ -n "$UNITY_LICENSE" ]; then
+            if echo "$UNITY_LICENSE" | grep -q "<root" && echo "$UNITY_LICENSE" | grep -q "<License"; then
+              echo "UNITY_LICENSE: platný formát .ulf"
+              echo "$UNITY_LICENSE" | grep -o '<SerialMasked Value="[^"]*"' | sed 's/<SerialMasked Value=/  maskované číslo licence: /' || true
+              echo "$UNITY_LICENSE" | grep -o '<StopDate Value="[^"]*"' | sed 's/<StopDate Value=/  platnost do: /' || true
+              echo "$UNITY_LICENSE" | grep -o '<UpdateDate Value="[^"]*"' | sed 's/<UpdateDate Value=/  aktualizováno: /' || true
+            else
+              echo "UNITY_LICENSE: obsah nevypadá jako soubor Unity_lic.ulf"; ok=0
+            fi
+          fi
+          [ "$ok" = 1 ] && echo "VÝSLEDEK: vše připraveno" || { echo "VÝSLEDEK: něco chybí"; exit 1; }
