@@ -68,6 +68,12 @@ cesta, dlažba, omítka, kamenné kvádry, střešní tašky, dřevo a srst zví
 - Postavy: tvarované hlavy (oči, obočí, nos, ústa, uši, vlasy, vousy), korintská přilba s hřebenem,
   svalový kyrys, pteryges, kolena, sandály, vypouklý štít aspis.
 
+Styl postav a zvířat podle šablon (20. 10. 2026): stylizované „chibi“ proporce – větší hlava,
+velké lesklé oči, obočí, růžové tváře a úsměv, kratší nohy; výzbroj zůstává řecká (attická přilba
+s hřebenem, aspis, kopí). Konstanty `HEAD_SCALE`, `LEG_SCALE` ve `three/figure.ts`.
+Zvířata (`world/animals.ts`) jsou skládaná z kulatých tvarů se srstí: ovce, koza, kráva, prase, pes,
+slepice, jelen, laň, kanec, vlk, medvěd, veverka, kůň a ptáci (racek, sýkorka, červenka, vrána).
+
 Textury lze kdykoli nahradit obrázky: stačí místo funkce vracet `TextureLoader().load(...)`.
 
 ## 4. Kde se kreslí co

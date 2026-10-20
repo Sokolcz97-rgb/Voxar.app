@@ -24,7 +24,11 @@ export type FigureOptions = {
 
 type Anim = { t: number; dur: number; fn: (k: number) => void; done?: () => void };
 
-const SKIN_DEFAULT = "#c99470";
+const SKIN_DEFAULT = "#e0a882";
+/** Stylizované proporce (podle šablony postavy): větší hlava, kratší nohy. */
+const HEAD_SCALE = 1.55;
+const LEG_SCALE = 0.84;
+const TORSO_Y = 0.9 - 0.82 * (1 - LEG_SCALE);
 
 function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) {
   const canvas = document.createElement("canvas");
@@ -188,7 +192,8 @@ export class Figure {
     // ---------------- nohy: kyčel (skupina) → stehno, koleno (skupina) → lýtko, sandál
     for (const side of [-1, 1]) {
       const hip = new THREE.Group();
-      hip.position.set(0.1 * side, 0.82, 0);
+      hip.position.set(0.1 * side, 0.82 * LEG_SCALE, 0);
+      hip.scale.y = LEG_SCALE;
       this.root.add(hip);
       (side < 0 ? this.legsR : this.legsL).push(hip);
       const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.082, 0.26, 6, 12), skin);
@@ -225,7 +230,7 @@ export class Figure {
     }
 
     // ---------------- trup
-    this.torso.position.y = 0.9;
+    this.torso.position.y = TORSO_Y;
     this.root.add(this.torso);
     if (cls === "vestec") {
       const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.37, 0.98, 22, 4, true), cloth);
@@ -288,39 +293,53 @@ export class Figure {
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.062, 0.12, 12), skin);
     neck.position.y = 0.63;
     this.torso.add(neck);
-    this.head.position.y = 0.77;
+    this.head.position.y = 0.77 + (HEAD_SCALE - 1) * 0.1;
+    this.head.scale.setScalar(HEAD_SCALE);
     this.torso.add(this.head);
-    const face = new THREE.Mesh(new THREE.SphereGeometry(0.105, 24, 18), skin);
-    face.scale.set(0.9, 1.1, 1);
+    // stylizovaná (chibi) hlava: velká, kulatá, velké oči a růžové tváře
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.105, 28, 20), skin);
+    face.scale.set(1, 1.02, 0.96);
     this.head.add(face);
-    const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 10), skin);
-    jaw.scale.set(1, 0.7, 1);
-    jaw.position.set(0, -0.06, 0.02);
-    this.head.add(jaw);
-    const noseM = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.05, 6), skin);
-    noseM.rotation.x = Math.PI / 2 + 0.5;
-    noseM.position.set(0, -0.005, 0.104);
+    const noseM = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), std(new THREE.Color(skinTone).offsetHSL(0, 0.05, -0.04).getStyle(), 0, 0.6));
+    noseM.scale.set(1.1, 0.9, 0.9);
+    noseM.position.set(0, -0.012, 0.102);
     this.head.add(noseM);
-    const lips = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.007, 0.01), std("#7a3a2a", 0, 0.6));
-    lips.position.set(0, -0.045, 0.1);
-    this.head.add(lips);
-    const white = std("#e8e0d4", 0, 0.4);
-    const iris = std(enemy ? "#2a1a10" : "#3a2a18", 0, 0.3);
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.0035, 6, 16, Math.PI * 0.8), std("#7a3a2a", 0, 0.6));
+    smile.rotation.z = Math.PI + Math.PI * 0.1;
+    smile.position.set(0, -0.036, 0.098);
+    this.head.add(smile);
+    const blush = std("#e88a7a", 0, 0.8, { transparent: true, opacity: 0.55 });
+    const white = std("#f4efe8", 0, 0.25);
+    const irisMat = std(enemy ? "#3a2412" : "#6a4022", 0, 0.25);
+    const pupilMat = std("#0c0806", 0, 0.2);
+    const glint = new THREE.MeshBasicMaterial({ color: "#ffffff" });
     for (const side of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), white);
-      eye.position.set(0.037 * side, 0.018, 0.088);
-      eye.scale.set(1, 0.7, 0.6);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.026, 16, 12), white);
+      eye.scale.set(0.85, 1, 0.45);
+      eye.position.set(0.04 * side, 0.012, 0.088);
       this.head.add(eye);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), iris);
-      pupil.position.set(0.037 * side, 0.018, 0.097);
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.017, 14, 10), irisMat);
+      iris.scale.set(1, 1.1, 0.4);
+      iris.position.set(0.04 * side, 0.01, 0.097);
+      this.head.add(iris);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 8), pupilMat);
+      pupil.scale.set(1, 1.1, 0.4);
+      pupil.position.set(0.04 * side, 0.01, 0.1035);
       this.head.add(pupil);
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.009, 0.012), hairMat);
-      brow.position.set(0.038 * side, 0.042, 0.096);
-      brow.rotation.z = -0.15 * side;
+      const shine = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 6, 4), glint);
+      shine.position.set(0.04 * side + 0.006, 0.019, 0.106);
+      this.head.add(shine);
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.006, 0.026, 3, 6), hairMat);
+      brow.rotation.z = Math.PI / 2 - 0.12 * side;
+      brow.position.set(0.041 * side, 0.05, 0.094);
       this.head.add(brow);
-      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), skin);
+      const cheek = new THREE.Mesh(new THREE.CircleGeometry(0.02, 16), blush);
+      cheek.position.set(0.066 * side, -0.022, 0.083);
+      cheek.rotation.y = 0.65 * side;
+      this.head.add(cheek);
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), skin);
       ear.scale.set(0.45, 1, 0.75);
-      ear.position.set(0.096 * side, 0.0, -0.005);
+      ear.position.set(0.102 * side, 0.0, -0.005);
       this.head.add(ear);
     }
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.112, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
@@ -328,7 +347,7 @@ export class Figure {
     hair.rotation.x = -0.35;
     hair.scale.set(0.97, 1.05, 1.05);
     this.head.add(hair);
-    if (cls !== "vestec" || hero) {
+    if (hero || this.opts.enemy || this.opts.boss) {
       // plnovous kolem brady (ústa zůstanou vidět)
       const beard = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45), hairMat);
       beard.position.set(0, -0.045, 0.045);
@@ -337,19 +356,25 @@ export class Figure {
     }
 
     if (cls === "hoplit") {
-      // Korintská přilba: skořepina s lícnicemi a nánosníkem, otvory pro oči
+      // Attická přilba: otevřený obličej, lícnice po stranách, hřeben z žíní
       const helmProfile = [
         new THREE.Vector2(0.0, 0.17), new THREE.Vector2(0.06, 0.165), new THREE.Vector2(0.11, 0.13), new THREE.Vector2(0.13, 0.06),
         new THREE.Vector2(0.128, -0.02), new THREE.Vector2(0.118, -0.1), new THREE.Vector2(0.105, -0.15), new THREE.Vector2(0.1, -0.16),
       ];
-      const helmGeo = new THREE.LatheGeometry(helmProfile, 36, Math.PI * 0.11, Math.PI * 1.78);
+      const helmGeo = new THREE.LatheGeometry(helmProfile, 40, Math.PI * 0.3, Math.PI * 1.4);
       const helm = new THREE.Mesh(helmGeo, bronze);
-      helm.scale.set(0.98, 1.02, 1.08);
-      helm.position.y = 0.0;
+      helm.scale.set(1.0, 1.0, 1.04);
       this.head.add(helm);
-      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.018), bronze);
-      nose.position.set(0, 0.0, 0.124);
-      this.head.add(nose);
+      // obruba přilby a nýty lícnic
+      const crown = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 8, 40), bronze);
+      crown.rotation.x = Math.PI / 2;
+      crown.position.y = 0.07;
+      this.head.add(crown);
+      for (const side of [-1, 1]) {
+        const rivet = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), bronze);
+        rivet.position.set(0.128 * side, 0.0, 0.0);
+        this.head.add(rivet);
+      }
       // hřeben z koňských žíní: držák + vějíř z tenkých vláken
       const crestTex = canvasTexture(64, 128, (ctx) => {
         ctx.fillStyle = crestColor;
@@ -720,7 +745,7 @@ export class Figure {
       this.root.position.y = Math.abs(Math.cos(this.walkPhase)) * 0.06 * k;
     }
     if (!this.dead) {
-      this.torso.position.y = 0.9 + Math.sin(t * 1.6) * 0.008;
+      this.torso.position.y = TORSO_Y + Math.sin(t * 1.6) * 0.008;
       this.head.rotation.y = Math.sin(t * 0.4) * 0.12;
       this.armL.rotation.z = 0.12 + Math.sin(t * 1.6) * 0.02;
     }
