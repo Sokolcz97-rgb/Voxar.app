@@ -50,6 +50,8 @@ async function packageInstaller() {
     out: DIST,
     overwrite: true,
     asar: true,
+    // ikona hry i pro instalátor
+    icon: path.join(ROOT, "..", "launcher", "app", "build", "icon.ico"),
     ignore: [
       // resources/ se přibaluje jen přes extraResource; visual-output/ jsou
       // CI screenshoty (visual:shots běží před buildem) a do GameSetupu nepatří.
