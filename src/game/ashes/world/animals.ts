@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { furTex } from "../three/textures";
 import { assets, attachAnimalModel, type ModelSlot } from "./assets";
-import { CAMP, CITY, COVE, WORLD_HALF, heightAt, inCity, roadDistance } from "./map";
+import { SpriteAnimal, hasSprite } from "./spriteAnimals";
+import { GlbAnimal, hasGlb, type GlbKind } from "./glbAnimals";
+import { CAMP, CITY, COVE, WORLD_HALF, coastX, heightAt, inCity, roadDistance } from "./map";
 
 /**
  * Zvířata – oživení krajiny (jen kosmetika, s nimi se nebojuje).
@@ -9,7 +11,8 @@ import { CAMP, CITY, COVE, WORLD_HALF, heightAt, inCity, roadDistance } from "./
  * uši a rohy. Plachá zvířata před hráčem utíkají.
  */
 
-type Kind = "sheep" | "goat" | "stag" | "doe" | "dog" | "chicken" | "horse" | "boar" | "cow" | "pig" | "wolf" | "bear" | "squirrel";
+type Kind = "sheep" | "goat" | "stag" | "doe" | "dog" | "chicken" | "horse" | "boar" | "cow" | "pig" | "wolf" | "bear" | "squirrel"
+  | "fox" | "badger" | "wildcat" | "duck" | "turtle" | "crab" | "cat" | "frog" | "salamander" | "snake" | "seal";
 
 type Walker = {
   kind: Kind;
@@ -27,9 +30,17 @@ type Walker = {
   heading: number;
   flee: number;
   model: ReturnType<typeof attachAnimalModel> | null;
+  sprite: SpriteAnimal | null;
+  glb: GlbAnimal | null;
 };
 
-type Bird = { g: THREE.Group; wings: THREE.Object3D[]; cx: number; cz: number; r: number; h: number; a: number; speed: number; phase: number; model: ReturnType<typeof attachAnimalModel> | null };
+type Bird = { g: THREE.Group; wings: THREE.Object3D[]; cx: number; cz: number; r: number; h: number; a: number; speed: number; phase: number; model: ReturnType<typeof attachAnimalModel> | null; sprite: SpriteAnimal | null; glb?: GlbAnimal | null };
+
+type Fish = { anim: GlbAnimal; g: THREE.Group; cx: number; cz: number; r: number; a: number; speed: number; jumpAt: number; jump: number; height: number; dur: number; depth: number };
+/** Hmyz poletující kolem středu (motýli, včely, vážky). */
+type Flyer = { anim: GlbAnimal; g: THREE.Group; cx: number; cz: number; r: number; h: number; t: number; speed: number };
+/** Nehybná zvířata (sup na skále, tuleň na pláži). */
+type Rest = { anim: GlbAnimal; g: THREE.Group };
 
 type Ears = "floppy" | "pointy" | "round" | "cow" | "pig" | "none";
 type Horns = "goat" | "cow" | "antlers" | "none";
@@ -59,7 +70,7 @@ type Spec = {
   mane?: string;
 };
 
-const SPECS: Record<Exclude<Kind, "chicken" | "squirrel">, Spec> = {
+const SPECS: Record<"sheep" | "goat" | "stag" | "doe" | "dog" | "horse" | "boar" | "cow" | "pig" | "wolf" | "bear", Spec> = {
   sheep: { r: 0.3, len: 0.42, legH: 0.24, legR: 0.045, head: 0.17, neck: 0.12, color: "#f2ede2", muzzle: "#3a302a", nose: "#1c1612", hoof: "#2a221c", ears: "round", horns: "none", tail: "stub", speed: 2.6, shy: 6 },
   goat: { r: 0.24, len: 0.42, legH: 0.32, legR: 0.04, head: 0.15, neck: 0.22, color: "#8a6a4c", belly: "#e8dccb", muzzle: "#e8d8c8", nose: "#e89a8a", hoof: "#2a221c", ears: "pointy", horns: "goat", tail: "tuft", speed: 3.2, shy: 7, beard: true },
   stag: { r: 0.28, len: 0.55, legH: 0.55, legR: 0.045, head: 0.15, neck: 0.42, color: "#9a5e30", belly: "#e8d0aa", muzzle: "#3a2a20", nose: "#1c1612", hoof: "#2a1e16", ears: "pointy", horns: "antlers", tail: "stub", speed: 6.5, shy: 12 },
@@ -73,8 +84,8 @@ const SPECS: Record<Exclude<Kind, "chicken" | "squirrel">, Spec> = {
   bear: { r: 0.48, len: 0.5, legH: 0.26, legR: 0.11, head: 0.27, neck: 0.12, color: "#8a5028", muzzle: "#d8a868", nose: "#1c1410", hoof: "#3a2418", ears: "round", horns: "none", tail: "stub", speed: 4, shy: 14 },
 };
 
-const SHY = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.shy])), chicken: 3.5, squirrel: 5 } as Record<Kind, number>;
-const SPEED = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.speed])), chicken: 2.4, squirrel: 5.5 } as Record<Kind, number>;
+const SHY = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.shy])), chicken: 3.5, squirrel: 5, fox: 9, badger: 6, wildcat: 8, duck: 4, turtle: 0, crab: 3, cat: 3, frog: 2.5, salamander: 2, snake: 0, seal: 0 } as Record<Kind, number>;
+const SPEED = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.speed])), chicken: 2.4, squirrel: 5.5, fox: 6, badger: 3, wildcat: 5.5, duck: 1.8, turtle: 0.5, crab: 1.5, cat: 3.5, frog: 2.2, salamander: 0.8, snake: 1.2, seal: 0 } as Record<Kind, number>;
 
 function rng(seed: number) {
   let s = seed >>> 0;
@@ -89,6 +100,9 @@ type Built = { g: THREE.Group; legs: THREE.Object3D[]; head: THREE.Object3D; tai
 export class Wildlife {
   private walkers: Walker[] = [];
   private birds: Bird[] = [];
+  private fish: Fish[] = [];
+  private flyers: Flyer[] = [];
+  private rests: Rest[] = [];
   private mats = new Map<string, THREE.Material>();
   private geos = new Map<string, THREE.BufferGeometry>();
   private spotTex = new Map<string, THREE.Texture>();
@@ -120,6 +134,20 @@ export class Wildlife {
       ["horse", CAMP.x - 8, CAMP.z + 10, 6, n(4)],
       ["dog", CAMP.x + 6, CAMP.z + 4, 6, 1],
       ["goat", COVE.x + 18, COVE.z + 22, 6, n(3)],
+      ["fox", -22, -14, 12, n(2)],
+      ["fox", 30, -36, 10, 1],
+      ["badger", -46, 0, 8, n(2)],
+      ["wildcat", 8, -44, 10, n(2)],
+      ["duck", -60, 30, 6, n(4)],
+      ["duck", 74, 18, 4, n(3)],
+      ["cat", 80, 28, 8, n(2)],
+      ["cat", 64, 4, 6, 1],
+      ["turtle", -64, 56, 8, n(3)],
+      ["crab", -66, 70, 10, n(5)],
+      ["crab", COVE.x + 8, COVE.z + 18, 6, n(3)],
+      ["frog", -44, 20, 5, n(3)],
+      ["salamander", -28, -2, 6, n(2)],
+      ["snake", -4, -50, 10, n(2)],
     ];
     for (const [kind, cx, cz, rad, count] of herds) {
       for (let i = 0; i < count; i += 1) {
@@ -132,6 +160,51 @@ export class Wildlife {
     for (let i = 0; i < n(7); i += 1) this.birds.push(this.makeBird("gull", -70 + r() * 30, -30 + r() * 110, 10 + r() * 14, 14 + r() * 8, r()));
     for (let i = 0; i < n(4); i += 1) this.birds.push(this.makeBird("gull", CITY.x1 + 6, CITY.z0 + r() * 50, 8 + r() * 8, 16 + r() * 6, r()));
     for (let i = 0; i < n(6); i += 1) this.birds.push(this.makeBird(i % 2 ? "robin" : "tit", -40 + r() * 70, -20 + r() * 60, 3 + r() * 4, 4 + r() * 3, r()));
+    // ryby u pobřeží a delfíni dál na moři: plavou pod hladinou a občas vyskočí
+    const sea = (kind: GlbKind, count: number, off: number, spread: number, height: number, dur: number, depth: number) => {
+      for (let i = 0; i < count; i += 1) {
+        const z = -50 + r() * 140;
+        const anim = new GlbAnimal(kind, 0.85 + r() * 0.3);
+        const g = new THREE.Group();
+        g.rotation.order = "YXZ";
+        g.add(anim.group);
+        this.scene.add(g);
+        this.fish.push({ anim, g, cx: coastX(z) - off - r() * spread, cz: z, r: 2 + r() * (kind === "dolphin" ? 10 : 3), a: r() * 6.28, speed: (0.5 + r() * 0.4) * (r() > 0.5 ? 1 : -1), jumpAt: 2 + r() * 8, jump: -1, height, dur, depth });
+      }
+    };
+    sea("fish", n(10), 6, 6, 1.1, 0.9, 0.35);
+    sea("dolphin", n(4), 22, 20, 2.6, 1.4, 1.2);
+    // hmyz: motýli na loukách, včely u Kalidry, vážky u vody
+    const fly = (kind: GlbKind, count: number, cx: number, cz: number, spread: number, h: number) => {
+      for (let i = 0; i < count; i += 1) {
+        const anim = new GlbAnimal(kind, 0.8 + r() * 0.5);
+        const g = new THREE.Group();
+        g.add(anim.group);
+        this.scene.add(g);
+        this.flyers.push({ anim, g, cx: cx + (r() - 0.5) * spread, cz: cz + (r() - 0.5) * spread, r: 1 + r() * 2.5, h: h + r() * 0.8, t: r() * 100, speed: 0.6 + r() * 0.6 });
+      }
+    };
+    fly("butterfly", n(8), -36, 40, 30, 0.9);
+    fly("butterfly", n(6), 12, 30, 24, 0.9);
+    fly("bee", n(6), 70, 30, 14, 0.8);
+    fly("dragonfly", n(5), -62, 34, 20, 0.7);
+    // supi na skalách nad kopci, tuleni na pláži
+    const rest = (kind: GlbKind, x: number, z: number, ry: number, lift = 0) => {
+      const anim = new GlbAnimal(kind);
+      const g = new THREE.Group();
+      g.add(anim.group);
+      g.position.set(x, heightAt(x, z) + lift, z);
+      g.rotation.y = ry;
+      this.scene.add(g);
+      this.rests.push({ anim, g });
+    };
+    rest("vulture", -6, -78, 0.5, 0.2);
+    rest("vulture", 18, -82, -0.8, 0.2);
+    rest("vulture", -26, -66, 2.2, 0.2);
+    for (let i = 0; i < n(3); i += 1) {
+      const z = 70 + r() * 30;
+      rest("seal", coastX(z) + 1.5 + r() * 2, z, r() * 6.28);
+    }
     for (let i = 0; i < n(5); i += 1) this.birds.push(this.makeBird("crow", -20 + r() * 50, -70 + r() * 20, 8 + r() * 10, 18 + r() * 8, r()));
   }
 
@@ -246,7 +319,26 @@ export class Wildlife {
 
   // ---------------------------------------------------------------- stavba zvířat
   private makeWalker(kind: Kind, pos: THREE.Vector2, home: THREE.Vector2, range: number, seed: number): Walker {
-    const built = kind === "chicken" ? this.buildChicken() : kind === "squirrel" ? this.buildSquirrel() : this.buildQuadruped(SPECS[kind]);
+    const slotKind = `animal.${kind}` as ModelSlot;
+    if (!assets.has(slotKind) && hasGlb(kind)) {
+      // 3D model z GLB (public/game/models/animals)
+      const glb = new GlbAnimal(kind, 0.9 + seed * 0.2);
+      const holder = new THREE.Group();
+      holder.add(glb.group);
+      holder.position.set(pos.x, heightAt(pos.x, pos.y), pos.y);
+      this.scene.add(holder);
+      return { kind, g: holder, legs: [], head: new THREE.Group(), tail: null, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0, model: null, sprite: null, glb };
+    }
+    if (!assets.has(slotKind) && hasSprite(kind)) {
+      // zvíře podle šablony (obrázky zepředu / z boku / zezadu)
+      const sprite = new SpriteAnimal(kind, 0.9 + seed * 0.2);
+      const holder = new THREE.Group();
+      holder.add(sprite.group);
+      holder.position.set(pos.x, heightAt(pos.x, pos.y), pos.y);
+      this.scene.add(holder);
+      return { kind, g: holder, legs: [], head: new THREE.Group(), tail: null, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0, model: null, sprite, glb: null };
+    }
+    const built = kind === "chicken" ? this.buildChicken() : kind === "squirrel" ? this.buildSquirrel() : this.buildQuadruped(SPECS[(kind in SPECS ? kind : "dog") as keyof typeof SPECS]);
     // vlastní 3D model z manifestu (public/game/models) nahradí procedurální zvíře
     const slot = `animal.${kind}` as ModelSlot;
     const holder = new THREE.Group();
@@ -256,7 +348,7 @@ export class Wildlife {
     holder.scale.setScalar(s);
     holder.position.set(pos.x, heightAt(pos.x, pos.y), pos.y);
     this.scene.add(holder);
-    return { kind, ...built, g: holder, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0, model };
+    return { kind, ...built, g: holder, pos: pos.clone(), home, target: pos.clone(), range, speed: SPEED[kind], wait: seed * 4, phase: seed * 10, heading: seed * 6.28, flee: 0, model, sprite: null, glb: null };
   }
 
   private buildQuadruped(sp: Spec): Built {
@@ -580,6 +672,24 @@ export class Wildlife {
 
   /** Ptáci: racek, sýkorka, červenka, vrána – kulaté tělíčko, velké oči. */
   private makeBird(kind: "gull" | "tit" | "robin" | "crow", cx: number, cz: number, r: number, h: number, seed: number): Bird {
+    if (kind === "crow" && !assets.has("animal.crow")) {
+      const glb = new GlbAnimal("crow", 0.9 + seed * 0.3);
+      const holder = new THREE.Group();
+      holder.rotation.order = "YXZ";
+      holder.add(glb.group);
+      this.scene.add(holder);
+      const sp = 0.25 + seed * 0.2;
+      return { g: holder, wings: [], cx, cz, r, h, a: seed * Math.PI * 2, speed: sp * (seed > 0.5 ? 1 : -1), phase: seed * 10, model: null, sprite: null, glb };
+    }
+    const spriteKind = kind === "gull" ? "gull" : kind === "crow" ? null : "songbird";
+    if (spriteKind && !assets.has(`animal.${kind}` as ModelSlot)) {
+      const sprite = new SpriteAnimal(spriteKind, kind === "gull" ? 1.2 : 1.4, false);
+      const holder = new THREE.Group();
+      holder.add(sprite.group);
+      this.scene.add(holder);
+      const sp = (kind === "gull" ? 0.25 : 0.9) + seed * 0.2;
+      return { g: holder, wings: [], cx, cz, r, h, a: seed * Math.PI * 2, speed: sp * (seed > 0.5 ? 1 : -1), phase: seed * 10, model: null, sprite };
+    }
     const g = new THREE.Group();
     const small = kind === "tit" || kind === "robin";
     const k = small ? 0.5 : 1;
@@ -621,20 +731,21 @@ export class Wildlife {
     const model = assets.has(slot) ? attachAnimalModel(slot, holder, g) : null;
     this.scene.add(holder);
     const speed = (small ? 0.9 : 0.25) + seed * 0.2;
-    return { g: holder, wings, cx, cz, r, h, a: seed * Math.PI * 2, speed: speed * (seed > 0.5 ? 1 : -1), phase: seed * 10, model };
+    return { g: holder, wings, cx, cz, r, h, a: seed * Math.PI * 2, speed: speed * (seed > 0.5 ? 1 : -1), phase: seed * 10, model, sprite: null };
   }
 
   private okGround(x: number, z: number, kind: Kind) {
     if (Math.abs(x) > WORLD_HALF - 4 || Math.abs(z) > WORLD_HALF - 4) return false;
     if (this.blocked(x, z)) return false;
     const h = heightAt(x, z);
+    if (kind === "crab" || kind === "turtle") return h > 0.35 && h < 1.4;
     if (h < 0.5) return false;
-    if (kind === "chicken" || kind === "dog") return true;
+    if (kind === "chicken" || kind === "dog" || kind === "cat" || kind === "duck") return true;
     if (inCity(x, z)) return false;
     return roadDistance(x, z) > 1.5 || kind === "horse";
   }
 
-  update(dt: number, time: number, player: THREE.Vector2) {
+  update(dt: number, time: number, player: THREE.Vector2, camera?: THREE.Camera) {
     for (const w of this.walkers) {
       const shy = SHY[w.kind];
       const toPlayer = Math.hypot(player.x - w.pos.x, player.y - w.pos.y);
@@ -686,6 +797,14 @@ export class Wildlife {
         w.model.update(dt, speed, w.speed * 0.6);
         continue;
       }
+      if (w.glb) {
+        w.glb.update(dt, speed, w.speed * 0.6);
+        continue;
+      }
+      if (w.sprite) {
+        if (camera) w.sprite.update(dt, camera, w.heading, speed);
+        continue;
+      }
       w.phase += dt * (speed > 0 ? 4 + speed * 2.2 : 0);
       const swing = speed > 0 ? Math.min(0.7, 0.25 + speed * 0.08) : 0;
       w.legs.forEach((leg, i) => {
@@ -698,6 +817,7 @@ export class Wildlife {
       if (w.kind === "chicken" && speed === 0) w.head.rotation.x = Math.max(0, Math.sin(time * 6 + w.home.y)) * 0.8;
       if (w.tail) w.tail.rotation.y = w.kind === "dog" ? Math.sin(time * 12 + w.phase) * 0.5 : Math.sin(time * 2 + w.home.x) * 0.15;
     }
+    this.updateFish(dt, time);
     for (const b of this.birds) {
       b.a += (b.speed * dt) / Math.max(1, b.r * 0.1);
       const x = b.cx + Math.cos(b.a) * b.r, z = b.cz + Math.sin(b.a) * b.r;
@@ -709,13 +829,64 @@ export class Wildlife {
         b.model.update(dt, 1, 0.5, "fly");
         continue;
       }
+      if (b.sprite) {
+        if (camera) b.sprite.update(dt, camera, b.g.rotation.y, 1);
+        continue;
+      }
+      if (b.glb) {
+        // klouzavý let s náklonem do zatáčky
+        b.g.rotation.z = -Math.sign(b.speed) * 0.35 + Math.sin(time * 1.3 + b.phase) * 0.08;
+        continue;
+      }
       const flap = Math.sin(time * 9 + b.phase) * 0.6;
       b.wings[0].rotation.z = flap;
       b.wings[1].rotation.z = -flap;
     }
   }
 
+  private updateFish(dt: number, time: number) {
+    for (const f of this.fish) {
+      f.a += (f.speed * dt) / Math.max(1, f.r * 0.4);
+      const x = f.cx + Math.cos(f.a) * f.r, z = f.cz + Math.sin(f.a) * f.r;
+      const heading = Math.atan2(-Math.sin(f.a) * Math.sign(f.speed), Math.cos(f.a) * Math.sign(f.speed));
+      f.jumpAt -= dt;
+      if (f.jump < 0 && f.jumpAt <= 0) f.jump = 0;
+      let y = -f.depth;
+      let pitch = 0;
+      if (f.jump >= 0) {
+        f.jump += dt / f.dur;
+        const k = Math.min(1, f.jump);
+        y = -f.depth + Math.sin(k * Math.PI) * (f.height + f.depth);
+        // nos nahoru při výskoku, dolů při dopadu
+        pitch = -Math.cos(k * Math.PI) * 0.7;
+        if (f.jump >= 1) {
+          f.jump = -1;
+          f.jumpAt = 4 + Math.random() * 10;
+        }
+      }
+      f.g.position.set(x, y, z);
+      f.g.rotation.set(pitch, heading, 0);
+      f.anim.update(dt, 1);
+    }
+    for (const f of this.flyers) {
+      f.t += dt * f.speed;
+      const x = f.cx + Math.sin(f.t) * f.r + Math.sin(f.t * 2.3) * 0.6;
+      const z = f.cz + Math.cos(f.t * 0.8) * f.r;
+      const dx = Math.cos(f.t) * f.r + Math.cos(f.t * 2.3) * 1.4, dz = -Math.sin(f.t * 0.8) * f.r * 0.8;
+      f.g.position.set(x, heightAt(x, z) + f.h + Math.sin(time * 3 + f.cx) * 0.15, z);
+      f.g.rotation.y = Math.atan2(dx, dz);
+      f.anim.update(dt, 1);
+    }
+  }
+
   dispose() {
+    for (const f of [...this.fish, ...this.flyers, ...this.rests]) {
+      this.scene.remove(f.g);
+      f.anim.dispose();
+    }
+    for (const w of this.walkers) w.glb?.dispose();
+    for (const w of this.walkers) w.sprite?.dispose();
+    for (const b of this.birds) b.sprite?.dispose();
     for (const w of this.walkers) this.scene.remove(w.g);
     for (const b of this.birds) this.scene.remove(b.g);
     this.geos.forEach((g) => g.dispose());

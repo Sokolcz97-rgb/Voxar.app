@@ -1480,7 +1480,7 @@ export class OpenWorld {
       o.fig.group.visible = this.mode !== "battle";
     }
     this.updateCamera(dt);
-    this.wildlife?.update(dt, t, this.pos);
+    this.wildlife?.update(dt, t, this.pos, this.camera);
     for (const f of this.fires) f.update(dt, t);
     for (const fig of this.figures) fig.update(dt, t);
     this.waterNormal.offset.set(t * 0.004, t * 0.006);
