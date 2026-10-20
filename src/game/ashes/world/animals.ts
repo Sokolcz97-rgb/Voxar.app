@@ -12,7 +12,7 @@ import { CAMP, CITY, COVE, WORLD_HALF, coastX, heightAt, inCity, roadDistance } 
  */
 
 type Kind = "sheep" | "goat" | "stag" | "doe" | "dog" | "chicken" | "horse" | "boar" | "cow" | "pig" | "wolf" | "bear" | "squirrel"
-  | "fox" | "badger" | "wildcat" | "duck" | "turtle" | "crab" | "cat" | "frog" | "salamander" | "snake" | "seal";
+  | "fox" | "badger" | "wildcat" | "duck" | "turtle" | "crab" | "cat" | "frog" | "salamander" | "snake" | "seal" | "gull";
 
 type Walker = {
   kind: Kind;
@@ -84,8 +84,8 @@ const SPECS: Record<"sheep" | "goat" | "stag" | "doe" | "dog" | "horse" | "boar"
   bear: { r: 0.48, len: 0.5, legH: 0.26, legR: 0.11, head: 0.27, neck: 0.12, color: "#8a5028", muzzle: "#d8a868", nose: "#1c1410", hoof: "#3a2418", ears: "round", horns: "none", tail: "stub", speed: 4, shy: 14 },
 };
 
-const SHY = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.shy])), chicken: 3.5, squirrel: 5, fox: 9, badger: 6, wildcat: 8, duck: 4, turtle: 0, crab: 3, cat: 3, frog: 2.5, salamander: 2, snake: 0, seal: 0 } as Record<Kind, number>;
-const SPEED = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.speed])), chicken: 2.4, squirrel: 5.5, fox: 6, badger: 3, wildcat: 5.5, duck: 1.8, turtle: 0.5, crab: 1.5, cat: 3.5, frog: 2.2, salamander: 0.8, snake: 1.2, seal: 0 } as Record<Kind, number>;
+const SHY = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.shy])), chicken: 3.5, squirrel: 5, fox: 9, badger: 6, wildcat: 8, duck: 4, turtle: 0, crab: 3, cat: 3, frog: 2.5, salamander: 2, snake: 0, seal: 0, gull: 5 } as Record<Kind, number>;
+const SPEED = { ...Object.fromEntries(Object.entries(SPECS).map(([k, v]) => [k, v.speed])), chicken: 2.4, squirrel: 5.5, fox: 6, badger: 3, wildcat: 5.5, duck: 1.8, turtle: 0.5, crab: 1.5, cat: 3.5, frog: 2.2, salamander: 0.8, snake: 1.2, seal: 0, gull: 1.6 } as Record<Kind, number>;
 
 function rng(seed: number) {
   let s = seed >>> 0;
@@ -144,6 +144,8 @@ export class Wildlife {
       ["cat", 64, 4, 6, 1],
       ["turtle", -64, 56, 8, n(3)],
       ["crab", -66, 70, 10, n(5)],
+      ["gull", -64, 40, 10, n(4)],
+      ["gull", -66, 84, 8, n(3)],
       ["crab", COVE.x + 8, COVE.z + 18, 6, n(3)],
       ["frog", -44, 20, 5, n(3)],
       ["salamander", -28, -2, 6, n(2)],
@@ -738,7 +740,7 @@ export class Wildlife {
     if (Math.abs(x) > WORLD_HALF - 4 || Math.abs(z) > WORLD_HALF - 4) return false;
     if (this.blocked(x, z)) return false;
     const h = heightAt(x, z);
-    if (kind === "crab" || kind === "turtle") return h > 0.35 && h < 1.4;
+    if (kind === "crab" || kind === "turtle" || kind === "gull") return h > 0.35 && h < 1.4;
     if (h < 0.5) return false;
     if (kind === "chicken" || kind === "dog" || kind === "cat" || kind === "duck") return true;
     if (inCity(x, z)) return false;

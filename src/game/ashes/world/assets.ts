@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Figure, type FigureOptions } from "../three/figure";
+import { MeshyFigure } from "../three/meshyFigure";
 
 /**
  * Grafika připravená na vylepšení.
@@ -327,6 +328,9 @@ class GltfFigure implements HeroFigure {
 
 /** Vytvoří postavu: glTF, pokud je v manifestu, jinak procedurální. */
 export function createFigure(opts: FigureOptions): HeroFigure {
+  // hráčské postavy (muž / žena) z 3D modelů; legendy, bossové a nepřátelé zůstávají procedurální
+  const g = opts.appearance?.gender;
+  if ((g === "m" || g === "f") && !opts.eryon && !opts.azkar && !opts.enemy && !opts.boss && !opts.appearance?.hero) return new MeshyFigure(opts, g);
   const slot = slotFor(opts);
   if (assets.has(slot)) return new GltfFigure(opts, slot);
   return new Figure(opts);

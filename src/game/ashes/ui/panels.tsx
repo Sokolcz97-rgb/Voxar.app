@@ -576,18 +576,21 @@ export const SKINS = ["#e0b08c", "#c99470", "#a4714c", "#7a4e33"];
 export const CLOAKS = ["#7a1f16", "#2c3e5a", "#3d4a2a", "#8a6a2a", "#2a2422"];
 export const CRESTS = ["#8a1a12", "#1d1d1d", "#d8cdb8", "#2a4a7a"];
 
-export function CreateCharacter({ busy, onPreview, onCreate }: {
+export function CreateCharacter({ busy, onPreview, onCreate, onBack }: {
   busy: boolean;
+  onBack?: () => void;
   onPreview: (cls: HeroClass, appearance: Appearance, faction: Faction) => void;
   onCreate: (name: string, cls: HeroClass, appearance: Appearance, faction: Faction) => void;
 }) {
   const [faction, setFaction] = useState<Faction>("kalidra");
   const [name, setName] = useState("");
   const [cls, setCls] = useState<HeroClass>("hoplit");
-  const [skin, setSkin] = useState(SKINS[1]);
-  const [cloak, setCloak] = useState(CLOAKS[0]);
-  const [crest, setCrest] = useState(CRESTS[0]);
-  const appearance = useMemo(() => ({ skin, cloak, crest }), [skin, cloak, crest]);
+  // barvy procedurální postavy (3D modely mají vlastní textury)
+  const skin = SKINS[1];
+  const cloak = CLOAKS[0];
+  const crest = CRESTS[0];
+  const [gender, setGender] = useState<"m" | "f">("m");
+  const appearance = useMemo(() => ({ gender, skin, cloak, crest }), [gender, skin, cloak, crest]);
   useEffect(() => onPreview(cls, appearance, faction), [cls, appearance, faction, onPreview]);
   const valid = /^\p{L}[\p{L}\p{N} _-]{2,19}$/u.test(name.trim()) && !["eryon", "azkar"].includes(name.trim().toLowerCase());
   const sides: { id: Faction; title: string; hero: string; desc: string }[] = [
@@ -627,6 +630,16 @@ export function CreateCharacter({ busy, onPreview, onCreate }: {
         <input id="ash-name" className="ash-input mb-1" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder={L("např. Tharion", "e.g. Tharion")} autoComplete="off" />
         <p className="mb-4 text-xs text-[var(--ash-muted)]">{L("3–20 znaků. Jména Eryon a Azkar patří legendám.", "3–20 characters. The names Eryon and Azkar belong to legends.")}</p>
 
+        <div className="ash-kicker mb-2">{L("Postava", "Character")}</div>
+        <div className="ash-classes ash-gender mb-4">
+          {([["m", L("Muž", "Man"), L("Hoplita s bronzovou přilbou a štítem.", "A hoplite with bronze helmet and shield.")], ["f", L("Žena", "Woman"), L("Hrdinka ve splývavém rouchu s vavřínem.", "A heroine in a flowing robe with a laurel.")]] as const).map(([id, label, desc]) => (
+            <button key={id} data-active={gender === id} onClick={() => setGender(id)}>
+              <b>{label}</b>
+              <small>{desc}</small>
+            </button>
+          ))}
+        </div>
+
         <div className="ash-kicker mb-2">{L("Povolání", "Class")}</div>
         <div className="ash-classes mb-4">
           {classes.map((c) => (
@@ -637,19 +650,10 @@ export function CreateCharacter({ busy, onPreview, onCreate }: {
           ))}
         </div>
 
-        <div className="ash-kicker mb-2">{L("Pleť", "Skin")}</div>
-        <div className="ash-swatches mb-4">{SKINS.map((c) => <button key={c} data-active={skin === c} style={{ background: c }} onClick={() => setSkin(c)} aria-label={`Pleť ${c}`} />)}</div>
-        <div className="ash-kicker mb-2">{cls === "vestec" ? L("Roucho", "Robe") : L("Plášť", "Cloak")}</div>
-        <div className="ash-swatches mb-4">{CLOAKS.map((c) => <button key={c} data-active={cloak === c} style={{ background: c }} onClick={() => setCloak(c)} aria-label={`Plášť ${c}`} />)}</div>
-        {cls === "hoplit" && (
-          <>
-            <div className="ash-kicker mb-2">{L("Hřeben přilby", "Helmet crest")}</div>
-            <div className="ash-swatches mb-4">{CRESTS.map((c) => <button key={c} data-active={crest === c} style={{ background: c }} onClick={() => setCrest(c)} aria-label={`Hřeben ${c}`} />)}</div>
-          </>
-        )}
       </div>
-      <footer className="border-t border-[var(--ash-line)] px-5 py-4">
-        <button className={`ash-btn w-full ${faction === "legie" ? "blood" : ""}`} disabled={!valid || busy} onClick={() => onCreate(name.trim(), cls, appearance, faction)}>
+      <footer className="flex gap-2 border-t border-[var(--ash-line)] px-5 py-4">
+        {onBack && <button className="ash-btn ghost" disabled={busy} onClick={onBack}>{L("Zpět", "Back")}</button>}
+        <button className={`ash-btn flex-1 ${faction === "legie" ? "blood" : ""}`} disabled={!valid || busy} onClick={() => onCreate(name.trim(), cls, appearance, faction)}>
           {faction === "legie" ? L("Vstoupit do Legie", "Join the Legion") : L("Probudit se na břehu", "Wake on the shore")}
         </button>
       </footer>

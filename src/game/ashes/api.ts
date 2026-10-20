@@ -19,7 +19,14 @@ function cleanError(message: string) {
   return message.replace(/^.*?ERROR:\s*/i, "").replace(/\s*CONTEXT:.*$/s, "").trim() || "Něco se pokazilo.";
 }
 
+export type CharacterSummary = { id?: string; name: string; class: HeroClass; faction: Faction; level: number; appearance: Appearance; eryon?: boolean; azkar?: boolean };
+export type CharacterList = { max: number; active: CharacterSummary | null; others: CharacterSummary[] };
+
 export const ashesApi = {
+  characters: () => call<CharacterList>("ashes_characters_list"),
+  switchCharacter: (id: string) => call<GameState>("ashes_switch_character", { p_slot: id }),
+  newCharacter: () => call<GameState>("ashes_new_character"),
+  deleteCharacter: (id: string) => call<CharacterList>("ashes_delete_character", { p_slot: id }),
   state: () => call<GameState>("ashes_state"),
   createCharacter: (name: string, cls: HeroClass, appearance: Appearance, faction: Faction) =>
     call<GameState>("ashes_create_character", { p_name: name, p_class: cls, p_appearance: appearance, p_faction: faction }),

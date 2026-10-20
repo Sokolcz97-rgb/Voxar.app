@@ -10,7 +10,7 @@ import * as THREE from "three";
 export type GlbKind =
   | "cow" | "sheep" | "goat" | "horse" | "dog" | "chicken" | "wolf" | "bear" | "fox" | "badger" | "wildcat"
   | "duck" | "turtle" | "crow" | "vulture" | "fish" | "dolphin" | "seal" | "crab" | "butterfly" | "bee"
-  | "dragonfly" | "snake" | "salamander" | "frog" | "cat";
+  | "dragonfly" | "snake" | "salamander" | "frog" | "cat" | "boar" | "squirrel" | "stag" | "doe" | "gull";
 
 type Motion = "quad" | "biped" | "flutter" | "static" | "clip" | "hop";
 
@@ -54,6 +54,11 @@ export const GLB_ANIMALS: Record<GlbKind, Cfg> = {
   salamander: { size: 0.22, axis: "l", rotY: 0, motion: "quad", leg: 0.6 },
   frog: { size: 0.16, axis: "h", rotY: -P / 2, motion: "hop" },
   cat: { size: 0.32, axis: "h", rotY: 0, motion: "quad", leg: 0.5 },
+  boar: { size: 0.85, axis: "h", rotY: 0, motion: "quad", leg: 0.32 },
+  squirrel: { size: 0.32, axis: "h", rotY: 0, motion: "quad", leg: 0.22 },
+  stag: { size: 2.1, axis: "h", rotY: 0, motion: "quad", leg: 0.36 },
+  doe: { size: 1.45, axis: "h", rotY: 0, motion: "quad", leg: 0.4 },
+  gull: { size: 0.5, axis: "h", rotY: 0, motion: "biped", leg: 0.2 },
 };
 
 export const hasGlb = (k: string): k is GlbKind => k in GLB_ANIMALS;

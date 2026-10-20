@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { BookOpen, Camera, Castle, Coins, Flame, LogOut, ScrollText, Settings, Shield, Sparkles, Trophy, User, Volume2, VolumeX } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ashesApi } from "./api";
+import { ashesApi, type CharacterList, type CharacterSummary } from "./api";
 import { music } from "./audio";
 import { OpenWorld, getCameraMode, type BattleEvent, type CameraMode, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
 import { QUALITY, assets, getQuality, setQuality, type Quality } from "./world/assets";
@@ -77,6 +77,8 @@ export default function AshesGame() {
   const [state, setState] = useState<GameState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [entered, setEntered] = useState(false);
+  const [selectOpen, setSelectOpen] = useState(false);
+  const [charList, setCharList] = useState<CharacterList | null>(null);
   const [panel, setPanel] = useState<PanelId | null>(null);
   const [talk, setTalk] = useState<NpcId | null>(null);
   const [busy, setBusy] = useState(false);
@@ -498,6 +500,61 @@ export default function AshesGame() {
     await supabase.auth.signOut();
   }, []);
 
+  // ------------------------------------------------------------ výběr postav
+  const loadCharacters = useCallback(async () => {
+    try {
+      setCharList(await ashesApi.characters());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : L("Postavy se nepodařilo načíst.", "Characters could not be loaded."));
+    }
+  }, []);
+  const openSelect = useCallback(() => {
+    if (myPos.current && stateRef.current?.character) savePos((stateRef.current.character.faction ?? "kalidra") as Faction, myPos.current);
+    setPanel(null);
+    setTalk(null);
+    setEntered(false);
+    setSelectOpen(true);
+    void loadCharacters();
+  }, [loadCharacters]);
+  const playCharacter = async (c: CharacterSummary) => {
+    if (c.id) {
+      const next = await act(() => ashesApi.switchCharacter(c.id!), L(`Hraješ za postavu ${c.name}.`, `Now playing ${c.name}.`));
+      if (!next) return;
+    }
+    setSelectOpen(false);
+    enter();
+  };
+  const newCharacter = async () => {
+    const next = await act(() => ashesApi.newCharacter());
+    if (!next) return;
+    setSelectOpen(false);
+    setEntered(true);
+    void loadCharacters();
+  };
+  const deleteCharacter = async (c: CharacterSummary) => {
+    if (!c.id) return;
+    if (!window.confirm(L(`Opravdu smazat postavu ${c.name}? Přijdeš o její úroveň, výbavu i úkoly.`, `Really delete ${c.name}? Their level, gear and quests will be lost.`))) return;
+    setBusy(true);
+    try {
+      setCharList(await ashesApi.deleteCharacter(c.id));
+      toast.success(L("Postava smazána.", "Character deleted."));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : L("Akce se nepodařila.", "The action failed."));
+    } finally {
+      setBusy(false);
+    }
+  };
+  /** Zpět z tvorby postavy: vrátit poslední uloženou postavu. */
+  const backFromCreate = async () => {
+    const last = charList?.others[0];
+    if (!last?.id) return;
+    const next = await act(() => ashesApi.switchCharacter(last.id!));
+    if (!next) return;
+    setEntered(false);
+    setSelectOpen(true);
+    void loadCharacters();
+  };
+
   // uložený režim zobrazení (v aplikaci okno / celá obrazovka) při spuštění
   useEffect(() => {
     if (isDesktop()) void applyDisplayMode(getDisplay());
@@ -723,6 +780,7 @@ export default function AshesGame() {
       {!character && entered && (
         <CreateCharacter
           busy={busy}
+          onBack={charList?.others.length ? () => void backFromCreate() : undefined}
           onPreview={onPreview}
           onCreate={(name, cls, appearance, f) =>
             act(
@@ -796,6 +854,7 @@ export default function AshesGame() {
           onQuality={changeQuality}
           onRenderScale={(r) => worldRef.current?.setRenderScale(r)}
           onLogout={() => void logout()}
+          onCharacters={openSelect}
           onExit={exitGame}
           onClose={() => setPanel(null)}
         />
@@ -873,7 +932,18 @@ export default function AshesGame() {
         </div>
       )}
 
-      {!entered && (
+      {!entered && selectOpen && (
+        <CharacterSelect
+          list={charList}
+          busy={busy}
+          onPlay={(c) => void playCharacter(c)}
+          onNew={() => void newCharacter()}
+          onDelete={(c) => void deleteCharacter(c)}
+          onClose={() => setSelectOpen(false)}
+        />
+      )}
+
+      {!entered && !selectOpen && (
         <div className="ash-title-screen">
           <div className="ash-title-inner">
             <img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" />
@@ -886,6 +956,9 @@ export default function AshesGame() {
                 : L("Moře tě vyplavilo na Bezejmenném břehu. V dálce hoří světla Kalidry.", "The sea cast you onto the Nameless Shore. The lights of Kalidra burn in the distance.")}
             </p>
             <button className="ash-btn" onClick={enter}>{character ? L("Vstoupit do světa", "Enter the world") : L("Začít dobrodružství", "Begin the adventure")}</button>
+            {character && (
+              <button className="ash-btn ghost small" onClick={() => { setSelectOpen(true); void loadCharacters(); }}>{L("Výběr postavy", "Choose character")}</button>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-xs text-[var(--ash-muted)]">{L("Alfa · otevřený svět · hudba: album „Eryon“", "Alpha · open world · music: the “Eryon” album")}</span>
               <Link to="/ashes" className="text-xs text-[var(--ash-gold)] underline">{L("Roadmapa", "Roadmap")}</Link>
@@ -894,6 +967,70 @@ export default function AshesGame() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const CLASS_ICON: Record<HeroClass, string> = { hoplit: "🛡", lucistnik: "🏹", vestec: "🔥" };
+
+/** Výběr postavy: aktivní a uložené postavy účtu, nová postava, smazání. */
+function CharacterSelect({ list, busy, onPlay, onNew, onDelete, onClose }: {
+  list: CharacterList | null;
+  busy: boolean;
+  onPlay: (c: CharacterSummary) => void;
+  onNew: () => void;
+  onDelete: (c: CharacterSummary) => void;
+  onClose: () => void;
+}) {
+  useLang();
+  const all = list ? [...(list.active ? [list.active] : []), ...list.others] : [];
+  const canNew = !!list && all.length < list.max;
+  return (
+    <div className="ash-title-screen">
+      <section className="ash-select ash-frame">
+        <header>
+          <div className="ash-kicker">{L("Tvoje postavy", "Your characters")}</div>
+          <h2 className="ash-title m-0 text-xl">{L("Za koho budeš hrát?", "Who will you play?")}</h2>
+          {list && <small>{all.length} / {list.max}</small>}
+        </header>
+        {!list ? (
+          <p className="ashes-prose">{L("Načítám postavy…", "Loading characters…")}</p>
+        ) : (
+          <div className="ash-select-list">
+            {all.map((c) => {
+              const active = !c.id;
+              const f = (c.faction ?? "kalidra") as Faction;
+              return (
+                <div key={c.id ?? "active"} className="ash-select-card" data-active={active} data-faction={f}>
+                  <div className={`portrait ${c.appearance?.gender === "f" ? "f" : "m"}`} aria-hidden>
+                    <img src={c.appearance?.gender === "f" ? "/game/models/heroes/female.webp" : "/game/models/heroes/male.webp"} alt="" />
+                  </div>
+                  <div className="info">
+                    <b>{c.eryon ? "Eryon" : c.azkar ? "Azkar" : c.name}</b>
+                    <small>
+                      {CLASS_ICON[c.class]} {classLabel(c.class)} · {L("úroveň", "level")} {c.level}
+                    </small>
+                    <small style={{ color: FACTION[f].color }}>{f === "legie" ? L("Legie Rudého slunce", "Legion of the Red Sun") : L("Obránci Kalidry", "Defenders of Kalidra")}{active ? ` · ${L("naposledy hraná", "last played")}` : ""}</small>
+                  </div>
+                  <div className="actions">
+                    <button className="ash-btn small" disabled={busy} onClick={() => onPlay(c)}>{L("Hrát", "Play")}</button>
+                    {!active && <button className="ash-btn ghost small" disabled={busy} onClick={() => onDelete(c)} aria-label={L("Smazat postavu", "Delete character")}>✕</button>}
+                  </div>
+                </div>
+              );
+            })}
+            {canNew && (
+              <button className="ash-select-new" disabled={busy} onClick={onNew}>
+                <b>＋ {L("Nová postava", "New character")}</b>
+                <small>{L("Muž nebo žena, libovolné povolání i strana. Ostatní postavy zůstanou uložené.", "Man or woman, any class and side. Your other characters stay saved.")}</small>
+              </button>
+            )}
+          </div>
+        )}
+        <footer>
+          <button className="ash-btn ghost small" onClick={onClose}>{L("Zpět", "Back")}</button>
+        </footer>
+      </section>
     </div>
   );
 }
