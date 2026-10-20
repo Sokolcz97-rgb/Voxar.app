@@ -342,3 +342,8 @@
 .ash-select-new:hover { border-color: var(--ash-gold); background: rgba(60, 44, 24, 0.35); }
 .ash-select-new small { color: var(--ash-muted); font-size: 12px; }
 @media (max-width: 480px) { .ash-select-card { grid-template-columns: 48px 1fr; } .ash-select-card .portrait { width: 48px; height: 48px; } .ash-select-card .actions { grid-column: 1 / -1; justify-content: flex-end; } }
+
+/* upozornění, když se hra seká */
+.ash-slow { position: absolute; z-index: 12; left: 50%; bottom: 96px; transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: rgba(14, 10, 8, 0.92); border: 1px solid rgba(201, 164, 92, 0.45); color: var(--ash-text); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
+.ash-slow b { color: var(--ash-gold); font-size: 0.95rem; }
+.ash-slow span { font-size: 0.85rem; color: var(--ash-muted); line-height: 1.45; }

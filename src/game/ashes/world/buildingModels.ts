@@ -34,6 +34,7 @@ export function placeBuilding(
   kind: BuildingModel,
   opts: { x: number; y: number; z: number; w: number; d: number; rotY: number; fill?: number },
   fallback: () => void,
+  onPlaced?: (holder: THREE.Object3D) => void,
 ) {
   void load(kind).then((src) => {
     if (!src) {
@@ -62,5 +63,6 @@ export function placeBuilding(
       mesh.receiveShadow = true;
     });
     scene.add(holder);
+    onPlaced?.(holder);
   });
 }
