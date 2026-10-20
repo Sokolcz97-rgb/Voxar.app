@@ -51,6 +51,16 @@ jobs:
           $exe = "game/launcher/app/dist/win-unpacked/Ashes of Eryon Launcher.exe"
           if (!(Test-Path $exe)) { throw "Launcher payload missing: $exe" }
 
+      - name: Upload launcher update files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ashes-of-Eryon-launcher-update
+          path: |
+            game/launcher/app/dist/win-unpacked/resources/app.asar
+            game/launcher/app/dist/win-unpacked/resources/launcher-ui/
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Install GameSetup dependencies
         working-directory: game/installer
         run: npm install --no-audit --no-fund

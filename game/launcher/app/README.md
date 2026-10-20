@@ -60,3 +60,17 @@ Packaged builds include the same prototype directory as `launcher-ui` under Elec
 The visual source of truth remains:
 - `../design/APPROVED_VISUAL_REFERENCE_V0.1.md`
 - `../design/LAUNCHER_DESIGN_SPEC_V0.1.md`
+
+## Automatické aktualizace (od 0.2.0)
+
+Launcher si sám stahuje nové verze svých souborů (`resources/app.asar` a `resources/launcher-ui`)
+z veřejného bucketu `game-updates/launcher/` – bez nové instalace. Logika je v `updater.cjs`.
+
+Vydání aktualizace:
+1. zvýšit `version` v `package.json`,
+2. CI (Ashes of Eryon GameSetup Check) vytvoří artefakt `Ashes-of-Eryon-launcher-update`,
+3. `node make-update.cjs <rozbalený artefakt> <výstup>` připraví soubory a `latest.json`,
+4. nahrát `<verze>/…` a nakonec `latest.json` do `game-updates/launcher/`.
+
+Hra samotná se nestahuje – herní okno vždy načítá aktuální studiovoxario.com/hra.
+Když nová verze potřebuje jiný Electron, launcher nabídne stáhnout nový GameSetup.

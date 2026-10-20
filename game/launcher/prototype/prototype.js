@@ -202,6 +202,43 @@
   if (demoControls) demoControls.hidden = isDesktop || params.get("demo") !== "1";
   const initial = !isDesktop && states[params.get("state")] ? params.get("state") : isDesktop ? "online" : "signed_out";
   applyState(initial);
+  // Automatické aktualizace launcheru (stav posílá hlavní proces).
+  function showUpdate(status) {
+    if (!status || root.dataset.state !== "online") return;
+    if (status.current) installedVersion.textContent = `Launcher ${status.current} · 1. akt online`;
+    const latest = status.latest ? ` ${status.latest}` : "";
+    if (status.state === "downloading") {
+      progressTitle.textContent = `Stahuji aktualizaci launcheru${latest}`;
+      progressDetail.textContent = "Nic nemusíš instalovat, launcher se sám restartuje.";
+      const pct = Math.round((status.progress || 0) * 100);
+      progressFill.style.width = pct + "%";
+      progressValue.textContent = pct + " %";
+    } else if (status.state === "ready") {
+      progressTitle.textContent = `Aktualizace${latest} je připravená`;
+      progressDetail.textContent = "Nainstaluje se po zavření hry.";
+      progressFill.style.width = "100%";
+      progressValue.textContent = "100 %";
+    } else if (status.state === "restarting") {
+      progressTitle.textContent = `Instaluji aktualizaci${latest}…`;
+      progressDetail.textContent = "Launcher se za chvilku sám znovu otevře.";
+    } else if (status.state === "full") {
+      progressTitle.textContent = `Je k dispozici nová verze${latest}`;
+      progressDetail.textContent = "Tahle verze potřebuje nový GameSetup – klikni na „Můj účet“ → Stáhnout.";
+      secondary.querySelector("span").textContent = "Stáhnout novou verzi";
+      secondary.dataset.full = "1";
+    }
+  }
+  if (isDesktop && desktop.update) {
+    desktop.update.onStatus(showUpdate);
+    desktop.update.status().then(showUpdate).catch(() => {});
+  }
+  secondary.addEventListener("click", (event) => {
+    if (secondary.dataset.full === "1" && isDesktop) {
+      event.stopImmediatePropagation();
+      void desktop.update?.openFullInstaller();
+    }
+  }, true);
+
   desktop?.game?.onClosed?.(() => {
     applyState("online");
     progressTitle.textContent = "Vítej zpět";
