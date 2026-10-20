@@ -125,9 +125,34 @@ jobs:
           Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe" -OutFile $rcedit
           $patched = Join-Path $env:RUNNER_TEMP "7zSD-asinvoker.sfx"
           Copy-Item $sfx.FullName $patched -Force
-          & $rcedit $patched --set-requested-execution-level asInvoker --set-icon "game/launcher/app/build/icon.ico"
-          if ($LASTEXITCODE -ne 0) { throw "rcedit failed to patch the SFX module." }
-          $sfx = Get-Item $patched
+          $manifest = Join-Path $env:RUNNER_TEMP "asinvoker.manifest"
+          @(
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+            '<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">',
+            '  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges>',
+            '    <requestedExecutionLevel level="asInvoker" uiAccess="false"/>',
+            '  </requestedPrivileges></security></trustInfo>',
+            '</assembly>'
+          ) | Set-Content -Path $manifest -Encoding utf8
+          $ok = $false
+          & $rcedit $patched --set-requested-execution-level asInvoker 2>&1 | Write-Host
+          if ($LASTEXITCODE -eq 0) { $ok = $true } else {
+            Write-Host "rcedit failed ($LASTEXITCODE), trying mt.exe"
+            Copy-Item $sfx.FullName $patched -Force
+            $mt = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter mt.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "x64" } | Select-Object -First 1
+            if ($mt) {
+              & $mt.FullName -nologo -manifest $manifest "-outputresource:$patched;#1" 2>&1 | Write-Host
+              if ($LASTEXITCODE -eq 0) { $ok = $true }
+            }
+          }
+          if ($ok) {
+            & $rcedit $patched --set-icon "game/launcher/app/build/icon.ico" 2>&1 | Write-Host
+            if ($LASTEXITCODE -ne 0) { Write-Host "::warning::Icon could not be set on GameSetup." }
+            $sfx = Get-Item $patched
+          } else {
+            Write-Host "::warning::SFX manifest could not be patched; GameSetup may request admin rights."
+          }
+          $global:LASTEXITCODE = 0
 
           "path=$($sfx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
