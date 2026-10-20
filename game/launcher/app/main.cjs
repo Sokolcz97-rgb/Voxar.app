@@ -4,6 +4,13 @@ const path = require("node:path");
 const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
 const { createUpdater } = require("./updater.cjs");
 
+// Výkon hry: grafická karta i na kartách, které má Chromium na černé listině,
+// rasterizace na GPU a žádné omezování snímků na pozadí.
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("force_high_performance_gpu");
+
 const REFERENCE_WIDTH = 1920;
 const REFERENCE_HEIGHT = 1080;
 
@@ -40,6 +47,7 @@ function openGameWindow() {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
+      backgroundThrottling: false,
       devTools: !app.isPackaged
     }
   });
