@@ -58,9 +58,11 @@ export function setQuality(q: Quality) {
 // ---------------------------------------------------------------- registr modelů
 export type ModelSlot =
   | "figure.hoplit" | "figure.lucistnik" | "figure.vestec" | "figure.eryon" | "figure.azkar"
-  | "building.house" | "building.tavern" | "building.smithy" | "building.temple" | "building.tent" | "building.hut";
+  | "figure.legie.hoplit" | "figure.legie.lucistnik" | "figure.legie.vestec"
+  | "building.house" | "building.tavern" | "building.smithy" | "building.temple" | "building.tent" | "building.hut"
+  | `animal.${"sheep" | "goat" | "stag" | "doe" | "dog" | "chicken" | "horse" | "boar" | "cow" | "pig" | "wolf" | "bear" | "squirrel" | "gull" | "tit" | "robin" | "crow"}`;
 
-export type ModelEntry = { url: string; scale?: number; rotationY?: number; clips?: Partial<Record<"idle" | "walk" | "attack" | "hit" | "death" | "block", string>> };
+export type ModelEntry = { url: string; scale?: number; rotationY?: number; clips?: Partial<Record<"idle" | "walk" | "run" | "attack" | "hit" | "death" | "block" | "eat" | "fly", string>> };
 
 type LoadedModel = { scene: THREE.Group; animations: THREE.AnimationClip[]; entry: ModelEntry };
 
@@ -159,7 +161,51 @@ export type HeroFigure = {
 function slotFor(opts: FigureOptions): ModelSlot {
   if (opts.eryon) return "figure.eryon";
   if (opts.azkar) return "figure.azkar";
+  // voják Legie může mít vlastní model; když není, použije se model povolání
+  if ((opts.legion || opts.enemy) && assets.has(`figure.legie.${opts.cls}` as ModelSlot)) return `figure.legie.${opts.cls}` as ModelSlot;
   return `figure.${opts.cls}` as ModelSlot;
+}
+
+/**
+ * Model zvířete z manifestu (glTF) s animacemi. Vrací skupinu, do které se model
+ * vloží po načtení, a funkci pro přepínání idle/walk/run podle rychlosti.
+ */
+export function attachAnimalModel(slot: ModelSlot, holder: THREE.Group, replace: THREE.Object3D) {
+  const state: { mixer: THREE.AnimationMixer | null; actions: Record<string, THREE.AnimationAction>; current: string; ready: boolean } = { mixer: null, actions: {}, current: "", ready: false };
+  void assets.load(slot).then(async (m) => {
+    if (!m) return;
+    const { clone } = await import("three/examples/jsm/utils/SkeletonUtils.js");
+    const model = clone(m.scene);
+    model.scale.setScalar(m.entry.scale ?? 1);
+    model.rotation.y = m.entry.rotationY ?? 0;
+    model.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
+    });
+    state.mixer = new THREE.AnimationMixer(model);
+    for (const [key, name] of Object.entries(m.entry.clips ?? {})) {
+      const clip = m.animations.find((a) => a.name === name);
+      if (clip) state.actions[key] = state.mixer.clipAction(clip);
+    }
+    holder.remove(replace);
+    holder.add(model);
+    state.ready = true;
+  });
+  return {
+    get ready() {
+      return state.ready;
+    },
+    update(dt: number, speed: number, fast: number, force?: string) {
+      if (!state.mixer) return;
+      const want = force && state.actions[force] ? force : speed <= 0.05 ? "idle" : speed > fast && state.actions.run ? "run" : "walk";
+      const key = state.actions[want] ? want : state.actions.walk ? "walk" : "idle";
+      if (key !== state.current && state.actions[key]) {
+        state.actions[state.current]?.fadeOut(0.2);
+        state.actions[key].reset().fadeIn(0.2).play();
+        state.current = key;
+      }
+      state.mixer.update(dt);
+    },
+  };
 }
 
 /**
