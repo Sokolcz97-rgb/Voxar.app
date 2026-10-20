@@ -57,3 +57,5 @@ Viz `docs/ASHES_GRAPHICS.md`.
 
 `animals/*.glb` se načítají přes `world/glbAnimals.ts` (tabulka `GLB_ANIMALS`: velikost, natočení, typ pohybu).
 Velké modely se před vložením zmenšují (gltf-transform: simplify + webp textury; chlupaté modely s barvou ve vrcholech).
+
+Přístup do hry spravuje admin na `/ashes` → „Přístup do hry“.
