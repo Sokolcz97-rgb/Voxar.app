@@ -747,10 +747,18 @@ export class Wildlife {
     return roadDistance(x, z) > 1.5 || kind === "horse";
   }
 
+  /** Vzdálenost, za kterou se zvířata nekreslí ani neanimují (výkon). */
+  cullDistance = 70;
+
   update(dt: number, time: number, player: THREE.Vector2, camera?: THREE.Camera) {
+    const far = this.cullDistance;
     for (const w of this.walkers) {
       const shy = SHY[w.kind];
       const toPlayer = Math.hypot(player.x - w.pos.x, player.y - w.pos.y);
+      // daleká zvířata: skrýt a přeskočit (ušetří vykreslování i animace)
+      const vis = toPlayer < far;
+      if (w.g.visible !== vis) w.g.visible = vis;
+      if (!vis) continue;
       // plaché zvíře uteče od hráče
       if (shy > 0 && toPlayer < shy && w.flee <= 0) {
         const away = w.pos.clone().sub(player).normalize().multiplyScalar(shy * 1.6);
@@ -819,8 +827,11 @@ export class Wildlife {
       if (w.kind === "chicken" && speed === 0) w.head.rotation.x = Math.max(0, Math.sin(time * 6 + w.home.y)) * 0.8;
       if (w.tail) w.tail.rotation.y = w.kind === "dog" ? Math.sin(time * 12 + w.phase) * 0.5 : Math.sin(time * 2 + w.home.x) * 0.15;
     }
-    this.updateFish(dt, time);
+    this.updateFish(dt, time, player);
     for (const b of this.birds) {
+      const bvis = Math.hypot(player.x - b.cx, player.y - b.cz) < far + b.r;
+      if (b.g.visible !== bvis) b.g.visible = bvis;
+      if (!bvis) continue;
       b.a += (b.speed * dt) / Math.max(1, b.r * 0.1);
       const x = b.cx + Math.cos(b.a) * b.r, z = b.cz + Math.sin(b.a) * b.r;
       const y = Math.max(heightAt(x, z), 0) + b.h + Math.sin(time * 0.7 + b.phase) * 1.2;
@@ -846,8 +857,12 @@ export class Wildlife {
     }
   }
 
-  private updateFish(dt: number, time: number) {
+  private updateFish(dt: number, time: number, player: THREE.Vector2) {
+    const far = this.cullDistance;
     for (const f of this.fish) {
+      const vis = Math.hypot(player.x - f.cx, player.y - f.cz) < far + f.r;
+      if (f.g.visible !== vis) f.g.visible = vis;
+      if (!vis) continue;
       f.a += (f.speed * dt) / Math.max(1, f.r * 0.4);
       const x = f.cx + Math.cos(f.a) * f.r, z = f.cz + Math.sin(f.a) * f.r;
       const heading = Math.atan2(-Math.sin(f.a) * Math.sign(f.speed), Math.cos(f.a) * Math.sign(f.speed));
@@ -871,6 +886,9 @@ export class Wildlife {
       f.anim.update(dt, 1);
     }
     for (const f of this.flyers) {
+      const vis = Math.hypot(player.x - f.cx, player.y - f.cz) < far * 0.6;
+      if (f.g.visible !== vis) f.g.visible = vis;
+      if (!vis) continue;
       f.t += dt * f.speed;
       const x = f.cx + Math.sin(f.t) * f.r + Math.sin(f.t * 2.3) * 0.6;
       const z = f.cz + Math.cos(f.t * 0.8) * f.r;
