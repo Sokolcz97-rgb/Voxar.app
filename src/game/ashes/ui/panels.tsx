@@ -632,7 +632,7 @@ export function CreateCharacter({ busy, onPreview, onCreate, onBack }: {
 
         <div className="ash-kicker mb-2">{L("Postava", "Character")}</div>
         <div className="ash-classes ash-gender mb-4">
-          {([["m", L("Muž", "Man"), L("Hoplita s bronzovou přilbou a štítem.", "A hoplite with bronze helmet and shield.")], ["f", L("Žena", "Woman"), L("Hrdinka ve splývavém rouchu s vavřínem.", "A heroine in a flowing robe with a laurel.")]] as const).map(([id, label, desc]) => (
+          {([["m", L("Muž", "Man"), L("Hrdina Kalidry – podoba podle povolání.", "A hero of Kalidra – look follows the class.")], ["f", L("Žena", "Woman"), L("Hrdinka Kalidry – podoba podle povolání.", "A heroine of Kalidra – look follows the class.")]] as const).map(([id, label, desc]) => (
             <button key={id} data-active={gender === id} onClick={() => setGender(id)}>
               <b>{label}</b>
               <small>{desc}</small>

@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { Figure, type FigureOptions } from "./figure";
+import type { HeroClass } from "../types";
 
 /**
- * Hráčská postava z 3D modelu (muž = hoplita, žena = bohyně s vavřínem).
+ * Hráčská postava z 3D modelu podle povolání a pohlaví
+ * (štítonoš, lučištník, věštec – muž i žena).
  * Modely nemají kostru, proto se nohy a lem šatů hýbou ve vertex shaderu
  * a útok, zásah, úhyb nebo pád dělá celé tělo. Dokud se model nenačte,
  * je vidět procedurální postava.
@@ -10,31 +12,27 @@ import { Figure, type FigureOptions } from "./figure";
 
 export type Gender = "m" | "f";
 
-const URL: Record<Gender, string> = { m: "/game/models/heroes/male.glb", f: "/game/models/heroes/female.glb" };
+type Key = `${HeroClass}_${Gender}`;
+export const heroModelUrl = (cls: HeroClass, g: Gender) => `/game/models/heroes/${cls}_${g}.glb`;
+export const heroPortraitUrl = (cls: HeroClass, g: Gender) => `/game/models/heroes/${cls}_${g}.webp`;
 /** výška postavy v metrech (stejně vysoká jako procedurální postavy) */
 const HEIGHT: Record<Gender, number> = { m: 1.62, f: 1.55 };
 /** do jaké výšky (podíl) sahají nohy / lem šatů */
-const LEG: Record<Gender, number> = { m: 0.3, f: 0.3 };
+const LEG = 0.3;
 
-type Source = THREE.Group;
-const cache = new Map<Gender, Promise<Source | null>>();
+const cache = new Map<Key, Promise<THREE.Group | null>>();
 
-function load(g: Gender) {
-  let p = cache.get(g);
+function load(cls: HeroClass, g: Gender) {
+  const key: Key = `${cls}_${g}`;
+  let p = cache.get(key);
   if (!p) {
     p = import("three/examples/jsm/loaders/GLTFLoader.js")
-      .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(URL[g]))
+      .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(heroModelUrl(cls, g)))
       .then((gltf) => gltf.scene as THREE.Group)
       .catch(() => null);
-    cache.set(g, p);
+    cache.set(key, p);
   }
   return p;
-}
-
-/** Načte oba modely dopředu (např. při tvorbě postavy). */
-export function preloadHeroModels() {
-  void load("m");
-  void load("f");
 }
 
 type Anim = { t: number; dur: number; fn: (k: number) => void; done?: () => void };
@@ -60,7 +58,7 @@ export class MeshyFigure {
     this.root.add(this.body);
     this.fallback = new Figure(opts);
     this.group.add(this.fallback.group);
-    void load(gender).then((src) => {
+    void load(opts.cls, gender).then((src) => {
       if (src) this.build(src);
     });
   }
@@ -75,7 +73,7 @@ export class MeshyFigure {
     model.scale.setScalar(s);
     model.updateMatrixWorld(true);
     // souřadnice modelu v metrech od chodidel (nezávisle na uzlech v GLB)
-    const leg = HEIGHT[this.gender] * LEG[this.gender];
+    const leg = HEIGHT[this.gender] * LEG;
     model.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;

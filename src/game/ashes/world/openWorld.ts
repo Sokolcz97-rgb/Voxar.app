@@ -4,6 +4,10 @@ import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHe
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Wildlife } from "./animals";
 import { clothTex, dirtTex, dryGrassTex, grassTex, pavingTex, plasterTex, rockTex, roofTex, sandTex, stoneBlockTex, woodTex, worldMapped } from "../three/textures";
+import { faceToward, placeBuilding } from "./buildingModels";
+
+/** stánky na tržišti (agora je na 74, 15) */
+const MARKET_STALLS: [number, number][] = [[67, 12.4], [67, 20.6], [81, 17.5], [80, 22.5]];
 import { assets, createFigure, QUALITY, type HeroFigure, type ModelSlot, type QualitySettings } from "./assets";
 import {
   AQUEDUCT, BEACONS, BUILDINGS, CITY, CAMP, ENEMY_CAMPS, MEMORIAL, NPCS, REGION_ENEMIES, RESPAWN, SAFE, SHIPS, SPAWN, WORLD_HALF, WRECKS,
@@ -477,28 +481,50 @@ export class OpenWorld {
         continue;
       }
       if (b.kind === "temple") {
-        const base = new THREE.Mesh(new THREE.BoxGeometry(b.w + 2, 0.8, b.d + 2), stone);
-        base.position.set(b.x, y + 0.4, b.z);
-        base.receiveShadow = true;
-        this.scene.add(base);
-        for (let i = 0; i < 6; i += 1) {
-          for (const side of [-1, 1]) {
-            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, b.h, 12), plaster);
-            col.position.set(b.x - b.w / 2 + 0.8 + i * ((b.w - 1.6) / 5), y + 0.8 + b.h / 2, b.z + side * (b.d / 2 - 0.6));
-            col.castShadow = true;
-            this.scene.add(col);
+        // chrám z modelu (štít a sloupoví), procedurální jen když se model nenačte
+        placeBuilding(this.scene, "temple", { x: b.x, y: y + 0.05, z: b.z + 0.6, w: b.w + 2, d: b.d + 2, rotY: 0, fill: 0.88 }, () => {
+          const base = new THREE.Mesh(new THREE.BoxGeometry(b.w + 2, 0.8, b.d + 2), stone);
+          base.position.set(b.x, y + 0.4, b.z);
+          base.receiveShadow = true;
+          this.scene.add(base);
+          for (let i = 0; i < 6; i += 1) {
+            for (const side of [-1, 1]) {
+              const col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, b.h, 12), plaster);
+              col.position.set(b.x - b.w / 2 + 0.8 + i * ((b.w - 1.6) / 5), y + 0.8 + b.h / 2, b.z + side * (b.d / 2 - 0.6));
+              col.castShadow = true;
+              this.scene.add(col);
+            }
           }
-        }
-        const cella = new THREE.Mesh(new THREE.BoxGeometry(b.w - 4, b.h - 0.6, b.d - 4), plaster);
-        cella.position.set(b.x, y + 0.8 + (b.h - 0.6) / 2, b.z);
-        this.scene.add(cella);
-        const ped = new THREE.Mesh(new THREE.CylinderGeometry(b.d / 2 + 0.6, b.d / 2 + 0.6, b.w + 1, 3, 1), roof);
-        ped.rotation.z = Math.PI / 2;
-        ped.scale.set(1, 1, 0.45);
-        ped.position.set(b.x, y + 0.8 + b.h + 0.9, b.z);
-        ped.castShadow = true;
-        this.scene.add(ped);
+          const cella = new THREE.Mesh(new THREE.BoxGeometry(b.w - 4, b.h - 0.6, b.d - 4), plaster);
+          cella.position.set(b.x, y + 0.8 + (b.h - 0.6) / 2, b.z);
+          this.scene.add(cella);
+          const ped = new THREE.Mesh(new THREE.CylinderGeometry(b.d / 2 + 0.6, b.d / 2 + 0.6, b.w + 1, 3, 1), roof);
+          ped.rotation.z = Math.PI / 2;
+          ped.scale.set(1, 1, 0.45);
+          ped.position.set(b.x, y + 0.8 + b.h + 0.9, b.z);
+          ped.castShadow = true;
+          this.scene.add(ped);
+        });
         this.colliders.push({ x0: b.x - b.w / 2 - 1, x1: b.x + b.w / 2 + 1, z0: b.z - b.d / 2 - 1, z1: b.z + b.d / 2 + 1 });
+        continue;
+      }
+      if (b.kind === "house") {
+        // městské domy: vila s modrými okenicemi, vchodem k agoře
+        const hb = b;
+        placeBuilding(this.scene, "villa", { x: b.x, y, z: b.z, w: b.w, d: b.d, rotY: faceToward(b.x, b.z, 74, 15) }, () => {
+          const box = new THREE.Mesh(new THREE.BoxGeometry(hb.w, hb.h, hb.d), plaster);
+          box.position.set(hb.x, y - 0.2 + hb.h / 2, hb.z);
+          box.castShadow = true;
+          box.receiveShadow = true;
+          this.scene.add(box);
+          const rm = new THREE.Mesh(new THREE.ConeGeometry(Math.max(hb.w, hb.d) * 0.75, 1.6, 4), roof);
+          rm.rotation.y = Math.PI / 4;
+          rm.scale.set(hb.w / Math.max(hb.w, hb.d), 1, hb.d / Math.max(hb.w, hb.d));
+          rm.position.set(hb.x, y - 0.2 + hb.h + 0.8, hb.z);
+          rm.castShadow = true;
+          this.scene.add(rm);
+        });
+        this.colliders.push({ x0: b.x - b.w / 2 - 0.4, x1: b.x + b.w / 2 + 0.4, z0: b.z - b.d / 2 - 0.4, z1: b.z + b.d / 2 + 0.4 });
         continue;
       }
       if (b.kind === "tent" || b.kind === "bigtent") {
@@ -536,6 +562,12 @@ export class OpenWorld {
         this.addFire(b.x + 2, y + 1, b.z + b.d / 2 + 1.2, 0.6);
       }
       if (b.kind === "hut") this.addFire(b.x + 2.5, y + 0.1, b.z + 4, 0.8);
+    }
+
+    // tržiště: stánky po stranách cesty od brány k agoře
+    for (const [sx, sz] of MARKET_STALLS) {
+      placeBuilding(this.scene, "stall", { x: sx, y: heightAt(sx, sz), z: sz, w: 3.2, d: 3.2, rotY: faceToward(sx, sz, 74, 15) }, () => undefined);
+      this.colliders.push({ x0: sx - 1.5, x1: sx + 1.5, z0: sz - 1.5, z1: sz + 1.5 });
     }
 
     // agora: kašna, bronzová socha a korouhve
