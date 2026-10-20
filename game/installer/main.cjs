@@ -112,6 +112,44 @@ function ensureDir(dir) {
   }
 }
 
+/**
+ * Smazání složky launcheru. Electron jinak považuje app.asar za složku a rekurzivní
+ * mazání skončí chybou ENOTEMPTY – proto původní fs bez podpory asar a vypnuté asar.
+ * Windows navíc občas drží soubory chvíli zamčené (antivir), takže pár pokusů.
+ */
+function removeDir(dir, { strict = false } = {}) {
+  const previous = process.noAsar;
+  process.noAsar = true;
+  try {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        rawFs.rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+        return true;
+      } catch (error) {
+        if (attempt === 4) {
+          if (strict) throw error;
+          log(`Složku ${dir} se nepodařilo smazat (${error?.code || error}); smaže se při příští instalaci.`);
+          return false;
+        }
+        const until = Date.now() + 300;
+        while (Date.now() < until) { /* krátké čekání */ }
+      }
+    }
+    return false;
+  } finally {
+    process.noAsar = previous;
+  }
+}
+
+/** Úklid zbytků po dřívějších instalacích (.staging-*, .backup-*). */
+function cleanLeftovers(root) {
+  let entries = [];
+  try { entries = fs.readdirSync(root); } catch { return; }
+  for (const name of entries) {
+    if (/^\.(staging|backup)-\d+$/.test(name)) removeDir(path.join(root, name));
+  }
+}
+
 function launcherLockedError(error) {
   const code = error?.code;
   if (code === "EBUSY" || code === "EPERM" || code === "EACCES") {
@@ -400,8 +438,9 @@ async function installLauncher(options = {}) {
     progress("prepare", 0.03, "Příprava instalace");
 
     ensureDir(root);
-    fs.rmSync(staging, { recursive: true, force: true });
-    fs.rmSync(backup, { recursive: true, force: true });
+    cleanLeftovers(root);
+    removeDir(staging);
+    removeDir(backup);
     ensureDir(staging);
 
     await extractLauncher(archive, staging);
@@ -414,17 +453,18 @@ async function installLauncher(options = {}) {
     progress("commit", 0.78, "Aktivace launcheru");
 
     try {
-      if (fs.existsSync(launcherDir)) fs.renameSync(launcherDir, backup);
+      if (fs.existsSync(launcherDir)) rawFs.renameSync(launcherDir, backup);
     } catch (error) {
       throw launcherLockedError(error);
     }
     try {
-      fs.renameSync(staging, launcherDir);
+      rawFs.renameSync(staging, launcherDir);
     } catch (error) {
-      if (fs.existsSync(backup) && !fs.existsSync(launcherDir)) fs.renameSync(backup, launcherDir);
+      if (fs.existsSync(backup) && !fs.existsSync(launcherDir)) rawFs.renameSync(backup, launcherDir);
       throw launcherLockedError(error);
     }
-    fs.rmSync(backup, { recursive: true, force: true });
+    // stará verze: smazání nesmí shodit instalaci (nový launcher už je na místě)
+    removeDir(backup);
 
     progress("shortcuts", 0.86, "Vytváření zástupců");
     try {
@@ -468,8 +508,8 @@ async function installLauncher(options = {}) {
     };
   } finally {
     installInProgress = false;
-    fs.rmSync(staging, { recursive: true, force: true });
-    fs.rmSync(backup, { recursive: true, force: true });
+    removeDir(staging);
+    removeDir(backup);
   }
 }
 
@@ -484,7 +524,7 @@ async function uninstallProduct(options = {}) {
   try {
     progress("remove", 0.15, "Odstraňování launcheru");
     try {
-      fs.rmSync(path.join(root, "Launcher"), { recursive: true, force: true });
+      removeDir(path.join(root, "Launcher"), { strict: true });
     } catch (error) {
       throw launcherLockedError(error);
     }
@@ -498,7 +538,7 @@ async function uninstallProduct(options = {}) {
     const preserve = ["UserData", "Saves", "Screenshots"];
     if (options.removeUserData && ownInstall) {
       for (const name of preserve) {
-        fs.rmSync(path.join(root, name), { recursive: true, force: true });
+        removeDir(path.join(root, name));
       }
     } else if (options.removeUserData) {
       log("Uživatelská data nebyla smazána: složka nebyla vytvořena tímto instalátorem.");
