@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { Appearance, HeroClass } from "../types";
+import { bronzeTex, clothTex, leatherTex, muscleBump, skinTex, woodTex } from "./textures";
 
 /**
  * Procedurální válečník doby bronzové (Kalidra). Žádné externí modely –
@@ -23,7 +24,11 @@ export type FigureOptions = {
 
 type Anim = { t: number; dur: number; fn: (k: number) => void; done?: () => void };
 
-const SKIN_DEFAULT = "#c99470";
+const SKIN_DEFAULT = "#e0a882";
+/** Stylizované proporce (podle šablony postavy): větší hlava, kratší nohy. */
+const HEAD_SCALE = 1.55;
+const LEG_SCALE = 0.84;
+const TORSO_Y = 0.9 - 0.82 * (1 - LEG_SCALE);
 
 function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) {
   const canvas = document.createElement("canvas");
@@ -128,6 +133,8 @@ export class Figure {
   private torso = new THREE.Group();
   private legsL: THREE.Group[] = [];
   private legsR: THREE.Group[] = [];
+  private kneesL: THREE.Group[] = [];
+  private kneesR: THREE.Group[] = [];
   private moveSpeed = 0;
   private walkPhase = 0;
   private head = new THREE.Group();
@@ -166,171 +173,309 @@ export class Figure {
     const { cls, appearance = {}, eryon, azkar, legion } = this.opts;
     const enemy = !!this.opts.enemy || !!legion || !!azkar;
     const hero = eryon || azkar;
-    const skin = std(appearance.skin || SKIN_DEFAULT, 0, 0.75);
+    const skinTone = appearance.skin || SKIN_DEFAULT;
+    const st = skinTex();
+    const skin = std(skinTone, 0, 0.62, { map: st.map, bumpMap: st.bump, bumpScale: 0.6 });
     const bronzeColor = azkar ? "#3d2c20" : legion ? "#5e4430" : this.opts.enemy ? "#4a3a2c" : eryon ? "#c58a3e" : "#a8743a";
-    const bronze = std(bronzeColor, 0.85, azkar ? 0.3 : enemy ? 0.5 : 0.32);
-    const leather = std(enemy ? "#2a1f19" : "#5a3a22", 0, 0.9);
-    const cloth = std(azkar ? "#5e0d0a" : eryon ? "#8e1b14" : appearance.cloak || (enemy ? appearance.tint || "#4a1414" : "#6b2a1e"), 0, 0.95, { side: THREE.DoubleSide });
+    const bt = bronzeTex(bronzeColor, enemy ? 0.15 : 0.3);
+    const bronze = std("#ffffff", 0.85, azkar ? 0.32 : enemy ? 0.5 : 0.36, { map: bt.map, bumpMap: bt.bump, bumpScale: 0.8, roughnessMap: bt.bump });
+    const lt = leatherTex(enemy ? "#2e231c" : "#6a4428");
+    const leather = std("#ffffff", 0, 0.85, { map: lt.map, bumpMap: lt.bump, bumpScale: 0.9 });
+    const clothColor = azkar ? "#5e0d0a" : eryon ? "#8e1b14" : appearance.cloak || (enemy ? appearance.tint || "#4a1414" : "#6b2a1e");
+    const ct = clothTex(clothColor);
+    const cloth = std("#ffffff", 0, 0.95, { map: ct.map, bumpMap: ct.bump, bumpScale: 0.5, side: THREE.DoubleSide });
+    const linen = std("#ffffff", 0, 0.92, { map: clothTex(cls === "hoplit" ? "#d8ccb0" : "#8a6a48").map, side: THREE.DoubleSide });
     const crestColor = azkar ? "#140806" : eryon ? "#b3160d" : appearance.crest || (enemy ? "#1d1d1d" : "#8a1a12");
-    this.flashMats.push(skin, bronze, leather, cloth);
+    const hairMat = std(enemy ? "#2a2018" : "#5a3a22", 0, 0.85);
+    this.flashMats.push(skin, bronze, leather, cloth, linen);
 
-    // Nohy
-    // Nohy visí z kyčle (skupina), aby se daly rozpohybovat při chůzi.
+    // ---------------- nohy: kyčel (skupina) → stehno, koleno (skupina) → lýtko, sandál
     for (const side of [-1, 1]) {
       const hip = new THREE.Group();
-      hip.position.set(0.1 * side, 0.8, 0);
+      hip.position.set(0.1 * side, 0.82 * LEG_SCALE, 0);
+      hip.scale.y = LEG_SCALE;
       this.root.add(hip);
       (side < 0 ? this.legsR : this.legsL).push(hip);
-      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.62, 4, 10), skin);
-      leg.position.set(0, 0.43 - 0.8, 0);
-      hip.add(leg);
-      const greave = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.075, 0.34, 12, 1, true), cls === "hoplit" ? bronze : leather);
-      greave.position.set(0, 0.27 - 0.8, 0.005);
-      hip.add(greave);
-      const sandal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.22), leather);
-      sandal.position.set(0, 0.025 - 0.8, 0.04);
-      hip.add(sandal);
+      const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.082, 0.26, 6, 12), skin);
+      thigh.position.y = -0.2;
+      thigh.scale.set(1, 1, 1.08);
+      hip.add(thigh);
+      const knee = new THREE.Group();
+      knee.position.y = -0.4;
+      hip.add(knee);
+      (side < 0 ? this.kneesR : this.kneesL).push(knee);
+      const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.066, 0.24, 6, 12), skin);
+      calf.position.y = -0.17;
+      calf.scale.set(1, 1, 1.12);
+      knee.add(calf);
+      if (cls !== "vestec") {
+        // holeně (knémidy) – bronz u štítonoše, kůže u ostatních
+        const greave = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.064, 0.3, 14, 1, true, -Math.PI * 0.75, Math.PI * 1.5), cls === "hoplit" ? bronze : leather);
+        greave.position.set(0, -0.17, 0.006);
+        knee.add(greave);
+      }
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.03, 0.22), leather);
+      sole.position.set(0, -0.395, 0.04);
+      knee.add(sole);
+      const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.12, 4, 8), skin);
+      foot.rotation.x = Math.PI / 2;
+      foot.position.set(0, -0.36, 0.05);
+      knee.add(foot);
+      for (const y of [-0.33, -0.27]) {
+        const strap = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.008, 4, 14), leather);
+        strap.rotation.x = Math.PI / 2;
+        strap.position.y = y;
+        knee.add(strap);
+      }
     }
 
-    // Trup
-    this.torso.position.y = 0.9;
+    // ---------------- trup
+    this.torso.position.y = TORSO_Y;
     this.root.add(this.torso);
     if (cls === "vestec") {
-      const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.36, 0.95, 18, 1, true), cloth);
-      robe.position.y = -0.38;
+      const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.37, 0.98, 22, 4, true), cloth);
+      robe.position.y = -0.39;
       this.torso.add(robe);
-      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.025, 6, 20), bronze);
+      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.025, 6, 24), bronze);
       sash.rotation.x = Math.PI / 2;
       sash.position.y = 0.08;
       this.torso.add(sash);
     } else {
-      const skirtTex = stripesTexture(cls === "hoplit" ? "#b9a888" : "#6a4a2c", cls === "hoplit" ? "#8a785a" : "#4c341f");
-      const skirt = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.2, 0.28, 0.3, 18, 1, true),
-        std("#ffffff", 0, 0.9, { map: skirtTex, side: THREE.DoubleSide }),
-      );
-      skirt.position.y = -0.06;
-      this.torso.add(skirt);
+      // lněná tunika a pteryges – visící pruhy kůže kolem boků
+      const tunic = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.27, 0.32, 20, 1, true), linen);
+      tunic.position.y = -0.1;
+      this.torso.add(tunic);
+      const strips = 14;
+      for (let i = 0; i < strips; i += 1) {
+        const a = (i / strips) * Math.PI * 2;
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.2, 0.012), cls === "hoplit" ? leather : linen);
+        strip.position.set(Math.sin(a) * 0.235, -0.05, Math.cos(a) * 0.2);
+        strip.rotation.y = a;
+        strip.rotation.x = 0.12;
+        this.torso.add(strip);
+        const stud = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 4), bronze);
+        stud.position.set(0, -0.08, 0.008);
+        strip.add(stud);
+      }
     }
     const cuirassProfile = [
-      new THREE.Vector2(0.18, 0),
-      new THREE.Vector2(0.2, 0.08),
-      new THREE.Vector2(0.235, 0.26),
-      new THREE.Vector2(0.24, 0.36),
-      new THREE.Vector2(0.21, 0.48),
-      new THREE.Vector2(0.12, 0.54),
-      new THREE.Vector2(0.06, 0.55),
+      new THREE.Vector2(0.185, 0),
+      new THREE.Vector2(0.205, 0.08),
+      new THREE.Vector2(0.24, 0.26),
+      new THREE.Vector2(0.25, 0.36),
+      new THREE.Vector2(0.22, 0.48),
+      new THREE.Vector2(0.13, 0.545),
+      new THREE.Vector2(0.06, 0.555),
     ];
-    const cuirass = new THREE.Mesh(new THREE.LatheGeometry(cuirassProfile, 20), cls === "lucistnik" ? leather : cls === "vestec" ? cloth : bronze);
+    const muscle = muscleBump();
+    const cuirassMat = cls === "hoplit"
+      ? std("#ffffff", 0.85, enemy ? 0.5 : 0.34, { map: bt.map, bumpMap: muscle.bump, bumpScale: 6 })
+      : cls === "lucistnik"
+        ? std("#ffffff", 0, 0.85, { map: lt.map, bumpMap: lt.bump, bumpScale: 0.9 })
+        : cloth;
+    if (cuirassMat !== cloth) this.flashMats.push(cuirassMat);
+    const cuirass = new THREE.Mesh(new THREE.LatheGeometry(cuirassProfile, 28), cuirassMat);
     cuirass.scale.z = 0.78;
     cuirass.position.y = 0.06;
     this.torso.add(cuirass);
     if (cls !== "vestec") {
-      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.022, 6, 22), leather);
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.195, 0.024, 6, 26), leather);
       belt.rotation.x = Math.PI / 2;
       belt.scale.y = 0.8;
       belt.position.y = 0.08;
       this.torso.add(belt);
+      const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.015), bronze);
+      buckle.position.set(0, 0.08, 0.158);
+      this.torso.add(buckle);
     }
 
-    // Krk a hlava
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.1, 10), skin);
-    neck.position.y = 0.64;
+    // ---------------- krk a hlava
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.062, 0.12, 12), skin);
+    neck.position.y = 0.63;
     this.torso.add(neck);
-    this.head.position.y = 0.77;
+    this.head.position.y = 0.77 + (HEAD_SCALE - 1) * 0.1;
+    this.head.scale.setScalar(HEAD_SCALE);
     this.torso.add(this.head);
-    const face = new THREE.Mesh(new THREE.SphereGeometry(0.105, 18, 14), skin);
-    face.scale.set(0.92, 1.08, 1);
+    // stylizovaná (chibi) hlava: velká, kulatá, velké oči a růžové tváře
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.105, 28, 20), skin);
+    face.scale.set(1, 1.02, 0.96);
     this.head.add(face);
-    const eyeMat = std("#120c08", 0, 0.4);
+    const noseM = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), std(new THREE.Color(skinTone).offsetHSL(0, 0.05, -0.04).getStyle(), 0, 0.6));
+    noseM.scale.set(1.1, 0.9, 0.9);
+    noseM.position.set(0, -0.012, 0.102);
+    this.head.add(noseM);
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.0035, 6, 16, Math.PI * 0.8), std("#7a3a2a", 0, 0.6));
+    smile.rotation.z = Math.PI + Math.PI * 0.1;
+    smile.position.set(0, -0.036, 0.098);
+    this.head.add(smile);
+    const blush = std("#e88a7a", 0, 0.8, { transparent: true, opacity: 0.55 });
+    const white = std("#f4efe8", 0, 0.25);
+    const irisMat = std(enemy ? "#3a2412" : "#6a4022", 0, 0.25);
+    const pupilMat = std("#0c0806", 0, 0.2);
+    const glint = new THREE.MeshBasicMaterial({ color: "#ffffff" });
     for (const side of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 6), eyeMat);
-      eye.position.set(0.036 * side, 0.015, 0.095);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.026, 16, 12), white);
+      eye.scale.set(0.85, 1, 0.45);
+      eye.position.set(0.04 * side, 0.012, 0.088);
       this.head.add(eye);
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.017, 14, 10), irisMat);
+      iris.scale.set(1, 1.1, 0.4);
+      iris.position.set(0.04 * side, 0.01, 0.097);
+      this.head.add(iris);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 8), pupilMat);
+      pupil.scale.set(1, 1.1, 0.4);
+      pupil.position.set(0.04 * side, 0.01, 0.1035);
+      this.head.add(pupil);
+      const shine = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 6, 4), glint);
+      shine.position.set(0.04 * side + 0.006, 0.019, 0.106);
+      this.head.add(shine);
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.006, 0.026, 3, 6), hairMat);
+      brow.rotation.z = Math.PI / 2 - 0.12 * side;
+      brow.position.set(0.041 * side, 0.05, 0.094);
+      this.head.add(brow);
+      const cheek = new THREE.Mesh(new THREE.CircleGeometry(0.02, 16), blush);
+      cheek.position.set(0.066 * side, -0.022, 0.083);
+      cheek.rotation.y = 0.65 * side;
+      this.head.add(cheek);
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), skin);
+      ear.scale.set(0.45, 1, 0.75);
+      ear.position.set(0.102 * side, 0.0, -0.005);
+      this.head.add(ear);
     }
-    const beard = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), std(enemy ? "#1a1410" : "#3a2616", 0, 1));
-    beard.position.set(0, -0.03, 0.04);
-    beard.scale.set(1.1, 1.2, 1);
-    if (cls !== "vestec") this.head.add(beard);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.112, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
+    hair.position.set(0, 0.02, -0.022);
+    hair.rotation.x = -0.35;
+    hair.scale.set(0.97, 1.05, 1.05);
+    this.head.add(hair);
+    if (hero || this.opts.enemy || this.opts.boss) {
+      // plnovous kolem brady (ústa zůstanou vidět)
+      const beard = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45), hairMat);
+      beard.position.set(0, -0.045, 0.045);
+      beard.scale.set(1.05, 1.2, 0.85);
+      this.head.add(beard);
+    }
 
     if (cls === "hoplit") {
-      // Korintská přilba s hřebenem z koňských žíní
-      const helm = new THREE.Mesh(new THREE.SphereGeometry(0.128, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), bronze);
-      helm.scale.set(0.95, 1.12, 1.05);
-      helm.position.y = 0.012;
+      // Attická přilba: otevřený obličej, lícnice po stranách, hřeben z žíní
+      const helmProfile = [
+        new THREE.Vector2(0.0, 0.17), new THREE.Vector2(0.06, 0.165), new THREE.Vector2(0.11, 0.13), new THREE.Vector2(0.13, 0.06),
+        new THREE.Vector2(0.128, -0.02), new THREE.Vector2(0.118, -0.1), new THREE.Vector2(0.105, -0.15), new THREE.Vector2(0.1, -0.16),
+      ];
+      const helmGeo = new THREE.LatheGeometry(helmProfile, 40, Math.PI * 0.3, Math.PI * 1.4);
+      const helm = new THREE.Mesh(helmGeo, bronze);
+      helm.scale.set(1.0, 1.0, 1.04);
       this.head.add(helm);
+      // obruba přilby a nýty lícnic
+      const crown = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 8, 40), bronze);
+      crown.rotation.x = Math.PI / 2;
+      crown.position.y = 0.07;
+      this.head.add(crown);
       for (const side of [-1, 1]) {
-        const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.11, 0.09), bronze);
-        cheek.position.set(0.085 * side, -0.04, 0.055);
-        cheek.rotation.y = -0.35 * side;
-        this.head.add(cheek);
+        const rivet = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), bronze);
+        rivet.position.set(0.128 * side, 0.0, 0.0);
+        this.head.add(rivet);
       }
-      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.07, 0.02), bronze);
-      nose.position.set(0, 0.0, 0.118);
-      this.head.add(nose);
-      const crestMat = std(crestColor, 0, 1);
-      const crest = new THREE.Mesh(new THREE.TorusGeometry(hero ? 0.15 : 0.13, hero ? 0.04 : 0.03, 8, 20, Math.PI), crestMat);
-      crest.rotation.y = Math.PI / 2;
-      crest.position.y = 0.09;
-      crest.scale.set(1, hero ? 1.25 : 1, 0.6);
+      // hřeben z koňských žíní: držák + vějíř z tenkých vláken
+      const crestTex = canvasTexture(64, 128, (ctx) => {
+        ctx.fillStyle = crestColor;
+        ctx.fillRect(0, 0, 64, 128);
+        for (let i = 0; i < 64; i += 1) {
+          ctx.strokeStyle = `rgba(${Math.random() < 0.5 ? "0,0,0" : "255,255,255"},${0.06 + Math.random() * 0.12})`;
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i + (Math.random() - 0.5) * 6, 128);
+          ctx.stroke();
+        }
+      });
+      const crestMat = std("#ffffff", 0, 0.95, { map: crestTex, side: THREE.DoubleSide });
+      const holder = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.18), bronze);
+      holder.position.set(0, 0.17, -0.01);
+      this.head.add(holder);
+      const shape = new THREE.Shape();
+      const len = hero ? 0.44 : 0.36;
+      const tall = hero ? 0.15 : 0.12;
+      shape.moveTo(-0.13, 0);
+      shape.quadraticCurveTo(-0.12, tall, 0.02, tall + 0.02);
+      shape.quadraticCurveTo(len - 0.12, tall, len - 0.1, -0.12);
+      shape.quadraticCurveTo(0.12, 0.02, -0.13, 0);
+      const crestGeo = new THREE.ExtrudeGeometry(shape, { depth: hero ? 0.05 : 0.04, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.008, bevelSegments: 2, curveSegments: 10 });
+      crestGeo.translate(0, 0, -(hero ? 0.025 : 0.02));
+      crestGeo.rotateY(-Math.PI / 2);
+      const uv = crestGeo.attributes.uv as THREE.BufferAttribute;
+      for (let i = 0; i < uv.count; i += 1) uv.setXY(i, uv.getX(i) * 2, uv.getY(i) * 2);
+      const crest = new THREE.Mesh(crestGeo, crestMat);
+      crest.position.set(0, 0.18, 0);
       this.head.add(crest);
-      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.04, hero ? 0.42 : 0.3, 8), crestMat);
-      tail.position.set(0, -0.02, -0.17);
-      tail.rotation.x = 0.35;
-      this.head.add(tail);
       this.flashMats.push(crestMat);
       if (azkar) {
         // zlatá koruna paprsků rudého slunce na přilbě vojevůdce
         const gold = std("#d8a24a", 0.9, 0.25, { emissive: "#3a1a00" });
-        for (let i = 0; i < 7; i += 1) {
-          const ray = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.09, 4), gold);
-          const a = -Math.PI / 2 + (i - 3) * 0.32;
-          ray.position.set(Math.sin(a + Math.PI / 2) * 0.13, 0.08 + Math.cos(a + Math.PI / 2) * 0.03, 0.08 + Math.abs(i - 3) * -0.02);
-          ray.rotation.z = -(i - 3) * 0.3;
+        for (let i = 0; i < 9; i += 1) {
+          const ray = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.11, 5), gold);
+          const a = (i - 4) * 0.28;
+          ray.position.set(Math.sin(a) * 0.12, 0.13 + Math.cos(a) * 0.02, Math.cos(a) * 0.08);
+          ray.rotation.set(0.5, 0, -a * 0.9);
           this.head.add(ray);
         }
       }
     } else if (cls === "lucistnik") {
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.118, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), leather);
-      cap.position.y = 0.02;
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.42), leather);
+      cap.position.y = 0.045;
       this.head.add(cap);
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.108, 0.014, 6, 18), bronze);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.014, 6, 22), bronze);
       band.rotation.x = Math.PI / 2;
-      band.position.y = 0.03;
+      band.position.y = 0.06;
       this.head.add(band);
+      const flapL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.09, 0.07), leather);
+      for (const side of [-1, 1]) {
+        const f = flapL.clone();
+        f.position.set(0.1 * side, -0.03, -0.01);
+        this.head.add(f);
+      }
     } else {
-      const hood = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.7), cloth);
-      hood.position.set(0, 0.02, -0.02);
-      hood.scale.set(1, 1.1, 1.1);
+      const hood = new THREE.Mesh(new THREE.SphereGeometry(0.145, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.72), cloth);
+      hood.position.set(0, 0.02, -0.025);
+      hood.scale.set(1, 1.12, 1.12);
       this.head.add(hood);
-      const circlet = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.01, 6, 18), std("#e0b45a", 0.9, 0.25, { emissive: "#5a3000" }));
+      const circlet = new THREE.Mesh(new THREE.TorusGeometry(0.112, 0.01, 6, 22), std("#e0b45a", 0.9, 0.25, { emissive: "#5a3000" }));
       circlet.rotation.x = Math.PI / 2 - 0.15;
       circlet.position.y = 0.05;
       this.head.add(circlet);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.014), std("#ff7a2a", 0.2, 0.2, { emissive: "#ff5a10", emissiveIntensity: 0.8 }));
+      gem.position.set(0, 0.07, 0.11);
+      this.head.add(gem);
     }
 
-    // Paže
+    // ---------------- paže
     const buildArm = (group: THREE.Group, side: number, forearm?: THREE.Group) => {
       group.position.set(0.25 * side, 0.5, 0);
       this.torso.add(group);
-      const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), cls === "hoplit" ? bronze : cls === "vestec" ? cloth : leather);
-      shoulder.scale.set(1.15, 0.85, 1.05);
+      const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.078, 14, 10), cls === "hoplit" ? bronze : cls === "vestec" ? cloth : leather);
+      shoulder.scale.set(1.2, 0.85, 1.1);
       group.add(shoulder);
-      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.2, 4, 8), cls === "vestec" ? cloth : skin);
+      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.058, 0.18, 6, 12), cls === "vestec" ? cloth : skin);
       upper.position.y = -0.16;
+      upper.scale.set(1, 1, 1.1);
       group.add(upper);
       const lower = forearm ?? new THREE.Group();
       lower.position.y = -0.3;
       group.add(lower);
-      const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.048, 0.2, 4, 8), skin);
+      const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.19, 6, 12), cls === "vestec" ? cloth : skin);
       fore.position.y = -0.13;
       lower.add(fore);
-      const bracer = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.052, 0.13, 10, 1, true), cls === "hoplit" ? bronze : leather);
-      bracer.position.y = -0.15;
-      lower.add(bracer);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), skin);
-      hand.position.y = -0.28;
+      if (cls !== "vestec") {
+        const bracer = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.053, 0.13, 12, 1, true), cls === "hoplit" ? bronze : leather);
+        bracer.position.y = -0.17;
+        lower.add(bracer);
+      }
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), skin);
+      hand.scale.set(0.85, 1.05, 0.6);
+      hand.position.y = -0.285;
       lower.add(hand);
+      const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.013, 0.03, 3, 6), skin);
+      thumb.position.set(-0.035 * side, -0.27, 0.02);
+      thumb.rotation.z = 0.6 * side;
+      lower.add(thumb);
       return lower;
     };
     const lowerR = buildArm(this.armR, -1, this.forearmR);
@@ -341,8 +486,9 @@ export class Figure {
     this.forearmL.rotation.x = -this.restBendL;
     this.armL.rotation.x = cls === "hoplit" || this.opts.shield ? -0.35 : -0.15;
 
-    // Zbraně – držák v dlani kompenzuje ohnuté předloktí, takže zbraň v klidu stojí svisle.
-    const wood = std("#5b3b22", 0, 0.85);
+    // ---------------- zbraně – držák v dlani kompenzuje ohnuté předloktí
+    const wt = woodTex();
+    const wood = std("#c8a888", 0, 0.8, { map: wt.map, bumpMap: wt.bump, bumpScale: 0.5 });
     const grip = (lower: THREE.Group, bend: number) => {
       const holder = new THREE.Group();
       holder.position.set(0, -0.28, 0.02);
@@ -352,12 +498,17 @@ export class Figure {
     };
     if (cls === "hoplit") {
       this.weapon = grip(lowerR, this.restBendR);
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 2.3, 8), wood);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.021, 2.3, 10), wood);
       shaft.position.y = 0.45;
-      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.24, 8), bronze);
-      tip.position.y = 1.26;
+      const tipShape = new THREE.LatheGeometry([new THREE.Vector2(0, 0.17), new THREE.Vector2(0.035, 0.05), new THREE.Vector2(0.03, 0.0), new THREE.Vector2(0.02, -0.06)], 8);
+      const tip = new THREE.Mesh(tipShape, bronze);
+      tip.scale.z = 0.35;
+      tip.position.y = 1.18;
       shaft.add(tip);
-      const butt = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 6), bronze);
+      const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.22, 10), leather);
+      wrap.position.y = -0.45;
+      shaft.add(wrap);
+      const butt = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.14, 8), bronze);
       butt.position.y = -1.2;
       butt.rotation.x = Math.PI;
       shaft.add(butt);
@@ -367,30 +518,43 @@ export class Figure {
       const yaw = new THREE.Group();
       yaw.rotation.y = Math.PI / 2;
       holder.add(yaw);
-      const bow = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.018, 6, 24, Math.PI * 0.8), wood);
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.018, 8, 32, Math.PI * 0.8), wood);
       bow.rotation.z = Math.PI * 0.6;
       bow.position.x = 0.46;
       yaw.add(bow);
+      const bowGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.1, 8), leather);
+      bowGrip.position.set(0.0, 0, 0);
+      yaw.add(bowGrip);
       const string = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.86, 4), std("#d8cfb8", 0, 0.6));
       string.position.x = 0.31;
       yaw.add(string);
-      const quiver = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.5, 10), leather);
+      const quiver = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.5, 12), leather);
       quiver.position.set(0.08, 0.35, -0.2);
       quiver.rotation.z = -0.4;
       this.torso.add(quiver);
-      for (let i = 0; i < 4; i += 1) {
-        const arrow = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.2, 4), std("#c8b48a", 0, 0.8));
-        arrow.position.set(-0.02 + i * 0.015, 0.32, 0);
+      const fletch = std("#e8dcc0", 0, 0.9, { side: THREE.DoubleSide });
+      for (let i = 0; i < 5; i += 1) {
+        const arrow = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.22, 4), wood);
+        arrow.position.set(-0.025 + i * 0.013, 0.32, (i % 2) * 0.012);
         quiver.add(arrow);
+        const f = new THREE.Mesh(new THREE.PlaneGeometry(0.02, 0.05), fletch);
+        f.position.y = 0.09;
+        arrow.add(f);
       }
     } else {
       this.weapon = grip(lowerR, this.restBendR);
-      const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.026, 1.7, 8), wood);
+      const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.026, 1.7, 10), wood);
       staff.position.y = 0.3;
       this.weapon.add(staff);
-      const head = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.014, 6, 14), bronze);
+      const head = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.014, 8, 18), bronze);
       head.position.y = 0.88;
       staff.add(head);
+      for (let i = 0; i < 3; i += 1) {
+        const prong = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.09, 5), bronze);
+        const a = (i / 3) * Math.PI * 2;
+        prong.position.set(Math.cos(a) * 0.04, 0.95, Math.sin(a) * 0.04);
+        staff.add(prong);
+      }
       const flameTex = canvasTexture(64, 64, (ctx) => {
         const g = ctx.createRadialGradient(32, 36, 2, 32, 32, 30);
         g.addColorStop(0, "rgba(255,240,200,1)");
@@ -409,12 +573,25 @@ export class Figure {
     }
 
     if (this.opts.shield ?? cls === "hoplit") {
-      const shieldMat = std("#ffffff", 0.75, 0.38, { map: shieldTexture(bronzeColor, eryon ? "#2a1408" : azkar ? "#d8a24a" : enemy ? "#a8261a" : "#3a2210", eryon ? "eryon" : enemy ? "redsun" : "sun") });
-      const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 32), [bronze, shieldMat, bronze]);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.025, 8, 32), bronze);
+      // aspis: vypouklý štít, přední strana s emblémem (rovinné UV)
+      const shieldMat = std("#ffffff", 0.75, 0.38, {
+        map: shieldTexture(bronzeColor, eryon ? "#2a1408" : azkar ? "#d8a24a" : enemy ? "#a8261a" : "#3a2210", eryon ? "eryon" : enemy ? "redsun" : "sun"),
+        bumpMap: bt.bump,
+        bumpScale: 0.6,
+      });
+      const R = 0.4;
+      const dome = new THREE.SphereGeometry(R * 2.2, 40, 10, 0, Math.PI * 2, 0, Math.asin(R / (R * 2.2)));
+      const dp = dome.attributes.position as THREE.BufferAttribute;
+      const duv = dome.attributes.uv as THREE.BufferAttribute;
+      for (let i = 0; i < dp.count; i += 1) duv.setXY(i, dp.getX(i) / (2 * R) + 0.5, -dp.getZ(i) / (2 * R) + 0.5);
+      dome.translate(0, -R * 2.2 * Math.cos(Math.asin(1 / 2.2)), 0);
+      const face = new THREE.Mesh(dome, shieldMat);
+      const back = new THREE.Mesh(new THREE.CircleGeometry(R, 40), leather);
+      back.rotation.x = Math.PI / 2;
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.03, 10, 40), bronze);
       rim.rotation.x = Math.PI / 2;
-      rim.position.y = 0.026;
-      shield.add(rim);
+      const shield = new THREE.Group();
+      shield.add(face, back, rim);
       shield.rotation.x = Math.PI / 2;
       this.shield = new THREE.Group();
       // štít opřený o levý bok – postava zůstane vidět, při bloku se přesune před tělo
@@ -425,15 +602,17 @@ export class Figure {
       this.flashMats.push(shieldMat);
     }
 
-    // Plášť
+    // ---------------- plášť
     if (cls !== "vestec" || hero) {
-      const geo = new THREE.PlaneGeometry(0.56, 1.15, 6, 14);
+      const geo = new THREE.PlaneGeometry(0.58, 1.15, 10, 18);
       geo.translate(0, -0.575, 0);
       const pos = geo.attributes.position as THREE.BufferAttribute;
       for (let i = 0; i < pos.count; i += 1) {
         const x = pos.getX(i);
         const y = pos.getY(i);
-        pos.setZ(i, -Math.abs(x) * 0.35 - 0.03 * (-y));
+        // záhyby látky
+        const fold = Math.sin(x * 26) * 0.012 * (0.4 - y);
+        pos.setZ(i, -Math.abs(x) * 0.35 - 0.03 * (-y) + fold);
         pos.setX(i, x * (1 + -y * 0.25));
       }
       geo.computeVertexNormals();
@@ -442,6 +621,10 @@ export class Figure {
       this.cloak.position.set(0, 0.52, -0.17);
       this.cloak.rotation.x = 0.08;
       this.torso.add(this.cloak);
+      const clasp = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.012, 14), bronze);
+      clasp.rotation.x = Math.PI / 2;
+      clasp.position.set(0.17, 0.52, 0.06);
+      this.torso.add(clasp);
     }
   }
 
@@ -553,11 +736,16 @@ export class Figure {
       const swing = Math.sin(this.walkPhase) * 0.6 * k;
       for (const leg of this.legsL) leg.rotation.x = swing;
       for (const leg of this.legsR) leg.rotation.x = -swing;
+      // koleno se ohne, když noha jde dozadu (krok)
+      const bendL = Math.max(0, -Math.sin(this.walkPhase - 0.6)) * 0.9 * k;
+      const bendR = Math.max(0, Math.sin(this.walkPhase - 0.6)) * 0.9 * k;
+      for (const kn of this.kneesL) kn.rotation.x = bendL;
+      for (const kn of this.kneesR) kn.rotation.x = bendR;
       this.armR.rotation.x = swing * 0.5;
       this.root.position.y = Math.abs(Math.cos(this.walkPhase)) * 0.06 * k;
     }
     if (!this.dead) {
-      this.torso.position.y = 0.9 + Math.sin(t * 1.6) * 0.008;
+      this.torso.position.y = TORSO_Y + Math.sin(t * 1.6) * 0.008;
       this.head.rotation.y = Math.sin(t * 0.4) * 0.12;
       this.armL.rotation.z = 0.12 + Math.sin(t * 1.6) * 0.02;
     }

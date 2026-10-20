@@ -54,7 +54,29 @@ takže chůze, souboje i rozhovory fungují beze změny.
 Doporučené zdroje modelů s licencí pro hry: vlastní tvorba v Blenderu, Quaternius, Kenney (CC0),
 Mixamo pro animace postav.
 
-## 3. Kde se kreslí co
+## 3. Procedurální textury (od 20. 10. 2026)
+
+`src/game/ashes/three/textures.ts` vyrábí dlaždicové textury přímo v prohlížeči (bez souborů):
+bronz s patinou, kůže, látka, pleť, svalový kyrys (reliéf), tráva, suchá tráva, písek, skála,
+cesta, dlažba, omítka, kamenné kvádry, střešní tašky, dřevo a srst zvířat.
+
+- Terén míchá 6 povrchů podle vah ve vrcholech (`splatA`, `splatB`) a vzorkuje je ve dvou měřítcích,
+  aby se neopakoval vzor.
+- Stavby používají `worldMapped()` – textura se nanáší podle světových souřadnic (triplanárně),
+  takže nepotřebují UV a měřítko je všude stejné.
+- Scéna má environment mapu z oblohy, kovy (bronz) proto odrážejí okolí.
+- Postavy: tvarované hlavy (oči, obočí, nos, ústa, uši, vlasy, vousy), korintská přilba s hřebenem,
+  svalový kyrys, pteryges, kolena, sandály, vypouklý štít aspis.
+
+Styl postav a zvířat podle šablon (20. 10. 2026): stylizované „chibi“ proporce – větší hlava,
+velké lesklé oči, obočí, růžové tváře a úsměv, kratší nohy; výzbroj zůstává řecká (attická přilba
+s hřebenem, aspis, kopí). Konstanty `HEAD_SCALE`, `LEG_SCALE` ve `three/figure.ts`.
+Zvířata (`world/animals.ts`) jsou skládaná z kulatých tvarů se srstí: ovce, koza, kráva, prase, pes,
+slepice, jelen, laň, kanec, vlk, medvěd, veverka, kůň a ptáci (racek, sýkorka, červenka, vrána).
+
+Textury lze kdykoli nahradit obrázky: stačí místo funkce vracet `TextureLoader().load(...)`.
+
+## 4. Kde se kreslí co
 
 | Soubor | Obsah |
 | --- | --- |
@@ -64,7 +86,7 @@ Mixamo pro animace postav.
 | `src/game/ashes/three/fx.ts` | oheň, záře |
 | `src/game/ashes/world/assets.ts` | kvalita a registr modelů |
 
-## 4. Další možné kroky
+## 5. Další možné kroky
 
 - textury terénu (splat mapa: tráva / písek / skála / cesta) místo barev ve vrcholech
 - voda se shaderem (odlesky, pěna u břehu)
