@@ -2,12 +2,23 @@
 
 const path = require("node:path");
 const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
+const { createUpdater } = require("./updater.cjs");
+
+// Výkon hry: grafická karta i na kartách, které má Chromium na černé listině,
+// rasterizace na GPU a žádné omezování snímků na pozadí.
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("force_high_performance_gpu");
 
 const REFERENCE_WIDTH = 1920;
 const REFERENCE_HEIGHT = 1080;
 
 let mainWindow = null;
 let gameWindow = null;
+let updater = null;
+
+const gameRunning = () => Boolean(gameWindow && !gameWindow.isDestroyed());
 
 // Ashes of Eryon běží jako 3D webová hra na studiovoxario.com (stejný účet,
 // autoritativní server v databázi). Launcher ji otevírá ve vlastním okně.
@@ -36,6 +47,7 @@ function openGameWindow() {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
+      backgroundThrottling: false,
       devTools: !app.isPackaged
     }
   });
@@ -43,6 +55,11 @@ function openGameWindow() {
   gameWindow.on("leave-full-screen", () => gameWindow?.setMenuBarVisibility(false));
   gameWindow.on("closed", () => {
     gameWindow = null;
+    // aktualizace launcheru stažená během hraní se nainstaluje hned po zavření hry
+    if (updater?.ready) {
+      updater.apply();
+      return;
+    }
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.show();
       mainWindow.webContents.send("launcher:game-closed");
@@ -201,6 +218,12 @@ function registerIpc() {
     void shell.openExternal(`${GAME_ORIGIN}/auth?next=/hra`);
   });
 
+  ipcMain.handle("launcher:update:status", () => updater?.status ?? null);
+  ipcMain.handle("launcher:update:check", () => updater?.check() ?? null);
+  ipcMain.handle("launcher:update:full", () => {
+    void shell.openExternal(`${GAME_ORIGIN}/download`);
+  });
+
   ipcMain.handle("launcher:window:get-state", () => ({
     maximized: Boolean(mainWindow?.isMaximized()),
     referenceWidth: REFERENCE_WIDTH,
@@ -223,6 +246,13 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     registerIpc();
     createMainWindow();
+    updater = createUpdater({
+      onStatus: (status) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("launcher:update", status);
+      },
+      canRestart: () => !gameRunning()
+    });
+    updater.start();
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
