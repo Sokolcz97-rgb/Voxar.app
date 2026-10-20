@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { Fire } from "../three/fx";
 import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHero } from "../types";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Wildlife } from "./animals";
+import { clothTex, dirtTex, dryGrassTex, grassTex, pavingTex, plasterTex, rockTex, roofTex, sandTex, stoneBlockTex, woodTex, worldMapped } from "../three/textures";
 import { assets, createFigure, QUALITY, type HeroFigure, type ModelSlot, type QualitySettings } from "./assets";
 import {
   AQUEDUCT, BEACONS, BUILDINGS, CITY, CAMP, ENEMY_CAMPS, MEMORIAL, NPCS, REGION_ENEMIES, RESPAWN, SAFE, SHIPS, SPAWN, WORLD_HALF, WRECKS,
@@ -223,6 +225,21 @@ export class OpenWorld {
     const sky = new THREE.Mesh(geo, mat);
     sky.renderOrder = -10;
     this.scene.add(sky);
+    // osvětlení z okolí (environment map) – kovy (bronz) odrážejí oblohu a zem
+    try {
+      const envScene = new THREE.Scene();
+      envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), mat));
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(9.5, 32), new THREE.MeshBasicMaterial({ color: "#5a4a32" }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.6;
+      envScene.add(ground);
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      this.scene.environment = pmrem.fromScene(envScene, 0.02).texture;
+      this.scene.environmentIntensity = 0.75;
+      pmrem.dispose();
+    } catch {
+      /* bez environment mapy */
+    }
     // hory na obzoru (siluety)
     const mtn = std("#3a3238", 1, { flatShading: true });
     const r = rng(7);
@@ -237,7 +254,7 @@ export class OpenWorld {
   }
 
   private buildLights() {
-    this.scene.add(new THREE.HemisphereLight("#b8c4e0", "#5a5032", 1.15));
+    this.scene.add(new THREE.HemisphereLight("#b8c4e0", "#5a5032", 0.8));
     const sun = new THREE.DirectionalLight("#ffc890", 2.6);
     sun.castShadow = this.q.shadows;
     sun.shadow.mapSize.set(this.q.shadowSize, this.q.shadowSize);
@@ -261,33 +278,96 @@ export class OpenWorld {
     const geo = new THREE.PlaneGeometry(size, size, seg, seg);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
-    const colors = new Float32Array(pos.count * 3);
-    const c = new THREE.Color();
-    const sand = new THREE.Color("#c4ab80"), grass = new THREE.Color("#6b7440"), dry = new THREE.Color("#968a56");
-    const rock = new THREE.Color("#6e675d"), dark = new THREE.Color("#4b463f"), road = new THREE.Color("#8d7c62"), pave = new THREE.Color("#a49882");
-    const seabed = new THREE.Color("#3e4a44"), lush = new THREE.Color("#4e6630");
-    for (let i = 0; i < pos.count; i += 1) {
-      const x = pos.getX(i), z = pos.getZ(i);
-      const h = heightAt(x, z);
-      pos.setY(i, h);
-      const n = fbm(x * 0.08, z * 0.08);
-      if (h < 0.1) c.copy(seabed).lerp(sand, Math.max(0, Math.min(1, (h + 2) / 2.1)));
-      else if (h < 0.95 && !inCity(x, z)) c.copy(sand).lerp(grass, Math.max(0, (h - 0.6) * 2.5) * 0.6);
-      else if (inCity(x, z)) c.copy(pave).lerp(dark, n * 0.25);
-      else if (h > 9) c.copy(rock).lerp(dark, n * 0.6);
-      else {
-        const patch = fbm(x * 0.025 + 7, z * 0.025 - 3);
-        c.copy(grass).lerp(dry, Math.min(1, n * 1.4 - 0.2)).lerp(lush, Math.max(0, patch - 0.45) * 1.6).lerp(rock, Math.max(0, (h - 5) / 6) * 0.7);
-      }
-      const rd = roadDistance(x, z);
-      if (rd < 2.6 && h > 0.3) c.lerp(road, (1 - rd / 2.6) * 0.85);
-      colors[i * 3] = c.r;
-      colors[i * 3 + 1] = c.g;
-      colors[i * 3 + 2] = c.b;
-    }
-    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    for (let i = 0; i < pos.count; i += 1) pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
     geo.computeVertexNormals();
-    this.terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96 }));
+    const nrm = geo.attributes.normal as THREE.BufferAttribute;
+    // váhy povrchů: A = tráva, suchá tráva, písek, skála; B = cesta, dlažba
+    const splatA = new Float32Array(pos.count * 4);
+    const splatB = new Float32Array(pos.count * 2);
+    const tint = new Float32Array(pos.count * 3);
+    const smooth = (a: number, b: number, x: number) => {
+      const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+      return t * t * (3 - 2 * t);
+    };
+    for (let i = 0; i < pos.count; i += 1) {
+      const x = pos.getX(i), z = pos.getZ(i), h = pos.getY(i);
+      const n = fbm(x * 0.08, z * 0.08);
+      const patch = fbm(x * 0.025 + 7, z * 0.025 - 3);
+      const slope = 1 - nrm.getY(i);
+      let g = 0, d = 0, sa = 0, r = 0, road = 0, pave = 0;
+      let tr = 1, tg = 1, tb = 1;
+      if (inCity(x, z) && h > 2) {
+        pave = 1;
+      } else if (h < 0.95) {
+        sa = 1 - smooth(0.55, 0.95, h) * 0.6;
+        g = 1 - sa;
+        if (h < 0.1) {
+          // mořské dno pod hladinou – tmavší a zelenavé
+          const k = smooth(0.1, -2, h);
+          tr = 1 - k * 0.55;
+          tg = 1 - k * 0.45;
+          tb = 1 - k * 0.4;
+        }
+      } else {
+        const dry = smooth(0.35, 0.7, n);
+        g = 1 - dry;
+        d = dry;
+        const lush = smooth(0.45, 0.75, patch);
+        tr -= lush * 0.18;
+        tb -= lush * 0.15;
+      }
+      r = Math.max(smooth(5, 11, h), smooth(0.18, 0.42, slope)) * (pave ? 0 : 1);
+      const rd = roadDistance(x, z);
+      if (rd < 2.8 && h > 0.3 && !pave) road = 1 - smooth(1.4, 2.8, rd);
+      // normalizace
+      const keep = 1 - r;
+      g *= keep;
+      d *= keep;
+      sa *= keep;
+      const sum = g + d + sa + r || 1;
+      splatA.set([g / sum, d / sum, sa / sum, r / sum], i * 4);
+      splatB.set([road, pave], i * 2);
+      const v = 0.92 + n * 0.16;
+      tint.set([tr * v, tg * v, tb * v], i * 3);
+    }
+    geo.setAttribute("splatA", new THREE.BufferAttribute(splatA, 4));
+    geo.setAttribute("splatB", new THREE.BufferAttribute(splatB, 2));
+    geo.setAttribute("color", new THREE.BufferAttribute(tint, 3));
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+    const tex = [grassTex(), dryGrassTex(), sandTex(), rockTex(), dirtTex(), pavingTex()];
+    mat.onBeforeCompile = (shader) => {
+      ["tG", "tD", "tS", "tR", "tDi", "tP"].forEach((name, i) => {
+        shader.uniforms[name] = { value: tex[i].map };
+        shader.uniforms[`${name}h`] = { value: tex[i].bump };
+      });
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute vec4 splatA;\nattribute vec2 splatB;\nvarying vec4 vSA;\nvarying vec2 vSB;\nvarying vec3 vWP;")
+        .replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvSA = splatA;\nvSB = splatB;\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          varying vec4 vSA; varying vec2 vSB; varying vec3 vWP;
+          uniform sampler2D tG, tD, tS, tR, tDi, tP, tGh, tDh, tSh, tRh, tDih, tPh;
+          vec3 tri(sampler2D t, vec2 a, vec2 b) { return mix(texture2D(t, a).rgb, texture2D(t, b).rgb, 0.35); }
+          float trih(sampler2D t, vec2 a, vec2 b) { return mix(texture2D(t, a).r, texture2D(t, b).r, 0.35); }`,
+        )
+        .replace(
+          "#include <map_fragment>",
+          `#include <map_fragment>
+          vec2 uvA = vWP.xz * 0.25;
+          vec2 uvB = vWP.xz * 0.057 + vec2(0.31, 0.77);
+          vec3 col = tri(tG, uvA, uvB) * vSA.x + tri(tD, uvA, uvB) * vSA.y + tri(tS, uvA * 0.8, uvB) * vSA.z + tri(tR, uvA * 0.6, uvB) * vSA.w;
+          float hh = trih(tGh, uvA, uvB) * vSA.x + trih(tDh, uvA, uvB) * vSA.y + trih(tSh, uvA * 0.8, uvB) * vSA.z + trih(tRh, uvA * 0.6, uvB) * vSA.w;
+          col = mix(col, tri(tDi, uvA, uvB), vSB.x);
+          hh = mix(hh, trih(tDih, uvA, uvB), vSB.x);
+          col = mix(col, texture2D(tP, vWP.xz * 0.22).rgb, vSB.y);
+          hh = mix(hh, texture2D(tPh, vWP.xz * 0.22).r, vSB.y);
+          diffuseColor.rgb *= col * (0.78 + hh * 0.42) * 1.15;`,
+        );
+    };
+    mat.customProgramCacheKey = () => "ashes-terrain-v2";
+    this.terrain = new THREE.Mesh(geo, mat);
     this.terrain.receiveShadow = true;
     this.scene.add(this.terrain);
   }
@@ -336,11 +416,11 @@ export class OpenWorld {
   }
 
   private buildCity() {
-    const stone = std("#cfc6b2", 0.92);
-    const stoneDark = std("#a99f8b", 0.95);
-    const plaster = std("#e4ddcc", 0.9);
-    const roof = std("#a2553a", 0.85, { flatShading: true });
-    const wood = std("#5b3b22", 0.85);
+    const stone = worldMapped(std("#f2ece0", 0.92), stoneBlockTex(), 4.5);
+    const stoneDark = worldMapped(std("#d2cabb", 0.95), stoneBlockTex(), 3.2);
+    const plaster = worldMapped(std("#ffffff", 0.9), plasterTex(), 3);
+    const roof = worldMapped(std("#ffffff", 0.85, { flatShading: true }), roofTex(), 2.2, 0.8);
+    const wood = worldMapped(std("#ffffff", 0.85), woodTex(), 2);
     const bronze = new THREE.MeshStandardMaterial({ color: "#b07a3a", metalness: 0.8, roughness: 0.35 });
     const cityY = CITY.height;
 
@@ -422,7 +502,7 @@ export class OpenWorld {
         continue;
       }
       if (b.kind === "tent" || b.kind === "bigtent") {
-        const cloth = std(b.kind === "bigtent" ? "#5e0d0a" : "#3b2a22", 0.95, { flatShading: true, side: THREE.DoubleSide });
+        const cloth = std("#ffffff", 0.95, { flatShading: true, side: THREE.DoubleSide, map: clothTex(b.kind === "bigtent" ? "#6e120c" : "#4b382c").map });
         const tent = new THREE.Mesh(new THREE.ConeGeometry(b.w / 1.4, b.h, b.kind === "bigtent" ? 8 : 4, 1, true), cloth);
         tent.position.set(b.x, y + b.h / 2, b.z);
         tent.castShadow = true;
@@ -431,9 +511,9 @@ export class OpenWorld {
         this.colliders.push({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2 });
         continue;
       }
-      const body = this.addBox(b, b.kind === "hut" ? std("#7a6a52", 0.95) : plaster, y - 0.2);
-      body.material = b.kind === "hut" ? std("#7a6a52", 0.95) : plaster;
-      const roofMesh = new THREE.Mesh(new THREE.ConeGeometry(Math.max(b.w, b.d) * 0.75, 1.6, 4), b.kind === "hut" ? std("#6a5a3a", 1, { flatShading: true }) : roof);
+      const hutMat = worldMapped(std("#c8b498", 0.95), woodTex(), 1.8);
+      this.addBox(b, b.kind === "hut" ? hutMat : plaster, y - 0.2);
+      const roofMesh = new THREE.Mesh(new THREE.ConeGeometry(Math.max(b.w, b.d) * 0.75, 1.6, 4), b.kind === "hut" ? worldMapped(std("#b8a070", 1, { flatShading: true }), woodTex(), 1.5) : roof);
       roofMesh.rotation.y = Math.PI / 4;
       roofMesh.scale.set(b.w / Math.max(b.w, b.d), 1, b.d / Math.max(b.w, b.d));
       roofMesh.position.set(b.x, y - 0.2 + b.h + 0.8, b.z);
@@ -527,8 +607,8 @@ export class OpenWorld {
   }
 
   private buildCountryside() {
-    const stone = std("#8a8170", 0.92, { flatShading: true });
-    const wood = std("#4a3020", 0.9);
+    const stone = worldMapped(std("#c8bfae", 0.92), stoneBlockTex(), 3.5);
+    const wood = worldMapped(std("#d8c8b8", 0.9), woodTex(), 2);
     // akvadukt
     const [a, b] = AQUEDUCT;
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
@@ -559,7 +639,7 @@ export class OpenWorld {
       }
     }
     // vraky na Bezejmenném břehu
-    const hullMat = std("#3e2a1c", 0.95, { side: THREE.DoubleSide });
+    const hullMat = worldMapped(std("#9a7a5c", 0.95, { side: THREE.DoubleSide }), woodTex(), 1.6);
     for (const w of WRECKS) {
       const hull = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 7, 12, 1, true, 0, Math.PI), hullMat);
       hull.rotation.set(Math.PI / 2, w.r, Math.PI);
@@ -683,27 +763,74 @@ export class OpenWorld {
     };
     const inst = (geo: THREE.BufferGeometry, mat: THREE.Material, mats: THREE.Matrix4[]) => {
       const im = new THREE.InstancedMesh(geo, mat, mats.length);
-      mats.forEach((m, i) => im.setMatrixAt(i, m));
+      const tint = new THREE.Color();
+      mats.forEach((m, i) => {
+        im.setMatrixAt(i, m);
+        // každý strom/kámen trochu jiný odstín
+        const k = 0.82 + ((i * 2654435761) % 1000) / 1000 * 0.3;
+        im.setColorAt(i, tint.setRGB(k, k * (0.97 + ((i * 7) % 5) * 0.012), k * 0.95));
+      });
       im.castShadow = true;
       im.receiveShadow = true;
       this.scene.add(im);
     };
+    // organický tvar koruny: vrcholy posunuté šumem + tmavší spodek (vertex colors)
+    const organic = (geo: THREE.BufferGeometry, amount: number, seed: number, dark: number) => {
+      const g = geo.index ? geo.toNonIndexed() : geo;
+      const p = g.attributes.position as THREE.BufferAttribute;
+      const col = new Float32Array(p.count * 3);
+      let minY = Infinity, maxY = -Infinity;
+      for (let i = 0; i < p.count; i += 1) {
+        minY = Math.min(minY, p.getY(i));
+        maxY = Math.max(maxY, p.getY(i));
+      }
+      const key = (x: number, y: number, z: number) => `${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)}`;
+      const moved = new Map<string, [number, number, number]>();
+      for (let i = 0; i < p.count; i += 1) {
+        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        const k = key(x, y, z);
+        let m = moved.get(k);
+        if (!m) {
+          const n = fbm(x * 1.7 + seed, z * 1.7 + y * 1.3) - 0.5;
+          const len = Math.hypot(x, z) || 1;
+          m = [x + (x / len) * n * amount, y + n * amount * 0.4, z + (z / len) * n * amount];
+          moved.set(k, m);
+        }
+        p.setXYZ(i, m[0], m[1], m[2]);
+        const t = (y - minY) / (maxY - minY || 1);
+        const c = dark + (1 - dark) * Math.min(1, t * 1.3);
+        col.set([c, c, c], i * 3);
+      }
+      g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      return g;
+    };
     place(cypressN, (mats) => {
-      const trunk = new THREE.CylinderGeometry(0.12, 0.16, 1.2, 5);
+      const trunk = new THREE.CylinderGeometry(0.1, 0.16, 1.2, 6);
       trunk.translate(0, 0.6, 0);
-      const crown = new THREE.ConeGeometry(0.7, 4.6, 7);
+      const crown = organic(new THREE.ConeGeometry(0.72, 4.6, 9, 6), 0.32, 1, 0.55);
       crown.translate(0, 3.2, 0);
-      inst(trunk, std("#4a3424"), mats);
-      inst(crown, std("#2e3a24", 0.95, { flatShading: true }), mats);
+      inst(trunk, worldMapped(std("#a08a70"), woodTex(), 0.8), mats);
+      inst(crown, std("#3c4a2c", 0.95, { flatShading: true, vertexColors: true }), mats);
     });
     place(oliveN, (mats) => {
-      const trunk = new THREE.CylinderGeometry(0.18, 0.28, 1.8, 6);
-      trunk.translate(0, 0.9, 0);
-      const crown = new THREE.IcosahedronGeometry(1.6, 0);
-      crown.scale(1.2, 0.8, 1.2);
-      crown.translate(0, 2.6, 0);
-      inst(trunk, std("#5a4634"), mats);
-      inst(crown, std("#5f6a44", 0.95, { flatShading: true }), mats);
+      const trunk = new THREE.CylinderGeometry(0.16, 0.3, 1.9, 7);
+      trunk.translate(0, 0.95, 0);
+      const blobs = [
+        [0, 2.7, 0, 1.25],
+        [0.8, 2.4, 0.3, 0.9],
+        [-0.7, 2.5, -0.4, 0.95],
+        [0.1, 3.2, -0.6, 0.85],
+        [-0.3, 2.3, 0.8, 0.8],
+      ].map(([x, y, z, r], i) => {
+        const b = new THREE.IcosahedronGeometry(r, 1);
+        b.scale(1.15, 0.75, 1.15);
+        b.translate(x, y, z);
+        return organic(b, 0.35, i * 3.1, 0.6);
+      });
+      const crown = mergeGeometries(blobs);
+      inst(trunk, worldMapped(std("#b8a088"), woodTex(), 0.8), mats);
+      inst(crown, std("#6c7650", 0.95, { flatShading: true, vertexColors: true }), mats);
     });
     // kameny
     const rocks: THREE.Matrix4[] = [];
@@ -714,7 +841,7 @@ export class OpenWorld {
       const s = 0.3 + r() * (h > 6 ? 1.6 : 0.8);
       rocks.push(new THREE.Matrix4().compose(new THREE.Vector3(x, h + s * 0.2, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(s, s * 0.7, s)));
     }
-    inst(new THREE.DodecahedronGeometry(1, 0), std("#7a7266", 0.95, { flatShading: true }), rocks);
+    inst(new THREE.DodecahedronGeometry(1, 1), worldMapped(std("#d8d0c0", 0.95, { flatShading: true }), rockTex(), 1.6), rocks);
     // tráva
     if (this.q.grass > 0) {
       const grass: THREE.Matrix4[] = [];

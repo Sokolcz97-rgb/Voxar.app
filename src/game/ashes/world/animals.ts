@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { furTex } from "../three/textures";
 import { CAMP, CITY, COVE, WORLD_HALF, heightAt, inCity, roadDistance } from "./map";
 
 /**
@@ -89,14 +91,16 @@ export class Wildlife {
   private mat(color: string) {
     let m = this.mats.get(color);
     if (!m) {
-      m = new THREE.MeshStandardMaterial({ color, roughness: 0.95, flatShading: true });
+      const fur = furTex(color);
+      m = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.95, map: fur.map, bumpMap: fur.bump, bumpScale: 1.2 });
       this.mats.set(color, m);
     }
     return m;
   }
 
   private box(w: number, h: number, d: number, color: string) {
-    const geo = new THREE.BoxGeometry(w, h, d);
+    // zaoblené hrany – zvířata nepůsobí jako krabice
+    const geo = new RoundedBoxGeometry(w, h, d, 2, Math.min(w, h, d) * 0.35);
     this.geos.push(geo);
     const m = new THREE.Mesh(geo, this.mat(color));
     m.castShadow = true;
