@@ -43,9 +43,14 @@ Viz `docs/ASHES_GRAPHICS.md`.
 
 ## Hráčské postavy (muž / žena)
 
-- `heroes/male.glb` (hoplita) a `heroes/female.glb` (hrdinka s vavřínem) – zjednodušené modely z Meshy,
+- `heroes/<povolání>_<m|f>.glb` (hoplit, lucistnik, vestec × muž/žena) – zjednodušené modely z Meshy,
   bez kostry. Chůzi (nohy / lem šatů) a útok, zásah, pád dělá `three/meshyFigure.ts`.
-- `heroes/male.webp`, `heroes/female.webp` – portréty pro výběr postavy.
+- `heroes/<povolání>_<m|f>.webp` – portréty pro výběr postavy.
+
+## Stavby z GLB
+
+`buildings/villa.glb` (domy ve městě), `buildings/temple.glb` (chrám), `buildings/stall.glb` (stánky na tržišti)
+– umisťuje `world/buildingModels.ts`, model se vejde do půdorysu z `BUILDINGS` a vchodem míří k agoře.
 - Pohlaví je v `appearance.gender` ("m" / "f"); legendy (Eryon, Azkar), bossové a nepřátelé zůstávají procedurální.
 
 ## Zvířata z GLB

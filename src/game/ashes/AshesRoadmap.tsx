@@ -185,11 +185,110 @@ function useCountdown(iso: string) {
   };
 }
 
+/** Odpočet k nejbližšímu termínu z roadmapy (použito i na bráně /hra). */
+export function RoadmapCountdown() {
+  const lang = useLang();
+  const { rows } = useRoadmap();
+  const headline = useMemo(() => rows.find((r) => r.starts_at && r.status !== "done") ?? null, [rows]);
+  const cd = useCountdown(headline?.starts_at ?? FIRST_TEST);
+  if (!headline) return null;
+  const date = new Date(headline.starts_at!).toLocaleString(lang === "en" ? "en-GB" : "cs-CZ", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Prague" });
+  return (
+    <div className="rm-countdown ash-frame">
+      <div>
+        <div className="ash-kicker">{lang === "en" ? headline.title_en || headline.title_cs : headline.title_cs}</div>
+        <b className="rm-date">{date}</b>
+      </div>
+      {cd.done ? (
+        <div className="rm-live">{L("Právě probíhá!", "Happening now!")}</div>
+      ) : (
+        <div className="rm-clock" aria-label={L("Odpočet", "Countdown")}>
+          {[
+            [cd.d, L("dní", "days")],
+            [cd.h, L("hod", "hrs")],
+            [cd.m, L("min", "min")],
+            [cd.s, L("s", "sec")],
+          ].map(([v, label]) => (
+            <span key={label as string}><b>{String(v).padStart(2, "0")}</b><small>{label}</small></span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type AccessRow = { user_id: string; email: string; name: string | null; note: string | null; created_at: string };
+type Rpc = { rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> };
+const rpc = supabase as unknown as Rpc;
+
+/** Správce: kdo smí hrát před otevřením (kromě adminů a editorů). */
+function AccessManager() {
+  const [list, setList] = useState<AccessRow[] | null>(null);
+  const [who, setWho] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const run = useCallback(async (fn: string, args?: Record<string, unknown>, ok?: string) => {
+    setBusy(true);
+    const { data, error } = await rpc.rpc(fn, args);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message.replace(/^.*?ERROR:\s*/i, ""));
+      return false;
+    }
+    setList((data as AccessRow[]) ?? []);
+    if (ok) toast.success(ok);
+    return true;
+  }, []);
+  useEffect(() => {
+    void run("ashes_admin_access_list");
+  }, [run]);
+  return (
+    <section className="rm-access ash-frame">
+      <div className="ash-kicker">{L("Přístup do hry", "Game access")}</div>
+      <p className="ashes-prose">{L("Dokud hra není otevřená všem, hrát mohou jen administrátoři, editoři a lidé z tohoto seznamu.", "Until the game opens to everyone, only admins, editors and people on this list can play.")}</p>
+      <form
+        className="rm-access-form"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (await run("ashes_admin_access_grant", { p_who: who.trim(), p_note: note.trim() || null }, L("Přístup povolen.", "Access granted."))) {
+            setWho("");
+            setNote("");
+          }
+        }}
+      >
+        <input className="ash-input" value={who} onChange={(e) => setWho(e.target.value)} placeholder={L("E-mail nebo přezdívka", "E-mail or nickname")} required />
+        <input className="ash-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("Poznámka (např. ticket #12)", "Note (e.g. ticket #12)")} />
+        <button className="ash-btn small" disabled={busy || who.trim().length < 2}>{L("Povolit", "Grant")}</button>
+      </form>
+      {list === null ? (
+        <p className="ashes-prose">{L("Načítám…", "Loading…")}</p>
+      ) : list.length === 0 ? (
+        <p className="ashes-prose">{L("Zatím nikdo navíc.", "Nobody extra yet.")}</p>
+      ) : (
+        <ul className="rm-access-list">
+          {list.map((a) => (
+            <li key={a.user_id}>
+              <span>
+                <b>{a.name || a.email}</b>
+                <small>{a.email}{a.note ? ` · ${a.note}` : ""}</small>
+              </span>
+              <button className="ash-btn ghost small" disabled={busy} onClick={() => void run("ashes_admin_access_revoke", { p_user: a.user_id }, L("Přístup odebrán.", "Access removed."))}>
+                {L("Odebrat", "Remove")}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export default function AshesRoadmap() {
   const lang = useLang();
   const { isAdmin } = useAuth();
   const { rows, reload } = useRoadmap();
   const [editing, setEditing] = useState(false);
+  const [access, setAccess] = useState(false);
   const tl = (r: Row, key: "when" | "title" | "text") => (lang === "en" ? r[`${key}_en`] || r[`${key}_cs`] : r[`${key}_cs`]);
   const headline = useMemo(() => rows.find((r) => r.starts_at && r.status !== "done") ?? null, [rows]);
   const cd = useCountdown(headline?.starts_at ?? FIRST_TEST);
@@ -209,6 +308,11 @@ export default function AshesRoadmap() {
       <header className="rm-top">
         <Link to="/hra" className="rm-logo"><img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" /></Link>
         <div className="rm-actions">
+          {isAdmin && (
+            <button className={`ash-btn small ${access ? "" : "ghost"}`} onClick={() => setAccess(!access)}>
+              {L("Přístup do hry", "Game access")}
+            </button>
+          )}
           {isAdmin && (
             <button className={`ash-btn small ${editing ? "" : "ghost"}`} onClick={() => setEditing(!editing)}>
               {editing ? L("Hotovo", "Done") : L("Upravit roadmapu", "Edit roadmap")}
@@ -254,6 +358,8 @@ export default function AshesRoadmap() {
             </div>
           )}
         </section>
+
+        {isAdmin && access && <AccessManager />}
 
         <ol className="rm-line">
           {rows.map((m, i) => (

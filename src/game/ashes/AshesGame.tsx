@@ -5,6 +5,8 @@ import { BookOpen, Camera, Castle, Coins, Flame, LogOut, ScrollText, Settings, S
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ashesApi, type CharacterList, type CharacterSummary } from "./api";
+import { heroPortraitUrl } from "./three/meshyFigure";
+import { RoadmapCountdown } from "./AshesRoadmap";
 import { music } from "./audio";
 import { OpenWorld, getCameraMode, type BattleEvent, type CameraMode, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
 import { QUALITY, assets, getQuality, setQuality, type Quality } from "./world/assets";
@@ -421,7 +423,7 @@ export default function AshesGame() {
   // ------------------------------------------------------------ ostatní hráči (realtime)
   useEffect(() => {
     if (!character || !user) return;
-    const channel = supabase.channel(`ashes:world:${character.faction ?? "kalidra"}`, { config: { presence: { key: user.id }, broadcast: { self: false } } });
+    const channel = supabase.channel(`ashes:world:${character.faction ?? "kalidra"}`, { config: { private: true, presence: { key: user.id }, broadcast: { self: false } } });
     channelRef.current = channel;
     channel.on("presence", { event: "sync" }, () => {
       const raw = channel.presenceState<PresenceHero & Partial<Pos>>();
@@ -429,7 +431,8 @@ export default function AshesGame() {
       for (const [key, metas] of Object.entries(raw)) {
         if (key === user.id) continue;
         const m = metas[0];
-        if (!m) continue;
+        if (!m || typeof m.name !== "string") continue;
+        m.name = m.name.slice(0, 24);
         if (typeof m.x === "number" && !positions.current[key]) positions.current[key] = { x: m.x, z: m.z ?? 0, ry: m.ry ?? 0 };
         list.push({ ...m, key });
       }
@@ -438,6 +441,9 @@ export default function AshesGame() {
     channel.on("broadcast", { event: "pos" }, ({ payload }) => {
       const p = payload as Pos & { uid?: string };
       if (!p?.uid || p.uid === user.id) return;
+      // jen hráči přítomní v kanálu a rozumné souřadnice (ochrana proti podvrženým zprávám)
+      if (!othersRef.current.some((o) => o.key === p.uid)) return;
+      if (![p.x, p.z, p.ry].every((v) => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 200 || Math.abs(p.z) > 200) return;
       positions.current[p.uid] = { x: p.x, z: p.z, ry: p.ry };
       worldRef.current?.setOthers(othersRef.current.map((o) => ({ ...o, ...positions.current[o.key] })));
     });
@@ -649,21 +655,30 @@ export default function AshesGame() {
   }
 
   if (!user || (state && !state.allowed) || (loadError && !state)) {
+    // brána: hrát mohou jen administrátoři, editoři a testeři s povolením (kontroluje server)
+    const closed = !!user && !!state && !state.allowed;
     return (
       <div className="ashes-root">
         <div className="ash-title-screen">
-          <div className="ash-title-inner">
+          <div className="ash-title-inner ash-gate">
             <img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" />
+            <div className="tag">{L("Uzavřené testování", "Closed playtest")}</div>
+            <RoadmapCountdown />
             {!user ? (
               <LoginForm />
-            ) : loadError ? (
+            ) : loadError && !state ? (
               <p className="ashes-prose">{loadError}</p>
-            ) : (
+            ) : closed ? (
               <>
-                <button className="ash-btn" disabled>{L("Připravuje se…", "Coming soon…")}</button>
-                <p className="ashes-prose">{L("Bezejmenný břeh se teprve probouzí. Brzy otevřeme brány Kalidry všem hráčům.", "The Nameless Shore is only just waking. Soon we will open the gates of Kalidra to all players.")}</p>
+                <p className="ashes-prose">
+                  {L(
+                    "Brány Kalidry jsou zatím zavřené. Hrát mohou jen testeři, kterým jsme dali povolení. Chceš se přidat? Napiš nám ticket a ozveme se.",
+                    "The gates of Kalidra are still closed. Only testers we have invited can play. Want to join? Send us a ticket and we will get back to you.",
+                  )}
+                </p>
+                <Link to="/tickets" className="ash-btn">{L("Požádat o přístup", "Request access")}</Link>
               </>
-            )}
+            ) : null}
             <Link to="/ashes" className="text-sm text-[var(--ash-gold)] underline">{L("Roadmapa – co a kdy čekat", "Roadmap – what to expect and when")}</Link>
             <div className="flex gap-2">
               {user && <button className="ash-btn ghost small" onClick={() => void logout()}>{L("Odhlásit se", "Sign out")}</button>}
@@ -1003,7 +1018,7 @@ function CharacterSelect({ list, busy, onPlay, onNew, onDelete, onClose }: {
               return (
                 <div key={c.id ?? "active"} className="ash-select-card" data-active={active} data-faction={f}>
                   <div className={`portrait ${c.appearance?.gender === "f" ? "f" : "m"}`} aria-hidden>
-                    <img src={c.appearance?.gender === "f" ? "/game/models/heroes/female.webp" : "/game/models/heroes/male.webp"} alt="" />
+                    <img src={heroPortraitUrl(c.class, c.appearance?.gender === "f" ? "f" : "m")} alt="" />
                   </div>
                   <div className="info">
                     <b>{c.eryon ? "Eryon" : c.azkar ? "Azkar" : c.name}</b>
