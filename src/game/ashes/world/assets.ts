@@ -17,7 +17,8 @@ import { MeshyFigure } from "../three/meshyFigure";
  * }
  */
 
-export type Quality = "low" | "medium" | "high";
+export type Quality = "potato" | "low" | "medium" | "high" | "ultra";
+export const QUALITIES: Quality[] = ["potato", "low", "medium", "high", "ultra"];
 
 export type QualitySettings = {
   pixelRatio: number;
@@ -27,34 +28,57 @@ export type QualitySettings = {
   grass: number;
   bloom: boolean;
   viewDistance: number;
+  /** jednoduché materiály (Lambert) a terén bez textur – pro slabé počítače */
+  lite: boolean;
+  antialias: boolean;
+  /** kolik ohňů a pochodní smí svítit najednou (nejbližší k hráči) */
+  lights: number;
+  /** vzdálenost, za kterou se postavy / zvířata nekreslí */
+  figureCull: number;
+  animalCull: number;
+  /** jiskry v ohni (počet sprajtů) */
+  fireSprites: number;
 };
 
 const QUALITY_KEY = "ashes.quality";
+const QUALITY_USER_KEY = "ashes.quality.user";
 
 export const QUALITY: Record<Quality, QualitySettings> = {
-  low: { pixelRatio: 1, shadows: false, shadowSize: 512, treeDensity: 0.45, grass: 0, bloom: false, viewDistance: 110 },
-  medium: { pixelRatio: 1.25, shadows: true, shadowSize: 1024, treeDensity: 0.75, grass: 1800, bloom: false, viewDistance: 150 },
-  // záře (bloom) stojí několik průchodů v plném rozlišení – zapnutá jen na „ultra“
-  high: { pixelRatio: 1.5, shadows: true, shadowSize: 2048, treeDensity: 1, grass: 3000, bloom: false, viewDistance: 170 },
+  // „Úsporná“: běží i bez grafické karty
+  potato: { pixelRatio: 1, shadows: false, shadowSize: 512, treeDensity: 0.15, grass: 0, bloom: false, viewDistance: 70, lite: true, antialias: false, lights: 0, figureCull: 26, animalCull: 22, fireSprites: 4 },
+  low: { pixelRatio: 1, shadows: false, shadowSize: 512, treeDensity: 0.4, grass: 0, bloom: false, viewDistance: 100, lite: true, antialias: false, lights: 0, figureCull: 42, animalCull: 45, fireSprites: 8 },
+  medium: { pixelRatio: 1.25, shadows: true, shadowSize: 1024, treeDensity: 0.7, grass: 1500, bloom: false, viewDistance: 140, lite: false, antialias: true, lights: 2, figureCull: 52, animalCull: 60, fireSprites: 12 },
+  high: { pixelRatio: 1.5, shadows: true, shadowSize: 2048, treeDensity: 1, grass: 3000, bloom: false, viewDistance: 170, lite: false, antialias: true, lights: 4, figureCull: 62, animalCull: 70, fireSprites: 16 },
+  // záře (bloom) stojí několik průchodů v plném rozlišení – jen na „ultra“
+  ultra: { pixelRatio: 2, shadows: true, shadowSize: 4096, treeDensity: 1, grass: 5000, bloom: true, viewDistance: 200, lite: false, antialias: true, lights: 6, figureCull: 85, animalCull: 90, fireSprites: 16 },
 };
 
 export function getQuality(): Quality {
   try {
-    const q = localStorage.getItem(QUALITY_KEY);
-    if (q === "low" || q === "medium" || q === "high") return q;
+    const q = localStorage.getItem(QUALITY_KEY) as Quality | null;
+    if (q && q in QUALITY) return q;
   } catch {
     /* bez úložiště */
   }
-  // výchozí podle zařízení: mobil střední, desktop vysoká
-  return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches ? "medium" : "high";
+  // výchozí střední; automatika ji případně sníží
+  return "medium";
 }
 
-/** Hráč si kvalitu ještě nevybral (rozhoduje automatika). */
+/** Hráč si kvalitu vybral sám (automatika ji pak nemění). */
 export function qualityChosen() {
   try {
-    return !!localStorage.getItem(QUALITY_KEY);
+    return localStorage.getItem(QUALITY_USER_KEY) === "1";
   } catch {
     return false;
+  }
+}
+
+export function setQualityByUser(q: Quality) {
+  setQuality(q);
+  try {
+    localStorage.setItem(QUALITY_USER_KEY, "1");
+  } catch {
+    /* bez úložiště */
   }
 }
 

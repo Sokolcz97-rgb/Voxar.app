@@ -347,3 +347,4 @@
 .ash-slow { position: absolute; z-index: 12; left: 50%; bottom: 96px; transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: rgba(14, 10, 8, 0.92); border: 1px solid rgba(201, 164, 92, 0.45); color: var(--ash-text); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
 .ash-slow b { color: var(--ash-gold); font-size: 0.95rem; }
 .ash-slow span { font-size: 0.85rem; color: var(--ash-muted); line-height: 1.45; }
+.ash-fps { position: absolute; z-index: 12; right: 12px; bottom: 12px; padding: 2px 8px; font: 600 12px/1.6 ui-monospace, monospace; color: #cfe8c4; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(160, 200, 140, 0.35); pointer-events: none; }

@@ -32,10 +32,10 @@ export class Fire {
   private size: number;
   lit = true;
 
-  constructor(size = 1, withLight = true) {
+  constructor(size = 1, withLight = true, sprites = 16) {
     this.size = size;
     const tex = getFireTexture();
-    for (let i = 0; i < 16; i += 1) {
+    for (let i = 0; i < sprites; i += 1) {
       const mat = new THREE.SpriteMaterial({
         map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
         color: new THREE.Color().setHSL(0.06 + Math.random() * 0.04, 1, 0.55),

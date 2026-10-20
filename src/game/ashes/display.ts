@@ -5,7 +5,26 @@
  * - „Rozlišení vykreslování“ snižuje počet vykreslovaných pixelů (výkon na slabších PC).
  */
 export type DisplayMode = "windowed" | "maximized" | "fullscreen";
-export type DisplaySettings = { mode: DisplayMode; width: number; height: number; renderScale: number };
+export type Upscale = "off" | "quality" | "balanced" | "performance" | "ultra";
+export type DisplaySettings = {
+  mode: DisplayMode;
+  width: number;
+  height: number;
+  /** stará volba (podíl rozlišení) – nahrazena `upscale` */
+  renderScale: number;
+  /** výška vykreslovaného obrazu v px (720, 1080, 1440 …), 0 = nativní */
+  resolution: number;
+  /** zvětšování obrazu: kolik pixelů se skutečně vykreslí */
+  upscale: Upscale;
+  /** doostření při zvětšování (jako AMD FSR 1 / CAS) */
+  sharpen: boolean;
+  /** limit snímků za sekundu, 0 = bez limitu */
+  fpsCap: number;
+  showFps: boolean;
+};
+
+export const UPSCALE: Record<Upscale, number> = { off: 1, quality: 0.77, balanced: 0.67, performance: 0.5, ultra: 0.33 };
+export const RENDER_HEIGHTS = [0, 720, 900, 1080, 1440, 2160];
 
 type DesktopBridge = {
   isDesktop: true;
@@ -31,12 +50,20 @@ export const RESOLUTIONS: [number, number][] = [
 ];
 
 const KEY = "ashes.display";
-const DEFAULTS: DisplaySettings = { mode: "windowed", width: 1600, height: 900, renderScale: 1 };
+const DEFAULTS: DisplaySettings = { mode: "windowed", width: 1600, height: 900, renderScale: 1, resolution: 0, upscale: "off", sharpen: true, fpsCap: 0, showFps: false };
 
 export function getDisplay(): DisplaySettings {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    if (v && typeof v === "object") return { ...DEFAULTS, ...v };
+    if (v && typeof v === "object") {
+      const out = { ...DEFAULTS, ...v } as DisplaySettings;
+      // převod staré volby „rozlišení vykreslování“
+      if (!("upscale" in v) && typeof v.renderScale === "number" && v.renderScale < 1) {
+        out.upscale = v.renderScale >= 0.85 ? "quality" : v.renderScale >= 0.7 ? "balanced" : "performance";
+      }
+      if (!(out.upscale in UPSCALE)) out.upscale = "off";
+      return out;
+    }
   } catch {
     /* bez úložiště */
   }

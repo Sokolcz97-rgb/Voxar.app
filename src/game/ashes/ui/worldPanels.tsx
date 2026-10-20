@@ -5,10 +5,10 @@ import { L, getLang, setLang, useLang } from "../i18n";
 import { NPCS, REGION_NAME, type NpcId, type RegionId } from "../world/map";
 import { NPC_TALK, WQUESTS, type WQuestDef } from "../world/npcContent";
 import { availableQuests, questMap, turnInNpc } from "../world/quests";
-import { getQuality, type Quality } from "../world/assets";
+import { QUALITIES, getQuality, type Quality } from "../world/assets";
 import { music } from "../audio";
 import { playSfx } from "../sfx";
-import { RESOLUTIONS, applyDisplayMode, getDisplay, isDesktop, saveDisplay, type DisplayMode, type DisplaySettings } from "../display";
+import { RENDER_HEIGHTS, RESOLUTIONS, UPSCALE, applyDisplayMode, getDisplay, isDesktop, saveDisplay, type DisplayMode, type DisplaySettings, type Upscale } from "../display";
 import { PanelShell } from "./panels";
 
 const t = (x: { cs: string; en: string }) => (getLang() === "en" ? x.en : x.cs);
@@ -185,14 +185,15 @@ function Slider({ label, value, onChange, disabled }: { label: string; value: nu
 
 /** Nastavení rozdělené do záložek: Grafika, Zvuk, Hra, Účet. */
 export function SettingsPanel({
-  email, cameraMode, onCameraMode, onQuality, onRenderScale, onLogout, onExit, onClose, onCharacters,
+  email, cameraMode, onCameraMode, onQuality, onDisplay, onLogout, onExit, onClose, onCharacters, fps,
 }: {
   onCharacters?: () => void;
   email?: string | null;
   cameraMode: "top" | "third";
   onCameraMode: (mode: "top" | "third") => void;
   onQuality: (q: Quality) => void;
-  onRenderScale: (scale: number) => void;
+  onDisplay: (settings: DisplaySettings) => void;
+  fps?: number;
   onLogout: () => void;
   onExit: () => void;
   onClose: () => void;
@@ -214,7 +215,7 @@ export function SettingsPanel({
     const next = { ...disp, ...patch };
     setDisp(next);
     saveDisplay(next);
-    if (patch.renderScale !== undefined) onRenderScale(next.renderScale);
+    onDisplay(next);
     if (patch.mode !== undefined || patch.width !== undefined) void applyDisplayMode(next);
   };
 
@@ -256,22 +257,51 @@ export function SettingsPanel({
               </div>
             </>
           )}
-          <div className="ash-kicker mb-2 mt-4">{L("Rozlišení vykreslování", "Render resolution")}</div>
+          <div className="ash-kicker mb-2 mt-4">{L("Rozlišení", "Resolution")}</div>
           <div className="ash-tabs flex-wrap">
-            {[1, 0.85, 0.7, 0.5].map((r) => (
-              <button key={r} data-active={disp.renderScale === r} onClick={() => updateDisplay({ renderScale: r })}>{r === 1 ? L("Nativní", "Native") : `${Math.round(r * 100)} %`}</button>
-            ))}
-          </div>
-          <p className="text-xs text-[var(--ash-muted)]">{L("Nižší rozlišení vykreslování výrazně zrychlí hru na slabších počítačích za cenu ostrosti.", "A lower render resolution greatly speeds up the game on weaker computers at the cost of sharpness.")}</p>
-          <div className="ash-kicker mb-2 mt-4">{L("Kvalita grafiky", "Graphics quality")}</div>
-          <div className="ash-tabs">
-            {(["low", "medium", "high"] as Quality[]).map((x) => (
-              <button key={x} data-active={q === x} onClick={() => { setQ(x); onQuality(x); }}>
-                {x === "low" ? L("Nízká", "Low") : x === "medium" ? L("Střední", "Medium") : L("Vysoká", "High")}
+            {RENDER_HEIGHTS.map((h) => (
+              <button key={h} data-active={disp.resolution === h} onClick={() => updateDisplay({ resolution: h })}>
+                {h === 0 ? L("Nativní", "Native") : h === 2160 ? "4K" : `${h}p`}
               </button>
             ))}
           </div>
-          <p className="text-xs text-[var(--ash-muted)]">{L("Nízká kvalita vypne stíny a záři a zředí vegetaci.", "Low quality disables shadows and bloom and thins vegetation.")}</p>
+          <p className="text-xs text-[var(--ash-muted)]">{L("V kolika řádcích se hra vykresluje (i na celé obrazovce). Vyšší než rozlišení monitoru = ostřejší, ale náročnější.", "How many lines the game renders (also in fullscreen). Higher than your monitor = sharper but heavier.")}</p>
+
+          <div className="ash-kicker mb-2 mt-4">{L("Zvětšování obrazu (jako FSR)", "Upscaling (FSR-like)")}</div>
+          <div className="ash-tabs flex-wrap">
+            {(Object.keys(UPSCALE) as Upscale[]).map((u) => (
+              <button key={u} data-active={disp.upscale === u} onClick={() => updateDisplay({ upscale: u })}>
+                {{ off: L("Vypnuto", "Off"), quality: L("Kvalita", "Quality"), balanced: L("Vyvážené", "Balanced"), performance: L("Výkon", "Performance"), ultra: L("Ultra výkon", "Ultra performance") }[u]}
+                {u !== "off" && <small className="ml-1 opacity-60">{Math.round(UPSCALE[u] * 100)} %</small>}
+              </button>
+            ))}
+          </div>
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={disp.sharpen} onChange={(e) => updateDisplay({ sharpen: e.target.checked })} />
+            {L("Doostření obrazu", "Sharpening")}
+          </label>
+          <p className="text-xs text-[var(--ash-muted)]">{L("Hra vykreslí méně pixelů a obraz zvětší s doostřením – velké zrychlení na slabších grafikách. DLSS od NVIDIA ve hře v prohlížeči ani v launcheru nejde (vyžaduje nativní hru pro DirectX/Vulkan); tohle je obdoba AMD FSR, funguje na všech kartách včetně NVIDIA.", "The game renders fewer pixels and upscales with sharpening – a big speed-up on weaker GPUs. NVIDIA DLSS is not possible in a browser/launcher game (it needs a native DirectX/Vulkan game); this is similar to AMD FSR and works on all cards including NVIDIA.")}</p>
+
+          <div className="ash-kicker mb-2 mt-4">{L("Kvalita grafiky", "Graphics quality")}</div>
+          <div className="ash-tabs flex-wrap">
+            {QUALITIES.map((x) => (
+              <button key={x} data-active={q === x} onClick={() => { setQ(x); onQuality(x); }}>
+                {{ potato: L("Úsporná", "Potato"), low: L("Nízká", "Low"), medium: L("Střední", "Medium"), high: L("Vysoká", "High"), ultra: "Ultra" }[x]}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-[var(--ash-muted)]">{L("Úsporná a Nízká používají jednoduché materiály bez stínů a světel – běží i na velmi slabých počítačích. Ultra zapne záři a nejostřejší stíny.", "Potato and Low use simple materials without shadows and lights – they run on very weak computers. Ultra enables bloom and the sharpest shadows.")}</p>
+
+          <div className="ash-kicker mb-2 mt-4">{L("Limit snímků", "Frame limit")}</div>
+          <div className="ash-tabs flex-wrap">
+            {[30, 60, 120, 0].map((f) => (
+              <button key={f} data-active={disp.fpsCap === f} onClick={() => updateDisplay({ fpsCap: f })}>{f === 0 ? L("Bez limitu", "Unlimited") : `${f} FPS`}</button>
+            ))}
+          </div>
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={disp.showFps} onChange={(e) => updateDisplay({ showFps: e.target.checked })} />
+            {L("Zobrazit FPS", "Show FPS")}{typeof fps === "number" && <span className="text-[var(--ash-muted)]"> · {fps} FPS</span>}
+          </label>
         </>
       )}
 

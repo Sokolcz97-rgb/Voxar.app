@@ -9,7 +9,7 @@ import { heroPortraitUrl } from "./three/meshyFigure";
 import { RoadmapCountdown } from "./AshesRoadmap";
 import { music } from "./audio";
 import { OpenWorld, getCameraMode, type BattleEvent, type CameraMode, type EnemyInfo, type Interactable, type WorldFrame } from "./world/openWorld";
-import { QUALITY, assets, getQuality, qualityChosen, setQuality, type Quality } from "./world/assets";
+import { QUALITIES, QUALITY, assets, getQuality, qualityChosen, setQuality, setQualityByUser, type Quality } from "./world/assets";
 import { NPCS, REGION_NAME, SPAWN, type NpcId, type RegionId } from "./world/map";
 import { questDef, beaconsLit, npcMark } from "./world/quests";
 import {
@@ -20,8 +20,15 @@ import { Minimap } from "./ui/Minimap";
 import { FACTION, RARITY, type Appearance, type Faction, type FightResult, type Fighter, type GameState, type HeroClass, type PresenceHero } from "./types";
 import { L, classLabel, getLang, setLang, tr, trItem, useLang } from "./i18n";
 import { playSfx } from "./sfx";
-import { applyDisplayMode, exitGame, getDisplay, isDesktop, saveDisplay } from "./display";
+import { UPSCALE, applyDisplayMode, exitGame, getDisplay, isDesktop, saveDisplay, type DisplaySettings } from "./display";
 import "./ashes.css";
+
+/** Použije grafická nastavení na svět (rozlišení, zvětšování, limit snímků). */
+function applyGraphics(w: OpenWorld, d: DisplaySettings) {
+  w.setResolution(d.resolution || null);
+  w.setUpscale(UPSCALE[d.upscale] ?? 1, d.sharpen);
+  w.setFpsCap(d.fpsCap);
+}
 
 type PanelId = NpcOpens | "postava" | "kronika" | "denik" | "nastaveni";
 
@@ -95,6 +102,8 @@ export default function AshesGame() {
   const [world, setWorld] = useState<OpenWorld | null>(null);
   const [worldGen, setWorldGen] = useState(0);
   const [slow, setSlow] = useState<null | { software: boolean }>(null);
+  const [showFps, setShowFps] = useState(getDisplay().showFps);
+  const [fps, setFps] = useState<number | undefined>(undefined);
   const [, forceMusic] = useState(0);
   const hostRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -282,10 +291,12 @@ export default function AshesGame() {
         setLoadError(L("Tvůj prohlížeč nepodporuje WebGL, bez kterého 3D svět nepoběží.", "Your browser does not support WebGL, which the 3D world needs."));
         return;
       }
-      w.setRenderScale(getDisplay().renderScale);
-      // bez grafické karty (vypnutá hardwarová akcelerace) rovnou nízká grafika
-      if (w.gpuInfo().software && !qualityChosen() && getQuality() !== "low") {
-        setQuality("low");
+      applyGraphics(w, getDisplay());
+      // bez grafické karty (vypnutá hardwarová akcelerace) rovnou úsporná grafika
+      if (w.gpuInfo().software && !qualityChosen() && getQuality() !== "potato") {
+        setQuality("potato");
+        const d = getDisplay();
+        if (d.upscale === "off") saveDisplay({ ...d, upscale: "performance", fpsCap: 30 });
         const old = w;
         w = null;
         old.dispose();
@@ -309,6 +320,13 @@ export default function AshesGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.allowed, worldGen]);
 
+  // počítadlo FPS (v nastavení a volitelně v rohu obrazovky)
+  useEffect(() => {
+    if (!world) return;
+    const t = window.setInterval(() => setFps(world.fps), 1000);
+    return () => window.clearInterval(t);
+  }, [world]);
+
   // hra se seká: po chvíli nabídnout nižší grafiku, zapnutí akcelerace nebo launcher
   useEffect(() => {
     if (!world) return;
@@ -323,10 +341,20 @@ export default function AshesGame() {
     let bad = 0;
     const t = window.setInterval(() => {
       if (document.hidden) return;
-      bad = world.struggling || software ? bad + 1 : 0;
+      bad = world.struggling ? bad + 1 : 0;
       if (bad >= 3) {
-        setSlow({ software });
         window.clearInterval(t);
+        const q = getQuality();
+        const i = QUALITIES.indexOf(q);
+        // automatika: hráč si kvalitu nevybral → sama sníží o stupeň (a zapne zvětšování obrazu)
+        if (!qualityChosen() && i > 0) {
+          setQuality(QUALITIES[i - 1]);
+          const d = getDisplay();
+          if (d.upscale === "off") saveDisplay({ ...d, upscale: "balanced" });
+          setWorldGen((n) => n + 1);
+          return;
+        }
+        setSlow({ software });
       }
     }, 4000);
     return () => window.clearInterval(t);
@@ -627,7 +655,7 @@ export default function AshesGame() {
   }, []);
 
   const changeQuality = (q: Quality) => {
-    setQuality(q);
+    setQualityByUser(q);
     setWorldGen((n) => n + 1);
   };
 
@@ -820,6 +848,8 @@ export default function AshesGame() {
         </div>
       )}
 
+      {showFps && fps !== undefined && <div className="ash-fps">{fps} FPS</div>}
+
       {slow && inWorld && !panel && (
         <div className="ash-slow" role="status">
           <b>{slow.software ? L("Hra běží bez grafické karty", "The game is running without your graphics card") : L("Hra se ti seká?", "Is the game stuttering?")}</b>
@@ -829,8 +859,8 @@ export default function AshesGame() {
               : L("Sniž grafiku, nebo si stáhni launcher – běží plynuleji než prohlížeč s mnoha záložkami.", "Lower the graphics, or download the launcher – it runs smoother than a browser full of tabs.")}
           </span>
           <div className="flex flex-wrap gap-2">
-            {getQuality() !== "low" && (
-              <button className="ash-btn small" onClick={() => { changeQuality(getQuality() === "high" ? "medium" : "low"); setSlow(null); }}>
+            {getQuality() !== "potato" && (
+              <button className="ash-btn small" onClick={() => { changeQuality(QUALITIES[Math.max(0, QUALITIES.indexOf(getQuality()) - 1)]); setSlow(null); }}>
                 {L("Snížit grafiku", "Lower graphics")}
               </button>
             )}
@@ -932,7 +962,12 @@ export default function AshesGame() {
           cameraMode={camMode}
           onCameraMode={(m) => worldRef.current?.setCameraMode(m)}
           onQuality={changeQuality}
-          onRenderScale={(r) => worldRef.current?.setRenderScale(r)}
+          onDisplay={(d) => {
+            const w = worldRef.current;
+            if (w) applyGraphics(w, d);
+            setShowFps(d.showFps);
+          }}
+          fps={fps}
           onLogout={() => void logout()}
           onCharacters={openSelect}
           onExit={exitGame}

@@ -3,8 +3,9 @@ import { Fire } from "../three/fx";
 import type { Appearance, Faction, Fight, Fighter, HeroClass, HeroId, PresenceHero } from "../types";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { Wildlife } from "./animals";
-import { clothTex, dirtTex, dryGrassTex, grassTex, pavingTex, plasterTex, rockTex, roofTex, sandTex, stoneBlockTex, woodTex, worldMapped } from "../three/textures";
-import { faceToward, placeBuilding } from "./buildingModels";
+import { clothTex, dirtTex, dryGrassTex, grassTex, pavingTex, plasterTex, rockTex, roofTex, sandTex, stoneBlockTex, woodTex, worldMapped, worldMappedLite } from "../three/textures";
+import { faceToward, placeBuilding, setLiteBuildings } from "./buildingModels";
+import { setLiteHeroes } from "../three/meshyFigure";
 
 /** stánky na tržišti (agora je na 74, 15) */
 const MARKET_STALLS: [number, number][] = [[67, 12.4], [67, 20.6], [81, 17.5], [80, 22.5]];
@@ -106,6 +107,19 @@ export class OpenWorld {
   private waterNormal!: THREE.Texture;
   private terrain!: THREE.Mesh;
   private fires: Fire[] = [];
+  private lightSpots: { fire: Fire; size: number }[] = [];
+  private lightPool: THREE.PointLight[] = [];
+  private liteCache = new Map<string, THREE.Material>();
+  private liteTimer = 0;
+  /** cílové rozlišení (výška v px) nebo null = nativní; zvětšení obrazu (FSR-like) */
+  private targetHeight: number | null = null;
+  private sharpen = true;
+  private upscaleRT: THREE.WebGLRenderTarget | null = null;
+  private upscaleScene: THREE.Scene | null = null;
+  private upscaleCam: THREE.OrthographicCamera | null = null;
+  private upscaleMat: THREE.ShaderMaterial | null = null;
+  private fpsCap = 0;
+  private sinceFrame = 0;
   private beaconFires = new Map<string, Fire>();
   private colliders: AABB[] = [];
   private figures: HeroFigure[] = [];
@@ -153,6 +167,8 @@ export class OpenWorld {
   private cullTimer = 0;
   /** Průměrná doba snímku a automatické snížení rozlišení, když hra nestíhá. */
   private frameAvg = 1 / 60;
+  private realAvg = 1 / 60;
+  private lastFrameAt = 0;
   private autoScale = 1;
   private userScale = 1;
   private perfTimer = 0;
@@ -176,7 +192,7 @@ export class OpenWorld {
     this.container = container;
     this.q = quality;
     this.faction = faction;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    this.renderer = new THREE.WebGLRenderer({ antialias: quality.antialias, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pixelRatio));
     this.renderer.shadowMap.enabled = quality.shadows;
     // PCF (bez "soft") je výrazně levnější; stínová mapa se obnovuje ručně (viz loop)
@@ -190,6 +206,8 @@ export class OpenWorld {
     container.appendChild(this.renderer.domElement);
 
     this.scene.fog = new THREE.Fog("#9a8a8a", 70, quality.viewDistance);
+    setLiteBuildings(quality.lite);
+    setLiteHeroes(quality.lite);
     this.buildSky();
     this.buildLights();
     this.buildTerrain();
@@ -199,6 +217,14 @@ export class OpenWorld {
     this.buildVegetation();
     this.buildSafeZones();
     this.wildlife = new Wildlife(this.scene, quality.treeDensity, (x, z) => this.blocked(x, z));
+    this.wildlife.cullDistance = quality.animalCull;
+    for (let i = 0; i < quality.lights; i += 1) {
+      const l = new THREE.PointLight("#ff8a3a", 0, 7, 1.6);
+      l.userData.base = 0;
+      this.scene.add(l);
+      this.lightPool.push(l);
+    }
+    if (quality.lite) this.liteify(this.scene);
 
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 24), new THREE.MeshBasicMaterial({ color: "#f0d39a", transparent: true, opacity: 0.8, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2;
@@ -244,7 +270,7 @@ export class OpenWorld {
     sky.renderOrder = -10;
     this.scene.add(sky);
     // osvětlení z okolí (environment map) – kovy (bronz) odrážejí oblohu a zem
-    try {
+    if (!this.q.lite) try {
       const envScene = new THREE.Scene();
       envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), mat));
       const ground = new THREE.Mesh(new THREE.CircleGeometry(9.5, 32), new THREE.MeshBasicMaterial({ color: "#5a4a32" }));
@@ -292,7 +318,8 @@ export class OpenWorld {
 
   private buildTerrain() {
     const size = WORLD_HALF * 2 + 20;
-    const seg = 220;
+    // úsporná grafika: řidší síť terénu (méně trojúhelníků pro slabé grafiky)
+    const seg = this.q.treeDensity < 0.3 ? 80 : this.q.lite ? 120 : 220;
     const geo = new THREE.PlaneGeometry(size, size, seg, seg);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
@@ -351,6 +378,27 @@ export class OpenWorld {
     geo.setAttribute("splatA", new THREE.BufferAttribute(splatA, 4));
     geo.setAttribute("splatB", new THREE.BufferAttribute(splatB, 2));
     geo.setAttribute("color", new THREE.BufferAttribute(tint, 3));
+    if (this.q.lite) {
+      // úsporný terén: barvy povrchů zapečené do vrcholů, žádné textury (24 čtení textur na pixel méně)
+      const AVG = [[80, 95, 44], [144, 126, 77], [195, 172, 131], [124, 117, 105], [125, 102, 74], [176, 166, 146]].map((c) => c.map((v) => Math.pow(v / 255, 2.2) * 1.1));
+      const col = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i += 1) {
+        const [g, d, sa, r] = [splatA[i * 4], splatA[i * 4 + 1], splatA[i * 4 + 2], splatA[i * 4 + 3]];
+        const [road, pave] = [splatB[i * 2], splatB[i * 2 + 1]];
+        for (let k = 0; k < 3; k += 1) {
+          let v = AVG[0][k] * g + AVG[1][k] * d + AVG[2][k] * sa + AVG[3][k] * r;
+          v = v * (1 - road) + AVG[4][k] * road;
+          v = v * (1 - pave) + AVG[5][k] * pave;
+          col[i * 3 + k] = v * tint[i * 3 + k];
+        }
+      }
+      geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      geo.deleteAttribute("splatA");
+      geo.deleteAttribute("splatB");
+      this.terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+      this.addTerrainTiles(this.terrain);
+      return;
+    }
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
     const tex = [grassTex(), dryGrassTex(), sandTex(), rockTex(), dirtTex(), pavingTex()];
     mat.onBeforeCompile = (shader) => {
@@ -386,8 +434,7 @@ export class OpenWorld {
     };
     mat.customProgramCacheKey = () => "ashes-terrain-v2";
     this.terrain = new THREE.Mesh(geo, mat);
-    this.terrain.receiveShadow = true;
-    this.scene.add(this.terrain);
+    this.addTerrainTiles(this.terrain);
   }
 
   private buildWater() {
@@ -645,11 +692,69 @@ export class OpenWorld {
   }
 
   private addFire(x: number, y: number, z: number, size: number, light = true) {
-    const f = new Fire(size, light);
+    // oheň bez vlastního světla – svítí jen pár nejbližších ohňů ze sdílené sady světel
+    const f = new Fire(size, false, this.q.fireSprites);
     f.group.position.set(x, y, z);
     this.scene.add(f.group);
     this.fires.push(f);
+    if (light) this.lightSpots.push({ fire: f, size });
     return f;
+  }
+
+  /**
+   * Terén po dlaždicích 4 × 4 (sdílí vrcholy, vlastní indexy): dlaždice mimo záběr se
+   * nekreslí. Celá síť zůstává jen pro výpočet kliknutí (raycast), do scény nepatří.
+   */
+  private addTerrainTiles(full: THREE.Mesh) {
+    const geo = full.geometry as THREE.BufferGeometry;
+    const index = geo.index!;
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const N = 4;
+    const half = WORLD_HALF + 10;
+    const cell = (half * 2) / N;
+    const lists: number[][] = Array.from({ length: N * N }, () => []);
+    for (let t = 0; t < index.count; t += 3) {
+      const a = index.getX(t), b = index.getX(t + 1), c = index.getX(t + 2);
+      const cx = (pos.getX(a) + pos.getX(b) + pos.getX(c)) / 3;
+      const cz = (pos.getZ(a) + pos.getZ(b) + pos.getZ(c)) / 3;
+      const ix = Math.min(N - 1, Math.max(0, Math.floor((cx + half) / cell)));
+      const iz = Math.min(N - 1, Math.max(0, Math.floor((cz + half) / cell)));
+      lists[ix * N + iz].push(a, b, c);
+    }
+    for (const list of lists) {
+      if (!list.length) continue;
+      const g = new THREE.BufferGeometry();
+      for (const [name, attr] of Object.entries(geo.attributes)) g.setAttribute(name, attr);
+      g.setIndex(list);
+      const box = new THREE.Box3();
+      const v = new THREE.Vector3();
+      for (const i of list) box.expandByPoint(v.fromBufferAttribute(pos, i));
+      g.boundingBox = box;
+      g.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+      const tile = new THREE.Mesh(g, full.material);
+      tile.receiveShadow = true;
+      tile.userData.lite = true;
+      this.scene.add(tile);
+    }
+  }
+
+  /** Stálý počet světel (změna počtu by přeložila všechny shadery) přesunutých k nejbližším ohňům. */
+  private placeLights() {
+    if (!this.lightPool.length) return;
+    const near = this.lightSpots
+      .filter((s) => s.fire.lit)
+      .map((s) => ({ s, d: Math.hypot(s.fire.group.position.x - this.pos.x, s.fire.group.position.z - this.pos.y) }))
+      .sort((a, b) => a.d - b.d);
+    this.lightPool.forEach((l, i) => {
+      const n = near[i];
+      if (n && n.d < 45) {
+        l.position.copy(n.s.fire.group.position).add(new THREE.Vector3(0, 0.6 * n.s.size, 0));
+        l.distance = 7 * n.s.size;
+        l.userData.base = 2.4 * n.s.size;
+      } else {
+        l.userData.base = 0;
+      }
+    });
   }
 
   private buildCountryside() {
@@ -1523,12 +1628,24 @@ export class OpenWorld {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.composer?.setSize(w, h);
+    if (this.upscaleRT && this.upscaleMat) {
+      const pr = this.renderer.getPixelRatio() * this.userScale * this.autoScale;
+      const rw = Math.max(1, Math.round(w * pr)), rh = Math.max(1, Math.round(h * pr));
+      this.upscaleRT.setSize(rw, rh);
+      this.upscaleMat.uniforms.texel.value.set(1 / rw, 1 / rh);
+    }
   }
 
   private loop = () => {
     this.raf = requestAnimationFrame(this.loop);
     if (document.hidden) return;
-    const dt = Math.min(0.05, this.clock.getDelta());
+    // omezení snímků (šetří slabé počítače a notebooky)
+    if (this.fpsCap > 0) {
+      this.sinceFrame += this.clock.getDelta();
+      if (this.sinceFrame < 1 / this.fpsCap - 0.002) return;
+    }
+    const dt = Math.min(0.05, this.fpsCap > 0 ? this.sinceFrame : this.clock.getDelta());
+    this.sinceFrame = 0;
     const t = this.clock.elapsedTime;
     const now = performance.now();
     this.updatePlayer(dt);
@@ -1547,7 +1664,16 @@ export class OpenWorld {
     if (this.cullTimer <= 0) {
       this.cullTimer = 0.25;
       this.cullFigures();
+      this.placeLights();
     }
+    if (this.q.lite) {
+      this.liteTimer -= dt;
+      if (this.liteTimer <= 0) {
+        this.liteTimer = 1;
+        this.liteify(this.scene);
+      }
+    }
+    for (const l of this.lightPool) l.intensity = l.userData.base ? l.userData.base * (0.92 + Math.sin(t * 11 + l.id) * 0.06 + Math.sin(t * 17.3) * 0.04) : 0;
     this.wildlife?.update(dt, t, this.pos, this.camera);
     for (const f of this.fires) f.update(dt, t);
     for (const fig of this.figures) if (!this.culled.has(fig)) fig.update(dt, t);
@@ -1580,7 +1706,13 @@ export class OpenWorld {
     this.frameNo += 1;
     if (this.q.shadows) this.renderer.shadowMap.needsUpdate = this.frameNo % 2 === 0 || this.mode === "battle";
     if (this.composer && this.mode !== "create") this.composer.render();
-    else this.renderer.render(this.scene, this.camera);
+    else if (this.upscaleRT && this.upscaleScene && this.upscaleCam) {
+      // vykreslit v nižším rozlišení a zvětšit s doostřením (podobně jako AMD FSR 1 / CAS)
+      this.renderer.setRenderTarget(this.upscaleRT);
+      this.renderer.render(this.scene, this.camera);
+      this.renderer.setRenderTarget(null);
+      this.renderer.render(this.upscaleScene, this.upscaleCam);
+    } else this.renderer.render(this.scene, this.camera);
     this.adaptResolution(dt);
   };
 
@@ -1588,7 +1720,7 @@ export class OpenWorld {
   private cullFigures() {
     const farObj = this.q.viewDistance * 0.8;
     for (const o of this.farObjects) o.visible = Math.hypot(o.position.x - this.pos.x, o.position.z - this.pos.y) < farObj;
-    const far = this.camMode === "third" ? 62 : 55;
+    const far = this.q.figureCull * (this.camMode === "third" ? 1.1 : 1);
     for (const fig of this.figures) {
       const keep = fig === this.player || this.mode === "battle" || this.battleFigures.includes(fig);
       const p = fig.group.position;
@@ -1615,22 +1747,144 @@ export class OpenWorld {
    * sníží se vykreslovací rozlišení; když je rezerva, vrátí se zpět (max. nastavení hráče).
    */
   private adaptResolution(dt: number) {
-    this.frameAvg += (dt - this.frameAvg) * 0.05;
+    const now = performance.now();
+    if (this.lastFrameAt) this.realAvg += (Math.min(1, (now - this.lastFrameAt) / 1000) - this.realAvg) * 0.1;
+    this.lastFrameAt = now;
+    this.frameAvg = this.realAvg;
     this.perfTimer += dt;
     if (this.perfTimer < 2) return;
     this.perfTimer = 0;
     let next = this.autoScale;
-    if (this.frameAvg > 1 / 45 && this.autoScale > 0.55) next = Math.max(0.55, this.autoScale - 0.1);
-    else if (this.frameAvg < 1 / 57 && this.autoScale < 1) next = Math.min(1, this.autoScale + 0.05);
+    // cíl: 60 FPS, nebo nastavený limit snímků
+    const target = this.fpsCap > 0 ? Math.min(60, this.fpsCap) : 60;
+    if (this.frameAvg > 1 / (target * 0.75) && this.autoScale > 0.55) next = Math.max(0.55, this.autoScale - 0.1);
+    else if (this.frameAvg < 1 / (target * 0.95) && this.autoScale < 1) next = Math.min(1, this.autoScale + 0.05);
     if (next !== this.autoScale) {
       this.autoScale = next;
       this.applyPixelRatio();
     }
   }
 
+  /** Základní hustota pixelů: cílové rozlišení (např. 1440p) nebo nativní podle kvality. */
+  private basePixelRatio() {
+    const h = this.container.clientHeight || 1;
+    if (this.targetHeight) return Math.max(0.25, Math.min(2.5, this.targetHeight / h));
+    return Math.min(window.devicePixelRatio || 1, this.q.pixelRatio);
+  }
+
   private applyPixelRatio() {
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio) * this.userScale * this.autoScale);
+    const base = this.basePixelRatio();
+    const scale = this.userScale * this.autoScale;
+    const useUpscaler = this.sharpen && scale < 0.99 && !this.composer;
+    if (useUpscaler) {
+      // plátno v plném rozlišení, scéna do menšího bufferu a zvětšení s doostřením
+      this.renderer.setPixelRatio(base);
+      this.ensureUpscaler();
+    } else {
+      this.disposeUpscaler();
+      this.renderer.setPixelRatio(base * scale);
+    }
     this.resize();
+  }
+
+  private ensureUpscaler() {
+    if (this.upscaleRT) return;
+    this.upscaleRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: true, samples: 0 });
+    this.upscaleMat = new THREE.ShaderMaterial({
+      uniforms: { tDiffuse: { value: this.upscaleRT.texture }, texel: { value: new THREE.Vector2(1, 1) }, sharpness: { value: 0.6 } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+      fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 texel; uniform float sharpness; varying vec2 vUv;
+        void main(){
+          vec3 c = texture2D(tDiffuse, vUv).rgb;
+          vec3 n = texture2D(tDiffuse, vUv + vec2(0.0, texel.y)).rgb;
+          vec3 s = texture2D(tDiffuse, vUv - vec2(0.0, texel.y)).rgb;
+          vec3 e = texture2D(tDiffuse, vUv + vec2(texel.x, 0.0)).rgb;
+          vec3 w = texture2D(tDiffuse, vUv - vec2(texel.x, 0.0)).rgb;
+          // AMD Contrast Adaptive Sharpening (zjednodušené)
+          vec3 mn = min(c, min(min(n, s), min(e, w)));
+          vec3 mx = max(c, max(max(n, s), max(e, w)));
+          vec3 amp = sqrt(clamp(min(mn, 2.0 - mx) / max(mx, vec3(1e-4)), 0.0, 1.0));
+          vec3 wt = amp * (-1.0 / mix(8.0, 5.0, sharpness));
+          vec3 col = (c + (n + s + e + w) * wt) / (1.0 + 4.0 * wt);
+          gl_FragColor = vec4(max(col, 0.0), 1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
+      depthTest: false,
+      depthWrite: false,
+    });
+    this.upscaleScene = new THREE.Scene();
+    const tri = new THREE.BufferGeometry();
+    tri.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+    tri.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
+    const quad = new THREE.Mesh(tri, this.upscaleMat);
+    quad.frustumCulled = false;
+    this.upscaleScene.add(quad);
+    this.upscaleCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  }
+
+  private disposeUpscaler() {
+    this.upscaleRT?.dispose();
+    this.upscaleMat?.dispose();
+    this.upscaleRT = null;
+    this.upscaleMat = null;
+    this.upscaleScene = null;
+    this.upscaleCam = null;
+  }
+
+  /** Cílové rozlišení (výška v px, např. 1440) nebo null = nativní. */
+  setResolution(height: number | null) {
+    this.targetHeight = height && height > 0 ? height : null;
+    this.applyPixelRatio();
+  }
+
+  /** Zvětšování obrazu: scale < 1 vykresluje méně pixelů; sharpen = doostření (FSR-like). */
+  setUpscale(scale: number, sharpen: boolean) {
+    this.userScale = Math.max(0.33, Math.min(1, scale));
+    this.sharpen = sharpen;
+    this.applyPixelRatio();
+  }
+
+  setFpsCap(fps: number) {
+    this.fpsCap = fps > 0 ? fps : 0;
+  }
+
+  /**
+   * Úsporný režim: PBR materiály (MeshStandard) nahradí levnější Lambert se stejnou
+   * barvou, texturou a úpravami shaderu (pohyb zvířat, postav).
+   */
+  private liteify(root: THREE.Object3D) {
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || mesh.userData.lite) return;
+      mesh.userData.lite = true;
+      if (mesh === this.terrain) return;
+      const conv = (m: THREE.Material) => {
+        const sm = m as THREE.MeshStandardMaterial;
+        if (!sm.isMeshStandardMaterial) return m;
+        let l = this.liteCache.get(sm.uuid);
+        if (!l) {
+          const lm = new THREE.MeshLambertMaterial({
+            color: sm.color, map: sm.map, vertexColors: sm.vertexColors, transparent: sm.transparent, opacity: sm.opacity,
+            side: sm.side, flatShading: sm.flatShading, alphaTest: sm.alphaTest, emissive: sm.emissive, emissiveMap: sm.emissiveMap,
+            emissiveIntensity: sm.emissiveIntensity, depthWrite: sm.depthWrite, polygonOffset: sm.polygonOffset,
+            polygonOffsetFactor: sm.polygonOffsetFactor, polygonOffsetUnits: sm.polygonOffsetUnits,
+          });
+          if (sm.userData.tp) {
+            worldMappedLite(lm, sm.userData.tp);
+          } else {
+            lm.onBeforeCompile = sm.onBeforeCompile;
+            const key = sm.customProgramCacheKey();
+            lm.customProgramCacheKey = () => `${key}-lite`;
+          }
+          lm.userData = sm.userData;
+          l = lm;
+          this.liteCache.set(sm.uuid, l);
+        }
+        return l;
+      };
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(conv) : conv(mesh.material);
+    });
   }
 
   /** Grafická karta podle WebGL; software = vykreslování bez grafické karty (hardwarová akcelerace vypnutá). */
@@ -1648,7 +1902,7 @@ export class OpenWorld {
 
   /** true, když hra ani při sníženém rozlišení nestíhá (pod ~30 FPS). */
   get struggling() {
-    return this.autoScale <= 0.56 && this.frameAvg > 1 / 30;
+    return this.autoScale <= 0.56 && this.frameAvg > 1 / Math.min(30, this.fpsCap > 0 ? this.fpsCap * 0.8 : 30);
   }
 
   /** Průměrné FPS (pro nastavení / ladění). */
@@ -1669,7 +1923,7 @@ export class OpenWorld {
 
   /** Rozlišení vykreslování: 0.5–1 = podíl nativního rozlišení okna (výkon vs. ostrost). */
   setRenderScale(scale: number) {
-    this.userScale = Math.max(0.4, Math.min(1, scale));
+    this.userScale = Math.max(0.33, Math.min(1, scale));
     this.applyPixelRatio();
   }
 
