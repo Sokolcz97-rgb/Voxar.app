@@ -185,8 +185,9 @@ function Slider({ label, value, onChange, disabled }: { label: string; value: nu
 
 /** Nastavení rozdělené do záložek: Grafika, Zvuk, Hra, Účet. */
 export function SettingsPanel({
-  email, cameraMode, onCameraMode, onQuality, onRenderScale, onLogout, onExit, onClose,
+  email, cameraMode, onCameraMode, onQuality, onRenderScale, onLogout, onExit, onClose, onCharacters,
 }: {
+  onCharacters?: () => void;
   email?: string | null;
   cameraMode: "top" | "third";
   onCameraMode: (mode: "top" | "third") => void;
@@ -320,6 +321,7 @@ export function SettingsPanel({
             <div className="text-sm">{email ?? "—"}</div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
+            {onCharacters && <button className="ash-btn ghost small" onClick={onCharacters}>{L("Změnit postavu", "Switch character")}</button>}
             <button className="ash-btn ghost small" onClick={onLogout}>{L("Odhlásit se", "Sign out")}</button>
             <button className="ash-btn small" onClick={onExit}>{desk ? L("Ukončit hru (zpět do launcheru)", "Quit game (back to launcher)") : L("Ukončit hru", "Quit game")}</button>
           </div>

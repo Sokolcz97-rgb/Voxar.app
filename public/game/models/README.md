@@ -40,3 +40,15 @@ postavu/zvíře procedurálně.
 - zvířatům stačí `idle` a `walk` (případně `run`), ptákům `fly`
 
 Viz `docs/ASHES_GRAPHICS.md`.
+
+## Hráčské postavy (muž / žena)
+
+- `heroes/male.glb` (hoplita) a `heroes/female.glb` (hrdinka s vavřínem) – zjednodušené modely z Meshy,
+  bez kostry. Chůzi (nohy / lem šatů) a útok, zásah, pád dělá `three/meshyFigure.ts`.
+- `heroes/male.webp`, `heroes/female.webp` – portréty pro výběr postavy.
+- Pohlaví je v `appearance.gender` ("m" / "f"); legendy (Eryon, Azkar), bossové a nepřátelé zůstávají procedurální.
+
+## Zvířata z GLB
+
+`animals/*.glb` se načítají přes `world/glbAnimals.ts` (tabulka `GLB_ANIMALS`: velikost, natočení, typ pohybu).
+Velké modely se před vložením zmenšují (gltf-transform: simplify + webp textury; chlupaté modely s barvou ve vrcholech).

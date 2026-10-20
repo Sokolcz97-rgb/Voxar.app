@@ -5,6 +5,8 @@ export type StatKey = "sila" | "obratnost" | "intelekt" | "vydrz" | "stesti";
 export type Slot = "zbran" | "stit" | "helma" | "zbroj" | "rukavice" | "boty" | "amulet";
 
 export type Appearance = {
+  /** pohlaví postavy hráče: m = muž (hoplita), f = žena */
+  gender?: "m" | "f";
   skin?: string;
   cloak?: string;
   crest?: string;
