@@ -9,19 +9,27 @@ import * as THREE from "three";
 
 export type BuildingModel = "villa" | "temple" | "stall";
 
-const cache = new Map<BuildingModel, Promise<THREE.Group | null>>();
+const cache = new Map<string, Promise<THREE.Group | null>>();
 
-function load(kind: BuildingModel) {
-  let p = cache.get(kind);
+function load(file: string) {
+  let p = cache.get(file);
   if (!p) {
     p = import("three/examples/jsm/loaders/GLTFLoader.js")
-      .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(`/game/models/buildings/${kind}.glb`))
+      .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(`/game/models/buildings/${file}.glb`))
       .then((g) => g.scene as THREE.Group)
       .catch(() => null);
-    cache.set(kind, p);
+    cache.set(file, p);
   }
   return p;
 }
+
+/** Úsporný režim: jen jednoduché modely staveb (cca 5 000 trojúhelníků místo 30–40 000). */
+let liteBuildings = false;
+export function setLiteBuildings(on: boolean) {
+  liteBuildings = on;
+}
+/** Od jaké vzdálenosti se místo detailního modelu kreslí jednoduchý. */
+const LOD_DISTANCE = 32;
 
 /** Natočení po 90° tak, aby vchod (+Z modelu) mířil k bodu (tx, tz). */
 export function faceToward(x: number, z: number, tx: number, tz: number) {
@@ -36,11 +44,7 @@ export function placeBuilding(
   fallback: () => void,
   onPlaced?: (holder: THREE.Object3D) => void,
 ) {
-  void load(kind).then((src) => {
-    if (!src) {
-      fallback();
-      return;
-    }
+  const fit = (src: THREE.Group) => {
     const model = src.clone(true);
     const turn = new THREE.Group();
     turn.add(model);
@@ -50,18 +54,29 @@ export function placeBuilding(
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const s = Math.min(opts.w / (size.x || 1), opts.d / (size.z || 1)) * (opts.fill ?? 1);
-    const holder = new THREE.Group();
-    holder.add(turn);
+    const g = new THREE.Group();
+    g.add(turn);
     turn.position.set(-center.x, -box.min.y, -center.z);
-    holder.scale.setScalar(s);
-    // lehce zapustit do terénu, ať pod stavbou není mezera ve svahu
-    holder.position.set(opts.x, opts.y - 0.08, opts.z);
+    g.scale.setScalar(s);
     model.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
     });
+    return g;
+  };
+  void Promise.all([liteBuildings ? Promise.resolve(null) : load(kind), load(`${kind}_lo`)]).then(([hi, lo]) => {
+    if (!hi && !lo) {
+      fallback();
+      return;
+    }
+    // detail zblízka, jednoduchý model z dálky (LOD)
+    const holder = new THREE.LOD();
+    if (hi) holder.addLevel(fit(hi), 0);
+    if (lo) holder.addLevel(fit(lo), hi ? LOD_DISTANCE : 0);
+    // lehce zapustit do terénu, ať pod stavbou není mezera ve svahu
+    holder.position.set(opts.x, opts.y - 0.08, opts.z);
     scene.add(holder);
     onPlaced?.(holder);
   });

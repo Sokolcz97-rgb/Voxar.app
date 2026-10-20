@@ -370,6 +370,38 @@ export function worldMapped(mat: THREE.MeshStandardMaterial, tex: { map: THREE.T
       );
   };
   mat.customProgramCacheKey = () => `tp:${tex.map.uuid}:${scale}`;
+  mat.userData.tp = { tex, scale };
+  return mat;
+}
+
+/**
+ * Úsporná varianta: jedno čtení textury podle převažující osy místo šesti
+ * (bez reliéfu). Pro režim „Úsporná / Nízká“.
+ */
+export function worldMappedLite(mat: THREE.Material, tp: { tex: { map: THREE.Texture }; scale: number }) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.tpMap = { value: tp.tex.map };
+    shader.uniforms.tpScale = { value: 1 / tp.scale };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vTpUv;\nuniform float tpScale;")
+      .replace(
+        "#include <worldpos_vertex>",
+        `#include <worldpos_vertex>
+        vec4 tpW = vec4(transformed, 1.0);
+        mat3 tpM = mat3(modelMatrix);
+        #ifdef USE_INSTANCING
+          tpW = instanceMatrix * tpW;
+          tpM = tpM * mat3(instanceMatrix);
+        #endif
+        tpW = modelMatrix * tpW;
+        vec3 tpN = abs(normalize(tpM * objectNormal));
+        vTpUv = (tpN.x > tpN.y && tpN.x > tpN.z ? tpW.zy : tpN.y > tpN.z ? tpW.xz : tpW.xy) * tpScale;`,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vTpUv;\nuniform sampler2D tpMap;")
+      .replace("#include <map_fragment>", "#include <map_fragment>\ndiffuseColor.rgb *= texture2D(tpMap, vTpUv).rgb * 1.25;");
+  };
+  mat.customProgramCacheKey = () => `tpl:${tp.tex.map.uuid}:${tp.scale}`;
   return mat;
 }
 

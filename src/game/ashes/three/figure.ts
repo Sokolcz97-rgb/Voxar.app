@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Appearance, HeroClass } from "../types";
 import { bronzeTex, clothTex, leatherTex, muscleBump, skinTex, woodTex } from "./textures";
 
@@ -161,12 +162,49 @@ export class Figure {
     this.group.add(this.root);
     const s = opts.scale ?? (opts.eryon ? 1.12 : opts.azkar ? 1.15 : opts.boss ? 1.15 : 1);
     this.root.scale.setScalar(s);
+    this.mergeStatic();
     this.group.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
         o.castShadow = true;
         o.receiveShadow = true;
       }
     });
+  }
+
+  /**
+   * Sloučí nehybné díly se stejným materiálem pod každým kloubem do jedné sítě.
+   * Postava měla ~80 samostatných dílů (80 vykreslovacích volání); po sloučení jich je
+   * zhruba desetina – to je hlavní úspora výkonu, když je vidět víc postav naráz.
+   */
+  private mergeStatic() {
+    const keep = new Set<THREE.Object3D>([this.cloak].filter(Boolean) as THREE.Object3D[]);
+    const nodes: THREE.Object3D[] = [];
+    this.group.traverse((o) => nodes.push(o));
+    for (const node of nodes) {
+      const buckets = new Map<string, THREE.Mesh[]>();
+      for (const child of node.children) {
+        const m = child as THREE.Mesh;
+        if (!m.isMesh || keep.has(m) || m.children.length || Array.isArray(m.material) || (m as unknown as { isInstancedMesh?: boolean }).isInstancedMesh || !m.visible) continue;
+        const g = m.geometry;
+        const sig = `${(m.material as THREE.Material).uuid}|${g.index ? "i" : "n"}|${Object.keys(g.attributes).sort().join(",")}|${m.renderOrder}`;
+        if (!buckets.has(sig)) buckets.set(sig, []);
+        buckets.get(sig)!.push(m);
+      }
+      for (const list of buckets.values()) {
+        if (list.length < 2) continue;
+        const geos = list.map((m) => {
+          m.updateMatrix();
+          return m.geometry.clone().applyMatrix4(m.matrix);
+        });
+        const merged = mergeGeometries(geos, false);
+        geos.forEach((g) => g.dispose());
+        if (!merged) continue;
+        const mesh = new THREE.Mesh(merged, list[0].material);
+        mesh.renderOrder = list[0].renderOrder;
+        for (const m of list) node.remove(m);
+        node.add(mesh);
+      }
+    }
   }
 
   private build() {
@@ -567,9 +605,7 @@ export class Figure {
       this.flame.scale.set(0.3, 0.38, 1);
       this.flame.position.y = 0.98;
       staff.add(this.flame);
-      const light = new THREE.PointLight("#ff8a2a", 0.8, 3, 2);
-      light.position.y = 1;
-      staff.add(light);
+      // bez vlastního světla: každé další světlo zpomaluje vykreslování všech objektů
     }
 
     if (this.opts.shield ?? cls === "hoplit") {

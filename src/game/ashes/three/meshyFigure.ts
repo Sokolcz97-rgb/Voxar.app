@@ -12,18 +12,22 @@ import type { HeroClass } from "../types";
 
 export type Gender = "m" | "f";
 
-type Key = `${HeroClass}_${Gender}`;
-export const heroModelUrl = (cls: HeroClass, g: Gender) => `/game/models/heroes/${cls}_${g}.glb`;
+/** Úsporná grafika: jednoduché modely postav (~7 000 místo až 35 000 trojúhelníků). */
+let liteHeroes = false;
+export function setLiteHeroes(on: boolean) {
+  liteHeroes = on;
+}
+export const heroModelUrl = (cls: HeroClass, g: Gender) => `/game/models/heroes/${cls}_${g}${liteHeroes ? "_lo" : ""}.glb`;
 export const heroPortraitUrl = (cls: HeroClass, g: Gender) => `/game/models/heroes/${cls}_${g}.webp`;
 /** výška postavy v metrech (stejně vysoká jako procedurální postavy) */
 const HEIGHT: Record<Gender, number> = { m: 1.62, f: 1.55 };
 /** do jaké výšky (podíl) sahají nohy / lem šatů */
 const LEG = 0.3;
 
-const cache = new Map<Key, Promise<THREE.Group | null>>();
+const cache = new Map<string, Promise<THREE.Group | null>>();
 
 function load(cls: HeroClass, g: Gender) {
-  const key: Key = `${cls}_${g}`;
+  const key = `${cls}_${g}${liteHeroes ? "_lo" : ""}`;
   let p = cache.get(key);
   if (!p) {
     p = import("three/examples/jsm/loaders/GLTFLoader.js")
