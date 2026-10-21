@@ -14,6 +14,16 @@ namespace Voxario.Ashes
         Transform body;
         float phase, amount, breath, height = 1.6f, lookSeed;
         LegRig legs;
+        float lungeT = -1, flinchT = -1, fallT = -1;
+        bool fallen;
+
+        /// <summary>Výpad dopředu (útok).</summary>
+        public void Lunge() => lungeT = 0;
+        /// <summary>Zásah: krátce se zakloní.</summary>
+        public void Flinch() => flinchT = 0;
+        /// <summary>Pád (prohra / smrt).</summary>
+        public void Fall() { fallT = 0; fallen = true; }
+        public void Stand() { fallen = false; fallT = -1; }
 
         public static CharacterView Create(GameObject prefab, Transform parent, float height, string name,
             LegRig.Gait gait = LegRig.Gait.Biped, float legRatio = 0.3f, float yaw = 0)
@@ -79,8 +89,33 @@ namespace Voxario.Ashes
                 float t = Time.time * 0.25f + lookSeed;
                 look = Mathf.Sin(t) * Mathf.Max(0, Mathf.Sin(t * 0.37f)) * 18f;
             }
-            body.localPosition = new Vector3(0, Mathf.Abs(Mathf.Sin(phase)) * 0.045f * k * amount + Mathf.Sin(breath * 1.8f) * 0.006f * k, 0);
-            body.localRotation = Quaternion.Euler(4.5f * amount, look, Mathf.Sin(phase) * 2f * amount);
+            var pos = new Vector3(0, Mathf.Abs(Mathf.Sin(phase)) * 0.045f * k * amount + Mathf.Sin(breath * 1.8f) * 0.006f * k, 0);
+            float pitch = 4.5f * amount;
+            if (lungeT >= 0)
+            {
+                lungeT += dt;
+                float l = Mathf.Sin(Mathf.Clamp01(lungeT / 0.42f) * Mathf.PI);
+                pos.z += l * 0.55f;
+                pitch += l * 14f;
+                if (lungeT > 0.42f) lungeT = -1;
+            }
+            if (flinchT >= 0)
+            {
+                flinchT += dt;
+                float l = Mathf.Sin(Mathf.Clamp01(flinchT / 0.32f) * Mathf.PI);
+                pitch -= l * 10f;
+                pos.z -= l * 0.12f;
+                if (flinchT > 0.32f) flinchT = -1;
+            }
+            if (fallen)
+            {
+                fallT = Mathf.Min(1, fallT + dt / 0.8f);
+                float e = 1 - Mathf.Pow(1 - fallT, 3);
+                pitch = -83f * e;
+                pos.y = 0.05f * e;
+            }
+            body.localPosition = pos;
+            body.localRotation = Quaternion.Euler(pitch, look, Mathf.Sin(phase) * 2f * amount);
             legs?.Update(phase, amount);
         }
     }

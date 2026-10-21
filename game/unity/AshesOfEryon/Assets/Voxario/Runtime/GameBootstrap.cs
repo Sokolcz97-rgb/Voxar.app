@@ -21,6 +21,17 @@ namespace Voxario.Ashes
         public CameraRig rig;
         public Camera cam;
         Transform worldRoot;
+        public Transform WorldRoot => worldRoot;
+        string savePosKey;
+        float savePosAt;
+
+        void Update()
+        {
+            if (!inWorld || player == null || savePosKey == null || Time.unscaledTime < savePosAt) return;
+            savePosAt = Time.unscaledTime + 2f;
+            var p = WorldMap.ToWeb(player.transform.position);
+            PlayerPrefs.SetString(savePosKey, p.x.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + ";" + p.y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture));
+        }
 
         void Awake()
         {
@@ -35,6 +46,8 @@ namespace Voxario.Ashes
             ui.guard = guard;
             gameObject.AddComponent<NpcDialog>().boot = this;
             gameObject.AddComponent<Minimap>().boot = this;
+            gameObject.AddComponent<Encounters>().boot = this;
+            gameObject.AddComponent<WorldPresence>().boot = this;
         }
 
         IEnumerator Start()
@@ -125,6 +138,7 @@ namespace Voxario.Ashes
             var ch = state.character;
             string faction = string.IsNullOrEmpty(ch.faction) ? "kalidra" : ch.faction;
             WorldBuilder.Build(worldRoot, library, faction);
+            GetComponent<Encounters>().Build(worldRoot, library, faction);
 
             string gender = ch.appearance != null && ch.appearance.gender == "f" ? "f" : "m";
             string cls = string.IsNullOrEmpty(ch.@class) ? "hoplit" : ch.@class;
@@ -139,6 +153,17 @@ namespace Voxario.Ashes
             tag.title = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
             tag.isPlayer = true;
             var spawn = faction == "legie" ? WorldMap.SpawnLegie : WorldMap.SpawnKalidra;
+            // pokračovat tam, kde hráč skončil (uloženo v tomto počítači)
+            string posKey = $"ashes.pos.{ch.name}.{faction}";
+            if (PlayerPrefs.HasKey(posKey))
+            {
+                var parts = PlayerPrefs.GetString(posKey).Split(';');
+                if (parts.Length == 2 && float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sx)
+                    && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sz)
+                    && Mathf.Abs(sx) < 130 && Mathf.Abs(sz) < 130 && WorldMap.HeightAt(sx, sz) > 0.4f)
+                    spawn = new Vector2(sx, sz);
+            }
+            savePosKey = posKey;
             player.Respawn(spawn);
 
             var rigGo = new GameObject("CameraRig");
@@ -226,6 +251,7 @@ namespace Voxario.Ashes
 
         public void SignOut()
         {
+            GetComponent<WorldPresence>()?.Disconnect();
             api.SignOut();
             state = null;
             inWorld = false;

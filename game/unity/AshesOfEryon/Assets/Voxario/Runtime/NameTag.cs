@@ -8,7 +8,8 @@ namespace Voxario.Ashes
         public string title, subtitle;
         public string npcId;
         public bool isPlayer;
-        static GUIStyle titleStyle, subStyle, markStyle, playerStyle;
+        public bool enemy;
+        static GUIStyle titleStyle, subStyle, markStyle, playerStyle, enemyStyle;
 
         void OnGUI()
         {
@@ -22,8 +23,9 @@ namespace Voxario.Ashes
             subStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 11, normal = { textColor = new Color(0.85f, 0.8f, 0.72f) } };
             markStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 30, fontStyle = FontStyle.Bold, normal = { textColor = new Color(1f, 0.78f, 0.25f) } };
             playerStyle ??= new GUIStyle(titleStyle) { normal = { textColor = new Color(0.7f, 0.9f, 1f) } };
+            enemyStyle ??= new GUIStyle(titleStyle) { normal = { textColor = new Color(1f, 0.42f, 0.35f) } };
             float x = sp.x, y = Screen.height - sp.y;
-            GUI.Label(new Rect(x - 100, y - 30, 200, 20), title, isPlayer ? playerStyle : titleStyle);
+            GUI.Label(new Rect(x - 100, y - 30, 200, 20), title, isPlayer ? playerStyle : enemy ? enemyStyle : titleStyle);
             if (!string.IsNullOrEmpty(subtitle)) GUI.Label(new Rect(x - 100, y - 13, 200, 16), subtitle, subStyle);
             if (npcId != null)
             {

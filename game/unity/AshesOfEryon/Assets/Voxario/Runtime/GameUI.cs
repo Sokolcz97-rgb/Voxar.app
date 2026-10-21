@@ -28,7 +28,7 @@ namespace Voxario.Ashes
                 if (dialog != null && dialog.IsOpen) dialog.Close();
                 else settingsOpen = !settingsOpen;
             }
-            bool blocked = settingsOpen || (dialog != null && dialog.IsOpen);
+            bool blocked = settingsOpen || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
             if (boot.player != null) boot.player.inputEnabled = !blocked;
             if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen;
         }
