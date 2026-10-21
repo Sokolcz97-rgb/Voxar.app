@@ -26,6 +26,8 @@ type MyDownload = {
   pending_purchase: string | null;
   pending_amount: number | null;
   pending_period: Period | null;
+  activated_at: string | null;
+  refundable_until: string | null;
 };
 
 export const planPrice = (item: ShopItem, period: Period) =>
@@ -55,6 +57,9 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
   const [choice, setChoice] = useState<Record<string, Period>>({});
   const [renew, setRenew] = useState<Record<string, boolean>>({});
   const [toggling, setToggling] = useState<string | null>(null);
+  const [refundAsk, setRefundAsk] = useState<string | null>(null);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundBusy, setRefundBusy] = useState(false);
   const [, setTick] = useState(0);
 
   const load = useCallback(async () => {
@@ -70,7 +75,7 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
 
   useEffect(() => {
     void load();
-    const t = window.setInterval(() => setTick((x) => x + 1), 30_000);
+    const t = window.setInterval(() => setTick((x) => x + 1), 15_000);
     return () => window.clearInterval(t);
   }, [load]);
 
@@ -78,6 +83,7 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
     setProgress((p) => ({ ...p, [item.id]: 0 }));
     try {
       await downloadShopFile(item, (k) => setProgress((p) => ({ ...p, [item.id]: k })));
+      void supabase.rpc("shop_log_download", { p_item: item.id });
       toast.success("Stahování dokončeno.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Stažení se nezdařilo.");
@@ -100,6 +106,20 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
       return;
     }
     toast.success(on ? "Automatické obnovení zapnuto." : "Automatické obnovení vypnuto.");
+    void load();
+  };
+
+  const requestRefund = async (item: ShopItem) => {
+    setRefundBusy(true);
+    const { error } = await supabase.rpc("shop_request_refund", { p_item: item.id, p_reason: refundReason.trim() || null });
+    setRefundBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setRefundAsk(null);
+    setRefundReason("");
+    toast.success("Žádost přijata. Přístup byl ukončen a peníze ti vrátíme nejpozději do 14 dnů.");
     void load();
   };
 
@@ -223,6 +243,42 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
                     <Button variant="ghost" size="sm" className="w-full" onClick={() => void setAutoRenew(item, true, period)}>
                       Další období obnovovat jako {period === "year" ? "roční" : "měsíční"}
                     </Button>
+                  )}
+                  {own.refundable_until && new Date(own.refundable_until).getTime() > Date.now() && (
+                    <div className="border border-border p-3 space-y-2 text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        Záruka vrácení peněz: požádat můžeš ještě{" "}
+                        <b>{Math.max(1, Math.ceil((new Date(own.refundable_until).getTime() - Date.now()) / 60000))} min</b> (do{" "}
+                        {new Date(own.refundable_until).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}), pokud jsi
+                        program nezačal(a) používat.{" "}
+                        <Link to="/obchodni-podminky#vraceni" className="text-primary underline">Podmínky</Link>
+                      </p>
+                      {refundAsk === item.id ? (
+                        <>
+                          <textarea
+                            className="w-full rounded border border-border bg-background p-2 text-sm"
+                            rows={2}
+                            maxLength={1000}
+                            placeholder="Důvod (nepovinné) – např. program nejde spustit"
+                            value={refundReason}
+                            onChange={(e) => setRefundReason(e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Po potvrzení se přístup okamžitě ukončí a program musíš odinstalovat. Záruku lze u předplatného využít jen jednou.
+                          </p>
+                          <div className="flex gap-2">
+                            <Button variant="destructive" size="sm" disabled={refundBusy} onClick={() => void requestRefund(item)}>
+                              {refundBusy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Potvrdit žádost o vrácení
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setRefundAsk(null)}>Zpět</Button>
+                          </div>
+                        </>
+                      ) : (
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => setRefundAsk(item.id)}>
+                          Požádat o vrácení peněz
+                        </Button>
+                      )}
+                    </div>
                   )}
                   {!own.pending_purchase && (
                     <Button variant="outline" className="w-full" onClick={() => onBuy(item, { period, autoRenew: own.auto_renew })}>

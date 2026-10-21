@@ -2358,6 +2358,9 @@ export type Database = {
       }
       shop_entitlements: {
         Row: {
+          download_count: number
+          first_download_at: string | null
+          revoked_at: string | null
           created_at: string
           expires_at: string
           id: string
@@ -2366,6 +2369,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          download_count?: number
+          first_download_at?: string | null
+          revoked_at?: string | null
           created_at?: string
           expires_at: string
           id?: string
@@ -2374,6 +2380,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          download_count?: number
+          first_download_at?: string | null
+          revoked_at?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -2454,6 +2463,12 @@ export type Database = {
       }
       shop_purchases: {
         Row: {
+          refund_reason: string | null
+          refund_requested_at: string | null
+          refunded_at: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
+          waiver_accepted_at: string | null
           amount_czk: number
           contact: string | null
           cosmetic_id: string | null
@@ -2477,6 +2492,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          refund_reason?: string | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
+          waiver_accepted_at?: string | null
           amount_czk?: number
           contact?: string | null
           cosmetic_id?: string | null
@@ -2500,6 +2521,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          refund_reason?: string | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
+          waiver_accepted_at?: string | null
           amount_czk?: number
           contact?: string | null
           cosmetic_id?: string | null
@@ -3799,10 +3826,18 @@ export type Database = {
           pending_purchase: string | null
           pending_amount: number | null
           pending_period: string | null
+          activated_at: string | null
+          refundable_until: string | null
         }[]
       }
+      shop_log_download: { Args: { p_item: string }; Returns: undefined }
+      shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
+      shop_request_refund: {
+        Args: { p_item: string; p_reason?: string | null }
+        Returns: Json
+      }
       shop_renewal_pay: {
-        Args: { p_method: string; p_purchase: string }
+        Args: { p_method: string; p_purchase: string; p_terms?: string }
         Returns: undefined
       }
       shop_run_renewals: { Args: never; Returns: number }

@@ -48,6 +48,7 @@ import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import ShopPage from "./pages/Shop.tsx";
 import BusinessTerms from "./pages/BusinessTerms.tsx";
+import LicenseTerms from "./pages/LicenseTerms.tsx";
 import Orders from "./pages/Orders.tsx";
 import CreateOrder from "./pages/CreateOrder.tsx";
 import MyOrders from "./pages/MyOrders.tsx";
@@ -126,6 +127,8 @@ const AppRoutes = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/obchod" element={<ShopPage />} />
         <Route path="/obchodni-podminky" element={<BusinessTerms />} />
+        <Route path="/licence" element={<LicenseTerms />} />
+        <Route path="/licencni-podminky" element={<Navigate to="/licence" replace />} />
         <Route path="/zakazky" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route path="/objednat" element={<ProtectedRoute><CreateOrder /></ProtectedRoute>} />
         <Route path="/profile/zakazky" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
