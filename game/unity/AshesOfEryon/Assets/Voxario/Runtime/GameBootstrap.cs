@@ -48,6 +48,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Minimap>().boot = this;
             gameObject.AddComponent<Encounters>().boot = this;
             gameObject.AddComponent<WorldPresence>().boot = this;
+            gameObject.AddComponent<Music>().boot = this;
         }
 
         IEnumerator Start()

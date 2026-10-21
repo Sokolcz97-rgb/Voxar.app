@@ -102,7 +102,7 @@ namespace Voxario.Ashes
 
         void Settings()
         {
-            float w = 640, h = 640;
+            float w = 660, h = 720;
             var r = new Rect((Screen.width - w) / 2, (Screen.height - h) / 2, w, h);
             GUI.Box(r, GUIContent.none, box);
             GUILayout.BeginArea(new Rect(r.x + 24, r.y + 16, w - 48, h - 32));
@@ -156,6 +156,14 @@ namespace Voxario.Ashes
                 }
                 GUILayout.EndHorizontal();
             }
+
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Hudba {Mathf.RoundToInt(Music.Volume * 100)} %", label, GUILayout.Width(130));
+            Music.Volume = GUILayout.HorizontalSlider(Music.Volume, 0, 1, GUILayout.Height(24));
+            GUILayout.EndHorizontal();
+            var music = boot.GetComponent<Music>();
+            if (music != null && music.NowPlaying != null) GUILayout.Label("Hraje: " + music.NowPlaying, small);
 
             GUILayout.Space(6);
             GUILayout.Label("Režim zobrazení", label);
