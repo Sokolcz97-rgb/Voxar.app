@@ -17,7 +17,7 @@ namespace Voxario.Ashes
         bool started;
         public static float Volume
         {
-            get => PlayerPrefs.GetFloat("audio.music", 0.5f);
+            get => PlayerPrefs.GetFloat("audio.music", 0.45f);
             set { PlayerPrefs.SetFloat("audio.music", Mathf.Clamp01(value)); }
         }
         public string NowPlaying { get; private set; }
