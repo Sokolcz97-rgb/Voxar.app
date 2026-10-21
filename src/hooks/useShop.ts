@@ -7,6 +7,8 @@ export type ShopItem = {
   title: string;
   description: string | null;
   price_czk: number;
+  /** Předplatné: cena ročního tarifu (null = jen měsíční). price_czk je měsíční cena. */
+  price_year_czk?: number | null;
   cosmetic_id: string | null;
   features: string[];
   image_url: string | null;

@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CosmeticFrame } from "@/components/CosmeticFrame";
 import { PurchaseDialog } from "@/components/shop/PurchaseDialog";
 import { ShopAdminPanel } from "@/components/shop/ShopAdminPanel";
-import { SoftwareTab } from "@/components/shop/SoftwareTab";
+import { SoftwareTab, subscriptionCheckout, type BuyPlan } from "@/components/shop/SoftwareTab";
 import { useShop, type ShopItem } from "@/hooks/useShop";
 import { useAuth } from "@/contexts/AuthContext";
 import { ShoppingBag, Sparkles, Code2, HeartHandshake, Check, ShieldAlert, Settings2, Crown } from "lucide-react";
@@ -32,6 +32,9 @@ const ShopPage = () => {
     kind: "frame" | "plugin" | "software" | "donation";
     itemId: string | null;
     cosmeticId: string | null;
+    period?: "month" | "year" | null;
+    autoRenew?: boolean;
+    renewalId?: string | null;
   } | null>(null);
 
   const frames = useMemo(
@@ -54,8 +57,8 @@ const ShopPage = () => {
     settings?.refund_notice ||
     "Na dary ani na zakoupené rámečky a digitální obsah neposkytujeme vrácení peněz (refund).";
 
-  const buy = (item: ShopItem) =>
-    setCheckout({
+  const buy = (item: ShopItem, plan?: BuyPlan) =>
+    setCheckout(plan ? subscriptionCheckout(item, plan) : {
       title: item.title,
       amount: item.price_czk,
       note: item.title,
@@ -268,6 +271,9 @@ const ShopPage = () => {
         kind={checkout?.kind ?? "donation"}
         itemId={checkout?.itemId ?? null}
         cosmeticId={checkout?.cosmeticId ?? null}
+        period={checkout?.period ?? null}
+        autoRenew={checkout?.autoRenew ?? false}
+        renewalId={checkout?.renewalId ?? null}
       />
     </div>
   );

@@ -180,7 +180,16 @@ export default function AdminPurchases() {
                     <p className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-4">
                       <span>👤 {r.user_id ? names[r.user_id] ?? r.user_id.slice(0, 8) : "—"}</span>
                       <span>💰 {r.amount_czk} {r.currency}</span>
-                      {r.payment_method && <span>💳 {r.payment_method === "qr" ? "QR platba" : "PayPal"}</span>}
+                      {r.payment_method && (
+                        <span>
+                          💳{" "}
+                          {r.payment_method === "qr"
+                            ? "QR platba"
+                            : r.payment_method === "renewal"
+                              ? "Automatické obnovení – zatím nezaplaceno"
+                              : "PayPal"}
+                        </span>
+                      )}
                       <span>🕒 {new Date(r.created_at).toLocaleString("cs-CZ")}</span>
                     </p>
                   </div>

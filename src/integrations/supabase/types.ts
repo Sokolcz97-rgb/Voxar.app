@@ -2401,6 +2401,7 @@ export type Database = {
           image_url: string | null
           kind: string
           price_czk: number
+          price_year_czk: number | null
           sort_order: number
           title: string
           updated_at: string
@@ -2422,6 +2423,7 @@ export type Database = {
           image_url?: string | null
           kind?: string
           price_czk?: number
+          price_year_czk?: number | null
           sort_order?: number
           title: string
           updated_at?: string
@@ -2443,6 +2445,7 @@ export type Database = {
           image_url?: string | null
           kind?: string
           price_czk?: number
+          price_year_czk?: number | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -2463,7 +2466,10 @@ export type Database = {
           note: string | null
           order_id: string | null
           paid_at: string | null
+          auto_renew: boolean
           payment_method: string | null
+          period: string | null
+          renewal: boolean
           requires_manual: boolean
           status: string
           title: string
@@ -2483,7 +2489,10 @@ export type Database = {
           note?: string | null
           order_id?: string | null
           paid_at?: string | null
+          auto_renew?: boolean
           payment_method?: string | null
+          period?: string | null
+          renewal?: boolean
           requires_manual?: boolean
           status?: string
           title: string
@@ -2503,7 +2512,10 @@ export type Database = {
           note?: string | null
           order_id?: string | null
           paid_at?: string | null
+          auto_renew?: boolean
           payment_method?: string | null
+          period?: string | null
+          renewal?: boolean
           requires_manual?: boolean
           status?: string
           title?: string
@@ -3782,7 +3794,21 @@ export type Database = {
           file_version: string
           item_id: string
           title: string
+          period: string | null
+          auto_renew: boolean
+          pending_purchase: string | null
+          pending_amount: number | null
+          pending_period: string | null
         }[]
+      }
+      shop_renewal_pay: {
+        Args: { p_method: string; p_purchase: string }
+        Returns: undefined
+      }
+      shop_run_renewals: { Args: never; Returns: number }
+      shop_set_auto_renew: {
+        Args: { p_item: string; p_on: boolean; p_period?: string }
+        Returns: undefined
       }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {

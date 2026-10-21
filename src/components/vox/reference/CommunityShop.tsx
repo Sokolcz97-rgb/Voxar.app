@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Check, Code2, Crown, HeartHandshake, Loader2, Settings2, ShieldAlert, Sparkles } from "lucide-react";
-import { SoftwareTab } from "@/components/shop/SoftwareTab";
+import { SoftwareTab, subscriptionCheckout, type BuyPlan } from "@/components/shop/SoftwareTab";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CosmeticFrame } from "@/components/CosmeticFrame";
 import { PurchaseDialog } from "@/components/shop/PurchaseDialog";
@@ -17,6 +17,9 @@ type Checkout = {
   kind: "frame" | "plugin" | "software" | "donation";
   itemId: string | null;
   cosmeticId: string | null;
+  period?: "month" | "year" | null;
+  autoRenew?: boolean;
+  renewalId?: string | null;
 };
 
 export function CommunityShop() {
@@ -34,7 +37,7 @@ export function CommunityShop() {
   const min = settings?.donate_min ?? 0;
   const max = settings?.donate_max ?? 500;
 
-  const buy = (item: ShopItem) => setCheckout({
+  const buy = (item: ShopItem, plan?: BuyPlan) => setCheckout(plan ? subscriptionCheckout(item, plan) : {
     title: item.title,
     amount: item.price_czk,
     note: item.title,
@@ -130,6 +133,9 @@ export function CommunityShop() {
         kind={checkout?.kind ?? "donation"}
         itemId={checkout?.itemId ?? null}
         cosmeticId={checkout?.cosmeticId ?? null}
+        period={checkout?.period ?? null}
+        autoRenew={checkout?.autoRenew ?? false}
+        renewalId={checkout?.renewalId ?? null}
       />
     </div>
   );

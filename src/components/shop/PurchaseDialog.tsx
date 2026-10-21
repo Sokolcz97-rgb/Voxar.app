@@ -22,6 +22,11 @@ interface Props {
   kind?: PurchaseKind;
   itemId?: string | null;
   cosmeticId?: string | null;
+  /** Předplatné: tarif a automatické obnovení. */
+  period?: "month" | "year" | null;
+  autoRenew?: boolean;
+  /** Platba za obnovení, kterou už připravil systém (jen se zaznamená způsob platby). */
+  renewalId?: string | null;
 }
 
 export function PurchaseDialog({
@@ -34,6 +39,9 @@ export function PurchaseDialog({
   kind = "donation",
   itemId = null,
   cosmeticId = null,
+  period = null,
+  autoRenew = false,
+  renewalId = null,
 }: Props) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -78,17 +86,21 @@ export function PurchaseDialog({
     if (lastKey.current === key) return;
     lastKey.current = key;
     setSaving(true);
-    const { error } = await supabase.from("shop_purchases").insert({
-      user_id: user.id,
-      item_id: itemId,
-      kind,
-      title,
-      amount_czk: amount,
-      cosmetic_id: cosmeticId,
-      requires_manual: kind === "plugin",
-      payment_method: method,
-      note,
-    });
+    const { error } = renewalId
+      ? await supabase.rpc("shop_renewal_pay", { p_purchase: renewalId, p_method: method })
+      : await supabase.from("shop_purchases").insert({
+          user_id: user.id,
+          item_id: itemId,
+          kind,
+          title,
+          amount_czk: amount,
+          cosmetic_id: cosmeticId,
+          requires_manual: kind === "plugin",
+          payment_method: method,
+          note,
+          period: kind === "software" ? period ?? "month" : null,
+          auto_renew: kind === "software" ? autoRenew : false,
+        });
     setSaving(false);
     if (error) {
       lastKey.current = "";
@@ -106,6 +118,12 @@ export function PurchaseDialog({
           <DialogTitle className="font-display">{title}</DialogTitle>
           <DialogDescription>
             Částka k úhradě: <span className="text-primary font-bold">{amount} Kč</span>
+            {kind === "software" && (
+              <span className="block mt-1">
+                {period === "year" ? "Roční předplatné (365 dní)" : "Měsíční předplatné (30 dní)"}
+                {autoRenew ? " · automatické obnovení zapnuto" : ""}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -175,6 +193,12 @@ export function PurchaseDialog({
             {settings?.refund_notice ||
               "Na dary ani na zakoupený digitální obsah neposkytujeme vrácení peněz (refund)."}
           </p>
+          {kind === "software" && autoRenew && (
+            <p className="text-xs text-muted-foreground">
+              Automatické obnovení: 3 dny před koncem ti připravíme platbu za další období a pošleme upozornění.
+              Stačí ji zaplatit – předplatné se po ověření prodlouží. Vypnout to můžeš kdykoli v Obchodě → Předplatné.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Po ověření platby ti rámeček aktivujeme automaticky; ručně spravované položky (např. pluginy) se
             objeví jako zakázka.
