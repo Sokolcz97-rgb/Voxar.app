@@ -133,7 +133,9 @@ function createUpdater({ onStatus, canRestart }) {
   function apply() {
     if (!ready || process.platform !== "win32") return false;
     const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
+    const transcript = path.join(app.getPath("userData"), "launcher-update.log");
     const lines = [
+      `try { Start-Transcript -LiteralPath ${q(transcript)} -Force | Out-Null } catch {}`,
       "$ErrorActionPreference = 'Stop'",
       `try { Wait-Process -Id ${process.pid} -Timeout 30 -ErrorAction SilentlyContinue } catch {}`,
       "Start-Sleep -Milliseconds 700",

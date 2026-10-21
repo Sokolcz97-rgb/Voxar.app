@@ -45,18 +45,29 @@ jobs:
           $exe = Join-Path $env:LOCALAPPDATA "StudioVoxario\Ashes of Eryon\Launcher\Ashes of Eryon Launcher.exe"
           function Show($label) {
             Write-Host "---- $label"
-            Get-CimInstance Win32_Process -Filter "Name='Ashes of Eryon Launcher.exe'" | ForEach-Object { Write-Host "pid=$($_.ProcessId) parent=$($_.ParentProcessId) cmd=$($_.CommandLine.Substring(0, [Math]::Min(160, $_.CommandLine.Length)))" }
-            Get-Process -Name "Ashes of Eryon Launcher" -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { Write-Host "WINDOW pid=$($_.Id) title=$($_.MainWindowTitle)" }
+            Get-CimInstance Win32_Process | Where-Object { $_.Name -like '*Ashes*' -or ($_.Name -like 'powershell*' -and "$($_.CommandLine)" -like '*ashes-launcher-update*') } | ForEach-Object { Write-Host "PROC pid=$($_.ProcessId) parent=$($_.ParentProcessId) name=$($_.Name) cmd=$("$($_.CommandLine)".Substring(0, [Math]::Min(200, "$($_.CommandLine)".Length)))" }
+            Get-Process | Where-Object { $_.ProcessName -like '*Ashes*' -and $_.MainWindowHandle -ne 0 } | ForEach-Object { Write-Host "WINDOW pid=$($_.Id) title=$($_.MainWindowTitle)" }
             $asar = Join-Path (Split-Path $exe) "resources\app.asar"
             $t = [System.Text.Encoding]::UTF8.GetString([System.IO.File]::ReadAllBytes($asar))
             Write-Host ("installed asar version: " + ([regex]::Match($t, '"version":\s*"([0-9.]+)"').Groups[1].Value))
             Get-ChildItem $env:APPDATA -Recurse -Filter launcher.log -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 15 }
-            Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "script $($_.Name)"; Get-Content $_.FullName }
+            Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "script $($_.Name) $($_.Length) B" }
           }
           Start-Process -FilePath $exe
           for ($i = 0; $i -lt 6; $i++) { Start-Sleep 15; Show "after $((($i+1)*15)) s" }
+          Write-Host "==== run update script by hand"
+          Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" | Select-Object -First 1 | ForEach-Object {
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $_.FullName 2>&1 | Select-Object -First 20
+            Write-Host "script exit: $LASTEXITCODE"
+          }
+          Start-Sleep 10
+          Show "after script by hand"
           Write-Host "==== second manual start"
-          Start-Process -FilePath $exe
+          Get-Process | Where-Object { $_.ProcessName -like '*Ashes*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep 2
+          $p = Start-Process -FilePath $exe -ArgumentList "--enable-logging" -PassThru -RedirectStandardError "$env:RUNNER_TEMP\manual.err" -RedirectStandardOutput "$env:RUNNER_TEMP\manual.out"
           Start-Sleep 15
+          Write-Host "manual alive: $(-not $p.HasExited) exit=$($p.ExitCode)"
+          Get-Content "$env:RUNNER_TEMP\manual.err","$env:RUNNER_TEMP\manual.out" -ErrorAction SilentlyContinue | Select-Object -Last 30
           Show "after manual start"
           Stop-Process -Id $srv.Id -Force -ErrorAction SilentlyContinue
