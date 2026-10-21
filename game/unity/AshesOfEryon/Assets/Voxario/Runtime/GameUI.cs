@@ -41,7 +41,7 @@ namespace Voxario.Ashes
         void OnGUI()
         {
             EryonSkin.Begin();
-            GUI.depth = 0;
+            GUI.depth = settingsOpen ? -20 : 0; // nastavení vždy nahoře
             if (!boot.inWorld) { LoginScreen(); return; }
             Hud();
             if (settingsOpen) Settings();
@@ -61,7 +61,7 @@ namespace Voxario.Ashes
             if (EryonSkin.Logo != null) GUI.DrawTexture(new Rect(x + colW / 2 - 150, H * 0.06f, 300, 300), EryonSkin.Logo, ScaleMode.ScaleToFit);
             GUI.Label(new Rect(x, H * 0.06f + 300, colW, 30), "KAPITOLA I  ·  POSLEDNÍ ŠTÍT", new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 16, normal = { textColor = EryonSkin.Gold } });
 
-            var r = new Rect(x, H * 0.06f + 350, colW, 400);
+            var r = new Rect(x, H * 0.06f + 350, colW, CrashReporter.Notice != null ? 470 : 400);
             var inner = EryonSkin.DrawPanel(r, "Vstup do Kalidry");
             GUILayout.BeginArea(inner);
             if (boot.busy || (boot.api.SignedIn && boot.state == null && string.IsNullOrEmpty(boot.status)))
@@ -95,6 +95,7 @@ namespace Voxario.Ashes
                 GUILayout.Space(8);
                 if (!string.IsNullOrEmpty(boot.status)) GUILayout.Label($"<color=#e0672a>{boot.status}</color>", EryonSkin.Small);
                 GUILayout.FlexibleSpace();
+                if (CrashReporter.Notice != null) GUILayout.Label($"<color=#e0672a>{CrashReporter.Notice}</color>", EryonSkin.Small);
                 GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Na studiovoxario.com si v profilu nastav heslo.", EryonSkin.Small);
             }
             GUILayout.EndArea();
@@ -122,7 +123,7 @@ namespace Voxario.Ashes
             var ch = boot.state.character;
             float W = EryonSkin.W, H = EryonSkin.H;
             // rámeček postavy
-            var frame = new Rect(16, 16, 420, 118);
+            var frame = new Rect(16, 16, 440, 128);
             EryonSkin.Fill(new Rect(frame.x + 50, frame.y + 14, frame.width - 50, frame.height - 28), new Color(0.04f, 0.03f, 0.025f, 0.82f));
             EryonSkin.Fill(new Rect(frame.x + 50, frame.y + 14, frame.width - 50, 1), EryonSkin.Line);
             EryonSkin.Fill(new Rect(frame.x + 50, frame.yMax - 15, frame.width - 50, 1), EryonSkin.Line);
@@ -136,7 +137,7 @@ namespace Voxario.Ashes
             float xpK = ch.xp_need > 0 ? ch.xp / (float)ch.xp_need : 0;
             EryonSkin.Bar(new Rect(frame.x + 132, frame.y + 78, 270, 18), xpK, new Color(0.62f, 0.48f, 0.9f), ch.xp_need > 0 ? $"{ch.xp} / {ch.xp_need} zk." : "");
             // zlato a čest
-            GUI.Label(new Rect(frame.x + 132, frame.y + 98, 290, 22), $"<color=#f0d08a>◆ {ch.gold}</color> zlata    <color=#9fd4f0>✦ {ch.honor}</color> cti", new GUIStyle(EryonSkin.Small) { fontSize = 16, richText = true });
+            GUI.Label(new Rect(frame.x + 132, frame.y + 100, 300, 24), $"<color=#f0d08a>◆ {ch.gold} zlata</color>     <color=#9fd4f0>✦ {ch.honor} cti</color>", new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold });
 
             // spodní lišta s klávesami
             float y = H - 40;

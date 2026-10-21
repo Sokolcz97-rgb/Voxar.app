@@ -199,8 +199,9 @@ namespace Voxario.Ashes
         {
             if (Mods.Count == 0 && toasts.Count == 0) return;
             EryonSkin.Begin();
-            GUI.depth = -5;
-            if (boot != null && boot.inWorld) Fire("draw");
+            GUI.depth = 5; // pod okny hry
+            var gui = boot != null ? boot.GetComponent<GameUI>() : null;
+            if (boot != null && boot.inWorld && (gui == null || !gui.SettingsOpen) && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen)) Fire("draw");
             float W = EryonSkin.W, y = 240;
             for (int i = toasts.Count - 1; i >= 0; i--) if (Time.time > toasts[i].until) toasts.RemoveAt(i);
             foreach (var t in toasts)

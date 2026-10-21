@@ -138,6 +138,8 @@ namespace Voxario.Ashes
         void OnGUI()
         {
             if (!boot.inWorld) return;
+            var gameUi = boot.GetComponent<GameUI>();
+            if (gameUi != null && gameUi.SettingsOpen) return;
             EryonSkin.Begin();
             float W = EryonSkin.W, H = EryonSkin.H;
             QuestTracker();

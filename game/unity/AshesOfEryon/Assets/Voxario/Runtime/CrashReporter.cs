@@ -11,6 +11,39 @@ namespace Voxario.Ashes
     public static class CrashReporter
     {
         static bool sent;
+        /// <summary>Hláška pro hráče po pádu (zobrazí se na přihlašovací obrazovce).</summary>
+        public static string Notice;
+
+        /// <summary>
+        /// Volá se při startu hry (před nastavením kamery). Když minulý běh spadl se zapnutým
+        /// DLSS a stalo se to už podruhé po sobě, přepne zvětšování na FSR 2.
+        /// </summary>
+        public static void CheckPrevious()
+        {
+            try
+            {
+                var dir = Path.GetDirectoryName(Application.consoleLogPath);
+                var prev = Path.Combine(dir ?? "", "Player-prev.log");
+                if (!File.Exists(prev)) return;
+                var text = File.ReadAllText(prev);
+                bool crashed = text.Contains("Crash!!!");
+                if (!crashed) { PlayerPrefs.SetInt("gfx.dlssCrashes", 0); return; }
+                Notice = "Hra se minule neočekávaně ukončila. Hlášení se po přihlášení odešle vývojářům.";
+                if (Upscaling.CurrentMode == Upscaling.Mode.DLSS)
+                {
+                    int n = PlayerPrefs.GetInt("gfx.dlssCrashes", 0) + 1;
+                    PlayerPrefs.SetInt("gfx.dlssCrashes", n);
+                    if (n >= 2)
+                    {
+                        Upscaling.Save(Upscaling.Mode.FSR2, Upscaling.CurrentQuality);
+                        PlayerPrefs.SetInt("gfx.dlssCrashes", 0);
+                        Notice = "Hra minule dvakrát spadla se zapnutým DLSS – pro jistotu jsme přepnuli na AMD FSR 2. DLSS můžeš znovu zapnout v Nastavení → Grafika.";
+                    }
+                }
+                Debug.Log("[Voxario] minulý běh spadl; upscaler " + Upscaling.CurrentMode);
+            }
+            catch { }
+        }
 
         public static IEnumerator SendIfCrashed(SupabaseClient api)
         {

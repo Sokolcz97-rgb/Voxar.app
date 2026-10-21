@@ -37,6 +37,7 @@ namespace Voxario.Ashes
         {
             Application.targetFrameRate = PlayerPrefs.GetInt("gfx.fpsCap", 0) > 0 ? PlayerPrefs.GetInt("gfx.fpsCap") : -1;
             QualitySettings.vSyncCount = PlayerPrefs.GetInt("gfx.vsync", 1);
+            CrashReporter.CheckPrevious();
             SetupCameraAndLight();
             Atmosphere.Create();
             var guard = gameObject.AddComponent<WindowGuard>();
