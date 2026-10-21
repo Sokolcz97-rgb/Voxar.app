@@ -533,7 +533,9 @@
       label.textContent = "Stahuji…";
       const pct = Math.round((st.progress || 0) * 100);
       progressTitle.textContent = st.state === "verifying" ? "Ověřuji soubory hry…" : `Stahuji hru${v}`;
-      progressDetail.textContent = st.total ? `${fmtSize(st.done)} z ${fmtSize(st.total)}` : "Kontroluji, co je potřeba stáhnout.";
+      progressDetail.textContent = st.waiting
+        ? `Server je vytížený – pokračuji za ${st.waiting} s…`
+        : st.total ? `${fmtSize(st.done)} z ${fmtSize(st.total)}` : "Kontroluji, co je potřeba stáhnout.";
       progressFill.style.width = pct + "%";
       progressValue.textContent = pct + " %";
     } else if (st.state === "ready") {

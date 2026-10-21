@@ -26,8 +26,31 @@ const BASE = process.env.ASHES_UNITY_BASE
   || "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/unity/";
 const SAFE_PATH = /^[A-Za-z0-9 _.\-()+\/]+$/;
 
+let chosenDir = null;
+/**
+ * Složka hry: vedle launcheru (např. E:\Ashes of Eryon\Game), aby hra byla na disku,
+ * který si hráč vybral v GameSetupu. Když tam nejde zapisovat, %LOCALAPPDATA%.
+ */
 function installDir() {
-  return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "StudioVoxario", "AshesOfEryon");
+  if (chosenDir) return chosenDir;
+  const fallback = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "StudioVoxario", "AshesOfEryon");
+  const candidates = [];
+  if (app.isPackaged) candidates.push(path.join(path.dirname(path.dirname(process.execPath)), "Game"));
+  candidates.push(fallback);
+  // už nainstalovaná hra má přednost
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "install.json"))) return (chosenDir = dir);
+  }
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      const probe = path.join(dir, `.probe-${process.pid}`);
+      fs.writeFileSync(probe, "ok");
+      fs.rmSync(probe, { force: true });
+      return (chosenDir = dir);
+    } catch {}
+  }
+  return (chosenDir = fallback);
 }
 
 function stateFile() {
@@ -42,10 +65,33 @@ function readInstalled() {
   }
 }
 
-async function fetchBuffer(url) {
-  const res = await net.fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Stažení s opakováním: server při mnoha požadavcích za sebou vrací HTTP 429
+ * (příliš mnoho požadavků) – počkáme (Retry-After nebo 2, 4, 8… s) a zkusíme znovu.
+ */
+async function fetchBuffer(url, onWait) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      const res = await net.fetch(url, { cache: "no-store" });
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      lastError = new Error(`HTTP ${res.status}`);
+      if (res.status !== 429 && res.status < 500) throw lastError;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(60000, 2000 * 2 ** attempt);
+      onWait?.(wait, res.status);
+      await sleep(wait);
+    } catch (error) {
+      if (lastError && error === lastError && !/HTTP (429|5\d\d)/.test(error.message)) throw error;
+      lastError = error;
+      const wait = Math.min(60000, 2000 * 2 ** attempt);
+      onWait?.(wait, 0);
+      await sleep(wait);
+    }
+  }
+  throw lastError || new Error("Stažení selhalo");
 }
 
 function hashFile(file) {
@@ -102,7 +148,7 @@ function createUnityGame({ onStatus, log }) {
     return m.files.reduce((a, f) => a + (Number(f.size) || 0), 0);
   }
 
-  async function downloadFile(file, target, onBytes) {
+  async function downloadFile(file, target, onBytes, onWait) {
     const url = new URL(String(file.url || ""), BASE).toString();
     if (!url.startsWith(BASE)) throw new Error("Soubor z cizího zdroje");
     const tmp = `${target}.download`;
@@ -112,7 +158,7 @@ function createUnityGame({ onStatus, log }) {
     try {
       const parts = Math.max(1, Number(file.parts) || 1);
       for (let i = 1; i <= parts; i += 1) {
-        const data = await fetchBuffer(parts > 1 ? `${url}.part${i}` : url);
+        const data = await fetchBuffer(parts > 1 ? `${url}.part${i}` : url, onWait);
         hash.update(data);
         fs.writeSync(out, data);
         onBytes(data.length);
@@ -152,7 +198,11 @@ function createUnityGame({ onStatus, log }) {
         await downloadFile(f, path.join(dir, ...f.path.split("/")), (n) => {
           done += n;
           emit({ state: "downloading", latest: manifest.version, progress: total ? done / total : 1, done, total });
+        }, (ms) => {
+          emit({ state: "downloading", latest: manifest.version, progress: total ? done / total : 1, done, total, waiting: Math.round(ms / 1000) });
         });
+        // malá pauza mezi soubory, ať server nezahltíme
+        await sleep(120);
       }
       // staré soubory z předchozí verze smazat (jen uvnitř složky hry)
       const keep = new Set(manifest.files.map((f) => path.join(dir, ...f.path.split("/")).toLowerCase()));
