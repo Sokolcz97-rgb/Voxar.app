@@ -21,7 +21,7 @@
 const path = require("node:path");
 const os = require("node:os");
 const crypto = require("node:crypto");
-const { spawn } = require("node:child_process");
+const { spawn, spawnSync } = require("node:child_process");
 const { app, net } = require("electron");
 
 let fs = require("node:fs");
@@ -53,9 +53,57 @@ async function fetchBuffer(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+function logLine(message) {
+  try { fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] ${message}\n`); } catch {}
+}
+
+/**
+ * Spustí aktualizační skript tak, aby přežil ukončení launcheru.
+ * Windows ukončí všechny podprocesy launcheru spolu s ním (proto aktualizace dřív
+ * nikdy nedoběhla). Skript proto zakládá služba WMI (Win32_Process.Create) – mimo
+ * launcher. Záloha: spuštění přes Průzkumníka (explorer.exe) z .cmd souboru.
+ */
+function launchOutsideLauncher(script) {
+  const cmdLine = `powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "${script}"`;
+  try {
+    const ps = `$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = '${cmdLine.replace(/'/g, "''")}' }; Write-Output "$($r.ReturnValue) $($r.ProcessId)"; exit [int]$r.ReturnValue`;
+    const res = spawnSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps], { windowsHide: true, timeout: 20000, encoding: "utf8" });
+    logLine(`Aktualizační skript přes WMI: status ${res.status} ${String(res.stdout || "").trim()} ${String(res.stderr || "").trim().slice(0, 300)}`);
+    if (res.status === 0) return true;
+  } catch (error) {
+    logLine(`WMI selhalo: ${error?.message || error}`);
+  }
+  try {
+    const cmd = script.replace(/\.ps1$/, ".cmd");
+    fs.writeFileSync(cmd, `@echo off\r\n${cmdLine}\r\n`, "utf8");
+    const res = spawnSync("explorer.exe", [cmd], { windowsHide: true, timeout: 10000 });
+    logLine(`Aktualizační skript přes Průzkumníka: status ${res.status}`);
+    // explorer.exe vrací 1 i při úspěchu
+    return res.error == null;
+  } catch (error) {
+    logLine(`Průzkumník selhal: ${error?.message || error}`);
+    return false;
+  }
+}
+
 function createUpdater({ onStatus, canRestart }) {
   const installDir = path.dirname(process.execPath);
   const stagingRoot = path.join(installDir, ".update");
+  const attemptFile = path.join(app.getPath("userData"), "update-attempt.json");
+
+  function readAttempt() {
+    try { return JSON.parse(fs.readFileSync(attemptFile, "utf8")); } catch { return null; }
+  }
+  function noteAttempt(version) {
+    const prev = readAttempt();
+    const count = prev && prev.version === version ? (prev.count || 0) + 1 : 1;
+    try { fs.writeFileSync(attemptFile, JSON.stringify({ version, count, at: new Date().toISOString() })); } catch {}
+  }
+  /** Pojistka proti smyčce: když se instalace stejné verze nepovedla dvakrát, už ji sám nezkouší. */
+  function blocked(version) {
+    const a = readAttempt();
+    return Boolean(a && a.version === version && a.count >= 2 && newer(version, app.getVersion()));
+  }
   let state = { state: "idle", current: app.getVersion() };
   let ready = null; // { version, files: [{ from, to }] }
   let checking = false;
@@ -118,6 +166,11 @@ function createUpdater({ onStatus, canRestart }) {
         done += 1;
       }
       ready = { version: manifest.version, files, dir };
+      if (blocked(manifest.version)) {
+        logLine(`Instalace aktualizace ${manifest.version} se opakovaně nepovedla – nabízím GameSetup.`);
+        emit({ state: "full", latest: manifest.version, reason: "apply-failed" });
+        return state;
+      }
       emit({ state: "ready", latest: manifest.version, progress: 1 });
       if (canRestart?.()) apply();
       return state;
@@ -156,21 +209,21 @@ function createUpdater({ onStatus, canRestart }) {
     ];
     const script = path.join(os.tmpdir(), `ashes-launcher-update-${Date.now()}.ps1`);
     // UTF-8 s BOM, ať PowerShell správně přečte české cesty
-    fs.writeFileSync(script, "﻿" + lines.join("\r\n"), "utf8");
-    const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", script], {
-      detached: true,
-      stdio: "ignore",
-      windowsHide: true,
-    });
-    child.on("error", (e) => { try { fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] spawn error ${e}\n`); } catch {} });
-    try { fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] update script pid ${child.pid}\n`); } catch {}
-    child.unref();
+    fs.writeFileSync(script, "\ufeff" + lines.join("\r\n"), "utf8");
+    if (!launchOutsideLauncher(script)) {
+      emit({ state: "error", error: "Aktualizaci se nepodařilo spustit. Stáhni prosím nový GameSetup." });
+      return false;
+    }
+    noteAttempt(ready.version);
     emit({ state: "restarting", latest: ready.version });
     setTimeout(() => app.quit(), 300);
     return true;
   }
 
   function start() {
+    // úspěšná aktualizace: smazat záznam o pokusech
+    const a = readAttempt();
+    if (a && !newer(a.version, app.getVersion())) { try { fs.rmSync(attemptFile, { force: true }); } catch {} }
     // úklid po předchozí aktualizaci
     try {
       for (const name of fs.existsSync(stagingRoot) ? fs.readdirSync(stagingRoot) : []) {
