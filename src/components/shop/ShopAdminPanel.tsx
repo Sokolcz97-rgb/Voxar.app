@@ -92,7 +92,8 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
     }
     const payload = {
       kind: editing.kind ?? "frame",
-      access_minutes: software ? Math.max(1, Math.round(durationValue)) * UNIT_MINUTES[durationUnit] : null,
+      access_minutes: software ? UNIT_MINUTES.months : null,
+      price_year_czk: software && editing.price_year_czk ? Math.max(0, Number(editing.price_year_czk)) : null,
       file_version: software ? editing.file_version || null : null,
       title: editing.title.trim(),
       description: editing.description || null,
@@ -189,7 +190,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
                 {item.title}
                 {item.kind === "software" && (
                   <span className="block text-xs text-muted-foreground font-normal">
-                    na {formatDuration(item.access_minutes)} · {item.file_name ? `${item.file_name} (${formatBytes(item.file_size)})` : "soubor chybí"}
+                    {item.price_year_czk ? `${item.price_czk} Kč/měs. · ${item.price_year_czk} Kč/rok` : `${item.price_czk} Kč/měs.`} · {item.file_name ? `${item.file_name} (${formatBytes(item.file_size)})` : "soubor chybí"}
                   </span>
                 )}
               </span>
@@ -332,28 +333,31 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
             )}
             {editing?.kind === "software" && (
               <div className="space-y-4 border border-primary/30 p-3">
-                <div className="space-y-1.5">
-                  <Label>Délka předplatného (od potvrzení platby) – po tuto dobu smí předplatitel stahovat soubor</Label>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Měsíční cena (Kč / 30 dní)</Label>
                     <Input
                       type="number"
-                      min={1}
-                      className="w-28"
-                      value={durationValue}
-                      onChange={(e) => setDurationValue(Math.max(1, Number(e.target.value) || 1))}
+                      min={0}
+                      value={editing?.price_czk ?? 0}
+                      onChange={(e) => setEditing((x) => ({ ...x, price_czk: Number(e.target.value) }))}
                     />
-                    <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
-                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hours">hodin</SelectItem>
-                        <SelectItem value="days">dní</SelectItem>
-                        <SelectItem value="weeks">týdnů</SelectItem>
-                        <SelectItem value="months">měsíců (30 dní)</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Předplatné na {formatDuration(Math.max(1, durationValue) * UNIT_MINUTES[durationUnit])}. Další platba ho prodlouží.
+                  <div className="space-y-1.5">
+                    <Label>Roční cena (Kč / 365 dní)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="prázdné = jen měsíční"
+                      value={editing?.price_year_czk ?? ""}
+                      onChange={(e) =>
+                        setEditing((x) => ({ ...x, price_year_czk: e.target.value === "" ? null : Number(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-muted-foreground">
+                    Zákazník si vybere měsíční nebo roční tarif a může zapnout automatické obnovení – 3 dny před koncem
+                    mu systém připraví platbu a pošle upozornění; po potvrzení platby se předplatné prodlouží.
                   </p>
                 </div>
                 <div className="space-y-1.5">
@@ -399,7 +403,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               <Textarea rows={4} value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className={`space-y-1.5 ${editing?.kind === "software" ? "hidden" : ""}`}>
                 <Label>Cena (Kč)</Label>
                 <Input
                   type="number"
