@@ -113,8 +113,8 @@ public static class VoxarioBuild
         }
 
         // globální nastavení HDRP (zdroje shaderů, výchozí profil prostředí)
-        var gs = typeof(HDRenderPipelineGlobalSettings);
-        var ensure = gs.GetMethod("Ensure", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        var gs = typeof(HDRenderPipelineAsset).Assembly.GetType("UnityEngine.Rendering.HighDefinition.HDRenderPipelineGlobalSettings");
+        var ensure = gs?.GetMethod("Ensure", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         try
         {
             if (ensure != null)
