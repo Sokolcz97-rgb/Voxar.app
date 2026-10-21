@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Check, Download, HardDrive, Loader2, RefreshCw } from "lucide-react";
+import { Check, Download, HardDrive, Loader2, MonitorPlay, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,6 +165,13 @@ export function SoftwareTab({ items, onBuy }: { items: ShopItem[]; onBuy: (item:
             )}
 
             <div className="mt-auto pt-6 space-y-2">
+              {/voxario studio/i.test(item.title) && (
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/studio/demo">
+                    <MonitorPlay className="h-4 w-4 mr-2" /> Vyzkoušet živé demo v prohlížeči
+                  </Link>
+                </Button>
+              )}
               {own?.pending_purchase && (
                 <div className="border border-primary/40 bg-primary/5 p-3 space-y-2">
                   <p className="text-sm">

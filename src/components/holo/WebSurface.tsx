@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 /** Trasy, které mají vlastní celoobrazovkové rozhraní (ne veřejný web). */
-const APP_SURFACES = [/^\/app(\/|$)/, /^\/hra(\/|$)/];
+const APP_SURFACES = [/^\/app(\/|$)/, /^\/hra(\/|$)/, /^\/studio(\/|$)/];
 
 export function isWebSurface(pathname: string) {
   return !APP_SURFACES.some((pattern) => pattern.test(pathname));
