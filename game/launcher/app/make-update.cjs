@@ -5,8 +5,8 @@
  *
  *   node make-update.cjs <složka resources z win-unpacked> <výstup>
  *
- * Výstup: <výstup>/latest.json + <výstup>/<verze>/… (app.asar a launcher-ui).
- * Obsah výstupu se nahraje do game-updates/launcher/ (latest.json jako poslední).
+ * Výstup: <výstup>/stable.json + <výstup>/<verze>/… (app.asar a launcher-ui).
+ * Obsah výstupu se nahraje do game-updates/launcher/ (stable.json jako poslední).
  */
 
 const fs = require("node:fs");
@@ -51,5 +51,5 @@ const walk = (dir, prefix) => {
 walk(ui, "");
 
 const manifest = { version, electron, publishedAt: new Date().toISOString(), files };
-fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify(manifest, null, 2));
+fs.writeFileSync(path.join(outDir, "stable.json"), JSON.stringify(manifest, null, 2));
 console.log(`Aktualizace ${version} (Electron ${electron}): ${files.length} souborů`);
