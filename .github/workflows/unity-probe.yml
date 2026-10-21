@@ -1,0 +1,22 @@
+name: Unity probe
+
+on:
+  push:
+    branches:
+      - 'unity/prototype'
+    paths:
+      - '.github/workflows/unity-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List Unity 6 editor images (GameCI)
+        run: |
+          for q in "6000.0" "6000.1" "6000.2"; do
+            curl -s "https://hub.docker.com/v2/repositories/unityci/editor/tags?name=ubuntu-${q}&page_size=100" \
+              | jq -r '.results[].name' | grep -E 'windows-mono' | sort -V | tail -8
+          done
