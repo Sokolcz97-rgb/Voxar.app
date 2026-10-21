@@ -33,7 +33,12 @@ namespace Voxario.Ashes
             if (move.sqrMagnitude > 1) move.Normalize();
             float spd = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
             Vector3 vel = move * spd;
-            if (cc.isGrounded) vy = -2f; else vy -= 20f * dt;
+            if (cc.isGrounded)
+            {
+                vy = -2f;
+                if (inputEnabled && Input.GetKeyDown(KeyCode.Space)) vy = 6.5f;
+            }
+            else vy -= 20f * dt;
             vel.y = vy;
             cc.Move(vel * dt);
             if (move.sqrMagnitude > 0.01f)
@@ -50,7 +55,10 @@ namespace Voxario.Ashes
         {
             if (cc == null) cc = GetComponent<CharacterController>();
             cc.enabled = false;
-            transform.position = WorldMap.ToWorld(web.x, web.y) + Vector3.up * 0.2f;
+            var p = WorldMap.ToWorld(web.x, web.y);
+            // přesná výška terénu (heightmapa se od výpočtu může o kousek lišit)
+            if (Physics.Raycast(p + Vector3.up * 50, Vector3.down, out var hit, 100f)) p.y = hit.point.y;
+            transform.position = p + Vector3.up * 0.15f;
             cc.enabled = true;
         }
     }

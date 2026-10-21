@@ -115,18 +115,48 @@ namespace Voxario.Ashes
         {
             var parent = new GameObject("NPCs").transform;
             parent.SetParent(root, false);
+            NpcDialog.Npcs.Clear();
             foreach (var n in WorldMap.Npcs)
             {
                 if (n.faction != faction) continue;
                 var prefab = lib.Hero($"{n.cls}_m");
-                var v = CharacterView.Create(prefab, parent, n.id == "eryon" || n.id == "azkar" ? 1.85f : 1.62f, n.name);
+                float h = n.id == "eryon" || n.id == "azkar" ? 1.85f : 1.62f;
+                var v = CharacterView.Create(prefab, parent, h, n.name);
+                v.idleLook = true;
                 v.transform.position = WorldMap.ToWorld(n.x, n.z);
                 v.transform.rotation = WorldMap.FaceToRotation(n.face);
                 var tag = v.gameObject.AddComponent<NameTag>();
                 tag.title = n.name;
                 tag.subtitle = n.role;
+                tag.npcId = n.id;
+                Capsule(v.gameObject, h, 0.35f);
+                NpcDialog.Npcs.Add((n, v.transform));
             }
         }
+
+        static void Capsule(GameObject go, float h, float r)
+        {
+            var c = go.AddComponent<CapsuleCollider>();
+            c.height = h;
+            c.radius = r;
+            c.center = new Vector3(0, h / 2, 0);
+        }
+
+        // jako webová verze (glbAnimals.ts): chůze, výška nohou, natočení modelu
+        static (LegRig.Gait gait, float leg, float yaw) AnimalCfg(string kind) => kind switch
+        {
+            "cow" => (LegRig.Gait.Quad, 0.42f, 0),
+            "sheep" => (LegRig.Gait.Quad, 0.38f, 0),
+            "goat" => (LegRig.Gait.Quad, 0.45f, 0),
+            "horse" => (LegRig.Gait.Quad, 0.5f, 0),
+            "dog" => (LegRig.Gait.Quad, 0.45f, 0),
+            "boar" => (LegRig.Gait.Quad, 0.32f, 0),
+            "stag" => (LegRig.Gait.Quad, 0.36f, 0),
+            "doe" => (LegRig.Gait.Quad, 0.4f, 0),
+            "chicken" => (LegRig.Gait.Biped, 0.25f, -90),
+            "gull" => (LegRig.Gait.Biped, 0.2f, 0),
+            _ => (LegRig.Gait.Quad, 0.4f, 0),
+        };
 
         static void BuildAnimals(Transform root, ModelLibrary lib)
         {
@@ -147,7 +177,9 @@ namespace Voxario.Ashes
                 for (int i = 0; i < h.n; i++)
                 {
                     float x = h.x + ((float)rnd.NextDouble() - 0.5f) * h.r, z = h.z + ((float)rnd.NextDouble() - 0.5f) * h.r;
-                    var a = CharacterView.Create(prefab, parent, h.size, h.kind);
+                    var cfg = AnimalCfg(h.kind);
+                    var a = CharacterView.Create(prefab, parent, h.size, h.kind, cfg.gait, cfg.leg, cfg.yaw);
+                    if (h.size > 0.8f) Capsule(a.gameObject, h.size, h.size * 0.3f);
                     a.transform.position = WorldMap.ToWorld(x, z);
                     a.transform.rotation = Quaternion.Euler(0, (float)rnd.NextDouble() * 360, 0);
                     var wander = a.gameObject.AddComponent<Wanderer>();

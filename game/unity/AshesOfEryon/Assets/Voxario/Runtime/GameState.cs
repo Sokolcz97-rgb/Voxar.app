@@ -32,5 +32,33 @@ namespace Voxario.Ashes
         public bool admin;
         public Character character;
         public int hp;
+        public WQuest[] wquests;
+
+        public WQuest Quest(string id)
+        {
+            if (wquests == null) return null;
+            foreach (var q in wquests) if (q.quest_id == id) return q;
+            return null;
+        }
+    }
+
+    /// <summary>Stav úkolu od NPC (pravidla drží server).</summary>
+    [Serializable]
+    public class WQuest
+    {
+        public string quest_id;
+        public string state; // active | ready | done
+        public int progress;
+        public string[] targets;
+    }
+
+    [Serializable]
+    public class TurnInResult
+    {
+        public string quest;
+        public int xp;
+        public int gold;
+        public int levels;
+        public GameState state;
     }
 }

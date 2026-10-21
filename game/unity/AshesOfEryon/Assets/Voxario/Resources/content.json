@@ -1,0 +1,394 @@
+{
+ "quests": [
+  {
+   "id": "k1",
+   "faction": "kalidra",
+   "giver": "nikias",
+   "type": "talk",
+   "target": "nikias",
+   "count": 1,
+   "req": [],
+   "title": "Probuzení",
+   "offer": "Moře tě vyplavilo do mé sítě, chlapče. Myslel jsem, že lovím rybu, a vytáhl jsem válečníka. Víš vůbec, kde jsi?",
+   "objective": "Promluv si s Nikiasem",
+   "done": "Tohle je Bezejmenný břeh. Ta světla na východě? To je Kalidra. A ty ohně na kopcích… ty se rozhořely až dnes večer. Něco se blíží.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k2",
+   "faction": "kalidra",
+   "giver": "nikias",
+   "type": "kill",
+   "target": "vrakar",
+   "count": 3,
+   "req": [
+    "k1"
+   ],
+   "title": "Vrakaři z břehu",
+   "offer": "Vrakaři se hrabou v troskách tvé lodi. Kdo nemá svědky, nemusí se nikomu zodpovídat. Ukaž jim, že svědek přežil.",
+   "objective": "Poraz vrakaře na břehu",
+   "done": "Tři vrakaři v příboji. Moře si je vezme zpátky. Vezmi si tohle – kalidrský bronz se ti bude hodit.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k3",
+   "faction": "kalidra",
+   "giver": "nikias",
+   "type": "talk",
+   "target": "damon",
+   "count": 1,
+   "req": [
+    "k1"
+   ],
+   "title": "Cesta ke Kalidře",
+   "offer": "Jdi po cestě kolem akvaduktu až k bráně. Najdi Damona, velitele hradeb. Řekni mu, že tě posílá starý Nikias – a že na kopcích hoří ohně.",
+   "objective": "Ohlas se Damonovi u brány Kalidry",
+   "done": "Nikias tě posílá? Ten starý lišák nikdy nevytáhl ze sítě nic zbytečného. Potřebuju každou ruku, co udrží kopí.",
+   "goalNpc": "damon"
+  },
+  {
+   "id": "k4",
+   "faction": "kalidra",
+   "giver": "damon",
+   "type": "beacon",
+   "target": "beacon",
+   "count": 3,
+   "req": [
+    "k3"
+   ],
+   "title": "Strážní ohně",
+   "offer": "Když rudé slunce kleslo k moři, na kopcích měly vzplát všechny strážní ohně. Hoří jen některé. Zapal všechny tři vatry, ať je vidí celé pobřeží.",
+   "objective": "Zapal strážní vatry na kopcích",
+   "done": "Vidím je odsud. Tři ohně – a celá Kalidra je vidí taky. Teď už nikdo nebude spát.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k5",
+   "faction": "kalidra",
+   "giver": "damon",
+   "type": "kill",
+   "target": "zved-legie",
+   "count": 4,
+   "req": [
+    "k3"
+   ],
+   "title": "Zvědové Legie",
+   "offer": "Na kopcích se plíží zvědové Rudého slunce. Počítají naše kopí a hledají slabé místo v hradbách. Ať se jejich pán nedozví nic.",
+   "objective": "Poraz zvědy Rudého slunce na kopcích",
+   "done": "Čtyři zvědové, kteří už nic neřeknou. Dobrá práce. Ale za nimi přijde tisíc kopí.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k6",
+   "faction": "kalidra",
+   "giver": "tharos",
+   "type": "kill",
+   "target": "lapka",
+   "count": 3,
+   "req": [
+    "k1"
+   ],
+   "title": "Bronz pro štíty",
+   "offer": "Lapkové u akvaduktu kradou bronz z vozů, co jedou do města. Bez bronzu nebudou štíty. Přines mi ho zpátky.",
+   "objective": "Vezmi bronz lapkům u akvaduktu",
+   "done": "Bronz se nevrací. Bronz jde jen vpřed. Tenhle půjde do štítů.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k7",
+   "faction": "kalidra",
+   "giver": "thalia",
+   "type": "visit",
+   "target": "memorial",
+   "count": 1,
+   "req": [
+    "k3"
+   ],
+   "title": "Jména v prachu",
+   "offer": "Na pláni před branou stojí kámen se jmény těch, kdo padli v minulých válkách. Jdi k němu a vzpomeň si na ně. Kámen si pamatuje – ale potřebuje, aby si pamatovali i lidé.",
+   "objective": "Dojdi k pamětnímu kameni na pláni",
+   "done": "Byl jsi tam. Teď víš, proč se nikdo z nás neohne. Moře si pamatuje. Kámen si pamatuje.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k8",
+   "faction": "kalidra",
+   "giver": "eryon",
+   "type": "talk",
+   "target": "eryon",
+   "count": 1,
+   "req": [
+    "k4",
+    "k5"
+   ],
+   "title": "Hlas Eryona",
+   "offer": "Zapálil jsi ohně a umlčel zvědy. Damon o tobě mluví. Já nejsem král ani bůh – jen muž, který stojí před svou branou. Postavíš se vedle mě?",
+   "objective": "Postav se do řady po boku Eryona",
+   "done": "Pak zvedni štít. Dokud jeden z nás stojí, Kalidra nepadne.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l1",
+   "faction": "legie",
+   "giver": "varkas",
+   "type": "talk",
+   "target": "varkas",
+   "count": 1,
+   "req": [],
+   "title": "Vylodění",
+   "offer": "Konečně pevná zem. Nestůj tu jak kůl, vojáku. Víš, proč nás Azkar vysadil zrovna tady?",
+   "objective": "Promluv si se setníkem Varkasem",
+   "done": "Protože tady nás nikdo nečeká. Na východě je Kalidra – bohaté město s bronzovými štíty. Do zítřka chce Azkar znát každou cestu k jejím branám.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l2",
+   "faction": "legie",
+   "giver": "varkas",
+   "type": "kill",
+   "target": "strazny-utesy",
+   "count": 3,
+   "req": [
+    "l1"
+   ],
+   "title": "Hlídka na útesech",
+   "offer": "Na útesech nad zátokou sedí kalidrští strážní. Jestli zapálí signální oheň, je po překvapení. Umlč je.",
+   "objective": "Poraz strážné z útesů",
+   "done": "Ticho na útesech. Tak to má být. Rudé slunce si tě všimlo.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l3",
+   "faction": "legie",
+   "giver": "varkas",
+   "type": "talk",
+   "target": "oren",
+   "count": 1,
+   "req": [
+    "l1"
+   ],
+   "title": "Do tábora",
+   "offer": "Jdi po hřebeni na východ do tábora Legie. Ohlas se knězi Orenovi – on ví, co Azkar chystá.",
+   "objective": "Ohlas se knězi Orenovi v táboře Legie",
+   "done": "Varkas tě posílá. Dobře. Rudé slunce zapadá do moře každý večer – a každé ráno vychází znovu. Tak jako my.",
+   "goalNpc": "oren"
+  },
+  {
+   "id": "l4",
+   "faction": "legie",
+   "giver": "oren",
+   "type": "beacon",
+   "target": "beacon",
+   "count": 3,
+   "req": [
+    "l3"
+   ],
+   "title": "Zhasnout ohně",
+   "offer": "Na kopcích hoří strážní vatry Kalidry. Dokud hoří, město vidí každý náš krok. Zhasni všechny tři.",
+   "objective": "Zhasni strážní vatry na kopcích",
+   "done": "Tma nad kopci. Kalidra oslepla. Azkar bude spokojen.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l5",
+   "faction": "legie",
+   "giver": "oren",
+   "type": "kill",
+   "target": "zved-kalidra",
+   "count": 4,
+   "req": [
+    "l3"
+   ],
+   "title": "Kalidrští zvědové",
+   "offer": "Eryonovi zvědové nás sledují z hřebene. Poraz je, než přinesou zprávu o našem počtu.",
+   "objective": "Poraz kalidrské zvědy na kopcích",
+   "done": "Žádné zprávy nedojdou. Teď jdi za Azkarem. Chce tě vidět.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l6",
+   "faction": "legie",
+   "giver": "azkar",
+   "type": "talk",
+   "target": "azkar",
+   "count": 1,
+   "req": [
+    "l4",
+    "l5"
+   ],
+   "title": "Slovo vojevůdce",
+   "offer": "Ty jsi ten, kdo zhasl ohně? Před branou Kalidry stojí muž jménem Eryon. Říkají mu poslední štít. Zítra zjistíme, jestli je to pravda. Půjdeš se mnou?",
+   "objective": "Postav se po boku Azkara",
+   "done": "Pak zítra půjdeme k bráně spolu. Rudé slunce vychází nad Kalidrou.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l7",
+   "faction": "legie",
+   "giver": "rukmar",
+   "type": "kill",
+   "target": "strazce-akvaduktu",
+   "count": 3,
+   "req": [
+    "l1"
+   ],
+   "title": "Cesta přes akvadukt",
+   "offer": "Kalidrští strážci drží most pod akvaduktem. Jejich bronz je dobrý – přines mi ho a ukovám z něj něco pro Legii.",
+   "objective": "Poraz strážce akvaduktu",
+   "done": "Kalidrský bronz. Po kalení v moři bude černý jako naše plachty.",
+   "goalNpc": ""
+  }
+ ],
+ "npcs": [
+  {
+   "id": "nikias",
+   "greet": "Moře dneska nevypadá dobře. Rudé jako krev.",
+   "lore": [
+    {
+     "q": "Co je Bezejmenný břeh?",
+     "a": "Břeh, kam moře vyhazuje, co si nechce nechat. Lodě, lidi, jména. Proto nemá jméno ani on."
+    },
+    {
+     "q": "Kdo je Eryon?",
+     "a": "Válečník z Kalidry. Žádný král. Ale když na hradby přijde bouře, všichni se dívají na něj."
+    }
+   ]
+  },
+  {
+   "id": "damon",
+   "greet": "Hradby jsou staré, ale pevné. Jako já. Co potřebuješ?",
+   "lore": [
+    {
+     "q": "Kdo jsou útočníci?",
+     "a": "Legie Rudého slunce. Přišli z hor a od moře s černými loděmi. Vede je Azkar a říká se, že nikdy neprohrál."
+    },
+    {
+     "q": "Vydrží hradby?",
+     "a": "Hradby vydrží, dokud na nich budou stát lidé. Každé vítězství obránců je zpevní."
+    }
+   ]
+  },
+  {
+   "id": "eryon",
+   "greet": "Kámen si pamatuje. Moře si pamatuje. A já si pamatuju každého, kdo stál vedle mě.",
+   "lore": [
+    {
+     "q": "Proč bojuješ?",
+     "a": "Ne kvůli slávě. Ne pro zlato. Za děti, co spí za hradbami. Za staré otce. Za domov."
+    },
+    {
+     "q": "Bojíš se?",
+     "a": "Smrti ne. Bojím se jen toho, že by Kalidra padla beze mě."
+    }
+   ]
+  },
+  {
+   "id": "gorgias",
+   "greet": "Vítej U Zlomeného vesla! Víno je kyselé, ale práce je dost.",
+   "lore": [
+    {
+     "q": "Proč Zlomené veslo?",
+     "a": "Můj děd přežil ztroskotání s jediným zlomeným veslem. Pověsil ho nad dveře a otevřel krčmu."
+    }
+   ]
+  },
+  {
+   "id": "tharos",
+   "greet": "Bronz se nevrací. Bronz jde jen vpřed. Co si vybereš?",
+   "lore": [
+    {
+     "q": "Odkud je váš bronz?",
+     "a": "Měď z hor, cín od moře. Když Legie zavře cesty, nebude ani jedno."
+    }
+   ]
+  },
+  {
+   "id": "thalia",
+   "greet": "Moře dává i bere. Já si pamatuju jména těch, které vzalo.",
+   "lore": [
+    {
+     "q": "Komu slouží chrám?",
+     "a": "Moři. Kalidra stojí na jeho břehu tisíc let. Dokud si ho pamatujeme, ono si pamatuje nás."
+    }
+   ]
+  },
+  {
+   "id": "melos",
+   "greet": "Chceš slyšet píseň o posledním štítu? Ještě není dopsaná. Konec teprve přijde.",
+   "lore": []
+  },
+  {
+   "id": "pylas",
+   "greet": "Hlídám první oheň. Kdyby zhasl, celé pobřeží by osleplo.",
+   "lore": [
+    {
+     "q": "Kolik je vater?",
+     "a": "Tři. Tahle u mě, druhá na nejvyšším kopci a třetí nad cestou k táboru… k tomu, co tam teď stojí."
+    }
+   ]
+  },
+  {
+   "id": "arena-k",
+   "greet": "Kruh kamenů je starší než hradby. Tady se obránci měří mezi sebou – i s nepřáteli.",
+   "lore": []
+  },
+  {
+   "id": "varkas",
+   "greet": "Rudé slunce tě vidí, vojáku. Neplýtvej jeho světlem.",
+   "lore": [
+    {
+     "q": "Proč útočíme na Kalidru?",
+     "a": "Kalidra drží jediný přístav na tomhle pobřeží. Kdo má přístav, má moře. A kdo má moře, má všechno."
+    },
+    {
+     "q": "Kdo je Azkar?",
+     "a": "Syn Rudého slunce. Vyrostl v horách a nikdy neprohrál bitvu. Váží si silných – i kdyby stáli proti němu."
+    }
+   ]
+  },
+  {
+   "id": "sabra",
+   "greet": "Víno pro vojáky, chléb pro raněné a rozkazy pro všechny. Co si dáš?",
+   "lore": []
+  },
+  {
+   "id": "rukmar",
+   "greet": "Bronz Legie je černý od kouře. O to líp se v něm odráží oheň.",
+   "lore": []
+  },
+  {
+   "id": "oren",
+   "greet": "Rudé slunce zapadá do moře každý večer. A každé ráno vychází znovu.",
+   "lore": [
+    {
+     "q": "Čemu Legie věří?",
+     "a": "Že slunce, které zapadne do moře, se vrátí silnější. Tak jako my po každé porážce."
+    }
+   ]
+  },
+  {
+   "id": "azkar",
+   "greet": "Takového nepřítele, jako je Eryon, si cením. Ty se mi zatím jen snažíš ukázat, že stojíš za pozornost.",
+   "lore": [
+    {
+     "q": "Proč tak chceš Kalidru?",
+     "a": "Protože se nevzdá. Města, která se vzdají, nestojí za dobytí."
+    },
+    {
+     "q": "Co si myslíš o Eryonovi?",
+     "a": "Že je to jediný muž na tomhle pobřeží, se kterým stojí za to bojovat."
+    }
+   ]
+  },
+  {
+   "id": "taras",
+   "greet": "Bubny Legie duní, jako srdce pod zemí. Chceš slyšet, o čem zpívají v Kalidře?",
+   "lore": []
+  },
+  {
+   "id": "arena-l",
+   "greet": "V kruhu se měří vojáci Legie. Kdo vyhraje proti kalidrskému, má u Azkara slovo.",
+   "lore": []
+  }
+ ]
+}

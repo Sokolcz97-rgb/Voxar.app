@@ -27,7 +27,14 @@ namespace Voxario.Ashes
             Application.targetFrameRate = PlayerPrefs.GetInt("gfx.fpsCap", 0) > 0 ? PlayerPrefs.GetInt("gfx.fpsCap") : -1;
             QualitySettings.vSyncCount = PlayerPrefs.GetInt("gfx.vsync", 1);
             SetupCameraAndLight();
-            gameObject.AddComponent<GameUI>().boot = this;
+            Atmosphere.Create();
+            var guard = gameObject.AddComponent<WindowGuard>();
+            guard.boot = this;
+            var ui = gameObject.AddComponent<GameUI>();
+            ui.boot = this;
+            ui.guard = guard;
+            gameObject.AddComponent<NpcDialog>().boot = this;
+            gameObject.AddComponent<Minimap>().boot = this;
         }
 
         IEnumerator Start()
@@ -102,8 +109,13 @@ namespace Voxario.Ashes
                 status = "Nemáš ještě postavu – vytvoř si ji na studiovoxario.com/hra.";
                 yield break;
             }
-            status = "";
+            status = "Stavím svět Kalidry…";
+            busy = true;
+            yield return null;
+            yield return null;
             EnterWorld();
+            busy = false;
+            status = "";
         }
 
         void EnterWorld()
@@ -123,6 +135,9 @@ namespace Voxario.Ashes
             view.transform.localPosition = Vector3.zero;
             player = playerGo.AddComponent<PlayerController>();
             player.view = view;
+            var tag = playerGo.AddComponent<NameTag>();
+            tag.title = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
+            tag.isPlayer = true;
             var spawn = faction == "legie" ? WorldMap.SpawnLegie : WorldMap.SpawnKalidra;
             player.Respawn(spawn);
 
@@ -133,6 +148,7 @@ namespace Voxario.Ashes
             rig.cam = cam;
             player.cameraPivot = rigGo.transform;
             inWorld = true;
+            Atmosphere.ApplyQuality(PlayerPrefs.GetInt("gfx.quality", 2));
         }
 
         /// <summary>
@@ -169,6 +185,23 @@ namespace Voxario.Ashes
                 ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, v.name + ".png"));
                 yield return new WaitForSeconds(1f);
             }
+            // rozhovor s Nikiasem a velká mapa
+            rig.enabled = true;
+            player.Respawn(new Vector2(-50.5f, 46.5f));
+            yield return new WaitForSeconds(1.5f);
+            var dialog = GetComponent<NpcDialog>();
+            dialog.testMode = true;
+            dialog.TestOpen("nikias");
+            yield return new WaitForSeconds(1.5f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "5-rozhovor.png"));
+            yield return new WaitForSeconds(1f);
+            dialog.Close();
+            // chůze: postava jde dopředu (animace nohou)
+            player.view.speed = 4.2f;
+            player.enabled = false;
+            for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
+            yield return new WaitForSeconds(1f);
             Debug.Log("[Voxario] SELFTEST hotovo");
             Application.Quit(0);
         }

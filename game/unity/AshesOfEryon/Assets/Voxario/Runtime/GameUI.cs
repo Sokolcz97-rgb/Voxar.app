@@ -9,6 +9,7 @@ namespace Voxario.Ashes
     public class GameUI : MonoBehaviour
     {
         public GameBootstrap boot;
+        public WindowGuard guard;
         string email = "", password = "";
         bool settingsOpen;
         float fps, fpsTimer;
@@ -21,8 +22,14 @@ namespace Voxario.Ashes
             frames++;
             fpsTimer += Time.unscaledDeltaTime;
             if (fpsTimer >= 0.5f) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
-            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld) settingsOpen = !settingsOpen;
-            if (boot.player != null) boot.player.inputEnabled = !settingsOpen;
+            var dialog = NpcDialog.Instance;
+            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld)
+            {
+                if (dialog != null && dialog.IsOpen) dialog.Close();
+                else settingsOpen = !settingsOpen;
+            }
+            bool blocked = settingsOpen || (dialog != null && dialog.IsOpen);
+            if (boot.player != null) boot.player.inputEnabled = !blocked;
             if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen;
         }
 
@@ -88,14 +95,14 @@ namespace Voxario.Ashes
             GUI.Box(new Rect(10, 10, 360, 54), GUIContent.none, box);
             GUI.Label(new Rect(22, 14, 340, 24), $"{(string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name)}  ·  úroveň {ch.level}", label);
             GUI.Label(new Rect(22, 36, 340, 20), $"{ClassName(ch.@class)} · {(ch.faction == "legie" ? "Legie Rudého slunce" : "Obránci Kalidry")} · {ch.gold} zlata", small);
-            GUI.Label(new Rect(10, Screen.height - 26, 700, 22), "WASD pohyb · Shift běh · pravé tlačítko myši otáčení · kolečko vzdálenost · Esc nastavení", small);
+            GUI.Label(new Rect(10, Screen.height - 26, 700, 22), "WASD pohyb · Shift běh · Mezerník skok · E mluvit · M mapa · pravé tlačítko myši otáčení · kolečko vzdálenost · Esc nastavení", small);
         }
 
         static string ClassName(string c) => c == "lucistnik" ? "Lučištník" : c == "vestec" ? "Věštec" : "Štítonoš";
 
         void Settings()
         {
-            float w = 560, h = 520;
+            float w = 640, h = 640;
             var r = new Rect((Screen.width - w) / 2, (Screen.height - h) / 2, w, h);
             GUI.Box(r, GUIContent.none, box);
             GUILayout.BeginArea(new Rect(r.x + 24, r.y + 16, w - 48, h - 32));
@@ -126,7 +133,31 @@ namespace Voxario.Ashes
                 Upscaling.Apply(boot.cam);
             }
 
-            GUILayout.Space(8);
+            GUILayout.Space(6);
+            GUILayout.Label("Kvalita grafiky (stíny, mlha, okluze, dohled)", label);
+            GUILayout.BeginHorizontal();
+            int qual = PlayerPrefs.GetInt("gfx.quality", 2);
+            string[] qn = { "Nízká", "Střední", "Vysoká", "Ultra" };
+            for (int i = 0; i < qn.Length; i++)
+                if (Toggle(qual == i, qn[i])) Atmosphere.ApplyQuality(i);
+            GUILayout.EndHorizontal();
+
+            var displays = WindowGuard.Displays();
+            if (displays.Count > 1)
+            {
+                GUILayout.Label("Monitor", label);
+                GUILayout.BeginHorizontal();
+                string cur = WindowGuard.CurrentKey();
+                for (int i = 0; i < displays.Count; i++)
+                {
+                    var d = displays[i];
+                    string key = $"{d.name}|{d.width}x{d.height}|{d.workArea.x},{d.workArea.y}";
+                    if (Toggle(cur == key, $"{i + 1}: {d.width}×{d.height}")) guard?.MoveTo(d);
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.Space(6);
             GUILayout.Label("Režim zobrazení", label);
             GUILayout.BeginHorizontal();
             if (Toggle(Screen.fullScreenMode == FullScreenMode.Windowed, "Okno")) Screen.fullScreenMode = FullScreenMode.Windowed;
