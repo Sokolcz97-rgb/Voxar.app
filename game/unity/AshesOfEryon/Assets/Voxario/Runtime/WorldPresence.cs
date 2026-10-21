@@ -41,6 +41,20 @@ namespace Voxario.Ashes
 
         public int Count => others.Count;
 
+        /// <summary>Znovu poslat údaje o sobě (např. po vstupu do oddílu).</summary>
+        public void Retrack()
+        {
+            if (joined) Track();
+            if (boot.player != null)
+            {
+                var t = boot.player.GetComponent<NameTag>();
+                var ch = boot.state?.character;
+                if (t != null && ch != null) t.title = TagName(Oddil.Instance?.MyTag, string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name);
+            }
+        }
+
+        public static string TagName(string tag, string name) => string.IsNullOrEmpty(tag) ? name : $"[{tag}] {name}";
+
         public void Connect()
         {
             Disconnect();
@@ -154,6 +168,7 @@ namespace Voxario.Ashes
                         ["cls"] = ch.@class, ["level"] = ch.level,
                         ["appearance"] = new Dictionary<string, object> { ["gender"] = ch.appearance?.gender ?? "m" },
                         ["eryon"] = ch.is_eryon, ["azkar"] = ch.is_azkar, ["faction"] = ch.faction, ["uid"] = uid,
+                        ["tag"] = Oddil.Instance?.MyTag ?? "",
                         ["x"] = p.x, ["z"] = p.y, ["ry"] = Ry(),
                     },
                 },
@@ -268,17 +283,24 @@ namespace Voxario.Ashes
             if (cls != "hoplit" && cls != "lucistnik" && cls != "vestec") cls = "hoplit";
             string gender = MiniJson.S(MiniJson.Obj(meta.TryGetValue("appearance", out var ap) ? ap : null), "gender") == "f" ? "f" : "m";
             int level = (int)MiniJson.N(meta, "level", 1);
+            string tagStr = MiniJson.S(meta, "tag") ?? "";
+            if (tagStr.Length > 5) tagStr = tagStr.Substring(0, 5);
             if (others.TryGetValue(key, out var o))
             {
                 o.level = level;
-                if (o.view != null) o.view.GetComponent<NameTag>().subtitle = $"úroveň {level}";
+                if (o.view != null)
+                {
+                    var nt = o.view.GetComponent<NameTag>();
+                    nt.subtitle = $"úroveň {level}";
+                    nt.title = TagName(tagStr, name);
+                }
                 return;
             }
             o = new Other { name = name, cls = cls, gender = gender, level = level };
             var parent = boot.WorldRoot;
             o.view = CharacterView.Create(boot.library.Hero($"{cls}_{gender}_lo") ?? boot.library.Hero($"{cls}_{gender}"), parent, gender == "f" ? 1.55f : 1.62f, "Hráč " + name);
             var tag = o.view.gameObject.AddComponent<NameTag>();
-            tag.title = name;
+            tag.title = TagName(tagStr, name);
             tag.subtitle = $"úroveň {level}";
             tag.isPlayer = true;
             double x = MiniJson.N(meta, "x", double.NaN), z = MiniJson.N(meta, "z", double.NaN);

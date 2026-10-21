@@ -251,7 +251,7 @@ namespace Voxario.Ashes
             }
 
             // vatry a památník (klávesa E)
-            if (!Busy && Input.GetKeyDown(KeyCode.E) && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
+            if (!Busy && !Chat.Typing && Input.GetKeyDown(KeyCode.E) && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
             {
                 foreach (var b in beacons)
                     if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) StartCoroutine(Interact("beacon", b.id));

@@ -51,6 +51,8 @@ namespace Voxario.Ashes
             gameObject.AddComponent<WorldPresence>().boot = this;
             gameObject.AddComponent<Music>().boot = this;
             gameObject.AddComponent<ModManager>().boot = this;
+            gameObject.AddComponent<Chat>().boot = this;
+            gameObject.AddComponent<Oddil>().boot = this;
         }
 
         IEnumerator Start()
@@ -243,6 +245,12 @@ namespace Voxario.Ashes
             for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
             yield return new WaitForSeconds(1f);
+            // chat a oddíl
+            GetComponent<Chat>().TestFill();
+            GetComponent<Oddil>().TestOpen();
+            yield return new WaitForSeconds(1.2f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "12-chat-oddil.png"));
+            yield return new WaitForSeconds(0.5f);
             // nastavení (záložka Zobrazení)
             player.enabled = true;
             var ui = GetComponent<GameUI>();
