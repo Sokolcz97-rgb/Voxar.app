@@ -1,0 +1,7 @@
+{
+  "name": "MoonSharp.Interpreter",
+  "references": [],
+  "autoReferenced": true,
+  "allowUnsafeCode": false,
+  "noEngineReferences": false
+}
