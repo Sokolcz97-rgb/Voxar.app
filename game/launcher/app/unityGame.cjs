@@ -3,7 +3,7 @@
 /**
  * Unity verze Ashes of Eryon (DirectX 12 / Vulkan, NVIDIA DLSS, AMD FSR 2).
  *
- * Sestavení z GitHub Actions se publikuje do veřejného bucketu `game-builds`:
+ * Sestavení z GitHub Actions se publikuje do veřejného bucketu `game-updates`:
  *   unity/latest.json = { "version": "0.1.0", "exe": "AshesOfEryon.exe", "files": [
  *       { "path": "AshesOfEryon_Data/data.unity3d", "url": "0.1.0/AshesOfEryon_Data/data.unity3d",
  *         "sha256": "…", "size": 123, "parts": 2 }, … ] }
@@ -23,7 +23,7 @@ let fs = require("node:fs");
 try { fs = require("original-fs"); } catch {}
 
 const BASE = process.env.ASHES_UNITY_BASE
-  || "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-builds/unity/";
+  || "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/unity/";
 const SAFE_PATH = /^[A-Za-z0-9 _.\-()+\/]+$/;
 
 function installDir() {
