@@ -94,7 +94,18 @@ public static class VoxarioBuild
 
         SetBool(so, "m_RenderPipelineSettings.dynamicResolutionSettings.enabled", true);
         SetBool(so, "m_RenderPipelineSettings.dynamicResolutionSettings.enableDLSS", true);
-        SetBool(so, "m_RenderPipelineSettings.dynamicResolutionSettings.enableFSR2", true);
+        // pořadí pokročilých upscalerů: DLSS, pak FSR 2 (STP vynecháme – na Linuxu nejde zkompilovat pro DirectX)
+        var ups = so.FindProperty("m_RenderPipelineSettings.dynamicResolutionSettings.advancedUpscalersByPriority");
+        if (ups != null && ups.isArray)
+        {
+            ups.arraySize = 1;
+            var names0 = ups.GetArrayElementAtIndex(0).enumNames;
+            Debug.Log("[Voxario] upscalery: " + string.Join("/", names0));
+            var wanted = new[] { "DLSS", "FSR2" }.Where(n => Array.IndexOf(names0, n) >= 0).ToArray();
+            ups.arraySize = wanted.Length;
+            for (int i = 0; i < wanted.Length; i++) ups.GetArrayElementAtIndex(i).enumValueIndex = Array.IndexOf(names0, wanted[i]);
+        }
+        else Debug.LogWarning("[Voxario] chybí advancedUpscalersByPriority");
         SetBool(so, "m_RenderPipelineSettings.dynamicResolutionSettings.DLSSUseOptimalSettings", true);
         SetBool(so, "m_RenderPipelineSettings.dynamicResolutionSettings.FSR2UseOptimalSettings", true);
         SetFloat(so, "m_RenderPipelineSettings.dynamicResolutionSettings.minPercentage", 33f);
@@ -104,6 +115,9 @@ public static class VoxarioBuild
         SetBool(so, "m_RenderPipelineSettings.supportVolumetrics", true);
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(asset);
+        var check = new SerializedObject(asset);
+        Debug.Log("[Voxario] DLSS zapnuto: " + check.FindProperty("m_RenderPipelineSettings.dynamicResolutionSettings.enableDLSS")?.boolValue
+            + ", dynamické rozlišení: " + check.FindProperty("m_RenderPipelineSettings.dynamicResolutionSettings.enabled")?.boolValue);
 
         GraphicsSettings.defaultRenderPipeline = asset;
         for (int i = 0; i < QualitySettings.names.Length; i++)
