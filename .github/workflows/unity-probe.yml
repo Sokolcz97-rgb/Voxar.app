@@ -32,4 +32,11 @@ jobs:
             echo "== editor manifest"; cat $E/Data/Resources/PackageManager/Editor/manifest.json 2>/dev/null | head -80
             echo "== nvidia files"; find $E/Data -iname "*nvngx*" -o -iname "*dlss*" 2>/dev/null | head -20
             echo "== windows player"; ls $E/Data/PlaybackEngines/ 2>/dev/null
+            for p in com.unity.render-pipelines.high-definition com.unity.render-pipelines.core com.unity.shadergraph com.unity.modules.nvidia com.unity.render-pipelines.high-definition-config; do
+              echo "== $p: $(grep -m1 "\"version\"" $E/Data/Resources/PackageManager/BuiltInPackages/$p/package.json)"
+            done
           '
+      - name: Registry versions
+        run: |
+          curl -s https://packages.unity.com/com.unity.cloud.gltfast | jq -r '.versions | keys[]' | sort -V | tail -6
+          curl -s https://packages.unity.com/com.unity.ugui | jq -r '.versions | keys[]' | sort -V | tail -3
