@@ -90,7 +90,7 @@ namespace Voxario.Ashes
         }
 
         readonly List<Enemy> enemies = new List<Enemy>();
-        readonly List<(string id, Transform t, Light fire)> beacons = new List<(string, Transform, Light)>();
+        readonly List<(string id, Transform t, Fire fire)> beacons = new List<(string, Transform, Fire)>();
         Transform memorial;
         string faction = "kalidra";
         bool fighting;
@@ -138,24 +138,18 @@ namespace Voxario.Ashes
                 var go = new GameObject("Beacon " + b.id);
                 go.transform.SetParent(root, false);
                 go.transform.position = WorldMap.ToWorld(b.x, b.z);
+                // kamenný podstavec a oheň
                 var pile = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 pile.transform.SetParent(go.transform, false);
-                pile.transform.localScale = new Vector3(1.6f, 0.5f, 1.6f);
+                pile.transform.localScale = new Vector3(2.8f, 0.6f, 2.8f);
                 pile.transform.localPosition = new Vector3(0, 0.5f, 0);
-                pile.GetComponent<Renderer>().sharedMaterial = ModelLibrary.NewLit(new Color(0.25f, 0.18f, 0.12f), 0.1f);
-                var lgo = new GameObject("Fire");
-                lgo.transform.SetParent(go.transform, false);
-                lgo.transform.localPosition = new Vector3(0, 1.6f, 0);
-                var light = lgo.AddComponent<Light>();
-                light.type = LightType.Point;
-                light.color = new Color(1f, 0.55f, 0.2f);
-                light.range = 14;
-                light.intensity = 0;
-                lgo.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
+                pile.GetComponent<Renderer>().sharedMaterial = ModelLibrary.NewLit(new Color(0.7f, 0.67f, 0.6f), 0.1f);
+                var fire = Fire.Create(go.transform, go.transform.position + Vector3.up * 1.1f, 1.6f, true);
+                fire.lit = false;
                 var tag = go.AddComponent<NameTag>();
                 tag.title = "Strážní vatra";
                 tag.subtitle = "";
-                beacons.Add((b.id, go.transform, light));
+                beacons.Add((b.id, go.transform, fire));
             }
             var mem = GameObject.CreatePrimitive(PrimitiveType.Cube);
             mem.name = "Memorial";
@@ -167,6 +161,17 @@ namespace Voxario.Ashes
             mtag.title = "Památník padlých";
             mtag.subtitle = "";
             memorial = mem.transform;
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i / 8f * Mathf.PI * 2;
+                var st = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Destroy(st.GetComponent<Collider>());
+                st.transform.SetParent(root, false);
+                st.transform.localScale = Vector3.one * 0.55f;
+                st.transform.position = WorldMap.ToWorld(Memorial.x + Mathf.Cos(a) * 2.2f, Memorial.y + Mathf.Sin(a) * 2.2f) + Vector3.up * 0.1f;
+                st.GetComponent<Renderer>().sharedMaterial = mem.GetComponent<Renderer>().sharedMaterial;
+            }
+            Fire.Create(root, WorldMap.ToWorld(Memorial.x + 0.9f, Memorial.y + 0.8f) + Vector3.up * 0.1f, 0.3f, false);
             RefreshBeacons();
         }
 
@@ -176,8 +181,8 @@ namespace Voxario.Ashes
             var wq = boot.state?.Quest("k4");
             foreach (var b in beacons)
             {
-                bool lit = wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0));
-                b.fire.intensity = lit ? 60000f : 0f;
+                bool lit = faction == "legie" || (wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0)));
+                b.fire.lit = lit;
             }
         }
 

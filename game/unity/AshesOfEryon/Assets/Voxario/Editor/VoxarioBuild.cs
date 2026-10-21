@@ -205,7 +205,7 @@ public static class VoxarioBuild
     {
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
-        PlayerSettings.bundleVersion = Arg("-buildVersion") ?? "0.1.0";
+        PlayerSettings.bundleVersion = Arg("-buildVersion") ?? "0.3.0";
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,
@@ -233,6 +233,13 @@ public static class VoxarioBuild
         lib.animals = Load("Assets/Models/animals");
         Debug.Log($"[Voxario] modely: postavy {lib.heroes.Length}, stavby {lib.buildings.Length}, zvířata {lib.animals.Length}");
         lib.lit = MaterialAsset("Lit", "HDRP/Lit");
+        lib.litDouble = MaterialAsset("LitDouble", "HDRP/Lit", m =>
+        {
+            m.SetFloat("_DoubleSidedEnable", 1);
+            m.SetFloat("_DoubleSidedNormalMode", 0); // zrcadlit normály
+            m.SetFloat("_CullMode", 0);
+            m.SetFloat("_CullModeForward", 0);
+        });
         // terén: výchozí materiál terénu z HDRP (správně nastavený), jinak vlastní
         Material defTerrain = null;
         try { defTerrain = GraphicsSettings.defaultRenderPipeline?.defaultTerrainMaterial; } catch { }
@@ -244,7 +251,7 @@ public static class VoxarioBuild
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
     }
 
-    static Material MaterialAsset(string name, string shader)
+    static Material MaterialAsset(string name, string shader, Action<Material> setup = null)
     {
         string path = $"{Settings}/{name}.mat";
         var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -252,6 +259,7 @@ public static class VoxarioBuild
         var sh = Shader.Find(shader);
         if (sh == null) { Debug.LogWarning("[Voxario] shader nenalezen: " + shader); return null; }
         m = new Material(sh);
+        setup?.Invoke(m);
         AssetDatabase.CreateAsset(m, path);
         ValidateHdrpMaterial(m);
         EditorUtility.SetDirty(m);

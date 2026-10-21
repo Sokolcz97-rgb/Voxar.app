@@ -107,8 +107,11 @@ namespace Voxario.Ashes
             yield return LoadState();
         }
 
+        void OnApplicationQuit() => Debug.Log("[Voxario] konec");
+
         IEnumerator LoadState()
         {
+            StartCoroutine(CrashReporter.SendIfCrashed(api));
             busy = true;
             status = "Načítám postavu…";
             string json = null, err = null;
@@ -138,6 +141,7 @@ namespace Voxario.Ashes
             var ch = state.character;
             string faction = string.IsNullOrEmpty(ch.faction) ? "kalidra" : ch.faction;
             WorldBuilder.Build(worldRoot, library, faction);
+            Scenery.Build(worldRoot, PlayerPrefs.GetInt("gfx.quality", 2));
             GetComponent<Encounters>().Build(worldRoot, library, faction);
 
             string gender = ch.appearance != null && ch.appearance.gender == "f" ? "f" : "m";
@@ -201,6 +205,9 @@ namespace Voxario.Ashes
                 ("2-mesto", WorldMap.ToWorld(40, 15) + new Vector3(0, 18, 0), WorldMap.ToWorld(74, 15)),
                 ("3-prehled", new Vector3(0, 140, 60), new Vector3(0, 0, -10)),
                 ("4-nikias", WorldMap.ToWorld(-46, 44) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-50, 44) + Vector3.up),
+                ("7-krajina", WorldMap.ToWorld(-40, 30) + new Vector3(0, 9, 0), WorldMap.ToWorld(-20, 0) + Vector3.up * 3),
+                ("8-akvadukt", WorldMap.ToWorld(-30, 12) + new Vector3(0, 5, 0), WorldMap.ToWorld(-45, 13) + Vector3.up * 4),
+                ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
             };
             foreach (var v in views)
             {

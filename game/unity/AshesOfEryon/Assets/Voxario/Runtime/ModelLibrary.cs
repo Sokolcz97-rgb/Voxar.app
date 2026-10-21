@@ -19,6 +19,8 @@ namespace Voxario.Ashes
         /// <summary>Šablony materiálů (HDRP/Lit a HDRP/TerrainLit), aby se shadery dostaly do sestavení.</summary>
         public Material lit;
         public Material terrain;
+        /// <summary>HDRP/Lit oboustranný (tráva, plachty).</summary>
+        public Material litDouble;
 
         public static ModelLibrary Instance { get; private set; }
         void Awake() => Instance = this;
