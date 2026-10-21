@@ -6,7 +6,8 @@
  * Launcher se skládá z Electron runtime (mění se jen výjimečně) a z vlastních
  * souborů: resources/app.asar (logika) a resources/launcher-ui (vzhled).
  * Ty se publikují do veřejného bucketu `game-updates` spolu s manifestem
- * launcher/latest.json:
+ * launcher/stable.json (launchery do 0.4.0 čtou latest.json – ten jim trvale nabízí
+ * nový GameSetup, protože jejich aktualizace se nikdy nedokončila):
  *
  * { "version": "0.2.1", "electron": "31.7.7", "files": [
  *     { "path": "resources/app.asar", "url": "0.2.1/app.asar", "sha256": "…", "size": 123 }, … ] }
@@ -131,7 +132,7 @@ function createUpdater({ onStatus, canRestart }) {
     checking = true;
     try {
       emit({ state: "checking" });
-      const manifest = JSON.parse((await fetchBuffer(`${UPDATE_BASE}latest.json?t=${Date.now()}`)).toString("utf8"));
+      const manifest = JSON.parse((await fetchBuffer(`${UPDATE_BASE}stable.json?t=${Date.now()}`)).toString("utf8"));
       if (!manifest?.version || !Array.isArray(manifest.files) || !newer(manifest.version, app.getVersion())) {
         emit({ state: "current", latest: manifest?.version || app.getVersion() });
         return state;
