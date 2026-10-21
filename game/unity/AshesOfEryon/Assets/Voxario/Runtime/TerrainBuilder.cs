@@ -79,6 +79,8 @@ namespace Voxario.Ashes
             terrain.heightmapPixelError = 4;
             terrain.basemapDistance = 120;
             terrain.drawInstanced = true;
+            var lib = ModelLibrary.Instance;
+            if (lib != null && lib.terrain != null) terrain.materialTemplate = lib.terrain;
             return terrain;
         }
 
@@ -107,15 +109,9 @@ namespace Voxario.Ashes
             sea.transform.localScale = new Vector3(90, 1, 90);
             Object.Destroy(sea.GetComponent<Collider>());
             var r = sea.GetComponent<Renderer>();
-            var shader = Shader.Find("HDRP/Lit");
-            if (shader != null)
-            {
-                var m = new Material(shader);
-                m.SetColor("_BaseColor", new Color(0.09f, 0.22f, 0.28f, 1));
-                m.SetFloat("_Smoothness", 0.92f);
-                m.SetFloat("_Metallic", 0.1f);
-                r.sharedMaterial = m;
-            }
+            var m = ModelLibrary.NewLit(new Color(0.09f, 0.22f, 0.28f, 1), 0.92f);
+            m.SetFloat("_Metallic", 0.1f);
+            r.sharedMaterial = m;
             return sea;
         }
     }

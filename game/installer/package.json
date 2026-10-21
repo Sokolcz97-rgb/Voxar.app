@@ -1,7 +1,7 @@
 {
   "name": "ashes-of-eryon-installer",
   "productName": "Ashes of Eryon Installer",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Custom bootstrap installer for Ashes of Eryon",
   "author": "StudioVoxario",
   "main": "main.cjs",

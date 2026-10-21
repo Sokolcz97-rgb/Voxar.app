@@ -160,11 +160,7 @@ namespace Voxario.Ashes
 
         static Material Mat(Color c)
         {
-            var shader = Shader.Find("HDRP/Lit");
-            var m = new Material(shader);
-            m.SetColor("_BaseColor", c);
-            m.SetFloat("_Smoothness", 0.15f);
-            return m;
+            return ModelLibrary.NewLit(c, 0.15f);
         }
     }
 }

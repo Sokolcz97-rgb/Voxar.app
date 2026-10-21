@@ -15,6 +15,17 @@ contextBridge.exposeInMainWorld("ashesLauncher", {
       return () => ipcRenderer.removeListener("launcher:game-closed", listener);
     }
   },
+  unity: {
+    status: () => ipcRenderer.invoke("launcher:unity:status"),
+    check: () => ipcRenderer.invoke("launcher:unity:check"),
+    install: () => ipcRenderer.invoke("launcher:unity:install"),
+    onStatus: (callback) => {
+      if (typeof callback !== "function") return () => {};
+      const listener = (_event, value) => callback(value);
+      ipcRenderer.on("launcher:unity", listener);
+      return () => ipcRenderer.removeListener("launcher:unity", listener);
+    }
+  },
   info: () => ipcRenderer.invoke("launcher:info"),
   settings: {
     get: () => ipcRenderer.invoke("launcher:settings:get"),

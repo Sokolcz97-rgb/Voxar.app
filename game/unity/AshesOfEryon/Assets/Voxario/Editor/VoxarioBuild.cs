@@ -180,10 +180,24 @@ public static class VoxarioBuild
         lib.buildings = Load("Assets/Models/buildings");
         lib.animals = Load("Assets/Models/animals");
         Debug.Log($"[Voxario] modely: postavy {lib.heroes.Length}, stavby {lib.buildings.Length}, zvířata {lib.animals.Length}");
+        lib.lit = MaterialAsset("Lit", "HDRP/Lit");
+        lib.terrain = MaterialAsset("Terrain", "HDRP/TerrainLit");
         var boot = go.AddComponent<GameBootstrap>();
         boot.library = lib;
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+    }
+
+    static Material MaterialAsset(string name, string shader)
+    {
+        string path = $"{Settings}/{name}.mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m != null) return m;
+        var sh = Shader.Find(shader);
+        if (sh == null) { Debug.LogWarning("[Voxario] shader nenalezen: " + shader); return null; }
+        m = new Material(sh);
+        AssetDatabase.CreateAsset(m, path);
+        return m;
     }
 
     static ModelLibrary.Entry[] Load(string dir)
