@@ -1,0 +1,66 @@
+name: Launcher update diagnostics
+
+on:
+  push:
+    branches: ['launcher/update-crash']
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+      - name: Build launcher
+        working-directory: game/launcher/app
+        run: |
+          npm install --no-audit --no-fund
+          npm run pack:win
+      - name: Inspect fuses and resources
+        shell: pwsh
+        run: |
+          $exe = "game/launcher/app/dist/win-unpacked/Ashes of Eryon Launcher.exe"
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+          $i = $text.IndexOf("dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX")
+          Write-Host "fuse sentinel at $i"
+          if ($i -ge 0) { Write-Host ("fuse wire: " + $text.Substring($i + 32, 12).Replace([char]0,'.') + " bytes: " + (($bytes[($i+32)..($i+44)] | ForEach-Object { $_.ToString() }) -join ',')) }
+          $j = $text.IndexOf("ElectronAsarIntegrity")
+          Write-Host "ElectronAsarIntegrity at $j"
+          $u = [System.Text.Encoding]::Unicode.GetString($bytes)
+          Write-Host ("INTEGRITY (utf16) at " + $u.IndexOf("INTEGRITY"))
+          $k = $text.IndexOf('"resources\\app.asar"')
+          Write-Host "asar json at $k"
+          if ($k -ge 0) { Write-Host $text.Substring($k - 20, 220) }
+      - name: Run original
+        shell: pwsh
+        run: |
+          $dir = (Resolve-Path "game/launcher/app/dist/win-unpacked").Path
+          $p = Start-Process -FilePath "$dir\Ashes of Eryon Launcher.exe" -ArgumentList "--enable-logging" -PassThru -RedirectStandardError "$env:RUNNER_TEMP\orig.err"
+          Start-Sleep 15
+          Write-Host "original alive: $(-not $p.HasExited) exit=$($p.ExitCode)"
+          Get-Content "$env:RUNNER_TEMP\orig.err" -ErrorAction SilentlyContinue | Select-Object -Last 20
+          Stop-Process -Name "Ashes of Eryon Launcher" -Force -ErrorAction SilentlyContinue
+          Start-Sleep 3
+      - name: Run with published 0.4.0 update files (simulated self-update)
+        shell: pwsh
+        run: |
+          $dir = (Resolve-Path "game/launcher/app/dist/win-unpacked").Path
+          $base = "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/launcher/"
+          $m = Invoke-RestMethod "$($base)latest.json"
+          foreach ($f in $m.files) {
+            $to = Join-Path $dir ($f.path -replace '/', '\')
+            New-Item -ItemType Directory -Force -Path (Split-Path $to) | Out-Null
+            Invoke-WebRequest "$base$($f.url)" -OutFile "$to.tmp"
+            [System.IO.File]::Copy("$to.tmp", $to, $true); Remove-Item "$to.tmp"
+          }
+          $p = Start-Process -FilePath "$dir\Ashes of Eryon Launcher.exe" -ArgumentList "--enable-logging" -PassThru -RedirectStandardError "$env:RUNNER_TEMP\upd.err"
+          Start-Sleep 15
+          Write-Host "updated alive: $(-not $p.HasExited) exit=$($p.ExitCode)"
+          Get-Content "$env:RUNNER_TEMP\upd.err" -ErrorAction SilentlyContinue | Select-Object -Last 40
+          Get-ChildItem "$env:APPDATA" -Recurse -Filter launcher.log -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Tail 30 }
+          Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=(Get-Date).AddMinutes(-3)} -ErrorAction SilentlyContinue | Where-Object { $_.Message -match 'Ashes' } | Select-Object -First 5 | Format-List TimeCreated, Id, Message
