@@ -17,6 +17,10 @@ namespace Voxario.Ashes
         public string @class;
         public string faction;
         public int level;
+        public long xp;
+        public long xp_need;
+        public int wins;
+        public int losses;
         public long gold;
         public int honor;
         public int chapter;

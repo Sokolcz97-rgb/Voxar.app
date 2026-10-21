@@ -29,7 +29,37 @@ namespace Voxario.Ashes
 
         public static string SavedDisplay => PlayerPrefs.GetString("gfx.display", "");
 
-        static string Key(DisplayInfo d) => $"{d.name}|{d.width}x{d.height}|{d.workArea.x},{d.workArea.y}";
+        public static string Key(DisplayInfo d) => $"{d.name}|{d.width}x{d.height}|{d.workArea.x},{d.workArea.y}";
+        FullScreenMode lastMode;
+
+        /// <summary>Změna režimu okna – vždy na uloženém monitoru.</summary>
+        public void SetMode(FullScreenMode mode)
+        {
+            StartCoroutine(ChangeMode(mode));
+        }
+
+        IEnumerator ChangeMode(FullScreenMode mode)
+        {
+            DisplayInfo? target = SavedInfo();
+            if (target.HasValue && CurrentKey() != Key(target.Value))
+                yield return Move(target.Value);
+            var d = target ?? Screen.mainWindowDisplayInfo;
+            if (mode == FullScreenMode.Windowed) Screen.SetResolution(Mathf.Min(1600, d.width - 80), Mathf.Min(900, d.height - 80), mode);
+            else Screen.SetResolution(d.width, d.height, mode);
+            PlayerPrefs.SetInt("gfx.mode", (int)mode);
+            yield return null;
+            yield return null;
+            lastMode = Screen.fullScreenMode;
+            RestoreMonitor();
+        }
+
+        static DisplayInfo? SavedInfo()
+        {
+            string saved = SavedDisplay;
+            if (string.IsNullOrEmpty(saved)) return null;
+            foreach (var d in Displays()) if (Key(d) == saved) return d;
+            return null;
+        }
 
         public static string CurrentKey() => Key(Screen.mainWindowDisplayInfo);
 
@@ -52,8 +82,10 @@ namespace Voxario.Ashes
 
         IEnumerator Start()
         {
-            // po spuštění na uložený monitor
+            // po spuštění na uložený monitor (při prvním spuštění si zapamatuje aktuální)
             yield return null;
+            if (string.IsNullOrEmpty(SavedDisplay)) { PlayerPrefs.SetString("gfx.display", CurrentKey()); PlayerPrefs.Save(); }
+            lastMode = Screen.fullScreenMode;
             RestoreMonitor();
         }
 
@@ -69,6 +101,7 @@ namespace Voxario.Ashes
         void OnApplicationFocus(bool on)
         {
             focused = on;
+            Debug.Log($"[Voxario] fokus {on} {Screen.width}x{Screen.height} {Screen.fullScreenMode}");
             if (on)
             {
                 checkAt = Time.unscaledTime + 0.5f;
@@ -94,6 +127,13 @@ namespace Voxario.Ashes
             {
                 checkAt = 0;
                 if (Screen.fullScreenMode != FullScreenMode.Windowed) RestoreMonitor();
+            }
+            // přepnutí režimu (Alt+Enter) – hlídat monitor
+            if (Screen.fullScreenMode != lastMode && !moving)
+            {
+                lastMode = Screen.fullScreenMode;
+                Debug.Log($"[Voxario] režim okna {lastMode} {Screen.width}x{Screen.height}");
+                checkAt = Time.unscaledTime + 0.3f;
             }
         }
     }

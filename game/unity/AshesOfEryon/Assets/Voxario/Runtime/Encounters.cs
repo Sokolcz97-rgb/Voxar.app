@@ -101,7 +101,6 @@ namespace Voxario.Ashes
         string fName1, fName2;
         int hp1, hp2, max1, max2;
         readonly List<(Vector3 pos, string text, Color color, float t0)> floats = new List<(Vector3, string, Color, float)>();
-        GUIStyle box, head, body, gold, floatStyle;
         public bool Busy => fighting || result != null;
         public static Encounters Instance { get; private set; }
         void Awake() => Instance = this;
@@ -312,6 +311,7 @@ namespace Voxario.Ashes
                 yield break;
             }
             var res = JsonUtility.FromJson<FightResult>(json);
+            ModManager.Fire("fight_start", e.def.id, e.def.name);
             var f = res.fight;
             fName1 = f.f1?.name ?? "Ty";
             fName2 = $"{f.f2?.name ?? e.def.name} · úroveň {f.f2?.level}";
@@ -354,6 +354,7 @@ namespace Voxario.Ashes
             if (res.state?.character != null) boot.state = res.state;
             RefreshBeacons();
             result = res;
+            ModManager.Fire("fight_end", res.won ? "won" : "lost", e.def.name);
             fighting = false;
         }
 
@@ -368,86 +369,76 @@ namespace Voxario.Ashes
 
         void Float(Vector3 pos, string text, Color color) => floats.Add((pos, text, color, Time.time));
 
-        void Styles()
-        {
-            if (box != null) return;
-            var tex = new Texture2D(1, 1);
-            tex.SetPixel(0, 0, new Color(0.06f, 0.045f, 0.04f, 0.92f));
-            tex.Apply();
-            box = new GUIStyle(GUI.skin.box) { normal = { background = tex } };
-            head = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.92f, 0.74f, 0.42f) } };
-            body = new GUIStyle(GUI.skin.label) { fontSize = 16, wordWrap = true, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.93f, 0.89f, 0.82f) } };
-            gold = new GUIStyle(body) { fontStyle = FontStyle.Bold, normal = { textColor = new Color(0.95f, 0.78f, 0.4f) } };
-            floatStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-        }
-
-        void Bar(Rect r, float v, Color c, string label)
-        {
-            GUI.Box(r, GUIContent.none, box);
-            var prev = GUI.color;
-            GUI.color = c;
-            GUI.DrawTexture(new Rect(r.x + 2, r.y + 2, (r.width - 4) * Mathf.Clamp01(v), r.height - 4), Texture2D.whiteTexture);
-            GUI.color = prev;
-            GUI.Label(r, label, new GUIStyle(body) { fontSize = 13 });
-        }
-
         void OnGUI()
         {
             if (!boot.inWorld) return;
-            Styles();
+            var gameUi = boot.GetComponent<GameUI>();
+            if (gameUi != null && gameUi.SettingsOpen) return;
+            EryonSkin.Begin();
+            float W = EryonSkin.W, H = EryonSkin.H, k = EryonSkin.Scale;
             var cam = boot.cam;
-            // létající čísla
+            // létající čísla (pozice z obrazovky převedené do virtuálních souřadnic)
             for (int i = floats.Count - 1; i >= 0; i--)
             {
                 var f = floats[i];
                 float age = Time.time - f.t0;
-                if (age > 1.2f) { floats.RemoveAt(i); continue; }
-                var sp = cam.WorldToScreenPoint(f.pos + Vector3.up * age * 0.8f);
+                if (age > 1.3f) { floats.RemoveAt(i); continue; }
+                var sp = cam.WorldToScreenPoint(f.pos + Vector3.up * age * 0.9f);
                 if (sp.z < 0) continue;
-                floatStyle.normal.textColor = new Color(f.color.r, f.color.g, f.color.b, 1 - age / 1.2f);
-                GUI.Label(new Rect(sp.x - 120, Screen.height - sp.y - 15, 240, 30), f.text, floatStyle);
+                var st = new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = f.text.StartsWith("KRIT") ? 34 : 28, normal = { textColor = new Color(f.color.r, f.color.g, f.color.b, 1 - age / 1.3f) } };
+                EryonSkin.Shadowed(new Rect(sp.x / k - 160, (Screen.height - sp.y) / k - 20, 320, 40), f.text, st);
             }
             if (note != null && Time.time < noteUntil)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 280, 130, 560, 36), GUIContent.none, box);
-                GUI.Label(new Rect(Screen.width / 2 - 280, 130, 560, 36), note, gold);
+                var nr = new Rect(W / 2 - 330, 170, 660, 50);
+                GUI.Box(nr, GUIContent.none, EryonSkin.PanelStyle);
+                EryonSkin.Shadowed(nr, note, new GUIStyle(EryonSkin.Center) { font = EryonSkin.CormorantBold, normal = { textColor = EryonSkin.GoldBright } });
             }
             if (fighting || result != null)
             {
-                float w = 300;
-                Bar(new Rect(Screen.width / 2 - w - 20, 70, w, 26), hp1 / (float)Mathf.Max(1, max1), new Color(0.3f, 0.75f, 0.35f), $"{fName1}  {hp1}/{max1}");
-                Bar(new Rect(Screen.width / 2 + 20, 70, w, 26), hp2 / (float)Mathf.Max(1, max2), new Color(0.8f, 0.25f, 0.2f), $"{fName2}  {hp2}/{max2}");
+                float bw = 420;
+                var left = new Rect(W / 2 - bw - 50, 40, bw, 30);
+                var right = new Rect(W / 2 + 50, 40, bw, 30);
+                GUI.Label(new Rect(left.x, left.y - 30, bw, 28), fName1, new GUIStyle(EryonSkin.H2) { normal = { textColor = EryonSkin.Sky } });
+                GUI.Label(new Rect(right.x, right.y - 30, bw, 28), fName2, new GUIStyle(EryonSkin.H2) { alignment = TextAnchor.MiddleRight, normal = { textColor = new Color(1f, 0.5f, 0.4f) } });
+                EryonSkin.Bar(left, hp1 / (float)Mathf.Max(1, max1), EryonSkin.Good, $"{hp1} / {max1}");
+                EryonSkin.Bar(right, hp2 / (float)Mathf.Max(1, max2), EryonSkin.Blood * 1.6f, $"{hp2} / {max2}");
+                EryonSkin.DiamondAt(new Vector2(W / 2, 55), 56, Color.white);
+                GUI.Label(new Rect(W / 2 - 28, 27, 56, 56), "VS", new GUIStyle(EryonSkin.Key) { fontSize = 17 });
             }
             if (result != null)
             {
-                var r = new Rect(Screen.width / 2 - 230, Screen.height / 2 - 120, 460, 240);
-                GUI.Box(r, GUIContent.none, box);
-                GUILayout.BeginArea(new Rect(r.x + 20, r.y + 16, r.width - 40, r.height - 30));
-                GUILayout.Label(result.won ? "Vítězství" : "Porážka", head);
+                EryonSkin.Fill(new Rect(0, 0, W, H), new Color(0, 0, 0, 0.45f));
+                var r = new Rect(W / 2 - 330, H / 2 - 190, 660, 380);
+                GUI.Box(r, GUIContent.none, EryonSkin.PanelStyle);
+                var head = new GUIStyle(EryonSkin.Title) { fontSize = 60, normal = { textColor = result.won ? EryonSkin.GoldBright : EryonSkin.Ember } };
+                EryonSkin.Shadowed(new Rect(r.x, r.y + 26, r.width, 70), result.won ? "VÍTĚZSTVÍ" : "PORÁŽKA", head);
+                EryonSkin.Ornament(new Rect(r.x + 60, r.y + 104, r.width - 120, 12));
+                GUILayout.BeginArea(new Rect(r.x + 40, r.y + 130, r.width - 80, r.height - 150));
                 if (result.won)
                 {
-                    GUILayout.Label($"+{result.xp} zkušeností   +{result.gold} zlata" + (result.levels > 0 ? "   ·   NOVÁ ÚROVEŇ!" : ""), gold);
-                    if (result.quests != null && result.quests.Length > 0)
+                    GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
+                    if (result.quests != null)
                         foreach (var q in result.quests)
                         {
                             var def = Content.Data.Quest(q);
                             var wq = boot.state?.Quest(q);
-                            if (def != null) GUILayout.Label($"Úkol „{def.title}“: {wq?.progress}/{def.count}" + (wq?.state == "ready" ? " – hotovo!" : ""), body);
+                            if (def != null) GUILayout.Label($"{def.title}: {wq?.progress}/{def.count}" + (wq?.state == "ready" ? "  –  hotovo!" : ""), EryonSkin.Center);
                         }
                 }
-                else GUILayout.Label("Padl jsi. Probudíš se v bezpečí u hradeb.", body);
+                else GUILayout.Label("Padl jsi. Probudíš se v bezpečí u hradeb Kalidry.", new GUIStyle(EryonSkin.Center) { fontSize = 24 });
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Pokračovat", GUILayout.Height(34))) CloseResult();
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("POKRAČOVAT", EryonSkin.ButtonPrimary, GUILayout.Height(54), GUILayout.Width(300))) CloseResult();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
                 GUILayout.EndArea();
                 return;
             }
             var prompt = NearPrompt();
-            if (prompt != null && !fighting)
-            {
-                var pr = new Rect(Screen.width / 2 - 170, Screen.height - 130, 340, 34);
-                GUI.Box(pr, GUIContent.none, box);
-                GUI.Label(pr, prompt, gold);
-            }
+            if (prompt != null && !fighting) NpcDialog.Prompt(W, H, "E", prompt.Replace("[E]  ", ""));
         }
     }
 }

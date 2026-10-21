@@ -13,7 +13,6 @@ namespace Voxario.Ashes
         const float Half = 135f; // web souřadnice -135 … 135
         Texture2D map, dot;
         bool big;
-        GUIStyle label;
 
         void Update()
         {
@@ -47,7 +46,6 @@ namespace Voxario.Ashes
             dot = new Texture2D(1, 1);
             dot.SetPixel(0, 0, Color.white);
             dot.Apply();
-            label = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.MiddleCenter, normal = { textColor = Color.white } };
         }
 
         Vector2 ToUv(Vector2 web) => new Vector2((web.x + Half) / (Half * 2), (-web.y + Half) / (Half * 2));
@@ -56,27 +54,59 @@ namespace Voxario.Ashes
         {
             if (!boot.inWorld || boot.player == null) return;
             if (map == null) Build();
+            EryonSkin.Begin();
+            float W = EryonSkin.W, H = EryonSkin.H;
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             if (big)
             {
-                float s = Mathf.Min(Screen.width, Screen.height) - 120;
-                var r = new Rect((Screen.width - s) / 2, (Screen.height - s) / 2, s, s);
+                EryonSkin.Fill(new Rect(0, 0, W, H), new Color(0, 0, 0, 0.6f));
+                float s = Mathf.Min(W, H) - 160;
+                var outer = new Rect((W - s) / 2 - 16, (H - s) / 2 - 56, s + 32, s + 88);
+                GUI.Box(outer, GUIContent.none, EryonSkin.PanelStyle);
+                GUI.Label(new Rect(outer.x, outer.y + 8, outer.width, 36), "POBŘEŽÍ KALIDRY", new GUIStyle(EryonSkin.H1) { alignment = TextAnchor.MiddleCenter, fontSize = 24 });
+                var r = new Rect((W - s) / 2, (H - s) / 2, s, s);
                 GUI.DrawTexture(r, map);
+                Border(r);
                 DrawMarks(r, new Rect(0, 0, 1, 1), true);
-                GUI.Label(new Rect(r.x, r.yMax + 4, s, 20), "Mapa světa · M zavřít", label);
+                GUI.Label(new Rect(r.x, r.yMax + 4, s, 26), "M – zavřít mapu", new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter });
                 return;
             }
-            float size = 190;
-            var rect = new Rect(Screen.width - size - 14, 14, size, size);
-            float zoom = 0.28f; // podíl mapy ve výřezu
+            float size = 250;
+            var rect = new Rect(W - size - 24, 24, size, size);
+            float zoom = 0.3f;
             var uv = ToUv(pw);
             var src = new Rect(uv.x - zoom / 2, uv.y - zoom / 2, zoom, zoom);
-            GUI.color = new Color(0, 0, 0, 0.6f);
-            GUI.DrawTexture(new Rect(rect.x - 3, rect.y - 3, size + 6, size + 6), dot);
-            GUI.color = Color.white;
+            EryonSkin.Fill(new Rect(rect.x - 6, rect.y - 6, size + 12, size + 12), new Color(0.04f, 0.03f, 0.02f, 0.9f));
             GUI.DrawTextureWithTexCoords(rect, map, src);
             DrawMarks(rect, src, false);
-            GUI.Label(new Rect(rect.x, rect.yMax + 2, size, 18), "M – velká mapa", label);
+            Border(rect);
+            // světové strany
+            var cs = new GUIStyle(EryonSkin.Key) { fontSize = 13 };
+            EryonSkin.DiamondAt(new Vector2(rect.center.x, rect.y - 2), 24, Color.white);
+            GUI.Label(new Rect(rect.center.x - 12, rect.y - 14, 24, 24), "S", cs);
+            GUI.Label(new Rect(rect.x, rect.yMax + 8, size, 22), RegionName(pw), new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 15, normal = { textColor = EryonSkin.GoldBright } });
+        }
+
+        static void Border(Rect r)
+        {
+            EryonSkin.Fill(new Rect(r.x - 2, r.y - 2, r.width + 4, 2), EryonSkin.LineStrong);
+            EryonSkin.Fill(new Rect(r.x - 2, r.yMax, r.width + 4, 2), EryonSkin.LineStrong);
+            EryonSkin.Fill(new Rect(r.x - 2, r.y - 2, 2, r.height + 4), EryonSkin.LineStrong);
+            EryonSkin.Fill(new Rect(r.xMax, r.y - 2, 2, r.height + 4), EryonSkin.LineStrong);
+            foreach (var c in new[] { new Vector2(r.x, r.y), new Vector2(r.xMax, r.y), new Vector2(r.x, r.yMax), new Vector2(r.xMax, r.yMax) })
+                EryonSkin.DiamondAt(c, 14, Color.white);
+        }
+
+        /// <summary>Název oblasti podle polohy (zjednodušeně podle webové mapy).</summary>
+        public static string RegionName(Vector2 p)
+        {
+            if (WorldMap.InCity(p.x, p.y)) return "Kalidra";
+            if (Vector2.Distance(p, new Vector2(60, -68)) < 22) return "Tábor Legie";
+            if (Vector2.Distance(p, new Vector2(-64, -74)) < 30) return "Zátoka černých plachet";
+            if (p.y < -30) return "Kopce strážních ohňů";
+            if (p.x < -40 && p.y > 26) return "Bezejmenný břeh";
+            if (p.x < 0 && p.y > -26) return "Akvadukt";
+            return "Pláň před branou";
         }
 
         void DrawMarks(Rect r, Rect view, bool names)
@@ -99,7 +129,7 @@ namespace Voxario.Ashes
                 GUI.color = mark != null ? new Color(1f, 0.8f, 0.2f) : new Color(0.95f, 0.92f, 0.85f);
                 float s = mark != null ? 9 : 6;
                 GUI.DrawTexture(new Rect(p.x - s / 2, p.y - s / 2, s, s), dot);
-                if (names) GUI.Label(new Rect(p.x - 60, p.y + 4, 120, 16), n.name, label);
+                if (names) EryonSkin.Shadowed(new Rect(p.x - 80, p.y + 4, 160, 22), n.name, new GUIStyle(EryonSkin.Center) { fontSize = 16, font = EryonSkin.CormorantBold });
             }
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             var pp = ToScreen(pw, out _);
