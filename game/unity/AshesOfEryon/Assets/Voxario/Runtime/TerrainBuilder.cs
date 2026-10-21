@@ -77,7 +77,9 @@ namespace Voxario.Ashes
             var terrain = go.GetComponent<Terrain>();
             terrain.heightmapPixelError = 4;
             terrain.basemapDistance = 120;
-            terrain.drawInstanced = true;
+            // instancované kreslení potřebuje normálovou mapu z editoru – u terénu vytvořeného za běhu vychází tmavý
+            terrain.drawInstanced = false;
+            data.SyncHeightmap();
             var lib = ModelLibrary.Instance;
             if (lib != null && lib.terrain != null) terrain.materialTemplate = lib.terrain;
             return terrain;
