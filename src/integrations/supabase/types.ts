@@ -2356,13 +2356,47 @@ export type Database = {
           },
         ]
       }
+      shop_entitlements: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          item_id: string
+          purchase_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          item_id: string
+          purchase_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          item_id?: string
+          purchase_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       shop_items: {
         Row: {
+          access_minutes: number | null
           active: boolean
           cosmetic_id: string | null
           created_at: string
           description: string | null
           features: string[]
+          file_name: string | null
+          file_parts: string[]
+          file_sha256: string | null
+          file_size: number | null
+          file_uploaded_at: string | null
+          file_version: string | null
           id: string
           image_url: string | null
           kind: string
@@ -2372,6 +2406,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_minutes?: number | null
+          file_name?: string | null
+          file_parts?: string[]
+          file_sha256?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_version?: string | null
           active?: boolean
           cosmetic_id?: string | null
           created_at?: string
@@ -2386,6 +2427,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_minutes?: number | null
+          file_name?: string | null
+          file_parts?: string[]
+          file_sha256?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_version?: string | null
           active?: boolean
           cosmetic_id?: string | null
           created_at?: string
@@ -3717,6 +3765,25 @@ export type Database = {
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
       redeem_download_code: { Args: { _code: string }; Returns: boolean }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
+      shop_can_download: { Args: { p_item: string }; Returns: boolean }
+      shop_grant_download: {
+        Args: { p_item: string; p_minutes: number; p_user: string }
+        Returns: undefined
+      }
+      shop_my_downloads: {
+        Args: never
+        Returns: {
+          active: boolean
+          expires_at: string
+          file_name: string
+          file_parts: string[]
+          file_sha256: string
+          file_size: number
+          file_version: string
+          item_id: string
+          title: string
+        }[]
+      }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }

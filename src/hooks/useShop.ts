@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ShopItem = {
   id: string;
-  kind: "frame" | "plugin";
+  kind: "frame" | "plugin" | "software";
   title: string;
   description: string | null;
   price_czk: number;
@@ -12,6 +12,14 @@ export type ShopItem = {
   image_url: string | null;
   sort_order: number;
   active: boolean;
+  /** Software: doba přístupu ke stažení po zaplacení (minuty). */
+  access_minutes?: number | null;
+  file_name?: string | null;
+  file_size?: number | null;
+  file_sha256?: string | null;
+  file_version?: string | null;
+  file_parts?: string[];
+  file_uploaded_at?: string | null;
 };
 
 export type ShopSettings = {
