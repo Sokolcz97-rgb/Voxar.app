@@ -21,13 +21,34 @@ namespace Voxario.Ashes
         public CameraRig rig;
         public Camera cam;
         Transform worldRoot;
+        public Transform WorldRoot => worldRoot;
+        string savePosKey;
+        float savePosAt;
+
+        void Update()
+        {
+            if (!inWorld || player == null || savePosKey == null || Time.unscaledTime < savePosAt) return;
+            savePosAt = Time.unscaledTime + 2f;
+            var p = WorldMap.ToWeb(player.transform.position);
+            PlayerPrefs.SetString(savePosKey, p.x.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + ";" + p.y.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture));
+        }
 
         void Awake()
         {
             Application.targetFrameRate = PlayerPrefs.GetInt("gfx.fpsCap", 0) > 0 ? PlayerPrefs.GetInt("gfx.fpsCap") : -1;
             QualitySettings.vSyncCount = PlayerPrefs.GetInt("gfx.vsync", 1);
             SetupCameraAndLight();
-            gameObject.AddComponent<GameUI>().boot = this;
+            Atmosphere.Create();
+            var guard = gameObject.AddComponent<WindowGuard>();
+            guard.boot = this;
+            var ui = gameObject.AddComponent<GameUI>();
+            ui.boot = this;
+            ui.guard = guard;
+            gameObject.AddComponent<NpcDialog>().boot = this;
+            gameObject.AddComponent<Minimap>().boot = this;
+            gameObject.AddComponent<Encounters>().boot = this;
+            gameObject.AddComponent<WorldPresence>().boot = this;
+            gameObject.AddComponent<Music>().boot = this;
         }
 
         IEnumerator Start()
@@ -87,8 +108,11 @@ namespace Voxario.Ashes
             yield return LoadState();
         }
 
+        void OnApplicationQuit() => Debug.Log("[Voxario] konec");
+
         IEnumerator LoadState()
         {
+            StartCoroutine(CrashReporter.SendIfCrashed(api));
             busy = true;
             status = "Načítám postavu…";
             string json = null, err = null;
@@ -102,8 +126,13 @@ namespace Voxario.Ashes
                 status = "Nemáš ještě postavu – vytvoř si ji na studiovoxario.com/hra.";
                 yield break;
             }
-            status = "";
+            status = "Stavím svět Kalidry…";
+            busy = true;
+            yield return null;
+            yield return null;
             EnterWorld();
+            busy = false;
+            status = "";
         }
 
         void EnterWorld()
@@ -113,6 +142,8 @@ namespace Voxario.Ashes
             var ch = state.character;
             string faction = string.IsNullOrEmpty(ch.faction) ? "kalidra" : ch.faction;
             WorldBuilder.Build(worldRoot, library, faction);
+            Scenery.Build(worldRoot, PlayerPrefs.GetInt("gfx.quality", 2));
+            GetComponent<Encounters>().Build(worldRoot, library, faction);
 
             string gender = ch.appearance != null && ch.appearance.gender == "f" ? "f" : "m";
             string cls = string.IsNullOrEmpty(ch.@class) ? "hoplit" : ch.@class;
@@ -123,7 +154,21 @@ namespace Voxario.Ashes
             view.transform.localPosition = Vector3.zero;
             player = playerGo.AddComponent<PlayerController>();
             player.view = view;
+            var tag = playerGo.AddComponent<NameTag>();
+            tag.title = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
+            tag.isPlayer = true;
             var spawn = faction == "legie" ? WorldMap.SpawnLegie : WorldMap.SpawnKalidra;
+            // pokračovat tam, kde hráč skončil (uloženo v tomto počítači)
+            string posKey = $"ashes.pos.{ch.name}.{faction}";
+            if (PlayerPrefs.HasKey(posKey))
+            {
+                var parts = PlayerPrefs.GetString(posKey).Split(';');
+                if (parts.Length == 2 && float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sx)
+                    && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sz)
+                    && Mathf.Abs(sx) < 130 && Mathf.Abs(sz) < 130 && WorldMap.HeightAt(sx, sz) > 0.4f)
+                    spawn = new Vector2(sx, sz);
+            }
+            savePosKey = posKey;
             player.Respawn(spawn);
 
             var rigGo = new GameObject("CameraRig");
@@ -133,6 +178,7 @@ namespace Voxario.Ashes
             rig.cam = cam;
             player.cameraPivot = rigGo.transform;
             inWorld = true;
+            Atmosphere.ApplyQuality(PlayerPrefs.GetInt("gfx.quality", 2));
         }
 
         /// <summary>
@@ -160,6 +206,9 @@ namespace Voxario.Ashes
                 ("2-mesto", WorldMap.ToWorld(40, 15) + new Vector3(0, 18, 0), WorldMap.ToWorld(74, 15)),
                 ("3-prehled", new Vector3(0, 140, 60), new Vector3(0, 0, -10)),
                 ("4-nikias", WorldMap.ToWorld(-46, 44) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-50, 44) + Vector3.up),
+                ("7-krajina", WorldMap.ToWorld(-40, 30) + new Vector3(0, 9, 0), WorldMap.ToWorld(-20, 0) + Vector3.up * 3),
+                ("8-akvadukt", WorldMap.ToWorld(-30, 12) + new Vector3(0, 5, 0), WorldMap.ToWorld(-45, 13) + Vector3.up * 4),
+                ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
             };
             foreach (var v in views)
             {
@@ -169,6 +218,23 @@ namespace Voxario.Ashes
                 ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, v.name + ".png"));
                 yield return new WaitForSeconds(1f);
             }
+            // rozhovor s Nikiasem a velká mapa
+            rig.enabled = true;
+            player.Respawn(new Vector2(-50.5f, 46.5f));
+            yield return new WaitForSeconds(1.5f);
+            var dialog = GetComponent<NpcDialog>();
+            dialog.testMode = true;
+            dialog.TestOpen("nikias");
+            yield return new WaitForSeconds(1.5f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "5-rozhovor.png"));
+            yield return new WaitForSeconds(1f);
+            dialog.Close();
+            // chůze: postava jde dopředu (animace nohou)
+            player.view.speed = 4.2f;
+            player.enabled = false;
+            for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
+            yield return new WaitForSeconds(1f);
             Debug.Log("[Voxario] SELFTEST hotovo");
             Application.Quit(0);
         }
@@ -193,6 +259,7 @@ namespace Voxario.Ashes
 
         public void SignOut()
         {
+            GetComponent<WorldPresence>()?.Disconnect();
             api.SignOut();
             state = null;
             inWorld = false;
