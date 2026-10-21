@@ -15,52 +15,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.22.0'
-      - name: Build launcher
+      - name: Build launcher (installed version)
         working-directory: game/launcher/app
         run: |
           npm install --no-audit --no-fund
           npm run pack:win
-      - name: Inspect fuses and resources
+      - name: Install like GameSetup
         shell: pwsh
         run: |
-          $exe = "game/launcher/app/dist/win-unpacked/Ashes of Eryon Launcher.exe"
-          $bytes = [System.IO.File]::ReadAllBytes($exe)
-          $text = [System.Text.Encoding]::ASCII.GetString($bytes)
-          $i = $text.IndexOf("dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX")
-          Write-Host "fuse sentinel at $i"
-          if ($i -ge 0) { Write-Host ("fuse wire: " + $text.Substring($i + 32, 12).Replace([char]0,'.') + " bytes: " + (($bytes[($i+32)..($i+44)] | ForEach-Object { $_.ToString() }) -join ',')) }
-          $j = $text.IndexOf("ElectronAsarIntegrity")
-          Write-Host "ElectronAsarIntegrity at $j"
-          $u = [System.Text.Encoding]::Unicode.GetString($bytes)
-          Write-Host ("INTEGRITY (utf16) at " + $u.IndexOf("INTEGRITY"))
-          $k = $text.IndexOf('"resources\\app.asar"')
-          Write-Host "asar json at $k"
-          if ($k -ge 0) { Write-Host $text.Substring($k - 20, 220) }
-      - name: Run original
+          $root = Join-Path $env:LOCALAPPDATA "StudioVoxario\Ashes of Eryon\Launcher"
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          Copy-Item -Recurse -Force "game/launcher/app/dist/win-unpacked/*" $root
+          Get-ChildItem $root | Select-Object Name
+      - name: Build update 0.4.9
+        working-directory: game/launcher/app
         shell: pwsh
         run: |
-          $dir = (Resolve-Path "game/launcher/app/dist/win-unpacked").Path
-          $p = Start-Process -FilePath "$dir\Ashes of Eryon Launcher.exe" -ArgumentList "--enable-logging" -PassThru -RedirectStandardError "$env:RUNNER_TEMP\orig.err"
-          Start-Sleep 15
-          Write-Host "original alive: $(-not $p.HasExited) exit=$($p.ExitCode)"
-          Get-Content "$env:RUNNER_TEMP\orig.err" -ErrorAction SilentlyContinue | Select-Object -Last 20
-          Stop-Process -Name "Ashes of Eryon Launcher" -Force -ErrorAction SilentlyContinue
+          (Get-Content package.json -Raw) -replace '"version": "[0-9.]+"', '"version": "0.4.9"' | Set-Content package.json -NoNewline
+          Remove-Item -Recurse -Force dist
+          npm run pack:win
+          node make-update.cjs dist/win-unpacked/resources "$env:RUNNER_TEMP/upd"
+          Get-Content "$env:RUNNER_TEMP/upd/latest.json" -TotalCount 5
+      - name: Self-update end to end
+        shell: pwsh
+        run: |
+          $srv = Start-Process python -ArgumentList "-m","http.server","8765","--bind","127.0.0.1","--directory","$env:RUNNER_TEMP/upd" -PassThru -WindowStyle Hidden
           Start-Sleep 3
-      - name: Run with published 0.4.0 update files (simulated self-update)
-        shell: pwsh
-        run: |
-          $dir = (Resolve-Path "game/launcher/app/dist/win-unpacked").Path
-          $base = "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/launcher/"
-          $m = Invoke-RestMethod "$($base)latest.json"
-          foreach ($f in $m.files) {
-            $to = Join-Path $dir ($f.path -replace '/', '\')
-            New-Item -ItemType Directory -Force -Path (Split-Path $to) | Out-Null
-            Invoke-WebRequest "$base$($f.url)" -OutFile "$to.tmp"
-            [System.IO.File]::Copy("$to.tmp", $to, $true); Remove-Item "$to.tmp"
+          $env:ASHES_UPDATE_BASE = "http://127.0.0.1:8765/"
+          $exe = Join-Path $env:LOCALAPPDATA "StudioVoxario\Ashes of Eryon\Launcher\Ashes of Eryon Launcher.exe"
+          function Show($label) {
+            Write-Host "---- $label"
+            Get-CimInstance Win32_Process -Filter "Name='Ashes of Eryon Launcher.exe'" | ForEach-Object { Write-Host "pid=$($_.ProcessId) parent=$($_.ParentProcessId) cmd=$($_.CommandLine.Substring(0, [Math]::Min(160, $_.CommandLine.Length)))" }
+            Get-Process -Name "Ashes of Eryon Launcher" -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { Write-Host "WINDOW pid=$($_.Id) title=$($_.MainWindowTitle)" }
+            $asar = Join-Path (Split-Path $exe) "resources\app.asar"
+            $t = [System.Text.Encoding]::UTF8.GetString([System.IO.File]::ReadAllBytes($asar))
+            Write-Host ("installed asar version: " + ([regex]::Match($t, '"version":\s*"([0-9.]+)"').Groups[1].Value))
+            Get-ChildItem $env:APPDATA -Recurse -Filter launcher.log -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 15 }
+            Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "script $($_.Name)"; Get-Content $_.FullName }
           }
-          $p = Start-Process -FilePath "$dir\Ashes of Eryon Launcher.exe" -ArgumentList "--enable-logging" -PassThru -RedirectStandardError "$env:RUNNER_TEMP\upd.err"
+          Start-Process -FilePath $exe
+          for ($i = 0; $i -lt 6; $i++) { Start-Sleep 15; Show "after $((($i+1)*15)) s" }
+          Write-Host "==== second manual start"
+          Start-Process -FilePath $exe
           Start-Sleep 15
-          Write-Host "updated alive: $(-not $p.HasExited) exit=$($p.ExitCode)"
-          Get-Content "$env:RUNNER_TEMP\upd.err" -ErrorAction SilentlyContinue | Select-Object -Last 40
-          Get-ChildItem "$env:APPDATA" -Recurse -Filter launcher.log -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Tail 30 }
-          Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=(Get-Date).AddMinutes(-3)} -ErrorAction SilentlyContinue | Where-Object { $_.Message -match 'Ashes' } | Select-Object -First 5 | Format-List TimeCreated, Id, Message
+          Show "after manual start"
+          Stop-Process -Id $srv.Id -Force -ErrorAction SilentlyContinue
