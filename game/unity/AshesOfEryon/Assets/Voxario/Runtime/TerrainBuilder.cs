@@ -25,15 +25,13 @@ namespace Voxario.Ashes
             }
             data.SetHeights(0, 0, heights);
 
-            // povrchy: tráva, suchá tráva, písek, skála, cesta, dlažba (barvy jako webová verze)
+            // povrchy (HDRP kreslí v jednom průchodu jen 4): tráva, suchá tráva / cesta, písek, kámen / dlažba
             var layers = new[]
             {
                 Layer(new Color32(80, 95, 44, 255), 4),
-                Layer(new Color32(144, 126, 77, 255), 4),
+                Layer(new Color32(140, 116, 78, 255), 4),
                 Layer(new Color32(195, 172, 131, 255), 6),
-                Layer(new Color32(124, 117, 105, 255), 5),
-                Layer(new Color32(125, 102, 74, 255), 3),
-                Layer(new Color32(176, 166, 146, 255), 2),
+                Layer(new Color32(150, 142, 126, 255), 3),
             };
             data.terrainLayers = layers;
             int ares = 256;
@@ -66,8 +64,9 @@ namespace Voxario.Ashes
                 }
                 float sum = w0 + w1 + w2 + w3 + w4 + w5;
                 if (sum <= 0) { w0 = 1; sum = 1; }
-                alpha[iz, ix, 0] = w0 / sum; alpha[iz, ix, 1] = w1 / sum; alpha[iz, ix, 2] = w2 / sum;
-                alpha[iz, ix, 3] = w3 / sum; alpha[iz, ix, 4] = w4 / sum; alpha[iz, ix, 5] = w5 / sum;
+                // cesta → suchá vrstva, dlažba → kámen
+                alpha[iz, ix, 0] = w0 / sum; alpha[iz, ix, 1] = (w1 + w4) / sum; alpha[iz, ix, 2] = w2 / sum;
+                alpha[iz, ix, 3] = (w3 + w5) / sum;
             }
             data.SetAlphamaps(0, 0, alpha);
 
@@ -93,11 +92,12 @@ namespace Voxario.Ashes
             for (int i = 0; i < px.Length; i++)
             {
                 float k = 0.85f + (float)rnd.NextDouble() * 0.3f;
-                px[i] = new Color32((byte)Mathf.Clamp(c.r * k, 0, 255), (byte)Mathf.Clamp(c.g * k, 0, 255), (byte)Mathf.Clamp(c.b * k, 0, 255), 255);
+                // alfa = hladkost v HDRP: matný povrch
+                px[i] = new Color32((byte)Mathf.Clamp(c.r * k, 0, 255), (byte)Mathf.Clamp(c.g * k, 0, 255), (byte)Mathf.Clamp(c.b * k, 0, 255), 20);
             }
             tex.SetPixels32(px);
             tex.Apply(true);
-            return new TerrainLayer { diffuseTexture = tex, tileSize = new Vector2(tile, tile) };
+            return new TerrainLayer { diffuseTexture = tex, tileSize = new Vector2(tile, tile), smoothness = 0f, metallic = 0f };
         }
 
         public static GameObject BuildSea(Transform parent)
