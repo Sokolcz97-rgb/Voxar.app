@@ -9,7 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Pencil, Save } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, Upload, FileDown } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { formatBytes, formatDuration, removeShopFiles, uploadShopFile } from "@/lib/shopFiles";
 import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
 import { COSMETICS } from "@/lib/cosmetics";
 import type { ShopItem, ShopSettings } from "@/hooks/useShop";
@@ -18,6 +20,17 @@ interface Props {
   items: ShopItem[];
   settings: ShopSettings | null;
   onRefresh: () => Promise<void> | void;
+}
+
+type DurationUnit = "hours" | "days" | "weeks" | "months";
+const UNIT_MINUTES: Record<DurationUnit, number> = { hours: 60, days: 24 * 60, weeks: 7 * 24 * 60, months: 30 * 24 * 60 };
+
+function splitDuration(minutes?: number | null): { value: number; unit: DurationUnit } {
+  const m = minutes ?? 7 * 24 * 60;
+  for (const unit of ["months", "weeks", "days", "hours"] as DurationUnit[]) {
+    if (m % UNIT_MINUTES[unit] === 0) return { value: m / UNIT_MINUTES[unit], unit };
+  }
+  return { value: Math.max(1, Math.round(m / 60)), unit: "hours" };
 }
 
 const EMPTY: Partial<ShopItem> = {
@@ -37,19 +50,33 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
   const [featuresText, setFeaturesText] = useState("");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<ShopSettings>>({});
+  const [durationValue, setDurationValue] = useState(7);
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("days");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [upload, setUpload] = useState<{ k: number; msg: string } | null>(null);
 
   useEffect(() => {
     if (settings) setForm(settings);
   }, [settings]);
 
-  const openNew = (kind: "frame" | "plugin") => {
+  const resetSoftware = (minutes?: number | null) => {
+    const d = splitDuration(minutes);
+    setDurationValue(d.value);
+    setDurationUnit(d.unit);
+    setPendingFile(null);
+    setUpload(null);
+  };
+
+  const openNew = (kind: "frame" | "plugin" | "software") => {
     setEditing({ ...EMPTY, kind });
     setFeaturesText("");
+    resetSoftware(null);
   };
 
   const openEdit = (item: ShopItem) => {
     setEditing(item);
     setFeaturesText((item.features || []).join("\n"));
+    resetSoftware(item.access_minutes);
   };
 
   const saveItem = async () => {
@@ -58,8 +85,15 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
       return;
     }
     setSaving(true);
+    const software = editing.kind === "software";
+    if (software && !editing.id && !pendingFile) {
+      toast.error("Vyber soubor instalátoru (Setup).");
+      return;
+    }
     const payload = {
       kind: editing.kind ?? "frame",
+      access_minutes: software ? Math.max(1, Math.round(durationValue)) * UNIT_MINUTES[durationUnit] : null,
+      file_version: software ? editing.file_version || null : null,
       title: editing.title.trim(),
       description: editing.description || null,
       price_czk: Number(editing.price_czk) || 0,
@@ -69,13 +103,29 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
       active: editing.active ?? true,
     };
     const res = editing.id
-      ? await supabase.from("shop_items").update(payload).eq("id", editing.id)
-      : await supabase.from("shop_items").insert(payload);
-    setSaving(false);
-    if (res.error) {
-      toast.error(res.error.message);
+      ? await supabase.from("shop_items").update(payload).eq("id", editing.id).select("id").single()
+      : await supabase.from("shop_items").insert(payload).select("id").single();
+    if (res.error || !res.data) {
+      setSaving(false);
+      toast.error(res.error?.message ?? "Uložení se nezdařilo");
       return;
     }
+    // nahrání instalátoru po částech (soukromé úložiště)
+    if (software && pendingFile) {
+      try {
+        const meta = await uploadShopFile(res.data.id, pendingFile, (k, msg) => setUpload({ k, msg }));
+        const old = editing.file_parts;
+        const { error } = await supabase.from("shop_items").update(meta).eq("id", res.data.id);
+        if (error) throw new Error(error.message);
+        await removeShopFiles(old);
+        setUpload({ k: 1, msg: "Soubor nahrán." });
+      } catch (e) {
+        setSaving(false);
+        toast.error(e instanceof Error ? e.message : "Nahrání selhalo");
+        return;
+      }
+    }
+    setSaving(false);
     toast.success("Uloženo");
     setEditing(null);
     await onRefresh();
@@ -120,6 +170,9 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
             <Button size="sm" variant="outline" onClick={() => openNew("plugin")}>
               <Plus className="h-4 w-4 mr-1" /> Plugin
             </Button>
+            <Button size="sm" variant="outline" onClick={() => openNew("software")}>
+              <Plus className="h-4 w-4 mr-1" /> Předplatné
+            </Button>
           </div>
         </div>
 
@@ -130,9 +183,16 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               className="flex flex-wrap items-center gap-3 border border-border/60 px-3 py-2 text-sm"
             >
               <span className="text-xs uppercase tracking-wider text-muted-foreground w-16">
-                {item.kind === "frame" ? "Rámeček" : "Plugin"}
+                {item.kind === "frame" ? "Rámeček" : item.kind === "software" ? "Předplatné" : "Plugin"}
               </span>
-              <span className="font-medium flex-1 min-w-[140px]">{item.title}</span>
+              <span className="font-medium flex-1 min-w-[140px]">
+                {item.title}
+                {item.kind === "software" && (
+                  <span className="block text-xs text-muted-foreground font-normal">
+                    na {formatDuration(item.access_minutes)} · {item.file_name ? `${item.file_name} (${formatBytes(item.file_size)})` : "soubor chybí"}
+                  </span>
+                )}
+              </span>
               <span className="text-primary font-bold">{item.price_czk} Kč</span>
               {!item.active && <span className="text-xs text-destructive">skryto</span>}
               <Button size="icon" variant="ghost" onClick={() => openEdit(item)}>
@@ -233,17 +293,18 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               <Label>Typ</Label>
               <Select
                 value={editing?.kind ?? "frame"}
-                onValueChange={(v) => setEditing((e) => ({ ...e, kind: v as "frame" | "plugin" }))}
+                onValueChange={(v) => setEditing((e) => ({ ...e, kind: v as "frame" | "plugin" | "software" }))}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="frame">Orámování (badge)</SelectItem>
                   <SelectItem value="plugin">Plugin code</SelectItem>
+                  <SelectItem value="software">Předplatné (se souborem ke stažení)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{editing?.kind === "plugin" ? "Název pluginu" : "Název rámečku"}</Label>
+              <Label>{editing?.kind === "plugin" ? "Název pluginu" : editing?.kind === "software" ? "Název předplatného" : "Název rámečku"}</Label>
               <Input
                 value={editing?.title ?? ""}
                 onChange={(e) => setEditing((x) => ({ ...x, title: e.target.value }))}
@@ -269,6 +330,62 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
                 </Select>
               </div>
             )}
+            {editing?.kind === "software" && (
+              <div className="space-y-4 border border-primary/30 p-3">
+                <div className="space-y-1.5">
+                  <Label>Délka předplatného (od potvrzení platby) – po tuto dobu smí předplatitel stahovat soubor</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-28"
+                      value={durationValue}
+                      onChange={(e) => setDurationValue(Math.max(1, Number(e.target.value) || 1))}
+                    />
+                    <Select value={durationUnit} onValueChange={(v) => setDurationUnit(v as DurationUnit)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hours">hodin</SelectItem>
+                        <SelectItem value="days">dní</SelectItem>
+                        <SelectItem value="weeks">týdnů</SelectItem>
+                        <SelectItem value="months">měsíců (30 dní)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Předplatné na {formatDuration(Math.max(1, durationValue) * UNIT_MINUTES[durationUnit])}. Další platba ho prodlouží.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Verze (nepovinné)</Label>
+                  <Input
+                    value={editing?.file_version ?? ""}
+                    onChange={(e) => setEditing((x) => ({ ...x, file_version: e.target.value }))}
+                    placeholder="např. 1.2.0"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Soubor předplatného – Setup / instalátor z tvého repozitáře (.exe, .msi, .zip…)</Label>
+                  {editing?.file_name && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <FileDown className="h-3.5 w-3.5" /> Aktuální: {editing.file_name} ({formatBytes(editing.file_size)})
+                    </p>
+                  )}
+                  <Input type="file" onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)} />
+                  {pendingFile && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Upload className="h-3.5 w-3.5" /> Po uložení se nahraje: {pendingFile.name} ({formatBytes(pendingFile.size)})
+                    </p>
+                  )}
+                  {upload && (
+                    <div className="space-y-1">
+                      <Progress value={upload.k * 100} />
+                      <p className="text-xs text-muted-foreground">{upload.msg}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Popis {editing?.kind === "plugin" ? "(iniciály / k čemu je)" : ""}</Label>
               <Textarea
@@ -278,7 +395,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Co plugin umí / obsah balíčku (jeden bod na řádek)</Label>
+              <Label>{editing?.kind === "software" ? "Co předplatné obsahuje / požadavky (jeden bod na řádek)" : "Co plugin umí / obsah balíčku (jeden bod na řádek)"}</Label>
               <Textarea rows={4} value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -309,7 +426,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Zrušit</Button>
-            <Button onClick={saveItem} disabled={saving}>Uložit</Button>
+            <Button onClick={saveItem} disabled={saving}>{saving && upload ? "Nahrávám…" : "Uložit"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
