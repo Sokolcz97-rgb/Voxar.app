@@ -32,6 +32,11 @@ namespace Voxario.Ashes
 
         IEnumerator Start()
         {
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-voxario-selftest") >= 0)
+            {
+                yield return SelfTest();
+                yield break;
+            }
             busy = true;
             status = "Obnovuji přihlášení…";
             bool resumed = false;
@@ -128,6 +133,62 @@ namespace Voxario.Ashes
             rig.cam = cam;
             player.cameraPivot = rigGo.transform;
             inWorld = true;
+        }
+
+        /// <summary>
+        /// Samotest pro CI (bez přihlášení): postaví svět s ukázkovou postavou, vyfotí
+        /// několik pohledů do složky "selftest" vedle hry a ukončí se.
+        /// </summary>
+        IEnumerator SelfTest()
+        {
+            string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "selftest");
+            System.IO.Directory.CreateDirectory(dir);
+            Debug.Log($"[Voxario] SELFTEST gfx={SystemInfo.graphicsDeviceType} {SystemInfo.graphicsDeviceName} hdrp={UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline}");
+            state = new GameState
+            {
+                allowed = true,
+                character = new Character { name = "Tester", display_name = "Tester", @class = "hoplit", faction = "kalidra", level = 1, appearance = new Appearance { gender = "m" } },
+            };
+            EnterWorld();
+            yield return new WaitForSeconds(4f);
+            Report();
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "1-hrac.png"));
+            yield return new WaitForSeconds(1.5f);
+            rig.enabled = false;
+            var views = new (string name, Vector3 pos, Vector3 look)[]
+            {
+                ("2-mesto", WorldMap.ToWorld(40, 15) + new Vector3(0, 18, 0), WorldMap.ToWorld(74, 15)),
+                ("3-prehled", new Vector3(0, 140, 60), new Vector3(0, 0, -10)),
+                ("4-nikias", WorldMap.ToWorld(-46, 44) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-50, 44) + Vector3.up),
+            };
+            foreach (var v in views)
+            {
+                cam.transform.position = v.pos;
+                cam.transform.LookAt(v.look);
+                yield return new WaitForSeconds(2f);
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, v.name + ".png"));
+                yield return new WaitForSeconds(1f);
+            }
+            Debug.Log("[Voxario] SELFTEST hotovo");
+            Application.Quit(0);
+        }
+
+        void Report()
+        {
+            var p = player.transform.position;
+            Debug.Log($"[Voxario] hráč {p} zem {WorldMap.HeightAt(p.x, -p.z):0.00} kamera {cam.transform.position}");
+            int n = 0;
+            foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (++n > 50) break;
+                var m = r.sharedMaterial;
+                Debug.Log($"[Voxario] R {r.GetType().Name} {r.name} enabled={r.enabled} visible={r.isVisible} bounds={r.bounds.center}/{r.bounds.size} mat={(m ? m.name : "null")} shader={(m && m.shader ? m.shader.name : "null")} supported={(m && m.shader ? m.shader.isSupported : false)} passes={(m ? m.passCount : 0)}");
+            }
+            foreach (var t in FindObjectsByType<Terrain>(FindObjectsSortMode.None))
+            {
+                var m = t.materialTemplate;
+                Debug.Log($"[Voxario] TERRAIN pos={t.transform.position} size={t.terrainData.size} mat={(m ? m.name : "null")} shader={(m && m.shader ? m.shader.name : "null")} supported={(m && m.shader ? m.shader.isSupported : false)} h(-52,50)={t.SampleHeight(WorldMap.ToWorld(-52, 50)) + t.transform.position.y:0.00}");
+            }
         }
 
         public void SignOut()
