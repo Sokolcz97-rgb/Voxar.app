@@ -27,6 +27,7 @@ public static class VoxarioBuild
         Directory.CreateDirectory(Settings);
         Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
         SetupPipeline();
+        ReimportModels();
         SetupPlayer();
         BuildScene();
         AssetDatabase.SaveAssets();
@@ -162,6 +163,36 @@ public static class VoxarioBuild
         if (p.propertyType == SerializedPropertyType.Enum) p.enumValueIndex = v; else p.intValue = v;
     }
 
+    /// <summary>
+    /// GLB modely se při prvním otevření projektu naimportují dřív, než je zapnuté HDRP,
+    /// a glTFast jim pak dá shadery pro vestavěné vykreslování (v HDRP neviditelné).
+    /// Po nastavení HDRP je proto naimportujeme znovu.
+    /// </summary>
+    static void ReimportModels()
+    {
+        int n = 0;
+        foreach (var guid in AssetDatabase.FindAssets("", new[] { "Assets/Models" }))
+        {
+            string p = AssetDatabase.GUIDToAssetPath(guid);
+            if (!p.EndsWith(".glb")) continue;
+            AssetDatabase.ImportAsset(p, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+            n++;
+        }
+        AssetDatabase.Refresh();
+        var sample = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/buildings/villa.glb");
+        var r = sample ? sample.GetComponentInChildren<Renderer>() : null;
+        Debug.Log($"[Voxario] znovu naimportováno {n} modelů, shader vily: {(r && r.sharedMaterial ? r.sharedMaterial.shader.name : "?")}");
+    }
+
+    /// <summary>HDRP potřebuje u materiálů vytvořených skriptem nastavit klíčová slova a průchody.</summary>
+    static void ValidateHdrpMaterial(Material m)
+    {
+        var t = Type.GetType("UnityEditor.Rendering.HighDefinition.HDShaderUtils, Unity.RenderPipelines.HighDefinition.Editor");
+        var reset = t?.GetMethod("ResetMaterialKeywords", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(Material) }, null);
+        try { reset?.Invoke(null, new object[] { m }); } catch (Exception e) { Debug.LogWarning("[Voxario] ResetMaterialKeywords: " + e.Message); }
+        Debug.Log($"[Voxario] materiál {m.name}: {m.shader.name}, klíčová slova: {string.Join(" ", m.shaderKeywords)}");
+    }
+
     // ------------------------------------------------------------------ přehrávač
     static void SetupPlayer()
     {
@@ -195,7 +226,11 @@ public static class VoxarioBuild
         lib.animals = Load("Assets/Models/animals");
         Debug.Log($"[Voxario] modely: postavy {lib.heroes.Length}, stavby {lib.buildings.Length}, zvířata {lib.animals.Length}");
         lib.lit = MaterialAsset("Lit", "HDRP/Lit");
-        lib.terrain = MaterialAsset("Terrain", "HDRP/TerrainLit");
+        // terén: výchozí materiál terénu z HDRP (správně nastavený), jinak vlastní
+        Material defTerrain = null;
+        try { defTerrain = GraphicsSettings.defaultRenderPipeline?.defaultTerrainMaterial; } catch { }
+        Debug.Log("[Voxario] výchozí materiál terénu HDRP: " + (defTerrain ? defTerrain.name + " / " + defTerrain.shader.name : "žádný"));
+        lib.terrain = defTerrain != null ? defTerrain : MaterialAsset("Terrain", "HDRP/TerrainLit");
         var boot = go.AddComponent<GameBootstrap>();
         boot.library = lib;
         EditorSceneManager.SaveScene(scene, ScenePath);
@@ -211,6 +246,8 @@ public static class VoxarioBuild
         if (sh == null) { Debug.LogWarning("[Voxario] shader nenalezen: " + shader); return null; }
         m = new Material(sh);
         AssetDatabase.CreateAsset(m, path);
+        ValidateHdrpMaterial(m);
+        EditorUtility.SetDirty(m);
         return m;
     }
 
