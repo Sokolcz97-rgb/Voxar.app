@@ -1,138 +1,271 @@
-import { Navbar } from "@/components/Navbar";
-import { SEO } from "@/components/SEO";
-import { PageHero } from "@/components/PageHero";
-import { Card } from "@/components/ui/card";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { useShop } from "@/hooks/useShop";
+import { Link } from "react-router-dom";
 import { Scale } from "lucide-react";
+import {
+  LEGAL_EFFECTIVE,
+  LEGAL_EFFECTIVE_EXISTING,
+  LEGAL_VERSION,
+  LegalPage,
+  Note,
+  OperatorBlock,
+  Sec,
+  Ul,
+  useOperator,
+} from "@/components/legal/LegalPage";
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <section className="space-y-2">
-    <h2 className="font-display font-bold text-xl text-glow">{title}</h2>
-    <div className="text-sm text-muted-foreground space-y-2 leading-relaxed">{children}</div>
-  </section>
+const L = ({ to, children }: { to: string; children: React.ReactNode }) => (
+  <Link className="text-primary underline" to={to}>{children}</Link>
 );
 
 const BusinessTerms = () => {
-  const { settings } = useSiteSettings();
-  const { settings: shop } = useShop();
-
-  const seller = settings.contact_full_name || settings.site_name;
-  const refund =
-    shop?.refund_notice ||
-    "Na dary ani na zakoupené rámečky a digitální obsah neposkytujeme vrácení peněz (refund).";
-
+  const op = useOperator();
   return (
-    <div className="min-h-screen relative">
-      <SEO
-        title="Obchodní podmínky — StudioVoxario"
-        description="Obchodní podmínky pro nákup digitálního obsahu, plugin licencí a dobrovolné dary na StudioVoxario."
-      />
-      <div className="fixed inset-0 -z-10 gradient-hero" />
-      <Navbar />
-      <main className="container py-8 md:py-10 animate-fade-in max-w-3xl">
-        <PageHero
-          eyebrow="Právní informace"
-          title="Obchodní podmínky"
-          description="Podmínky pro nákup digitálního obsahu a poskytování dobrovolných darů."
-          icon={Scale}
-        />
+    <LegalPage
+      seoTitle={`Obchodní podmínky — ${op.site}`}
+      seoDescription="Obchodní podmínky StudioVoxario: nákup digitálního obsahu, předplatné (měsíční a roční), vrácení peněz, reklamace a dary."
+      eyebrow="Právní informace"
+      title="Obchodní podmínky"
+      description={`Podmínky nákupu digitálního obsahu, předplatného a darů. Verze ${LEGAL_VERSION}, účinná od ${LEGAL_EFFECTIVE}.`}
+      icon={Scale}
+      footer={
+        <p>
+          Verze {LEGAL_VERSION}, účinná od {LEGAL_EFFECTIVE} pro objednávky učiněné od tohoto dne. U předplatného sjednaného dříve
+          se uplatní od nejbližšího obnovení po {LEGAL_EFFECTIVE_EXISTING}. Předchozí verze platila od 1. 1. 2026.
+        </p>
+      }
+    >
+      <Note>
+        <strong>Stručně o vracení peněz:</strong> Zaplacené částky obecně <strong>nevracíme</strong> – digitální obsah dodáváme
+        hned a při objednávce výslovně souhlasíš, že tím ztrácíš právo odstoupit od smlouvy. <strong>Výjimkou je předplatné:</strong>{" "}
+        o vrácení peněz můžeš požádat <strong>do 30 minut od aktivace</strong>, pokud jsi program nezačal(a) používat (bod 10).
+        Kdyby nákup nefungoval, máš vždy zákonná práva z vadného plnění (bod 11).
+      </Note>
 
-        <Card className="glass border-border p-6 md:p-8 space-y-8">
-          <Section title="1. Provozovatel (prodávající)">
-            <p>{seller}</p>
-            {settings.contact_address && (
-              <p>
-                {settings.contact_address}
-                {settings.contact_zip ? `, ${settings.contact_zip}` : ""}
-              </p>
-            )}
-            {settings.contact_ico && <p>IČO: {settings.contact_ico}</p>}
-            {settings.contact_registration && <p>{settings.contact_registration}</p>}
-            {settings.contact_phone_number && (
-              <p>
-                Telefon: {settings.contact_phone_dial_code} {settings.contact_phone_number}
-              </p>
-            )}
-            <p>
-              Provozovatel není plátcem DPH, pokud není u ceny uvedeno jinak. Ceny jsou uvedeny v Kč
-              jako konečné.
-            </p>
-          </Section>
+      <Sec id="prodavajici" n={1} title="Prodávající">
+        <OperatorBlock />
+        <p>
+          Prodávající není plátcem DPH. Dozor nad dodržováním povinností vůči spotřebitelům vykonává Česká obchodní inspekce
+          (www.coi.gov.cz), nad ochranou osobních údajů Úřad pro ochranu osobních údajů (www.uoou.gov.cz) a nad živnostenským
+          podnikáním příslušný živnostenský úřad.
+        </p>
+      </Sec>
 
-          <Section title="2. Předmět nabídky">
-            <p>
-              Prostřednictvím sekce Obchod je nabízen výhradně digitální obsah nedodávaný na hmotném
-              nosiči — kosmetická orámování profilu, licenční kódy k pluginům a dobrovolné finanční
-              dary na podporu provozu projektu.
-            </p>
-            <p>
-              Dar není nákupem zboží ani služby a nevzniká za něj nárok na protiplnění.
-            </p>
-          </Section>
+      <Sec id="pojmy" n={2} title="Pojmy">
+        <Ul>
+          <li><strong>Kupující</strong> – registrovaný uživatel, který v Obchodě učiní objednávku. <strong>Spotřebitel</strong> je kupující, který nejedná v rámci svého podnikání.</li>
+          <li><strong>Digitální obsah</strong> – data vytvořená a dodaná v digitální podobě (rámečky profilu, licence a soubory pluginů, instalátory programů).</li>
+          <li><strong>Předplatné</strong> – časově omezený přístup ke stažení a k užívání programu nebo jiného digitálního obsahu (např. Voxario Studio Engine) po zaplacené období.</li>
+          <li><strong>Aktivace</strong> – okamžik, kdy prodávající potvrdí platbu a obsah či předplatné se zpřístupní v účtu kupujícího.</li>
+          <li><strong>Dar</strong> – dobrovolný příspěvek na provoz bez nároku na protiplnění.</li>
+        </Ul>
+      </Sec>
 
-          <Section title="3. Objednávka a uzavření smlouvy">
-            <p>
-              Smlouva je uzavřena okamžikem zaplacení zvolené částky (PayPal nebo bankovní převod /
-              QR platba). Po připsání platby je digitální obsah aktivován na účtu kupujícího, zpravidla
-              do 72 hodin.
-            </p>
-          </Section>
+      <Sec id="nabidka" n={3} title="Nabídka a ceny">
+        <p>
+          V Obchodě nabízíme výhradně digitální obsah nedodávaný na hmotném nosiči: kosmetické rámečky profilu, licence
+          k pluginům (případně zakázkové úpravy), předplatné programů a možnost poslat dar. Popis, systémové požadavky, cena
+          a délka předplatného jsou uvedeny u každé položky. Ceny jsou konečné v Kč; prodávající není plátcem DPH. Nabídka
+          platí, dokud je zobrazena.
+        </p>
+      </Sec>
 
-          <Section title="4. Platební podmínky">
-            <p>
-              Platby probíhají přes službu PayPal nebo bankovním převodem na účet provozovatele,
-              který lze uhradit i naskenováním QR kódu v bankovní aplikaci. Provozovatel neuchovává
-              platební údaje kupujícího.
-            </p>
-          </Section>
+      <Sec id="objednavka" n={4} title="Objednávka a uzavření smlouvy">
+        <Ul>
+          <li>Nakupovat mohou jen přihlášení uživatelé. Nezletilí jen v rozsahu přiměřeném věku, jinak se souhlasem zákonného zástupce.</li>
+          <li>
+            Při objednávce zvolíš položku (u předplatného měsíční nebo roční tarif a případně automatické obnovení), potvrdíš
+            souhlas s těmito obchodními podmínkami a u digitálního obsahu výslovně požádáš o jeho okamžité dodání (bod 9),
+            a zvolíš způsob platby.
+          </li>
+          <li>
+            Smlouva je uzavřena okamžikem, kdy se objednávka zaznamená v našem systému (kliknutím na platbu přes PayPal nebo na
+            tlačítko „Zaplaceno – zaznamenat objednávku“). Objednávka zavazuje k zaplacení.
+          </li>
+          <li>
+            Smlouvu uzavíráme v češtině. Záznam objednávky včetně udělených souhlasů a verze podmínek archivujeme a potvrzení
+            najdeš v oznámeních svého účtu. Tyto podmínky si můžeš kdykoli zobrazit, vytisknout nebo uložit.
+          </li>
+          <li>Chyby při zadávání můžeš opravit před potvrzením platby; nezaplacenou objednávku můžeš nechat propadnout.</li>
+        </Ul>
+      </Sec>
 
-          <Section title="5. Dodání digitálního obsahu a souhlas se zahájením plnění">
-            <p>
-              Kupující výslovně žádá o zahájení dodávání digitálního obsahu před uplynutím lhůty pro
-              odstoupení od smlouvy a bere na vědomí, že tímto souhlasem ztrácí právo odstoupit od
-              smlouvy podle § 1837 písm. l) občanského zákoníku.
-            </p>
-            <p className="text-foreground">{refund}</p>
-          </Section>
+      <Sec id="platba" n={5} title="Platba">
+        <p>
+          Platí se předem přes PayPal nebo bankovním převodem (i pomocí QR kódu). Platbu ověřujeme ručně. Nezaplacená
+          objednávka se po 7 dnech ruší. Platební údaje (číslo karty apod.) nezpracováváme – zpracovává je PayPal nebo tvoje
+          banka. Doklad o zaplacení vystavíme na požádání. Neoprávněné zpětné stornování platby (chargeback) vede k odebrání
+          obsahu a může vést k zablokování účtu.
+        </p>
+      </Sec>
 
-          <Section title="6. Reklamace a vadné plnění">
-            <p>
-              Pokud zakoupený digitální obsah nefunguje podle popisu, kontaktuj nás přes ticket systém
-              nebo Discord. Reklamaci vyřídíme nejpozději do 30 dnů. V případě oprávněné reklamace máš
-              nárok na nápravu (oprava, náhradní obsah), případně na vrácení platby, pokud nápravu
-              nelze zajistit.
-            </p>
-          </Section>
+      <Sec id="dodani" n={6} title="Dodání">
+        <p>
+          Digitální obsah dodáváme zpřístupněním v účtu (aktivací) po připsání a ověření platby, zpravidla do 72 hodin. Rámečky
+          se aktivují v profilu, soubory a instalátory jsou ke stažení v Obchodě → Předplatné, pluginy dodáváme podle popisu
+          položky (u zakázek jako zakázku). O aktivaci tě informujeme oznámením v účtu, které slouží i jako potvrzení smlouvy.
+        </p>
+      </Sec>
 
-          <Section title="7. Uživatelský účet a zákaz zneužití">
-            <p>
-              Zakoupený obsah je vázán na uživatelský účet a není přenositelný ani určený k dalšímu
-              prodeji. Při porušení pravidel komunity může být přístup k obsahu omezen bez nároku na
-              vrácení platby.
-            </p>
-          </Section>
+      <Sec id="predplatne" n={7} title="Předplatné">
+        <Ul>
+          <li>
+            <strong>Tarify:</strong> měsíční (30 dní) a – pokud je u položky nabízen – roční (365 dní). Období začíná aktivací;
+            pokud už předplatné běží, nové období navazuje na jeho konec.
+          </li>
+          <li>
+            <strong>Automatické obnovení</strong> si můžeš zapnout a kdykoli vypnout u předplatného v Obchodě. Zapnuté obnovení
+            znamená, že ti 3 dny před koncem období připravíme platbu za další období a upozorníme tě. <strong>Žádné peníze se
+            automaticky nestrhávají</strong> – předplatné se prodlouží teprve po zaplacení. Pokud nezaplatíš, předplatné skončí.
+          </li>
+          <li>
+            <strong>Ukončení:</strong> předplatné končí uplynutím zaplaceného období. Vypnutím obnovení nebo zrušením účtu se
+            nevyčerpaná část nevrací (s výjimkou bodů 10–12).
+          </li>
+          <li>
+            <strong>Změna ceny</strong> se týká až dalších období; oznámíme ji nejméně 14 dní předem. Zaplacené období se
+            nemění.
+          </li>
+          <li>
+            Během předplatného smíš program užívat podle <L to="/licence">Licenčních podmínek</L>. Po skončení předplatného
+            zaniká právo program stahovat a užívat; projekty, které jsi v programu vytvořil(a), zůstávají tvé.
+          </li>
+        </Ul>
+      </Sec>
 
-          <Section title="8. Ochrana osobních údajů">
-            <p>
-              Osobní údaje jsou zpracovávány v souladu s nařízením GDPR pouze pro účely vyřízení
-              objednávky a vedení účtu. Podrobnosti najdeš v zásadách ochrany osobních údajů.
-            </p>
-          </Section>
+      <Sec id="dary" n={8} title="Dary">
+        <p>
+          Dar je dobrovolný příspěvek na provoz platformy. Nejde o koupi zboží ani služby, nevzniká za něj nárok na protiplnění
+          a dar se nevrací (s výjimkou chybné platby, např. omylem zadané částky, kterou nám oznámíš bez zbytečného odkladu).
+        </p>
+      </Sec>
 
-          <Section title="9. Mimosoudní řešení sporů">
-            <p>
-              K mimosoudnímu řešení spotřebitelských sporů je příslušná Česká obchodní inspekce
-              (www.coi.cz). Vztahy se řídí právním řádem České republiky.
-            </p>
-          </Section>
+      <Sec id="odstoupeni" n={9} title="Odstoupení od smlouvy (spotřebitelé)">
+        <p>
+          Spotřebitel má obecně právo odstoupit od smlouvy uzavřené distančně do 14 dnů bez udání důvodu (§ 1829 občanského
+          zákoníku). <strong>U digitálního obsahu nedodávaného na hmotném nosiči toto právo zaniká</strong>, pokud bylo dodání
+          zahájeno s předchozím výslovným souhlasem spotřebitele a spotřebitel byl poučen, že tím právo na odstoupení ztrácí
+          (§ 1837 písm. l) občanského zákoníku). U služeb zaniká právo odstoupit jejich úplným poskytnutím se souhlasem
+          spotřebitele (§ 1837 písm. a)).
+        </p>
+        <p>
+          <strong>
+            Při objednávce proto výslovně žádáš o okamžité dodání digitálního obsahu (zahájení předplatného) před uplynutím lhůty
+            pro odstoupení a bereš na vědomí, že aktivací ztrácíš právo od smlouvy odstoupit.
+          </strong>{" "}
+          Bez tohoto souhlasu objednávku nelze dokončit. Souhlas zaznamenáme a potvrdíme ti ho v oznámení o aktivaci.
+        </p>
+        <p>
+          <strong>Před aktivací</strong> můžeš od smlouvy odstoupit kdykoli (napiš nám přes Tickety nebo použij vzorový formulář
+          níže) a vrátíme ti celou zaplacenou částku nejpozději do 14 dnů stejným způsobem, jakým jsi platil(a).
+        </p>
+      </Sec>
 
-          <Section title="10. Účinnost">
-            <p>Tyto obchodní podmínky jsou účinné od 1. 1. 2026.</p>
-          </Section>
-        </Card>
-      </main>
-    </div>
+      <Sec id="vraceni" n={10} title="Vrácení peněz – obecné pravidlo a záruka u předplatného">
+        <p>
+          <strong>Zaplacené částky obecně nevracíme.</strong> Peníze vracíme jen v těchto případech:
+        </p>
+        <Ul>
+          <li>odstoupení před aktivací (bod 9),</li>
+          <li>oprávněná reklamace, kterou nelze vyřešit nápravou (bod 11),</li>
+          <li><strong>dobrovolná záruka vrácení peněz u předplatného</strong> (níže),</li>
+          <li>ukončení nebo podstatné omezení placené služby z naší strany (bod 12),</li>
+          <li>další případy, kdy to vyžaduje zákon.</li>
+        </Ul>
+        <p className="text-foreground font-semibold">Dobrovolná záruka vrácení peněz u předplatného</p>
+        <p>
+          Nad rámec zákona nabízíme u každého zaplaceného období předplatného (i u obnovení) možnost vrácení peněz, pokud jsou
+          splněny <strong>všechny</strong> tyto podmínky:
+        </p>
+        <Ul>
+          <li>
+            o vrácení požádáš tlačítkem „Požádat o vrácení peněz“ v Obchodě → Předplatné <strong>nejpozději do 30 minut od
+            aktivace</strong> předplatného (čas aktivace a konec lhůty vidíš u předplatného a v potvrzení);
+          </li>
+          <li>
+            předplatné tedy <strong>neběželo déle než 30 minut</strong> a <strong>program jsi nezačal(a) používat</strong> –
+            za používání se nepovažuje stažení, instalace a první spuštění za účelem ověření, že program funguje;
+          </li>
+          <li>u stejného předplatného jsi záruku dosud neuplatnil(a) (záruku lze u jedné položky využít jen jednou).</li>
+        </Ul>
+        <p>
+          Po podání žádosti se přístup k předplatnému <strong>okamžitě ukončí</strong>, automatické obnovení se vypne a jsi
+          povinen(a) program odinstalovat a stažené kopie smazat. Peníze vrátíme stejným způsobem, jakým jsi platil(a), nejpozději
+          do 14 dnů. Pro posouzení žádosti evidujeme čas aktivace, čas a počet stažení souboru. Zjevné zneužívání záruky (např.
+          opakované nákupy a žádosti) může vést k jejímu odepření.
+        </p>
+        <p>
+          Po uplynutí 30 minut záruka zaniká. <strong>Tím nejsou dotčena tvá zákonná práva z vadného plnění</strong> – pokud
+          program nefunguje, postupuj podle bodu 11.
+        </p>
+      </Sec>
+
+      <Sec id="reklamace" n={11} title="Práva z vadného plnění (reklamace)">
+        <p>
+          Odpovídáme za to, že digitální obsah odpovídá popisu, je funkční a dostáváš k němu aktualizace potřebné k zachování
+          souladu se smlouvou – u předplatného po celou dobu jeho trvání, u jednorázového dodání po dobu stanovenou zákonem
+          (§ 2389a a násl. občanského zákoníku).
+        </p>
+        <Ul>
+          <li>Reklamaci uplatni bez zbytečného odkladu přes Tickety: popiš vadu, přilož snímek nebo log a uveď svůj systém.</li>
+          <li>Reklamaci vyřídíme nejpozději do 30 dnů od jejího uplatnění a o výsledku tě informujeme.</li>
+          <li>
+            Máš právo na uvedení do souladu (oprava, aktualizace, náhradní soubor). Pokud to není možné, vada se opakuje nebo je
+            podstatná, máš právo na přiměřenou slevu nebo odstoupení od smlouvy a vrácení peněz.
+          </li>
+          <li>
+            Vadou není nesplnění systémových požadavků uvedených u položky na tvém zařízení (např. grafická karta s podporou
+            Vulkan 1.1+), zásah do programu nebo jeho užití v rozporu s licencí.
+          </li>
+        </Ul>
+      </Sec>
+
+      <Sec id="ukonceni-sluzby" n={12} title="Ukončení služby z naší strany">
+        <p>
+          Pokud placenou službu ukončíme nebo ji podstatně omezíme, oznámíme to předem v účtu a vrátíme ti poměrnou část ceny za
+          nevyčerpané období. Pokud ti přístup ukončíme kvůli podstatnému porušení <L to="/terms">Podmínek použití</L> nebo
+          Licenčních podmínek, nárok na vrácení peněz nevzniká v rozsahu, v jakém to dovoluje zákon.
+        </p>
+      </Sec>
+
+      <Sec id="licence" n={13} title="Licence a vlastnictví">
+        <p>
+          Nákupem nezískáváš vlastnictví ani autorská práva k digitálnímu obsahu, ale licenci k jeho užívání podle{" "}
+          <L to="/licence">Licenčních podmínek</L>. Obsah je vázán na tvůj účet a nelze ho přeprodat, přenést ani sdílet.
+        </p>
+      </Sec>
+
+      <Sec id="osobni-udaje" n={14} title="Osobní údaje">
+        <p>
+          Osobní údaje kupujících zpracováváme k uzavření a plnění smlouvy, k plnění právních povinností a k ochraně našich
+          nároků (včetně záznamu souhlasů a evidence aktivace a stažení). Podrobnosti v{" "}
+          <L to="/privacy">Zásadách ochrany osobních údajů</L>.
+        </p>
+      </Sec>
+
+      <Sec id="spory" n={15} title="Mimosoudní řešení sporů a závěrečná ustanovení">
+        <p>
+          Spotřebitel může spor řešit mimosoudně u České obchodní inspekce, Ústřední inspektorát, Gorazdova 1969/24,
+          120 00 Praha 2 (<a className="text-primary underline" href="https://coi.gov.cz/informace-o-adr/" target="_blank" rel="noreferrer">coi.gov.cz/informace-o-adr</a>).
+          Smlouvy se řídí právem České republiky; ochranná ustanovení práva státu bydliště spotřebitele v EU nejsou dotčena.
+        </p>
+        <p>
+          Obchodní podmínky můžeme měnit; změna nemá vliv na již uzavřené objednávky. U předplatného se nové znění použije od
+          dalšího období, pokud ti změnu oznámíme nejméně 14 dní předem – s možností obnovení vypnout.
+        </p>
+      </Sec>
+
+      <Sec id="formular" n={16} title="Vzorový formulář pro odstoupení od smlouvy">
+        <p>(vyplň a pošli přes Tickety jen v případě, že chceš odstoupit od smlouvy před aktivací digitálního obsahu)</p>
+        <div className="rounded-md border border-border/70 bg-background/40 p-4 space-y-1 font-mono text-xs">
+          <p>Adresát: {op.name}, IČO {op.ico}{op.address ? `, ${op.address}` : ""}</p>
+          <p>Oznamuji, že tímto odstupuji od smlouvy o dodání následujícího digitálního obsahu / poskytnutí služby:</p>
+          <p>Název položky: ______________________</p>
+          <p>Datum objednání: ______________________</p>
+          <p>Jméno a uživatelské jméno na {op.site}: ______________________</p>
+          <p>Způsob platby a údaje pro vrácení: ______________________</p>
+          <p>Datum: ______________________</p>
+        </div>
+      </Sec>
+    </LegalPage>
   );
 };
 

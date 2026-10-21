@@ -46,7 +46,10 @@ export function CommunityNotifications() {
     if (channelId) {
       openVoxUtility(null);
       openVoxChannel(channelId);
+      return;
     }
+    const url = typeof item.data?.url === "string" ? item.data.url : null;
+    if (url && /^\/(?!\/)/.test(url)) window.location.assign(url);
   };
 
   const markEverything = async () => {

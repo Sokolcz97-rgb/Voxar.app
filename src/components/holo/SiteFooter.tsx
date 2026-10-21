@@ -33,6 +33,7 @@ const columns = [
       { to: "/obchodni-podminky", label: "Obchodní podmínky" },
       { to: "/terms", label: "Podmínky použití" },
       { to: "/privacy", label: "Ochrana soukromí" },
+      { to: "/licence", label: "Licenční podmínky" },
     ],
   },
 ];

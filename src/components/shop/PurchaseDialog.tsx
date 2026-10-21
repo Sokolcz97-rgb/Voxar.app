@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { paypalLink, spayd } from "@/lib/payments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LEGAL_VERSION } from "@/components/legal/LegalPage";
 import type { ShopSettings } from "@/hooks/useShop";
 
 export type PurchaseKind = "frame" | "plugin" | "software" | "donation";
@@ -47,11 +50,17 @@ export function PurchaseDialog({
   const [saving, setSaving] = useState(false);
   const [recorded, setRecorded] = useState(false);
   const lastKey = useRef<string>("");
+  const [accTerms, setAccTerms] = useState(false);
+  const [accWaiver, setAccWaiver] = useState(false);
+  const digital = kind !== "donation";
+  const consented = accTerms && (!digital || accWaiver);
 
   useEffect(() => {
     if (!open) {
       setRecorded(false);
       lastKey.current = "";
+      setAccTerms(false);
+      setAccWaiver(false);
     }
   }, [open]);
 
@@ -82,12 +91,17 @@ export function PurchaseDialog({
       toast.error("Pro dokončení objednávky se prosím přihlas.");
       return;
     }
+    if (!consented) {
+      toast.error("Nejdřív prosím potvrď souhlasy nad platebními možnostmi.");
+      return;
+    }
+    const now = new Date().toISOString();
     const key = `${itemId ?? kind}-${amount}-${method}`;
     if (lastKey.current === key) return;
     lastKey.current = key;
     setSaving(true);
     const { error } = renewalId
-      ? await supabase.rpc("shop_renewal_pay", { p_purchase: renewalId, p_method: method })
+      ? await supabase.rpc("shop_renewal_pay", { p_purchase: renewalId, p_method: method, p_terms: LEGAL_VERSION })
       : await supabase.from("shop_purchases").insert({
           user_id: user.id,
           item_id: itemId,
@@ -100,6 +114,9 @@ export function PurchaseDialog({
           note,
           period: kind === "software" ? period ?? "month" : null,
           auto_renew: kind === "software" ? autoRenew : false,
+          terms_version: LEGAL_VERSION,
+          terms_accepted_at: now,
+          waiver_accepted_at: digital ? now : null,
         });
     setSaving(false);
     if (error) {
@@ -134,13 +151,43 @@ export function PurchaseDialog({
             </p>
           )}
 
-          <Card className="glass border-border p-4 space-y-3">
+          <div className="space-y-2 rounded-md border border-border p-3 text-xs leading-relaxed">
+            <label className="flex gap-2 items-start cursor-pointer">
+              <Checkbox checked={accTerms} onCheckedChange={(v) => setAccTerms(v === true)} className="mt-0.5" />
+              <span>
+                Souhlasím s{" "}
+                <Link to="/obchodni-podminky" target="_blank" className="text-primary underline">obchodními podmínkami</Link>
+                {digital && (
+                  <>
+                    {" "}a{" "}
+                    <Link to="/licence" target="_blank" className="text-primary underline">licenčními podmínkami</Link>
+                  </>
+                )}{" "}
+                a beru na vědomí{" "}
+                <Link to="/privacy" target="_blank" className="text-primary underline">zásady ochrany osobních údajů</Link>.
+              </span>
+            </label>
+            {digital && (
+              <label className="flex gap-2 items-start cursor-pointer">
+                <Checkbox checked={accWaiver} onCheckedChange={(v) => setAccWaiver(v === true)} className="mt-0.5" />
+                <span>
+                  Výslovně žádám o okamžité dodání digitálního obsahu{kind === "software" ? " (zahájení předplatného)" : ""} před
+                  uplynutím 14denní lhůty pro odstoupení a beru na vědomí, že jeho aktivací <strong>ztrácím právo na odstoupení
+                  od smlouvy</strong> (§ 1837 písm. l) občanského zákoníku).
+                  {kind === "software" && " U předplatného mohu do 30 minut od aktivace požádat o vrácení peněz podle bodu 10 obchodních podmínek."}
+                </span>
+              </label>
+            )}
+            {kind === "donation" && <p className="text-muted-foreground">Dar je dobrovolný a nevrací se.</p>}
+          </div>
+
+          <Card className={`glass border-border p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
             <div className="flex items-center gap-2 text-sm font-medium">
               <CreditCard className="h-4 w-4 text-primary" /> PayPal
             </div>
             {pp ? (
-              <Button asChild className="w-full" disabled={!user}>
-                <a href={pp} target="_blank" rel="noopener noreferrer" onClick={() => void record("paypal")}>
+              <Button asChild className="w-full" disabled={!user || !consented}>
+                <a href={consented ? pp : undefined} tabIndex={consented ? 0 : -1} target="_blank" rel="noopener noreferrer" onClick={() => void record("paypal")}>
                   Zaplatit přes PayPal
                 </a>
               </Button>
@@ -151,11 +198,13 @@ export function PurchaseDialog({
             )}
           </Card>
 
-          <Card className="glass border-border p-4 space-y-3">
+          <Card className={`glass border-border p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
             <div className="flex items-center gap-2 text-sm font-medium">
               <QrCode className="h-4 w-4 text-primary" /> QR platba (české banky)
             </div>
-            {qr ? (
+            {qr && !consented ? (
+              <p className="text-sm text-muted-foreground">QR kód se zobrazí po potvrzení souhlasů výše.</p>
+            ) : qr ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="bg-background p-3 border border-border">
                   <QRCodeSVG value={qr} size={176} />
@@ -191,7 +240,7 @@ export function PurchaseDialog({
           <p className="text-xs text-muted-foreground flex gap-2">
             <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
             {settings?.refund_notice ||
-              "Na dary ani na zakoupený digitální obsah neposkytujeme vrácení peněz (refund)."}
+              "Zaplacené částky obecně nevracíme. U předplatného lze požádat o vrácení do 30 minut od aktivace."}
           </p>
           {kind === "software" && autoRenew && (
             <p className="text-xs text-muted-foreground">

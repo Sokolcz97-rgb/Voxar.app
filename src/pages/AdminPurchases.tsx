@@ -25,12 +25,20 @@ type Purchase = {
   payment_method: string | null;
   note: string | null;
   created_at: string;
+  terms_version?: string | null;
+  terms_accepted_at?: string | null;
+  waiver_accepted_at?: string | null;
+  refund_requested_at?: string | null;
+  refund_reason?: string | null;
+  refunded_at?: string | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Čeká na ověření",
   paid: "Zaplaceno",
   cancelled: "Zrušeno",
+  refund_requested: "Žádost o vrácení",
+  refunded: "Peníze vráceny",
 };
 
 const KIND_LABEL: Record<string, string> = {
@@ -97,6 +105,19 @@ export default function AdminPurchases() {
     await load();
   };
 
+  const refunded = async (id: string) => {
+    if (!window.confirm("Opravdu jsi peníze vrátil(a)? Kupujícímu se odebere přístup a dostane oznámení.")) return;
+    setBusy(id);
+    const { error } = await supabase.rpc("shop_mark_refunded", { _id: id });
+    setBusy(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Označeno jako vráceno, přístup odebrán a kupující upozorněn.");
+    await load();
+  };
+
   const filtered = useMemo(() => {
     if (filter === "all") return rows;
     if (filter === "donation") return rows.filter((r) => r.kind === "donation");
@@ -151,6 +172,7 @@ export default function AdminPurchases() {
             <TabsTrigger value="all">Vše</TabsTrigger>
             <TabsTrigger value="pending">Čekající</TabsTrigger>
             <TabsTrigger value="paid">Zaplacené</TabsTrigger>
+            <TabsTrigger value="refund_requested">Vrácení</TabsTrigger>
             <TabsTrigger value="donation">Dary</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -191,12 +213,34 @@ export default function AdminPurchases() {
                         </span>
                       )}
                       <span>🕒 {new Date(r.created_at).toLocaleString("cs-CZ")}</span>
+                      {r.terms_accepted_at && (
+                        <span title={`Podmínky ${r.terms_version ?? ""}`}>
+                          ✅ souhlas s OP{r.waiver_accepted_at ? " + okamžité dodání" : ""}
+                        </span>
+                      )}
                     </p>
+                    {r.refund_requested_at && (
+                      <p className="text-xs text-destructive mt-1">
+                        Žádost o vrácení {new Date(r.refund_requested_at).toLocaleString("cs-CZ")}
+                        {r.refund_reason ? ` – „${r.refund_reason}“` : ""} · vrať {r.amount_czk} {r.currency} stejnou cestou ({r.payment_method === "qr" ? "převod" : "PayPal"})
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    {r.status !== "paid" && (
+                    {(r.status === "pending" || r.status === "cancelled") && (
                       <Button size="sm" disabled={busy === r.id} onClick={() => approve(r.id)}>
                         <Check className="h-4 w-4 mr-1" /> Potvrdit platbu
+                      </Button>
+                    )}
+                    {(r.status === "refund_requested" || (r.status === "paid" && r.kind !== "donation")) && (
+                      <Button
+                        size="sm"
+                        variant={r.status === "refund_requested" ? "default" : "ghost"}
+                        disabled={busy === r.id}
+                        onClick={() => refunded(r.id)}
+                        title="Použij až po skutečném vrácení peněz (záruka nebo oprávněná reklamace)."
+                      >
+                        Peníze vráceny
                       </Button>
                     )}
                     {r.status === "pending" && (
