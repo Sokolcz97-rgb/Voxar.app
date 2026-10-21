@@ -1,0 +1,6 @@
+{
+  "name": "Voxario.Editor",
+  "references": ["Voxario.Runtime", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.HighDefinition.Runtime", "Unity.RenderPipelines.HighDefinition.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}
