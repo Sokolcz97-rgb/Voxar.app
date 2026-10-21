@@ -54,7 +54,8 @@ jobs:
             Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "script $($_.Name) $($_.Length) B" }
           }
           Start-Process -FilePath $exe
-          for ($i = 0; $i -lt 6; $i++) { Start-Sleep 15; Show "after $((($i+1)*15)) s" }
+          for ($i = 0; $i -lt 3; $i++) { Start-Sleep 15; Show "after $((($i+1)*15)) s" }
+          Get-ChildItem $env:APPDATA -Recurse -Filter launcher-update.log -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "== TRANSCRIPT $($_.FullName)"; Get-Content $_.FullName | Select-Object -Last 40 }
           Write-Host "==== run update script by hand"
           Get-ChildItem $env:TEMP -Filter "ashes-launcher-update-*.ps1" | Select-Object -First 1 | ForEach-Object {
             & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $_.FullName 2>&1 | Select-Object -First 20

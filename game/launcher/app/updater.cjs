@@ -162,6 +162,8 @@ function createUpdater({ onStatus, canRestart }) {
       stdio: "ignore",
       windowsHide: true,
     });
+    child.on("error", (e) => { try { fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] spawn error ${e}\n`); } catch {} });
+    try { fs.appendFileSync(path.join(app.getPath("userData"), "launcher.log"), `[${new Date().toISOString()}] update script pid ${child.pid}\n`); } catch {}
     child.unref();
     emit({ state: "restarting", latest: ready.version });
     setTimeout(() => app.quit(), 300);
