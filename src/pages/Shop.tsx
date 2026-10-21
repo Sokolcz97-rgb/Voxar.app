@@ -96,7 +96,7 @@ const ShopPage = () => {
         )}
 
         {!adminMode && (
-          <Tabs defaultValue="frames" className="space-y-6">
+          <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") ?? "frames"} className="space-y-6">
             <TabsList>
               <TabsTrigger value="frames">
                 <Sparkles className="h-4 w-4 mr-2" /> Orámování

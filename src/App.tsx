@@ -82,6 +82,7 @@ import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
 
 const AshesGame = lazy(() => import("./game/ashes/AshesGame.tsx"));
 const AshesRoadmap = lazy(() => import("./game/ashes/AshesRoadmap.tsx"));
+const StudioDemo = lazy(() => import("./pages/studio/StudioDemo.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -144,6 +145,8 @@ const AppRoutes = () => {
         <Route path="/roadmap" element={<Navigate to="/ashes" replace />} />
         <Route path="/ashes" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
         <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
+        <Route path="/studio/demo" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#141319] text-[#a48bff] tracking-[0.3em]">VOXARIO STUDIO…</div>}><StudioDemo /></Suspense>} />
+        <Route path="/studio" element={<Navigate to="/studio/demo" replace />} />
         <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
         <Route path="/admin/download-codes" element={<ProtectedRoute requireEditor><AdminDownloadCodes /></ProtectedRoute>} />
         <Route path="/admin/badges" element={<ProtectedRoute requireEditor><AdminBadges /></ProtectedRoute>} />
@@ -159,7 +162,8 @@ const AppRoutes = () => {
 };
 
 /** Root-level AI layer: a sibling of the router layout, never nested in app grids. */
-const isGameRoute = (pathname: string) => pathname === "/hra" || pathname.startsWith("/hra/") || pathname === "/ashes";
+const isGameRoute = (pathname: string) =>
+  pathname === "/hra" || pathname.startsWith("/hra/") || pathname === "/ashes" || pathname.startsWith("/studio");
 
 /** Plovoucí pomocníci webu se ve hře nezobrazují. */
 const WebOnly = ({ children }: { children: ReactNode }) => {
