@@ -170,6 +170,13 @@ public static class VoxarioBuild
     /// </summary>
     static void ReimportModels()
     {
+        // glTFast si typ vykreslování a generátor materiálů pamatuje ve statických polích – vynulovat
+        var rpUtils = Type.GetType("GLTFast.RenderPipelineUtils, glTFast");
+        var rpField = rpUtils?.GetField("s_RenderPipeline", BindingFlags.Static | BindingFlags.NonPublic);
+        if (rpField != null) rpField.SetValue(null, Enum.Parse(rpField.FieldType, "Unknown"));
+        var genField = Type.GetType("GLTFast.Materials.MaterialGenerator, glTFast")?.GetField("s_DefaultMaterialGenerator", BindingFlags.Static | BindingFlags.NonPublic);
+        genField?.SetValue(null, null);
+        Debug.Log($"[Voxario] glTFast reset: pole {(rpField != null)}/{(genField != null)}, vykreslování = {rpUtils?.GetProperty("RenderPipeline", BindingFlags.Static | BindingFlags.Public)?.GetValue(null)}");
         int n = 0;
         foreach (var guid in AssetDatabase.FindAssets("", new[] { "Assets/Models" }))
         {
