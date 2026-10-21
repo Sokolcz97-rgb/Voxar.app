@@ -2,35 +2,46 @@ using UnityEngine;
 
 namespace Voxario.Ashes
 {
-    /// <summary>Jmenovka nad postavou (jen do vzdálenosti 28 m).</summary>
+    /// <summary>Jmenovka nad postavou (písmo Cinzel, stín; NPC se značkou úkolu).</summary>
     public class NameTag : MonoBehaviour
     {
         public string title, subtitle;
         public string npcId;
         public bool isPlayer;
         public bool enemy;
-        static GUIStyle titleStyle, subStyle, markStyle, playerStyle, enemyStyle;
+        public float height = 2.2f;
+        static GUIStyle titleStyle, subStyle, markStyle;
 
         void OnGUI()
         {
             var cam = Camera.main;
-            if (cam == null) return;
-            var world = transform.position + Vector3.up * 2.2f;
-            if (Vector3.Distance(cam.transform.position, world) > (npcId != null ? 45 : 28)) return;
+            if (cam == null || !cam.enabled) return;
+            var world = transform.position + Vector3.up * height;
+            float dist = Vector3.Distance(cam.transform.position, world);
+            if (dist > (npcId != null ? 45 : enemy ? 35 : 28)) return;
             var sp = cam.WorldToScreenPoint(world);
             if (sp.z < 0) return;
-            titleStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15, fontStyle = FontStyle.Bold, normal = { textColor = new Color(0.95f, 0.85f, 0.6f) } };
-            subStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 11, normal = { textColor = new Color(0.85f, 0.8f, 0.72f) } };
-            markStyle ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 30, fontStyle = FontStyle.Bold, normal = { textColor = new Color(1f, 0.78f, 0.25f) } };
-            playerStyle ??= new GUIStyle(titleStyle) { normal = { textColor = new Color(0.7f, 0.9f, 1f) } };
-            enemyStyle ??= new GUIStyle(titleStyle) { normal = { textColor = new Color(1f, 0.42f, 0.35f) } };
-            float x = sp.x, y = Screen.height - sp.y;
-            GUI.Label(new Rect(x - 100, y - 30, 200, 20), title, isPlayer ? playerStyle : enemy ? enemyStyle : titleStyle);
-            if (!string.IsNullOrEmpty(subtitle)) GUI.Label(new Rect(x - 100, y - 13, 200, 16), subtitle, subStyle);
+            EryonSkin.Begin();
+            float k = EryonSkin.Scale;
+            titleStyle ??= new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = 18 };
+            subStyle ??= new GUIStyle(EryonSkin.Center) { font = EryonSkin.Cormorant, fontSize = 16 };
+            markStyle ??= new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = 34 };
+            float x = sp.x / k, y = (Screen.height - sp.y) / k;
+            float fade = Mathf.Clamp01((45 - dist) / 10f);
+            titleStyle.normal.textColor = (isPlayer ? EryonSkin.Sky : enemy ? new Color(1f, 0.45f, 0.36f) : EryonSkin.GoldBright) * new Color(1, 1, 1, fade);
+            subStyle.normal.textColor = new Color(0.86f, 0.8f, 0.72f, fade);
+            EryonSkin.Shadowed(new Rect(x - 150, y - 34, 300, 24), title, titleStyle);
+            if (!string.IsNullOrEmpty(subtitle)) EryonSkin.Shadowed(new Rect(x - 150, y - 12, 300, 20), subtitle, subStyle);
             if (npcId != null)
             {
                 var mark = NpcDialog.Marker(npcId);
-                if (mark != null) GUI.Label(new Rect(x - 20, y - 66, 40, 36), mark, markStyle);
+                if (mark != null)
+                {
+                    float bob = Mathf.Sin(Time.time * 3) * 3;
+                    EryonSkin.DiamondAt(new Vector2(x, y - 62 + bob), 36, mark == "?" ? EryonSkin.Good : Color.white);
+                    markStyle.normal.textColor = new Color(0.1f, 0.07f, 0.04f, fade);
+                    GUI.Label(new Rect(x - 18, y - 80 + bob, 36, 36), mark, markStyle);
+                }
             }
         }
     }

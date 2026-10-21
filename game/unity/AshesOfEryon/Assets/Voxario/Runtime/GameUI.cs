@@ -3,8 +3,9 @@ using UnityEngine;
 namespace Voxario.Ashes
 {
     /// <summary>
-    /// Rozhraní zkušební verze (IMGUI): přihlášení, horní lišta, nastavení grafiky
-    /// (DLSS / FSR 2, rozlišení, režim okna, svislá synchronizace, limit FPS) a FPS.
+    /// Hlavní rozhraní ve stylu Eryon: přihlášení (pozadí a logo z launcheru), načítání,
+    /// horní lišta s portrétem postavy a nastavení se záložkami (grafika, zobrazení a
+    /// monitor, zvuk, ovládání, módy).
     /// </summary>
     public class GameUI : MonoBehaviour
     {
@@ -12,10 +13,14 @@ namespace Voxario.Ashes
         public WindowGuard guard;
         string email = "", password = "";
         bool settingsOpen;
+        int tab;
         float fps, fpsTimer;
         int frames;
-        GUIStyle title, label, small, box;
-        static readonly Color Gold = new Color(0.85f, 0.66f, 0.36f);
+        Vector2 scroll;
+        static readonly string[] Tabs = { "Grafika", "Zobrazení", "Zvuk", "Ovládání", "Módy" };
+
+        public bool SettingsOpen => settingsOpen;
+        public void TestOpenSettings(int t) { settingsOpen = true; tab = t; }
 
         void Update()
         {
@@ -33,99 +38,185 @@ namespace Voxario.Ashes
             if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen;
         }
 
-        void Styles()
-        {
-            if (title != null) return;
-            title = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { textColor = Gold } };
-            label = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true, normal = { textColor = new Color(0.92f, 0.88f, 0.8f) } };
-            small = new GUIStyle(label) { fontSize = 12, normal = { textColor = new Color(0.75f, 0.7f, 0.62f) } };
-            box = new GUIStyle(GUI.skin.box) { normal = { background = Tex(new Color(0.05f, 0.04f, 0.04f, 0.88f)) } };
-        }
-
-        static Texture2D Tex(Color c)
-        {
-            var t = new Texture2D(1, 1);
-            t.SetPixel(0, 0, c);
-            t.Apply();
-            return t;
-        }
-
         void OnGUI()
         {
-            Styles();
-            GUI.Label(new Rect(Screen.width - 110, Screen.height - 26, 100, 22), $"{fps:0} FPS", small);
+            EryonSkin.Begin();
+            GUI.depth = 0;
             if (!boot.inWorld) { LoginScreen(); return; }
             Hud();
             if (settingsOpen) Settings();
         }
 
+        // ------------------------------------------------------------------ přihlášení
         void LoginScreen()
         {
-            float w = 420, h = 330;
-            var r = new Rect((Screen.width - w) / 2, (Screen.height - h) / 2, w, h);
-            GUI.Box(r, GUIContent.none, box);
-            GUILayout.BeginArea(new Rect(r.x + 24, r.y + 18, w - 48, h - 36));
-            GUILayout.Label("ASHES OF ERYON", title);
-            GUILayout.Label("Zkušební verze (Unity, DirectX 12, DLSS)", small);
-            GUILayout.Space(10);
-            if (boot.api.SignedIn && boot.state == null && !boot.busy)
+            float W = EryonSkin.W, H = EryonSkin.H;
+            var full = new Rect(0, 0, W, H);
+            EryonSkin.Cover(full, EryonSkin.Background);
+            GUI.DrawTexture(full, EryonSkin.Vignette);
+            EryonSkin.Fill(new Rect(0, 0, W * 0.42f, H), new Color(0.03f, 0.02f, 0.015f, 0.55f));
+
+            // levý sloupec: logo a přihlášení
+            float colW = 520, x = Mathf.Max(60, W * 0.08f);
+            if (EryonSkin.Logo != null) GUI.DrawTexture(new Rect(x + colW / 2 - 150, H * 0.06f, 300, 300), EryonSkin.Logo, ScaleMode.ScaleToFit);
+            GUI.Label(new Rect(x, H * 0.06f + 300, colW, 30), "KAPITOLA I  ·  POSLEDNÍ ŠTÍT", new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 16, normal = { textColor = EryonSkin.Gold } });
+
+            var r = new Rect(x, H * 0.06f + 350, colW, 400);
+            var inner = EryonSkin.DrawPanel(r, "Vstup do Kalidry");
+            GUILayout.BeginArea(inner);
+            if (boot.busy || (boot.api.SignedIn && boot.state == null && string.IsNullOrEmpty(boot.status)))
             {
-                GUILayout.Label(boot.status, label);
-                if (GUILayout.Button("Odhlásit se", GUILayout.Height(30))) boot.SignOut();
+                GUILayout.Space(40);
+                Spinner(new Vector2(inner.width / 2, 70));
+                GUILayout.Space(70);
+                GUILayout.Label(string.IsNullOrEmpty(boot.status) ? "Načítám…" : boot.status, EryonSkin.Center);
+            }
+            else if (boot.api.SignedIn && boot.state == null)
+            {
+                GUILayout.Space(10);
+                GUILayout.Label(boot.status, EryonSkin.Body);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Odhlásit se", EryonSkin.Button, GUILayout.Height(44))) boot.SignOut();
             }
             else
             {
-                GUILayout.Label("E-mail účtu StudioVoxario", small);
-                email = GUILayout.TextField(email, GUILayout.Height(26));
-                GUILayout.Label("Heslo", small);
-                password = GUILayout.PasswordField(password, '•', GUILayout.Height(26));
-                GUILayout.Space(8);
-                GUI.enabled = !boot.busy && email.Length > 3 && password.Length > 0;
-                if (GUILayout.Button(boot.busy ? "…" : "Přihlásit se", GUILayout.Height(34))) boot.SignIn(email.Trim(), password);
+                GUILayout.Label("E-MAIL ÚČTU STUDIOVOXARIO", EryonSkin.Caps);
+                GUI.SetNextControlName("email");
+                email = GUILayout.TextField(email, EryonSkin.Field, GUILayout.Height(44));
+                GUILayout.Space(10);
+                GUILayout.Label("HESLO", EryonSkin.Caps);
+                password = GUILayout.PasswordField(password, '•', EryonSkin.Field, GUILayout.Height(44));
+                GUILayout.Space(18);
+                bool can = email.Length > 3 && password.Length > 0;
+                GUI.enabled = can;
+                bool enter = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+                if (GUILayout.Button("VSTOUPIT DO SVĚTA", EryonSkin.ButtonPrimary, GUILayout.Height(54)) || (enter && can)) boot.SignIn(email.Trim(), password);
                 GUI.enabled = true;
-                if (!string.IsNullOrEmpty(boot.status)) GUILayout.Label(boot.status, label);
-                GUILayout.Label("Účet přes Google/Discord? Na studiovoxario.com si nastav heslo v profilu.", small);
+                GUILayout.Space(8);
+                if (!string.IsNullOrEmpty(boot.status)) GUILayout.Label($"<color=#e0672a>{boot.status}</color>", EryonSkin.Small);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Na studiovoxario.com si v profilu nastav heslo.", EryonSkin.Small);
             }
             GUILayout.EndArea();
+
+            // pravý dolní roh: verze a technika
+            var info = $"Unity · DirectX 12 · {(Upscaling.DlssSupported ? "NVIDIA DLSS" : "AMD FSR 2")}    verze {Application.version}";
+            GUI.Label(new Rect(W - 640, H - 44, 610, 30), info, new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(W - 640, H - 80, 610, 34), "Every choice leaves a scar.", new GUIStyle(EryonSkin.Body) { alignment = TextAnchor.MiddleRight, fontSize = 26, fontStyle = FontStyle.Italic, normal = { textColor = new Color(0.93f, 0.89f, 0.82f, 0.8f) } });
         }
 
+        static void Spinner(Vector2 c)
+        {
+            float t = Time.unscaledTime * 2.2f;
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i / 8f * Mathf.PI * 2;
+                float k = Mathf.Repeat(i / 8f - t / (Mathf.PI * 2) * 2, 1);
+                EryonSkin.DiamondAt(c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 26, 10, new Color(1, 0.85f, 0.55f, 0.25f + k * 0.75f));
+            }
+        }
+
+        // ------------------------------------------------------------------ horní lišta
         void Hud()
         {
             var ch = boot.state.character;
-            GUI.Box(new Rect(10, 10, 360, 54), GUIContent.none, box);
-            GUI.Label(new Rect(22, 14, 340, 24), $"{(string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name)}  ·  úroveň {ch.level}", label);
-            GUI.Label(new Rect(22, 36, 340, 20), $"{ClassName(ch.@class)} · {(ch.faction == "legie" ? "Legie Rudého slunce" : "Obránci Kalidry")} · {ch.gold} zlata", small);
-            GUI.Label(new Rect(10, Screen.height - 26, 700, 22), "WASD pohyb · Shift běh · Mezerník skok · E mluvit · M mapa · pravé tlačítko myši otáčení · kolečko vzdálenost · Esc nastavení", small);
+            float W = EryonSkin.W, H = EryonSkin.H;
+            // rámeček postavy
+            var frame = new Rect(16, 16, 420, 118);
+            EryonSkin.Fill(new Rect(frame.x + 50, frame.y + 14, frame.width - 50, frame.height - 28), new Color(0.04f, 0.03f, 0.025f, 0.82f));
+            EryonSkin.Fill(new Rect(frame.x + 50, frame.y + 14, frame.width - 50, 1), EryonSkin.Line);
+            EryonSkin.Fill(new Rect(frame.x + 50, frame.yMax - 15, frame.width - 50, 1), EryonSkin.Line);
+            EryonSkin.Portrait(new Rect(frame.x, frame.y, 118, 118), EryonSkin.PortraitFor(ch.@class, ch.appearance?.gender));
+            // úroveň v kosočtverci
+            EryonSkin.DiamondAt(new Vector2(frame.x + 100, frame.y + 100), 40, Color.white);
+            GUI.Label(new Rect(frame.x + 80, frame.y + 86, 40, 28), ch.level.ToString(), new GUIStyle(EryonSkin.Key) { fontSize = 17 });
+            string name = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
+            EryonSkin.Shadowed(new Rect(frame.x + 132, frame.y + 20, 290, 32), name, new GUIStyle(EryonSkin.H2) { fontSize = 23, normal = { textColor = EryonSkin.GoldBright } });
+            GUI.Label(new Rect(frame.x + 132, frame.y + 50, 290, 22), $"{EryonSkin.ClassName(ch.@class)}  ·  {EryonSkin.FactionName(ch.faction)}", new GUIStyle(EryonSkin.Small) { fontSize = 16 });
+            float xpK = ch.xp_need > 0 ? ch.xp / (float)ch.xp_need : 0;
+            EryonSkin.Bar(new Rect(frame.x + 132, frame.y + 78, 270, 18), xpK, new Color(0.62f, 0.48f, 0.9f), ch.xp_need > 0 ? $"{ch.xp} / {ch.xp_need} zk." : "");
+            // zlato a čest
+            GUI.Label(new Rect(frame.x + 132, frame.y + 98, 290, 22), $"<color=#f0d08a>◆ {ch.gold}</color> zlata    <color=#9fd4f0>✦ {ch.honor}</color> cti", new GUIStyle(EryonSkin.Small) { fontSize = 16, richText = true });
+
+            // spodní lišta s klávesami
+            float y = H - 40;
+            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "M", "mapa", "Esc", "nastavení" };
+            float x = 18;
+            for (int i = 0; i < keys.Length; i += 2)
+            {
+                float kw = 14 + keys[i].Length * 10;
+                EryonSkin.KeyCap(new Rect(x, y, kw, 24), keys[i]);
+                GUI.Label(new Rect(x + kw + 6, y, 120, 24), keys[i + 1], new GUIStyle(EryonSkin.Small) { alignment = TextAnchor.MiddleLeft });
+                x += kw + 16 + keys[i + 1].Length * 9;
+            }
+            if (PlayerPrefs.GetInt("ui.fps", 1) == 1)
+                GUI.Label(new Rect(W - 130, H - 38, 112, 24), $"{fps:0} FPS", new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleRight });
         }
 
-        static string ClassName(string c) => c == "lucistnik" ? "Lučištník" : c == "vestec" ? "Věštec" : "Štítonoš";
-
+        // ------------------------------------------------------------------ nastavení
         void Settings()
         {
-            float w = 660, h = 720;
-            var r = new Rect((Screen.width - w) / 2, (Screen.height - h) / 2, w, h);
-            GUI.Box(r, GUIContent.none, box);
-            GUILayout.BeginArea(new Rect(r.x + 24, r.y + 16, w - 48, h - 32));
-            GUILayout.Label("Nastavení grafiky", new GUIStyle(title) { fontSize = 24, alignment = TextAnchor.MiddleLeft });
+            float W = EryonSkin.W, H = EryonSkin.H;
+            EryonSkin.Fill(new Rect(0, 0, W, H), new Color(0, 0, 0, 0.55f));
+            var r = new Rect(W / 2 - 480, H / 2 - 400, 960, 800);
+            var inner = EryonSkin.DrawPanel(r, "Nastavení");
+            // záložky
+            GUILayout.BeginArea(new Rect(inner.x, inner.y - 8, inner.width, 50));
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < Tabs.Length; i++)
+                if (GUILayout.Button(Tabs[i], tab == i ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(38))) { tab = i; scroll = Vector2.zero; }
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
 
-            GUILayout.Label("Zvětšování obrazu", label);
+            GUILayout.BeginArea(new Rect(inner.x, inner.y + 52, inner.width, inner.height - 120));
+            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUIStyle.none);
+            switch (tab)
+            {
+                case 0: Graphics(); break;
+                case 1: Display(); break;
+                case 2: Sound(); break;
+                case 3: Controls(); break;
+                case 4: ModsTab(); break;
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+
+            GUILayout.BeginArea(new Rect(inner.x, inner.yMax - 58, inner.width, 58));
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("ZPĚT DO HRY", EryonSkin.ButtonPrimary, GUILayout.Height(50), GUILayout.Width(280))) settingsOpen = false;
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Odhlásit se", EryonSkin.Button, GUILayout.Height(50), GUILayout.Width(200))) { settingsOpen = false; boot.SignOut(); }
+            if (GUILayout.Button("Ukončit hru", EryonSkin.Button, GUILayout.Height(50), GUILayout.Width(200))) Application.Quit();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+        }
+
+        static void Section(string title, string hint = null)
+        {
+            GUILayout.Space(10);
+            GUILayout.Label(title.ToUpperInvariant(), EryonSkin.H2);
+            if (hint != null) GUILayout.Label(hint, EryonSkin.Small);
+            GUILayout.Space(4);
+        }
+
+        void Graphics()
+        {
+            Section("Zvětšování obrazu", Upscaling.DlssSupported ? "Tvoje karta podporuje NVIDIA DLSS." : "DLSS vyžaduje kartu NVIDIA RTX a DirectX 12 – použij AMD FSR 2.");
             var mode = Upscaling.CurrentMode;
             var quality = Upscaling.CurrentQuality;
-            bool dlss = Upscaling.DlssSupported;
             GUILayout.BeginHorizontal();
-            if (Toggle(mode == Upscaling.Mode.Off, "Vypnuto")) mode = Upscaling.Mode.Off;
-            GUI.enabled = dlss;
-            if (Toggle(mode == Upscaling.Mode.DLSS, "NVIDIA DLSS")) mode = Upscaling.Mode.DLSS;
+            if (EryonSkin.Toggle(mode == Upscaling.Mode.Off, "Vypnuto", GUILayout.Height(40))) mode = Upscaling.Mode.Off;
+            GUI.enabled = Upscaling.DlssSupported;
+            if (EryonSkin.Toggle(mode == Upscaling.Mode.DLSS, "NVIDIA DLSS", GUILayout.Height(40))) mode = Upscaling.Mode.DLSS;
             GUI.enabled = true;
-            if (Toggle(mode == Upscaling.Mode.FSR2, "AMD FSR 2")) mode = Upscaling.Mode.FSR2;
+            if (EryonSkin.Toggle(mode == Upscaling.Mode.FSR2, "AMD FSR 2", GUILayout.Height(40))) mode = Upscaling.Mode.FSR2;
             GUILayout.EndHorizontal();
-            GUILayout.Label(dlss ? "DLSS je k dispozici (karta NVIDIA RTX)." : "DLSS není k dispozici – vyžaduje kartu NVIDIA RTX a DirectX 12. Použij FSR 2.", small);
             GUILayout.BeginHorizontal();
-            if (Toggle(quality == Upscaling.Quality.MaximumQuality, "Kvalita")) quality = Upscaling.Quality.MaximumQuality;
-            if (Toggle(quality == Upscaling.Quality.Balanced, "Vyvážené")) quality = Upscaling.Quality.Balanced;
-            if (Toggle(quality == Upscaling.Quality.MaximumPerformance, "Výkon")) quality = Upscaling.Quality.MaximumPerformance;
-            if (Toggle(quality == Upscaling.Quality.UltraPerformance, "Ultra výkon")) quality = Upscaling.Quality.UltraPerformance;
-            if (mode == Upscaling.Mode.DLSS && Toggle(quality == Upscaling.Quality.DLAA, "DLAA")) quality = Upscaling.Quality.DLAA;
+            if (EryonSkin.Toggle(quality == Upscaling.Quality.MaximumQuality, "Kvalita", GUILayout.Height(36))) quality = Upscaling.Quality.MaximumQuality;
+            if (EryonSkin.Toggle(quality == Upscaling.Quality.Balanced, "Vyvážené", GUILayout.Height(36))) quality = Upscaling.Quality.Balanced;
+            if (EryonSkin.Toggle(quality == Upscaling.Quality.MaximumPerformance, "Výkon", GUILayout.Height(36))) quality = Upscaling.Quality.MaximumPerformance;
+            if (EryonSkin.Toggle(quality == Upscaling.Quality.UltraPerformance, "Ultra výkon", GUILayout.Height(36))) quality = Upscaling.Quality.UltraPerformance;
+            if (mode == Upscaling.Mode.DLSS && EryonSkin.Toggle(quality == Upscaling.Quality.DLAA, "DLAA", GUILayout.Height(36))) quality = Upscaling.Quality.DLAA;
             GUILayout.EndHorizontal();
             if (mode != Upscaling.CurrentMode || quality != Upscaling.CurrentQuality)
             {
@@ -133,83 +224,123 @@ namespace Voxario.Ashes
                 Upscaling.Apply(boot.cam);
             }
 
-            GUILayout.Space(6);
-            GUILayout.Label("Kvalita grafiky (stíny, mlha, okluze, dohled)", label);
+            Section("Kvalita světa", "Stíny, mlha, okluze, dohled, hustota stromů a trávy (stromy a tráva se změní po příštím vstupu do světa).");
             GUILayout.BeginHorizontal();
             int qual = PlayerPrefs.GetInt("gfx.quality", 2);
             string[] qn = { "Nízká", "Střední", "Vysoká", "Ultra" };
             for (int i = 0; i < qn.Length; i++)
-                if (Toggle(qual == i, qn[i])) Atmosphere.ApplyQuality(i);
+                if (EryonSkin.Toggle(qual == i, qn[i], GUILayout.Height(40))) Atmosphere.ApplyQuality(i);
             GUILayout.EndHorizontal();
+        }
 
+        void Display()
+        {
             var displays = WindowGuard.Displays();
-            if (displays.Count > 1)
+            Section("Monitor hry", "Hra se vždy otevře a po minimalizaci vrátí na zvolený monitor (i v režimu celé obrazovky).");
+            string cur = WindowGuard.SavedDisplay;
+            if (string.IsNullOrEmpty(cur)) cur = WindowGuard.CurrentKey();
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < displays.Count; i++)
             {
-                GUILayout.Label("Monitor", label);
-                GUILayout.BeginHorizontal();
-                string cur = WindowGuard.CurrentKey();
-                for (int i = 0; i < displays.Count; i++)
-                {
-                    var d = displays[i];
-                    string key = $"{d.name}|{d.width}x{d.height}|{d.workArea.x},{d.workArea.y}";
-                    if (Toggle(cur == key, $"{i + 1}: {d.width}×{d.height}")) guard?.MoveTo(d);
-                }
-                GUILayout.EndHorizontal();
+                var d = displays[i];
+                string label = $"{i + 1}. {(string.IsNullOrEmpty(d.name) ? "Monitor" : d.name)}  {d.width}×{d.height}";
+                if (EryonSkin.Toggle(cur == WindowGuard.Key(d), label, GUILayout.Height(40))) guard?.MoveTo(d);
             }
-
-            GUILayout.Space(6);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"Hudba {Mathf.RoundToInt(Music.Volume * 100)} %", label, GUILayout.Width(130));
-            Music.Volume = GUILayout.HorizontalSlider(Music.Volume, 0, 1, GUILayout.Height(24));
-            GUILayout.EndHorizontal();
-            var music = boot.GetComponent<Music>();
-            if (music != null && music.NowPlaying != null) GUILayout.Label("Hraje: " + music.NowPlaying, small);
-
-            GUILayout.Space(6);
-            GUILayout.Label("Režim zobrazení", label);
-            GUILayout.BeginHorizontal();
-            if (Toggle(Screen.fullScreenMode == FullScreenMode.Windowed, "Okno")) Screen.fullScreenMode = FullScreenMode.Windowed;
-            if (Toggle(Screen.fullScreenMode == FullScreenMode.FullScreenWindow, "Okno přes celou obrazovku")) Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-            if (Toggle(Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen, "Celá obrazovka")) Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Rozlišení", label);
+            Section("Režim zobrazení");
+            GUILayout.BeginHorizontal();
+            if (EryonSkin.Toggle(Screen.fullScreenMode == FullScreenMode.Windowed, "Okno", GUILayout.Height(40))) guard?.SetMode(FullScreenMode.Windowed);
+            if (EryonSkin.Toggle(Screen.fullScreenMode == FullScreenMode.FullScreenWindow, "Celá obrazovka v okně", GUILayout.Height(40))) guard?.SetMode(FullScreenMode.FullScreenWindow);
+            if (EryonSkin.Toggle(Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen, "Exkluzivní celá obrazovka", GUILayout.Height(40))) guard?.SetMode(FullScreenMode.ExclusiveFullScreen);
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Tip: „Celá obrazovka v okně“ nepřeskakuje mezi monitory při přepínání Alt+Tab.", EryonSkin.Small);
+
+            Section("Rozlišení");
             GUILayout.BeginHorizontal();
             foreach (var hgt in new[] { 720, 900, 1080, 1440, 2160 })
             {
                 int wid = hgt * 16 / 9;
-                if (Toggle(Screen.height == hgt, hgt == 2160 ? "4K" : $"{hgt}p")) Screen.SetResolution(wid, hgt, Screen.fullScreenMode);
+                if (EryonSkin.Toggle(Screen.height == hgt, hgt == 2160 ? "4K" : $"{hgt}p", GUILayout.Height(36))) Screen.SetResolution(wid, hgt, Screen.fullScreenMode);
             }
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Svislá synchronizace a limit snímků", label);
+            Section("Snímky za sekundu");
             GUILayout.BeginHorizontal();
-            if (Toggle(QualitySettings.vSyncCount > 0, "V-Sync zap.")) { QualitySettings.vSyncCount = 1; PlayerPrefs.SetInt("gfx.vsync", 1); }
-            if (Toggle(QualitySettings.vSyncCount == 0, "V-Sync vyp.")) { QualitySettings.vSyncCount = 0; PlayerPrefs.SetInt("gfx.vsync", 0); }
-            foreach (var cap in new[] { 30, 60, 144, 0 })
-                if (Toggle(Application.targetFrameRate == (cap == 0 ? -1 : cap), cap == 0 ? "Bez limitu" : $"{cap}"))
+            if (EryonSkin.Toggle(QualitySettings.vSyncCount > 0, "V-Sync", GUILayout.Height(36))) { QualitySettings.vSyncCount = 1; PlayerPrefs.SetInt("gfx.vsync", 1); }
+            if (EryonSkin.Toggle(QualitySettings.vSyncCount == 0, "Bez V-Sync", GUILayout.Height(36))) { QualitySettings.vSyncCount = 0; PlayerPrefs.SetInt("gfx.vsync", 0); }
+            foreach (var cap in new[] { 30, 60, 144, 240, 0 })
+                if (EryonSkin.Toggle(Application.targetFrameRate == (cap == 0 ? -1 : cap), cap == 0 ? "Bez limitu" : $"{cap}", GUILayout.Height(36)))
                 {
                     Application.targetFrameRate = cap == 0 ? -1 : cap;
                     PlayerPrefs.SetInt("gfx.fpsCap", cap);
                 }
             GUILayout.EndHorizontal();
-
-            GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Zpět do hry", GUILayout.Height(32))) settingsOpen = false;
-            if (GUILayout.Button("Odhlásit se", GUILayout.Height(32))) { settingsOpen = false; boot.SignOut(); }
-            if (GUILayout.Button("Ukončit hru", GUILayout.Height(32))) Application.Quit();
+            bool showFps = PlayerPrefs.GetInt("ui.fps", 1) == 1;
+            if (EryonSkin.Toggle(showFps, "Zobrazit FPS", GUILayout.Height(34))) PlayerPrefs.SetInt("ui.fps", 1);
+            if (EryonSkin.Toggle(!showFps, "Skrýt FPS", GUILayout.Height(34))) PlayerPrefs.SetInt("ui.fps", 0);
             GUILayout.EndHorizontal();
-            GUILayout.EndArea();
+
+            Section("Velikost rozhraní");
+            GUILayout.BeginHorizontal();
+            float s = PlayerPrefs.GetFloat("ui.scale", 1f);
+            GUILayout.Label($"{Mathf.RoundToInt(s * 100)} %", EryonSkin.BodyBold, GUILayout.Width(80));
+            float ns = GUILayout.HorizontalSlider(s, 0.75f, 1.5f, GUILayout.Width(500));
+            if (Mathf.Abs(ns - s) > 0.001f) PlayerPrefs.SetFloat("ui.scale", Mathf.Round(ns * 20) / 20);
+            GUILayout.EndHorizontal();
         }
 
-        static bool Toggle(bool on, string text)
+        void Sound()
         {
-            var prev = GUI.color;
-            if (on) GUI.color = Gold;
-            bool clicked = GUILayout.Button(text, GUILayout.Height(28)) && !on;
-            GUI.color = prev;
-            return clicked;
+            Section("Hudba", "Album „Eryon“ – skladba podle kapitoly příběhu.");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"{Mathf.RoundToInt(Music.Volume * 100)} %", EryonSkin.BodyBold, GUILayout.Width(80));
+            Music.Volume = GUILayout.HorizontalSlider(Music.Volume, 0, 1, GUILayout.Width(500));
+            GUILayout.EndHorizontal();
+            var music = boot.GetComponent<Music>();
+            if (music != null && music.NowPlaying != null) GUILayout.Label("♪  " + music.NowPlaying, EryonSkin.Body);
+        }
+
+        static void Controls()
+        {
+            Section("Ovládání");
+            (string k, string d)[] rows =
+            {
+                ("W A S D", "pohyb"), ("Shift", "běh"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
+                ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"), ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
+            };
+            foreach (var (k, d) in rows)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(k, new GUIStyle(EryonSkin.BodyBold) { normal = { textColor = EryonSkin.GoldBright } }, GUILayout.Width(280));
+                GUILayout.Label(d, EryonSkin.Body);
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        void ModsTab()
+        {
+            Section("Módy a doplňky", "Vlastní rozšíření v jazyce Lua (jako doplňky ve World of Warcraft) – rozhraní, upozornění, vlastní modely. Nemění pravidla hry na serveru.");
+            var mods = ModManager.Instance;
+            if (mods == null) { GUILayout.Label("Módy nejsou dostupné.", EryonSkin.Small); return; }
+            GUILayout.Label("Složka s módy: " + ModManager.ModsFolder, EryonSkin.Small);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Otevřít složku", EryonSkin.Button, GUILayout.Height(40), GUILayout.Width(220))) ModManager.OpenFolder();
+            if (GUILayout.Button("Znovu načíst (F8)", EryonSkin.Button, GUILayout.Height(40), GUILayout.Width(220))) mods.Reload();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(8);
+            if (mods.Mods.Count == 0) GUILayout.Label("Zatím žádné módy. Ukázkový mód „UkazkaEryon“ se vytvoří ve složce po prvním spuštění.", EryonSkin.Body);
+            foreach (var m in mods.Mods)
+            {
+                GUILayout.BeginHorizontal();
+                bool on = mods.IsEnabled(m.id);
+                if (GUILayout.Button(on ? "Zapnuto" : "Vypnuto", on ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Width(130), GUILayout.Height(34))) mods.SetEnabled(m.id, !on);
+                GUILayout.Label($"<b>{m.name}</b>  <color=#a8998a>{m.version} · {m.author}</color>", EryonSkin.Body, GUILayout.Height(34));
+                GUILayout.EndHorizontal();
+                if (!string.IsNullOrEmpty(m.description)) GUILayout.Label(m.description, EryonSkin.Small);
+                if (!string.IsNullOrEmpty(m.error)) GUILayout.Label($"<color=#e0672a>Chyba: {m.error}</color>", EryonSkin.Small);
+            }
         }
     }
 }

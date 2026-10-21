@@ -49,6 +49,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Encounters>().boot = this;
             gameObject.AddComponent<WorldPresence>().boot = this;
             gameObject.AddComponent<Music>().boot = this;
+            gameObject.AddComponent<ModManager>().boot = this;
         }
 
         IEnumerator Start()
@@ -179,6 +180,7 @@ namespace Voxario.Ashes
             player.cameraPivot = rigGo.transform;
             inWorld = true;
             Atmosphere.ApplyQuality(PlayerPrefs.GetInt("gfx.quality", 2));
+            ModManager.Fire("enter_world");
         }
 
         /// <summary>
@@ -190,10 +192,15 @@ namespace Voxario.Ashes
             string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "selftest");
             System.IO.Directory.CreateDirectory(dir);
             Debug.Log($"[Voxario] SELFTEST gfx={SystemInfo.graphicsDeviceType} {SystemInfo.graphicsDeviceName} hdrp={UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline}");
+            // přihlašovací obrazovka
+            yield return new WaitForSeconds(1.5f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "0-prihlaseni.png"));
+            yield return new WaitForSeconds(0.5f);
             state = new GameState
             {
                 allowed = true,
-                character = new Character { name = "Tester", display_name = "Tester", @class = "hoplit", faction = "kalidra", level = 1, appearance = new Appearance { gender = "m" } },
+                character = new Character { name = "Tester", display_name = "Tester", @class = "hoplit", faction = "kalidra", level = 3, xp = 140, xp_need = 300, gold = 172, honor = 12, appearance = new Appearance { gender = "m" } },
+                wquests = new[] { new WQuest { quest_id = "k1", state = "done" }, new WQuest { quest_id = "k2", state = "active", progress = 1 }, new WQuest { quest_id = "k3", state = "ready" } },
             };
             EnterWorld();
             yield return new WaitForSeconds(4f);
@@ -235,6 +242,17 @@ namespace Voxario.Ashes
             for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
             yield return new WaitForSeconds(1f);
+            // nastavení (záložka Zobrazení)
+            player.enabled = true;
+            var ui = GetComponent<GameUI>();
+            ui.TestOpenSettings(1);
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "10-nastaveni.png"));
+            yield return new WaitForSeconds(0.5f);
+            ui.TestOpenSettings(4);
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "11-mody.png"));
+            yield return new WaitForSeconds(0.5f);
             Debug.Log("[Voxario] SELFTEST hotovo");
             Application.Quit(0);
         }
@@ -255,6 +273,18 @@ namespace Voxario.Ashes
                 var m = t.materialTemplate;
                 Debug.Log($"[Voxario] TERRAIN pos={t.transform.position} size={t.terrainData.size} mat={(m ? m.name : "null")} shader={(m && m.shader ? m.shader.name : "null")} supported={(m && m.shader ? m.shader.isSupported : false)} h(-52,50)={t.SampleHeight(WorldMap.ToWorld(-52, 50)) + t.transform.position.y:0.00}");
             }
+        }
+
+        /// <summary>Mód nahradil model hráče vlastním GLB (šablona je neaktivní).</summary>
+        public void ReplacePlayerModel(GameObject template, float height)
+        {
+            if (player == null) return;
+            var old = player.view;
+            var view = CharacterView.Create(template, player.transform, height, "Model (mód)");
+            view.transform.localPosition = Vector3.zero;
+            foreach (var t in view.GetComponentsInChildren<Transform>(true)) t.gameObject.SetActive(true);
+            player.view = view;
+            if (old != null) Destroy(old.gameObject);
         }
 
         public void SignOut()

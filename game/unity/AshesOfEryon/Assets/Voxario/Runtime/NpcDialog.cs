@@ -24,7 +24,6 @@ namespace Voxario.Ashes
         float noticeUntil;
         bool busy;
         public bool testMode;
-        GUIStyle box, head, body, small, gold;
 
         public bool IsOpen => open.HasValue;
         public static NpcDialog Instance { get; private set; }
@@ -76,6 +75,7 @@ namespace Voxario.Ashes
             offer = null;
             title = $"{n.def.name} · {n.def.role}";
             text = Content.Data.Talk(n.def.id)?.greet ?? "…";
+            ModManager.Fire("npc_talk", n.def.id, n.def.name);
             // úkoly typu „promluv si s …“
             var st = boot.state;
             foreach (var q in Content.Data.quests)
@@ -135,80 +135,91 @@ namespace Voxario.Ashes
             return true;
         }
 
-        void Styles()
-        {
-            if (box != null) return;
-            var tex = new Texture2D(1, 1);
-            tex.SetPixel(0, 0, new Color(0.06f, 0.045f, 0.04f, 0.92f));
-            tex.Apply();
-            box = new GUIStyle(GUI.skin.box) { normal = { background = tex } };
-            head = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, normal = { textColor = new Color(0.9f, 0.72f, 0.42f) } };
-            body = new GUIStyle(GUI.skin.label) { fontSize = 16, wordWrap = true, normal = { textColor = new Color(0.93f, 0.89f, 0.82f) } };
-            small = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, normal = { textColor = new Color(0.78f, 0.72f, 0.64f) } };
-            gold = new GUIStyle(small) { fontStyle = FontStyle.Bold, normal = { textColor = new Color(0.95f, 0.78f, 0.4f) } };
-        }
-
         void OnGUI()
         {
             if (!boot.inWorld) return;
-            Styles();
+            EryonSkin.Begin();
+            float W = EryonSkin.W, H = EryonSkin.H;
             QuestTracker();
             if (notice != null && Time.time < noticeUntil)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 260, 80, 520, 40), GUIContent.none, box);
-                GUI.Label(new Rect(Screen.width / 2 - 250, 88, 500, 30), notice, new GUIStyle(gold) { alignment = TextAnchor.MiddleCenter, fontSize = 15 });
+                var nr = new Rect(W / 2 - 330, 110, 660, 54);
+                GUI.Box(nr, GUIContent.none, EryonSkin.PanelStyle);
+                EryonSkin.Shadowed(nr, notice, new GUIStyle(EryonSkin.Center) { font = EryonSkin.CormorantBold, fontSize = 22, normal = { textColor = EryonSkin.GoldBright } });
             }
             if (!open.HasValue)
             {
-                if (near.HasValue)
-                {
-                    var r = new Rect(Screen.width / 2 - 170, Screen.height - 130, 340, 34);
-                    GUI.Box(r, GUIContent.none, box);
-                    GUI.Label(r, $"[E]  Mluvit – {near.Value.def.name}", new GUIStyle(gold) { alignment = TextAnchor.MiddleCenter, fontSize = 15 });
-                }
+                if (near.HasValue) Prompt(W, H, "E", $"Mluvit – {near.Value.def.name}");
                 return;
             }
-            DialogWindow();
+            DialogWindow(W, H);
         }
 
-        void DialogWindow()
+        /// <summary>Výzva k akci nad spodní lištou ([E] …).</summary>
+        public static void Prompt(float W, float H, string key, string text)
+        {
+            var r = new Rect(W / 2 - 220, H - 170, 440, 50);
+            GUI.Box(r, GUIContent.none, EryonSkin.PanelStyle);
+            EryonSkin.KeyCap(new Rect(r.x + 16, r.y + 11, 34, 28), key);
+            GUI.Label(new Rect(r.x + 62, r.y, r.width - 76, r.height), text, new GUIStyle(EryonSkin.BodyBold) { alignment = TextAnchor.MiddleLeft, normal = { textColor = EryonSkin.GoldBright } });
+        }
+
+        void DialogWindow(float W, float H)
         {
             var n = open.Value;
-            float w = Mathf.Min(720, Screen.width - 40), h = 330;
-            var r = new Rect((Screen.width - w) / 2, Screen.height - h - 60, w, h);
-            GUI.Box(r, GUIContent.none, box);
-            GUILayout.BeginArea(new Rect(r.x + 22, r.y + 16, w - 44, h - 30));
-            GUILayout.Label(title, head);
-            GUILayout.Space(4);
-            GUILayout.Label(text, body);
-            GUILayout.FlexibleSpace();
+            float w = Mathf.Min(1180, W - 80), h = 380;
+            var r = new Rect((W - w) / 2, H - h - 70, w, h);
+            GUI.Box(r, GUIContent.none, EryonSkin.PanelStyle);
+            // portrét a jméno
+            EryonSkin.Portrait(new Rect(r.x + 26, r.y + 26, 150, 150), EryonSkin.PortraitFor(n.def.cls, "m"));
+            GUI.Label(new Rect(r.x + 26, r.y + 182, 150, 28), n.def.name.ToUpperInvariant(), new GUIStyle(EryonSkin.H2) { alignment = TextAnchor.MiddleCenter, fontSize = 18, normal = { textColor = EryonSkin.GoldBright } });
+            GUI.Label(new Rect(r.x + 16, r.y + 208, 170, 24), n.def.role, new GUIStyle(EryonSkin.Small) { alignment = TextAnchor.MiddleCenter });
+
+            float tx = r.x + 210, tw = w * 0.5f;
+            GUI.Label(new Rect(tx, r.y + 22, tw, 36), title, new GUIStyle(EryonSkin.H1) { fontSize = 24 });
+            EryonSkin.Ornament(new Rect(tx, r.y + 62, tw, 10));
+            GUI.Label(new Rect(tx, r.y + 82, tw, h - 110), text, new GUIStyle(EryonSkin.Body) { fontSize = 24 });
+
+            // volby vpravo
+            float ox = tx + tw + 30, ow = r.xMax - ox - 26;
+            EryonSkin.Fill(new Rect(ox - 16, r.y + 26, 1, h - 52), EryonSkin.Line);
+            GUILayout.BeginArea(new Rect(ox, r.y + 26, ow, h - 52));
             GUI.enabled = !busy;
             var st = boot.state;
+            var opt = new GUIStyle(EryonSkin.ButtonGhost) { fontSize = 21, wordWrap = true, padding = new RectOffset(28, 8, 6, 6) };
+            bool Option(string label, Color mark)
+            {
+                var rr = GUILayoutUtility.GetRect(new GUIContent(label), opt, GUILayout.ExpandWidth(true));
+                bool hover = rr.Contains(Event.current.mousePosition);
+                if (hover) EryonSkin.Fill(rr, new Color(0.82f, 0.68f, 0.4f, 0.1f));
+                EryonSkin.DiamondAt(new Vector2(rr.x + 12, rr.y + rr.height / 2), 11, mark);
+                return GUI.Button(rr, label, opt);
+            }
             if (offer != null)
             {
-                GUILayout.Label("Úkol: " + offer.objective, gold);
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Přijmout úkol", GUILayout.Height(30)))
+                GUILayout.Label("ÚKOL", EryonSkin.Caps);
+                GUILayout.Label(offer.objective, new GUIStyle(EryonSkin.BodyBold) { normal = { textColor = EryonSkin.GoldBright } });
+                GUILayout.Space(14);
+                if (GUILayout.Button("PŘIJMOUT ÚKOL", EryonSkin.ButtonPrimary, GUILayout.Height(50)))
                 {
                     var q = offer;
                     StartCoroutine(Call("ashes_wq_accept", $"{{\"p_quest\":\"{q.id}\"}}", json =>
                     {
                         ApplyState(json);
                         Notice($"Nový úkol: {q.title}");
+                        ModManager.Fire("quest_accepted", q.id, q.title);
                         offer = null;
                         text = "Dobře. Vrať se, až to bude hotové.";
                     }));
                 }
-                if (GUILayout.Button("Zatím ne", GUILayout.Height(30))) { offer = null; text = Content.Data.Talk(n.def.id)?.greet ?? "…"; }
-                GUILayout.EndHorizontal();
+                if (GUILayout.Button("Zatím ne", EryonSkin.Button, GUILayout.Height(42))) { offer = null; text = Content.Data.Talk(n.def.id)?.greet ?? "…"; }
             }
             else
             {
-                // odevzdání hotových úkolů
                 foreach (var q in Content.Data.quests.Where(q => q.giver == n.def.id))
                 {
                     var wq = st?.Quest(q.id);
-                    if (wq != null && wq.state == "ready" && GUILayout.Button($"✔ Odevzdat: {q.title}", GUILayout.Height(28)))
+                    if (wq != null && wq.state == "ready" && Option($"Odevzdat: {q.title}", EryonSkin.Good))
                     {
                         var qq = q;
                         StartCoroutine(Call("ashes_wq_turnin", $"{{\"p_quest\":\"{q.id}\"}}", json =>
@@ -217,26 +228,19 @@ namespace Voxario.Ashes
                             if (res?.state?.character != null) boot.state = res.state;
                             title = qq.title;
                             text = qq.done;
-                            Notice($"Úkol splněn: {qq.title}  +{res?.xp} zkušeností  +{res?.gold} zlata" + (res != null && res.levels > 0 ? "  ·  nová úroveň!" : ""));
+                            Notice($"Úkol splněn: {qq.title}   +{res?.xp} zk.   +{res?.gold} zlata" + (res != null && res.levels > 0 ? "   ·   NOVÁ ÚROVEŇ!" : ""));
+                            ModManager.Fire("quest_done", qq.id, qq.title);
                         }));
                     }
                 }
-                // nové úkoly
                 foreach (var q in Content.Data.quests.Where(q => q.giver == n.def.id && Available(q)))
-                {
-                    if (GUILayout.Button($"! {q.title}", GUILayout.Height(28)))
-                    {
-                        offer = q;
-                        title = q.title;
-                        text = q.offer;
-                    }
-                }
-                // vyprávění
+                    if (Option($"Úkol: {q.title}", EryonSkin.Ember)) { offer = q; title = q.title; text = q.offer; }
                 var talk = Content.Data.Talk(n.def.id);
                 if (talk?.lore != null)
                     foreach (var l in talk.lore)
-                        if (GUILayout.Button(l.q, GUILayout.Height(26))) { title = $"{n.def.name} · {n.def.role}"; text = l.a; }
-                if (GUILayout.Button("Rozloučit se", GUILayout.Height(26))) Close();
+                        if (Option(l.q, EryonSkin.Gold)) { title = $"{n.def.name} · {n.def.role}"; text = l.a; }
+                GUILayout.FlexibleSpace();
+                if (Option("Rozloučit se", EryonSkin.Muted)) Close();
             }
             GUI.enabled = true;
             GUILayout.EndArea();
@@ -248,22 +252,25 @@ namespace Voxario.Ashes
             if (st?.wquests == null) return;
             var active = st.wquests.Where(q => q.state == "active" || q.state == "ready").ToList();
             if (active.Count == 0) return;
-            float w = 320, y = 250;
-            GUI.Box(new Rect(Screen.width - w - 12, y, w, 30 + active.Count * 44), GUIContent.none, box);
-            GUI.Label(new Rect(Screen.width - w, y + 6, w - 20, 22), "Úkoly", new GUIStyle(head) { fontSize = 15 });
-            y += 30;
+            float W = EryonSkin.W;
+            float w = 380, x = W - w - 20, y = 330;
+            GUI.Label(new Rect(x, y, w, 28), "ÚKOLY", new GUIStyle(EryonSkin.H2) { fontSize = 19 });
+            EryonSkin.Fill(new Rect(x, y + 30, w, 1), EryonSkin.Line);
+            y += 40;
             foreach (var wq in active)
             {
                 var def = Content.Data.Quest(wq.quest_id);
                 if (def == null) continue;
-                string line = wq.state == "ready"
+                bool ready = wq.state == "ready";
+                string line = ready
                     ? $"Hotovo – vrať se za {NpcName(def.giver)}"
-                    : def.type == "kill"
-                        ? $"{def.objective} ({wq.progress}/{def.count}) · boj zatím ve webové verzi"
-                        : def.count > 1 ? $"{def.objective} ({wq.progress}/{def.count})" : def.objective;
-                GUI.Label(new Rect(Screen.width - w, y, w - 20, 18), def.title, gold);
-                GUI.Label(new Rect(Screen.width - w, y + 17, w - 20, 26), line, small);
-                y += 44;
+                    : def.count > 1 ? $"{def.objective}  ({wq.progress}/{def.count})" : def.objective;
+                EryonSkin.DiamondAt(new Vector2(x + 7, y + 13), 12, ready ? EryonSkin.Good : EryonSkin.Gold);
+                EryonSkin.Shadowed(new Rect(x + 22, y, w - 22, 26), def.title, new GUIStyle(EryonSkin.BodyBold) { fontSize = 21, normal = { textColor = ready ? EryonSkin.Good : EryonSkin.GoldBright } });
+                var ls = new GUIStyle(EryonSkin.Small) { fontSize = 17, normal = { textColor = EryonSkin.Text } };
+                float lh = ls.CalcHeight(new GUIContent(line), w - 22);
+                EryonSkin.Shadowed(new Rect(x + 22, y + 26, w - 22, lh), line, ls);
+                y += 34 + lh;
             }
         }
 

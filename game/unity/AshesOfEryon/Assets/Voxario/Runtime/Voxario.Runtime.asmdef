@@ -1,6 +1,6 @@
 {
   "name": "Voxario.Runtime",
   "rootNamespace": "Voxario",
-  "references": ["Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.HighDefinition.Runtime"],
+  "references": ["Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.HighDefinition.Runtime", "MoonSharp.Interpreter", "glTFast"],
   "autoReferenced": true
 }
