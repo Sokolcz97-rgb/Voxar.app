@@ -11,12 +11,25 @@ permissions:
   contents: read
 
 jobs:
-  tags:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: List Unity 6 editor images (GameCI)
+      - name: Free disk space
         run: |
-          for q in "6000.0" "6000.1" "6000.2"; do
-            curl -s "https://hub.docker.com/v2/repositories/unityci/editor/tags?name=ubuntu-${q}&page_size=100" \
-              | jq -r '.results[].name' | grep -E 'windows-mono' | sort -V | tail -8
-          done
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h /
+      - name: Inspect Unity 6000.0.85f1 image
+        run: |
+          IMG=unityci/editor:ubuntu-6000.0.85f1-windows-mono-3
+          docker pull -q $IMG
+          docker run --rm $IMG bash -lc '
+            E=/opt/unity/Editor
+            echo "== templates"; ls $E/Data/Resources/PackageManager/ProjectTemplates/ 2>/dev/null
+            for t in $E/Data/Resources/PackageManager/ProjectTemplates/*hdrp*.tgz $E/Data/Resources/PackageManager/ProjectTemplates/*high*.tgz; do
+              [ -f "$t" ] || continue; echo "== $t"; mkdir -p /tmp/t && tar -xzf "$t" -C /tmp/t && find /tmp/t -name manifest.json -exec cat {} \; ; rm -rf /tmp/t
+            done
+            echo "== builtin SRP packages"; ls $E/Data/Resources/PackageManager/BuiltInPackages 2>/dev/null | grep -i -E "render|nvidia|gltf|shadergraph|core" 
+            echo "== editor manifest"; cat $E/Data/Resources/PackageManager/Editor/manifest.json 2>/dev/null | head -80
+            echo "== nvidia files"; find $E/Data -iname "*nvngx*" -o -iname "*dlss*" 2>/dev/null | head -20
+            echo "== windows player"; ls $E/Data/PlaybackEngines/ 2>/dev/null
+          '
