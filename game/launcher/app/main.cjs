@@ -6,6 +6,7 @@ const os = require("node:os");
 const { app, BrowserWindow, dialog, ipcMain, screen, session, shell } = require("electron");
 const { createUpdater } = require("./updater.cjs");
 const services = require("./services.cjs");
+const { createUnityGame } = require("./unityGame.cjs");
 
 // ------------------------------------------------------------------ odolný start
 // Když složku s daty launcheru vytvořil proces spuštěný jako správce (např. instalátor),
@@ -55,8 +56,36 @@ const REFERENCE_HEIGHT = 1080;
 let mainWindow = null;
 let gameWindow = null;
 let updater = null;
+let unity = null;
 
-const gameRunning = () => Boolean(gameWindow && !gameWindow.isDestroyed());
+const gameRunning = () => Boolean((gameWindow && !gameWindow.isDestroyed()) || unity?.running);
+
+/** Po zavření hry (webové i Unity) nainstalovat staženou aktualizaci launcheru nebo vrátit okno. */
+function afterGameClosed() {
+  if (updater?.ready) {
+    updater.apply();
+    return;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.webContents.send("launcher:game-closed");
+  }
+}
+
+/** Hrát: Unity verze (DirectX 12, DLSS), když je nainstalovaná a vybraná, jinak webová verze. */
+function play() {
+  const settings = services.loadSettings();
+  if (settings.engine === "unity" && unity?.status?.state === "ready") {
+    const result = unity.play(() => afterGameClosed());
+    if (result.opened) {
+      if (settings.afterPlay === "hide") mainWindow?.hide();
+      else if (settings.afterPlay === "minimize") mainWindow?.minimize();
+      return { ...result, engine: "unity" };
+    }
+  }
+  return { ...openGameWindow(), engine: "web" };
+}
 
 // Ashes of Eryon běží jako 3D webová hra na studiovoxario.com (stejný účet,
 // autoritativní server v databázi). Launcher ji otevírá ve vlastním okně.
@@ -99,14 +128,7 @@ function openGameWindow() {
   gameWindow.on("closed", () => {
     gameWindow = null;
     // aktualizace launcheru stažená během hraní se nainstaluje hned po zavření hry
-    if (updater?.ready) {
-      updater.apply();
-      return;
-    }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.show();
-      mainWindow.webContents.send("launcher:game-closed");
-    }
+    afterGameClosed();
   });
   // Uvnitř herního okna jen stránky hry a přihlášení přes https; vše ostatní do systémového prohlížeče.
   gameWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -260,7 +282,10 @@ function registerIpc() {
     mainWindow?.close();
   });
 
-  ipcMain.handle("launcher:game:play", () => openGameWindow());
+  ipcMain.handle("launcher:game:play", () => play());
+  ipcMain.handle("launcher:unity:status", () => unity?.status ?? null);
+  ipcMain.handle("launcher:unity:check", () => unity?.check() ?? null);
+  ipcMain.handle("launcher:unity:install", () => unity?.install() ?? null);
 
   ipcMain.handle("launcher:open-account", () => {
     void shell.openExternal(`${GAME_ORIGIN}/auth?next=/hra`);
@@ -284,6 +309,7 @@ function registerIpc() {
       web: GAME_ORIGIN,
     };
     if (what === "folder") return shell.openPath(services.info().installDir);
+    if (what === "unity-folder" && unity) return shell.openPath(unity.installDir());
     if (what === "logs") return shell.openPath(app.getPath("userData"));
     if (links[what]) void shell.openExternal(links[what]);
     return true;
@@ -328,8 +354,18 @@ if (!app.requestSingleInstanceLock()) {
       },
       canRestart: () => !gameRunning()
     });
+    unity = createUnityGame({
+      onStatus: (status) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("launcher:unity", status);
+      },
+      log,
+    });
     const settings = services.loadSettings();
     if (settings.autoUpdate) updater.start();
+    // Unity verze: zjistit stav a při zapnutých automatických aktualizacích rovnou stáhnout
+    void unity.check().then((st) => {
+      if (settings.autoUpdate && settings.engine === "unity" && st?.state === "update") void unity.install();
+    });
     // zástupce na ploše s ikonou hry (opraví i starší zástupce z instalace)
     services.syncShortcuts(settings);
     services.applyLoginItem(settings);

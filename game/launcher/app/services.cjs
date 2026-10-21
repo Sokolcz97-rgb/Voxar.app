@@ -20,6 +20,7 @@ const DEFAULTS = {
   autoUpdate: true,
   desktopShortcut: true,
   startWithWindows: false,
+  engine: "unity", // "unity" (DirectX 12, DLSS) | "web"
 };
 
 function settingsFile() {
@@ -40,6 +41,7 @@ function saveSettings(next) {
     if (key in (next || {})) clean[key] = typeof DEFAULTS[key] === "boolean" ? Boolean(next[key]) : String(next[key]);
   }
   if (!["minimize", "hide", "keep"].includes(clean.afterPlay)) clean.afterPlay = DEFAULTS.afterPlay;
+  if (!["unity", "web"].includes(clean.engine)) clean.engine = DEFAULTS.engine;
   try {
     fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
     fs.writeFileSync(settingsFile(), JSON.stringify(clean, null, 2));

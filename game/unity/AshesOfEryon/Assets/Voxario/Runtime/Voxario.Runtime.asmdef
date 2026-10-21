@@ -1,0 +1,6 @@
+{
+  "name": "Voxario.Runtime",
+  "rootNamespace": "Voxario",
+  "references": ["Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.HighDefinition.Runtime"],
+  "autoReferenced": true
+}

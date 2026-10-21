@@ -154,12 +154,17 @@
   primary.addEventListener("click", () => {
     const current = root.dataset.state;
 
+    if (isDesktop && current === "online" && unityNeedsInstall()) {
+      void installUnity();
+      return;
+    }
+
     if (isDesktop && current === "online") {
       progressTitle.textContent = "Otevírám svět Ashes of Eryon…";
       progressDetail.textContent = "Hra se otevře v novém okně.";
       desktop.game?.play()
-        .then(() => {
-          progressTitle.textContent = "Hra běží";
+        .then((result) => {
+          progressTitle.textContent = result?.engine === "unity" ? "Hra běží (DirectX 12)" : "Hra běží";
           progressDetail.textContent = "Launcher počká, až herní okno zavřeš.";
         })
         .catch(() => {
@@ -358,6 +363,26 @@
       toggleRow("desktopShortcut", "Ikona hry na ploše", "Zástupce Ashes of Eryon na ploše s ikonou hry."),
       toggleRow("startWithWindows", "Spouštět launcher se systémem", "Launcher se otevře po přihlášení do Windows."),
     );
+    const engine = el("div", "setting");
+    const engineCopy = el("div");
+    engineCopy.append(el("b", "", "Verze hry"), el("small", "", "Unity: DirectX 12 / Vulkan, NVIDIA DLSS a AMD FSR 2 (stáhne se do počítače). Webová: běží ze serveru, nic se nestahuje."));
+    const engineChoice = el("div", "choice");
+    [["unity", "Unity (DirectX 12)"], ["web", "Webová"]].forEach(([value, label]) => {
+      const b = el("button", "", label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(settings.engine === value));
+      b.addEventListener("click", async () => {
+        settings = await desktop.settings.set({ engine: value });
+        engineSetting = settings.engine;
+        engineChoice.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+        showUnity(unityStatus);
+      });
+      engineChoice.append(b);
+    });
+    engine.append(engineCopy, engineChoice);
+    overlayBody.append(engine);
+
     const after = el("div", "setting");
     const copy = el("div");
     copy.append(el("b", "", "Po spuštění hry"), el("small", "", "Co má udělat launcher, když se otevře herní okno."));
@@ -394,6 +419,15 @@
     folder.type = "button";
     folder.addEventListener("click", () => void desktop.open("folder"));
     actions.append(check, cache, folder);
+    if (desktop.unity) {
+      const verify = el("button", "", "Ověřit soubory hry (Unity)");
+      verify.type = "button";
+      verify.addEventListener("click", () => { closeOverlay(); void installUnity(); });
+      const unityFolder = el("button", "", "Složka Unity verze");
+      unityFolder.type = "button";
+      unityFolder.addEventListener("click", () => void desktop.open("unity-folder"));
+      actions.append(verify, unityFolder);
+    }
     overlayBody.append(actions);
     try {
       const info = await desktop.info();
@@ -464,6 +498,66 @@
     }
   }, true);
 
+  // ------------------------------------------------------------------ Unity verze (DirectX 12, DLSS)
+  let unityStatus = null;
+  let engineSetting = "unity";
+  function unityNeedsInstall() {
+    return engineSetting === "unity" && unityStatus && ["install", "update", "error"].includes(unityStatus.state);
+  }
+  async function installUnity() {
+    progressTitle.textContent = "Připravuji stahování hry…";
+    progressDetail.textContent = "Unity verze s DirectX 12 a DLSS.";
+    const st = await desktop.unity.install().catch(() => null);
+    showUnity(st);
+  }
+  function showUnity(st) {
+    if (st) unityStatus = st;
+    st = unityStatus;
+    if (!st || root.dataset.state !== "online" || engineSetting !== "unity") {
+      if (engineSetting !== "unity" && root.dataset.state === "online") primary.querySelector("span").textContent = "Hrát";
+      return;
+    }
+    const label = primary.querySelector("span");
+    const v = st.latest ? ` ${st.latest}` : "";
+    if (st.state === "install") {
+      label.textContent = "Instalovat";
+      progressTitle.textContent = `Unity verze${v} je připravená ke stažení`;
+      progressDetail.textContent = `DirectX 12, NVIDIA DLSS, AMD FSR 2 · ${fmtSize(st.size)}`;
+      progressValue.textContent = fmtSize(st.size);
+      progressFill.style.width = "0%";
+    } else if (st.state === "update") {
+      label.textContent = "Aktualizovat";
+      progressTitle.textContent = `Nová verze hry${v}`;
+      progressDetail.textContent = `Nainstalováno ${st.installed || "—"} · stáhnou se jen změněné soubory.`;
+    } else if (st.state === "verifying" || st.state === "downloading") {
+      label.textContent = "Stahuji…";
+      const pct = Math.round((st.progress || 0) * 100);
+      progressTitle.textContent = st.state === "verifying" ? "Ověřuji soubory hry…" : `Stahuji hru${v}`;
+      progressDetail.textContent = st.total ? `${fmtSize(st.done)} z ${fmtSize(st.total)}` : "Kontroluji, co je potřeba stáhnout.";
+      progressFill.style.width = pct + "%";
+      progressValue.textContent = pct + " %";
+    } else if (st.state === "ready") {
+      label.textContent = "Hrát";
+      progressTitle.textContent = `Hra je aktuální${v}`;
+      progressDetail.textContent = "Unity verze · DirectX 12 · DLSS / FSR 2";
+      progressFill.style.width = "100%";
+      progressValue.textContent = "100 %";
+      installedVersion.textContent = st.installed || st.latest || "—";
+    } else if (st.state === "running") {
+      progressTitle.textContent = "Hra běží (DirectX 12)";
+      progressDetail.textContent = "Launcher počká, až hru zavřeš.";
+    } else if (st.state === "error") {
+      label.textContent = "Zkusit znovu";
+      progressTitle.textContent = "Stažení hry se nepodařilo";
+      progressDetail.textContent = st.error || "Zkontroluj připojení k internetu.";
+    }
+  }
+  if (isDesktop && desktop.unity) {
+    desktop.settings.get().then((s) => { engineSetting = s?.engine || "unity"; showUnity(null); }).catch(() => {});
+    desktop.unity.onStatus(showUnity);
+    desktop.unity.status().then((st) => st && showUnity(st)).catch(() => {});
+  }
+
   void loadLive();
   if (isDesktop) {
     setInterval(() => void refreshServer(), 60000);
@@ -474,5 +568,6 @@
     applyState("online");
     progressTitle.textContent = "Vítej zpět";
     progressDetail.textContent = "Svět Kalidry na tebe počká.";
+    if (engineSetting === "unity") showUnity(null);
   });
 })();
