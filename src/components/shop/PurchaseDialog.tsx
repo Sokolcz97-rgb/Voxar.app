@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ShopSettings } from "@/hooks/useShop";
 
-export type PurchaseKind = "frame" | "plugin" | "donation";
+export type PurchaseKind = "frame" | "plugin" | "software" | "donation";
 
 interface Props {
   open: boolean;

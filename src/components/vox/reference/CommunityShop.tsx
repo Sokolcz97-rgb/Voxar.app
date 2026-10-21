@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, Code2, HeartHandshake, Loader2, Settings2, ShieldAlert, Sparkles } from "lucide-react";
+import { Check, Code2, Crown, HeartHandshake, Loader2, Settings2, ShieldAlert, Sparkles } from "lucide-react";
+import { SoftwareTab } from "@/components/shop/SoftwareTab";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CosmeticFrame } from "@/components/CosmeticFrame";
 import { PurchaseDialog } from "@/components/shop/PurchaseDialog";
@@ -7,13 +8,13 @@ import { ShopAdminPanel } from "@/components/shop/ShopAdminPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useShop, type ShopItem } from "@/hooks/useShop";
 
-type Tab = "frames" | "plugins" | "donate";
+type Tab = "frames" | "plugins" | "subscription" | "donate";
 
 type Checkout = {
   title: string;
   amount: number;
   note: string;
-  kind: "frame" | "plugin" | "donation";
+  kind: "frame" | "plugin" | "software" | "donation";
   itemId: string | null;
   cosmeticId: string | null;
 };
@@ -29,6 +30,7 @@ export function CommunityShop() {
 
   const frames = useMemo(() => items.filter((item) => item.kind === "frame" && (item.active || adminMode)), [items, adminMode]);
   const plugins = useMemo(() => items.filter((item) => item.kind === "plugin" && (item.active || adminMode)), [items, adminMode]);
+  const subscriptions = useMemo(() => items.filter((item) => item.kind === "software" && (item.active || adminMode)), [items, adminMode]);
   const min = settings?.donate_min ?? 0;
   const max = settings?.donate_max ?? 500;
 
@@ -63,6 +65,7 @@ export function CommunityShop() {
           <div className="sv-feature-tabs">
             <button type="button" className={tab === "frames" ? "active" : ""} onClick={() => setTab("frames")}><Sparkles /> Rámečky</button>
             <button type="button" className={tab === "plugins" ? "active" : ""} onClick={() => setTab("plugins")}><Code2 /> Plugin code</button>
+            <button type="button" className={tab === "subscription" ? "active" : ""} onClick={() => setTab("subscription")}><Crown /> Předplatné</button>
             <button type="button" className={tab === "donate" ? "active" : ""} onClick={() => setTab("donate")}><HeartHandshake /> Podpořit projekt</button>
           </div>
 
@@ -83,6 +86,8 @@ export function CommunityShop() {
                 </article>
               ))}
             </div> : <div className="sv-feature-empty"><Sparkles /><strong>Zatím tu nejsou žádné rámečky</strong><span>Přidáš je přes správu nabídky a automaticky se zobrazí tady.</span></div>
+          ) : tab === "subscription" ? (
+            <SoftwareTab items={subscriptions} onBuy={buy} />
           ) : tab === "plugins" ? (
             plugins.length ? <div className="sv-shop-grid plugins">
               {plugins.map((item) => (

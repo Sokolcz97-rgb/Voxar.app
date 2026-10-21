@@ -13,9 +13,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CosmeticFrame } from "@/components/CosmeticFrame";
 import { PurchaseDialog } from "@/components/shop/PurchaseDialog";
 import { ShopAdminPanel } from "@/components/shop/ShopAdminPanel";
+import { SoftwareTab } from "@/components/shop/SoftwareTab";
 import { useShop, type ShopItem } from "@/hooks/useShop";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingBag, Sparkles, Code2, HeartHandshake, Check, ShieldAlert, Settings2 } from "lucide-react";
+import { ShoppingBag, Sparkles, Code2, HeartHandshake, Check, ShieldAlert, Settings2, Crown } from "lucide-react";
 
 const ShopPage = () => {
   const { items, settings, loading, refresh } = useShop();
@@ -28,7 +29,7 @@ const ShopPage = () => {
     title: string;
     amount: number;
     note: string;
-    kind: "frame" | "plugin" | "donation";
+    kind: "frame" | "plugin" | "software" | "donation";
     itemId: string | null;
     cosmeticId: string | null;
   } | null>(null);
@@ -39,6 +40,11 @@ const ShopPage = () => {
   );
   const plugins = useMemo(
     () => items.filter((i) => i.kind === "plugin" && (i.active || adminMode)),
+    [items, adminMode],
+  );
+
+  const software = useMemo(
+    () => items.filter((i) => i.kind === "software" && (i.active || adminMode)),
     [items, adminMode],
   );
 
@@ -94,6 +100,9 @@ const ShopPage = () => {
               </TabsTrigger>
               <TabsTrigger value="plugins">
                 <Code2 className="h-4 w-4 mr-2" /> Plugin code
+              </TabsTrigger>
+              <TabsTrigger value="software">
+                <Crown className="h-4 w-4 mr-2" /> Předplatné
               </TabsTrigger>
               <TabsTrigger value="donate">
                 <HeartHandshake className="h-4 w-4 mr-2" /> Podpořit projekt
@@ -163,6 +172,10 @@ const ShopPage = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="software">
+              {loading ? <p className="text-muted-foreground">Načítám…</p> : <SoftwareTab items={software} onBuy={buy} />}
             </TabsContent>
 
             <TabsContent value="donate">

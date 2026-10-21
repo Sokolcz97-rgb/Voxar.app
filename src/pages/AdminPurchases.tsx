@@ -36,6 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
 const KIND_LABEL: Record<string, string> = {
   frame: "Rámeček",
   plugin: "Plugin",
+  software: "Předplatné",
   donation: "Dar",
 };
 
