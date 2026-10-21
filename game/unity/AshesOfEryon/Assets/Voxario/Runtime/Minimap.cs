@@ -16,7 +16,7 @@ namespace Voxario.Ashes
 
         void Update()
         {
-            if (boot.inWorld && Input.GetKeyDown(KeyCode.M)) big = !big;
+            if (boot.inWorld && !Chat.Typing && Input.GetKeyDown(KeyCode.M)) big = !big;
         }
 
         void Build()

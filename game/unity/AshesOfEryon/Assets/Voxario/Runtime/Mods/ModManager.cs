@@ -192,7 +192,7 @@ namespace Voxario.Ashes
             if (Input.GetKeyDown(KeyCode.F8)) { Reload(); Toast("Módy znovu načteny."); }
             if (Mods.Count == 0) return;
             Fire("update", Time.deltaTime);
-            if (Input.anyKeyDown && Input.inputString.Length > 0) Fire("key", Input.inputString.Substring(0, 1).ToLowerInvariant());
+            if (!Chat.Typing && Input.anyKeyDown && Input.inputString.Length > 0) Fire("key", Input.inputString.Substring(0, 1).ToLowerInvariant());
         }
 
         void OnGUI()

@@ -58,7 +58,7 @@ namespace Voxario.Ashes
                 if (d < best) { best = d; near = n; }
             }
             if (open.HasValue && (near == null || near.Value.def.id != open.Value.def.id) && !testMode) Close();
-            if (Input.GetKeyDown(KeyCode.E) && near.HasValue && !open.HasValue) Open(near.Value);
+            if (!Chat.Typing && Input.GetKeyDown(KeyCode.E) && near.HasValue && !open.HasValue) Open(near.Value);
             if (open.HasValue)
             {
                 // NPC se otočí k hráči

@@ -28,14 +28,14 @@ namespace Voxario.Ashes
             fpsTimer += Time.unscaledDeltaTime;
             if (fpsTimer >= 0.5f) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
             var dialog = NpcDialog.Instance;
-            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld)
+            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen))
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
                 else settingsOpen = !settingsOpen;
             }
-            bool blocked = settingsOpen || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
+            bool blocked = settingsOpen || Chat.Typing || (Oddil.Instance != null && Oddil.Instance.IsOpen) || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
             if (boot.player != null) boot.player.inputEnabled = !blocked;
-            if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen;
+            if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen && !Chat.Typing;
         }
 
         void OnGUI()
@@ -141,7 +141,7 @@ namespace Voxario.Ashes
 
             // spodní lišta s klávesami
             float y = H - 40;
-            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "M", "mapa", "Esc", "nastavení" };
+            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "M", "mapa", "Enter", "chat", "O", "oddíl", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
             {
@@ -309,7 +309,8 @@ namespace Voxario.Ashes
             (string k, string d)[] rows =
             {
                 ("W A S D", "pohyb"), ("Shift", "běh"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
-                ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"), ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
+                ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
+                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
             };
             foreach (var (k, d) in rows)
             {

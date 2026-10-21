@@ -95,6 +95,7 @@ UDÁLOSTI  –  eryon.on(""nazev"", function(...) ... end)
   quest_done (id, nazev)      odevzdaný úkol
   fight_start (id, jmeno)     začátek souboje
   fight_end (""won""/""lost"", jmeno)
+  chat (""svet""/""oddil"", jmeno, text)   nová zpráva v chatu
 
 FUNKCE
   eryon.print(...)                    zápis do logu
