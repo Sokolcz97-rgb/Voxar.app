@@ -12,7 +12,7 @@ namespace Voxario.Ashes
         public GameBootstrap boot;
         public WindowGuard guard;
         string email = "", password = "";
-        int hudGold = -1, goldGain;
+        long hudGold = -1, goldGain;
         float goldPulse = -10;
         bool settingsOpen;
         int tab;
