@@ -422,7 +422,7 @@ namespace Voxario.Ashes
             Section("Ovládání");
             (string k, string d)[] rows =
             {
-                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
+                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("T", "návrat do bezpečí (5 s, jednou za 3 min)"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
                 ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
                 ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"), ("F1", "nahlásit chybu nebo nápad vývojářům"),
                 ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),

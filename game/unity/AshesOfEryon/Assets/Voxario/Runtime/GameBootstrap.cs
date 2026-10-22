@@ -60,6 +60,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<CharacterSlots>().boot = this;
             gameObject.AddComponent<StoryCards>().boot = this;
             gameObject.AddComponent<Feedback>().boot = this;
+            gameObject.AddComponent<Recall>().boot = this;
         }
 
         IEnumerator Start()
