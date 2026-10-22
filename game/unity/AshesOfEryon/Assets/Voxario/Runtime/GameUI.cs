@@ -179,6 +179,8 @@ namespace Voxario.Ashes
                 EryonSkin.Fill(box, EryonSkin.Gold);
                 EryonSkin.Fill(new Rect(box.x + 2, box.y + 2, 12, 12), new Color(0.05f, 0.04f, 0.03f, 1f));
                 if (rememberEmail) EryonSkin.Fill(new Rect(box.x + 5, box.y + 5, 6, 6), EryonSkin.GoldBright);
+                GUILayout.FlexibleSpace();
+                LinkButton("Zapomenuté heslo?", Site + "/reset-password" + (email.Contains("@") ? "?email=" + System.Uri.EscapeDataString(email.Trim()) : ""), 160);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(10);
                 bool can = email.Trim().Length > 3 && email.Contains("@") && password.Length > 0;
@@ -198,7 +200,7 @@ namespace Voxario.Ashes
                 GUILayout.Label("Nemáš účet?", new GUIStyle(EryonSkin.Small) { fontSize = 16 }, GUILayout.Width(110));
                 LinkButton("Vytvoř si ho zdarma", Site + "/auth", 200);
                 GUILayout.EndHorizontal();
-                GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Na studiovoxario.com si v profilu nastav heslo.", new GUIStyle(EryonSkin.Small) { fontSize = 15, wordWrap = true });
+                GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Klikni na „Zapomenuté heslo?“ a nastav si heslo i pro hru.", new GUIStyle(EryonSkin.Small) { fontSize = 15, wordWrap = true });
             }
             GUILayout.EndArea();
 
