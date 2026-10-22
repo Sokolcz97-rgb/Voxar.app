@@ -21,6 +21,7 @@ namespace Voxario.Ashes
         GameState seenState;
         TimeSpan serverOffset; // serverový čas − místní čas
         Vector2 scroll;
+        bool doneNotified, expeditionSeen;
 
         public bool IsOpen => open;
         void Awake() => Instance = this;
@@ -66,6 +67,16 @@ namespace Voxario.Ashes
                 seenState = boot.state;
                 if (TryTime(boot.state?.now, out var sn)) serverOffset = sn - DateTimeOffset.UtcNow;
             }
+            // výprava právě skončila → upozornění
+            var left = Remaining;
+            bool done = left.HasValue && left.Value <= TimeSpan.Zero;
+            if (done && !doneNotified && expeditionSeen)
+            {
+                Sfx.Play("quest");
+                ModManager.Fire("expedition", "ready", Active?.title ?? "");
+            }
+            expeditionSeen = left.HasValue;
+            doneNotified = done;
             if (Chat.Typing) return;
             if (Input.GetKeyDown(KeyCode.K)) { if (open) open = false; else Open(); }
             if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }

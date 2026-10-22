@@ -490,6 +490,14 @@ namespace Voxario.Ashes
                 var tag = arenaFoe.gameObject.AddComponent<NameTag>();
                 tag.title = label;
                 tag.enemy = true;
+                if (fn == "ashes_fight_boss")
+                {
+                    // strážce kapitoly je o hlavu větší
+                    arenaFoe.transform.localScale *= 1.3f;
+                    tag.height *= 1.3f;
+                    tag.subtitle = "strážce kapitoly";
+                    tag.subtitleColor = new Color(1f, 0.45f, 0.3f);
+                }
             }
             ModManager.Fire("fight_start", "arena", label);
             yield return new WaitForSeconds(0.5f);
