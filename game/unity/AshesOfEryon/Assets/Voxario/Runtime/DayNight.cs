@@ -29,6 +29,8 @@ namespace Voxario.Ashes
         bool moonTexWaxing;
         float nextAt;
         Vector3 lastSunDir = Vector3.up, lastMoonDir = Vector3.up;
+        public Vector3 SunDir => lastSunDir;
+        public Vector3 MoonDir => lastMoonDir;
 
         /// <summary>Výška slunce nad obzorem ve stupních (záporná = noc).</summary>
         public float SunAltitude { get; private set; } = 30;
