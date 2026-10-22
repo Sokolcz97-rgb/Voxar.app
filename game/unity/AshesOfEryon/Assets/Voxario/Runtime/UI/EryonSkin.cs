@@ -29,7 +29,7 @@ namespace Voxario.Ashes
         // ------------------------------------------------------------------ písma a styly
         public static Font Cinzel, CinzelBold, Cormorant, CormorantBold;
         public static GUIStyle Title, H1, H2, Body, BodyBold, Small, Caps, Button, ButtonPrimary, ButtonGhost, Chip, ChipOn, Field, PanelStyle, Center, Key;
-        public static Texture2D White, PanelTex, ButtonTex, ButtonHover, ButtonDown, PrimaryTex, PrimaryHover, FieldTex, ChipTex, ChipOnTex, Background, Logo, Wordmark, Vignette, Diamond, Ring, Disc;
+        public static Texture2D White, PanelTex, ButtonTex, ButtonHover, ButtonDown, PrimaryTex, PrimaryHover, FieldTex, ChipTex, ChipOnTex, Background, Logo, Wordmark, Vignette, Diamond, Ring, Disc, Coin, CoinSmall;
         static bool ready;
 
         /// <summary>Měřítko rozhraní (virtuální výška 1080 px).</summary>
@@ -74,6 +74,8 @@ namespace Voxario.Ashes
             Diamond = MakeDiamond(32);
             Ring = MakeRing(128, 0.86f, 0.98f);
             Disc = MakeRing(128, 0f, 1f);
+            Coin = MakeCoin(96);
+            CoinSmall = MakeCoin(26);
 
             Title = Style(CinzelBold, 54, GoldBright, TextAnchor.MiddleCenter);
             H1 = Style(CinzelBold, 30, Gold, TextAnchor.MiddleLeft);
@@ -188,6 +190,78 @@ namespace Voxario.Ashes
             t.Apply();
             return t;
         }
+
+        // výška reliéfu mince (drachma se sovou): u, v v rozsahu -1..1
+        static float CoinHeight(float u, float v)
+        {
+            float r = Mathf.Sqrt(u * u + v * v);
+            if (r > 1f) return -1f;
+            float h = 0;
+            if (r > 0.86f) h = 0.55f + 0.12f * Mathf.Cos(Mathf.Atan2(v, u) * 36f); // vroubkovaný okraj
+            else if (r > 0.80f) h = 0.15f;                                          // drážka
+            else h = 0.3f * (1 - r * r);                                            // mírně klenuté pole
+            // sova: tělo, hlava, uši a oči
+            float body = (u * u) / (0.30f * 0.30f) + ((v + 0.18f) * (v + 0.18f)) / (0.40f * 0.40f);
+            float head = (u * u) / (0.30f * 0.30f) + ((v - 0.22f) * (v - 0.22f)) / (0.24f * 0.24f);
+            if (body < 1f) h += 0.35f * (1 - body);
+            if (head < 1f) h += 0.4f * (1 - head);
+            for (int sgn = -1; sgn <= 1; sgn += 2)
+            {
+                float ex = u - sgn * 0.12f, ey = v - 0.24f;
+                float e = Mathf.Sqrt(ex * ex + ey * ey);
+                if (e < 0.10f) h -= e < 0.04f ? -0.1f : 0.25f;                       // oko: prohlubeň s panenkou
+                float ear = Mathf.Abs(u - sgn * 0.22f) + Mathf.Abs(v - 0.46f) * 1.6f;
+                if (ear < 0.09f) h += 0.25f;                                         // ouška
+            }
+            // olivová ratolest vpravo nahoře
+            float lx = u - 0.48f, ly = v - 0.35f;
+            if ((lx * lx) / 0.012f + (ly * ly) / 0.003f < 1f) h += 0.2f;
+            return h;
+        }
+
+        static Texture2D MakeCoin(int s)
+        {
+            var t = new Texture2D(s, s, TextureFormat.RGBA32, true) { hideFlags = HideFlags.DontSave, filterMode = FilterMode.Trilinear, wrapMode = TextureWrapMode.Clamp };
+            float hs = (s - 1) / 2f, e = 1.5f / s;
+            var light = new Vector3(-0.55f, 0.6f, 0.58f).normalized;
+            var dark = new Color(0.45f, 0.28f, 0.08f);
+            var mid = new Color(0.86f, 0.64f, 0.26f);
+            var hi = new Color(1f, 0.93f, 0.66f);
+            for (int y = 0; y < s; y++)
+            for (int x = 0; x < s; x++)
+            {
+                float u = (x - hs) / hs, v = (y - hs) / hs;
+                float r = Mathf.Sqrt(u * u + v * v);
+                float a = Mathf.Clamp01((1f - r) * hs * 0.9f);
+                if (a <= 0) { t.SetPixel(x, y, new Color(0, 0, 0, 0)); continue; }
+                float h0 = CoinHeight(u, v);
+                float dx = CoinHeight(u + e, v) - CoinHeight(u - e, v);
+                float dy = CoinHeight(u, v + e) - CoinHeight(u, v - e);
+                if (h0 < -0.5f) { dx = 0; dy = 0; }
+                var n = new Vector3(-dx * 6f, -dy * 6f, 1f).normalized;
+                float l = Mathf.Clamp01(Vector3.Dot(n, light));
+                var c = l < 0.6f ? Color.Lerp(dark, mid, l / 0.6f) : Color.Lerp(mid, hi, (l - 0.6f) / 0.4f);
+                // jemný odlesk a tmavší okraj kvůli čitelnosti na světlém pozadí
+                if (r > 0.94f) c = Color.Lerp(c, dark, (r - 0.94f) / 0.06f);
+                c.a = a;
+                t.SetPixel(x, y, c);
+            }
+            t.Apply(true);
+            return t;
+        }
+
+        /// <summary>Mince a částka vedle sebe (zlato v rozhraní).</summary>
+        public static float GoldAt(Rect r, string amount, GUIStyle style, float coin = 0)
+        {
+            if (coin <= 0) coin = Mathf.Min(r.height, 26);
+            GUI.DrawTexture(new Rect(r.x, r.y + (r.height - coin) / 2, coin, coin), Coin, ScaleMode.ScaleToFit);
+            var st = new GUIStyle(style) { alignment = TextAnchor.MiddleLeft, wordWrap = false };
+            GUI.Label(new Rect(r.x + coin + 5, r.y, r.width - coin - 5, r.height), amount, st);
+            return coin + 5 + st.CalcSize(new GUIContent(amount)).x;
+        }
+
+        /// <summary>GUIContent s mincí (pro tlačítka a popisky v layoutu).</summary>
+        public static GUIContent GoldContent(string text) => new GUIContent(" " + text, CoinSmall);
 
         static Texture2D MakeRing(int s, float inner, float outer)
         {

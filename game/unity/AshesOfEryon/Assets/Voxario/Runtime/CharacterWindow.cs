@@ -255,7 +255,7 @@ namespace Voxario.Ashes
             for (int i = 0; i < Tabs.Length; i++)
                 if (EryonSkin.Toggle(tab == i, Tabs[i], GUILayout.Height(38), GUILayout.Width(220))) { tab = i; error = ok = null; if (i == 2) shopLoaded = false; }
             GUILayout.FlexibleSpace();
-            GUILayout.Label($"<color=#f0d08a>◆ {ch.gold} zlata</color>", new GUIStyle(EryonSkin.BodyBold) { fontSize = 22, richText = true }, GUILayout.Height(38));
+            GUILayout.Label(EryonSkin.GoldContent($"{ch.gold} zlata"), new GUIStyle(EryonSkin.BodyBold) { fontSize = 22, wordWrap = false, normal = { textColor = new Color(0.94f, 0.82f, 0.54f) } }, GUILayout.Height(38));
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
@@ -324,7 +324,7 @@ namespace Voxario.Ashes
                 int bonus = total - baseV;
                 GUILayout.Label($"<b>{baseV}</b>{(bonus > 0 ? $"<color=#8cc06b> +{bonus}</color>" : "")}", new GUIStyle(EryonSkin.H2) { fontSize = 26, richText = true, alignment = TextAnchor.MiddleRight }, GUILayout.Width(120), GUILayout.Height(60));
                 GUI.enabled = !busy && cost > 0 && ch.gold >= cost;
-                if (GUILayout.Button($"Trénovat  ◆ {cost}", EryonSkin.Button, GUILayout.Width(210), GUILayout.Height(52)))
+                if (GUILayout.Button(EryonSkin.GoldContent($"Trénovat  {cost}"), EryonSkin.Button, GUILayout.Width(210), GUILayout.Height(52)))
                 {
                     string ss = s;
                     StartCoroutine(Call("ashes_train", $"{{\"p_stat\":{Q(ss)}}}", $"{StatName(ss)} +1"));
@@ -393,7 +393,7 @@ namespace Voxario.Ashes
                     StartCoroutine(Call("ashes_equip", $"{{\"p_item\":{Q(id)},\"p_on\":true}}", $"Nasazeno: {nm}"));
                 }
                 GUI.enabled = !busy;
-                if (GUILayout.Button($"Prodat ◆ {Mathf.Max(1, it.price / 4)}", EryonSkin.Button, GUILayout.Width(150), GUILayout.Height(46)))
+                if (GUILayout.Button(EryonSkin.GoldContent($"Prodat  {Mathf.Max(1, it.price / 4)}"), EryonSkin.Button, GUILayout.Width(150), GUILayout.Height(46)))
                 {
                     var id = it.id; var nm = it.name;
                     StartCoroutine(Call("ashes_sell", $"{{\"p_item\":{Q(id)}}}", $"Prodáno: {nm}"));
@@ -428,7 +428,7 @@ namespace Voxario.Ashes
                 GUILayout.EndVertical();
                 GUILayout.FlexibleSpace();
                 GUI.enabled = !busy && !full && st.character.gold >= it.price;
-                if (GUILayout.Button($"Koupit  ◆ {it.price}", EryonSkin.ButtonPrimary, GUILayout.Width(220), GUILayout.Height(50)))
+                if (GUILayout.Button(EryonSkin.GoldContent($"Koupit  {it.price}"), EryonSkin.ButtonPrimary, GUILayout.Width(220), GUILayout.Height(50)))
                 {
                     var id = it.id; var nm = it.name;
                     StartCoroutine(Call("ashes_buy", $"{{\"p_item\":{Q(id)}}}", $"Koupeno: {nm} (v batohu)", true));

@@ -107,7 +107,7 @@ namespace Voxario.Ashes
             var g = JsonUtility.FromJson<GiftResult>(json);
             if (g?.state?.character != null) boot.state = g.state;
             error = null;
-            giftNote = $"Denní dar: ◆ +{g?.gold} zlata, +{g?.xp} zkušeností.";
+            giftNote = $"Denní dar: +{g?.gold} zlata, +{g?.xp} zkušeností.";
             Sfx.Play(g != null && g.levels > 0 ? "level" : "coin");
         }
         string giftNote;
@@ -223,7 +223,7 @@ namespace Voxario.Ashes
                     GUILayout.BeginVertical();
                     GUILayout.Label(q.title, new GUIStyle(EryonSkin.H2) { fontSize = 22, normal = { textColor = EryonSkin.GoldBright } });
                     if (!string.IsNullOrEmpty(q.story)) GUILayout.Label(q.story, new GUIStyle(EryonSkin.Small) { fontSize = 17 });
-                    GUILayout.Label($"⏱ {q.minutes} min   ·   <color=#c8a8ff>+{q.xp} zk.</color>   ·   <color=#f0d08a>◆ {q.gold}</color>   ·   kořist {q.item_chance} %" +
+                    GUILayout.Label($"⏱ {q.minutes} min   ·   <color=#c8a8ff>+{q.xp} zk.</color>   ·   <color=#f0d08a>{q.gold} zlata</color>   ·   kořist {q.item_chance} %" +
                                     (q.enemy != null && !string.IsNullOrEmpty(q.enemy.name) ? $"   ·   nepřítel: {q.enemy.name}" : ""),
                         new GUIStyle(EryonSkin.Small) { richText = true });
                     GUILayout.EndVertical();

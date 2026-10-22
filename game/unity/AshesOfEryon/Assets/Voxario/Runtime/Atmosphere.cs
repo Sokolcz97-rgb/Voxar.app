@@ -17,6 +17,7 @@ namespace Voxario.Ashes
         static HDShadowSettings shadows;
         static ContactShadows contact;
         static ScreenSpaceAmbientOcclusion ssao;
+        static ScreenSpaceReflection ssr;
 
         public static void Create()
         {
@@ -60,6 +61,9 @@ namespace Voxario.Ashes
             ssao.intensity.Override(0.8f);
             ssao.radius.Override(1.2f);
 
+            ssr = profile.Add<ScreenSpaceReflection>(true);
+            ssr.enabled.Override(true);
+
             var tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
 
@@ -86,6 +90,20 @@ namespace Voxario.Ashes
             var cam = Camera.main;
             if (cam != null) cam.farClipPlane = q switch { 0 => 400f, 1 => 650f, _ => 900f };
             QualitySettings.lodBias = q switch { 0 => 0.6f, 1 => 1f, 2 => 1.5f, _ => 2.5f };
+            if (ssr != null) ssr.active = q >= 2 || RayTracing.Enabled;
+            ApplyRayTracing();
+        }
+
+        /// <summary>Přepne odrazy, okluzi a stíny slunce mezi klasickým a paprskovým výpočtem.</summary>
+        public static void ApplyRayTracing()
+        {
+            if (volume == null) return;
+            bool rt = RayTracing.Enabled;
+            RayTracing.Param(ssr, "tracing", rt ? "RayTracing" : "RayMarching");
+            RayTracing.Param(ssao, "rayTracing", rt);
+            if (ssr != null) ssr.active = rt || PlayerPrefs.GetInt("gfx.quality", 2) >= 2;
+            RayTracing.LightShadows(rt);
+            Debug.Log($"[Voxario] ray tracing: {(rt ? "zapnuto" : "vypnuto")} (podpora: {RayTracing.Supported})");
         }
     }
 }
