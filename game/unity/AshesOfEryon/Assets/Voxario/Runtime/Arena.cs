@@ -144,9 +144,20 @@ namespace Voxario.Ashes
                 GUILayout.EndArea();
                 return;
             }
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Cvičný zápas s gladiátorem na tvé úrovni – trochu zkušeností, zlata a 1 čest za výhru, bez rizika.", new GUIStyle(EryonSkin.Small) { fontSize = 17, wordWrap = true });
+            GUI.enabled = !busy && Encounters.Instance != null && !Encounters.Instance.Busy;
+            if (GUILayout.Button("CVIČNÝ ZÁPAS", EryonSkin.Button, GUILayout.Width(220), GUILayout.Height(46)))
+            {
+                open = false;
+                Encounters.Instance.StartSpar(err => { error = err; open = true; loaded = true; });
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            EryonSkin.Fill(GUILayoutUtility.GetRect(inner.width - 30, 1), EryonSkin.Line);
             if (!loaded) GUILayout.Label("Mistr arény vybírá soupeře…", EryonSkin.Body);
-            else if (list.Length == 0) GUILayout.Label("Zatím tu není žádný jiný hrdina. Přiveď přátele!", EryonSkin.Body);
-            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 230));
+            else if (list.Length == 0) GUILayout.Label("Zatím tu není žádný jiný hrdina – zkus cvičný zápas a přiveď přátele!", EryonSkin.Body);
+            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 290));
             GUI.enabled = !busy && Encounters.Instance != null && !Encounters.Instance.Busy;
             foreach (var o in list)
             {

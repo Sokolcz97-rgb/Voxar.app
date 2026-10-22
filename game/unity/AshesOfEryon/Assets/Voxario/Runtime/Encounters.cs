@@ -431,13 +431,20 @@ namespace Voxario.Ashes
         }
 
         // ------------------------------------------------------------------ aréna
-        [Serializable] public class ArenaResult { public Fight fight; public bool won; public int honor, gold; public bool rival; public GameState state; }
+        [Serializable] public class ArenaResult { public Fight fight; public bool won; public int honor, gold, xp, levels; public bool rival; public GameState state; }
 
         /// <summary>Zápas v aréně: server vyhodnotí souboj proti uložené postavě jiného hráče.</summary>
         public void StartArena(string targetId, string cls, string gender, string label, Action<string> onError)
         {
             if (Busy || boot.player == null) return;
             StartCoroutine(RunServerFight("ashes_arena_fight", $"{{\"p_target\":{MiniJson.Write(targetId)}}}", true, cls, gender, label, onError));
+        }
+
+        /// <summary>Cvičný zápas s gladiátorem na úrovni hráče (ashes_arena_spar).</summary>
+        public void StartSpar(Action<string> onError)
+        {
+            if (Busy || boot.player == null) return;
+            StartCoroutine(RunServerFight("ashes_arena_spar", "{}", true, null, "m", "Gladiátor", onError));
         }
 
         /// <summary>Souboj z Kroniky (konec výpravy, boss kapitoly) – výsledek ve formátu FightResult.</summary>
@@ -463,14 +470,16 @@ namespace Voxario.Ashes
             }
             var res = JsonUtility.FromJson<ArenaResult>(json);
             var story = arena ? null : JsonUtility.FromJson<FightResult>(json);
-            if (!arena && res.fight?.f2 != null && !string.IsNullOrEmpty(res.fight.f2.name))
+            if ((!arena || cls == null) && res.fight?.f2 != null && !string.IsNullOrEmpty(res.fight.f2.name))
             {
                 label = $"{res.fight.f2.name} · úroveň {res.fight.f2.level}";
                 if (!string.IsNullOrEmpty(res.fight.f2.@class)) cls = res.fight.f2.@class;
             }
             // soupeř se objeví naproti hráči
             var pt = boot.player.transform;
-            var tpl = library != null ? (library.Hero($"{cls}_{gender}") ?? library.Hero($"{cls}_m")) : null;
+            GameObject tpl = null;
+            if (cls == null) cls = "hoplit";
+            tpl = library != null ? (library.Hero($"{cls}_{gender}") ?? library.Hero($"{cls}_m")) : null;
             if (tpl != null)
             {
                 arenaFoe = CharacterView.Create(tpl, worldRoot, gender == "f" ? 1.55f : 1.62f, "Soupeř v aréně");
@@ -491,7 +500,7 @@ namespace Voxario.Ashes
             if (res.state?.character != null) boot.state = res.state;
             arenaMode = true; // bez smrti a návratu na respawn
             arenaHonor = arena ? res.honor : int.MinValue;
-            result = arena ? new FightResult { won = res.won, gold = res.gold, xp = 0, state = res.state } : story;
+            result = arena ? new FightResult { won = res.won, gold = res.gold, xp = res.xp, levels = res.levels, state = res.state } : story;
             ResultSound();
             ModManager.Fire("fight_end", res.won ? "won" : "lost", label);
             fighting = false;
@@ -579,7 +588,7 @@ namespace Voxario.Ashes
                 else if (arenaMode)
                 {
                     string hon = arenaHonor >= 0 ? $"<color=#9fd4f0>✦ +{arenaHonor} cti</color>" : $"<color=#e0672a>✦ {arenaHonor} cti</color>";
-                    string gl = result.gold > 0 ? $"      <color=#f0d08a>◆ +{result.gold} zlata</color>" : "";
+                    string gl = (result.xp > 0 ? $"      <color=#c8a8ff>+{result.xp} zk.</color>" : "") + (result.gold > 0 ? $"      <color=#f0d08a>◆ +{result.gold} zlata</color>" : "");
                     GUILayout.Label(hon + gl, new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
                     GUILayout.Label(result.won ? "Dav v aréně skanduje tvé jméno." : "Tentokrát byl soupeř silnější. Trénuj a vrať se.", EryonSkin.Center);
                 }
