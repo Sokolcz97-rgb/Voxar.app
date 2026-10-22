@@ -248,7 +248,7 @@ namespace Voxario.Ashes
                 if (!moonUp) mDir = Dir(55, sAz + 180);
                 moon.transform.rotation = Quaternion.LookRotation(-mDir);
                 float phase = moonUp ? 0.35f + 0.65f * MoonIllumination : 0.25f;
-                moon.intensity = Night * 14f * phase;
+                moon.intensity = Night * 40f * phase;
                 moon.enabled = Night > 0.02f;
                 SetProp(moonHd, "angularDiameter", moonUp ? 2.2f : 0f);
                 // stíny vrhá vždy to silnější světlo (HDRP zvládne jen jedno směrové se stíny)

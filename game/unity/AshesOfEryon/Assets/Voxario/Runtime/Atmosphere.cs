@@ -19,6 +19,7 @@ namespace Voxario.Ashes
         static ScreenSpaceAmbientOcclusion ssao;
         static ScreenSpaceReflection ssr;
         static Exposure exposure;
+        static IndirectLightingController indirect;
         static VolumeComponent lensFlare;
         static float night;
 
@@ -38,6 +39,8 @@ namespace Voxario.Ashes
             env.skyType.Override((int)SkyType.PhysicallyBased);
             env.skyAmbientMode.Override(SkyAmbientMode.Dynamic);
             profile.Add<PhysicallyBasedSky>(true);
+
+            indirect = profile.Add<IndirectLightingController>(true);
 
             exposure = profile.Add<Exposure>(true);
             exposure.mode.Override(ExposureMode.AutomaticHistogram);
@@ -118,9 +121,11 @@ namespace Voxario.Ashes
             bool changed = Mathf.Abs(n - night) > 0.02f;
             night = n;
             // v noci kamera „otevře clonu“, ať je měsícem nasvícený svět čitelný, ale pořád tmavší
-            exposure.limitMin.Override(Mathf.Lerp(11.5f, 3.2f, n));
-            exposure.limitMax.Override(Mathf.Lerp(15.5f, 7.5f, n));
-            exposure.compensation.Override(Mathf.Lerp(0.3f, -0.6f, n));
+            exposure.limitMin.Override(Mathf.Lerp(11.5f, 2.2f, n));
+            exposure.limitMax.Override(Mathf.Lerp(15.5f, 6.5f, n));
+            exposure.compensation.Override(Mathf.Lerp(0.3f, 0.1f, n));
+            // v noci víc rozptýleného světla, ať stíny nejsou úplně černé
+            if (indirect != null) indirect.indirectDiffuseLightingMultiplier.Override(Mathf.Lerp(1f, 4f, n));
             float dusk = Mathf.Clamp01(1 - Mathf.Abs(sunAlt - 2f) / 10f); // zlatá hodinka kolem obzoru
             var dayCol = new Color(0.86f, 0.82f, 0.76f);
             var duskCol = new Color(0.95f, 0.68f, 0.48f);
