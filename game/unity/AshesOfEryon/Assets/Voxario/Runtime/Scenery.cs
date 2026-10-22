@@ -33,6 +33,10 @@ namespace Voxario.Ashes
             foreach (var b in BeaconPts) if (Vector2.Distance(new Vector2(x, z), b) < 5) return false;
             // mýtina kolem světového bosse (pirát Thalassos)
             if (Vector2.Distance(new Vector2(x, z), new Vector2(20, 50)) < 11) return false;
+            // dráha stadionu (běh kolem mét) bez stromů a kamenů
+            var rc = Race.Course;
+            for (int i = 0; i < rc.Length; i++)
+                if (SegDist(new Vector2(x, z), rc[i], rc[(i + 1) % rc.Length]) < 3.5f) return false;
             // aquadukt
             if (SegDist(new Vector2(x, z), new Vector2(-64, 24), new Vector2(-15, -10)) < 3) return false;
             return true;

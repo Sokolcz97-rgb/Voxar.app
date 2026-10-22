@@ -209,6 +209,14 @@ namespace Voxario.Ashes
         public List<Vector2> QuestTargets()
         {
             var list = new List<Vector2>();
+            foreach (var t in QuestTargetsNamed()) list.Add(t.pos);
+            return list;
+        }
+
+        /// <summary>Cíle aktivních úkolů i s názvem úkolu (pro ukazatel cíle).</summary>
+        public List<(Vector2 pos, string title)> QuestTargetsNamed()
+        {
+            var list = new List<(Vector2 pos, string title)>();
             var st = boot.state;
             if (st?.wquests == null) return list;
             foreach (var wq in st.wquests)
@@ -218,13 +226,13 @@ namespace Voxario.Ashes
                 if (def == null) continue;
                 if (def.type == "kill")
                 {
-                    foreach (var e in enemies) if (e.alive && e.def.id == def.target) list.Add(e.pos);
+                    foreach (var e in enemies) if (e.alive && e.def.id == def.target) list.Add((e.pos, def.title));
                 }
                 else if (def.type == "beacon")
                 {
-                    foreach (var b in Beacons) if (wq.targets == null || Array.IndexOf(wq.targets, b.id) < 0) list.Add(new Vector2(b.x, b.z));
+                    foreach (var b in Beacons) if (wq.targets == null || Array.IndexOf(wq.targets, b.id) < 0) list.Add((new Vector2(b.x, b.z), def.title));
                 }
-                else if (def.type == "visit") list.Add(Memorial);
+                else if (def.type == "visit") list.Add((Memorial, def.title));
             }
             return list;
         }

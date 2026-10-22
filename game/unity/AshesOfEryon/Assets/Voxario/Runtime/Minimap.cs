@@ -152,6 +152,18 @@ namespace Voxario.Ashes
                     if (names) EryonSkin.Shadowed(new Rect(bp.x - 90, bp.y + 6, 180, 22), "Thalassos", new GUIStyle(EryonSkin.Center) { fontSize = 16, font = EryonSkin.CormorantBold });
                 }
             }
+            // stadion (start) a během závodu další méta
+            if (Race.Instance != null && Race.Instance.StartSpot.HasValue)
+            {
+                var rs = Race.Instance.Running && Race.Instance.Target.HasValue ? WorldMap.ToWeb(Race.Instance.Target.Value) : Race.Instance.StartSpot.Value;
+                var sp = ToScreen(rs, out bool okS);
+                if (okS)
+                {
+                    GUI.color = new Color(0.95f, 0.92f, 0.82f);
+                    GUI.DrawTexture(new Rect(sp.x - 5, sp.y - 5, 10, 10), dot);
+                    if (names && !Race.Instance.Running) EryonSkin.Shadowed(new Rect(sp.x - 90, sp.y + 5, 180, 22), "Stadion", new GUIStyle(EryonSkin.Center) { fontSize = 15, font = EryonSkin.CormorantBold });
+                }
+            }
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             var pp = ToScreen(pw, out _);
             GUI.color = new Color(0.4f, 0.85f, 1f);

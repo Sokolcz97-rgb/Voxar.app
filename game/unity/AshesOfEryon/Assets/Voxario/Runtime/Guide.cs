@@ -90,8 +90,8 @@ namespace Voxario.Ashes
             if (wb?.state != null && wb.state.alive && st.character.level >= 2)
                 return "Na pláni u Památníku padlých táboří pirátský vůdce Thalassos se svou družinou (rudý bod na mapě). Spoj síly s ostatními – přijdi k němu a stiskni E.";
             return fac == "legie"
-                ? "Bojuj s obránci Kalidry v kraji, zkus arénu u Mistra zápasů nebo navštiv kováře Rukmara."
-                : "Bojuj s Legií v kraji, zkus arénu u Mistra arény nebo navštiv kováře Tharose.";
+                ? "Bojuj s obránci Kalidry v kraji, zkus arénu u Mistra zápasů, navštiv kováře Rukmara nebo si zaběhni kolo kolem mét na stadionu (bílý sloup na pláni)."
+                : "Bojuj s Legií v kraji, zkus arénu u Mistra arény, navštiv kováře Tharose nebo si zaběhni kolo kolem mét na stadionu (bílý sloup na pláni).";
         }
 
         void OnGUI()
