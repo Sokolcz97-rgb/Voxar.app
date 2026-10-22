@@ -18,6 +18,9 @@ namespace Voxario.Ashes
         static ContactShadows contact;
         static ScreenSpaceAmbientOcclusion ssao;
         static ScreenSpaceReflection ssr;
+        static Exposure exposure;
+        static VolumeComponent lensFlare;
+        static float night;
 
         public static void Create()
         {
@@ -30,7 +33,13 @@ namespace Voxario.Ashes
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             volume.sharedProfile = profile;
 
-            var exposure = profile.Add<Exposure>(true);
+            // obloha s fyzikálním modelem: slunce i měsíc jsou vidět jako kotouče, v noci tmavne
+            var env = profile.Add<VisualEnvironment>(true);
+            env.skyType.Override((int)SkyType.PhysicallyBased);
+            env.skyAmbientMode.Override(SkyAmbientMode.Dynamic);
+            profile.Add<PhysicallyBasedSky>(true);
+
+            exposure = profile.Add<Exposure>(true);
             exposure.mode.Override(ExposureMode.AutomaticHistogram);
             exposure.limitMin.Override(11.5f);
             exposure.limitMax.Override(15.5f);
@@ -61,6 +70,14 @@ namespace Voxario.Ashes
             ssao.intensity.Override(0.8f);
             ssao.radius.Override(1.2f);
 
+            // záblesky a paprsky od jasných zdrojů (slunce, měsíc) – zapnuto s ray tracingem
+            var lfType = typeof(Volume).Assembly.GetType("UnityEngine.Rendering.ScreenSpaceLensFlare")
+                         ?? typeof(Exposure).Assembly.GetType("UnityEngine.Rendering.HighDefinition.ScreenSpaceLensFlare");
+            if (lfType != null)
+            {
+                try { lensFlare = profile.Add(lfType, true); } catch { lensFlare = null; }
+            }
+
             ssr = profile.Add<ScreenSpaceReflection>(true);
             ssr.enabled.Override(true);
 
@@ -78,7 +95,7 @@ namespace Voxario.Ashes
             shadows.maxShadowDistance.Override(q switch { 0 => 50f, 1 => 90f, 2 => 150f, _ => 250f });
             contact.enable.Override(q >= 2);
             ssao.active = q >= 1;
-            fog.enableVolumetricFog.Override(q >= 3);
+            fog.enableVolumetricFog.Override(q >= 3 || RayTracing.Enabled);
             bloom.active = q >= 1;
             foreach (var t in Object.FindObjectsByType<Terrain>(FindObjectsSortMode.None))
                 t.heightmapPixelError = q switch { 0 => 12, 1 => 7, 2 => 4, _ => 2 };
@@ -94,6 +111,24 @@ namespace Voxario.Ashes
             ApplyRayTracing();
         }
 
+        /// <summary>Denní doba: expozice a barva mlhy (night 0 = den, 1 = noc).</summary>
+        public static void ApplyTimeOfDay(float n, float sunAlt)
+        {
+            if (volume == null) return;
+            bool changed = Mathf.Abs(n - night) > 0.02f;
+            night = n;
+            // v noci kamera „otevře clonu“, ať je měsícem nasvícený svět čitelný, ale pořád tmavší
+            exposure.limitMin.Override(Mathf.Lerp(11.5f, 3.2f, n));
+            exposure.limitMax.Override(Mathf.Lerp(15.5f, 7.5f, n));
+            exposure.compensation.Override(Mathf.Lerp(0.3f, -0.6f, n));
+            float dusk = Mathf.Clamp01(1 - Mathf.Abs(sunAlt - 2f) / 10f); // zlatá hodinka kolem obzoru
+            var dayCol = new Color(0.86f, 0.82f, 0.76f);
+            var duskCol = new Color(0.95f, 0.68f, 0.48f);
+            var nightCol = new Color(0.35f, 0.42f, 0.6f);
+            fog.albedo.Override(Color.Lerp(Color.Lerp(dayCol, duskCol, dusk), nightCol, n));
+            if (changed) ApplyRayTracing();
+        }
+
         /// <summary>Přepne odrazy, okluzi a stíny slunce mezi klasickým a paprskovým výpočtem.</summary>
         public static void ApplyRayTracing()
         {
@@ -103,6 +138,16 @@ namespace Voxario.Ashes
             RayTracing.Param(ssao, "rayTracing", rt);
             if (ssr != null) ssr.active = rt || PlayerPrefs.GetInt("gfx.quality", 2) >= 2;
             RayTracing.LightShadows(rt);
+            // paprsky od slunce a měsíce: objemová mlha + záblesky na obrazovce
+            fog.enableVolumetricFog.Override(rt || PlayerPrefs.GetInt("gfx.quality", 2) >= 3);
+            if (rt) { fog.meanFreePath.Override(Mathf.Lerp(420f, 260f, night)); fog.anisotropy.Override(0.65f); }
+            else fog.meanFreePath.Override(Mathf.Lerp(650f, 400f, night));
+            if (lensFlare != null)
+            {
+                lensFlare.active = rt;
+                RayTracing.Param(lensFlare, "intensity", rt ? 0.6f : 0f);
+                RayTracing.Param(lensFlare, "streaksIntensity", rt ? 0.5f : 0f);
+            }
             Debug.Log($"[Voxario] ray tracing: {(rt ? "zapnuto" : "vypnuto")} (podpora: {RayTracing.Supported})");
         }
     }

@@ -32,6 +32,10 @@ namespace Voxario.Ashes
         float errorUntil;
 
         void Awake() => Instance = this;
+        float lastNews;
+
+        /// <summary>Někdo poslal zprávu – načíst hned (signál přes WebSocket).</summary>
+        public void PollNow() { pollAt = 0; lastNews = Time.unscaledTime; }
 
         string WorldChannel => "world:" + (string.IsNullOrEmpty(boot.state?.character?.faction) ? "kalidra" : boot.state.character.faction);
         string OddilChannel => Oddil.Instance != null && Oddil.Instance.MyId != null ? "oddil:" + Oddil.Instance.MyId : null;
@@ -41,7 +45,9 @@ namespace Voxario.Ashes
             if (!boot.inWorld || !boot.api.SignedIn) { typing = false; return; }
             if (Time.unscaledTime > pollAt && !sending)
             {
-                pollAt = Time.unscaledTime + (typing ? 1.5f : 3f);
+                // nové zprávy ohlásí WebSocket (PollNow), dotaz na server je jen pojistka
+                bool recent = Time.unscaledTime - lastNews < 30f;
+                pollAt = Time.unscaledTime + (typing ? 2f : recent ? 4f : 8f);
                 StartCoroutine(Poll());
             }
             if (!typing && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !Blocked())
@@ -117,7 +123,9 @@ namespace Voxario.Ashes
             yield return boot.api.Rpc("ashes_chat_send", "{\"p_channel\":" + MiniJson.Write(channel) + ",\"p_text\":" + MiniJson.Write(text) + "}", (j, e) => err = e);
             sending = false;
             if (err != null) Error(err);
+            else WorldPresence.Instance?.Signal("chat");
             pollAt = 0;
+            lastNews = Time.unscaledTime;
         }
 
         void Error(string e) { error = e; errorUntil = Time.unscaledTime + 4; }

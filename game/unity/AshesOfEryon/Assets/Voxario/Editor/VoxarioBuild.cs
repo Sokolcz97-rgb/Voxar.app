@@ -117,6 +117,8 @@ public static class VoxarioBuild
         // ray tracing (DXR) – ve hře volitelný, zapne se jen na kartách, které ho umí
         SetBool(so, "m_RenderPipelineSettings.supportSSR", true);
         SetBool(so, "m_RenderPipelineSettings.supportRayTracing", true);
+        SetBool(so, "m_RenderPipelineSettings.supportScreenSpaceLensFlare", true);
+        SetBool(so, "m_RenderPipelineSettings.supportDataDrivenLensFlare", true);
         var rtMode = so.FindProperty("m_RenderPipelineSettings.supportedRayTracingMode");
         if (rtMode != null)
         {
@@ -217,7 +219,7 @@ public static class VoxarioBuild
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
         var ver = Arg("-buildVersion");
-        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.3" : ver;
+        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.4" : ver;
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,

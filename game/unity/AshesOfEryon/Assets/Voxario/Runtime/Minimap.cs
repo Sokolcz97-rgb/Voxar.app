@@ -85,6 +85,9 @@ namespace Voxario.Ashes
             EryonSkin.DiamondAt(new Vector2(rect.center.x, rect.y - 2), 24, Color.white);
             GUI.Label(new Rect(rect.center.x - 12, rect.y - 14, 24, 24), "S", cs);
             GUI.Label(new Rect(rect.x, rect.yMax + 8, size, 22), RegionName(pw), new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 15, normal = { textColor = EryonSkin.GoldBright } });
+            if (DayNight.Instance != null)
+                GUI.Label(new Rect(rect.x - 20, rect.yMax + 28, size + 40, 20), DayNight.Instance.ClockText() + (WorldPresence.PingMs > 0 ? $"   ·   odezva {WorldPresence.PingMs} ms" : ""),
+                    new GUIStyle(EryonSkin.Small) { alignment = TextAnchor.MiddleCenter, fontSize = 14, wordWrap = false });
         }
 
         static void Border(Rect r)

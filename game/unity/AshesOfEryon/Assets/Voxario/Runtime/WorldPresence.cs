@@ -33,13 +33,36 @@ namespace Voxario.Ashes
             public string name, cls, gender;
             public int level;
             public CharacterView view;
-            public Vector2 pos, target;
+            public Vector2 pos, target, vel;
+            public float stamp;
             public float ry;
             public bool hasPos;
         }
         readonly Dictionary<string, Other> others = new Dictionary<string, Other>();
 
         public int Count => others.Count;
+        public static WorldPresence Instance { get; private set; }
+        /// <summary>Odezva serveru (WebSocket, tam a zpět) v ms; 0 = zatím neměřeno.</summary>
+        public static int PingMs { get; private set; }
+        string pingRef;
+        float pingSentAt;
+        Vector3 lastVel;
+        float lastSendTime;
+
+        void Awake() => Instance = this;
+
+        /// <summary>Krátký signál ostatním (např. „chat“ = nová zpráva).</summary>
+        public void Signal(string ev)
+        {
+            if (!joined) return;
+            Enqueue(new Dictionary<string, object>
+            {
+                ["topic"] = topic, ["event"] = "broadcast", ["ref"] = NextRef(), ["join_ref"] = "1",
+                ["payload"] = new Dictionary<string, object> { ["type"] = "broadcast", ["event"] = ev, ["payload"] = new Dictionary<string, object> { ["uid"] = uid } },
+            });
+        }
+
+        static double R2(float v) => Math.Round(v, 2);
 
         /// <summary>Znovu poslat údaje o sobě (např. po vstupu do oddílu).</summary>
         public void Retrack()
@@ -190,24 +213,38 @@ namespace Voxario.Ashes
             float now = Time.unscaledTime;
             if (joined && now > heartbeatAt)
             {
-                heartbeatAt = now + 25;
-                Enqueue(new Dictionary<string, object> { ["topic"] = "phoenix", ["event"] = "heartbeat", ["payload"] = new Dictionary<string, object>(), ["ref"] = NextRef() });
+                // heartbeat drží spojení a zároveň měří odezvu
+                heartbeatAt = now + 5;
+                pingRef = NextRef();
+                pingSentAt = now;
+                Enqueue(new Dictionary<string, object> { ["topic"] = "phoenix", ["event"] = "heartbeat", ["payload"] = new Dictionary<string, object>(), ["ref"] = pingRef });
             }
             if (joined && boot.player != null && now > sendAt)
             {
-                sendAt = now + 0.25f;
+                // posílá se poloha + rychlost; ostatní si mezi zprávami pohyb dopočítají.
+                // Rovný běh = 3× za s, změna směru = hned (max 6× za s), stání = nic.
+                sendAt = now + 0.16f;
                 var pos = boot.player.transform.position;
-                if ((pos - lastSent).sqrMagnitude > 0.0025f)
+                float since = now - lastSendTime;
+                var vel = since > 0.01f ? (pos - lastSent) / Mathf.Max(since, 0.16f) : Vector3.zero;
+                bool moved = (pos - lastSent).sqrMagnitude > 0.0025f;
+                bool turned = (vel - lastVel).sqrMagnitude > 0.8f;
+                bool stopped = !moved && lastVel.sqrMagnitude > 0.01f;
+                if ((moved && (turned || since > 0.33f)) || stopped)
                 {
+                    if (stopped) vel = Vector3.zero;
                     lastSent = pos;
+                    lastVel = vel;
+                    lastSendTime = now;
                     var p = WorldMap.ToWeb(pos);
+                    var v = new Vector2(vel.x, -vel.z);
                     Enqueue(new Dictionary<string, object>
                     {
                         ["topic"] = topic, ["event"] = "broadcast", ["ref"] = NextRef(), ["join_ref"] = "1",
                         ["payload"] = new Dictionary<string, object>
                         {
                             ["type"] = "broadcast", ["event"] = "pos",
-                            ["payload"] = new Dictionary<string, object> { ["x"] = p.x, ["z"] = p.y, ["ry"] = Ry(), ["uid"] = uid },
+                            ["payload"] = new Dictionary<string, object> { ["x"] = R2(p.x), ["z"] = R2(p.y), ["vx"] = R2(v.x), ["vz"] = R2(v.y), ["ry"] = R2(Ry()), ["uid"] = uid },
                         },
                     });
                 }
@@ -218,7 +255,10 @@ namespace Voxario.Ashes
             {
                 if (o.view == null || !o.hasPos) continue;
                 var before = o.pos;
-                o.pos = Vector2.Lerp(o.pos, o.target, 1 - Mathf.Exp(-8 * dt));
+                // dopočet polohy podle poslední rychlosti (max 0,6 s), skryje zpoždění sítě
+                float age = Mathf.Min(Time.unscaledTime - o.stamp + PingMs / 2000f, 0.6f);
+                var predicted = o.target + o.vel * age;
+                o.pos = Vector2.Lerp(o.pos, predicted, 1 - Mathf.Exp(-10 * dt));
                 float spd = (o.pos - before).magnitude / Mathf.Max(dt, 0.001f);
                 o.view.speed = spd > 0.3f ? spd : 0;
                 o.view.transform.position = WorldMap.ToWorld(o.pos.x, o.pos.y);
@@ -240,6 +280,13 @@ namespace Voxario.Ashes
                     reconnectAt = Time.unscaledTime + 5;
                     break;
                 case "phx_reply":
+                    if (pingRef != null && MiniJson.S(msg, "ref") == pingRef)
+                    {
+                        int ms = Mathf.RoundToInt((Time.unscaledTime - pingSentAt) * 1000f);
+                        PingMs = PingMs == 0 ? ms : Mathf.RoundToInt(PingMs * 0.6f + ms * 0.4f);
+                        pingRef = null;
+                        break;
+                    }
                     if (MiniJson.S(msg, "ref") == "1")
                     {
                         if (MiniJson.S(payload, "status") == "ok") { joined = true; heartbeatAt = Time.unscaledTime + 25; Track(); }
@@ -257,6 +304,7 @@ namespace Voxario.Ashes
                     if (joins != null) foreach (var kv in joins) Join(kv.Key, kv.Value);
                     break;
                 case "broadcast":
+                    if (MiniJson.S(payload, "event") == "chat") { Chat.Instance?.PollNow(); break; }
                     if (MiniJson.S(payload, "event") != "pos") break;
                     var p = MiniJson.Obj(payload.TryGetValue("payload", out var bp) ? bp : null);
                     string id = MiniJson.S(p, "uid");
@@ -264,6 +312,9 @@ namespace Voxario.Ashes
                     double x = MiniJson.N(p, "x", double.NaN), z = MiniJson.N(p, "z", double.NaN), ry = MiniJson.N(p, "ry", 0);
                     if (double.IsNaN(x) || double.IsNaN(z) || Math.Abs(x) > 200 || Math.Abs(z) > 200) break;
                     o.target = new Vector2((float)x, (float)z);
+                    o.vel = new Vector2((float)MiniJson.N(p, "vx", 0), (float)MiniJson.N(p, "vz", 0));
+                    if (o.vel.sqrMagnitude > 200) o.vel = Vector2.zero;
+                    o.stamp = Time.unscaledTime;
                     o.ry = (float)ry;
                     if (!o.hasPos) { o.pos = o.target; o.hasPos = true; o.view.gameObject.SetActive(true); }
                     break;

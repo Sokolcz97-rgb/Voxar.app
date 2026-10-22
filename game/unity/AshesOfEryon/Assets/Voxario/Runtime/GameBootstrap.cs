@@ -64,6 +64,9 @@ namespace Voxario.Ashes
             gameObject.AddComponent<WorldBoss>().boot = this;
             gameObject.AddComponent<Waypoint>().boot = this;
             gameObject.AddComponent<Race>().boot = this;
+            var dayNight = gameObject.AddComponent<DayNight>();
+            dayNight.boot = this;
+            dayNight.Build();
         }
 
         IEnumerator Start()
