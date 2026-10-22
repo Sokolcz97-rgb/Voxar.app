@@ -50,26 +50,96 @@ namespace Voxario.Ashes
         }
 
         // ------------------------------------------------------------------ přihlášení
+        bool showPassword, rememberEmail = true, loginInit;
+        Texture2D fadeTex;
+        [System.Serializable] class NewsItem { public string title_cs, text_cs, published_at; }
+        [System.Serializable] class NewsList { public NewsItem[] items; }
+        NewsItem[] news;
+        int serverState; // 0 = ověřuji, 1 = online, -1 = nedostupné
+        bool newsLoading;
+        const string Site = "https://studiovoxario.com";
+
+        System.Collections.IEnumerator LoadNews()
+        {
+            newsLoading = true;
+            var url = SupabaseClient.Url + "/rest/v1/ashes_changelog?select=title_cs,text_cs,published_at&kind=eq.game&order=published_at.desc&limit=3";
+            using (var req = UnityEngine.Networking.UnityWebRequest.Get(url))
+            {
+                req.SetRequestHeader("apikey", SupabaseClient.PublishableKey);
+                req.timeout = 10;
+                yield return req.SendWebRequest();
+                if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    serverState = 1;
+                    news = JsonUtility.FromJson<NewsList>("{\"items\":" + req.downloadHandler.text + "}")?.items;
+                }
+                else serverState = -1;
+            }
+        }
+
+        void InitLogin()
+        {
+            loginInit = true;
+            rememberEmail = PlayerPrefs.GetInt("login.remember", 1) == 1;
+            if (rememberEmail && string.IsNullOrEmpty(email)) email = PlayerPrefs.GetString("login.email", "");
+            fadeTex = new Texture2D(256, 1, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int i = 0; i < 256; i++)
+            {
+                float t = i / 255f;
+                float a = t < 0.55f ? 0.86f : Mathf.Lerp(0.86f, 0f, Mathf.SmoothStep(0, 1, (t - 0.55f) / 0.45f));
+                fadeTex.SetPixel(i, 0, new Color(0.025f, 0.018f, 0.012f, a));
+            }
+            fadeTex.Apply();
+            if (!newsLoading) StartCoroutine(LoadNews());
+        }
+
+        void DoSignIn()
+        {
+            PlayerPrefs.SetInt("login.remember", rememberEmail ? 1 : 0);
+            PlayerPrefs.SetString("login.email", rememberEmail ? email.Trim() : "");
+            boot.SignIn(email.Trim(), password);
+        }
+
+        static string NewsDate(string iso)
+        {
+            return System.DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var d)
+                ? d.ToLocalTime().ToString("d. M. yyyy") : "";
+        }
+
+        void LinkButton(string text, string url, float width)
+        {
+            var st = new GUIStyle(EryonSkin.Small) { fontSize = 16, normal = { textColor = EryonSkin.GoldBright }, hover = { textColor = Color.white } };
+            if (GUILayout.Button(text, st, GUILayout.Width(width))) Application.OpenURL(url);
+            var lr = GUILayoutUtility.GetLastRect();
+            EryonSkin.Fill(new Rect(lr.x, lr.yMax - 3, Mathf.Min(lr.width, st.CalcSize(new GUIContent(text)).x), 1), new Color(0.85f, 0.7f, 0.4f, 0.5f));
+        }
+
         void LoginScreen()
         {
+            if (!loginInit) InitLogin();
             float W = EryonSkin.W, H = EryonSkin.H;
             var full = new Rect(0, 0, W, H);
             EryonSkin.Cover(full, EryonSkin.Background);
             GUI.DrawTexture(full, EryonSkin.Vignette);
-            EryonSkin.Fill(new Rect(0, 0, W * 0.42f, H), new Color(0.03f, 0.02f, 0.015f, 0.55f));
+            // plynulý přechod místo ostré hrany
+            GUI.DrawTexture(new Rect(0, 0, W * 0.62f, H), fadeTex);
 
             // levý sloupec: logo a přihlášení
             float colW = 520, x = Mathf.Max(60, W * 0.08f);
-            if (EryonSkin.Logo != null) GUI.DrawTexture(new Rect(x + colW / 2 - 150, H * 0.06f, 300, 300), EryonSkin.Logo, ScaleMode.ScaleToFit);
-            GUI.Label(new Rect(x, H * 0.06f + 300, colW, 30), "KAPITOLA I  ·  POSLEDNÍ ŠTÍT", new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 16, normal = { textColor = EryonSkin.Gold } });
+            float top = Mathf.Max(20, H * 0.05f);
+            if (EryonSkin.Logo != null) GUI.DrawTexture(new Rect(x + colW / 2 - 140, top, 280, 280), EryonSkin.Logo, ScaleMode.ScaleToFit);
+            var capsC = new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleCenter, fontSize = 16, normal = { textColor = EryonSkin.Gold } };
+            GUI.Label(new Rect(x, top + 282, colW, 26), "KAPITOLA I  ·  POSLEDNÍ ŠTÍT", capsC);
+            EryonSkin.Ornament(new Rect(x + colW / 2 - 90, top + 310, 180, 12));
 
-            var r = new Rect(x, H * 0.06f + 350, colW, CrashReporter.Notice != null ? 470 : 400);
+            bool form = !(boot.busy || boot.api.SignedIn);
+            var r = new Rect(x, top + 334, colW, form ? (CrashReporter.Notice != null ? 500 : 450) : 300);
             var inner = EryonSkin.DrawPanel(r, "Vstup do Kalidry");
             GUILayout.BeginArea(inner);
             if (boot.busy || (boot.api.SignedIn && boot.state == null && string.IsNullOrEmpty(boot.status)))
             {
-                GUILayout.Space(40);
-                Spinner(new Vector2(inner.width / 2, 70));
+                GUILayout.Space(30);
+                Spinner(new Vector2(inner.width / 2, 60));
                 GUILayout.Space(70);
                 GUILayout.Label(string.IsNullOrEmpty(boot.status) ? "Načítám…" : boot.status, EryonSkin.Center);
             }
@@ -82,30 +152,103 @@ namespace Voxario.Ashes
             }
             else
             {
+                bool enter = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
                 GUILayout.Label("E-MAIL ÚČTU STUDIOVOXARIO", EryonSkin.Caps);
                 GUI.SetNextControlName("email");
-                email = GUILayout.TextField(email, EryonSkin.Field, GUILayout.Height(44));
-                GUILayout.Space(10);
+                email = GUILayout.TextField(email, 120, EryonSkin.Field, GUILayout.Height(46));
+                GUILayout.Space(12);
+                GUILayout.BeginHorizontal();
                 GUILayout.Label("HESLO", EryonSkin.Caps);
-                password = GUILayout.PasswordField(password, '•', EryonSkin.Field, GUILayout.Height(44));
-                GUILayout.Space(18);
-                bool can = email.Length > 3 && password.Length > 0;
-                GUI.enabled = can;
-                bool enter = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
-                if (GUILayout.Button("VSTOUPIT DO SVĚTA", EryonSkin.ButtonPrimary, GUILayout.Height(54)) || (enter && can)) boot.SignIn(email.Trim(), password);
-                GUI.enabled = true;
-                GUILayout.Space(8);
-                if (!string.IsNullOrEmpty(boot.status)) GUILayout.Label($"<color=#e0672a>{boot.status}</color>", EryonSkin.Small);
                 GUILayout.FlexibleSpace();
-                if (CrashReporter.Notice != null) GUILayout.Label($"<color=#e0672a>{CrashReporter.Notice}</color>", EryonSkin.Small);
-                GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Na studiovoxario.com si v profilu nastav heslo.", EryonSkin.Small);
+                if (GUILayout.Button(showPassword ? "skrýt" : "zobrazit", new GUIStyle(EryonSkin.Small) { fontSize = 14, alignment = TextAnchor.MiddleRight, normal = { textColor = EryonSkin.Gold } }, GUILayout.Width(90)))
+                    showPassword = !showPassword;
+                GUILayout.EndHorizontal();
+                GUI.SetNextControlName("password");
+                password = showPassword ? GUILayout.TextField(password, 128, EryonSkin.Field, GUILayout.Height(46))
+                                        : GUILayout.PasswordField(password, '•', 128, EryonSkin.Field, GUILayout.Height(46));
+                if (Event.current.capsLock && GUI.GetNameOfFocusedControl() == "password")
+                    GUILayout.Label("<color=#e0a040>Pozor, máš zapnutý Caps Lock.</color>", new GUIStyle(EryonSkin.Small) { richText = true, fontSize = 14 });
+                else GUILayout.Space(6);
+                GUILayout.Space(4);
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(4);
+                if (GUILayout.Button("        Zapamatovat e-mail", new GUIStyle(EryonSkin.Small) { fontSize = 16, normal = { textColor = EryonSkin.Text } }, GUILayout.Width(260), GUILayout.Height(26)))
+                    rememberEmail = !rememberEmail;
+                var cb = GUILayoutUtility.GetLastRect();
+                var box = new Rect(cb.x + 2, cb.y + 5, 16, 16);
+                EryonSkin.Fill(box, EryonSkin.Gold);
+                EryonSkin.Fill(new Rect(box.x + 2, box.y + 2, 12, 12), new Color(0.05f, 0.04f, 0.03f, 1f));
+                if (rememberEmail) EryonSkin.Fill(new Rect(box.x + 5, box.y + 5, 6, 6), EryonSkin.GoldBright);
+                GUILayout.FlexibleSpace();
+                LinkButton("Zapomenuté heslo?", Site + "/reset-password" + (email.Contains("@") ? "?email=" + System.Uri.EscapeDataString(email.Trim()) : ""), 160);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(10);
+                bool can = email.Trim().Length > 3 && email.Contains("@") && password.Length > 0;
+                GUI.enabled = can;
+                if (GUILayout.Button("VSTOUPIT DO SVĚTA", EryonSkin.ButtonPrimary, GUILayout.Height(56)) || (enter && can)) DoSignIn();
+                GUI.enabled = true;
+                // první spuštění: kurzor rovnou do pole
+                if (Event.current.type == EventType.Repaint && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
+                    GUI.FocusControl(string.IsNullOrEmpty(email) ? "email" : "password");
+                GUILayout.Space(6);
+                if (!string.IsNullOrEmpty(boot.status)) GUILayout.Label($"<color=#e0672a>{boot.status}</color>", new GUIStyle(EryonSkin.Small) { richText = true, wordWrap = true });
+                GUILayout.FlexibleSpace();
+                if (CrashReporter.Notice != null) GUILayout.Label($"<color=#e0672a>{CrashReporter.Notice}</color>", new GUIStyle(EryonSkin.Small) { richText = true, wordWrap = true });
+                EryonSkin.Fill(GUILayoutUtility.GetRect(inner.width, 1), EryonSkin.Line);
+                GUILayout.Space(6);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Nemáš účet?", new GUIStyle(EryonSkin.Small) { fontSize = 16 }, GUILayout.Width(110));
+                LinkButton("Vytvoř si ho zdarma", Site + "/auth", 200);
+                GUILayout.EndHorizontal();
+                GUILayout.Label("Přihlašuješ se přes Google nebo Discord? Klikni na „Zapomenuté heslo?“ a nastav si heslo i pro hru.", new GUIStyle(EryonSkin.Small) { fontSize = 15, wordWrap = true });
             }
             GUILayout.EndArea();
 
-            // pravý dolní roh: verze a technika
-            var info = $"Unity · DirectX 12 · {(Upscaling.DlssSupported ? "NVIDIA DLSS" : "AMD FSR 2")}    verze {Application.version}";
-            GUI.Label(new Rect(W - 640, H - 44, 610, 30), info, new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleRight });
-            GUI.Label(new Rect(W - 640, H - 80, 610, 34), "Every choice leaves a scar.", new GUIStyle(EryonSkin.Body) { alignment = TextAnchor.MiddleRight, fontSize = 26, fontStyle = FontStyle.Italic, normal = { textColor = new Color(0.93f, 0.89f, 0.82f, 0.8f) } });
+            // pravý sloupec: stav serveru a novinky
+            float nw = 470, nx = W - nw - Mathf.Max(40, W * 0.04f), ny = top + 10;
+            var dot = serverState == 1 ? new Color(0.35f, 0.85f, 0.45f) : serverState == -1 ? new Color(0.9f, 0.35f, 0.25f) : new Color(0.9f, 0.75f, 0.3f);
+            var sr = new Rect(nx, ny, nw, 40);
+            EryonSkin.Fill(sr, new Color(0.03f, 0.02f, 0.015f, 0.7f));
+            EryonSkin.Fill(new Rect(sr.x + 16, sr.y + 15, 10, 10), dot);
+            GUI.Label(new Rect(sr.x + 36, sr.y, nw - 50, 40), serverState == 1 ? "SERVERY ONLINE" : serverState == -1 ? "SERVERY NEDOSTUPNÉ" : "OVĚŘUJI SERVERY…",
+                new GUIStyle(EryonSkin.Caps) { fontSize = 15, alignment = TextAnchor.MiddleLeft });
+            GUI.Label(new Rect(sr.x, sr.y, nw - 16, 40), "Uzavřený test", new GUIStyle(EryonSkin.Small) { fontSize = 14, alignment = TextAnchor.MiddleRight });
+            if (news != null && news.Length > 0)
+            {
+                float y = ny + 54;
+                GUI.Label(new Rect(nx, y, nw, 28), "NOVINKY", new GUIStyle(EryonSkin.Caps) { fontSize = 16, normal = { textColor = EryonSkin.Gold } });
+                y += 32;
+                var tSt = new GUIStyle(EryonSkin.BodyBold) { fontSize = 19, wordWrap = true };
+                var bSt = new GUIStyle(EryonSkin.Small) { fontSize = 15, wordWrap = true };
+                foreach (var n in news)
+                {
+                    if (n == null || y > H - 220) break;
+                    string body = n.text_cs ?? "";
+                    string title = (n.title_cs ?? "").Replace("Unity verze", "Verze");
+                    if (body.Length > 170) body = body.Substring(0, 167).TrimEnd() + "…";
+                    float th = tSt.CalcHeight(new GUIContent(title), nw - 32), bh = bSt.CalcHeight(new GUIContent(body), nw - 32);
+                    var card = new Rect(nx, y, nw, th + bh + 46);
+                    EryonSkin.Fill(card, new Color(0.03f, 0.02f, 0.015f, 0.72f));
+                    EryonSkin.Fill(new Rect(card.x, card.y, 3, card.height), EryonSkin.Gold);
+                    GUI.Label(new Rect(card.x + 16, card.y + 10, nw - 32, 18), NewsDate(n.published_at), new GUIStyle(EryonSkin.Small) { fontSize = 13 });
+                    GUI.Label(new Rect(card.x + 16, card.y + 28, nw - 32, th), title, tSt);
+                    GUI.Label(new Rect(card.x + 16, card.y + 32 + th, nw - 32, bh), body, bSt);
+                    y += card.height + 10;
+                }
+            }
+
+            // spodní lišta: odkazy vlevo, verze vpravo
+            var foot = new GUIStyle(EryonSkin.Small) { fontSize = 14, wordWrap = false, clipping = TextClipping.Overflow, normal = { textColor = new Color(0.85f, 0.8f, 0.72f, 0.75f) }, hover = { textColor = EryonSkin.GoldBright } };
+            float fx = x;
+            foreach (var (label, url) in new[] { ("© 2026 StudioVoxario", Site), ("Podmínky použití", Site + "/terms"), ("Ochrana soukromí", Site + "/privacy"), ("Podpora", Site) })
+            {
+                float lw = foot.CalcSize(new GUIContent(label)).x;
+                if (GUI.Button(new Rect(fx, H - 40, lw + 4, 26), label, foot)) Application.OpenURL(url);
+                fx += lw + 26;
+            }
+            var info = $"DirectX 12 · {(Upscaling.DlssSupported ? "NVIDIA DLSS" : "AMD FSR 2")}   ·   verze {Application.version}";
+            GUI.Label(new Rect(W - 640, H - 44, 610, 30), info, new GUIStyle(EryonSkin.Caps) { alignment = TextAnchor.MiddleRight, fontSize = 14 });
+            GUI.Label(new Rect(W - 640, H - 82, 610, 34), "Každá volba zanechá jizvu.", new GUIStyle(EryonSkin.Body) { alignment = TextAnchor.MiddleRight, fontSize = 26, fontStyle = FontStyle.Italic, normal = { textColor = new Color(0.93f, 0.89f, 0.82f, 0.8f) } });
         }
 
         // ------------------------------------------------------------------ tvorba postavy
