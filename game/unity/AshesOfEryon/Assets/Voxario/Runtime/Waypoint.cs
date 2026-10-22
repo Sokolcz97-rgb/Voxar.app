@@ -39,6 +39,11 @@ namespace Voxario.Ashes
             if (Encounters.Instance != null)
                 foreach (var t in Encounters.Instance.QuestTargets())
                     Consider(WorldMap.ToWorld(t.x, t.y), "cíl úkolu", 1f);
+            // 3) bez úkolů: světový boss (stejně jako ho doporučuje rádce)
+            var wb = WorldBoss.Instance;
+            if (target == null && wb?.View != null && wb.state != null && wb.state.alive
+                && boot.state?.character != null && boot.state.character.level >= 2)
+                Consider(wb.View.transform.position, "Thalassos – světový boss", 1f);
         }
 
         void OnGUI()
@@ -58,6 +63,8 @@ namespace Voxario.Ashes
             if (behind) v = new Vector2(W - v.x, H - v.y);
             float m = 70;
             bool off = behind || v.x < m || v.x > W - m || v.y < m + 150 || v.y > H - m - 60;
+            // blízký cíl na obrazovce má vlastní značku (vykřičník / jmenovka) – nepřekrývat
+            if (!off && Vector3.Distance(boot.player.transform.position, target.Value) < 12f) return;
             if (off)
             {
                 // na okraj obrazovky ve směru cíle

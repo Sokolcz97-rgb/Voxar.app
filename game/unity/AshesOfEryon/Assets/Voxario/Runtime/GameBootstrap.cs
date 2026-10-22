@@ -268,7 +268,7 @@ namespace Voxario.Ashes
                 ("7-krajina", WorldMap.ToWorld(-40, 30) + new Vector3(0, 9, 0), WorldMap.ToWorld(-20, 0) + Vector3.up * 3),
                 ("8-akvadukt", WorldMap.ToWorld(-30, 12) + new Vector3(0, 5, 0), WorldMap.ToWorld(-45, 13) + Vector3.up * 4),
                 ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
-                ("18-obr", WorldMap.ToWorld(WorldBoss.Spot.x - 9, WorldBoss.Spot.y + 6) + new Vector3(0, 4, 0), WorldMap.ToWorld(WorldBoss.Spot.x, WorldBoss.Spot.y) + Vector3.up * 3),
+                ("18-obr", WorldMap.ToWorld(WorldBoss.Spot.x - 9, WorldBoss.Spot.y + 6) + new Vector3(0, 3, 0), WorldMap.ToWorld(WorldBoss.Spot.x, WorldBoss.Spot.y) + Vector3.up * 1.5f),
             };
             foreach (var v in views)
             {
