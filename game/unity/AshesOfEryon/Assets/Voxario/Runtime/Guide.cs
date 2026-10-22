@@ -63,6 +63,7 @@ namespace Voxario.Ashes
             foreach (var q in data.quests)
                 if (q.faction == fac && st.Quest(q.id) == null && Unlocked(q, st))
                     return $"Nový úkol čeká u: {NpcName(q.giver)} – nad hlavou má zlatý vykřičník. Přijdi k němu a stiskni E.";
+            if (st.GiftReady) return "Čeká na tebe denní dar – otevři Kroniku (K) a vyzvedni si zlato a zkušenosti.";
             // 4) výprava z Kroniky
             var rem = Chronicle.Instance?.Remaining;
             if (rem.HasValue && rem.Value.TotalSeconds <= 0) return "Výprava skončila – otevři Kroniku (K) a dokonči ji soubojem.";

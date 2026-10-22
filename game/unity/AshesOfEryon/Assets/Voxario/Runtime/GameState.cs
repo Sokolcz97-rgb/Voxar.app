@@ -28,7 +28,7 @@ namespace Voxario.Ashes
         public bool is_azkar;
         public int sila, obratnost, intelekt, vydrz, stesti;
         public int chapter_progress, courage;
-        public string boss_ready_at, arena_ready_at;
+        public string boss_ready_at, arena_ready_at, daily_gift_day;
         public Appearance appearance;
     }
 
@@ -104,6 +104,10 @@ namespace Voxario.Ashes
         public ChapterInfo chapter;
         public WorldInfo world;
         public ChronicleEntry[] chronicle;
+
+        /// <summary>Dnešní dar ještě nevyzvednut (datum serveru).</summary>
+        public bool GiftReady => character != null && !string.IsNullOrEmpty(now) && now.Length >= 10
+                                 && character.daily_gift_day != now.Substring(0, 10);
 
         public int BagCount
         {
