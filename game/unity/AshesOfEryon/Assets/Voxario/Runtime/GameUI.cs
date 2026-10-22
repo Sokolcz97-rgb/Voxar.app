@@ -133,7 +133,7 @@ namespace Voxario.Ashes
             EryonSkin.Ornament(new Rect(x + colW / 2 - 90, top + 310, 180, 12));
 
             bool form = !(boot.busy || boot.api.SignedIn);
-            var r = new Rect(x, top + 334, colW, form ? (CrashReporter.Notice != null ? 560 : 510) : 300);
+            var r = new Rect(x, top + 334, colW, form ? (CrashReporter.Notice != null ? 500 : 450) : 300);
             var inner = EryonSkin.DrawPanel(r, "Vstup do Kalidry");
             GUILayout.BeginArea(inner);
             if (boot.busy || (boot.api.SignedIn && boot.state == null && string.IsNullOrEmpty(boot.status)))
@@ -171,8 +171,14 @@ namespace Voxario.Ashes
                 else GUILayout.Space(6);
                 GUILayout.Space(4);
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button((rememberEmail ? "◆  " : "◇  ") + "Zapamatovat e-mail", new GUIStyle(EryonSkin.Small) { fontSize = 16, normal = { textColor = EryonSkin.Text } }, GUILayout.Width(260)))
+                GUILayout.Space(4);
+                if (GUILayout.Button("        Zapamatovat e-mail", new GUIStyle(EryonSkin.Small) { fontSize = 16, normal = { textColor = EryonSkin.Text } }, GUILayout.Width(260), GUILayout.Height(26)))
                     rememberEmail = !rememberEmail;
+                var cb = GUILayoutUtility.GetLastRect();
+                var box = new Rect(cb.x + 2, cb.y + 5, 16, 16);
+                EryonSkin.Fill(box, EryonSkin.Gold);
+                EryonSkin.Fill(new Rect(box.x + 2, box.y + 2, 12, 12), new Color(0.05f, 0.04f, 0.03f, 1f));
+                if (rememberEmail) EryonSkin.Fill(new Rect(box.x + 5, box.y + 5, 6, 6), EryonSkin.GoldBright);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(10);
                 bool can = email.Trim().Length > 3 && email.Contains("@") && password.Length > 0;
@@ -216,25 +222,26 @@ namespace Voxario.Ashes
                 {
                     if (n == null || y > H - 220) break;
                     string body = n.text_cs ?? "";
+                    string title = (n.title_cs ?? "").Replace("Unity verze", "Verze");
                     if (body.Length > 170) body = body.Substring(0, 167).TrimEnd() + "…";
-                    float th = tSt.CalcHeight(new GUIContent(n.title_cs), nw - 32), bh = bSt.CalcHeight(new GUIContent(body), nw - 32);
+                    float th = tSt.CalcHeight(new GUIContent(title), nw - 32), bh = bSt.CalcHeight(new GUIContent(body), nw - 32);
                     var card = new Rect(nx, y, nw, th + bh + 46);
                     EryonSkin.Fill(card, new Color(0.03f, 0.02f, 0.015f, 0.72f));
                     EryonSkin.Fill(new Rect(card.x, card.y, 3, card.height), EryonSkin.Gold);
                     GUI.Label(new Rect(card.x + 16, card.y + 10, nw - 32, 18), NewsDate(n.published_at), new GUIStyle(EryonSkin.Small) { fontSize = 13 });
-                    GUI.Label(new Rect(card.x + 16, card.y + 28, nw - 32, th), n.title_cs, tSt);
+                    GUI.Label(new Rect(card.x + 16, card.y + 28, nw - 32, th), title, tSt);
                     GUI.Label(new Rect(card.x + 16, card.y + 32 + th, nw - 32, bh), body, bSt);
                     y += card.height + 10;
                 }
             }
 
             // spodní lišta: odkazy vlevo, verze vpravo
-            var foot = new GUIStyle(EryonSkin.Small) { fontSize = 14, normal = { textColor = new Color(0.85f, 0.8f, 0.72f, 0.75f) }, hover = { textColor = EryonSkin.GoldBright } };
+            var foot = new GUIStyle(EryonSkin.Small) { fontSize = 14, wordWrap = false, clipping = TextClipping.Overflow, normal = { textColor = new Color(0.85f, 0.8f, 0.72f, 0.75f) }, hover = { textColor = EryonSkin.GoldBright } };
             float fx = x;
             foreach (var (label, url) in new[] { ("© 2026 StudioVoxario", Site), ("Podmínky použití", Site + "/terms"), ("Ochrana soukromí", Site + "/privacy"), ("Podpora", Site) })
             {
                 float lw = foot.CalcSize(new GUIContent(label)).x;
-                if (GUI.Button(new Rect(fx, H - 40, lw, 26), label, foot)) Application.OpenURL(url);
+                if (GUI.Button(new Rect(fx, H - 40, lw + 4, 26), label, foot)) Application.OpenURL(url);
                 fx += lw + 26;
             }
             var info = $"DirectX 12 · {(Upscaling.DlssSupported ? "NVIDIA DLSS" : "AMD FSR 2")}   ·   verze {Application.version}";
