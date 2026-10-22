@@ -147,7 +147,7 @@ namespace Voxario.Ashes
             if (r.state?.character != null) boot.state = r.state;
             bestMs = r.best_ms; runsLeft = r.runs_left; top = r.top ?? new Top[0];
             string t = Sec(r.ms);
-            string reward = r.gold > 0 ? $"  ◆ +{r.gold} zlata, +{r.xp} zkušeností" : "";
+            string reward = r.gold > 0 ? $"  +{r.gold} zlata, +{r.xp} zkušeností" : "";
             Note((r.record ? $"NOVÝ REKORD! {t}" : $"Doběhl jsi za {t} (rekord {Sec(r.best_ms)}).") + reward);
             Sfx.Play(r.levels > 0 ? "level" : r.record ? "quest" : "coin");
         }

@@ -633,7 +633,7 @@ namespace Voxario.Ashes
                 if (arenaMode && arenaHonor == int.MinValue)
                 {
                     if (result.won || storyNoteAlways)
-                        GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold, richText = true });
+                        RewardLine($"<color=#c8a8ff>+{result.xp} zkušeností</color>", result.gold, null);
                     else
                         GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>  ·  Ustoupil jsi, ale přežil.", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true });
                     if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
@@ -644,13 +644,12 @@ namespace Voxario.Ashes
                 else if (arenaMode)
                 {
                     string hon = arenaHonor >= 0 ? $"<color=#9fd4f0>✦ +{arenaHonor} cti</color>" : $"<color=#e0672a>✦ {arenaHonor} cti</color>";
-                    string gl = (result.xp > 0 ? $"      <color=#c8a8ff>+{result.xp} zk.</color>" : "") + (result.gold > 0 ? $"      <color=#f0d08a>◆ +{result.gold} zlata</color>" : "");
-                    GUILayout.Label(hon + gl, new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    RewardLine(hon + (result.xp > 0 ? $"      <color=#c8a8ff>+{result.xp} zk.</color>" : ""), result.gold, null);
                     GUILayout.Label(result.won ? "Dav v aréně skanduje tvé jméno." : "Tentokrát byl soupeř silnější. Trénuj a vrať se.", EryonSkin.Center);
                 }
                 else if (result.won)
                 {
-                    GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    RewardLine($"<color=#c8a8ff>+{result.xp} zkušeností</color>", result.gold, null);
                     if (result.item != null && result.item.Valid)
                         GUILayout.Label($"Kořist: <color=#{ColorUtility.ToHtmlStringRGB(CharacterWindow.RarityColor(result.item.rarity))}>{result.item.name}</color>  <size=18>(v batohu – klávesa I)</size>", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true, font = EryonSkin.CormorantBold });
                     if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
@@ -674,6 +673,23 @@ namespace Voxario.Ashes
             }
             var prompt = NearPrompt();
             if (prompt != null && !fighting) NpcDialog.Prompt(W, H, "E", prompt.Replace("[E]  ", ""));
+        }
+
+        /// <summary>Řádek odměny: text, mince se zlatem (když je), uprostřed.</summary>
+        static void RewardLine(string pre, int gold, string post)
+        {
+            var st = new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold, richText = true, wordWrap = false };
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (!string.IsNullOrEmpty(pre)) GUILayout.Label(pre, st);
+            if (gold > 0)
+            {
+                GUILayout.Space(30);
+                GUILayout.Label(new GUIContent($" +{gold} zlata", EryonSkin.CoinSmall), new GUIStyle(st) { normal = { textColor = new Color(0.94f, 0.82f, 0.54f) } }, GUILayout.Height(36));
+            }
+            if (!string.IsNullOrEmpty(post)) GUILayout.Label(post, st);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
         }
     }
 }

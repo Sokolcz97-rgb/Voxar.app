@@ -114,6 +114,17 @@ public static class VoxarioBuild
         SetInt(so, "m_RenderPipelineSettings.dynamicResolutionSettings.dynResType", 1); // Hardware
         SetBool(so, "m_RenderPipelineSettings.supportSSAO", true);
         SetBool(so, "m_RenderPipelineSettings.supportVolumetrics", true);
+        // ray tracing (DXR) – ve hře volitelný, zapne se jen na kartách, které ho umí
+        SetBool(so, "m_RenderPipelineSettings.supportSSR", true);
+        SetBool(so, "m_RenderPipelineSettings.supportRayTracing", true);
+        var rtMode = so.FindProperty("m_RenderPipelineSettings.supportedRayTracingMode");
+        if (rtMode != null)
+        {
+            Debug.Log("[Voxario] režimy ray tracingu: " + string.Join("/", rtMode.enumNames));
+            int both = Array.IndexOf(rtMode.enumNames, "Both");
+            if (both >= 0) rtMode.enumValueIndex = both;
+        }
+        else Debug.LogWarning("[Voxario] chybí supportedRayTracingMode");
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(asset);
         var check = new SerializedObject(asset);
@@ -206,7 +217,7 @@ public static class VoxarioBuild
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
         var ver = Arg("-buildVersion");
-        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.2" : ver;
+        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.3" : ver;
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,

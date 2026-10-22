@@ -12,6 +12,8 @@ namespace Voxario.Ashes
         public GameBootstrap boot;
         public WindowGuard guard;
         string email = "", password = "";
+        int hudGold = -1, goldGain;
+        float goldPulse = -10;
         bool settingsOpen;
         int tab;
         float fps, fpsTimer;
@@ -381,7 +383,19 @@ namespace Voxario.Ashes
             float xpK = ch.xp_need > 0 ? ch.xp / (float)ch.xp_need : 0;
             EryonSkin.Bar(new Rect(frame.x + 132, frame.y + 78, 270, 18), xpK, new Color(0.62f, 0.48f, 0.9f), ch.xp_need > 0 ? $"{ch.xp} / {ch.xp_need} zk." : "");
             // zlato a čest
-            GUI.Label(new Rect(frame.x + 132, frame.y + 100, 320, 24), $"<color=#8cc06b>❤ {Mathf.RoundToInt(boot.state.hp)}</color>    <color=#f0d08a>◆ {ch.gold}</color>    <color=#9fd4f0>✦ {ch.honor} cti</color>", new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold });
+            var hs = new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold, wordWrap = false };
+            string hpTxt = $"<color=#8cc06b>❤ {Mathf.RoundToInt(boot.state.hp)}</color>";
+            float hx = frame.x + 132;
+            GUI.Label(new Rect(hx, frame.y + 100, 120, 24), hpTxt, hs);
+            hx += hs.CalcSize(new GUIContent(hpTxt)).x + 18;
+            // zlato: mince a částka, při přírůstku krátce zazáří
+            if (ch.gold != hudGold) { if (ch.gold > hudGold && hudGold >= 0) { goldPulse = Time.time; goldGain = ch.gold - hudGold; } hudGold = ch.gold; }
+            float pulse = Mathf.Clamp01(1 - (Time.time - goldPulse) / 1.2f);
+            var gs = new GUIStyle(hs) { normal = { textColor = Color.Lerp(new Color(0.94f, 0.82f, 0.54f), Color.white, pulse) } };
+            hx += EryonSkin.GoldAt(new Rect(hx, frame.y + 99, 140, 26), ch.gold.ToString(), gs, 22 + pulse * 6) + 18;
+            if (pulse > 0 && goldGain > 0)
+                EryonSkin.Shadowed(new Rect(hx - 70, frame.y + 74 - (1 - pulse) * 18, 80, 22), $"+{goldGain}", new GUIStyle(gs) { fontSize = 17, normal = { textColor = new Color(1f, 0.88f, 0.5f, pulse) } });
+            GUI.Label(new Rect(hx, frame.y + 100, 140, 24), $"<color=#9fd4f0>✦ {ch.honor} cti</color>", hs);
 
             // spodní lišta s klávesami (tmavý podklad kvůli čitelnosti na světlém terénu)
             float y = H - 40;
@@ -480,6 +494,17 @@ namespace Voxario.Ashes
             string[] qn = { "Nízká", "Střední", "Vysoká", "Ultra" };
             for (int i = 0; i < qn.Length; i++)
                 if (EryonSkin.Toggle(qual == i, qn[i], GUILayout.Height(40))) Atmosphere.ApplyQuality(i);
+            GUILayout.EndHorizontal();
+
+            Section("Ray tracing", RayTracing.Supported
+                ? "Paprskově sledované odrazy, stíny slunce a okluze. Výrazně hezčí světlo, ale náročnější – doporučeno s DLSS."
+                : "Tvoje grafická karta nebo ovladač ray tracing (DirectX 12 DXR) nepodporuje. Potřeba je např. NVIDIA RTX nebo AMD RX 6000 a novější.");
+            GUILayout.BeginHorizontal();
+            GUI.enabled = RayTracing.Supported;
+            bool rtOn = RayTracing.Enabled;
+            if (EryonSkin.Toggle(!rtOn, "Vypnuto", GUILayout.Height(40))) RayTracing.Set(false);
+            if (EryonSkin.Toggle(rtOn, "Zapnuto", GUILayout.Height(40))) RayTracing.Set(true);
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
         }
 
