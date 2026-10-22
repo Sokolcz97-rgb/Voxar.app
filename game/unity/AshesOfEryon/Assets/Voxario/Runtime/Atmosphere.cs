@@ -137,8 +137,18 @@ namespace Voxario.Ashes
             QualitySettings.lodBias = q switch { 0 => 0.6f, 1 => 1f, 2 => 1.5f, _ => 2.5f };
             if (ssr != null) ssr.active = q >= 2 || RayTracing.Enabled;
             if (volClouds != null) volClouds.active = q >= 2;
+            Ocean.Instance?.Apply(q);
             if (cloudLayer != null) cloudLayer.active = q < 2 || volClouds == null;
             ApplyRayTracing();
+        }
+
+        /// <summary>Oblačnost ze skutečného počasí (0 = jasno, 1 = zataženo).</summary>
+        public static void ApplyCloudCover(float cover)
+        {
+            if (volume == null) return;
+            string preset = cover < 0.25f ? "Sparse" : cover < 0.6f ? "Cloudy" : cover < 0.9f ? "Overcast" : "Stormy";
+            RayTracing.Param(volClouds, "cloudPreset", preset);
+            RayTracing.Param(cloudLayer, "opacity", Mathf.Lerp(0.35f, 1f, cover));
         }
 
         /// <summary>Denní doba: expozice a barva mlhy (night 0 = den, 1 = noc).</summary>

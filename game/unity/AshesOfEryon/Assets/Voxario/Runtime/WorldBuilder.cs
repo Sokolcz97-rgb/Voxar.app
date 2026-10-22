@@ -8,7 +8,8 @@ namespace Voxario.Ashes
         public static void Build(Transform root, ModelLibrary lib, string faction)
         {
             TerrainBuilder.Build(root);
-            TerrainBuilder.BuildSea(root);
+            var flatSea = TerrainBuilder.BuildSea(root);
+            Ocean.Create(root, flatSea);
             BuildCity(root, lib);
             BuildNpcs(root, lib, faction);
             BuildAnimals(root, lib);

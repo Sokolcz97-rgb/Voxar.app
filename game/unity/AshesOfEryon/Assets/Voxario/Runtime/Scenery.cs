@@ -257,8 +257,6 @@ namespace Voxario.Ashes
         static void BuildShips(Transform parent)
         {
             var wood = new MeshKit();
-            var black = new MeshKit();
-            var sails = new MeshKit();
             // vraky na Bezejmenném břehu (napůl zahrabané trupy)
             (float x, float z, float r)[] wrecks = { (-71, 60, 0.6f), (-68, 74, 2.2f), (-73, 46, 1.2f) };
             foreach (var w in wrecks)
@@ -269,20 +267,29 @@ namespace Voxario.Ashes
                 for (int k = 0; k < 5; k++)
                     wood.Add(MeshKit.Box(new Vector3(0.2f, 2.2f, 0.25f)), Matrix4x4.TRS(pos + rot * new Vector3(1.2f, 0.9f, -3 + k * 1.5f), rot * Quaternion.Euler(0, 0, -20), Vector3.one), 0.6f, -1.1f, 1.1f);
             }
-            // černé lodě v zátoce
+            var woodMat = PaletteMat(null, new Color(0.6f, 0.48f, 0.36f), 0.7f);
+            Emit(parent, "Dřevo vraků", wood, woodMat);
+            // černé lodě v zátoce – každá zvlášť, aby se mohla houpat na vlnách
+            var blackMat = PaletteMat(null, new Color(0.09f, 0.08f, 0.08f), 0.8f);
+            var sailMat = PaletteMat(null, new Color(0.12f, 0.09f, 0.09f), 0.9f);
             (float x, float z, float r)[] ships = { (-66, -78, 0.4f), (-74, -68, 1.0f), (-58, -86, 0.9f), (-78, -82, 0.6f) };
+            int n = 0;
             foreach (var s in ships)
             {
-                var pos = new Vector3(s.x, 0, -s.z);
-                var rot = Quaternion.Euler(0, -s.r * Mathf.Rad2Deg, 0);
-                black.Add(MeshKit.Box(new Vector3(2.6f, 1.2f, 10f)), Matrix4x4.TRS(pos + Vector3.up * 0.4f, rot, Vector3.one), 0.5f, -0.6f, 0.6f);
-                black.Add(MeshKit.Cone(1.3f, 2.8f, 4, 1), Matrix4x4.TRS(pos + rot * new Vector3(0, 0.5f, 5f), rot * Quaternion.Euler(90, 0, 0), Vector3.one), 0.5f, 0, 2.8f);
-                wood.Add(MeshKit.Cylinder(0.12f, 0.09f, 8, 6), Matrix4x4.TRS(pos + Vector3.up * 0.5f, rot, Vector3.one), 0.4f, 0, 8);
-                sails.Add(MeshKit.Box(new Vector3(4.4f, 3.6f, 0.08f)), Matrix4x4.TRS(pos + Vector3.up * 5.3f + rot * new Vector3(0, 0, 0.2f), rot, Vector3.one), 0.5f, -1.8f, 1.8f);
+                var ship = new GameObject("Loď " + (++n));
+                ship.transform.SetParent(parent, false);
+                ship.transform.position = new Vector3(s.x, 0, -s.z);
+                ship.transform.rotation = Quaternion.Euler(0, -s.r * Mathf.Rad2Deg, 0);
+                var hull = new MeshKit(); var mast = new MeshKit(); var sail = new MeshKit();
+                hull.Add(MeshKit.Box(new Vector3(2.6f, 1.2f, 10f)), Matrix4x4.TRS(Vector3.up * 0.4f, Quaternion.identity, Vector3.one), 0.5f, -0.6f, 0.6f);
+                hull.Add(MeshKit.Cone(1.3f, 2.8f, 4, 1), Matrix4x4.TRS(new Vector3(0, 0.5f, 5f), Quaternion.Euler(90, 0, 0), Vector3.one), 0.5f, 0, 2.8f);
+                mast.Add(MeshKit.Cylinder(0.12f, 0.09f, 8, 6), Matrix4x4.TRS(Vector3.up * 0.5f, Quaternion.identity, Vector3.one), 0.4f, 0, 8);
+                sail.Add(MeshKit.Box(new Vector3(4.4f, 3.6f, 0.08f)), Matrix4x4.TRS(Vector3.up * 5.3f + new Vector3(0, 0, 0.2f), Quaternion.identity, Vector3.one), 0.5f, -1.8f, 1.8f);
+                Emit(ship.transform, "Trup", hull, blackMat);
+                Emit(ship.transform, "Stěžeň", mast, woodMat);
+                Emit(ship.transform, "Plachta", sail, sailMat);
+                ship.AddComponent<Boat>();
             }
-            Emit(parent, "Dřevo lodí", wood, PaletteMat(null, new Color(0.6f, 0.48f, 0.36f), 0.7f));
-            Emit(parent, "Černé lodě", black, PaletteMat(null, new Color(0.09f, 0.08f, 0.08f), 0.8f));
-            Emit(parent, "Plachty", sails, PaletteMat(null, new Color(0.12f, 0.09f, 0.09f), 0.9f));
         }
 
         static void Emit(Transform parent, string name, MeshKit kit, Material mat)

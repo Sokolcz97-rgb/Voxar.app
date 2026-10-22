@@ -205,6 +205,11 @@ public static class VoxarioBuild
         SetBool(so, "m_RenderPipelineSettings.supportRayTracing", true);
         SetBool(so, "m_RenderPipelineSettings.supportScreenSpaceLensFlare", true);
         SetBool(so, "m_RenderPipelineSettings.supportVolumetricClouds", true);
+        // vodní systém: moře s vlnami, pěnou, kaustikami a příbojem
+        SetBool(so, "m_RenderPipelineSettings.supportWater", true);
+        SetBool(so, "m_RenderPipelineSettings.supportWaterDeformation", true);
+        SetBool(so, "m_RenderPipelineSettings.supportWaterFoam", true);
+        SetBool(so, "m_RenderPipelineSettings.supportWaterExclusion", true);
         SetBool(so, "m_RenderPipelineSettings.supportDataDrivenLensFlare", true);
         var rtMode = so.FindProperty("m_RenderPipelineSettings.supportedRayTracingMode");
         if (rtMode != null)
@@ -306,7 +311,7 @@ public static class VoxarioBuild
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
         var ver = Arg("-buildVersion");
-        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.6" : ver;
+        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.7" : ver;
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,
