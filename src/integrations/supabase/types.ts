@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ashes_feedback: {
+        Row: {
+          character_name: string | null
+          context: Json
+          created_at: string
+          id: number
+          kind: string
+          resolved: boolean
+          text: string
+          user_id: string
+        }
+        Insert: {
+          character_name?: string | null
+          context?: Json
+          created_at?: string
+          id?: never
+          kind?: string
+          resolved?: boolean
+          text: string
+          user_id: string
+        }
+        Update: {
+          character_name?: string | null
+          context?: Json
+          created_at?: string
+          id?: never
+          kind?: string
+          resolved?: boolean
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_access_ips: {
         Row: {
           code_id: string | null
