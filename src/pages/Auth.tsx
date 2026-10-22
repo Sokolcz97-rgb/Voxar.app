@@ -106,7 +106,15 @@ const Auth = () => {
                   <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="player@example.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pw-in">{t("auth.password")}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="pw-in">{t("auth.password")}</Label>
+                    <Link
+                      to={email ? `/reset-password?email=${encodeURIComponent(email)}` : "/reset-password"}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Zapomenuté heslo?
+                    </Link>
+                  </div>
                   <Input id="pw-in" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-glow">
