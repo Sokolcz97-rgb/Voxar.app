@@ -39,6 +39,11 @@ namespace Voxario.Ashes
             if (Encounters.Instance != null)
                 foreach (var t in Encounters.Instance.QuestTargets())
                     Consider(WorldMap.ToWorld(t.x, t.y), "cíl úkolu", 1f);
+            // 3) bez úkolů: světový boss (stejně jako ho doporučuje rádce)
+            var wb = WorldBoss.Instance;
+            if (target == null && wb?.View != null && wb.state != null && wb.state.alive
+                && boot.state?.character != null && boot.state.character.level >= 2)
+                Consider(wb.View.transform.position, "Thalassos – světový boss", 1f);
         }
 
         void OnGUI()
