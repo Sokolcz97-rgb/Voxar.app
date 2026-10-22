@@ -29,6 +29,7 @@ namespace Voxario.Ashes
         readonly List<Part> parts = new List<Part>();
         readonly Gait gait;
         readonly float height, hipY, kneeY, shoulderY, hipHalf, armX;
+        float elbowY;
         readonly float quadAmp;
         bool dirty;
 
@@ -95,6 +96,9 @@ namespace Voxario.Ashes
                     float top = 0;
                     foreach (var p in all) if (Mathf.Abs(p.x - cx) > armX && p.y < height * 0.8f && p.y > top) top = p.y;
                     shoulderY = Mathf.Clamp(top - height * 0.03f, height * 0.5f, height * 0.75f);
+                    float bottom = shoulderY;
+                    foreach (var p in all) if (Mathf.Abs(p.x - cx) > armX && p.y < shoulderY && p.y > height * 0.2f && p.y < bottom) bottom = p.y;
+                    elbowY = shoulderY - (shoulderY - bottom) * 0.45f;
                 }
                 zc = cx; // zde střed v ose X
             }
@@ -172,9 +176,22 @@ namespace Voxario.Ashes
             return pivot + new Vector3(d.x, d.y * c - d.z * s, d.y * s + d.z * c);
         }
 
-        /// <summary>phase = fáze kroku, amount = 0 (stojí) … 1 (chůze), run = 0 … 1 (běh)</summary>
-        public void Update(float phase, float amount, float run = 0, float armIdle = 0)
+        /// <summary>
+        /// phase = fáze kroku, amount = 0 (stojí) … 1 (chůze), run = 0 … 1 (běh);
+        /// gait = zachycený pohyb z animace (běh), gaitW = jak moc ho použít (0 … 1).
+        /// </summary>
+        public void Update(float phase, float amount, float run = 0, float armIdle = 0, Voxario.Ashes.Gait motion = null, float gaitW = 0)
         {
+            if (motion == null) gaitW = 0;
+            float gt = gaitW > 0 ? motion.T(phase) : 0;
+            float thL = 0, thR = 0, knL = 0, knR = 0, arL = 0, arR = 0, elL = 0, elR = 0;
+            if (gaitW > 0)
+            {
+                thL = motion.Sample("thighL", gt); thR = motion.Sample("thighR", gt);
+                knL = motion.Sample("kneeL", gt); knR = motion.Sample("kneeR", gt);
+                arL = motion.Sample("armL", gt) - motion.Mean("armL"); arR = motion.Sample("armR", gt) - motion.Mean("armR");
+                elL = motion.Sample("elbowL", gt); elR = motion.Sample("elbowR", gt);
+            }
             if (amount < 0.01f && armIdle < 0.01f)
             {
                 if (!dirty) return;
@@ -213,12 +230,19 @@ namespace Voxario.Ashes
                     float w = p.legW[j] * amount;
                     var v = p.rootVerts[i];
                     float ang = -sinP * side * legAmp * w;
+                    float lr = (side + 1) * 0.5f; // 0 = levá, 1 = pravá
+                    if (gaitW > 0)
+                    {
+                        float fwd = Mathf.Lerp(thL, thR, lr) * (Robe ? 0.35f : 1f);
+                        ang = Mathf.Lerp(ang, -fwd * w, gaitW);
+                    }
                     var pivot = new Vector3(v.x, hipY, 0);
                     var r = RotX(v, pivot, ang);
                     if (!Robe && v.y < kneeY)
                     {
                         // zvednutí chodidla: koleno se ohne při švihu vpřed
                         float lift = Mathf.Max(0, cosP * side) * Mathf.Lerp(28f, 50f, run) * w;
+                        if (gaitW > 0) lift = Mathf.Lerp(lift, Mathf.Max(0, Mathf.Lerp(knL, knR, lr)) * w, gaitW);
                         var knee = RotX(new Vector3(v.x, kneeY, 0), pivot, ang);
                         float kk = Mathf.InverseLerp(kneeY, kneeY - height * 0.05f, v.y);
                         r = RotX(r, knee, lift * kk);
@@ -241,8 +265,23 @@ namespace Voxario.Ashes
                     float side = p.armSide[j];
                     float w = p.armW[j];
                     float ang = sinP * side * armAmp * w + armIdle * w;
+                    float elbow = 0;
+                    if (gaitW > 0)
+                    {
+                        bool left = side < 0;
+                        ang = Mathf.Lerp(ang, -(left ? arL : arR) * 0.8f * w, gaitW);
+                        // pokrčení lokte (předloktí dopředu), u postav s věcí v ruce méně
+                        elbow = -Mathf.Clamp(left ? elL : elR, 0, 100) * 0.6f * gaitW;
+                    }
                     var pivot = new Vector3(v.x, shoulderY, 0);
-                    p.verts[i] = p.toLocal.MultiplyPoint3x4(RotX(v, pivot, ang));
+                    var r = RotX(v, pivot, ang);
+                    if (elbow != 0 && elbowY > 0 && v.y < elbowY)
+                    {
+                        var e = RotX(new Vector3(v.x, elbowY, 0), pivot, ang);
+                        float ek = Mathf.InverseLerp(elbowY, elbowY - height * 0.04f, v.y);
+                        r = RotX(r, e, elbow * ek);
+                    }
+                    p.verts[i] = p.toLocal.MultiplyPoint3x4(r);
                 }
                 p.mesh.SetVertices(p.verts);
             }

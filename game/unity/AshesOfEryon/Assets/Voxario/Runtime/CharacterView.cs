@@ -19,6 +19,7 @@ namespace Voxario.Ashes
         /// <summary>Ženská postava: kratší krok, víc pohupování v bocích.</summary>
         public bool feminine;
         float run;
+        Gait jog;
 
         /// <summary>Výpad dopředu (útok).</summary>
         public void Lunge() => lungeT = 0;
@@ -42,6 +43,8 @@ namespace Voxario.Ashes
             {
                 var model = Instantiate(prefab, view.body);
                 view.feminine = prefab.name.Contains("_f");
+                // běh z animace Mixamo (zatím mužský)
+                if (gait == LegRig.Gait.Biped && !view.feminine) view.jog = Gait.Load("gait_jogging_m");
                 SharpenTextures(model);
                 if (yaw != 0) model.transform.localRotation = Quaternion.Euler(0, yaw, 0) * model.transform.localRotation;
                 Fit(model.transform, height);
@@ -136,8 +139,19 @@ namespace Voxario.Ashes
             float hip = Mathf.Sin(phase) * (feminine ? 0.022f : 0.01f) * k * amount;
             // v klidu jemné přenášení váhy
             float idleShift = moving ? 0 : Mathf.Sin(breath * 0.55f + lookSeed) * 0.008f * k;
+            float gw = jog != null ? run * amount : 0;
+            float gaitRoll = 0;
+            if (gw > 0)
+            {
+                float t = jog.T(phase);
+                // pohupování pánve a náklon z animace (pánev ~ 0,5 výšky postavy u Mixamo, u našich menší)
+                float jb = (jog.Sample("bob", t)) * height * 0.32f;
+                bob = Mathf.Lerp(bob, jb, gw);
+                gaitRoll = jog.Sample("roll", t) - jog.Mean("roll");
+            }
             var pos = new Vector3(hip + idleShift, bob + Mathf.Sin(breath * 1.8f) * 0.005f * k, 0);
             float pitch = Mathf.Lerp(3f, 9f, run) * amount;
+            if (gw > 0) pitch = Mathf.Lerp(pitch, Mathf.Clamp(jog.Mean("lean"), 0, 18) * amount, gw);
             if (lungeT >= 0)
             {
                 lungeT += dt;
@@ -165,11 +179,12 @@ namespace Voxario.Ashes
             // trup se mírně stáčí proti krokům, ženy víc naklánějí boky
             float twist = Mathf.Sin(phase) * Mathf.Lerp(3f, 5f, run) * amount;
             float roll = Mathf.Sin(phase) * (feminine ? 3.2f : 1.8f) * amount + idleShift * 40f;
+            roll = Mathf.Lerp(roll, gaitRoll, gw);
             body.localRotation = Quaternion.Euler(pitch, look + twist, roll);
             // dech: nepatrné „nadechnutí“ celé postavy
             float br = 1 + Mathf.Sin(breath * 1.8f) * 0.006f;
             body.localScale = new Vector3(1 + (br - 1) * 0.6f, br, 1 + (br - 1) * 0.6f);
-            legs?.Update(phase, amount, run);
+            legs?.Update(phase, amount, run, 0, jog, gw);
         }
     }
 }
