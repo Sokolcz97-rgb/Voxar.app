@@ -27,6 +27,8 @@ namespace Voxario.Ashes
         public bool is_eryon;
         public bool is_azkar;
         public int sila, obratnost, intelekt, vydrz, stesti;
+        public int chapter_progress, courage;
+        public string boss_ready_at, arena_ready_at;
         public Appearance appearance;
     }
 
@@ -50,6 +52,29 @@ namespace Voxario.Ashes
         public bool shield;
     }
 
+    /// <summary>Výprava (časová mise za odvahu, ashes_quests).</summary>
+    [Serializable]
+    public class Expedition
+    {
+        public string id, title, story, state, started_at, ends_at;
+        public int chapter, minutes, xp, gold, item_chance;
+        public ExpeditionEnemy enemy;
+        public int CourageCost => 8 + minutes * 2;
+    }
+
+    [Serializable] public class ExpeditionEnemy { public string name, @class; public int level; }
+
+    [Serializable] public class ChapterBoss { public string c, e, s, t, win; }
+
+    /// <summary>Aktuální kapitola příběhu (ashes_chapter_for + číslo n).</summary>
+    [Serializable]
+    public class ChapterInfo
+    {
+        public int n, need;
+        public string title, intro, song;
+        public ChapterBoss boss;
+    }
+
     [Serializable] public class TrainCost { public int sila, obratnost, intelekt, vydrz, stesti; }
 
     [Serializable]
@@ -64,6 +89,9 @@ namespace Voxario.Ashes
         public FighterStats fighter;
         public TrainCost train_cost;
         public int bag_max;
+        public string now;
+        public Expedition[] quests;
+        public ChapterInfo chapter;
 
         public int BagCount
         {

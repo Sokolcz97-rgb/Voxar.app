@@ -243,6 +243,11 @@ namespace Voxario.Ashes
                     Close();
                     CharacterWindow.Instance?.OpenSmith(smith);
                 }
+                if ((n.def.id == "gorgias" || n.def.id == "sabra") && Option("Jaké výpravy jsou k mání? (Kronika)", EryonSkin.GoldBright))
+                {
+                    Close();
+                    Chronicle.Instance?.Open();
+                }
                 if ((n.def.id == "arena-k" || n.def.id == "arena-l") && Option("Chci zápasit v aréně", EryonSkin.Ember))
                 {
                     Close();

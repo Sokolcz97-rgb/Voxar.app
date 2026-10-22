@@ -28,7 +28,8 @@ namespace Voxario.Ashes
             fpsTimer += Time.unscaledDeltaTime;
             if (fpsTimer >= 0.5f) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
             var dialog = NpcDialog.Instance;
-            bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen);
+            bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen)
+                              || (Chronicle.Instance != null && Chronicle.Instance.IsOpen);
             if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen)
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
@@ -233,7 +234,7 @@ namespace Voxario.Ashes
 
             // spodní lišta s klávesami
             float y = H - 40;
-            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "M", "mapa", "Enter", "chat", "O", "oddíl", "Esc", "nastavení" };
+            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
             {

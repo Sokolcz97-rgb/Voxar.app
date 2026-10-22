@@ -55,6 +55,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Oddil>().boot = this;
             gameObject.AddComponent<CharacterWindow>().boot = this;
             gameObject.AddComponent<Arena>().boot = this;
+            gameObject.AddComponent<Chronicle>().boot = this;
         }
 
         IEnumerator Start()
@@ -307,6 +308,20 @@ namespace Voxario.Ashes
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "16-arena.png"));
             yield return new WaitForSeconds(0.5f);
             GetComponent<Arena>().Close();
+            state.character.courage = 64;
+            state.character.chapter_progress = 2;
+            state.chapter = new ChapterInfo { n = 1, need = 4, title = "Bezejmenný břeh", intro = "Probouzíš se na Bezejmenném břehu. Moře tě vyplavilo mezi trosky a v dálce hoří světla Kalidry.",
+                boss = new ChapterBoss { c = "hoplit", e = "Kapitán Dorkas", t = "Kapitán vrakařů", s = "„Kdo přežije moře, patří mně,“ směje se kapitán Dorkas." } };
+            state.quests = new[]
+            {
+                new Expedition { id = "q1", state = "offered", title = "Trosky v příboji", story = "Mezi troskami se prý ukrývá raněný námořník.", minutes = 2, xp = 60, gold = 25, item_chance = 15, enemy = new ExpeditionEnemy { name = "Vrakař", @class = "lucistnik", level = 2 } },
+                new Expedition { id = "q2", state = "offered", title = "Stezka k akvaduktu", story = "Lapkové přepadají poutníky u starého akvaduktu.", minutes = 5, xp = 110, gold = 40, item_chance = 20, enemy = new ExpeditionEnemy { name = "Lapka", @class = "hoplit", level = 3 } },
+            };
+            GetComponent<Chronicle>().TestOpen();
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "17-kronika.png"));
+            yield return new WaitForSeconds(0.5f);
+            GetComponent<Chronicle>().Close();
             // nastavení (záložka Zobrazení)
             player.enabled = true;
             var ui = GetComponent<GameUI>();
