@@ -209,6 +209,7 @@ namespace Voxario.Ashes
                     {
                         ApplyState(json);
                         Notice($"Nový úkol: {q.title}");
+                        Sfx.Play("quest", 0.6f);
                         ModManager.Fire("quest_accepted", q.id, q.title);
                         offer = null;
                         text = "Dobře. Vrať se, až to bude hotové.";
@@ -230,6 +231,7 @@ namespace Voxario.Ashes
                             if (res?.state?.character != null) boot.state = res.state;
                             title = qq.title;
                             text = qq.done;
+                            Sfx.Play(res != null && res.levels > 0 ? "level" : "quest");
                             Notice($"Úkol splněn: {qq.title}   +{res?.xp} zk.   +{res?.gold} zlata" + (res != null && res.levels > 0 ? "   ·   NOVÁ ÚROVEŇ!" : ""));
                             ModManager.Fire("quest_done", qq.id, qq.title);
                         }));

@@ -102,6 +102,7 @@ namespace Voxario.Ashes
                 if (st.character.level > before && before > 0) success += "  ·  NOVÁ ÚROVEŇ!";
             }
             Msg(success, false);
+            Sfx.Play(success.Contains("NOVÁ ÚROVEŇ") ? "level" : "coin", 0.8f);
             if (reloadShop) yield return LoadShop();
         }
 

@@ -394,6 +394,15 @@ namespace Voxario.Ashes
             GUILayout.EndHorizontal();
             var music = boot.GetComponent<Music>();
             if (music != null && music.NowPlaying != null) GUILayout.Label("♪  " + music.NowPlaying, EryonSkin.Body);
+            GUILayout.Space(16);
+            Section("Zvukové efekty", "Zásahy, bloky, mince, nová úroveň.");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"{Mathf.RoundToInt(Sfx.Volume * 100)} %", EryonSkin.BodyBold, GUILayout.Width(80));
+            float sv = GUILayout.HorizontalSlider(Sfx.Volume, 0, 1, GUILayout.Width(500));
+            if (Mathf.Abs(sv - Sfx.Volume) > 0.001f) Sfx.Volume = sv;
+            GUILayout.Space(20);
+            if (GUILayout.Button("Vyzkoušet", EryonSkin.Button, GUILayout.Width(160), GUILayout.Height(36))) Sfx.Play("crit");
+            GUILayout.EndHorizontal();
         }
 
         static void Controls()

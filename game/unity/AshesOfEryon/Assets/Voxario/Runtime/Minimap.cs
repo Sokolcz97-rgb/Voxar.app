@@ -131,6 +131,15 @@ namespace Voxario.Ashes
                 GUI.DrawTexture(new Rect(p.x - s / 2, p.y - s / 2, s, s), dot);
                 if (names) EryonSkin.Shadowed(new Rect(p.x - 80, p.y + 4, 160, 22), n.name, new GUIStyle(EryonSkin.Center) { fontSize = 16, font = EryonSkin.CormorantBold });
             }
+            // cíle aktivních úkolů (nepřátelé, vatry, památník) – červené značky
+            if (Encounters.Instance != null)
+                foreach (var t in Encounters.Instance.QuestTargets())
+                {
+                    var tp = ToScreen(t, out bool okT);
+                    if (!okT) continue;
+                    GUI.color = new Color(1f, 0.35f, 0.25f, 0.85f + 0.15f * Mathf.Sin(Time.time * 4));
+                    GUI.DrawTexture(new Rect(tp.x - 4, tp.y - 4, 8, 8), dot);
+                }
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             var pp = ToScreen(pw, out _);
             GUI.color = new Color(0.4f, 0.85f, 1f);

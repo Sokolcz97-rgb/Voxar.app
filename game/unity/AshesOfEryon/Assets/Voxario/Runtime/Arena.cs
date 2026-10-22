@@ -22,6 +22,10 @@ namespace Voxario.Ashes
             public Appearance appearance;
         }
         [System.Serializable] class OpponentList { public Opponent[] items; }
+        [System.Serializable] public class Famous { public string name, @class, faction; public int level, honor, chapter; public bool eryon, azkar; }
+        [System.Serializable] class FamousList { public Famous[] items; }
+        Famous[] fame;
+        bool fameTab, fameLoaded;
 
         bool open, busy, loaded;
         Opponent[] list = new Opponent[0];
@@ -57,6 +61,43 @@ namespace Voxario.Ashes
             if (!boot.inWorld) { open = false; return; }
             if (open && !Chat.Typing && Input.GetKeyDown(KeyCode.Escape)) open = false;
             if (open && !loaded && !busy) StartCoroutine(Load());
+            if (open && fameTab && !fameLoaded && !busy) StartCoroutine(LoadFame());
+        }
+
+        IEnumerator LoadFame()
+        {
+            busy = true;
+            string json = null, err = null;
+            yield return boot.api.Rpc("ashes_hall_of_fame", "{}", (j, e) => { json = j; err = e; });
+            busy = false;
+            fameLoaded = true;
+            if (err != null) { error = err; fame = new Famous[0]; yield break; }
+            fame = JsonUtility.FromJson<FamousList>("{\"items\":" + (string.IsNullOrEmpty(json) ? "[]" : json) + "}")?.items ?? new Famous[0];
+        }
+
+        void FameList(Rect inner)
+        {
+            GUILayout.Label("Nejslavnější hrdinové podle cti.", EryonSkin.Small);
+            if (!fameLoaded) { GUILayout.Label("Kronikář listuje svitky…", EryonSkin.Body); return; }
+            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 190));
+            int i = 0;
+            var me = boot.state.character;
+            string myName = string.IsNullOrEmpty(me.display_name) ? me.name : me.display_name;
+            foreach (var f in fame ?? new Famous[0])
+            {
+                i++;
+                bool mine = f.name == myName;
+                GUILayout.BeginHorizontal(GUILayout.Height(48));
+                GUILayout.Label($"<b>{i}.</b>", new GUIStyle(EryonSkin.H2) { richText = true, normal = { textColor = i <= 3 ? EryonSkin.GoldBright : EryonSkin.Text } }, GUILayout.Width(56));
+                string legend = f.eryon ? " ★ Eryon" : f.azkar ? " ★ Azkar" : "";
+                GUILayout.Label($"{(mine ? "<color=#9fd4f0>" : "")}<b>{f.name}</b>{legend}{(mine ? "  (ty)</color>" : "")}", new GUIStyle(EryonSkin.Body) { richText = true, fontSize = 21 }, GUILayout.Width(380));
+                GUILayout.Label($"{EryonSkin.ClassName(f.@class)} · úr. {f.level} · kap. {f.chapter}", EryonSkin.Small, GUILayout.Width(280));
+                GUILayout.Label(f.faction == "legie" ? "<color=#e0672a>Legie</color>" : "<color=#9fd4f0>Kalidra</color>", new GUIStyle(EryonSkin.Small) { richText = true }, GUILayout.Width(100));
+                GUILayout.FlexibleSpace();
+                GUILayout.Label($"<color=#9fd4f0>✦ {f.honor}</color>", new GUIStyle(EryonSkin.H2) { richText = true, alignment = TextAnchor.MiddleRight }, GUILayout.Width(120));
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
         }
 
         IEnumerator Load()
@@ -86,10 +127,26 @@ namespace Voxario.Ashes
                             "Soupeř z druhé strany války dává <color=#f0d08a>1,5× více cti</color> a posune hradbu. Mezi zápasy si musíš chvíli odpočinout.",
                 new GUIStyle(EryonSkin.Small) { richText = true, fontSize = 17 });
             GUILayout.Label($"Tvá čest: <color=#9fd4f0>✦ {me.honor}</color>   ·   vítězství {me.wins} / porážky {me.losses}", new GUIStyle(EryonSkin.BodyBold) { richText = true });
+            GUILayout.BeginHorizontal();
+            if (EryonSkin.Toggle(!fameTab, "Soupeři", GUILayout.Height(36), GUILayout.Width(200))) fameTab = false;
+            if (EryonSkin.Toggle(fameTab, "Síň slávy", GUILayout.Height(36), GUILayout.Width(200))) { fameTab = true; fameLoaded = false; }
+            GUILayout.EndHorizontal();
             GUILayout.Space(6);
+            if (fameTab)
+            {
+                FameList(inner);
+                GUILayout.FlexibleSpace();
+                if (error != null) GUILayout.Label($"<color=#e0672a>{error}</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true });
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("ZAVŘÍT (Esc)", EryonSkin.ButtonPrimary, GUILayout.Height(46), GUILayout.Width(240))) open = false;
+                GUILayout.EndHorizontal();
+                GUILayout.EndArea();
+                return;
+            }
             if (!loaded) GUILayout.Label("Mistr arény vybírá soupeře…", EryonSkin.Body);
             else if (list.Length == 0) GUILayout.Label("Zatím tu není žádný jiný hrdina. Přiveď přátele!", EryonSkin.Body);
-            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 190));
+            scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 230));
             GUI.enabled = !busy && Encounters.Instance != null && !Encounters.Instance.Busy;
             foreach (var o in list)
             {

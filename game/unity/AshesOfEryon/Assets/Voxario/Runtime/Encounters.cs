@@ -189,15 +189,41 @@ namespace Voxario.Ashes
         /// <summary>Zapálené vatry podle úkolu „Strážní ohně“ (cíle v targets).</summary>
         void RefreshBeacons()
         {
-            var wq = boot.state?.Quest("k4");
+            bool legie = faction == "legie";
+            var wq = boot.state?.Quest(legie ? "l4" : "k4");
             foreach (var b in beacons)
             {
-                bool lit = faction == "legie" || (wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0)));
-                b.fire.lit = lit;
+                // Kalidra vatry zapaluje (k4), Legie je zhasíná (l4)
+                bool touched = wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0));
+                b.fire.lit = legie ? !touched : touched;
             }
         }
 
         void Note(string s) { note = s; noteUntil = Time.time + 5; }
+
+        /// <summary>Polohy (webové souřadnice) cílů aktivních úkolů pro minimapu.</summary>
+        public List<Vector2> QuestTargets()
+        {
+            var list = new List<Vector2>();
+            var st = boot.state;
+            if (st?.wquests == null) return list;
+            foreach (var wq in st.wquests)
+            {
+                if (wq.state != "active") continue;
+                var def = Content.Data.Quest(wq.quest_id);
+                if (def == null) continue;
+                if (def.type == "kill")
+                {
+                    foreach (var e in enemies) if (e.alive && e.def.id == def.target) list.Add(e.pos);
+                }
+                else if (def.type == "beacon")
+                {
+                    foreach (var b in Beacons) if (wq.targets == null || Array.IndexOf(wq.targets, b.id) < 0) list.Add(new Vector2(b.x, b.z));
+                }
+                else if (def.type == "visit") list.Add(Memorial);
+            }
+            return list;
+        }
 
         void Update()
         {
@@ -274,18 +300,26 @@ namespace Voxario.Ashes
         string NearPrompt()
         {
             if (boot.player == null) return null;
-            foreach (var b in beacons) if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) return "[E]  Zapálit strážní vatru";
+            foreach (var b in beacons) if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) return faction == "legie" ? "[E]  Uhasit kalidrskou vatru" : "[E]  Zapálit strážní vatru";
             if (memorial != null && Vector3.Distance(boot.player.transform.position, memorial.position) < 4) return "[E]  Položit květ k památníku";
             return null;
         }
 
         IEnumerator Interact(string kind, string target)
         {
-            string quest = kind == "beacon" ? "k4" : "k7";
+            bool legie = faction == "legie";
+            string quest = kind == "beacon" ? (legie ? "l4" : "k4") : "k7";
             var wq = boot.state?.Quest(quest);
             if (wq == null || wq.state != "active")
             {
-                Note(kind == "beacon" ? "Vatra čeká na rozkaz. (Úkol „Strážní ohně“ dává Damon.)" : "Památník padlých. Kámen si pamatuje jejich jména.");
+                Note(kind == "beacon"
+                    ? (legie ? "Kalidrská vatra. (Úkol „Zhasnout ohně“ dává kněz Oren.)" : "Vatra čeká na rozkaz. (Úkol „Strážní ohně“ dává Damon.)")
+                    : "Památník padlých. Kámen si pamatuje jejich jména.");
+                yield break;
+            }
+            if (kind == "beacon" && wq.targets != null && Array.IndexOf(wq.targets, target) >= 0)
+            {
+                Note(legie ? "Tahle vatra už je uhašená." : "Tahle vatra už hoří.");
                 yield break;
             }
             string json = null, err = null;
@@ -294,7 +328,7 @@ namespace Voxario.Ashes
             var st = JsonUtility.FromJson<GameState>(json);
             if (st?.character != null) boot.state = st;
             RefreshBeacons();
-            Note(kind == "beacon" ? "Vatra vzplála – vidí ji celé pobřeží." : "Položil jsi květ k památníku padlých.");
+            Note(kind == "beacon" ? (legie ? "Vatra zasyčela a zhasla. Kalidra o jedno oko méně." : "Vatra vzplála – vidí ji celé pobřeží.") : "Položil jsi květ k památníku padlých.");
         }
 
         // ------------------------------------------------------------------ souboj
@@ -342,6 +376,7 @@ namespace Voxario.Ashes
             if (res.state?.character != null) boot.state = res.state;
             RefreshBeacons();
             result = res;
+            ResultSound();
             ModManager.Fire("fight_end", res.won ? "won" : "lost", e.def.name);
             fighting = false;
         }
@@ -363,9 +398,10 @@ namespace Voxario.Ashes
                 attacker.Lunge();
                 yield return new WaitForSeconds(0.18f);
                 var at = target.transform.position + Vector3.up * 2f;
-                if (r.e) Float(at, "úhyb", new Color(0.7f, 0.85f, 1f));
+                if (r.e) { Float(at, "úhyb", new Color(0.7f, 0.85f, 1f)); Sfx.Play("dodge"); }
                 else
                 {
+                    Sfx.Play(r.b ? "block" : r.c ? "crit" : "hit");
                     if (r.b) Float(at + Vector3.up * 0.4f, "blok", new Color(0.8f, 0.8f, 0.8f));
                     Float(at, (r.c ? "KRITICKÝ  " : "") + "-" + r.d, r.c ? new Color(1f, 0.45f, 0.2f) : (r.a == 1 ? new Color(1f, 0.9f, 0.5f) : new Color(1f, 0.35f, 0.3f)));
                     target.Flinch();
@@ -437,6 +473,7 @@ namespace Voxario.Ashes
             arenaMode = true; // bez smrti a návratu na respawn
             arenaHonor = arena ? res.honor : int.MinValue;
             result = arena ? new FightResult { won = res.won, gold = res.gold, xp = 0, state = res.state } : story;
+            ResultSound();
             ModManager.Fire("fight_end", res.won ? "won" : "lost", label);
             fighting = false;
         }
@@ -451,6 +488,14 @@ namespace Voxario.Ashes
             arenaMode = false;
             StoryNote = null;
             if (lost) boot.player.Respawn(faction == "legie" ? RespawnLegie : RespawnKalidra);
+        }
+
+        void ResultSound()
+        {
+            if (result == null) return;
+            if (result.levels > 0) Sfx.Play("level");
+            else if (result.won) Sfx.Play("coin");
+            else Sfx.Play("fall", 0.8f);
         }
 
         void Float(Vector3 pos, string text, Color color) => floats.Add((pos, text, color, Time.time));
