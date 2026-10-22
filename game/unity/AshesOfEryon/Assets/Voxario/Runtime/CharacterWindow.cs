@@ -255,7 +255,7 @@ namespace Voxario.Ashes
             for (int i = 0; i < Tabs.Length; i++)
                 if (EryonSkin.Toggle(tab == i, Tabs[i], GUILayout.Height(38), GUILayout.Width(220))) { tab = i; error = ok = null; if (i == 2) shopLoaded = false; }
             GUILayout.FlexibleSpace();
-            GUILayout.Label(EryonSkin.GoldContent($"{ch.gold} zlata"), new GUIStyle(EryonSkin.BodyBold) { fontSize = 22, normal = { textColor = new Color(0.94f, 0.82f, 0.54f) } }, GUILayout.Height(38));
+            GUILayout.Label(EryonSkin.GoldContent($"{ch.gold} zlata"), new GUIStyle(EryonSkin.BodyBold) { fontSize = 22, wordWrap = false, normal = { textColor = new Color(0.94f, 0.82f, 0.54f) } }, GUILayout.Height(38));
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
