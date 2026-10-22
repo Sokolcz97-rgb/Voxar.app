@@ -26,8 +26,31 @@ namespace Voxario.Ashes
         public int chapter;
         public bool is_eryon;
         public bool is_azkar;
+        public int sila, obratnost, intelekt, vydrz, stesti;
         public Appearance appearance;
     }
+
+    /// <summary>Předmět (výbava, batoh, zboží u kováře).</summary>
+    [Serializable]
+    public class Item
+    {
+        public string id, slot, name;
+        public int rarity, level, wmin, wmax, armor, sila, obratnost, intelekt, vydrz, stesti, price;
+        public bool equipped, in_shop;
+        public bool Valid => !string.IsNullOrEmpty(id);
+    }
+
+    [Serializable] public class ItemList { public Item[] items; }
+
+    /// <summary>Bojové hodnoty postavy včetně výbavy (ashes_fighter).</summary>
+    [Serializable]
+    public class FighterStats
+    {
+        public int level, sila, obratnost, intelekt, vydrz, stesti, wmin, wmax, armor;
+        public bool shield;
+    }
+
+    [Serializable] public class TrainCost { public int sila, obratnost, intelekt, vydrz, stesti; }
 
     [Serializable]
     public class GameState
@@ -35,8 +58,17 @@ namespace Voxario.Ashes
         public bool allowed;
         public bool admin;
         public Character character;
-        public int hp;
+        public float hp;
         public WQuest[] wquests;
+        public Item[] items;
+        public FighterStats fighter;
+        public TrainCost train_cost;
+        public int bag_max;
+
+        public int BagCount
+        {
+            get { int n = 0; if (items != null) foreach (var i in items) if (!i.equipped) n++; return n; }
+        }
 
         public WQuest Quest(string id)
         {

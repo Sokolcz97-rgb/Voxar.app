@@ -16,6 +16,7 @@ namespace Voxario.Ashes
         public bool won;
         public int xp, gold, levels;
         public string[] quests;
+        public Item item;
         public GameState state;
     }
 
@@ -105,9 +106,18 @@ namespace Voxario.Ashes
         public static Encounters Instance { get; private set; }
         void Awake() => Instance = this;
 
+        ModelLibrary library;
+        Transform worldRoot;
+        // aréna: soupeř, čest a režim bez smrti
+        CharacterView arenaFoe;
+        bool arenaMode;
+        int arenaHonor;
+
         public void Build(Transform root, ModelLibrary lib, string fac)
         {
             faction = fac;
+            library = lib;
+            worldRoot = root;
             enemies.Clear();
             beacons.Clear();
             var parent = new GameObject("Enemies").transform;
@@ -312,31 +322,7 @@ namespace Voxario.Ashes
             }
             var res = JsonUtility.FromJson<FightResult>(json);
             ModManager.Fire("fight_start", e.def.id, e.def.name);
-            var f = res.fight;
-            fName1 = f.f1?.name ?? "Ty";
-            fName2 = $"{f.f2?.name ?? e.def.name} · úroveň {f.f2?.level}";
-            var r0 = f.rounds != null && f.rounds.Length > 0 ? f.rounds[0] : null;
-            max1 = r0 == null ? f.hp1 : Mathf.Max(r0.h1 + (r0.a == 2 && !r0.e ? r0.d : 0), 1);
-            max2 = r0 == null ? f.hp2 : Mathf.Max(r0.h2 + (r0.a == 1 && !r0.e ? r0.d : 0), 1);
-            hp1 = max1; hp2 = max2;
-            yield return new WaitForSeconds(0.4f);
-            foreach (var r in f.rounds ?? new FightRound[0])
-            {
-                var attacker = r.a == 1 ? boot.player.view : e.view;
-                var target = r.a == 1 ? e.view : boot.player.view;
-                attacker.Lunge();
-                yield return new WaitForSeconds(0.18f);
-                var at = target.transform.position + Vector3.up * 2f;
-                if (r.e) Float(at, "úhyb", new Color(0.7f, 0.85f, 1f));
-                else
-                {
-                    if (r.b) Float(at + Vector3.up * 0.4f, "blok", new Color(0.8f, 0.8f, 0.8f));
-                    Float(at, (r.c ? "KRITICKÝ  " : "") + "-" + r.d, r.c ? new Color(1f, 0.45f, 0.2f) : (r.a == 1 ? new Color(1f, 0.9f, 0.5f) : new Color(1f, 0.35f, 0.3f)));
-                    target.Flinch();
-                }
-                hp1 = r.h1; hp2 = r.h2;
-                yield return new WaitForSeconds(0.42f);
-            }
+            yield return Replay(res.fight, e.view, $"{res.fight.f2?.name ?? e.def.name} · úroveň {res.fight.f2?.level}");
             if (res.won)
             {
                 e.view.Fall();
@@ -358,12 +344,96 @@ namespace Voxario.Ashes
             fighting = false;
         }
 
+        /// <summary>Přehraje souboj vyhodnocený serverem kolo po kole (hráč = f1).</summary>
+        IEnumerator Replay(Fight f, CharacterView foe, string foeLabel)
+        {
+            fName1 = f.f1?.name ?? "Ty";
+            fName2 = foeLabel;
+            var r0 = f.rounds != null && f.rounds.Length > 0 ? f.rounds[0] : null;
+            max1 = r0 == null ? f.hp1 : Mathf.Max(r0.h1 + (r0.a == 2 && !r0.e ? r0.d : 0), 1);
+            max2 = r0 == null ? f.hp2 : Mathf.Max(r0.h2 + (r0.a == 1 && !r0.e ? r0.d : 0), 1);
+            hp1 = max1; hp2 = max2;
+            yield return new WaitForSeconds(0.4f);
+            foreach (var r in f.rounds ?? new FightRound[0])
+            {
+                var attacker = r.a == 1 ? boot.player.view : foe;
+                var target = r.a == 1 ? foe : boot.player.view;
+                attacker.Lunge();
+                yield return new WaitForSeconds(0.18f);
+                var at = target.transform.position + Vector3.up * 2f;
+                if (r.e) Float(at, "úhyb", new Color(0.7f, 0.85f, 1f));
+                else
+                {
+                    if (r.b) Float(at + Vector3.up * 0.4f, "blok", new Color(0.8f, 0.8f, 0.8f));
+                    Float(at, (r.c ? "KRITICKÝ  " : "") + "-" + r.d, r.c ? new Color(1f, 0.45f, 0.2f) : (r.a == 1 ? new Color(1f, 0.9f, 0.5f) : new Color(1f, 0.35f, 0.3f)));
+                    target.Flinch();
+                }
+                hp1 = r.h1; hp2 = r.h2;
+                yield return new WaitForSeconds(0.42f);
+            }
+        }
+
+        // ------------------------------------------------------------------ aréna
+        [Serializable] public class ArenaResult { public Fight fight; public bool won; public int honor, gold; public bool rival; public GameState state; }
+
+        /// <summary>Zápas v aréně: server vyhodnotí souboj proti uložené postavě jiného hráče.</summary>
+        public void StartArena(string targetId, string cls, string gender, string label, Action<string> onError)
+        {
+            if (Busy || boot.player == null) return;
+            StartCoroutine(RunArena(targetId, cls, gender, label, onError));
+        }
+
+        IEnumerator RunArena(string targetId, string cls, string gender, string label, Action<string> onError)
+        {
+            fighting = true;
+            boot.player.inputEnabled = false;
+            boot.player.view.speed = 0;
+            string json = null, err = null;
+            yield return boot.api.Rpc("ashes_arena_fight", $"{{\"p_target\":{MiniJson.Write(targetId)}}}", (j, er) => { json = j; err = er; });
+            if (err != null)
+            {
+                fighting = false;
+                boot.player.inputEnabled = true;
+                onError?.Invoke(err);
+                yield break;
+            }
+            var res = JsonUtility.FromJson<ArenaResult>(json);
+            // soupeř se objeví naproti hráči
+            var pt = boot.player.transform;
+            var tpl = library != null ? (library.Hero($"{cls}_{gender}") ?? library.Hero($"{cls}_m")) : null;
+            if (tpl != null)
+            {
+                arenaFoe = CharacterView.Create(tpl, worldRoot, gender == "f" ? 1.55f : 1.62f, "Soupeř v aréně");
+                var pos = pt.position + pt.forward * 2.4f;
+                var w = WorldMap.ToWeb(pos);
+                arenaFoe.transform.position = WorldMap.ToWorld(w.x, w.y);
+                arenaFoe.transform.rotation = Quaternion.LookRotation(-pt.forward);
+                var tag = arenaFoe.gameObject.AddComponent<NameTag>();
+                tag.title = label;
+                tag.enemy = true;
+            }
+            ModManager.Fire("fight_start", "arena", label);
+            yield return new WaitForSeconds(0.5f);
+            yield return Replay(res.fight, arenaFoe != null ? arenaFoe : boot.player.view, label);
+            if (res.won) { if (arenaFoe != null) arenaFoe.Fall(); }
+            else boot.player.view.Fall();
+            yield return new WaitForSeconds(0.9f);
+            if (res.state?.character != null) boot.state = res.state;
+            arenaMode = true;
+            arenaHonor = res.honor;
+            result = new FightResult { won = res.won, gold = res.gold, xp = 0, state = res.state };
+            ModManager.Fire("fight_end", res.won ? "won" : "lost", label);
+            fighting = false;
+        }
+
         void CloseResult()
         {
-            bool lost = result != null && !result.won;
+            bool lost = result != null && !result.won && !arenaMode;
             result = null;
             boot.player.view.Stand();
             boot.player.inputEnabled = true;
+            if (arenaFoe != null) { Destroy(arenaFoe.gameObject); arenaFoe = null; }
+            arenaMode = false;
             if (lost) boot.player.Respawn(faction == "legie" ? RespawnLegie : RespawnKalidra);
         }
 
@@ -415,9 +485,18 @@ namespace Voxario.Ashes
                 EryonSkin.Shadowed(new Rect(r.x, r.y + 26, r.width, 70), result.won ? "VÍTĚZSTVÍ" : "PORÁŽKA", head);
                 EryonSkin.Ornament(new Rect(r.x + 60, r.y + 104, r.width - 120, 12));
                 GUILayout.BeginArea(new Rect(r.x + 40, r.y + 130, r.width - 80, r.height - 150));
-                if (result.won)
+                if (arenaMode)
+                {
+                    string hon = arenaHonor >= 0 ? $"<color=#9fd4f0>✦ +{arenaHonor} cti</color>" : $"<color=#e0672a>✦ {arenaHonor} cti</color>";
+                    string gl = result.gold > 0 ? $"      <color=#f0d08a>◆ +{result.gold} zlata</color>" : "";
+                    GUILayout.Label(hon + gl, new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    GUILayout.Label(result.won ? "Dav v aréně skanduje tvé jméno." : "Tentokrát byl soupeř silnější. Trénuj a vrať se.", EryonSkin.Center);
+                }
+                else if (result.won)
                 {
                     GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    if (result.item != null && result.item.Valid)
+                        GUILayout.Label($"Kořist: <color=#{ColorUtility.ToHtmlStringRGB(CharacterWindow.RarityColor(result.item.rarity))}>{result.item.name}</color>  <size=18>(v batohu – klávesa I)</size>", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true, font = EryonSkin.CormorantBold });
                     if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
                     if (result.quests != null)
                         foreach (var q in result.quests)
@@ -427,7 +506,7 @@ namespace Voxario.Ashes
                             if (def != null) GUILayout.Label($"{def.title}: {wq?.progress}/{def.count}" + (wq?.state == "ready" ? "  –  hotovo!" : ""), EryonSkin.Center);
                         }
                 }
-                else GUILayout.Label("Padl jsi. Probudíš se v bezpečí u hradeb Kalidry.", new GUIStyle(EryonSkin.Center) { fontSize = 24 });
+                else GUILayout.Label(faction == "legie" ? "Padl jsi. Probudíš se v bezpečí tábora Legie." : "Padl jsi. Probudíš se v bezpečí u hradeb Kalidry.", new GUIStyle(EryonSkin.Center) { fontSize = 24 });
                 GUILayout.FlexibleSpace();
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();

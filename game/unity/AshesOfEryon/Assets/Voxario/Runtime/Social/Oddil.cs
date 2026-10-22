@@ -47,6 +47,7 @@ namespace Voxario.Ashes
         }
 
         void Awake() => Instance = this;
+        public void Close() { open = false; test = false; }
 
         void Update()
         {

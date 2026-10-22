@@ -237,6 +237,17 @@ namespace Voxario.Ashes
                 }
                 foreach (var q in Content.Data.quests.Where(q => q.giver == n.def.id && Available(q)))
                     if (Option($"Úkol: {q.title}", EryonSkin.Ember)) { offer = q; title = q.title; text = q.offer; }
+                if ((n.def.id == "tharos" || n.def.id == "rukmar") && Option("Ukaž mi své zboží (obchod)", EryonSkin.GoldBright))
+                {
+                    var smith = $"{n.def.name} · {n.def.role}";
+                    Close();
+                    CharacterWindow.Instance?.OpenSmith(smith);
+                }
+                if ((n.def.id == "arena-k" || n.def.id == "arena-l") && Option("Chci zápasit v aréně", EryonSkin.Ember))
+                {
+                    Close();
+                    Arena.Instance?.Open();
+                }
                 var talk = Content.Data.Talk(n.def.id);
                 if (talk?.lore != null)
                     foreach (var l in talk.lore)
