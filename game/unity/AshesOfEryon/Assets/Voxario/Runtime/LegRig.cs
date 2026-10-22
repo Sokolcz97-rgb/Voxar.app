@@ -4,9 +4,11 @@ using UnityEngine;
 namespace Voxario.Ashes
 {
     /// <summary>
-    /// Chůze modelů bez kostry (stejně jako webová verze): vrcholy pod výškou nohou se
-    /// kývají dopředu a dozadu. Lidé a ptáci střídají levou a pravou nohu, čtyřnožci
-    /// diagonální páry. Počítá se jen u viditelných postav, které se hýbou.
+    /// Chůze modelů bez kostry. Lidé: nohy se otáčejí v kyčlích (s pokrčením kolene při
+    /// zvednutí), paže se kývají proti nohám v ramenou. Model se při vytvoření proměří:
+    /// když má oddělené nohy, chodí plným krokem; když má sukni / róbu, kmitá jen lem látky
+    /// (bez „roztrhávání“ šatů). Čtyřnožci střídají diagonální páry. Počítá se jen
+    /// u viditelných postav, které se hýbou.
     /// </summary>
     public class LegRig
     {
@@ -15,36 +17,103 @@ namespace Voxario.Ashes
         class Part
         {
             public Mesh mesh;
-            public Vector3[] baseVerts;
+            public Vector3[] baseVerts;   // v prostoru meshe
+            public Vector3[] rootVerts;   // v prostoru postavy
             public Vector3[] verts;
-            public int[] idx;          // vrcholy nohou
-            public float[] k;          // síla pohybu (0 u kyčle, 1 u chodidla)
-            public float[] side;       // −1 … 1 (strana / diagonála)
-            public Matrix4x4 toLocal;  // směr z prostoru postavy do prostoru meshe
+            public int[] legIdx; public float[] legW; public float[] legSide;
+            public int[] armIdx; public float[] armW; public float[] armSide;
+            public Matrix4x4 toLocal;     // z prostoru postavy do meshe
             public Renderer renderer;
         }
 
         readonly List<Part> parts = new List<Part>();
         readonly Gait gait;
-        readonly float amp;
+        readonly float height, hipY, kneeY, shoulderY, hipHalf, armX;
+        float elbowY;
+        readonly float quadAmp;
         bool dirty;
 
         public bool Valid => parts.Count > 0;
+        /// <summary>Model má sukni / róbu (nohy nejsou oddělené).</summary>
+        public bool Robe { get; }
+        public bool HasArms { get; }
 
         /// <param name="root">kořen postavy (chodidla v y = 0, dopředu = +Z)</param>
         /// <param name="height">výška postavy v metrech</param>
         /// <param name="legRatio">do jaké výšky (podíl výšky) sahají nohy</param>
-        public LegRig(Transform root, float height, float legRatio, Gait gait)
-        {
-            this.gait = gait;
-            amp = gait == Gait.Biped ? 0.2f : height * 0.14f;
-            float leg = Mathf.Max(0.05f, height * legRatio);
-            var toRoot = root.worldToLocalMatrix;
+        /// <summary>Které paže se smí kývat (−1 levá, +1 pravá); ruka s předmětem (štít, luk, hůl) zůstává.</summary>
+        readonly bool armLeftFree = true, armRightFree = true;
+        /// <summary>Výška, od které dolů se u sukní / rób hýbou nohy (lem).</summary>
+        float hemY;
 
-            // střed těla v ose Z (pro rozdělení předních a zadních nohou)
-            float zc = 0;
+        public LegRig(Transform root, float height, float legRatio, Gait gait, string model = null)
+        {
+            string key = (model ?? "").ToLowerInvariant();
+            // předměty v rukou (modely jsou z jednoho kusu – ohnutá ruka by zkroutila štít / luk / hůl)
+            if (key.StartsWith("hoplit_m")) { armLeftFree = false; armRightFree = false; }      // štít + kopí
+            else if (key.StartsWith("lucistnik")) armLeftFree = false;                          // luk v levé
+            else if (key.StartsWith("vestec")) armRightFree = false;                            // hůl v pravé
+            this.gait = gait;
+            this.height = height;
+            quadAmp = height * 0.14f;
+            hipY = Mathf.Max(0.05f, height * legRatio);
+            kneeY = hipY * 0.5f;
+            var toRoot = root.worldToLocalMatrix;
             var filters = root.GetComponentsInChildren<MeshFilter>();
-            if (gait == Gait.Quad)
+
+            // --- proměření modelu (jen lidé)
+            var all = new List<Vector3>();
+            foreach (var f in filters)
+            {
+                var src = f.sharedMesh;
+                if (src == null || !src.isReadable) continue;
+                var m2r = toRoot * f.transform.localToWorldMatrix;
+                foreach (var v in src.vertices) all.Add(m2r.MultiplyPoint3x4(v));
+            }
+            float zc = 0;
+            if (gait == Gait.Biped && all.Count > 0)
+            {
+                // nohy: v pásmu kotníků a lýtek je mezi nohama mezera, u sukně ne
+                int band = 0, center = 0;
+                float sumX = 0; int nx = 0;
+                foreach (var p in all) if (p.y > height * 0.25f && p.y < height * 0.7f) { sumX += p.x; nx++; }
+                float cx = nx > 0 ? sumX / nx : 0;
+                foreach (var p in all)
+                {
+                    if (p.y < height * 0.04f || p.y > hipY * 0.75f) continue;
+                    band++;
+                    if (Mathf.Abs(p.x - cx) < height * 0.018f) center++;
+                }
+                Robe = band > 0 && center > band * 0.07f;
+                hemY = height * 0.14f;
+                hipHalf = height * 0.05f;
+                // paže: pod rameny hledáme mezeru mezi trupem a paží
+                shoulderY = height * 0.66f;
+                var xs = new List<float>();
+                foreach (var p in all) if (p.y > height * 0.44f && p.y < height * 0.56f) xs.Add(Mathf.Abs(p.x - cx));
+                xs.Sort();
+                float bestGap = 0, gapAt = 0;
+                for (int i = 1; i < xs.Count; i++)
+                {
+                    if (xs[i - 1] < height * 0.04f || xs[i] > height * 0.3f) continue;
+                    float g = xs[i] - xs[i - 1];
+                    if (g > bestGap) { bestGap = g; gapAt = (xs[i] + xs[i - 1]) / 2; }
+                }
+                HasArms = bestGap > height * 0.006f;
+                armX = gapAt;
+                // rameno = nejvyšší vrchol paže
+                if (HasArms)
+                {
+                    float top = 0;
+                    foreach (var p in all) if (Mathf.Abs(p.x - cx) > armX && p.y < height * 0.8f && p.y > top) top = p.y;
+                    shoulderY = Mathf.Clamp(top - height * 0.03f, height * 0.5f, height * 0.75f);
+                    float bottom = shoulderY;
+                    foreach (var p in all) if (Mathf.Abs(p.x - cx) > armX && p.y < shoulderY && p.y > height * 0.2f && p.y < bottom) bottom = p.y;
+                    elbowY = shoulderY - (shoulderY - bottom) * 0.45f;
+                }
+                zc = cx; // zde střed v ose X
+            }
+            else if (gait == Gait.Quad)
             {
                 var b = new Bounds();
                 bool first = true;
@@ -64,45 +133,111 @@ namespace Voxario.Ashes
                 if (src == null || !src.isReadable) continue;
                 var m2r = toRoot * f.transform.localToWorldMatrix;
                 var verts = src.vertices;
-                var idx = new List<int>();
-                var ks = new List<float>();
-                var sides = new List<float>();
+                var rootV = new Vector3[verts.Length];
+                var li = new List<int>(); var lw = new List<float>(); var ls = new List<float>();
+                var ai = new List<int>(); var aw = new List<float>(); var asd = new List<float>();
+                float legBand = Robe ? height * 0.06f : height * 0.035f;
+                float legLimit = height * 0.14f; // jen úzký pás kolem středu (luk u nohou zůstane)
                 for (int i = 0; i < verts.Length; i++)
                 {
                     var p = m2r.MultiplyPoint3x4(verts[i]);
-                    if (p.y >= leg) continue;
-                    idx.Add(i);
-                    ks.Add((leg - p.y) / leg);
-                    if (gait == Gait.Biped) sides.Add(Mathf.SmoothStep(-1, 1, Mathf.InverseLerp(-0.07f, 0.07f, p.x)));
-                    else sides.Add((p.z - zc) * p.x > 0 ? 1 : -1);
+                    rootV[i] = p;
+                    if (gait == Gait.Quad)
+                    {
+                        if (p.y >= hipY) continue;
+                        li.Add(i); lw.Add((hipY - p.y) / hipY); ls.Add((p.z - zc) * p.x > 0 ? 1 : -1);
+                        continue;
+                    }
+                    float x = p.x - zc;
+                    bool arm = HasArms && Mathf.Abs(x) > armX && p.y < shoulderY + height * 0.02f && p.y > height * 0.2f;
+                    if (arm && !(x < 0 ? armLeftFree : armRightFree)) arm = false;
+                    if (arm)
+                    {
+                        ai.Add(i);
+                        aw.Add(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(shoulderY + height * 0.02f, shoulderY - height * 0.12f, p.y)));
+                        asd.Add(Mathf.Sign(x));
+                        continue;
+                    }
+                    if (Mathf.Abs(x) > legLimit) continue;
+                    // sukně / róba: hýbe se jen to pod lemem, látka nahoře zůstává (žádné natahování textury)
+                    float top = Robe ? hemY : hipY;
+                    if (p.y >= top) continue;
+                    li.Add(i);
+                    // u kyčle (lemu) 0, níž plná síla (plynulý přechod = žádné trhliny)
+                    lw.Add(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(top, top - height * (Robe ? 0.05f : 0.12f), p.y)));
+                    ls.Add(Mathf.Lerp(-1, 1, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-legBand, legBand, x))));
                 }
-                if (idx.Count == 0) continue;
+                if (li.Count == 0 && ai.Count == 0) continue;
                 var mesh = Object.Instantiate(src);
                 mesh.name = src.name + " (chůze)";
                 mesh.MarkDynamic();
-                // pohyb vrcholů nesmí model oříznout
                 var bounds = mesh.bounds;
-                bounds.Expand(amp * 2.5f);
+                bounds.Expand(height * 0.5f);
                 mesh.bounds = bounds;
                 f.sharedMesh = mesh;
                 parts.Add(new Part
                 {
-                    mesh = mesh,
-                    baseVerts = verts,
-                    verts = (Vector3[])verts.Clone(),
-                    idx = idx.ToArray(),
-                    k = ks.ToArray(),
-                    side = sides.ToArray(),
-                    toLocal = m2r.inverse,
-                    renderer = f.GetComponent<Renderer>(),
+                    mesh = mesh, baseVerts = verts, rootVerts = rootV, verts = (Vector3[])verts.Clone(),
+                    legIdx = li.ToArray(), legW = lw.ToArray(), legSide = ls.ToArray(),
+                    armIdx = ai.ToArray(), armW = aw.ToArray(), armSide = asd.ToArray(),
+                    toLocal = m2r.inverse, renderer = f.GetComponent<Renderer>(),
                 });
             }
         }
 
-        /// <summary>phase = fáze kroku, amount = 0 (stojí) … 1 (chůze)</summary>
-        public void Update(float phase, float amount)
+        static Vector3 RotX(Vector3 v, Vector3 pivot, float deg)
         {
-            if (amount < 0.01f)
+            float a = deg * Mathf.Deg2Rad, c = Mathf.Cos(a), s = Mathf.Sin(a);
+            var d = v - pivot;
+            return pivot + new Vector3(d.x, d.y * c - d.z * s, d.y * s + d.z * c);
+        }
+
+        /// <summary>
+        /// phase = fáze kroku, amount = 0 (stojí) … 1 (chůze), run = 0 … 1 (běh);
+        /// gait = zachycený pohyb z animace (běh), gaitW = jak moc ho použít (0 … 1).
+        /// </summary>
+        public void Update(float phase, float amount, float run = 0, float armIdle = 0, Voxario.Ashes.Gait motion = null, float gaitW = 0)
+            => Update(phase, amount, run, armIdle, motion, gaitW, null, 0, -1);
+
+        /// <summary>
+        /// Míchání až dvou zachycených pohybů (např. chůze + běh) s procedurální chůzí.
+        /// idleT ≥ 0 = klidový klip v daném čase (motion = klid, bez fáze kroku).
+        /// </summary>
+        public void Update(float phase, float amount, float run, float armIdle, Voxario.Ashes.Gait motion, float gaitW, Voxario.Ashes.Gait motion2, float gaitW2, float idleT)
+        {
+            if (motion == null) gaitW = 0;
+            if (motion2 == null) gaitW2 = 0;
+            float thL = 0, thR = 0, knL = 0, knR = 0, arL = 0, arR = 0, elL = 0, elR = 0;
+            void Add(Voxario.Ashes.Gait g, float w, float t)
+            {
+                if (w <= 0) return;
+                float c = g.ThighCenter;
+                thL += (g.Sample("thighL", t) - c) * w; thR += (g.Sample("thighR", t) - c) * w;
+                knL += (g.Sample("kneeL", t) - g.Min("kneeL")) * w; knR += (g.Sample("kneeR", t) - g.Min("kneeR")) * w;
+                arL += (g.Sample("armL", t) - g.Mean("armL")) * w; arR += (g.Sample("armR", t) - g.Mean("armR")) * w;
+                elL += g.Sample("elbowL", t) * w; elR += g.Sample("elbowR", t) * w;
+            }
+            if (idleT >= 0 && motion != null)
+            {
+                // klid: jen jemné pohyby kolem střední polohy (náš model stojí v klidu jinak než Mixamo)
+                float t = idleT;
+                thL = (motion.Sample("thighL", t) - motion.Mean("thighL")); thR = (motion.Sample("thighR", t) - motion.Mean("thighR"));
+                knL = Mathf.Max(0, motion.Sample("kneeL", t) - motion.Mean("kneeL")); knR = Mathf.Max(0, motion.Sample("kneeR", t) - motion.Mean("kneeR"));
+                arL = motion.Sample("armL", t) - motion.Mean("armL"); arR = motion.Sample("armR", t) - motion.Mean("armR");
+                elL = Mathf.Max(0, motion.Sample("elbowL", t) - motion.Mean("elbowL")); elR = Mathf.Max(0, motion.Sample("elbowR", t) - motion.Mean("elbowR"));
+                gaitW = 1; amount = 1; run = 0;
+            }
+            else
+            {
+                float sum = gaitW + gaitW2;
+                if (sum > 0)
+                {
+                    Add(motion, gaitW / sum, gaitW > 0 ? motion.T(phase) : 0);
+                    Add(motion2, gaitW2 / sum, gaitW2 > 0 ? motion2.T(phase) : 0);
+                }
+                gaitW = Mathf.Clamp01(sum);
+            }
+            if (amount < 0.01f && armIdle < 0.01f && idleT < 0)
             {
                 if (!dirty) return;
                 foreach (var p in parts) p.mesh.SetVertices(p.baseVerts);
@@ -110,29 +245,88 @@ namespace Voxario.Ashes
                 return;
             }
             dirty = true;
+            float sinP = Mathf.Sin(phase), cosP = Mathf.Cos(phase);
             foreach (var p in parts)
             {
                 if (p.renderer != null && !p.renderer.isVisible) continue;
-                var fwd = p.toLocal.MultiplyVector(Vector3.forward);
-                var up = p.toLocal.MultiplyVector(Vector3.up);
-                for (int j = 0; j < p.idx.Length; j++)
+                if (gait == Gait.Quad)
                 {
-                    int i = p.idx[j];
-                    float k = p.k[j] * amount;
-                    float dz, dy;
-                    if (gait == Gait.Biped)
+                    var fwd = p.toLocal.MultiplyVector(Vector3.forward);
+                    var up = p.toLocal.MultiplyVector(Vector3.up);
+                    for (int j = 0; j < p.legIdx.Length; j++)
                     {
-                        float s = p.side[j];
-                        dz = Mathf.Sin(phase) * s * amp * k;
-                        dy = Mathf.Max(0, Mathf.Cos(phase) * s) * 0.07f * k;
+                        int i = p.legIdx[j];
+                        float k = p.legW[j] * amount;
+                        float ph = phase + (p.legSide[j] > 0 ? 0 : Mathf.PI);
+                        float dz = Mathf.Sin(ph) * quadAmp * k;
+                        float dy = Mathf.Max(0, Mathf.Cos(ph)) * quadAmp * 0.35f * k;
+                        p.verts[i] = p.baseVerts[i] + fwd * dz + up * dy;
                     }
-                    else
+                    p.mesh.SetVertices(p.verts);
+                    continue;
+                }
+
+                // --- nohy: rotace v kyčli, koleno se pokrčí, když noda jde dopředu
+                float legAmp = Robe ? Mathf.Lerp(16f, 24f, run) : Mathf.Lerp(24f, 36f, run);
+                for (int j = 0; j < p.legIdx.Length; j++)
+                {
+                    int i = p.legIdx[j];
+                    float side = p.legSide[j];
+                    float w = p.legW[j] * amount;
+                    var v = p.rootVerts[i];
+                    float ang = -sinP * side * legAmp * w;
+                    float lr = (side + 1) * 0.5f; // 0 = levá, 1 = pravá
+                    if (gaitW > 0)
                     {
-                        float ph = phase + (p.side[j] > 0 ? 0 : Mathf.PI);
-                        dz = Mathf.Sin(ph) * amp * k;
-                        dy = Mathf.Max(0, Mathf.Cos(ph)) * amp * 0.35f * k;
+                        float fwd = Mathf.Lerp(thL, thR, lr) * (Robe ? 0.7f : 1f);
+                        ang = Mathf.Lerp(ang, -fwd * w, gaitW);
                     }
-                    p.verts[i] = p.baseVerts[i] + fwd * dz + up * dy;
+                    var pivot = new Vector3(v.x, Robe ? hemY + height * 0.08f : hipY, 0);
+                    var r = RotX(v, pivot, ang);
+                    if (!Robe && v.y < kneeY)
+                    {
+                        // zvednutí chodidla: koleno se ohne při švihu vpřed
+                        float lift = Mathf.Max(0, cosP * side) * Mathf.Lerp(28f, 50f, run) * w;
+                        if (gaitW > 0) lift = Mathf.Lerp(lift, Mathf.Max(0, Mathf.Lerp(knL, knR, lr)) * w, gaitW);
+                        var knee = RotX(new Vector3(v.x, kneeY, 0), pivot, ang);
+                        float kk = Mathf.InverseLerp(kneeY, kneeY - height * 0.05f, v.y);
+                        r = RotX(r, knee, lift * kk);
+                    }
+                    else if (Robe)
+                    {
+                        // lem šatů: jemné vlnění a nadzvednutí podle kroku
+                        float hem = Mathf.InverseLerp(hipY, 0, v.y);
+                        r.z += Mathf.Sin(phase * 2 + v.x * 9f) * 0.012f * height * hem * w;
+                        r.y += Mathf.Max(0, cosP * side) * 0.02f * height * hem * w;
+                    }
+                    p.verts[i] = p.toLocal.MultiplyPoint3x4(r);
+                }
+                // --- paže: kyv proti nohám, při běhu víc a pokrčené
+                float armAmp = Mathf.Lerp(16f, 30f, run) * amount;
+                for (int j = 0; j < p.armIdx.Length; j++)
+                {
+                    int i = p.armIdx[j];
+                    var v = p.rootVerts[i];
+                    float side = p.armSide[j];
+                    float w = p.armW[j];
+                    float ang = sinP * side * armAmp * w + armIdle * w;
+                    float elbow = 0;
+                    if (gaitW > 0)
+                    {
+                        bool left = side < 0;
+                        ang = Mathf.Lerp(ang, -(left ? arL : arR) * 0.8f * w, gaitW);
+                        // pokrčení lokte (předloktí dopředu), u postav s věcí v ruce méně
+                        elbow = -Mathf.Clamp(left ? elL : elR, 0, 100) * 0.6f * gaitW;
+                    }
+                    var pivot = new Vector3(v.x, shoulderY, 0);
+                    var r = RotX(v, pivot, ang);
+                    if (elbow != 0 && elbowY > 0 && v.y < elbowY)
+                    {
+                        var e = RotX(new Vector3(v.x, elbowY, 0), pivot, ang);
+                        float ek = Mathf.InverseLerp(elbowY, elbowY - height * 0.04f, v.y);
+                        r = RotX(r, e, elbow * ek);
+                    }
+                    p.verts[i] = p.toLocal.MultiplyPoint3x4(r);
                 }
                 p.mesh.SetVertices(p.verts);
             }

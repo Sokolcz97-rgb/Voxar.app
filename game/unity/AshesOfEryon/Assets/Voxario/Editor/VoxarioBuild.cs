@@ -28,9 +28,95 @@ public static class VoxarioBuild
         Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
         SetupPipeline();
         ReimportModels();
+        ExtractGaits();
         SetupPlayer();
         BuildScene();
         AssetDatabase.SaveAssets();
+    }
+
+    // ------------------------------------------------------------------ pohyb z Mixamo
+    /// <summary>
+    /// Z animací Mixamo (Assets/Voxario/Anim/*.fbx, jen kostra) vytáhne průběh úhlů kloubů
+    /// v rovině kroku: kyčle, kolena, ramena, lokty, pohupování pánve a náklon trupu.
+    /// Uloží je do Resources/gait_*.json – hra jimi pohání vlastní chůzi modelů bez kostry.
+    /// </summary>
+    static void ExtractGaits()
+    {
+        const string dir = "Assets/Voxario/Anim";
+        if (!Directory.Exists(dir)) return;
+        Directory.CreateDirectory("Assets/Voxario/Resources");
+        foreach (var path in Directory.GetFiles(dir, "*.fbx"))
+        {
+            string p = path.Replace('\\', '/');
+            try
+            {
+                var imp = AssetImporter.GetAtPath(p) as ModelImporter;
+                if (imp != null && imp.animationType != ModelImporterAnimationType.Generic)
+                {
+                    imp.animationType = ModelImporterAnimationType.Generic;
+                    imp.SaveAndReimport();
+                }
+                var clip = AssetDatabase.LoadAllAssetsAtPath(p).OfType<AnimationClip>().FirstOrDefault(c => !c.name.StartsWith("__preview__"));
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                if (clip == null || prefab == null) { Debug.LogWarning("[Voxario] gait: chybí klip nebo kostra v " + p); continue; }
+                var go = (GameObject)UnityEngine.Object.Instantiate(prefab);
+                Transform Bone(string n) => go.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name.EndsWith(":" + n) || t.name == n);
+                var hips = Bone("Hips"); var spine = Bone("Spine2") ?? Bone("Spine1");
+                var lUp = Bone("LeftUpLeg"); var lLeg = Bone("LeftLeg"); var lFoot = Bone("LeftFoot");
+                var rUp = Bone("RightUpLeg"); var rLeg = Bone("RightLeg"); var rFoot = Bone("RightFoot");
+                var lArm = Bone("LeftArm"); var lFore = Bone("LeftForeArm"); var lHand = Bone("LeftHand");
+                var rArm = Bone("RightArm"); var rFore = Bone("RightForeArm"); var rHand = Bone("RightHand");
+                if (hips == null || lUp == null || lLeg == null || lFoot == null || rUp == null || rLeg == null || rFoot == null || lArm == null || lFore == null || lHand == null || rArm == null || rFore == null || rHand == null)
+                { Debug.LogWarning("[Voxario] gait: neúplná kostra v " + p); UnityEngine.Object.DestroyImmediate(go); continue; }
+                var root = go.transform;
+                // úhel úsečky v rovině kroku (0 = svisle dolů, + = dopředu)
+                float Ang(Transform a, Transform b)
+                {
+                    var v = root.InverseTransformDirection(b.position - a.position);
+                    return Mathf.Atan2(v.z, -v.y) * Mathf.Rad2Deg;
+                }
+                const int N = 48;
+                var data = new Dictionary<string, float[]>();
+                foreach (var k in new[] { "thighL", "thighR", "kneeL", "kneeR", "armL", "armR", "elbowL", "elbowR", "bob", "lean", "roll" })
+                    data[k] = new float[N];
+                // výška pánve v klidu (pro pohupování) a délka nohy (pro měřítko)
+                clip.SampleAnimation(go, 0);
+                float legLen = Vector3.Distance(lUp.position, lLeg.position) + Vector3.Distance(lLeg.position, lFoot.position);
+                float minY = float.MaxValue;
+                var hy = new float[N];
+                for (int i = 0; i < N; i++)
+                {
+                    clip.SampleAnimation(go, clip.length * i / N);
+                    float tl = Ang(lUp, lLeg), sl = Ang(lLeg, lFoot), tr = Ang(rUp, rLeg), sr = Ang(rLeg, rFoot);
+                    float al = Ang(lArm, lFore), fl = Ang(lFore, lHand), ar = Ang(rArm, rFore), fr = Ang(rFore, rHand);
+                    data["thighL"][i] = tl; data["kneeL"][i] = tl - sl;
+                    data["thighR"][i] = tr; data["kneeR"][i] = tr - sr;
+                    data["armL"][i] = al; data["elbowL"][i] = fl - al;
+                    data["armR"][i] = ar; data["elbowR"][i] = fr - ar;
+                    var sp = root.InverseTransformDirection((spine != null ? spine.position : hips.position + Vector3.up) - hips.position);
+                    data["lean"][i] = Mathf.Atan2(sp.z, sp.y) * Mathf.Rad2Deg;
+                    data["roll"][i] = Mathf.Atan2(-sp.x, sp.y) * Mathf.Rad2Deg;
+                    hy[i] = root.InverseTransformPoint(hips.position).y;
+                    minY = Mathf.Min(minY, hy[i]);
+                }
+                for (int i = 0; i < N; i++) data["bob"][i] = (hy[i] - minY) / Mathf.Max(0.01f, legLen); // podíl délky nohy
+                // kolik krokových cyklů klip obsahuje (průchody levého stehna středem nahoru)
+                float mean = data["thighL"].Average();
+                int cycles = 0;
+                for (int i = 0; i < N; i++) if (data["thighL"][i] < mean && data["thighL"][(i + 1) % N] >= mean) cycles++;
+                var sb = new System.Text.StringBuilder();
+                sb.Append("{\"cycles\":").Append(Mathf.Max(1, cycles)).Append(",\"length\":").Append(clip.length.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                foreach (var kv in data)
+                    sb.Append(",\"").Append(kv.Key).Append("\":[").Append(string.Join(",", kv.Value.Select(f => f.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)))).Append("]");
+                sb.Append("}");
+                string name = "gait_" + Path.GetFileNameWithoutExtension(p).ToLowerInvariant();
+                File.WriteAllText($"Assets/Voxario/Resources/{name}.json", sb.ToString());
+                AssetDatabase.ImportAsset($"Assets/Voxario/Resources/{name}.json", ImportAssetOptions.ForceSynchronousImport);
+                Debug.Log($"[Voxario] gait {name}: {clip.length:0.00} s, cyklů {cycles}, stehno {data["thighL"].Min():0}…{data["thighL"].Max():0}°, koleno {data["kneeL"].Min():0}…{data["kneeL"].Max():0}°, paže {data["armL"].Min():0}…{data["armL"].Max():0}°, loket {data["elbowL"].Min():0}…{data["elbowL"].Max():0}°, náklon {data["lean"].Average():0}°");
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+            catch (Exception e) { Debug.LogWarning("[Voxario] gait " + p + ": " + e.Message); }
+        }
     }
 
     public static void BuildWindows()
@@ -117,6 +203,9 @@ public static class VoxarioBuild
         // ray tracing (DXR) – ve hře volitelný, zapne se jen na kartách, které ho umí
         SetBool(so, "m_RenderPipelineSettings.supportSSR", true);
         SetBool(so, "m_RenderPipelineSettings.supportRayTracing", true);
+        SetBool(so, "m_RenderPipelineSettings.supportScreenSpaceLensFlare", true);
+        SetBool(so, "m_RenderPipelineSettings.supportVolumetricClouds", true);
+        SetBool(so, "m_RenderPipelineSettings.supportDataDrivenLensFlare", true);
         var rtMode = so.FindProperty("m_RenderPipelineSettings.supportedRayTracingMode");
         if (rtMode != null)
         {
@@ -217,7 +306,7 @@ public static class VoxarioBuild
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
         var ver = Arg("-buildVersion");
-        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.3" : ver;
+        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.7.6" : ver;
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,

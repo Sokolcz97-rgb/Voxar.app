@@ -119,8 +119,10 @@ namespace Voxario.Ashes
             foreach (var n in WorldMap.Npcs)
             {
                 if (n.faction != faction) continue;
-                var prefab = lib.Hero($"{n.cls}_m");
-                float h = n.id == "eryon" || n.id == "azkar" ? 1.85f : 1.62f;
+                // ženské postavy (kněžka, markytánka) mají ženský model
+                bool fem = n.id == "thalia" || n.id == "sabra";
+                var prefab = lib.Hero($"{n.cls}_{(fem ? "f" : "m")}") ?? lib.Hero($"{n.cls}_m");
+                float h = n.id == "eryon" || n.id == "azkar" ? 1.85f : fem ? 1.55f : 1.62f;
                 var v = CharacterView.Create(prefab, parent, h, n.name);
                 v.idleLook = true;
                 v.transform.position = WorldMap.ToWorld(n.x, n.z);

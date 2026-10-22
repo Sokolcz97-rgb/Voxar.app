@@ -108,10 +108,10 @@ namespace Voxario.Ashes
             sea.name = "Sea";
             sea.transform.SetParent(parent, false);
             sea.transform.position = new Vector3(0, 0.02f, 0);
-            sea.transform.localScale = new Vector3(90, 1, 90);
+            sea.transform.localScale = new Vector3(220, 1, 220);
             Object.Destroy(sea.GetComponent<Collider>());
             var r = sea.GetComponent<Renderer>();
-            var m = ModelLibrary.NewLit(new Color(0.09f, 0.22f, 0.28f, 1), 0.92f);
+            var m = ModelLibrary.NewLit(new Color(0.06f, 0.2f, 0.3f, 1), 0.82f);
             m.SetFloat("_Metallic", 0.1f);
             r.sharedMaterial = m;
             return sea;

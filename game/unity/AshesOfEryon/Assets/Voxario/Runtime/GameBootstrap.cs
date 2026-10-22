@@ -64,6 +64,9 @@ namespace Voxario.Ashes
             gameObject.AddComponent<WorldBoss>().boot = this;
             gameObject.AddComponent<Waypoint>().boot = this;
             gameObject.AddComponent<Race>().boot = this;
+            var dayNight = gameObject.AddComponent<DayNight>();
+            dayNight.boot = this;
+            dayNight.Build();
         }
 
         IEnumerator Start()
@@ -192,6 +195,7 @@ namespace Voxario.Ashes
             view.transform.localPosition = Vector3.zero;
             player = playerGo.AddComponent<PlayerController>();
             player.view = view;
+            view.detailedIdle = true;
             var tag = playerGo.AddComponent<NameTag>();
             tag.title = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
             tag.isPlayer = true;
@@ -271,6 +275,7 @@ namespace Voxario.Ashes
                 ("8-akvadukt", WorldMap.ToWorld(-30, 12) + new Vector3(0, 5, 0), WorldMap.ToWorld(-45, 13) + Vector3.up * 4),
                 ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
                 ("18-obr", WorldMap.ToWorld(WorldBoss.Spot.x - 9, WorldBoss.Spot.y + 6) + new Vector3(0, 3, 0), WorldMap.ToWorld(WorldBoss.Spot.x, WorldBoss.Spot.y) + Vector3.up * 1.5f),
+                ("20-obloha", WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0), WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0) + (DayNight.Instance == null ? Vector3.forward : (DayNight.Instance.SunAltitude > 0 ? DayNight.Instance.SunDir : DayNight.Instance.MoonDir) * 50f + Vector3.down * 12f)),
                 ("19-stadion", WorldMap.ToWorld(-8, 8) + new Vector3(0, 4, 0), WorldMap.ToWorld(0, 15) + Vector3.up * 2.5f),
             };
             foreach (var v in views)
@@ -298,6 +303,21 @@ namespace Voxario.Ashes
             for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
             yield return new WaitForSeconds(1f);
+            // běh z boku zblízka (animace z Mixamo) – tři různé okamžiky kroku
+            player.view.speed = 7f;
+            if (rig != null) rig.enabled = false;
+            for (int shot = 0; shot < 3; shot++)
+            {
+                for (float t = 0; t < 0.35f + shot * 0.13f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 5f * Time.deltaTime; yield return null; }
+                var pp = player.transform.position;
+                cam.transform.position = pp + player.transform.right * 3.2f + Vector3.up * 1.1f;
+                cam.transform.LookAt(pp + Vector3.up * 0.8f);
+                yield return null;
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, $"6{(char)('b' + shot)}-beh.png"));
+                yield return new WaitForSeconds(0.6f);
+            }
+            if (rig != null) rig.enabled = true;
+            player.view.speed = 0;
             // chat a oddíl
             GetComponent<Chat>().TestFill();
             GetComponent<Oddil>().TestOpen();
