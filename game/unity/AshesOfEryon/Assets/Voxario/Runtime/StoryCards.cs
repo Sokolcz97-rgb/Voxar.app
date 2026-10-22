@@ -36,6 +36,7 @@ namespace Voxario.Ashes
                 levelShown = ch.level;
                 levelUntil = Time.time + 4f;
                 Sfx.Play("level");
+                ModManager.Fire("level_up", ch.level);
             }
             lastLevel = ch.level;
             // kapitola

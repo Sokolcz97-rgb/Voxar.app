@@ -89,6 +89,7 @@ namespace Voxario.Ashes
 
         IEnumerator Call(string fn, string args, string success, bool reloadShop = false)
         {
+            string ev = fn == "ashes_equip" ? "equip" : fn == "ashes_sell" ? "sell" : fn == "ashes_buy" ? "buy" : null;
             busy = true;
             string json = null, err = null;
             yield return boot.api.Rpc(fn, args, (j, e) => { json = j; err = e; });
@@ -102,6 +103,7 @@ namespace Voxario.Ashes
                 if (st.character.level > before && before > 0) success += "  ·  NOVÁ ÚROVEŇ!";
             }
             Msg(success, false);
+            if (ev != null) ModManager.Fire("item", ev, success);
             Sfx.Play(success.Contains("NOVÁ ÚROVEŇ") ? "level" : "coin", 0.8f);
             if (reloadShop) yield return LoadShop();
         }

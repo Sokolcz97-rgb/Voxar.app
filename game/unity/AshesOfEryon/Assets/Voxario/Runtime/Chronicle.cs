@@ -81,6 +81,7 @@ namespace Voxario.Ashes
             var st = JsonUtility.FromJson<GameState>(json);
             if (st?.character != null) boot.state = st;
             error = null;
+            if (fn == "ashes_start_quest") { ModManager.Fire("expedition", "start", Active?.title ?? ""); Sfx.Play("quest", 0.6f); }
         }
 
         void Fight(string fn, string args, string cls, string label, string note)
@@ -88,6 +89,7 @@ namespace Voxario.Ashes
             if (Encounters.Instance == null) return;
             open = false;
             Encounters.Instance.StoryNote = note;
+            if (fn == "ashes_finish_quest") ModManager.Fire("expedition", "end", label);
             Encounters.Instance.StartStoryFight(fn, args, cls, label, e => { error = e; open = true; });
         }
 
