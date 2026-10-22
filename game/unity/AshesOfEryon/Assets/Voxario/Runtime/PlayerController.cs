@@ -10,6 +10,7 @@ namespace Voxario.Ashes
         public Transform cameraPivot;
         public float walkSpeed = 4.2f;
         public float runSpeed = 7f;
+        bool autoRun;
         public bool inputEnabled = true;
         CharacterController cc;
         float vy;
@@ -27,11 +28,15 @@ namespace Voxario.Ashes
         protected override void OnUpdate(float dt)
         {
             Vector2 input = inputEnabled ? new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) : Vector2.zero;
+            // automatický běh (R): vpřed, dokud hráč nezmáčkne W/S nebo R znovu
+            if (inputEnabled && !Chat.Typing && Input.GetKeyDown(KeyCode.R)) autoRun = !autoRun;
+            if (!inputEnabled || Input.GetKey(KeyCode.S) || Input.GetKeyDown(KeyCode.W)) autoRun = false;
+            if (autoRun && input.y == 0) input.y = 1;
             Vector3 fwd = cameraPivot != null ? Vector3.ProjectOnPlane(cameraPivot.forward, Vector3.up).normalized : Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
             Vector3 move = (fwd * input.y + right * input.x);
             if (move.sqrMagnitude > 1) move.Normalize();
-            float spd = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
+            float spd = Input.GetKey(KeyCode.LeftShift) || autoRun ? runSpeed : walkSpeed;
             Vector3 vel = move * spd;
             if (cc.isGrounded)
             {
@@ -48,7 +53,12 @@ namespace Voxario.Ashes
             }
             if (view != null) view.speed = move.magnitude * spd;
             // pád do moře: zpět na břeh
-            if (transform.position.y < -3) Respawn(WorldMap.SpawnKalidra);
+            if (transform.position.y < -3)
+            {
+                var boot = FindAnyObjectByType<GameBootstrap>();
+                bool legie = boot != null && boot.state?.character?.faction == "legie";
+                Respawn(legie ? Encounters.RespawnLegie : WorldMap.SpawnKalidra);
+            }
         }
 
         public void Respawn(Vector2 web)
