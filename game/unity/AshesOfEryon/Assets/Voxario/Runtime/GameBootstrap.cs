@@ -301,6 +301,21 @@ namespace Voxario.Ashes
             for (float t = 0; t < 1.2f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 3f * Time.deltaTime; yield return null; }
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "6-chuze.png"));
             yield return new WaitForSeconds(1f);
+            // běh z boku zblízka (animace z Mixamo) – tři různé okamžiky kroku
+            player.view.speed = 7f;
+            if (rig != null) rig.enabled = false;
+            for (int shot = 0; shot < 3; shot++)
+            {
+                for (float t = 0; t < 0.35f + shot * 0.13f; t += Time.deltaTime) { player.transform.position += player.transform.forward * 5f * Time.deltaTime; yield return null; }
+                var pp = player.transform.position;
+                cam.transform.position = pp + player.transform.right * 3.2f + Vector3.up * 1.1f;
+                cam.transform.LookAt(pp + Vector3.up * 0.8f);
+                yield return null;
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, $"6{(char)('b' + shot)}-beh.png"));
+                yield return new WaitForSeconds(0.6f);
+            }
+            if (rig != null) rig.enabled = true;
+            player.view.speed = 0;
             // chat a oddíl
             GetComponent<Chat>().TestFill();
             GetComponent<Oddil>().TestOpen();
