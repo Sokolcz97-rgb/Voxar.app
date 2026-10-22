@@ -474,6 +474,7 @@ namespace Voxario.Ashes
             {
                 label = $"{res.fight.f2.name} · úroveň {res.fight.f2.level}";
                 if (!string.IsNullOrEmpty(res.fight.f2.@class)) cls = res.fight.f2.@class;
+                if (res.fight.f2.name.StartsWith("Gladiátorka")) gender = "f";
             }
             // soupeř se objeví naproti hráči
             var pt = boot.player.transform;
