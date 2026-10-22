@@ -17,7 +17,7 @@ namespace Voxario.Ashes
         float fps, fpsTimer;
         int frames;
         Vector2 scroll;
-        static readonly string[] Tabs = { "Grafika", "Zobrazení", "Zvuk", "Ovládání", "Módy" };
+        static readonly string[] Tabs = { "Grafika", "Zobrazení", "Zvuk", "Ovládání", "Módy", "Postavy" };
 
         public bool SettingsOpen => settingsOpen;
         public void TestOpenSettings(int t) { settingsOpen = true; tab = t; }
@@ -28,12 +28,14 @@ namespace Voxario.Ashes
             fpsTimer += Time.unscaledDeltaTime;
             if (fpsTimer >= 0.5f) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
             var dialog = NpcDialog.Instance;
-            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen))
+            bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen)
+                              || (Chronicle.Instance != null && Chronicle.Instance.IsOpen) || (Feedback.Instance != null && Feedback.Instance.IsOpen);
+            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen && !UiFocus.ClosedThisFrame)
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
                 else settingsOpen = !settingsOpen;
             }
-            bool blocked = settingsOpen || Chat.Typing || (Oddil.Instance != null && Oddil.Instance.IsOpen) || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
+            bool blocked = settingsOpen || windowOpen || Chat.Typing || (Oddil.Instance != null && Oddil.Instance.IsOpen) || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
             if (boot.player != null) boot.player.inputEnabled = !blocked;
             if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen && !Chat.Typing;
         }
@@ -42,7 +44,7 @@ namespace Voxario.Ashes
         {
             EryonSkin.Begin();
             GUI.depth = settingsOpen ? -20 : 0; // nastavení vždy nahoře
-            if (!boot.inWorld) { LoginScreen(); return; }
+            if (!boot.inWorld) { if (boot.NeedsCharacter && !boot.busy) CreatorScreen(); else LoginScreen(); return; }
             Hud();
             if (settingsOpen) Settings();
         }
@@ -106,6 +108,105 @@ namespace Voxario.Ashes
             GUI.Label(new Rect(W - 640, H - 80, 610, 34), "Every choice leaves a scar.", new GUIStyle(EryonSkin.Body) { alignment = TextAnchor.MiddleRight, fontSize = 26, fontStyle = FontStyle.Italic, normal = { textColor = new Color(0.93f, 0.89f, 0.82f, 0.8f) } });
         }
 
+        // ------------------------------------------------------------------ tvorba postavy
+        string cName = "", cClass = "hoplit", cGender = "m", cFaction = "kalidra", cError;
+
+        static readonly (string id, string desc)[] ClassInfo =
+        {
+            ("hoplit", "Štít a kopí. Nejvíc životů a blok štítem. Hlavní vlastnost: síla."),
+            ("lucistnik", "Luk a dýka. Rychlé zásahy a úhyby. Hlavní vlastnost: obratnost."),
+            ("vestec", "Oheň a proroctví. Silná kouzla, méně životů. Hlavní vlastnost: intelekt."),
+        };
+
+        void CreatorScreen()
+        {
+            float W = EryonSkin.W, H = EryonSkin.H;
+            var full = new Rect(0, 0, W, H);
+            EryonSkin.Cover(full, EryonSkin.Background);
+            GUI.DrawTexture(full, EryonSkin.Vignette);
+            EryonSkin.Fill(full, new Color(0.03f, 0.02f, 0.015f, 0.5f));
+            float w = Mathf.Min(1300, W - 60), h = Mathf.Min(900, H - 60);
+            var r = new Rect((W - w) / 2, (H - h) / 2, w, h);
+            var inner = EryonSkin.DrawPanel(r, "Zrození hrdiny");
+            GUILayout.BeginArea(inner);
+            GUILayout.Label("Každá volba zanechá jizvu. Jméno, strana i povolání zůstanou s tvým hrdinou navždy.", new GUIStyle(EryonSkin.Body) { fontStyle = FontStyle.Italic });
+            GUILayout.Space(10);
+
+            GUILayout.Label("STRANA VÁLKY", EryonSkin.Caps);
+            GUILayout.BeginHorizontal();
+            FactionCard("kalidra", "Obránci Kalidry", "Poslední svobodné město na pobřeží. Probudíš se na Bezejmenném břehu a pomůžeš Eryonovi udržet hradby.");
+            GUILayout.Space(16);
+            FactionCard("legie", "Legie Rudého slunce", "Vojsko Azkara, Syna Rudého slunce. Vystoupíš z černých lodí v zátoce a povedeš útok na Kalidru.");
+            GUILayout.EndHorizontal();
+            GUILayout.Space(12);
+
+            GUILayout.Label("POVOLÁNÍ", EryonSkin.Caps);
+            GUILayout.BeginHorizontal();
+            foreach (var c in ClassInfo)
+            {
+                bool on = cClass == c.id;
+                GUILayout.BeginVertical(on ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Width((inner.width - 40) / 3), GUILayout.Height(250));
+                var pr = GUILayoutUtility.GetRect(130, 130, GUILayout.ExpandWidth(true));
+                EryonSkin.Portrait(new Rect(pr.x + pr.width / 2 - 65, pr.y + 4, 122, 122), EryonSkin.PortraitFor(c.id, cGender));
+                GUILayout.Label(EryonSkin.ClassName(c.id), new GUIStyle(EryonSkin.H2) { alignment = TextAnchor.MiddleCenter, normal = { textColor = on ? EryonSkin.GoldBright : EryonSkin.Text } });
+                GUILayout.Label(c.desc, new GUIStyle(EryonSkin.Small) { alignment = TextAnchor.UpperCenter, wordWrap = true });
+                GUILayout.EndVertical();
+                if (Event.current.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) { cClass = c.id; Event.current.Use(); }
+                GUILayout.Space(10);
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.Space(12);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical(GUILayout.Width(520));
+            GUILayout.Label("JMÉNO HRDINY (3–20 znaků)", EryonSkin.Caps);
+            cName = GUILayout.TextField(cName, 20, EryonSkin.Field, GUILayout.Height(46));
+            GUILayout.EndVertical();
+            GUILayout.Space(30);
+            GUILayout.BeginVertical();
+            GUILayout.Label("POSTAVA", EryonSkin.Caps);
+            GUILayout.BeginHorizontal();
+            if (EryonSkin.Toggle(cGender == "m", "Muž", GUILayout.Height(46), GUILayout.Width(150))) cGender = "m";
+            if (EryonSkin.Toggle(cGender == "f", "Žena", GUILayout.Height(46), GUILayout.Width(150))) cGender = "f";
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+
+            var slots = boot.GetComponent<CharacterSlots>();
+            if (slots != null && slots.HasOthers)
+            {
+                GUILayout.Space(10);
+                GUILayout.Label("NEBO POKRAČUJ S EXISTUJÍCÍ POSTAVOU", EryonSkin.Caps);
+                slots.Draw(false);
+            }
+            else if (slots != null && !slots.Loaded) slots.Refresh();
+            GUILayout.FlexibleSpace();
+            if (!string.IsNullOrEmpty(cError)) GUILayout.Label($"<color=#e0672a>{cError}</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true });
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Odhlásit se", EryonSkin.Button, GUILayout.Height(50), GUILayout.Width(220))) boot.SignOut();
+            GUILayout.FlexibleSpace();
+            string nm = cName.Trim();
+            GUI.enabled = nm.Length >= 3 && !boot.busy;
+            if (GUILayout.Button("VSTOUPIT DO SVĚTA", EryonSkin.ButtonPrimary, GUILayout.Height(58), GUILayout.Width(380)))
+            {
+                cError = null;
+                boot.CreateCharacter(nm, cClass, cGender, cFaction, e => cError = e);
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+        }
+
+        void FactionCard(string id, string title, string desc)
+        {
+            bool on = cFaction == id;
+            GUILayout.BeginVertical(on ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(110));
+            GUILayout.Label(title, new GUIStyle(EryonSkin.H2) { normal = { textColor = on ? EryonSkin.GoldBright : EryonSkin.Text } });
+            GUILayout.Label(desc, new GUIStyle(EryonSkin.Small) { wordWrap = true });
+            GUILayout.EndVertical();
+            if (Event.current.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) { cFaction = id; Event.current.Use(); }
+        }
+
         static void Spinner(Vector2 c)
         {
             float t = Time.unscaledTime * 2.2f;
@@ -137,11 +238,11 @@ namespace Voxario.Ashes
             float xpK = ch.xp_need > 0 ? ch.xp / (float)ch.xp_need : 0;
             EryonSkin.Bar(new Rect(frame.x + 132, frame.y + 78, 270, 18), xpK, new Color(0.62f, 0.48f, 0.9f), ch.xp_need > 0 ? $"{ch.xp} / {ch.xp_need} zk." : "");
             // zlato a čest
-            GUI.Label(new Rect(frame.x + 132, frame.y + 100, 300, 24), $"<color=#f0d08a>◆ {ch.gold} zlata</color>     <color=#9fd4f0>✦ {ch.honor} cti</color>", new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold });
+            GUI.Label(new Rect(frame.x + 132, frame.y + 100, 320, 24), $"<color=#8cc06b>❤ {Mathf.RoundToInt(boot.state.hp)}</color>    <color=#f0d08a>◆ {ch.gold}</color>    <color=#9fd4f0>✦ {ch.honor} cti</color>", new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold });
 
             // spodní lišta s klávesami
             float y = H - 40;
-            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "M", "mapa", "Enter", "chat", "O", "oddíl", "Esc", "nastavení" };
+            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "F1", "hlášení", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
             {
@@ -165,7 +266,7 @@ namespace Voxario.Ashes
             GUILayout.BeginArea(new Rect(inner.x, inner.y - 8, inner.width, 50));
             GUILayout.BeginHorizontal();
             for (int i = 0; i < Tabs.Length; i++)
-                if (GUILayout.Button(Tabs[i], tab == i ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(38))) { tab = i; scroll = Vector2.zero; }
+                if (GUILayout.Button(Tabs[i], tab == i ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(38))) { tab = i; scroll = Vector2.zero; if (i == 5) boot.GetComponent<CharacterSlots>()?.Refresh(); }
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
@@ -178,6 +279,10 @@ namespace Voxario.Ashes
                 case 2: Sound(); break;
                 case 3: Controls(); break;
                 case 4: ModsTab(); break;
+                case 5:
+                    Section("Tvé postavy", "Na jednom účtu můžeš mít až 4 hrdiny – třeba za každou stranu války.");
+                    boot.GetComponent<CharacterSlots>()?.Draw(true);
+                    break;
             }
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -301,6 +406,15 @@ namespace Voxario.Ashes
             GUILayout.EndHorizontal();
             var music = boot.GetComponent<Music>();
             if (music != null && music.NowPlaying != null) GUILayout.Label("♪  " + music.NowPlaying, EryonSkin.Body);
+            GUILayout.Space(16);
+            Section("Zvukové efekty", "Zásahy, bloky, mince, nová úroveň.");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"{Mathf.RoundToInt(Sfx.Volume * 100)} %", EryonSkin.BodyBold, GUILayout.Width(80));
+            float sv = GUILayout.HorizontalSlider(Sfx.Volume, 0, 1, GUILayout.Width(500));
+            if (Mathf.Abs(sv - Sfx.Volume) > 0.001f) Sfx.Volume = sv;
+            GUILayout.Space(20);
+            if (GUILayout.Button("Vyzkoušet", EryonSkin.Button, GUILayout.Width(160), GUILayout.Height(36))) Sfx.Play("crit");
+            GUILayout.EndHorizontal();
         }
 
         static void Controls()
@@ -308,9 +422,10 @@ namespace Voxario.Ashes
             Section("Ovládání");
             (string k, string d)[] rows =
             {
-                ("W A S D", "pohyb"), ("Shift", "běh"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
+                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
                 ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
-                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
+                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"), ("F1", "nahlásit chybu nebo nápad vývojářům"),
+                ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
             };
             foreach (var (k, d) in rows)
             {

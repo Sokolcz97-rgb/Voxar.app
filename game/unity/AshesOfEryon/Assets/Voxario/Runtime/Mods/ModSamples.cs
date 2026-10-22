@@ -96,6 +96,9 @@ UDÁLOSTI  –  eryon.on(""nazev"", function(...) ... end)
   fight_start (id, jmeno)     začátek souboje
   fight_end (""won""/""lost"", jmeno)
   chat (""svet""/""oddil"", jmeno, text)   nová zpráva v chatu
+  level_up (uroven)           nová úroveň postavy
+  item (""equip""/""sell""/""buy"", nazev)  změna výbavy
+  expedition (""start""/""end"", nazev)  výprava z Kroniky
 
 FUNKCE
   eryon.print(...)                    zápis do logu

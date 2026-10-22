@@ -53,6 +53,13 @@ namespace Voxario.Ashes
             gameObject.AddComponent<ModManager>().boot = this;
             gameObject.AddComponent<Chat>().boot = this;
             gameObject.AddComponent<Oddil>().boot = this;
+            gameObject.AddComponent<CharacterWindow>().boot = this;
+            gameObject.AddComponent<Arena>().boot = this;
+            gameObject.AddComponent<Chronicle>().boot = this;
+            gameObject.AddComponent<Guide>().boot = this;
+            gameObject.AddComponent<CharacterSlots>().boot = this;
+            gameObject.AddComponent<StoryCards>().boot = this;
+            gameObject.AddComponent<Feedback>().boot = this;
         }
 
         IEnumerator Start()
@@ -112,6 +119,26 @@ namespace Voxario.Ashes
             yield return LoadState();
         }
 
+        /// <summary>Hráč přihlášený, ale bez postavy – GameUI ukáže tvorbu postavy.</summary>
+        public bool NeedsCharacter => state != null && state.allowed && (state.character == null || string.IsNullOrEmpty(state.character.name));
+
+        public void CreateCharacter(string name, string cls, string gender, string faction, System.Action<string> onError)
+            => StartCoroutine(CreateRoutine(name, cls, gender, faction, onError));
+
+        IEnumerator CreateRoutine(string name, string cls, string gender, string faction, System.Action<string> onError)
+        {
+            busy = true;
+            status = "Kovám tvůj osud…";
+            string json = null, err = null;
+            string args = "{\"p_name\":" + MiniJson.Write(name) + ",\"p_class\":" + MiniJson.Write(cls) +
+                          ",\"p_appearance\":{\"gender\":" + MiniJson.Write(gender) + "},\"p_faction\":" + MiniJson.Write(faction) + "}";
+            yield return api.Rpc("ashes_create_character", args, (j, e) => { json = j; err = e; });
+            busy = false;
+            status = "";
+            if (err != null) { onError?.Invoke(err); yield break; }
+            yield return LoadState();
+        }
+
         void OnApplicationQuit() => Debug.Log("[Voxario] konec");
 
         IEnumerator LoadState()
@@ -127,7 +154,8 @@ namespace Voxario.Ashes
             if (state == null || !state.allowed) { status = "Brány Kalidry jsou zatím zavřené – hrát mohou jen testeři s povolením."; yield break; }
             if (state.character == null || string.IsNullOrEmpty(state.character.name))
             {
-                status = "Nemáš ještě postavu – vytvoř si ji na studiovoxario.com/hra.";
+                // tvorbu postavy zobrazí GameUI (NeedsCharacter)
+                status = "";
                 yield break;
             }
             status = "Stavím svět Kalidry…";
@@ -199,10 +227,27 @@ namespace Voxario.Ashes
             yield return new WaitForSeconds(1.5f);
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "0-prihlaseni.png"));
             yield return new WaitForSeconds(0.5f);
+            // tvorba postavy (přihlášený hráč bez postavy)
+            state = new GameState { allowed = true, character = new Character() };
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "0b-tvorba-postavy.png"));
+            yield return new WaitForSeconds(0.5f);
             state = new GameState
             {
                 allowed = true,
-                character = new Character { name = "Tester", display_name = "Tester", @class = "hoplit", faction = "kalidra", level = 3, xp = 140, xp_need = 300, gold = 172, honor = 12, appearance = new Appearance { gender = "m" } },
+                hp = 165,
+                bag_max = 12,
+                character = new Character { name = "Tester", display_name = "Tester", @class = "hoplit", faction = "kalidra", level = 3, xp = 140, xp_need = 300, gold = 172, honor = 12, wins = 9, losses = 2,
+                    sila = 13, obratnost = 5, intelekt = 5, vydrz = 11, stesti = 6, appearance = new Appearance { gender = "m" } },
+                fighter = new FighterStats { level = 3, sila = 15, obratnost = 5, intelekt = 5, vydrz = 13, stesti = 6, wmin = 5, wmax = 9, armor = 7, shield = true },
+                train_cost = new TrainCost { sila = 48, obratnost = 12, intelekt = 12, vydrz = 36, stesti = 15 },
+                items = new[]
+                {
+                    new Item { id = "w", slot = "zbran", name = "Měděné kopí", rarity = 0, level = 1, wmin = 5, wmax = 9, sila = 2, price = 20, equipped = true },
+                    new Item { id = "s", slot = "stit", name = "Měděný štít", rarity = 0, level = 1, armor = 5, price = 20, equipped = true },
+                    new Item { id = "h", slot = "helma", name = "Bronzová přilba", rarity = 2, level = 3, armor = 6, vydrz = 2, price = 160 },
+                    new Item { id = "a", slot = "amulet", name = "Kostěný talisman", rarity = 1, level = 2, stesti = 3, price = 70 },
+                },
                 wquests = new[] { new WQuest { quest_id = "k1", state = "done" }, new WQuest { quest_id = "k2", state = "active", progress = 1 }, new WQuest { quest_id = "k3", state = "ready" } },
             };
             EnterWorld();
@@ -251,6 +296,36 @@ namespace Voxario.Ashes
             yield return new WaitForSeconds(1.2f);
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "12-chat-oddil.png"));
             yield return new WaitForSeconds(0.5f);
+            GetComponent<Oddil>().Close();
+            // okno postavy, batoh, kovář a aréna
+            var cw = GetComponent<CharacterWindow>();
+            foreach (var (t, file) in new[] { (0, "13-postava.png"), (1, "14-batoh.png"), (2, "15-kovar.png") })
+            {
+                cw.TestOpen(t);
+                yield return new WaitForSeconds(1f);
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, file));
+                yield return new WaitForSeconds(0.5f);
+            }
+            cw.Close();
+            GetComponent<Arena>().TestOpen();
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "16-arena.png"));
+            yield return new WaitForSeconds(0.5f);
+            GetComponent<Arena>().Close();
+            state.character.courage = 64;
+            state.character.chapter_progress = 2;
+            state.chapter = new ChapterInfo { n = 1, need = 4, title = "Bezejmenný břeh", intro = "Probouzíš se na Bezejmenném břehu. Moře tě vyplavilo mezi trosky a v dálce hoří světla Kalidry.",
+                boss = new ChapterBoss { c = "hoplit", e = "Kapitán Dorkas", t = "Kapitán vrakařů", s = "„Kdo přežije moře, patří mně,“ směje se kapitán Dorkas." } };
+            state.quests = new[]
+            {
+                new Expedition { id = "q1", state = "offered", title = "Trosky v příboji", story = "Mezi troskami se prý ukrývá raněný námořník.", minutes = 2, xp = 60, gold = 25, item_chance = 15, enemy = new ExpeditionEnemy { name = "Vrakař", @class = "lucistnik", level = 2 } },
+                new Expedition { id = "q2", state = "offered", title = "Stezka k akvaduktu", story = "Lapkové přepadají poutníky u starého akvaduktu.", minutes = 5, xp = 110, gold = 40, item_chance = 20, enemy = new ExpeditionEnemy { name = "Lapka", @class = "hoplit", level = 3 } },
+            };
+            GetComponent<Chronicle>().TestOpen();
+            yield return new WaitForSeconds(1f);
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "17-kronika.png"));
+            yield return new WaitForSeconds(0.5f);
+            GetComponent<Chronicle>().Close();
             // nastavení (záložka Zobrazení)
             player.enabled = true;
             var ui = GetComponent<GameUI>();
@@ -294,6 +369,21 @@ namespace Voxario.Ashes
             foreach (var t in view.GetComponentsInChildren<Transform>(true)) t.gameObject.SetActive(true);
             player.view = view;
             if (old != null) Destroy(old.gameObject);
+        }
+
+        /// <summary>Znovu načte postavu ze serveru a přestaví svět (přepnutí / nová postava).</summary>
+        public void Reload() => StartCoroutine(ReloadRoutine());
+
+        IEnumerator ReloadRoutine()
+        {
+            GetComponent<WorldPresence>()?.Disconnect();
+            inWorld = false;
+            if (worldRoot != null) Destroy(worldRoot.gameObject);
+            worldRoot = null;
+            player = null;
+            state = null;
+            yield return null;
+            yield return LoadState();
         }
 
         public void SignOut()

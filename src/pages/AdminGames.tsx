@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Pencil, Search } from "lucide-react";
 import { toast } from "sonner";
+import { AshesFeedbackPanel } from "@/components/admin/AshesFeedbackPanel";
 
 type Game = {
   id: string;
@@ -143,6 +144,8 @@ const AdminGames = () => {
           </div>
           <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" />Přidat hru</Button>
         </div>
+
+        <AshesFeedbackPanel />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {games.map((g) => (

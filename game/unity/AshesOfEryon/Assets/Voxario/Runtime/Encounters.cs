@@ -16,6 +16,7 @@ namespace Voxario.Ashes
         public bool won;
         public int xp, gold, levels;
         public string[] quests;
+        public Item item;
         public GameState state;
     }
 
@@ -65,7 +66,8 @@ namespace Voxario.Ashes
             ("kalidra", 86, 2), ("kalidra", 86, 36),
         };
 
-        static readonly Dictionary<string, string[]> Safe = new Dictionary<string, string[]> { ["kalidra"] = new[] { "kalidra" }, ["legie"] = new[] { "cove", "camp" } };
+        // oblasti bez nepřátel (vlastní město / tábor); zátoka Legie má strážné na útesech mimo bezpečný kruh
+        static readonly Dictionary<string, string[]> Safe = new Dictionary<string, string[]> { ["kalidra"] = new[] { "kalidra" }, ["legie"] = new[] { "camp" } };
         static readonly (float x, float z, float r)[] SafeZones = { (-52, 50, 20), (-44, -50, 18), (62, 15, 14), (56, -60, 14) };
         public static readonly Vector2 RespawnKalidra = new Vector2(62, 15), RespawnLegie = new Vector2(56, -60);
         static readonly (string id, float x, float z)[] Beacons = { ("b1", -22, -58), ("b2", 2, -72), ("b3", 28, -60) };
@@ -90,6 +92,7 @@ namespace Voxario.Ashes
         }
 
         readonly List<Enemy> enemies = new List<Enemy>();
+        int tagLevel = -1;
         readonly List<(string id, Transform t, Fire fire)> beacons = new List<(string, Transform, Fire)>();
         Transform memorial;
         string faction = "kalidra";
@@ -102,12 +105,24 @@ namespace Voxario.Ashes
         int hp1, hp2, max1, max2;
         readonly List<(Vector3 pos, string text, Color color, float t0)> floats = new List<(Vector3, string, Color, float)>();
         public bool Busy => fighting || result != null;
+        /// <summary>Text pod výsledkem příběhového souboje (např. vítězství nad bossem).</summary>
+        public string StoryNote;
         public static Encounters Instance { get; private set; }
         void Awake() => Instance = this;
+
+        ModelLibrary library;
+        Transform worldRoot;
+        // aréna: soupeř, čest a režim bez smrti
+        CharacterView arenaFoe;
+        bool arenaMode;
+        int arenaHonor;
 
         public void Build(Transform root, ModelLibrary lib, string fac)
         {
             faction = fac;
+            library = lib;
+            tagLevel = -1;
+            worldRoot = root;
             enemies.Clear();
             beacons.Clear();
             var parent = new GameObject("Enemies").transform;
@@ -177,21 +192,63 @@ namespace Voxario.Ashes
         /// <summary>Zapálené vatry podle úkolu „Strážní ohně“ (cíle v targets).</summary>
         void RefreshBeacons()
         {
-            var wq = boot.state?.Quest("k4");
+            bool legie = faction == "legie";
+            var wq = boot.state?.Quest(legie ? "l4" : "k4");
             foreach (var b in beacons)
             {
-                bool lit = faction == "legie" || (wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0)));
-                b.fire.lit = lit;
+                // Kalidra vatry zapaluje (k4), Legie je zhasíná (l4)
+                bool touched = wq != null && (wq.state != "active" || (wq.targets != null && Array.IndexOf(wq.targets, b.id) >= 0));
+                b.fire.lit = legie ? !touched : touched;
             }
         }
 
         void Note(string s) { note = s; noteUntil = Time.time + 5; }
+
+        /// <summary>Polohy (webové souřadnice) cílů aktivních úkolů pro minimapu.</summary>
+        public List<Vector2> QuestTargets()
+        {
+            var list = new List<Vector2>();
+            var st = boot.state;
+            if (st?.wquests == null) return list;
+            foreach (var wq in st.wquests)
+            {
+                if (wq.state != "active") continue;
+                var def = Content.Data.Quest(wq.quest_id);
+                if (def == null) continue;
+                if (def.type == "kill")
+                {
+                    foreach (var e in enemies) if (e.alive && e.def.id == def.target) list.Add(e.pos);
+                }
+                else if (def.type == "beacon")
+                {
+                    foreach (var b in Beacons) if (wq.targets == null || Array.IndexOf(wq.targets, b.id) < 0) list.Add(new Vector2(b.x, b.z));
+                }
+                else if (def.type == "visit") list.Add(Memorial);
+            }
+            return list;
+        }
 
         void Update()
         {
             if (!boot.inWorld || boot.player == null) return;
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             float dt = Time.deltaTime, now = Time.time;
+            int myLevel = boot.state?.character?.level ?? 1;
+            if (myLevel != tagLevel)
+            {
+                tagLevel = myLevel;
+                foreach (var en in enemies)
+                {
+                    float mid = (en.def.l0 + en.def.l1) / 2f;
+                    string diff; Color c;
+                    if (mid <= myLevel - 2) { diff = "snadný"; c = new Color(0.6f, 0.8f, 0.55f); }
+                    else if (mid <= myLevel + 0.5f) { diff = "vyrovnaný"; c = new Color(0.95f, 0.85f, 0.55f); }
+                    else if (mid <= myLevel + 2) { diff = "silný"; c = new Color(1f, 0.6f, 0.35f); }
+                    else { diff = "nebezpečný"; c = new Color(1f, 0.35f, 0.3f); }
+                    en.tag.subtitle = $"úroveň {en.def.l0}–{en.def.l1} · {diff}";
+                    en.tag.subtitleColor = c;
+                }
+            }
             bool calm = fighting || result != null || InSafe(pw) || (NpcDialog.Instance != null && NpcDialog.Instance.IsOpen);
             foreach (var e in enemies)
             {
@@ -262,18 +319,26 @@ namespace Voxario.Ashes
         string NearPrompt()
         {
             if (boot.player == null) return null;
-            foreach (var b in beacons) if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) return "[E]  Zapálit strážní vatru";
+            foreach (var b in beacons) if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) return faction == "legie" ? "[E]  Uhasit kalidrskou vatru" : "[E]  Zapálit strážní vatru";
             if (memorial != null && Vector3.Distance(boot.player.transform.position, memorial.position) < 4) return "[E]  Položit květ k památníku";
             return null;
         }
 
         IEnumerator Interact(string kind, string target)
         {
-            string quest = kind == "beacon" ? "k4" : "k7";
+            bool legie = faction == "legie";
+            string quest = kind == "beacon" ? (legie ? "l4" : "k4") : "k7";
             var wq = boot.state?.Quest(quest);
             if (wq == null || wq.state != "active")
             {
-                Note(kind == "beacon" ? "Vatra čeká na rozkaz. (Úkol „Strážní ohně“ dává Damon.)" : "Památník padlých. Kámen si pamatuje jejich jména.");
+                Note(kind == "beacon"
+                    ? (legie ? "Kalidrská vatra. (Úkol „Zhasnout ohně“ dává kněz Oren.)" : "Vatra čeká na rozkaz. (Úkol „Strážní ohně“ dává Damon.)")
+                    : "Památník padlých. Kámen si pamatuje jejich jména.");
+                yield break;
+            }
+            if (kind == "beacon" && wq.targets != null && Array.IndexOf(wq.targets, target) >= 0)
+            {
+                Note(legie ? "Tahle vatra už je uhašená." : "Tahle vatra už hoří.");
                 yield break;
             }
             string json = null, err = null;
@@ -282,7 +347,7 @@ namespace Voxario.Ashes
             var st = JsonUtility.FromJson<GameState>(json);
             if (st?.character != null) boot.state = st;
             RefreshBeacons();
-            Note(kind == "beacon" ? "Vatra vzplála – vidí ji celé pobřeží." : "Položil jsi květ k památníku padlých.");
+            Note(kind == "beacon" ? (legie ? "Vatra zasyčela a zhasla. Kalidra o jedno oko méně." : "Vatra vzplála – vidí ji celé pobřeží.") : "Položil jsi květ k památníku padlých.");
         }
 
         // ------------------------------------------------------------------ souboj
@@ -312,31 +377,7 @@ namespace Voxario.Ashes
             }
             var res = JsonUtility.FromJson<FightResult>(json);
             ModManager.Fire("fight_start", e.def.id, e.def.name);
-            var f = res.fight;
-            fName1 = f.f1?.name ?? "Ty";
-            fName2 = $"{f.f2?.name ?? e.def.name} · úroveň {f.f2?.level}";
-            var r0 = f.rounds != null && f.rounds.Length > 0 ? f.rounds[0] : null;
-            max1 = r0 == null ? f.hp1 : Mathf.Max(r0.h1 + (r0.a == 2 && !r0.e ? r0.d : 0), 1);
-            max2 = r0 == null ? f.hp2 : Mathf.Max(r0.h2 + (r0.a == 1 && !r0.e ? r0.d : 0), 1);
-            hp1 = max1; hp2 = max2;
-            yield return new WaitForSeconds(0.4f);
-            foreach (var r in f.rounds ?? new FightRound[0])
-            {
-                var attacker = r.a == 1 ? boot.player.view : e.view;
-                var target = r.a == 1 ? e.view : boot.player.view;
-                attacker.Lunge();
-                yield return new WaitForSeconds(0.18f);
-                var at = target.transform.position + Vector3.up * 2f;
-                if (r.e) Float(at, "úhyb", new Color(0.7f, 0.85f, 1f));
-                else
-                {
-                    if (r.b) Float(at + Vector3.up * 0.4f, "blok", new Color(0.8f, 0.8f, 0.8f));
-                    Float(at, (r.c ? "KRITICKÝ  " : "") + "-" + r.d, r.c ? new Color(1f, 0.45f, 0.2f) : (r.a == 1 ? new Color(1f, 0.9f, 0.5f) : new Color(1f, 0.35f, 0.3f)));
-                    target.Flinch();
-                }
-                hp1 = r.h1; hp2 = r.h2;
-                yield return new WaitForSeconds(0.42f);
-            }
+            yield return Replay(res.fight, e.view, $"{res.fight.f2?.name ?? e.def.name} · úroveň {res.fight.f2?.level}");
             if (res.won)
             {
                 e.view.Fall();
@@ -354,17 +395,143 @@ namespace Voxario.Ashes
             if (res.state?.character != null) boot.state = res.state;
             RefreshBeacons();
             result = res;
+            ResultSound();
             ModManager.Fire("fight_end", res.won ? "won" : "lost", e.def.name);
+            fighting = false;
+        }
+
+        /// <summary>Přehraje souboj vyhodnocený serverem kolo po kole (hráč = f1).</summary>
+        IEnumerator Replay(Fight f, CharacterView foe, string foeLabel)
+        {
+            fName1 = f.f1?.name ?? "Ty";
+            fName2 = foeLabel;
+            var r0 = f.rounds != null && f.rounds.Length > 0 ? f.rounds[0] : null;
+            max1 = r0 == null ? f.hp1 : Mathf.Max(r0.h1 + (r0.a == 2 && !r0.e ? r0.d : 0), 1);
+            max2 = r0 == null ? f.hp2 : Mathf.Max(r0.h2 + (r0.a == 1 && !r0.e ? r0.d : 0), 1);
+            hp1 = max1; hp2 = max2;
+            yield return new WaitForSeconds(0.4f);
+            foreach (var r in f.rounds ?? new FightRound[0])
+            {
+                var attacker = r.a == 1 ? boot.player.view : foe;
+                var target = r.a == 1 ? foe : boot.player.view;
+                attacker.Lunge();
+                yield return new WaitForSeconds(0.18f);
+                var at = target.transform.position + Vector3.up * 2f;
+                if (r.e) { Float(at, "úhyb", new Color(0.7f, 0.85f, 1f)); Sfx.Play("dodge"); }
+                else
+                {
+                    Sfx.Play(r.b ? "block" : r.c ? "crit" : "hit");
+                    if (r.b) Float(at + Vector3.up * 0.4f, "blok", new Color(0.8f, 0.8f, 0.8f));
+                    Float(at, (r.c ? "KRITICKÝ  " : "") + "-" + r.d, r.c ? new Color(1f, 0.45f, 0.2f) : (r.a == 1 ? new Color(1f, 0.9f, 0.5f) : new Color(1f, 0.35f, 0.3f)));
+                    target.Flinch();
+                }
+                hp1 = r.h1; hp2 = r.h2;
+                yield return new WaitForSeconds(0.42f);
+            }
+        }
+
+        // ------------------------------------------------------------------ aréna
+        [Serializable] public class ArenaResult { public Fight fight; public bool won; public int honor, gold, xp, levels; public bool rival; public GameState state; }
+
+        /// <summary>Zápas v aréně: server vyhodnotí souboj proti uložené postavě jiného hráče.</summary>
+        public void StartArena(string targetId, string cls, string gender, string label, Action<string> onError)
+        {
+            if (Busy || boot.player == null) return;
+            StartCoroutine(RunServerFight("ashes_arena_fight", $"{{\"p_target\":{MiniJson.Write(targetId)}}}", true, cls, gender, label, onError));
+        }
+
+        /// <summary>Cvičný zápas s gladiátorem na úrovni hráče (ashes_arena_spar).</summary>
+        public void StartSpar(Action<string> onError)
+        {
+            if (Busy || boot.player == null) return;
+            StartCoroutine(RunServerFight("ashes_arena_spar", "{}", true, null, "m", "Gladiátor", onError));
+        }
+
+        /// <summary>Souboj z Kroniky (konec výpravy, boss kapitoly) – výsledek ve formátu FightResult.</summary>
+        public void StartStoryFight(string fn, string args, string cls, string label, Action<string> onError)
+        {
+            if (Busy || boot.player == null) return;
+            StartCoroutine(RunServerFight(fn, args, false, cls, "m", label, onError));
+        }
+
+        IEnumerator RunServerFight(string fn, string args, bool arena, string cls, string gender, string label, Action<string> onError)
+        {
+            fighting = true;
+            boot.player.inputEnabled = false;
+            boot.player.view.speed = 0;
+            string json = null, err = null;
+            yield return boot.api.Rpc(fn, args, (j, er) => { json = j; err = er; });
+            if (err != null)
+            {
+                fighting = false;
+                boot.player.inputEnabled = true;
+                onError?.Invoke(err);
+                yield break;
+            }
+            var res = JsonUtility.FromJson<ArenaResult>(json);
+            var story = arena ? null : JsonUtility.FromJson<FightResult>(json);
+            if ((!arena || cls == null) && res.fight?.f2 != null && !string.IsNullOrEmpty(res.fight.f2.name))
+            {
+                label = $"{res.fight.f2.name} · úroveň {res.fight.f2.level}";
+                if (!string.IsNullOrEmpty(res.fight.f2.@class)) cls = res.fight.f2.@class;
+            }
+            // soupeř se objeví naproti hráči
+            var pt = boot.player.transform;
+            GameObject tpl = null;
+            if (cls == null) cls = "hoplit";
+            tpl = library != null ? (library.Hero($"{cls}_{gender}") ?? library.Hero($"{cls}_m")) : null;
+            if (tpl != null)
+            {
+                arenaFoe = CharacterView.Create(tpl, worldRoot, gender == "f" ? 1.55f : 1.62f, "Soupeř v aréně");
+                var pos = pt.position + pt.forward * 2.4f;
+                var w = WorldMap.ToWeb(pos);
+                arenaFoe.transform.position = WorldMap.ToWorld(w.x, w.y);
+                arenaFoe.transform.rotation = Quaternion.LookRotation(-pt.forward);
+                var tag = arenaFoe.gameObject.AddComponent<NameTag>();
+                tag.title = label;
+                tag.enemy = true;
+                if (fn == "ashes_fight_boss")
+                {
+                    // strážce kapitoly je o hlavu větší
+                    arenaFoe.transform.localScale *= 1.3f;
+                    tag.height *= 1.3f;
+                    tag.subtitle = "strážce kapitoly";
+                    tag.subtitleColor = new Color(1f, 0.45f, 0.3f);
+                }
+            }
+            ModManager.Fire("fight_start", "arena", label);
+            yield return new WaitForSeconds(0.5f);
+            yield return Replay(res.fight, arenaFoe != null ? arenaFoe : boot.player.view, label);
+            if (res.won) { if (arenaFoe != null) arenaFoe.Fall(); }
+            else boot.player.view.Fall();
+            yield return new WaitForSeconds(0.9f);
+            if (res.state?.character != null) boot.state = res.state;
+            arenaMode = true; // bez smrti a návratu na respawn
+            arenaHonor = arena ? res.honor : int.MinValue;
+            result = arena ? new FightResult { won = res.won, gold = res.gold, xp = res.xp, levels = res.levels, state = res.state } : story;
+            ResultSound();
+            ModManager.Fire("fight_end", res.won ? "won" : "lost", label);
             fighting = false;
         }
 
         void CloseResult()
         {
-            bool lost = result != null && !result.won;
+            bool lost = result != null && !result.won && !arenaMode;
             result = null;
             boot.player.view.Stand();
             boot.player.inputEnabled = true;
+            if (arenaFoe != null) { Destroy(arenaFoe.gameObject); arenaFoe = null; }
+            arenaMode = false;
+            StoryNote = null;
             if (lost) boot.player.Respawn(faction == "legie" ? RespawnLegie : RespawnKalidra);
+        }
+
+        void ResultSound()
+        {
+            if (result == null) return;
+            if (result.levels > 0) Sfx.Play("level");
+            else if (result.won) Sfx.Play("coin");
+            else Sfx.Play("fall", 0.8f);
         }
 
         void Float(Vector3 pos, string text, Color color) => floats.Add((pos, text, color, Time.time));
@@ -415,9 +582,29 @@ namespace Voxario.Ashes
                 EryonSkin.Shadowed(new Rect(r.x, r.y + 26, r.width, 70), result.won ? "VÍTĚZSTVÍ" : "PORÁŽKA", head);
                 EryonSkin.Ornament(new Rect(r.x + 60, r.y + 104, r.width - 120, 12));
                 GUILayout.BeginArea(new Rect(r.x + 40, r.y + 130, r.width - 80, r.height - 150));
-                if (result.won)
+                if (arenaMode && arenaHonor == int.MinValue)
+                {
+                    if (result.won)
+                        GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold, richText = true });
+                    else
+                        GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>  ·  Ustoupil jsi, ale přežil.", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true });
+                    if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
+                    if (result.item != null && result.item.Valid)
+                        GUILayout.Label($"Kořist: <color=#{ColorUtility.ToHtmlStringRGB(CharacterWindow.RarityColor(result.item.rarity))}>{result.item.name}</color>  <size=18>(v batohu – klávesa I)</size>", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true, font = EryonSkin.CormorantBold });
+                    if (result.won && !string.IsNullOrEmpty(StoryNote)) GUILayout.Label(StoryNote, new GUIStyle(EryonSkin.Center) { fontSize = 20, wordWrap = true, fontStyle = FontStyle.Italic });
+                }
+                else if (arenaMode)
+                {
+                    string hon = arenaHonor >= 0 ? $"<color=#9fd4f0>✦ +{arenaHonor} cti</color>" : $"<color=#e0672a>✦ {arenaHonor} cti</color>";
+                    string gl = (result.xp > 0 ? $"      <color=#c8a8ff>+{result.xp} zk.</color>" : "") + (result.gold > 0 ? $"      <color=#f0d08a>◆ +{result.gold} zlata</color>" : "");
+                    GUILayout.Label(hon + gl, new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    GUILayout.Label(result.won ? "Dav v aréně skanduje tvé jméno." : "Tentokrát byl soupeř silnější. Trénuj a vrať se.", EryonSkin.Center);
+                }
+                else if (result.won)
                 {
                     GUILayout.Label($"<color=#c8a8ff>+{result.xp} zkušeností</color>      <color=#f0d08a>◆ +{result.gold} zlata</color>", new GUIStyle(EryonSkin.Center) { fontSize = 26, font = EryonSkin.CormorantBold });
+                    if (result.item != null && result.item.Valid)
+                        GUILayout.Label($"Kořist: <color=#{ColorUtility.ToHtmlStringRGB(CharacterWindow.RarityColor(result.item.rarity))}>{result.item.name}</color>  <size=18>(v batohu – klávesa I)</size>", new GUIStyle(EryonSkin.Center) { fontSize = 24, richText = true, font = EryonSkin.CormorantBold });
                     if (result.levels > 0) GUILayout.Label("NOVÁ ÚROVEŇ!", new GUIStyle(EryonSkin.Title) { fontSize = 28 });
                     if (result.quests != null)
                         foreach (var q in result.quests)
@@ -427,7 +614,7 @@ namespace Voxario.Ashes
                             if (def != null) GUILayout.Label($"{def.title}: {wq?.progress}/{def.count}" + (wq?.state == "ready" ? "  –  hotovo!" : ""), EryonSkin.Center);
                         }
                 }
-                else GUILayout.Label("Padl jsi. Probudíš se v bezpečí u hradeb Kalidry.", new GUIStyle(EryonSkin.Center) { fontSize = 24 });
+                else GUILayout.Label(faction == "legie" ? "Padl jsi. Probudíš se v bezpečí tábora Legie." : "Padl jsi. Probudíš se v bezpečí u hradeb Kalidry.", new GUIStyle(EryonSkin.Center) { fontSize = 24 });
                 GUILayout.FlexibleSpace();
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();

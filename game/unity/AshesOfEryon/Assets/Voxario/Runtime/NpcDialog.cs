@@ -209,6 +209,7 @@ namespace Voxario.Ashes
                     {
                         ApplyState(json);
                         Notice($"Nový úkol: {q.title}");
+                        Sfx.Play("quest", 0.6f);
                         ModManager.Fire("quest_accepted", q.id, q.title);
                         offer = null;
                         text = "Dobře. Vrať se, až to bude hotové.";
@@ -230,6 +231,7 @@ namespace Voxario.Ashes
                             if (res?.state?.character != null) boot.state = res.state;
                             title = qq.title;
                             text = qq.done;
+                            Sfx.Play(res != null && res.levels > 0 ? "level" : "quest");
                             Notice($"Úkol splněn: {qq.title}   +{res?.xp} zk.   +{res?.gold} zlata" + (res != null && res.levels > 0 ? "   ·   NOVÁ ÚROVEŇ!" : ""));
                             ModManager.Fire("quest_done", qq.id, qq.title);
                         }));
@@ -237,6 +239,22 @@ namespace Voxario.Ashes
                 }
                 foreach (var q in Content.Data.quests.Where(q => q.giver == n.def.id && Available(q)))
                     if (Option($"Úkol: {q.title}", EryonSkin.Ember)) { offer = q; title = q.title; text = q.offer; }
+                if ((n.def.id == "tharos" || n.def.id == "rukmar") && Option("Ukaž mi své zboží (obchod)", EryonSkin.GoldBright))
+                {
+                    var smith = $"{n.def.name} · {n.def.role}";
+                    Close();
+                    CharacterWindow.Instance?.OpenSmith(smith);
+                }
+                if ((n.def.id == "gorgias" || n.def.id == "sabra") && Option("Jaké výpravy jsou k mání? (Kronika)", EryonSkin.GoldBright))
+                {
+                    Close();
+                    Chronicle.Instance?.Open();
+                }
+                if ((n.def.id == "arena-k" || n.def.id == "arena-l") && Option("Chci zápasit v aréně", EryonSkin.Ember))
+                {
+                    Close();
+                    Arena.Instance?.Open();
+                }
                 var talk = Content.Data.Talk(n.def.id);
                 if (talk?.lore != null)
                     foreach (var l in talk.lore)

@@ -26,8 +26,66 @@ namespace Voxario.Ashes
         public int chapter;
         public bool is_eryon;
         public bool is_azkar;
+        public int sila, obratnost, intelekt, vydrz, stesti;
+        public int chapter_progress, courage;
+        public string boss_ready_at, arena_ready_at;
         public Appearance appearance;
     }
+
+    /// <summary>Předmět (výbava, batoh, zboží u kováře).</summary>
+    [Serializable]
+    public class Item
+    {
+        public string id, slot, name;
+        public int rarity, level, wmin, wmax, armor, sila, obratnost, intelekt, vydrz, stesti, price;
+        public bool equipped, in_shop;
+        public bool Valid => !string.IsNullOrEmpty(id);
+    }
+
+    [Serializable] public class ItemList { public Item[] items; }
+
+    /// <summary>Bojové hodnoty postavy včetně výbavy (ashes_fighter).</summary>
+    [Serializable]
+    public class FighterStats
+    {
+        public int level, sila, obratnost, intelekt, vydrz, stesti, wmin, wmax, armor;
+        public bool shield;
+    }
+
+    /// <summary>Výprava (časová mise za odvahu, ashes_quests).</summary>
+    [Serializable]
+    public class Expedition
+    {
+        public string id, title, story, state, started_at, ends_at;
+        public int chapter, minutes, xp, gold, item_chance;
+        public ExpeditionEnemy enemy;
+        public int CourageCost => 8 + minutes * 2;
+    }
+
+    [Serializable] public class ExpeditionEnemy { public string name, @class; public int level; }
+
+    [Serializable] public class ChapterBoss { public string c, e, s, t, win; }
+
+    /// <summary>Aktuální kapitola příběhu (ashes_chapter_for + číslo n).</summary>
+    [Serializable]
+    public class ChapterInfo
+    {
+        public int n, need;
+        public string title, intro, song;
+        public ChapterBoss boss;
+    }
+
+    /// <summary>Stav války: hradba Kalidry (Kalidra ji zvyšuje, Legie snižuje).</summary>
+    [Serializable]
+    public class WorldInfo
+    {
+        public int wall, wall_max, heroes, kalidra, legie;
+        public bool eryon_claimed, azkar_claimed;
+    }
+
+    [Serializable] public class ChronicleEntry { public string created_at, kind, text; }
+
+    [Serializable] public class TrainCost { public int sila, obratnost, intelekt, vydrz, stesti; }
 
     [Serializable]
     public class GameState
@@ -35,8 +93,22 @@ namespace Voxario.Ashes
         public bool allowed;
         public bool admin;
         public Character character;
-        public int hp;
+        public float hp;
         public WQuest[] wquests;
+        public Item[] items;
+        public FighterStats fighter;
+        public TrainCost train_cost;
+        public int bag_max;
+        public string now;
+        public Expedition[] quests;
+        public ChapterInfo chapter;
+        public WorldInfo world;
+        public ChronicleEntry[] chronicle;
+
+        public int BagCount
+        {
+            get { int n = 0; if (items != null) foreach (var i in items) if (!i.equipped) n++; return n; }
+        }
 
         public WQuest Quest(string id)
         {
