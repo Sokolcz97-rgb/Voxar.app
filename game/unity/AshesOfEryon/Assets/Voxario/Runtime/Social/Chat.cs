@@ -14,7 +14,8 @@ namespace Voxario.Ashes
         public GameBootstrap boot;
         public static Chat Instance { get; private set; }
         /// <summary>Hráč právě píše – ostatní klávesy (pohyb, E, M…) se ignorují.</summary>
-        public static bool Typing => Instance != null && Instance.typing;
+        // psaní do chatu nebo do hlášení (F1) – klávesové zkratky se ignorují
+        public static bool Typing => (Instance != null && Instance.typing) || (Feedback.Instance != null && Feedback.Instance.IsOpen);
 
         class Msg { public long id; public string channel, name, tag, text; public bool mine; public float t; }
         [System.Serializable] class Row { public long id; public string channel, name, tag, text; public bool mine; }
@@ -54,7 +55,8 @@ namespace Voxario.Ashes
         bool Blocked()
         {
             var ui = boot.GetComponent<GameUI>();
-            return (ui != null && ui.SettingsOpen) || (NpcDialog.Instance != null && NpcDialog.Instance.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
+            return (ui != null && ui.SettingsOpen) || (NpcDialog.Instance != null && NpcDialog.Instance.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy)
+                   || (Feedback.Instance != null && Feedback.Instance.IsOpen);
         }
 
         IEnumerator Poll()

@@ -29,7 +29,7 @@ namespace Voxario.Ashes
             if (fpsTimer >= 0.5f) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
             var dialog = NpcDialog.Instance;
             bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen)
-                              || (Chronicle.Instance != null && Chronicle.Instance.IsOpen);
+                              || (Chronicle.Instance != null && Chronicle.Instance.IsOpen) || (Feedback.Instance != null && Feedback.Instance.IsOpen);
             if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen && !UiFocus.ClosedThisFrame)
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
@@ -242,7 +242,7 @@ namespace Voxario.Ashes
 
             // spodní lišta s klávesami
             float y = H - 40;
-            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "Esc", "nastavení" };
+            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "F1", "hlášení", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
             {
@@ -424,7 +424,7 @@ namespace Voxario.Ashes
             {
                 ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
                 ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
-                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"),
+                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"), ("F1", "nahlásit chybu nebo nápad vývojářům"),
                 ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
             };
             foreach (var (k, d) in rows)
