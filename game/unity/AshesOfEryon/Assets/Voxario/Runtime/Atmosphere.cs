@@ -18,6 +18,8 @@ namespace Voxario.Ashes
         static ContactShadows contact;
         static ScreenSpaceAmbientOcclusion ssao;
         static ScreenSpaceReflection ssr;
+        static VolumeComponent cloudLayer;
+        static VolumeComponent volClouds;
         static Exposure exposure;
         static IndirectLightingController indirect;
         static VolumeComponent lensFlare;
@@ -38,7 +40,30 @@ namespace Voxario.Ashes
             var env = profile.Add<VisualEnvironment>(true);
             env.skyType.Override((int)SkyType.PhysicallyBased);
             env.skyAmbientMode.Override(SkyAmbientMode.Dynamic);
-            profile.Add<PhysicallyBasedSky>(true);
+            var pbs = profile.Add<PhysicallyBasedSky>(true);
+            // „zem“ planety pod obzorem = moře (jinak se v hladině zrcadlí zelenohnědá)
+            RayTracing.Param(pbs, "groundTint", new Color(0.05f, 0.16f, 0.24f));
+            RayTracing.Param(pbs, "groundColorTexture", null);
+
+            // mraky: 2D vrstva vždy, objemové mraky od kvality Vysoká
+            RayTracing.Param(env, "cloudType", 1); // 1 = vrstva mraků
+            var clType = typeof(Exposure).Assembly.GetType("UnityEngine.Rendering.HighDefinition.CloudLayer");
+            if (clType != null)
+            {
+                try { cloudLayer = profile.Add(clType, true); RayTracing.Param(cloudLayer, "opacity", 0.85f); }
+                catch { cloudLayer = null; }
+            }
+            var vcType = typeof(Exposure).Assembly.GetType("UnityEngine.Rendering.HighDefinition.VolumetricClouds");
+            if (vcType != null)
+            {
+                try
+                {
+                    volClouds = profile.Add(vcType, true);
+                    RayTracing.Param(volClouds, "enable", true);
+                    RayTracing.Param(volClouds, "cloudPreset", "Sparse");
+                }
+                catch { volClouds = null; }
+            }
 
             indirect = profile.Add<IndirectLightingController>(true);
 
@@ -111,6 +136,8 @@ namespace Voxario.Ashes
             if (cam != null) cam.farClipPlane = q switch { 0 => 400f, 1 => 650f, _ => 900f };
             QualitySettings.lodBias = q switch { 0 => 0.6f, 1 => 1f, 2 => 1.5f, _ => 2.5f };
             if (ssr != null) ssr.active = q >= 2 || RayTracing.Enabled;
+            if (volClouds != null) volClouds.active = q >= 2;
+            if (cloudLayer != null) cloudLayer.active = q < 2 || volClouds == null;
             ApplyRayTracing();
         }
 

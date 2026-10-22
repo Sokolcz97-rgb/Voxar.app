@@ -204,6 +204,7 @@ public static class VoxarioBuild
         SetBool(so, "m_RenderPipelineSettings.supportSSR", true);
         SetBool(so, "m_RenderPipelineSettings.supportRayTracing", true);
         SetBool(so, "m_RenderPipelineSettings.supportScreenSpaceLensFlare", true);
+        SetBool(so, "m_RenderPipelineSettings.supportVolumetricClouds", true);
         SetBool(so, "m_RenderPipelineSettings.supportDataDrivenLensFlare", true);
         var rtMode = so.FindProperty("m_RenderPipelineSettings.supportedRayTracingMode");
         if (rtMode != null)

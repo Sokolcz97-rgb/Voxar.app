@@ -22,7 +22,13 @@ namespace Voxario.Ashes
         HDAdditionalLightData sunHd, moonHd;
         Renderer stars;
         Material starMat;
+        Transform sunDisc, moonDisc;
+        Material sunMat, moonMat;
+        Texture2D moonTex;
+        float moonTexIllum = -1;
+        bool moonTexWaxing;
         float nextAt;
+        Vector3 lastSunDir = Vector3.up, lastMoonDir = Vector3.up;
 
         /// <summary>Výška slunce nad obzorem ve stupních (záporná = noc).</summary>
         public float SunAltitude { get; private set; } = 30;
@@ -164,8 +170,110 @@ namespace Voxario.Ashes
                 SetProp(moonHd, "celestialBodyShadingSource", "ReflectSunLight");
             }
             if (stars == null) stars = MakeStars();
+            SetProp(sunHd, "volumetricDimmer", 1.6f);
+            SetProp(moonHd, "volumetricDimmer", 8f);
+            if (sunDisc == null) sunDisc = MakeDisc("SunDisc", MakeSunTexture(), out sunMat);
+            if (moonDisc == null) { moonTex = new Texture2D(128, 128, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp }; moonDisc = MakeDisc("MoonDisc", moonTex, out moonMat); }
             nextAt = 0;
             Update();
+        }
+
+        // ---------------------------------------------------------------- kotouče na obloze
+        Transform MakeDisc(string name, Texture2D tex, out Material mat)
+        {
+            // kruhový disk (bez průhlednosti – rohy čtverce by byly na obloze vidět)
+            const int seg = 48;
+            var verts = new Vector3[seg + 1];
+            var uvs = new Vector2[seg + 1];
+            var tris = new int[seg * 3];
+            verts[0] = Vector3.zero; uvs[0] = new Vector2(0.5f, 0.5f);
+            for (int i = 0; i < seg; i++)
+            {
+                float a = i / (float)seg * Mathf.PI * 2;
+                verts[i + 1] = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * 0.5f;
+                uvs[i + 1] = new Vector2(0.5f + Mathf.Cos(a) * 0.5f, 0.5f + Mathf.Sin(a) * 0.5f);
+                tris[i * 3] = 0; tris[i * 3 + 1] = 1 + (i + 1) % seg; tris[i * 3 + 2] = 1 + i;
+            }
+            var mesh = new Mesh { name = name, vertices = verts, uv = uvs, triangles = tris };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            var go = new GameObject(name);
+            DontDestroyOnLoad(go);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+            // oboustranný materiál – disk je vidět bez ohledu na pořadí vrcholů
+            var dbl = ModelLibrary.Instance != null ? ModelLibrary.Instance.litDouble : null;
+            mat = dbl != null ? new Material(dbl) : ModelLibrary.NewLit(Color.black, 0f);
+            mat.SetColor("_BaseColor", Color.black);
+            mat.SetTexture("_BaseColorMap", null);
+            mat.SetTexture("_EmissiveColorMap", tex);
+            mat.EnableKeyword("_EMISSIVE_COLOR_MAP");
+            mat.SetFloat("_EmissiveExposureWeight", 0.15f);
+            mr.sharedMaterial = mat;
+            return go.transform;
+        }
+
+        static Texture2D MakeSunTexture()
+        {
+            const int n = 128;
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp };
+            float h = (n - 1) / 2f;
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float r = Mathf.Sqrt((x - h) * (x - h) + (y - h) * (y - h)) / h;
+                    float a = Mathf.Clamp01((1f - r) * 12f);
+                    var c = Color.Lerp(new Color(1f, 0.98f, 0.9f), new Color(1f, 0.8f, 0.5f), r * r);
+                    c.a = a;
+                    t.SetPixel(x, y, c);
+                }
+            t.Apply(true);
+            return t;
+        }
+
+        /// <summary>Měsíc s krátery a osvětlenou částí podle fáze (dorůstá = svítí vpravo).</summary>
+        void PaintMoon(float illum, bool waxing)
+        {
+            const int n = 128;
+            float h = (n - 1) / 2f;
+            var rnd = new System.Random(7);
+            var craters = new Vector3[18];
+            for (int i = 0; i < craters.Length; i++) craters[i] = new Vector3((float)rnd.NextDouble() * 1.6f - 0.8f, (float)rnd.NextDouble() * 1.6f - 0.8f, 0.05f + (float)rnd.NextDouble() * 0.16f);
+            float edge = 1 - 2 * illum; // poloha terminátoru (−1 … 1)
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float u = (x - h) / h, v = (y - h) / h;
+                    float r = Mathf.Sqrt(u * u + v * v);
+                    float a = Mathf.Clamp01((1f - r) * 14f);
+                    float half = Mathf.Sqrt(Mathf.Max(0, 1 - v * v));
+                    float side = waxing ? u : -u;
+                    float lit = Mathf.Clamp01((side - edge * half) * 10f + 0.5f);
+                    float tone = 0.86f;
+                    foreach (var c in craters)
+                    {
+                        float d = Mathf.Sqrt((u - c.x) * (u - c.x) + (v - c.y) * (v - c.y));
+                        if (d < c.z) tone -= 0.12f * (1 - d / c.z);
+                    }
+                    var col = new Color(tone, tone * 1.0f, tone * 1.04f) * Mathf.Lerp(0.06f, 1f, lit);
+                    col.a = a;
+                    moonTex.SetPixel(x, y, col);
+                }
+            moonTex.Apply(true);
+        }
+
+        void PlaceDisc(Transform disc, Vector3 dir, float sizeDeg, bool visible, Camera cam)
+        {
+            if (disc == null) return;
+            disc.gameObject.SetActive(visible && cam != null);
+            if (!visible || cam == null) return;
+            const float dist = 300f;
+            disc.position = cam.transform.position + dir * dist;
+            disc.rotation = Quaternion.LookRotation(-dir); // quad svítí směrem ke kameře
+            float size = 2 * dist * Mathf.Tan(sizeDeg * 0.5f * Mathf.Deg2Rad);
+            disc.localScale = new Vector3(size, size, size);
         }
 
         Renderer MakeStars()
@@ -220,6 +328,9 @@ namespace Voxario.Ashes
             // hvězdy putují s kamerou (jsou „nekonečně“ daleko)
             var cam = boot != null ? boot.cam : Camera.main;
             if (stars != null && cam != null) stars.transform.position = cam.transform.position;
+            // kotouče slunce a měsíce drží stálou vzdálenost od kamery
+            PlaceDisc(sunDisc, lastSunDir, 3.2f, SunAltitude > -3f, cam);
+            PlaceDisc(moonDisc, lastMoonDir, 4.2f, MoonAltitude > -3f, cam);
             if (Time.unscaledTime < nextAt) return;
             nextAt = Time.unscaledTime + 1f;
 
@@ -229,9 +340,31 @@ namespace Voxario.Ashes
             SunAltitude = (float)sAlt;
             MoonAltitude = (float)mAlt;
             MoonIllumination = (float)illum;
+            // dorůstá, když je měsíc východně od slunce (elongace 0–180°)
+            double d0 = DaysJ2000(utc);
+            double moonLon = Norm360(218.316 + 13.176396 * d0 + 6.289 * Math.Sin(Rad(Norm360(134.963 + 13.064993 * d0))));
+            bool wax = Norm360(moonLon - sunLon) < 180;
+            if (moonTex != null && (Mathf.Abs(MoonIllumination - moonTexIllum) > 0.02f || wax != moonTexWaxing))
+            {
+                moonTexIllum = MoonIllumination;
+                moonTexWaxing = wax;
+                PaintMoon(MoonIllumination, wax);
+            }
 
             // slunce
             var sDir = Dir(Math.Max(sAlt, -10), sAz);
+            lastSunDir = Dir(sAlt, sAz);
+            lastMoonDir = Dir(mAlt, mAz);
+            if (sunMat != null)
+            {
+                // nízko nad obzorem oranžovější a slabší
+                float low = Mathf.InverseLerp(0f, 25f, (float)sAlt);
+                sunMat.SetColor("_EmissiveColor", Color.Lerp(new Color(1f, 0.55f, 0.25f), new Color(1f, 0.95f, 0.85f), low) * Mathf.Lerp(60f, 160f, low));
+            }
+            if (moonMat != null)
+            {
+                moonMat.SetColor("_EmissiveColor", Color.white * Mathf.Lerp(2f, 9f, Night));
+            }
             sun.transform.rotation = Quaternion.LookRotation(-sDir);
             float day = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-6f, 12f, SunAltitude));
             Night = 1 - day;
