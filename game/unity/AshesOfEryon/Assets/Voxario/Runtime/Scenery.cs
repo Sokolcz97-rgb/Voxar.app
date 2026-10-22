@@ -31,6 +31,8 @@ namespace Voxario.Ashes
             foreach (var n in WorldMap.Npcs) if (Vector2.Distance(new Vector2(x, z), new Vector2(n.x, n.z)) < 9) return false;
             foreach (var s in Spawns) if (Vector2.Distance(new Vector2(x, z), s) < 12) return false;
             foreach (var b in BeaconPts) if (Vector2.Distance(new Vector2(x, z), b) < 5) return false;
+            // mýtina kolem světového bosse (obr Thalassos)
+            if (Vector2.Distance(new Vector2(x, z), new Vector2(20, 50)) < 11) return false;
             // aquadukt
             if (SegDist(new Vector2(x, z), new Vector2(-64, 24), new Vector2(-15, -10)) < 3) return false;
             return true;

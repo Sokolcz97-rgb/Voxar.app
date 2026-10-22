@@ -95,6 +95,23 @@ namespace Voxario.Ashes
             if (fn == "ashes_start_quest") { ModManager.Fire("expedition", "start", Active?.title ?? ""); Sfx.Play("quest", 0.6f); }
         }
 
+        [Serializable] class GiftResult { public int gold, xp, levels; public GameState state; }
+
+        IEnumerator Gift()
+        {
+            busy = true;
+            string json = null, err = null;
+            yield return boot.api.Rpc("ashes_daily_gift", "{}", (j, e) => { json = j; err = e; });
+            busy = false;
+            if (err != null) { error = err; yield break; }
+            var g = JsonUtility.FromJson<GiftResult>(json);
+            if (g?.state?.character != null) boot.state = g.state;
+            error = null;
+            giftNote = $"Denní dar: ◆ +{g?.gold} zlata, +{g?.xp} zkušeností.";
+            Sfx.Play(g != null && g.levels > 0 ? "level" : "coin");
+        }
+        string giftNote;
+
         void Fight(string fn, string args, string cls, string label, string note)
         {
             if (Encounters.Instance == null) return;
@@ -136,6 +153,17 @@ namespace Voxario.Ashes
             GUI.enabled = !busy && !fighting;
             scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 64));
 
+            // denní dar
+            if (st.GiftReady)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(ch.faction == "legie" ? "Azkar posílá svým vojákům denní žold." : "Kalidra posílá svým obráncům denní dar.", new GUIStyle(EryonSkin.BodyBold) { normal = { textColor = EryonSkin.GoldBright } }, GUILayout.Height(46));
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("VYZVEDNOUT DENNÍ DAR", EryonSkin.ButtonPrimary, GUILayout.Width(320), GUILayout.Height(46)))
+                    StartCoroutine(Gift());
+                GUILayout.EndHorizontal();
+                GUILayout.Space(8);
+            }
             // válka o Kalidru
             if (st.world != null && st.world.wall_max > 0)
             {
@@ -248,6 +276,7 @@ namespace Voxario.Ashes
             GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
             if (error != null) GUILayout.Label($"<color=#e0672a>{error}</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true }, GUILayout.Height(46));
+            else if (giftNote != null) GUILayout.Label($"<color=#8cc06b>{giftNote}</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true }, GUILayout.Height(46));
             GUILayout.FlexibleSpace();
             GUI.enabled = true;
             if (GUILayout.Button("ZAVŘÍT (Esc)", EryonSkin.ButtonPrimary, GUILayout.Height(46), GUILayout.Width(240))) open = false;

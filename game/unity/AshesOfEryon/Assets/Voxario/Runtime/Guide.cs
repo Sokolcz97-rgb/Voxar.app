@@ -63,6 +63,7 @@ namespace Voxario.Ashes
             foreach (var q in data.quests)
                 if (q.faction == fac && st.Quest(q.id) == null && Unlocked(q, st))
                     return $"Nový úkol čeká u: {NpcName(q.giver)} – nad hlavou má zlatý vykřičník. Přijdi k němu a stiskni E.";
+            if (st.GiftReady) return "Čeká na tebe denní dar – otevři Kroniku (K) a vyzvedni si zlato a zkušenosti.";
             // 4) výprava z Kroniky
             var rem = Chronicle.Instance?.Remaining;
             if (rem.HasValue && rem.Value.TotalSeconds <= 0) return "Výprava skončila – otevři Kroniku (K) a dokonči ji soubojem.";
@@ -85,6 +86,9 @@ namespace Voxario.Ashes
                 int cheapest = Mathf.Min(Mathf.Min(tc.sila, tc.obratnost), Mathf.Min(Mathf.Min(tc.intelekt, tc.vydrz), tc.stesti));
                 if (cheapest > 0 && st.character.gold >= cheapest * 2) return "Máš dost zlata – natrénuj vlastnosti v okně Postava (C).";
             }
+            var wb = WorldBoss.Instance;
+            if (wb?.state != null && wb.state.alive && st.character.level >= 2)
+                return "Na pláni u Památníku padlých řádí mořský obr Thalassos (rudý bod na mapě). Spoj síly s ostatními – přijdi k němu a stiskni E.";
             return fac == "legie"
                 ? "Bojuj s obránci Kalidry v kraji, zkus arénu u Mistra zápasů nebo navštiv kováře Rukmara."
                 : "Bojuj s Legií v kraji, zkus arénu u Mistra arény nebo navštiv kováře Tharose.";

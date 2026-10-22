@@ -240,8 +240,9 @@ namespace Voxario.Ashes
             // zlato a čest
             GUI.Label(new Rect(frame.x + 132, frame.y + 100, 320, 24), $"<color=#8cc06b>❤ {Mathf.RoundToInt(boot.state.hp)}</color>    <color=#f0d08a>◆ {ch.gold}</color>    <color=#9fd4f0>✦ {ch.honor} cti</color>", new GUIStyle(EryonSkin.Small) { fontSize = 18, richText = true, font = EryonSkin.CormorantBold });
 
-            // spodní lišta s klávesami
+            // spodní lišta s klávesami (tmavý podklad kvůli čitelnosti na světlém terénu)
             float y = H - 40;
+            EryonSkin.Fill(new Rect(0, y - 8, W, 48), new Color(0.03f, 0.02f, 0.015f, 0.55f));
             string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "F1", "hlášení", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
@@ -422,7 +423,7 @@ namespace Voxario.Ashes
             Section("Ovládání");
             (string k, string d)[] rows =
             {
-                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
+                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("T", "návrat do bezpečí (5 s, jednou za 3 min)"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
                 ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
                 ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"), ("F1", "nahlásit chybu nebo nápad vývojářům"),
                 ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
