@@ -14,6 +14,7 @@ namespace Voxario.Ashes
 
         readonly Dictionary<string, float[]> curves = new Dictionary<string, float[]>();
         public int Cycles { get; private set; } = 1;
+        public float Length { get; private set; } = 1;
         float offset; // posun, aby fáze seděla s procedurální chůzí (levá noha vpředu ve 3/4 cyklu)
 
         public static Gait Load(string name)
@@ -26,7 +27,7 @@ namespace Voxario.Ashes
                 try
                 {
                     var obj = MiniJson.Obj(MiniJson.Parse(ta.text));
-                    g = new Gait { Cycles = Mathf.Max(1, (int)MiniJson.N(obj, "cycles", 1)) };
+                    g = new Gait { Cycles = Mathf.Max(1, (int)MiniJson.N(obj, "cycles", 1)), Length = Mathf.Max(0.1f, (float)MiniJson.N(obj, "length", 1)) };
                     foreach (var kv in obj)
                         if (kv.Value is List<object> list)
                         {
@@ -55,6 +56,13 @@ namespace Voxario.Ashes
         {
             float cyc = phase / (2 * Mathf.PI);
             float t = (cyc - 0.75f) / Cycles + offset;
+            return t - Mathf.Floor(t);
+        }
+
+        /// <summary>Čas v klipu podle skutečného času (klidový postoj).</summary>
+        public float TTime(float seconds)
+        {
+            float t = seconds / Length;
             return t - Mathf.Floor(t);
         }
 

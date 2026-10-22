@@ -195,6 +195,7 @@ namespace Voxario.Ashes
             view.transform.localPosition = Vector3.zero;
             player = playerGo.AddComponent<PlayerController>();
             player.view = view;
+            view.detailedIdle = true;
             var tag = playerGo.AddComponent<NameTag>();
             tag.title = string.IsNullOrEmpty(ch.display_name) ? ch.name : ch.display_name;
             tag.isPlayer = true;

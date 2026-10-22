@@ -181,18 +181,46 @@ namespace Voxario.Ashes
         /// gait = zachycený pohyb z animace (běh), gaitW = jak moc ho použít (0 … 1).
         /// </summary>
         public void Update(float phase, float amount, float run = 0, float armIdle = 0, Voxario.Ashes.Gait motion = null, float gaitW = 0)
+            => Update(phase, amount, run, armIdle, motion, gaitW, null, 0, -1);
+
+        /// <summary>
+        /// Míchání až dvou zachycených pohybů (např. chůze + běh) s procedurální chůzí.
+        /// idleT ≥ 0 = klidový klip v daném čase (motion = klid, bez fáze kroku).
+        /// </summary>
+        public void Update(float phase, float amount, float run, float armIdle, Voxario.Ashes.Gait motion, float gaitW, Voxario.Ashes.Gait motion2, float gaitW2, float idleT)
         {
             if (motion == null) gaitW = 0;
-            float gt = gaitW > 0 ? motion.T(phase) : 0;
+            if (motion2 == null) gaitW2 = 0;
             float thL = 0, thR = 0, knL = 0, knR = 0, arL = 0, arR = 0, elL = 0, elR = 0;
-            if (gaitW > 0)
+            void Add(Voxario.Ashes.Gait g, float w, float t)
             {
-                thL = motion.Sample("thighL", gt); thR = motion.Sample("thighR", gt);
-                knL = motion.Sample("kneeL", gt); knR = motion.Sample("kneeR", gt);
-                arL = motion.Sample("armL", gt) - motion.Mean("armL"); arR = motion.Sample("armR", gt) - motion.Mean("armR");
-                elL = motion.Sample("elbowL", gt); elR = motion.Sample("elbowR", gt);
+                if (w <= 0) return;
+                thL += g.Sample("thighL", t) * w; thR += g.Sample("thighR", t) * w;
+                knL += g.Sample("kneeL", t) * w; knR += g.Sample("kneeR", t) * w;
+                arL += (g.Sample("armL", t) - g.Mean("armL")) * w; arR += (g.Sample("armR", t) - g.Mean("armR")) * w;
+                elL += g.Sample("elbowL", t) * w; elR += g.Sample("elbowR", t) * w;
             }
-            if (amount < 0.01f && armIdle < 0.01f)
+            if (idleT >= 0 && motion != null)
+            {
+                // klid: jen jemné pohyby kolem střední polohy (náš model stojí v klidu jinak než Mixamo)
+                float t = idleT;
+                thL = (motion.Sample("thighL", t) - motion.Mean("thighL")); thR = (motion.Sample("thighR", t) - motion.Mean("thighR"));
+                knL = Mathf.Max(0, motion.Sample("kneeL", t) - motion.Mean("kneeL")); knR = Mathf.Max(0, motion.Sample("kneeR", t) - motion.Mean("kneeR"));
+                arL = motion.Sample("armL", t) - motion.Mean("armL"); arR = motion.Sample("armR", t) - motion.Mean("armR");
+                elL = Mathf.Max(0, motion.Sample("elbowL", t) - motion.Mean("elbowL")); elR = Mathf.Max(0, motion.Sample("elbowR", t) - motion.Mean("elbowR"));
+                gaitW = 1; amount = 1; run = 0;
+            }
+            else
+            {
+                float sum = gaitW + gaitW2;
+                if (sum > 0)
+                {
+                    Add(motion, gaitW / sum, gaitW > 0 ? motion.T(phase) : 0);
+                    Add(motion2, gaitW2 / sum, gaitW2 > 0 ? motion2.T(phase) : 0);
+                }
+                gaitW = Mathf.Clamp01(sum);
+            }
+            if (amount < 0.01f && armIdle < 0.01f && idleT < 0)
             {
                 if (!dirty) return;
                 foreach (var p in parts) p.mesh.SetVertices(p.baseVerts);
