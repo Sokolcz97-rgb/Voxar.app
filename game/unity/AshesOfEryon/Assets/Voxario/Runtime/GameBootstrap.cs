@@ -62,6 +62,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Feedback>().boot = this;
             gameObject.AddComponent<Recall>().boot = this;
             gameObject.AddComponent<WorldBoss>().boot = this;
+            gameObject.AddComponent<Waypoint>().boot = this;
         }
 
         IEnumerator Start()
