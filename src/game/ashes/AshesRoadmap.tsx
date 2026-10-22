@@ -306,7 +306,7 @@ export default function AshesRoadmap() {
     <div className="ashes-root rm-root">
       <div className="rm-bg" aria-hidden />
       <header className="rm-top">
-        <Link to="/hra" className="rm-logo"><img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" /></Link>
+        <Link to="/ashes" className="rm-logo"><img src="/game/eryon/wordmark.webp" alt="Ashes of Eryon" /></Link>
         <div className="rm-actions">
           {isAdmin && (
             <button className={`ash-btn small ${access ? "" : "ghost"}`} onClick={() => setAccess(!access)}>
@@ -320,7 +320,7 @@ export default function AshesRoadmap() {
           )}
           <button className="ash-icon-btn lang" onClick={() => setLang(lang === "cs" ? "en" : "cs")}>{lang === "cs" ? "EN" : "CZ"}</button>
           <Link to="/desktop#ashes" className="ash-btn ghost small">{L("Stáhnout", "Download")}</Link>
-          <Link to="/hra" className="ash-btn small">{L("Hrát", "Play")}</Link>
+          <Link to="/desktop#ashes" className="ash-btn small">{L("Stáhnout hru", "Download")}</Link>
         </div>
       </header>
 

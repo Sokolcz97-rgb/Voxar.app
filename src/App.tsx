@@ -83,7 +83,6 @@ import { AppAccessGate } from "@/components/vox/AppAccessGate";
 import { AIHelperHolo } from "@/components/vox/AIHelperHolo";
 import { SystemUpdateAlert } from "@/components/SystemUpdateAlert";
 
-const AshesGame = lazy(() => import("./game/ashes/AshesGame.tsx"));
 const AshesRoadmap = lazy(() => import("./game/ashes/AshesRoadmap.tsx"));
 const StudioDemo = lazy(() => import("./pages/studio/StudioDemo.tsx"));
 
@@ -151,7 +150,8 @@ const AppRoutes = () => {
         <Route path="/hra/roadmap" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
         <Route path="/roadmap" element={<Navigate to="/ashes" replace />} />
         <Route path="/ashes" element={<Suspense fallback={<div className="fixed inset-0 bg-[#0b0908]" />}><AshesRoadmap /></Suspense>} />
-        <Route path="/hra" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#0b0908] text-[#d2ae68] tracking-[0.3em]">ASHES OF ERYON…</div>}><AshesGame /></Suspense>} />
+        {/* Hra se hraje jen ve stažené verzi (Unity) – prohlížečová verze je zrušená. */}
+        <Route path="/hra" element={<Navigate to="/desktop#ashes" replace />} />
         <Route path="/studio/demo" element={<Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-[#141319] text-[#a48bff] tracking-[0.3em]">VOXARIO STUDIO…</div>}><StudioDemo /></Suspense>} />
         <Route path="/studio" element={<Navigate to="/studio/demo" replace />} />
         <Route path="/ai" element={<ProtectedRoute requireAdmin><VoxarioTools /></ProtectedRoute>} />
