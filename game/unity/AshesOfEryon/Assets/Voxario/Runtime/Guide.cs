@@ -100,12 +100,13 @@ namespace Voxario.Ashes
             var step = NextStep();
             if (string.IsNullOrEmpty(step)) return;
             EryonSkin.Begin();
-            var r = new Rect(16, 156, 440, 112);
+            // nahoře uprostřed (vlevo je rámeček postavy a ukázkový mód Deník poutníka)
+            var r = new Rect(EryonSkin.W / 2 - 280, 70, 560, 96);
             EryonSkin.Fill(r, new Color(0.04f, 0.03f, 0.025f, 0.78f));
             EryonSkin.Fill(new Rect(r.x, r.y, 3, r.height), EryonSkin.Gold);
             GUI.Label(new Rect(r.x + 14, r.y + 6, r.width - 28, 22), "CO DÁL", EryonSkin.Caps);
-            GUI.Label(new Rect(r.x + 14, r.y + 28, r.width - 28, r.height - 50), step, new GUIStyle(EryonSkin.Body) { fontSize = 19, wordWrap = true });
-            GUI.Label(new Rect(r.x + 14, r.yMax - 24, r.width - 28, 20), "H – skrýt rádce", new GUIStyle(EryonSkin.Small) { fontSize = 13, alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(r.x + 14, r.y + 6, r.width - 28, 22), "H – skrýt rádce", new GUIStyle(EryonSkin.Small) { fontSize = 13, alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(r.x + 14, r.y + 28, r.width - 28, r.height - 32), step, new GUIStyle(EryonSkin.Body) { fontSize = 19, wordWrap = true });
         }
     }
 }

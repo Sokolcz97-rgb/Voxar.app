@@ -355,7 +355,7 @@ namespace Voxario.Ashes
                 {
                     GUI.Label(new Rect(rr.x + 12, rr.y + 26, rr.width - 140, 26), $"<color=#{Hex(RarityColor(eq.rarity))}>{eq.name}</color>  <size=15><color=#a8998a>úr. {eq.level}</color></size>", new GUIStyle(EryonSkin.BodyBold) { richText = true, fontSize = 20 });
                     GUI.Label(new Rect(rr.x + 12, rr.y + 48, rr.width - 140, 22), ItemLine(eq), EryonSkin.Small);
-                    if (GUI.Button(new Rect(rr.xMax - 118, rr.y + 18, 106, 36), "Sundat", EryonSkin.Chip))
+                    if (GUI.Button(new Rect(rr.xMax - 118, rr.y + 18, 106, 36), "Sundat", EryonSkin.Button))
                     {
                         var id = eq.id;
                         StartCoroutine(Call("ashes_equip", $"{{\"p_item\":{Q(id)},\"p_on\":false}}", $"{eq.name} je v batohu."));
@@ -391,7 +391,7 @@ namespace Voxario.Ashes
                     StartCoroutine(Call("ashes_equip", $"{{\"p_item\":{Q(id)},\"p_on\":true}}", $"Nasazeno: {nm}"));
                 }
                 GUI.enabled = !busy;
-                if (GUILayout.Button($"Prodat ◆ {Mathf.Max(1, it.price / 4)}", EryonSkin.ButtonGhost, GUILayout.Width(150), GUILayout.Height(46)))
+                if (GUILayout.Button($"Prodat ◆ {Mathf.Max(1, it.price / 4)}", EryonSkin.Button, GUILayout.Width(150), GUILayout.Height(46)))
                 {
                     var id = it.id; var nm = it.name;
                     StartCoroutine(Call("ashes_sell", $"{{\"p_item\":{Q(id)}}}", $"Prodáno: {nm}"));
