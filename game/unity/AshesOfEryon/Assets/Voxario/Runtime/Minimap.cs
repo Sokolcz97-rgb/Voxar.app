@@ -140,6 +140,18 @@ namespace Voxario.Ashes
                     GUI.color = new Color(1f, 0.35f, 0.25f, 0.85f + 0.15f * Mathf.Sin(Time.time * 4));
                     GUI.DrawTexture(new Rect(tp.x - 4, tp.y - 4, 8, 8), dot);
                 }
+            // světový boss
+            var wb = WorldBoss.Instance;
+            if (wb != null && (wb.state == null || wb.state.alive))
+            {
+                var bp = ToScreen(WorldBoss.Spot, out bool okB);
+                if (okB)
+                {
+                    GUI.color = new Color(1f, 0.25f, 0.2f);
+                    GUI.DrawTexture(new Rect(bp.x - 7, bp.y - 7, 14, 14), dot);
+                    if (names) EryonSkin.Shadowed(new Rect(bp.x - 90, bp.y + 6, 180, 22), "Thalassos", new GUIStyle(EryonSkin.Center) { fontSize = 16, font = EryonSkin.CormorantBold });
+                }
+            }
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             var pp = ToScreen(pw, out _);
             GUI.color = new Color(0.4f, 0.85f, 1f);
