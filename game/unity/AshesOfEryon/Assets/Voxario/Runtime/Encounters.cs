@@ -91,6 +91,7 @@ namespace Voxario.Ashes
         }
 
         readonly List<Enemy> enemies = new List<Enemy>();
+        int tagLevel = -1;
         readonly List<(string id, Transform t, Fire fire)> beacons = new List<(string, Transform, Fire)>();
         Transform memorial;
         string faction = "kalidra";
@@ -119,6 +120,7 @@ namespace Voxario.Ashes
         {
             faction = fac;
             library = lib;
+            tagLevel = -1;
             worldRoot = root;
             enemies.Clear();
             beacons.Clear();
@@ -230,6 +232,22 @@ namespace Voxario.Ashes
             if (!boot.inWorld || boot.player == null) return;
             var pw = WorldMap.ToWeb(boot.player.transform.position);
             float dt = Time.deltaTime, now = Time.time;
+            int myLevel = boot.state?.character?.level ?? 1;
+            if (myLevel != tagLevel)
+            {
+                tagLevel = myLevel;
+                foreach (var en in enemies)
+                {
+                    float mid = (en.def.l0 + en.def.l1) / 2f;
+                    string diff; Color c;
+                    if (mid <= myLevel - 2) { diff = "snadný"; c = new Color(0.6f, 0.8f, 0.55f); }
+                    else if (mid <= myLevel + 0.5f) { diff = "vyrovnaný"; c = new Color(0.95f, 0.85f, 0.55f); }
+                    else if (mid <= myLevel + 2) { diff = "silný"; c = new Color(1f, 0.6f, 0.35f); }
+                    else { diff = "nebezpečný"; c = new Color(1f, 0.35f, 0.3f); }
+                    en.tag.subtitle = $"úroveň {en.def.l0}–{en.def.l1} · {diff}";
+                    en.tag.subtitleColor = c;
+                }
+            }
             bool calm = fighting || result != null || InSafe(pw) || (NpcDialog.Instance != null && NpcDialog.Instance.IsOpen);
             foreach (var e in enemies)
             {

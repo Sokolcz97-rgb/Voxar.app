@@ -9,6 +9,8 @@ namespace Voxario.Ashes
         public string npcId;
         public bool isPlayer;
         public bool enemy;
+        /// <summary>Barva podtitulku (obtížnost nepřítele); alfa 0 = výchozí.</summary>
+        public Color subtitleColor = new Color(0, 0, 0, 0);
         public float height = 2.2f;
         static GUIStyle titleStyle, subStyle, markStyle;
 
@@ -29,7 +31,8 @@ namespace Voxario.Ashes
             float x = sp.x / k, y = (Screen.height - sp.y) / k;
             float fade = Mathf.Clamp01((45 - dist) / 10f);
             titleStyle.normal.textColor = (isPlayer ? EryonSkin.Sky : enemy ? new Color(1f, 0.45f, 0.36f) : EryonSkin.GoldBright) * new Color(1, 1, 1, fade);
-            subStyle.normal.textColor = new Color(0.86f, 0.8f, 0.72f, fade);
+            var sc = subtitleColor.a > 0 ? subtitleColor : new Color(0.86f, 0.8f, 0.72f);
+            subStyle.normal.textColor = new Color(sc.r, sc.g, sc.b, fade);
             EryonSkin.Shadowed(new Rect(x - 150, y - 34, 300, 24), title, titleStyle);
             if (!string.IsNullOrEmpty(subtitle)) EryonSkin.Shadowed(new Rect(x - 150, y - 12, 300, 20), subtitle, subStyle);
             if (npcId != null)
