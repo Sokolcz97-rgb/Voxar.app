@@ -75,6 +75,17 @@ namespace Voxario.Ashes
             return Mathf.Lerp(a[i], a[j], f - Mathf.Floor(f));
         }
 
+        public float Min(string key)
+        {
+            if (!curves.TryGetValue(key, out var a) || a.Length == 0) return 0;
+            float m = float.MaxValue;
+            foreach (var v in a) if (v < m) m = v;
+            return m;
+        }
+
+        /// <summary>Střed kyvu stehen (obě nohy) – Mixamo stojí v mírném podřepu, naše modely rovně.</summary>
+        public float ThighCenter => (Mean("thighL") + Mean("thighR")) * 0.5f;
+
         public float Mean(string key)
         {
             if (!curves.TryGetValue(key, out var a) || a.Length == 0) return 0;

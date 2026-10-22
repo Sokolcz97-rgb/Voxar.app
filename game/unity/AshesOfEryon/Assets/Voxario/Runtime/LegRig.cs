@@ -195,8 +195,9 @@ namespace Voxario.Ashes
             void Add(Voxario.Ashes.Gait g, float w, float t)
             {
                 if (w <= 0) return;
-                thL += g.Sample("thighL", t) * w; thR += g.Sample("thighR", t) * w;
-                knL += g.Sample("kneeL", t) * w; knR += g.Sample("kneeR", t) * w;
+                float c = g.ThighCenter;
+                thL += (g.Sample("thighL", t) - c) * w; thR += (g.Sample("thighR", t) - c) * w;
+                knL += (g.Sample("kneeL", t) - g.Min("kneeL")) * w; knR += (g.Sample("kneeR", t) - g.Min("kneeR")) * w;
                 arL += (g.Sample("armL", t) - g.Mean("armL")) * w; arR += (g.Sample("armR", t) - g.Mean("armR")) * w;
                 elL += g.Sample("elbowL", t) * w; elR += g.Sample("elbowR", t) * w;
             }
