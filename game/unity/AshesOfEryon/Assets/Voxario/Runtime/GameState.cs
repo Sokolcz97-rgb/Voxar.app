@@ -75,6 +75,16 @@ namespace Voxario.Ashes
         public ChapterBoss boss;
     }
 
+    /// <summary>Stav války: hradba Kalidry (Kalidra ji zvyšuje, Legie snižuje).</summary>
+    [Serializable]
+    public class WorldInfo
+    {
+        public int wall, wall_max, heroes, kalidra, legie;
+        public bool eryon_claimed, azkar_claimed;
+    }
+
+    [Serializable] public class ChronicleEntry { public string created_at, kind, text; }
+
     [Serializable] public class TrainCost { public int sila, obratnost, intelekt, vydrz, stesti; }
 
     [Serializable]
@@ -92,6 +102,8 @@ namespace Voxario.Ashes
         public string now;
         public Expedition[] quests;
         public ChapterInfo chapter;
+        public WorldInfo world;
+        public ChronicleEntry[] chronicle;
 
         public int BagCount
         {

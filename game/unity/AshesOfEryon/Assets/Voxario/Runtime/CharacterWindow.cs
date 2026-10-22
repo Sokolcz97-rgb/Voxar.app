@@ -71,7 +71,7 @@ namespace Voxario.Ashes
             if (Chat.Typing) return;
             if (Input.GetKeyDown(KeyCode.C)) { if (open && tab == 0) open = false; else Open(0); }
             if (Input.GetKeyDown(KeyCode.I) || Input.GetKeyDown(KeyCode.B)) { if (open && tab == 1) open = false; else Open(1); }
-            if (open && Input.GetKeyDown(KeyCode.Escape)) open = false;
+            if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
             if (open && tab == 2 && !shopLoaded && !busy) StartCoroutine(LoadShop());
         }
 

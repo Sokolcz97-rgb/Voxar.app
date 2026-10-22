@@ -57,6 +57,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Arena>().boot = this;
             gameObject.AddComponent<Chronicle>().boot = this;
             gameObject.AddComponent<Guide>().boot = this;
+            gameObject.AddComponent<CharacterSlots>().boot = this;
         }
 
         IEnumerator Start()
@@ -366,6 +367,21 @@ namespace Voxario.Ashes
             foreach (var t in view.GetComponentsInChildren<Transform>(true)) t.gameObject.SetActive(true);
             player.view = view;
             if (old != null) Destroy(old.gameObject);
+        }
+
+        /// <summary>Znovu načte postavu ze serveru a přestaví svět (přepnutí / nová postava).</summary>
+        public void Reload() => StartCoroutine(ReloadRoutine());
+
+        IEnumerator ReloadRoutine()
+        {
+            GetComponent<WorldPresence>()?.Disconnect();
+            inWorld = false;
+            if (worldRoot != null) Destroy(worldRoot.gameObject);
+            worldRoot = null;
+            player = null;
+            state = null;
+            yield return null;
+            yield return LoadState();
         }
 
         public void SignOut()

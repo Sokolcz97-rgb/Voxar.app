@@ -59,7 +59,7 @@ namespace Voxario.Ashes
                 StartCoroutine(Call("ashes_oddil_info", "{}", null));
             }
             if (!Chat.Typing && Input.GetKeyDown(KeyCode.O)) { open = !open; error = ok = null; if (open) refreshAt = 0; }
-            if (open && Input.GetKeyDown(KeyCode.Escape)) open = false;
+            if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
         }
 
         IEnumerator Call(string fn, string args, string success)

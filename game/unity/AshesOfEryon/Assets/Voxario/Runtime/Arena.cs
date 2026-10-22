@@ -59,7 +59,7 @@ namespace Voxario.Ashes
         void Update()
         {
             if (!boot.inWorld) { open = false; return; }
-            if (open && !Chat.Typing && Input.GetKeyDown(KeyCode.Escape)) open = false;
+            if (open && !Chat.Typing && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
             if (open && !loaded && !busy) StartCoroutine(Load());
             if (open && fameTab && !fameLoaded && !busy) StartCoroutine(LoadFame());
         }

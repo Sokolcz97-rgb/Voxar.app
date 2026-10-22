@@ -68,7 +68,7 @@ namespace Voxario.Ashes
             }
             if (Chat.Typing) return;
             if (Input.GetKeyDown(KeyCode.K)) { if (open) open = false; else Open(); }
-            if (open && Input.GetKeyDown(KeyCode.Escape)) open = false;
+            if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
         }
 
         IEnumerator Call(string fn, string args)
@@ -123,6 +123,15 @@ namespace Voxario.Ashes
             GUI.enabled = !busy && !fighting;
             scroll = GUILayout.BeginScrollView(scroll, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(inner.height - 64));
 
+            // válka o Kalidru
+            if (st.world != null && st.world.wall_max > 0)
+            {
+                float k = Mathf.Clamp01(st.world.wall / (float)st.world.wall_max);
+                GUILayout.Label($"VÁLKA O KALIDRU  ·  hrdinů {st.world.heroes} (Kalidra {st.world.kalidra} · Legie {st.world.legie})", EryonSkin.Caps);
+                EryonSkin.Bar(GUILayoutUtility.GetRect(inner.width - 30, 22), k, new Color(0.45f, 0.7f, 0.95f), $"Hradba Kalidry {Mathf.RoundToInt(k * 100)} %  –  " +
+                    (ch.faction == "legie" ? "každé tvé vítězství ji boří" : "každé tvé vítězství ji zpevňuje"));
+                GUILayout.Space(10);
+            }
             if (chap != null && !string.IsNullOrEmpty(chap.intro))
                 GUILayout.Label(chap.intro, new GUIStyle(EryonSkin.Body) { fontStyle = FontStyle.Italic, fontSize = 21 });
             GUILayout.Space(8);
@@ -207,6 +216,19 @@ namespace Voxario.Ashes
                 if (GUILayout.Button(label, EryonSkin.ButtonPrimary, GUILayout.Height(54), GUILayout.Width(460)))
                     Fight("ashes_fight_boss", "{}", string.IsNullOrEmpty(chap.boss.c) ? "hoplit" : chap.boss.c, chap.boss.e, chap.boss.win);
                 GUI.enabled = !busy && !fighting;
+            }
+            // zprávy ze světa
+            if (st.chronicle != null && st.chronicle.Length > 0)
+            {
+                GUILayout.Space(16);
+                GUILayout.Label("ZPRÁVY ZE SVĚTA", EryonSkin.Caps);
+                int shown = 0;
+                foreach (var c in st.chronicle)
+                {
+                    if (string.IsNullOrEmpty(c.text) || ++shown > 6) continue;
+                    string when = TryTime(c.created_at, out var t) ? t.ToLocalTime().ToString("d. M. HH:mm") : "";
+                    GUILayout.Label($"<color=#a8998a>{when}</color>   {c.text}", new GUIStyle(EryonSkin.Small) { richText = true, fontSize = 17 });
+                }
             }
             GUILayout.EndScrollView();
 

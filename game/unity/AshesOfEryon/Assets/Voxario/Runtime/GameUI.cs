@@ -17,7 +17,7 @@ namespace Voxario.Ashes
         float fps, fpsTimer;
         int frames;
         Vector2 scroll;
-        static readonly string[] Tabs = { "Grafika", "Zobrazení", "Zvuk", "Ovládání", "Módy" };
+        static readonly string[] Tabs = { "Grafika", "Zobrazení", "Zvuk", "Ovládání", "Módy", "Postavy" };
 
         public bool SettingsOpen => settingsOpen;
         public void TestOpenSettings(int t) { settingsOpen = true; tab = t; }
@@ -30,7 +30,7 @@ namespace Voxario.Ashes
             var dialog = NpcDialog.Instance;
             bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen)
                               || (Chronicle.Instance != null && Chronicle.Instance.IsOpen);
-            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen)
+            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen && !UiFocus.ClosedThisFrame)
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
                 else settingsOpen = !settingsOpen;
@@ -172,6 +172,14 @@ namespace Voxario.Ashes
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
 
+            var slots = boot.GetComponent<CharacterSlots>();
+            if (slots != null && slots.HasOthers)
+            {
+                GUILayout.Space(10);
+                GUILayout.Label("NEBO POKRAČUJ S EXISTUJÍCÍ POSTAVOU", EryonSkin.Caps);
+                slots.Draw(false);
+            }
+            else if (slots != null && !slots.Loaded) slots.Refresh();
             GUILayout.FlexibleSpace();
             if (!string.IsNullOrEmpty(cError)) GUILayout.Label($"<color=#e0672a>{cError}</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true });
             GUILayout.BeginHorizontal();
@@ -258,7 +266,7 @@ namespace Voxario.Ashes
             GUILayout.BeginArea(new Rect(inner.x, inner.y - 8, inner.width, 50));
             GUILayout.BeginHorizontal();
             for (int i = 0; i < Tabs.Length; i++)
-                if (GUILayout.Button(Tabs[i], tab == i ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(38))) { tab = i; scroll = Vector2.zero; }
+                if (GUILayout.Button(Tabs[i], tab == i ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Height(38))) { tab = i; scroll = Vector2.zero; if (i == 5) boot.GetComponent<CharacterSlots>()?.Refresh(); }
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
 
@@ -271,6 +279,10 @@ namespace Voxario.Ashes
                 case 2: Sound(); break;
                 case 3: Controls(); break;
                 case 4: ModsTab(); break;
+                case 5:
+                    Section("Tvé postavy", "Na jednom účtu můžeš mít až 4 hrdiny – třeba za každou stranu války.");
+                    boot.GetComponent<CharacterSlots>()?.Draw(true);
+                    break;
             }
             GUILayout.EndScrollView();
             GUILayout.EndArea();
