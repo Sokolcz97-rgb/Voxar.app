@@ -88,7 +88,7 @@ namespace Voxario.Ashes
             }
             var wb = WorldBoss.Instance;
             if (wb?.state != null && wb.state.alive && st.character.level >= 2)
-                return "Na pláni u Památníku padlých řádí mořský obr Thalassos (rudý bod na mapě). Spoj síly s ostatními – přijdi k němu a stiskni E.";
+                return "Na pláni u Památníku padlých táboří pirátský vůdce Thalassos se svou družinou (rudý bod na mapě). Spoj síly s ostatními – přijdi k němu a stiskni E.";
             return fac == "legie"
                 ? "Bojuj s obránci Kalidry v kraji, zkus arénu u Mistra zápasů nebo navštiv kováře Rukmara."
                 : "Bojuj s Legií v kraji, zkus arénu u Mistra arény nebo navštiv kováře Tharose.";

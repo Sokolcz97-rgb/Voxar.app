@@ -459,7 +459,7 @@ namespace Voxario.Ashes
         public void StartBossAttack(CharacterView boss, Action<string> onError)
         {
             if (Busy || boot.player == null) return;
-            StartCoroutine(RunServerFight("ashes_boss_attack", "{}", false, "hoplit", "m", "Thalassos, mořský obr", onError, boss));
+            StartCoroutine(RunServerFight("ashes_boss_attack", "{}", false, "hoplit", "m", "Thalassos, vůdce pirátů", onError, boss));
         }
 
         [Serializable] public class BossResult { public int damage, boss_hp, boss_hp_max; public bool killed; }
@@ -493,7 +493,7 @@ namespace Voxario.Ashes
                 // hráč se otočí k obrovi
                 var dir = existingFoe.transform.position - boot.player.transform.position; dir.y = 0;
                 if (dir.sqrMagnitude > 0.01f) boot.player.transform.rotation = Quaternion.LookRotation(dir);
-                label = "Thalassos, mořský obr";
+                label = "Thalassos, vůdce pirátů";
             }
             // soupeř se objeví naproti hráči
             var pt = boot.player.transform;
@@ -527,7 +527,7 @@ namespace Voxario.Ashes
             if (boss)
             {
                 var br = JsonUtility.FromJson<BossResult>(json);
-                if (br.killed) { existingFoe.Fall(); resultHeader = "OBR PADL!"; }
+                if (br.killed) { existingFoe.Fall(); resultHeader = "THALASSOS PADL!"; }
                 else
                 {
                     if (res.fight.winner == 2) boot.player.view.Fall();
