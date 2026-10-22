@@ -16,6 +16,9 @@ namespace Voxario.Ashes
         LegRig legs;
         float lungeT = -1, flinchT = -1, fallT = -1;
         bool fallen;
+        /// <summary>Ženská postava: kratší krok, víc pohupování v bocích.</summary>
+        public bool feminine;
+        float run;
 
         /// <summary>Výpad dopředu (útok).</summary>
         public void Lunge() => lungeT = 0;
@@ -38,6 +41,8 @@ namespace Voxario.Ashes
             if (prefab != null)
             {
                 var model = Instantiate(prefab, view.body);
+                view.feminine = prefab.name.Contains("_f");
+                SharpenTextures(model);
                 if (yaw != 0) model.transform.localRotation = Quaternion.Euler(0, yaw, 0) * model.transform.localRotation;
                 Fit(model.transform, height);
                 view.legs = new LegRig(root.transform, height, legRatio, gait);
@@ -53,6 +58,42 @@ namespace Voxario.Ashes
                 cap.transform.localScale = new Vector3(0.6f, height / 2, 0.6f);
             }
             return view;
+        }
+
+        static readonly System.Collections.Generic.HashSet<Material> sharpened = new System.Collections.Generic.HashSet<Material>();
+        static readonly System.Collections.Generic.Dictionary<Texture, Texture2D> noMip = new System.Collections.Generic.Dictionary<Texture, Texture2D>();
+
+        /// <summary>
+        /// Textury postav jsou atlasy z mnoha malých ostrůvků – zmenšené úrovně (mipmapy)
+        /// slévají sousední barvy a postava pak vypadá zašle. Použijeme jen plné rozlišení.
+        /// </summary>
+        public static void SharpenTextures(GameObject model)
+        {
+            foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+                foreach (var m in r.sharedMaterials)
+                {
+                    if (m == null || !sharpened.Add(m)) continue;
+                    foreach (var prop in m.GetTexturePropertyNames())
+                    {
+                        if (!(m.GetTexture(prop) is Texture2D t) || t.mipmapCount <= 1) continue;
+                        if (!noMip.TryGetValue(t, out var copy))
+                        {
+                            copy = null;
+                            try
+                            {
+                                if (SystemInfo.copyTextureSupport != UnityEngine.Rendering.CopyTextureSupport.None)
+                                {
+                                    copy = new Texture2D(t.width, t.height, t.format, false, false) { name = t.name + " (ostrá)", filterMode = FilterMode.Bilinear, anisoLevel = 4, wrapMode = t.wrapMode };
+                                    Graphics.CopyTexture(t, 0, 0, copy, 0, 0);
+                                }
+                            }
+                            catch { copy = null; }
+                            if (copy == null) { t.mipMapBias = -1.5f; t.anisoLevel = 8; }
+                            noMip[t] = copy;
+                        }
+                        if (copy != null) m.SetTexture(prop, copy);
+                    }
+                }
         }
 
         /// <summary>Zmenší model na danou výšku a postaví chodidly na nulu, střed do osy.</summary>
@@ -75,11 +116,12 @@ namespace Voxario.Ashes
         {
             if (body == null) return;
             bool moving = speed > 0.05f;
-            float target = moving ? Mathf.Min(1, 0.45f + speed * 0.12f) : 0;
-            amount = Mathf.MoveTowards(amount, target, dt * 6);
-            // menší zvířata dělají rychlejší kroky
-            float stride = Mathf.Clamp(1.6f / Mathf.Max(0.3f, height), 0.6f, 2.5f);
-            if (moving) phase += dt * (4 + speed * 1.6f) * stride;
+            float target = moving ? Mathf.Min(1, 0.55f + speed * 0.15f) : 0;
+            amount = Mathf.MoveTowards(amount, target, dt * 5);
+            run = Mathf.MoveTowards(run, Mathf.InverseLerp(4.5f, 7f, speed), dt * 3);
+            // délka kroku podle výšky (chodidla nekloužou); ženy kratší krok
+            float step = height * (feminine ? 0.36f : 0.42f) * Mathf.Lerp(1f, 1.35f, run);
+            if (moving) phase += dt * Mathf.PI * Mathf.Max(speed, 1.2f) / Mathf.Max(0.2f, step);
             breath += dt;
             float k = height / 1.6f;
             float look = 0;
@@ -89,8 +131,13 @@ namespace Voxario.Ashes
                 float t = Time.time * 0.25f + lookSeed;
                 look = Mathf.Sin(t) * Mathf.Max(0, Mathf.Sin(t * 0.37f)) * 18f;
             }
-            var pos = new Vector3(0, Mathf.Abs(Mathf.Sin(phase)) * 0.045f * k * amount + Mathf.Sin(breath * 1.8f) * 0.006f * k, 0);
-            float pitch = 4.5f * amount;
+            // pohupování: dvakrát za cyklus nahoru (při běhu víc), boky do strany (ženy víc)
+            float bob = (1 - Mathf.Abs(Mathf.Cos(phase))) * Mathf.Lerp(0.03f, 0.065f, run) * k * amount;
+            float hip = Mathf.Sin(phase) * (feminine ? 0.022f : 0.01f) * k * amount;
+            // v klidu jemné přenášení váhy
+            float idleShift = moving ? 0 : Mathf.Sin(breath * 0.55f + lookSeed) * 0.008f * k;
+            var pos = new Vector3(hip + idleShift, bob + Mathf.Sin(breath * 1.8f) * 0.005f * k, 0);
+            float pitch = Mathf.Lerp(3f, 9f, run) * amount;
             if (lungeT >= 0)
             {
                 lungeT += dt;
@@ -115,8 +162,14 @@ namespace Voxario.Ashes
                 pos.y = 0.05f * e;
             }
             body.localPosition = pos;
-            body.localRotation = Quaternion.Euler(pitch, look, Mathf.Sin(phase) * 2f * amount);
-            legs?.Update(phase, amount);
+            // trup se mírně stáčí proti krokům, ženy víc naklánějí boky
+            float twist = Mathf.Sin(phase) * Mathf.Lerp(3f, 5f, run) * amount;
+            float roll = Mathf.Sin(phase) * (feminine ? 3.2f : 1.8f) * amount + idleShift * 40f;
+            body.localRotation = Quaternion.Euler(pitch, look + twist, roll);
+            // dech: nepatrné „nadechnutí“ celé postavy
+            float br = 1 + Mathf.Sin(breath * 1.8f) * 0.006f;
+            body.localScale = new Vector3(1 + (br - 1) * 0.6f, br, 1 + (br - 1) * 0.6f);
+            legs?.Update(phase, amount, run);
         }
     }
 }
