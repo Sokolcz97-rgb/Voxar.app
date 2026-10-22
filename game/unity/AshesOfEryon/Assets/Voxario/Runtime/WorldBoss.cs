@@ -63,6 +63,11 @@ namespace Voxario.Ashes
                 var c = CharacterView.Create(ct, root, 1.62f, "Pirát");
                 c.transform.position = WorldMap.ToWorld(Spot.x + Mathf.Cos(a) * 3.2f, Spot.y + Mathf.Sin(a) * 3.2f);
                 c.transform.rotation = Quaternion.Euler(0, 200 + i * 25, 0);
+                var ctag = c.gameObject.AddComponent<NameTag>();
+                ctag.title = i % 2 == 0 ? "Pirátský lukostřelec" : "Pirátský kopiník";
+                ctag.subtitle = "družina Thalassose";
+                ctag.enemy = true;
+                ctag.height = 2.2f;
                 crew.Add(c);
             }
             Fire.Create(root, WorldMap.ToWorld(Spot.x + 3.5f, Spot.y - 2) + Vector3.up * 0.1f, 0.5f, false);

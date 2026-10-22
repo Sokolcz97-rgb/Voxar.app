@@ -37,8 +37,19 @@ namespace Voxario.Ashes
             }
             // 2) cíle aktivních úkolů
             if (Encounters.Instance != null)
-                foreach (var t in Encounters.Instance.QuestTargets())
-                    Consider(WorldMap.ToWorld(t.x, t.y), "cíl úkolu", 1f);
+                foreach (var t in Encounters.Instance.QuestTargetsNamed())
+                    Consider(WorldMap.ToWorld(t.pos.x, t.pos.y), string.IsNullOrEmpty(t.title) ? "cíl úkolu" : t.title, 1f);
+            // 2b) úkoly „promluv si s…“ – vede k cílové postavě
+            var wqs = boot.state?.wquests;
+            if (wqs != null)
+                foreach (var wq in wqs)
+                {
+                    if (wq.state != "active") continue;
+                    var def = Content.Data.Quest(wq.quest_id);
+                    if (def == null || def.type != "talk") continue;
+                    foreach (var n in NpcDialog.Npcs)
+                        if (n.t != null && n.def.id == def.target) Consider(n.t.position, $"{n.def.name} – {def.title}", 0.8f);
+                }
             // 3) bez úkolů: světový boss (stejně jako ho doporučuje rádce)
             var wb = WorldBoss.Instance;
             if (target == null && wb?.View != null && wb.state != null && wb.state.alive
