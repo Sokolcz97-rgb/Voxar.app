@@ -41,8 +41,18 @@ namespace Voxario.Ashes
         /// <param name="root">kořen postavy (chodidla v y = 0, dopředu = +Z)</param>
         /// <param name="height">výška postavy v metrech</param>
         /// <param name="legRatio">do jaké výšky (podíl výšky) sahají nohy</param>
-        public LegRig(Transform root, float height, float legRatio, Gait gait)
+        /// <summary>Které paže se smí kývat (−1 levá, +1 pravá); ruka s předmětem (štít, luk, hůl) zůstává.</summary>
+        readonly bool armLeftFree = true, armRightFree = true;
+        /// <summary>Výška, od které dolů se u sukní / rób hýbou nohy (lem).</summary>
+        float hemY;
+
+        public LegRig(Transform root, float height, float legRatio, Gait gait, string model = null)
         {
+            string key = (model ?? "").ToLowerInvariant();
+            // předměty v rukou (modely jsou z jednoho kusu – ohnutá ruka by zkroutila štít / luk / hůl)
+            if (key.StartsWith("hoplit_m")) { armLeftFree = false; armRightFree = false; }      // štít + kopí
+            else if (key.StartsWith("lucistnik")) armLeftFree = false;                          // luk v levé
+            else if (key.StartsWith("vestec")) armRightFree = false;                            // hůl v pravé
             this.gait = gait;
             this.height = height;
             quadAmp = height * 0.14f;
@@ -75,6 +85,7 @@ namespace Voxario.Ashes
                     if (Mathf.Abs(p.x - cx) < height * 0.018f) center++;
                 }
                 Robe = band > 0 && center > band * 0.07f;
+                hemY = height * 0.14f;
                 hipHalf = height * 0.05f;
                 // paže: pod rameny hledáme mezeru mezi trupem a paží
                 shoulderY = height * 0.66f;
@@ -125,7 +136,8 @@ namespace Voxario.Ashes
                 var rootV = new Vector3[verts.Length];
                 var li = new List<int>(); var lw = new List<float>(); var ls = new List<float>();
                 var ai = new List<int>(); var aw = new List<float>(); var asd = new List<float>();
-                float legBand = Robe ? height * 0.16f : height * 0.035f;
+                float legBand = Robe ? height * 0.06f : height * 0.035f;
+                float legLimit = height * 0.14f; // jen úzký pás kolem středu (luk u nohou zůstane)
                 for (int i = 0; i < verts.Length; i++)
                 {
                     var p = m2r.MultiplyPoint3x4(verts[i]);
@@ -138,6 +150,7 @@ namespace Voxario.Ashes
                     }
                     float x = p.x - zc;
                     bool arm = HasArms && Mathf.Abs(x) > armX && p.y < shoulderY + height * 0.02f && p.y > height * 0.2f;
+                    if (arm && !(x < 0 ? armLeftFree : armRightFree)) arm = false;
                     if (arm)
                     {
                         ai.Add(i);
@@ -145,10 +158,13 @@ namespace Voxario.Ashes
                         asd.Add(Mathf.Sign(x));
                         continue;
                     }
-                    if (p.y >= hipY) continue;
+                    if (Mathf.Abs(x) > legLimit) continue;
+                    // sukně / róba: hýbe se jen to pod lemem, látka nahoře zůstává (žádné natahování textury)
+                    float top = Robe ? hemY : hipY;
+                    if (p.y >= top) continue;
                     li.Add(i);
-                    // u kyčle 0, níž plná síla (plynulý přechod = žádné trhliny)
-                    lw.Add(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(hipY, hipY - height * 0.12f, p.y)));
+                    // u kyčle (lemu) 0, níž plná síla (plynulý přechod = žádné trhliny)
+                    lw.Add(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(top, top - height * (Robe ? 0.05f : 0.12f), p.y)));
                     ls.Add(Mathf.Lerp(-1, 1, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-legBand, legBand, x))));
                 }
                 if (li.Count == 0 && ai.Count == 0) continue;
@@ -251,7 +267,7 @@ namespace Voxario.Ashes
                 }
 
                 // --- nohy: rotace v kyčli, koleno se pokrčí, když noda jde dopředu
-                float legAmp = Robe ? Mathf.Lerp(9f, 13f, run) : Mathf.Lerp(24f, 36f, run);
+                float legAmp = Robe ? Mathf.Lerp(16f, 24f, run) : Mathf.Lerp(24f, 36f, run);
                 for (int j = 0; j < p.legIdx.Length; j++)
                 {
                     int i = p.legIdx[j];
@@ -262,10 +278,10 @@ namespace Voxario.Ashes
                     float lr = (side + 1) * 0.5f; // 0 = levá, 1 = pravá
                     if (gaitW > 0)
                     {
-                        float fwd = Mathf.Lerp(thL, thR, lr) * (Robe ? 0.35f : 1f);
+                        float fwd = Mathf.Lerp(thL, thR, lr) * (Robe ? 0.7f : 1f);
                         ang = Mathf.Lerp(ang, -fwd * w, gaitW);
                     }
-                    var pivot = new Vector3(v.x, hipY, 0);
+                    var pivot = new Vector3(v.x, Robe ? hemY + height * 0.08f : hipY, 0);
                     var r = RotX(v, pivot, ang);
                     if (!Robe && v.y < kneeY)
                     {

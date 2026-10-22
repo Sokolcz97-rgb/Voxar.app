@@ -55,7 +55,7 @@ namespace Voxario.Ashes
                 SharpenTextures(model);
                 if (yaw != 0) model.transform.localRotation = Quaternion.Euler(0, yaw, 0) * model.transform.localRotation;
                 Fit(model.transform, height);
-                view.legs = new LegRig(root.transform, height, legRatio, gait);
+                view.legs = new LegRig(root.transform, height, legRatio, gait, prefab.name);
                 if (!view.legs.Valid) view.legs = null;
             }
             else
@@ -93,8 +93,10 @@ namespace Voxario.Ashes
                             {
                                 if (SystemInfo.copyTextureSupport != UnityEngine.Rendering.CopyTextureSupport.None)
                                 {
-                                    copy = new Texture2D(t.width, t.height, t.format, false, false) { name = t.name + " (ostrá)", filterMode = FilterMode.Bilinear, anisoLevel = 4, wrapMode = t.wrapMode };
-                                    Graphics.CopyTexture(t, 0, 0, copy, 0, 0);
+                                    // jen 3 nejostřejší úrovně: bez třpytu, ale ještě bez slévání sousedních ostrůvků atlasu
+                                    int mips = Mathf.Min(3, t.mipmapCount);
+                                    copy = new Texture2D(t.width, t.height, t.format, mips, false) { name = t.name + " (ostrá)", filterMode = FilterMode.Trilinear, anisoLevel = 8, wrapMode = t.wrapMode };
+                                    for (int mip = 0; mip < mips; mip++) Graphics.CopyTexture(t, 0, mip, copy, 0, mip);
                                 }
                             }
                             catch { copy = null; }
