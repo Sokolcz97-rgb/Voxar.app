@@ -66,7 +66,8 @@ namespace Voxario.Ashes
             ("kalidra", 86, 2), ("kalidra", 86, 36),
         };
 
-        static readonly Dictionary<string, string[]> Safe = new Dictionary<string, string[]> { ["kalidra"] = new[] { "kalidra" }, ["legie"] = new[] { "cove", "camp" } };
+        // oblasti bez nepřátel (vlastní město / tábor); zátoka Legie má strážné na útesech mimo bezpečný kruh
+        static readonly Dictionary<string, string[]> Safe = new Dictionary<string, string[]> { ["kalidra"] = new[] { "kalidra" }, ["legie"] = new[] { "camp" } };
         static readonly (float x, float z, float r)[] SafeZones = { (-52, 50, 20), (-44, -50, 18), (62, 15, 14), (56, -60, 14) };
         public static readonly Vector2 RespawnKalidra = new Vector2(62, 15), RespawnLegie = new Vector2(56, -60);
         static readonly (string id, float x, float z)[] Beacons = { ("b1", -22, -58), ("b2", 2, -72), ("b3", 28, -60) };

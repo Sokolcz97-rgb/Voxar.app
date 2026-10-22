@@ -237,6 +237,248 @@
    "objective": "Poraz strážce akvaduktu",
    "done": "Kalidrský bronz. Po kalení v moři bude černý jako naše plachty.",
    "goalNpc": ""
+  },
+  {
+   "id": "k9",
+   "faction": "kalidra",
+   "giver": "gorgias",
+   "type": "kill",
+   "target": "pasarak",
+   "count": 3,
+   "req": [
+    "k1"
+   ],
+   "title": "Pašeráci z útesů",
+   "offer": "Pašeráci z útesů mi prodávají víno ředěné mořskou vodou a ještě se smějí. Dej jim lekci – a jestli u nich najdeš nějaký džbán, nesu ho na tvůj účet.",
+   "objective": "Poraz pašeráky na pobřeží",
+   "done": "Ha! Tak tohle víno je aspoň poctivě kyselé. Na zdraví, hrdino.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k10",
+   "faction": "kalidra",
+   "giver": "melos",
+   "type": "talk",
+   "target": "pylas",
+   "count": 1,
+   "req": [
+    "k3"
+   ],
+   "title": "Píseň pro strážného",
+   "offer": "Pylas drží stráž u strážních ohňů už třetí noc. Napsal jsem mu píseň, ať mu nezamrzne srdce. Doneseš mu ji? Já bych cestou zpíval a prozradil ho.",
+   "objective": "Doruč píseň strážnému Pylasovi u strážních ohňů",
+   "done": "Melos? Ten blázen. … Díky. Je to dobrá píseň.",
+   "goalNpc": "pylas"
+  },
+  {
+   "id": "k11",
+   "faction": "kalidra",
+   "giver": "pylas",
+   "type": "kill",
+   "target": "predvoj",
+   "count": 4,
+   "req": [
+    "k5"
+   ],
+   "title": "Předvoj na kopcích",
+   "offer": "Ze strážní věže vidím jejich předvoj. Čtyři muži, kopí a štíty s rudým sluncem. Jestli se usadí na kopcích, odříznou nám ohně.",
+   "objective": "Rozbij předvoj Legie na kopcích",
+   "done": "Kopce jsou zase naše. Ohně budou hořet dál.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k12",
+   "faction": "kalidra",
+   "giver": "thalia",
+   "type": "kill",
+   "target": "kultista",
+   "count": 3,
+   "req": [
+    "k7"
+   ],
+   "title": "Popel v akvaduktu",
+   "offer": "U akvaduktu se schází kultisté popela. Sypou do vody popel a modlí se k Rudému slunci. Voda, kterou pije Kalidra, nesmí nést jejich kletbu.",
+   "objective": "Rozežeň kultisty popela u akvaduktu",
+   "done": "Moře přijalo jejich popel a vrátilo nám čistou vodu. Bohové vidí tvou ruku.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k13",
+   "faction": "kalidra",
+   "giver": "damon",
+   "type": "kill",
+   "target": "kopinik",
+   "count": 4,
+   "req": [
+    "k8"
+   ],
+   "title": "Kopí na pláni",
+   "offer": "Legie už nestojí na kopcích – je na pláni před branou. Kopiníci Rudého slunce zkoušejí, jak blízko k hradbám se odváží. Ukaž jim, kde končí.",
+   "objective": "Poraz kopiníky Rudého slunce na pláni",
+   "done": "Tohle si budou pamatovat. A já si budu pamatovat tebe.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k14",
+   "faction": "kalidra",
+   "giver": "eryon",
+   "type": "kill",
+   "target": "knez-slunce",
+   "count": 3,
+   "req": [
+    "k13"
+   ],
+   "title": "Kněží Rudého slunce",
+   "offer": "Jejich kněží chodí mezi vojáky a slibují jim, že Kalidra hoří už teď, jen to ještě nevíme. Strach je jejich nejlepší zbraň. Vezmi jim ji.",
+   "objective": "Umlč kněze Rudého slunce na pláni",
+   "done": "Bez kněží jsou to jen muži, co se bojí stejně jako my. S takovými se dá bojovat.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k15",
+   "faction": "kalidra",
+   "giver": "damon",
+   "type": "kill",
+   "target": "strazce-lodi",
+   "count": 3,
+   "req": [
+    "k13"
+   ],
+   "title": "Černé lodě",
+   "offer": "V zátoce kotví černé lodě Legie. Dokud tam jsou, mohou kdykoli přivézt další tisíc kopí. Stráže lodí jsou jejich nejlepší muži – ale i ti krvácí.",
+   "objective": "Poraz strážce černých lodí v zátoce",
+   "done": "Plachty hoří. Azkar dnes v noci nebude spát.",
+   "goalNpc": ""
+  },
+  {
+   "id": "k16",
+   "faction": "kalidra",
+   "giver": "eryon",
+   "type": "kill",
+   "target": "garda",
+   "count": 3,
+   "req": [
+    "k14",
+    "k15"
+   ],
+   "title": "Azkarova garda",
+   "offer": "Zbývá jeho garda. Muži, kteří s ním přišli přes moře a nikdy neustoupili. Nežádám tě, abys šel sám – žádám tě, abys šel první.",
+   "objective": "Poraz Azkarovu gardu v táboře Legie",
+   "done": "Dnes jsi nebojoval za Kalidru. Dnes jsi byl Kalidra.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l8",
+   "faction": "legie",
+   "giver": "sabra",
+   "type": "kill",
+   "target": "rybar",
+   "count": 3,
+   "req": [
+    "l1"
+   ],
+   "title": "Ryby a harpuny",
+   "offer": "Rybáři z břehu nám nechtějí prodat ani šupinu. Prý radši nakrmí moře. Tak ať ho nakrmí – a jejich úlovek ať skončí v našem kotli.",
+   "objective": "Poraz rybáře s harpunami na pobřeží",
+   "done": "Dnes se v táboře nají i bubeníci. To ti nezapomenou.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l9",
+   "faction": "legie",
+   "giver": "taras",
+   "type": "talk",
+   "target": "rukmar",
+   "count": 1,
+   "req": [
+    "l3"
+   ],
+   "title": "Buben a kovadlina",
+   "offer": "Můj buben praskl, když jsme vystupovali z lodí. Bez bubnu neudržím krok legie. Zajdi za kovářem Rukmarem, ať mi ukove nové obruče.",
+   "objective": "Promluv si s kovářem Rukmarem o bubnu",
+   "done": "Bubeník? Zase? Dobře, ať si pro obruče přijde. Rudé slunce potřebuje rytmus.",
+   "goalNpc": "rukmar"
+  },
+  {
+   "id": "l10",
+   "faction": "legie",
+   "giver": "rukmar",
+   "type": "kill",
+   "target": "knezka",
+   "count": 3,
+   "req": [
+    "l7"
+   ],
+   "title": "Kněžky přílivu",
+   "offer": "Kněžky přílivu žehnají kalidrským zbraním u akvaduktu. Jejich požehnání tupí naše ostří – aspoň to vojáci říkají. Ať tomu přestanou věřit.",
+   "objective": "Poraz kněžky přílivu u akvaduktu",
+   "done": "Žádné požehnání. Jen dobře zakalená ocel. Tak.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l11",
+   "faction": "legie",
+   "giver": "oren",
+   "type": "kill",
+   "target": "strazce-ohne",
+   "count": 4,
+   "req": [
+    "l5"
+   ],
+   "title": "Strážci ohně",
+   "offer": "Zhasnuté vatry znovu zapalují strážci ohně. Dokud žijí, Kalidra uvidí každý náš krok. Rudé slunce nesnese cizí plamen.",
+   "objective": "Poraz strážce ohně na kopcích",
+   "done": "Kopce jsou temné. Jen naše slunce na nich svítí.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l12",
+   "faction": "legie",
+   "giver": "varkas",
+   "type": "kill",
+   "target": "obrance",
+   "count": 4,
+   "req": [
+    "l6"
+   ],
+   "title": "Obránci brány",
+   "offer": "Azkar chce pláň před branou. Obránci Kalidry tam stojí ve štítové hradbě a myslí si, že jsou skála. Ukaž jim, že i skála puká.",
+   "objective": "Poraz obránce Kalidry na pláni",
+   "done": "Jejich štíty jsou v blátě. Pláň patří Rudému slunci.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l13",
+   "faction": "legie",
+   "giver": "azkar",
+   "type": "kill",
+   "target": "knez-kalidry",
+   "count": 3,
+   "req": [
+    "l12"
+   ],
+   "title": "Kněží Kalidry",
+   "offer": "Jejich kněží vykládají o Eryonovi, jako by byl bůh. Není. Je to muž. A muži padají. Umlč ty, kdo z něj dělají víc.",
+   "objective": "Umlč kněze Kalidry na pláni",
+   "done": "Teď uvidí, že jejich štít je jen bronz. Bronz se ohýbá.",
+   "goalNpc": ""
+  },
+  {
+   "id": "l14",
+   "faction": "legie",
+   "giver": "azkar",
+   "type": "kill",
+   "target": "straz-kalidry",
+   "count": 3,
+   "req": [
+    "l12",
+    "l13"
+   ],
+   "title": "Stráž Kalidry",
+   "offer": "Je čas zaklepat na bránu. Stráž Kalidry je poslední, co stojí mezi námi a městem. Jdi první. Rudé slunce půjde za tebou.",
+   "objective": "Poraz stráž Kalidry u hradeb města",
+   "done": "Brána se otřásla. Dnes jsi nebojoval za Legii. Dnes jsi byl Legie.",
+   "goalNpc": ""
   }
  ],
  "npcs": [
