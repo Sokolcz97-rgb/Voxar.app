@@ -276,6 +276,7 @@ namespace Voxario.Ashes
                 ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
                 ("18-obr", WorldMap.ToWorld(WorldBoss.Spot.x - 9, WorldBoss.Spot.y + 6) + new Vector3(0, 3, 0), WorldMap.ToWorld(WorldBoss.Spot.x, WorldBoss.Spot.y) + Vector3.up * 1.5f),
                 ("20-obloha", WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0), WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0) + (DayNight.Instance == null ? Vector3.forward : (DayNight.Instance.SunAltitude > 0 ? DayNight.Instance.SunDir : DayNight.Instance.MoonDir) * 50f + Vector3.down * 12f)),
+                ("21-pobrezi", WorldMap.ToWorld(-58, 40) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-85, 38) + Vector3.up * 0.3f),
                 ("19-stadion", WorldMap.ToWorld(-8, 8) + new Vector3(0, 4, 0), WorldMap.ToWorld(0, 15) + Vector3.up * 2.5f),
             };
             foreach (var v in views)
