@@ -21,6 +21,11 @@ namespace Voxario.Ashes
             scanAt = Time.time + 0.5f;
             target = null;
             var p = boot.player.transform.position;
+            if (Race.Instance != null && Race.Instance.Running)
+            {
+                target = Race.Instance.Target; label = Race.Instance.TargetLabel;
+                return;
+            }
             float best = float.MaxValue;
             void Consider(Vector3 pos, string text, float bias)
             {

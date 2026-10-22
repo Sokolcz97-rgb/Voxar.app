@@ -63,6 +63,7 @@ namespace Voxario.Ashes
             gameObject.AddComponent<Recall>().boot = this;
             gameObject.AddComponent<WorldBoss>().boot = this;
             gameObject.AddComponent<Waypoint>().boot = this;
+            gameObject.AddComponent<Race>().boot = this;
         }
 
         IEnumerator Start()
@@ -180,6 +181,7 @@ namespace Voxario.Ashes
             Scenery.Build(worldRoot, PlayerPrefs.GetInt("gfx.quality", 2));
             GetComponent<Encounters>().Build(worldRoot, library, faction);
             GetComponent<WorldBoss>().Build(worldRoot, library);
+            GetComponent<Race>().Build(worldRoot);
 
             string gender = ch.appearance != null && ch.appearance.gender == "f" ? "f" : "m";
             string cls = string.IsNullOrEmpty(ch.@class) ? "hoplit" : ch.@class;
@@ -269,6 +271,7 @@ namespace Voxario.Ashes
                 ("8-akvadukt", WorldMap.ToWorld(-30, 12) + new Vector3(0, 5, 0), WorldMap.ToWorld(-45, 13) + Vector3.up * 4),
                 ("9-zatoka", WorldMap.ToWorld(-50, -60) + new Vector3(0, 14, 0), WorldMap.ToWorld(-68, -78)),
                 ("18-obr", WorldMap.ToWorld(WorldBoss.Spot.x - 9, WorldBoss.Spot.y + 6) + new Vector3(0, 3, 0), WorldMap.ToWorld(WorldBoss.Spot.x, WorldBoss.Spot.y) + Vector3.up * 1.5f),
+                ("19-stadion", WorldMap.ToWorld(-8, 8) + new Vector3(0, 4, 0), WorldMap.ToWorld(0, 15) + Vector3.up * 2.5f),
             };
             foreach (var v in views)
             {
