@@ -15,6 +15,20 @@ contextBridge.exposeInMainWorld("ashesLauncher", {
       return () => ipcRenderer.removeListener("launcher:game-closed", listener);
     }
   },
+  auth: {
+    status: () => ipcRenderer.invoke("launcher:auth:status"),
+    signIn: () => ipcRenderer.invoke("launcher:auth:sign-in"),
+    cancel: () => ipcRenderer.invoke("launcher:auth:cancel"),
+    signOut: () => ipcRenderer.invoke("launcher:auth:sign-out"),
+    register: () => ipcRenderer.invoke("launcher:auth:register"),
+    forgot: () => ipcRenderer.invoke("launcher:auth:forgot"),
+    onStatus: (callback) => {
+      if (typeof callback !== "function") return () => {};
+      const listener = (_event, value) => callback(value);
+      ipcRenderer.on("launcher:auth", listener);
+      return () => ipcRenderer.removeListener("launcher:auth", listener);
+    }
+  },
   unity: {
     status: () => ipcRenderer.invoke("launcher:unity:status"),
     check: () => ipcRenderer.invoke("launcher:unity:check"),

@@ -226,13 +226,20 @@ function createUnityGame({ onStatus, log }) {
   }
 
   /** Spustí nainstalovanou hru. `onExit` se zavolá po jejím ukončení. */
-  function play(onExit, args = []) {
+  function play(onExit, args = [], env = {}) {
     const installed = readInstalled();
     if (!installed) return { opened: false, error: "Hra není nainstalovaná" };
     if (child) return { opened: true, running: true };
     const exe = path.join(installDir(), installed.exe);
     if (!fs.existsSync(exe)) return { opened: false, error: "Chybí spustitelný soubor hry" };
-    child = spawn(exe, ["-ashes-launcher", ...args], { cwd: path.dirname(exe), detached: false, stdio: "ignore", windowsHide: false });
+    child = spawn(exe, ["-ashes-launcher", ...args], {
+      cwd: path.dirname(exe),
+      detached: false,
+      stdio: "ignore",
+      windowsHide: false,
+      // jednorázový lístek přihlášení jde přes proměnnou prostředí (není vidět v seznamu procesů)
+      env: { ...process.env, ...env },
+    });
     child.on("error", (error) => log?.(`Spuštění hry selhalo: ${error?.message || error}`));
     child.on("exit", (code) => {
       log?.(`Hra skončila (${code})`);

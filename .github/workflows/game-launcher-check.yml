@@ -54,3 +54,12 @@ jobs:
 
           Write-Host "Ashes of Eryon launcher runtime built successfully."
           Write-Host "No installer or release asset was published."
+
+      - name: Upload launcher resources (for the in-app update)
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-resources
+          path: |
+            game/launcher/app/dist/win-unpacked/resources/app.asar
+            game/launcher/app/dist/win-unpacked/resources/launcher-ui/
+          retention-days: 14

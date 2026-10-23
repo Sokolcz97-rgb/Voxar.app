@@ -77,9 +77,21 @@ namespace Voxario.Ashes
                 yield break;
             }
             busy = true;
-            status = "Obnovuji přihlášení…";
             bool resumed = false;
-            yield return api.Resume(ok => resumed = ok);
+            // spuštěno z launcheru s přihlášeným účtem → bez přihlašovací obrazovky
+            var ticket = System.Environment.GetEnvironmentVariable("ASHES_LAUNCHER_TICKET");
+            if (!string.IsNullOrEmpty(ticket))
+            {
+                System.Environment.SetEnvironmentVariable("ASHES_LAUNCHER_TICKET", null);
+                status = "Přihlašuji účtem z launcheru…";
+                yield return api.SignInWithTicket(ticket.Trim(), ok => resumed = ok);
+                if (!resumed) Debug.LogWarning("[Voxario] lístek z launcheru neplatný – zkouším uložené přihlášení");
+            }
+            if (!resumed)
+            {
+                status = "Obnovuji přihlášení…";
+                yield return api.Resume(ok => resumed = ok);
+            }
             busy = false;
             status = "";
             if (resumed) yield return LoadState();
