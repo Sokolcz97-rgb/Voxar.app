@@ -43,8 +43,10 @@ export async function snapshotGuild(guild) {
         allow: flagNames(o.allow.bitfield), deny: flagNames(o.deny.bitfield),
       })),
     }));
+  const onboarding = await guild.fetchOnboarding().catch(() => null);
   return {
     taken_at: new Date().toISOString(),
+    onboarding: onboarding ? { enabled: !!onboarding.enabled, default_channel_ids: [...(onboarding.defaultChannels?.keys?.() ?? [])] } : null,
     guild: { id: guild.id, name: guild.name, owner_id: guild.ownerId, members: guild.memberCount, everyone_id: guild.roles.everyone.id },
     bot: { id: me.id, top_role: me.roles.highest?.name, permissions: flagNames(me.permissions.bitfield) },
     roles,
@@ -70,15 +72,33 @@ function resolveOverwrites(guild, overwrites = []) {
  *   delete_empty_categories: [id]                  – smaže jen tehdy, když jsou po přesunu prázdné
  * }
  */
-export async function applyLayout(guild, plan, log) {
+/** Kanály z Onboardingu musí zůstat čitelné pro @everyone (jinak je Discord odmítne). */
+function keepReadableForEveryone(overwrites = []) {
+  const list = overwrites.map((o) => ({ ...o, allow: [...(o.allow || [])], deny: [...(o.deny || [])] }));
+  let ev = list.find((o) => o.role === '@everyone');
+  if (!ev) { ev = { role: '@everyone', allow: [], deny: [] }; list.unshift(ev); }
+  ev.deny = ev.deny.filter((p) => p !== 'ViewChannel' && p !== 'ReadMessageHistory');
+  for (const p of ['ViewChannel', 'ReadMessageHistory']) if (!ev.allow.includes(p)) ev.allow.push(p);
+  // neověření a cizí jazyk: číst ano, psát ne
+  for (const o of list) if (o.role !== '@everyone') o.deny = o.deny.filter((p) => p !== 'ViewChannel');
+  for (const p of ['SendMessages', 'CreatePublicThreads', 'CreatePrivateThreads', 'SendMessagesInThreads']) {
+    if (!ev.allow.includes(p) && !ev.deny.includes(p)) ev.deny.push(p);
+  }
+  return list;
+}
+
+export async function applyLayout(guild, plan, log, created = []) {
   await guild.roles.fetch();
   await guild.channels.fetch();
   const me = guild.members.me ?? (await guild.members.fetchMe());
   if (!me.permissions.has(PermissionFlagsBits.ManageChannels) || !me.permissions.has(PermissionFlagsBits.ManageRoles)) {
     throw new Error('bot potřebuje oprávnění Spravovat kanály a Spravovat role');
   }
-  const created = [];
   const catIds = {};
+  const onboarding = await guild.fetchOnboarding().catch(() => null);
+  const onboardingIds = new Set(onboarding?.defaultChannels ? [...onboarding.defaultChannels.keys()] : []);
+  if (onboardingIds.size) log(`ℹ Onboarding: ${onboardingIds.size} kanálů zůstane čitelných pro všechny`);
+  const catOverwrites = Object.fromEntries((plan.categories || []).map((c) => [c.key, c.overwrites]));
 
   // 1) kategorie: vytvořit / přejmenovat / oprávnění
   for (const cat of plan.categories || []) {
@@ -120,10 +140,15 @@ export async function applyLayout(guild, plan, log) {
     if (!ch) { log(`! kanál ${c.id} nenalezen – přeskočeno`); continue; }
     const parent = catIds[c.category];
     if (!parent) throw new Error(`neznámá kategorie ${c.category}`);
-    const lock = c.sync !== false && !c.overwrites;
+    let wanted = c.overwrites;
+    if (onboardingIds.has(ch.id) && c.sync !== false) {
+      wanted = keepReadableForEveryone(c.overwrites || catOverwrites[c.category] || []);
+      log(`ℹ #${ch.name} je v Onboardingu – čitelný pro všechny`);
+    }
+    const lock = c.sync !== false && !wanted;
     if (ch.parentId !== parent) await ch.setParent(parent, { lockPermissions: lock, reason: 'Přestavba serveru' });
     else if (lock && !ch.permissionsLocked) await ch.lockPermissions();
-    if (c.overwrites) await ch.permissionOverwrites.set(resolveOverwrites(guild, c.overwrites), 'Přestavba serveru');
+    if (wanted) await ch.permissionOverwrites.set(resolveOverwrites(guild, wanted), 'Přestavba serveru');
     if (c.name && c.name !== ch.name) await ch.setName(c.name, 'Přestavba serveru');
     if (c.topic !== undefined && 'setTopic' in ch) await ch.setTopic(c.topic, 'Přestavba serveru').catch(() => {});
     log(`→ #${ch.name}`);
@@ -154,6 +179,7 @@ export async function applyLayout(guild, plan, log) {
   }
   return { created };
 }
+
 
 /** Vrátí kategorie, pořadí a oprávnění kanálů podle snímku (role se nemění). */
 export async function restoreLayout(guild, snapshot, createdIds = [], log) {
@@ -198,12 +224,13 @@ export async function handleLayoutJob(client, job, supabase) {
     if (p.confirm !== `${guild.id}:${guild.name}`) throw new Error('chybí potvrzení (confirm = "<guild_id>:<název serveru>")');
     if (p.action === 'guild_restructure') {
       const backup = await snapshotGuild(guild);
+      const created = [];
       try {
-        const r = await applyLayout(guild, p.plan || {}, log);
-        await done({ error: null, payload: { ...p, backup, result: { ok: true, created: r.created, steps } } });
+        await applyLayout(guild, p.plan || {}, log, created);
+        await done({ error: null, payload: { ...p, backup, result: { ok: true, created, steps } } });
       } catch (e) {
         log(`CHYBA: ${e?.message || e}`);
-        await done({ error: String(e?.message || e), payload: { ...p, backup, result: { ok: false, steps } } });
+        await done({ error: String(e?.message || e), payload: { ...p, backup, result: { ok: false, created, steps } } });
       }
       return true;
     }
