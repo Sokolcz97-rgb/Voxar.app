@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PUBLIC_SUPABASE_CONFIG } from "@/integrations/supabase/public-config";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || PUBLIC_SUPABASE_CONFIG.url;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || PUBLIC_SUPABASE_CONFIG.publishableKey;
 import {
   Select,
   SelectContent,
@@ -36,10 +40,10 @@ export async function fetchGuildResources(guildId: string): Promise<GuildResourc
       (async () => {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discord-guild-resources?guild_id=${guildId}`;
+        const url = `${SUPABASE_URL}/functions/v1/discord-guild-resources?guild_id=${guildId}`;
         const res = await fetch(url, {
           headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: SUPABASE_KEY,
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         });
@@ -48,7 +52,13 @@ export async function fetchGuildResources(guildId: string): Promise<GuildResourc
           const t = await res.text();
           throw new Error(`Discord resources: ${t}`);
         }
-        return res.json();
+        const text = await res.text();
+        try {
+          return JSON.parse(text) as GuildResources;
+        } catch {
+          cache.delete(guildId);
+          throw new Error("server vrátil neplatnou odpověď – zkus obnovit stránku");
+        }
       })(),
     );
   }
