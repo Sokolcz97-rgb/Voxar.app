@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle, Settings2, Shield, Terminal, HandMetal, LayoutTemplate, Ticket, Activity, BarChart3, Trophy, Gamepad2, HelpCircle } from "lucide-react";
 import { ChatBotPlatformPanel } from "@/components/ChatBotPlatformPanel";
 import { DiscordGuildPicker } from "@/components/DiscordGuildPicker";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
@@ -27,6 +27,7 @@ import { MinecraftPanel } from "@/components/MinecraftPanel";
 import { PointsPanel } from "@/components/PointsPanel";
 import { SocialHandleField } from "@/components/SocialHandleField";
 import { GuildAvatar } from "@/components/GuildAvatar";
+import { BotProtectionPanel } from "@/components/BotProtectionPanel";
 import {
   Select,
   SelectContent,
@@ -51,6 +52,11 @@ type AnyConfig = {
   nsfw_protection: boolean;
   nsfw_allowed_channels: string[];
   bypass_role_ids: string[];
+  antiscam_enabled?: boolean;
+  antiscam_sensitivity?: "low" | "normal" | "high";
+  antiscam_allowed_domains?: string[];
+  antiscam_blocked_domains?: string[];
+  antiscam_allow_invites?: boolean;
   bot_maintenance: boolean;
   web_maintenance?: boolean;
   maintenance_channel: string | null;
@@ -299,6 +305,11 @@ const DashboardBot = () => {
       nsfw_protection: config.nsfw_protection,
       nsfw_allowed_channels: config.nsfw_allowed_channels,
       bypass_role_ids: config.bypass_role_ids ?? [],
+      antiscam_enabled: config.antiscam_enabled ?? true,
+      antiscam_sensitivity: config.antiscam_sensitivity ?? "normal",
+      antiscam_allowed_domains: config.antiscam_allowed_domains ?? [],
+      antiscam_blocked_domains: config.antiscam_blocked_domains ?? [],
+      antiscam_allow_invites: config.antiscam_allow_invites ?? false,
       bot_maintenance: config.bot_maintenance,
       maintenance_channel: config.maintenance_channel,
     };
@@ -636,24 +647,26 @@ const DashboardBot = () => {
         <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">
           <TabsList className="lg:sticky lg:top-20 flex lg:flex-col h-auto w-full lg:w-60 shrink-0 bg-card/40 backdrop-blur-md border border-border rounded-xl p-2 gap-1 overflow-x-auto lg:overflow-visible justify-start">
             {[
-              { v: "basics", l: "Základ" },
-              { v: "automod", l: "Auto-moderace" },
-              { v: "commands", l: "Příkazy" },
-              { v: "welcome", l: "Uvítací zprávy" },
-              { v: "embed", l: "Embed / Webhook" },
-              { v: "streams", l: "YT / Twitch" },
-              { v: "tickets", l: "Tickety" },
-              { v: "status", l: "Status checks" },
-              { v: "serverstats", l: "Server Stats" },
-              { v: "points", l: "Bodový systém" },
-              { v: "games", l: "Games" },
-              { v: "faq", l: "FAQ / Návod" },
+              { v: "basics", l: "Základ", I: Settings2 },
+              { v: "protection", l: "Ochrana", I: Shield },
+              { v: "automod", l: "Auto-moderace", I: ShieldAlert },
+              { v: "commands", l: "Příkazy", I: Terminal },
+              { v: "welcome", l: "Uvítací zprávy", I: HandMetal },
+              { v: "embed", l: "Embed / Webhook", I: LayoutTemplate },
+              { v: "streams", l: "YT / Twitch", I: Radio },
+              { v: "tickets", l: "Tickety", I: Ticket },
+              { v: "status", l: "Status checks", I: Activity },
+              { v: "serverstats", l: "Server Stats", I: BarChart3 },
+              { v: "points", l: "Bodový systém", I: Trophy },
+              { v: "games", l: "Games", I: Gamepad2 },
+              { v: "faq", l: "FAQ / Návod", I: HelpCircle },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.v}
                 value={tab.v}
                 className="w-full justify-start whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-sm text-muted-foreground transition-all hover:text-foreground hover:bg-secondary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/60 data-[state=active]:[box-shadow:var(--glow-soft)]"
               >
+                <tab.I className="h-4 w-4 mr-2 shrink-0" />
                 {tab.l}
               </TabsTrigger>
             ))}
@@ -707,6 +720,25 @@ const DashboardBot = () => {
                 </div>
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
               </Card>
+            )}
+          </TabsContent>
+
+          {/* OCHRANA */}
+          <TabsContent value="protection" className="mt-4">
+            {config && (
+              <BotProtectionPanel
+                config={config}
+                setConfig={setConfig}
+                isManager={isManager}
+                guildId={guildIdOrNull()}
+                onSave={saveConfig}
+                scanButtons={selectedGuild ? (
+                  <>
+                    <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                    <ScanMessagesButton guildId={selectedGuild.guild_id} disabled={!isManager} />
+                  </>
+                ) : null}
+              />
             )}
           </TabsContent>
 
@@ -780,39 +812,9 @@ const DashboardBot = () => {
                     />
                   </div>
                 </div>
-                <div className="border-t border-border pt-4 space-y-2">
-                  <div className="font-medium">Bypass role (žádná penalizace)</div>
-                  <p className="text-xs text-muted-foreground">
-                    Uživatelé s některou z těchto rolí <strong>nebudou banováni, vyhozeni ani jejich zprávy mazány</strong> anti-scam ani anti-spam ochranou.
-                    Mohou posílat jakékoliv odkazy. Pokud poruší pravidla, bot pouze pošle <strong>upozornění do Alerts kanálu</strong> a zpráva zůstane.
-                  </p>
-                  <MultiRolePicker
-                    guildId={guildIdOrNull()}
-                    value={config.bypass_role_ids ?? []}
-                    onChange={(v) => setConfig({ ...config, bypass_role_ids: v })}
-                    disabled={!isManager}
-                    placeholder="Přidat bypass roli"
-                  />
+                <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+                  Ochrana proti podvodům a botům, výjimky (bypass role) a kontrola členů jsou v záložce <strong>Ochrana</strong>.
                 </div>
-                {selectedGuild && (
-                  <div className="border-t border-border pt-4 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <ShieldAlert className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <div className="font-medium">Anti-bot / Anti-scam — kontrola členů</div>
-                        <p className="text-xs text-muted-foreground">
-                          Projde všechny členy serveru a vyhodnotí podezřelé účty (nově vytvořené, nick „nitro/free/gift", neoficiální boti).
-                          Tvrdé případy automaticky <strong>banuje</strong> (+kick fallback). Ostatní označí jako „sledováno".
-                          Souhrn odejde do <strong>Alerts kanálu</strong> (nastav v záložce Základ).
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
-                      <ScanMessagesButton guildId={selectedGuild.guild_id} disabled={!isManager} />
-                    </div>
-                  </div>
-                )}
                 <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
               </Card>
             )}

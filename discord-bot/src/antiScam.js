@@ -4,6 +4,7 @@ import {
 } from 'discord.js';
 import { getConfig } from './config.js';
 import { supabase } from './supabase.js';
+import { logModeration, resolveModeration, BRAND } from './ui.js';
 
 // ============================================================================
 //  Anti-scam / anti-bot ochrana – bodový systém
@@ -280,7 +281,8 @@ async function fetchImageAttachments(urls, max = 4) {
 
 const COLORS = { info: 0x5865f2, warn: 0xfee75c, timeout: 0xf0b232, ban: 0xed4245, ok: 0x57f287 };
 
-async function sendAlert(guild, cfg, { user, level, score, reasons, action, channel, messageContent, evidenceImages, buttons = true }) {
+async function sendAlert(guild, cfg, { user, level, score, reasons, action, channel, messageContent, evidenceImages, buttons = true, source = 'antiscam' }) {
+  logModeration({ guildId: guild.id, userId: user.id, userTag: user.tag, source, level, score, reasons, channelId: channel?.id, content: messageContent });
   const channelId = cfg.default_alerts_channel || cfg.default_log_channel;
   if (!channelId) return;
   const alertCh = await guild.channels.fetch(channelId).catch(() => null);
@@ -300,6 +302,7 @@ async function sendAlert(guild, cfg, { user, level, score, reasons, action, chan
       { name: 'Riziko', value: `**${Math.round(score)}** bodů`, inline: true },
       { name: 'Účet vytvořen', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: true },
     )
+    .setFooter({ text: `${guild.name} · ${BRAND.name} ochrana`, iconURL: guild.iconURL?.() || undefined })
     .setTimestamp();
   if (channel) embed.addFields({ name: 'Kanál', value: `<#${channel.id}>`, inline: true });
   if (reasons?.length) embed.addFields({ name: 'Proč', value: reasons.slice(0, 8).map((r) => `• ${r}`).join('\n').slice(0, 1000) });
@@ -339,6 +342,7 @@ export async function handleAntiScamInteraction(interaction) {
     else if (action === 'ban') { await guild.members.ban(userId, { reason: `Potvrzeno moderátorem ${interaction.user.tag}`, deleteMessageSeconds: 3600 }); note = `🔴 Zabanován moderátorem <@${interaction.user.id}>`; }
     else if (action === 'ok') note = `✔️ Vyřízeno – <@${interaction.user.id}>`;
   } catch (e) { note = `⚠️ Akce selhala: ${e?.message || e}`; }
+  if (!note.startsWith('⚠️')) resolveModeration(guild.id, userId, action, interaction.user.tag);
   const old = interaction.message.embeds?.[0];
   const embed = old ? EmbedBuilder.from(old).addFields({ name: 'Moderátor', value: note }) : null;
   await interaction.update({ embeds: embed ? [embed] : interaction.message.embeds, components: [] }).catch(async () => {
@@ -481,12 +485,12 @@ export async function runAntiBot(member) {
     let banned = false;
     try { await member.guild.members.ban(member.id, { reason: `Anti-bot: ${reasons.join('; ')}`.slice(0, 500), deleteMessageSeconds: 3600 }); banned = true; }
     catch (e) { console.error('anti-bot ban', e?.message); }
-    await sendAlert(member.guild, cfg, { user: member.user, level: banned ? 'ban' : 'info', score, reasons, action: banned ? 'Zabanován při příchodu.' : 'Ban selhal (oprávnění).' });
+    await sendAlert(member.guild, cfg, { user: member.user, level: banned ? 'ban' : 'info', score, reasons, action: banned ? 'Zabanován při příchodu.' : 'Ban selhal (oprávnění).', source: 'antibot' });
     return banned;
   }
   let ok = false;
   try { await member.timeout(12 * 3600000, `Anti-bot karanténa: ${reasons.join('; ')}`.slice(0, 500)); ok = true; } catch { /* ignore */ }
-  await sendAlert(member.guild, cfg, { user: member.user, level: ok ? 'timeout' : 'info', score, reasons, action: ok ? 'Karanténa 12 h (může číst, nemůže psát). Pusť ho tlačítkem, pokud je v pořádku.' : 'Jen upozornění – timeout se nepovedl.' });
+  await sendAlert(member.guild, cfg, { user: member.user, level: ok ? 'timeout' : 'info', score, reasons, action: ok ? 'Karanténa 12 h (může číst, nemůže psát). Pusť ho tlačítkem, pokud je v pořádku.' : 'Jen upozornění – timeout se nepovedl.', source: 'antibot' });
   return false;
 }
 
@@ -554,7 +558,7 @@ export async function scanGuildMessages(guild, { perChannel = 30 } = {}) {
       let banned = false;
       try { await guild.members.ban(msg.author.id, { reason: `Scan: ${reasons.join('; ')}`.slice(0, 500), deleteMessageSeconds: 3600 }); banned = true; } catch { /* ignore */ }
       actioned.push({ user: msg.author, channel: ch, banned });
-      await sendAlert(guild, cfg, { user: msg.author, level: banned ? 'ban' : 'info', score, reasons, action: banned ? 'Nalezeno při kontrole zpráv – zabanován.' : 'Nalezeno při kontrole zpráv – ban selhal.', channel: ch, messageContent: msg.content, evidenceImages: imgs });
+      await sendAlert(guild, cfg, { user: msg.author, level: banned ? 'ban' : 'info', score, reasons, action: banned ? 'Nalezeno při kontrole zpráv – zabanován.' : 'Nalezeno při kontrole zpráv – ban selhal.', channel: ch, messageContent: msg.content, evidenceImages: imgs, source: 'scan' });
     }
   }
   if (alertCh?.isTextBased?.()) {
