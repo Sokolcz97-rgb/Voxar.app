@@ -1,7 +1,7 @@
 {
   "name": "ashes-of-eryon-launcher",
   "productName": "Ashes of Eryon Launcher",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Desktop launcher runtime for Ashes of Eryon",
   "author": "StudioVoxario",
   "main": "main.cjs",
@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "check": "node --check main.cjs && node --check preload.cjs && node --check game-preload.cjs && node --check updater.cjs && node --check services.cjs && node --check unityGame.cjs && node --check ../prototype/prototype.js",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check game-preload.cjs && node --check updater.cjs && node --check services.cjs && node --check unityGame.cjs && node --check auth.cjs && node --check ../prototype/prototype.js",
     "pack:win": "npm run check && electron-builder --win --x64 --dir"
   },
   "devDependencies": {
@@ -30,6 +30,7 @@
       "updater.cjs",
       "services.cjs",
       "unityGame.cjs",
+      "auth.cjs",
       "package.json"
     ],
     "extraResources": [

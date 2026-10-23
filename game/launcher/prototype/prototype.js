@@ -164,6 +164,15 @@
       progressDetail.textContent = "Hra se otevře v novém okně.";
       desktop.game?.play()
         .then((result) => {
+          if (result?.error === "signed_out") {
+            void desktop.auth?.status().then(applyAuth);
+            return;
+          }
+          if (result && result.opened === false) {
+            progressTitle.textContent = "Hru se nepodařilo spustit";
+            progressDetail.textContent = result.error || "Zkus ověřit soubory hry v nastavení.";
+            return;
+          }
           progressTitle.textContent = result?.engine === "unity" ? "Hra běží (DirectX 12)" : "Hra běží";
           progressDetail.textContent = "Launcher počká, až herní okno zavřeš.";
         })
@@ -176,8 +185,7 @@
 
     if (isDesktop) {
       if (current === "signed_out") {
-        progressTitle.textContent = "StudioVoxario přihlášení";
-        progressDetail.textContent = "Bezpečný browser login bude připojen v další fázi.";
+        startSignIn();
       } else if (current === "ready_to_install") {
         progressTitle.textContent = "Instalace ještě není aktivní";
         progressDetail.textContent = "Downloader a ověřování souborů budou připojeny v další fázi.";
@@ -205,8 +213,9 @@
   // Přepínač ukázkových stavů jen v náhledu v prohlížeči (?demo=1).
   const demoControls = document.querySelector(".prototype-controls");
   if (demoControls) demoControls.hidden = isDesktop || params.get("demo") !== "1";
-  const initial = !isDesktop && states[params.get("state")] ? params.get("state") : isDesktop ? "online" : "signed_out";
+  const initial = !isDesktop && states[params.get("state")] ? params.get("state") : "signed_out";
   applyState(initial);
+  if (isDesktop) root.dataset.auth = "loading";
 
   // ------------------------------------------------------------------ živá data launcheru
   const IMAGES = ["news-coast", "news-citadel", "news-ruins"];
@@ -560,6 +569,105 @@
     desktop.unity.status().then((st) => st && showUnity(st)).catch(() => {});
   }
 
+  // ------------------------------------------------------------------ účet StudioVoxario
+  const gate = document.getElementById("loginGate");
+  const gateIdle = document.getElementById("gateIdle");
+  const gateWait = document.getElementById("gateWait");
+  const gateError = document.getElementById("gateError");
+  const accountButton = document.getElementById("accountButton");
+  const accountMenu = document.getElementById("accountMenu");
+  const accountInitial = document.getElementById("accountInitial");
+  const accountAvatar = document.getElementById("accountAvatar");
+  let authState = null;
+
+  function setAccount(name, sub) {
+    accountName.textContent = name;
+    accountState.lastChild.textContent = sub;
+  }
+
+  function startSignIn() {
+    if (!isDesktop || !desktop.auth) return;
+    gateError.hidden = true;
+    void desktop.auth.signIn().then(applyAuth).catch(() => {});
+  }
+
+  function applyAuth(st) {
+    if (!st || !isDesktop) return;
+    const wasSignedIn = Boolean(authState?.signedIn);
+    authState = st;
+    if (st.restoring) {
+      root.dataset.auth = "loading";
+      gate.hidden = true;
+      setAccount(st.user?.name || "Účet StudioVoxario", "Obnovuji přihlášení…");
+      progressTitle.textContent = "Obnovuji přihlášení…";
+      progressDetail.textContent = "Ověřuji tvůj účet StudioVoxario.";
+      return;
+    }
+    root.dataset.auth = st.signedIn ? "in" : st.pending ? "pending" : "out";
+    gate.hidden = st.signedIn;
+    gateIdle.hidden = st.pending;
+    gateWait.hidden = !st.pending;
+    gateError.hidden = !st.error || st.signedIn;
+    gateError.textContent = st.error || "";
+
+    const name = st.user?.name || "";
+    accountInitial.hidden = !st.signedIn;
+    accountAvatar.hidden = st.signedIn;
+    accountInitial.textContent = (name.trim()[0] || "?").toUpperCase();
+    document.getElementById("menuName").textContent = name || "—";
+    document.getElementById("menuEmail").textContent = st.user?.email || "";
+
+    if (st.signedIn) {
+      if (!wasSignedIn || root.dataset.state === "signed_out") {
+        applyState("online");
+        if (!wasSignedIn && authState) {
+          progressTitle.textContent = `Vítej, ${name}`;
+          progressDetail.textContent = nextEventText || "Svět Kalidry na tebe čeká.";
+        }
+        if (engineSetting === "unity") showUnity(null);
+      }
+      setAccount(name, st.offline ? "Offline – připojím se později" : "Přihlášen · StudioVoxario");
+    } else {
+      closeAccountMenu();
+      applyState("signed_out");
+      setAccount("Nepřihlášen", st.pending ? "Čekám na prohlížeč…" : "StudioVoxario účet");
+      if (st.pending) {
+        progressTitle.textContent = "Přihlášení v prohlížeči";
+        progressDetail.textContent = "Potvrď launcher na stránce StudioVoxario.";
+      }
+    }
+  }
+
+  function closeAccountMenu() {
+    accountMenu.hidden = true;
+    accountButton.setAttribute("aria-expanded", "false");
+  }
+  function toggleAccountMenu() {
+    if (!authState?.signedIn) {
+      startSignIn();
+      return;
+    }
+    accountMenu.hidden = !accountMenu.hidden;
+    accountButton.setAttribute("aria-expanded", String(!accountMenu.hidden));
+  }
+
+  if (isDesktop && desktop.auth) {
+    accountButton.addEventListener("click", (e) => { e.stopPropagation(); toggleAccountMenu(); });
+    accountButton.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAccountMenu(); } });
+    document.addEventListener("click", (e) => { if (!accountMenu.hidden && !accountMenu.contains(e.target)) closeAccountMenu(); });
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAccountMenu(); });
+    document.getElementById("menuWeb").addEventListener("click", () => { closeAccountMenu(); void desktop.game.openAccount(); });
+    document.getElementById("menuSignOut").addEventListener("click", () => { closeAccountMenu(); void desktop.auth.signOut().then(applyAuth); });
+    document.getElementById("gateSignIn").addEventListener("click", startSignIn);
+    document.getElementById("gateReopen").addEventListener("click", startSignIn);
+    document.getElementById("gateCancel").addEventListener("click", () => void desktop.auth.cancel().then(applyAuth));
+    document.getElementById("gateRegister").addEventListener("click", () => void desktop.auth.register());
+    document.getElementById("gateForgot").addEventListener("click", () => void desktop.auth.forgot());
+    document.getElementById("gateSupport").addEventListener("click", () => openOverlay("support"));
+    desktop.auth.onStatus(applyAuth);
+    desktop.auth.status().then(applyAuth).catch(() => {});
+  }
+
   void loadLive();
   if (isDesktop) {
     setInterval(() => void refreshServer(), 60000);
@@ -567,6 +675,7 @@
   }
 
   desktop?.game?.onClosed?.(() => {
+    if (!authState?.signedIn) return;
     applyState("online");
     progressTitle.textContent = "Vítej zpět";
     progressDetail.textContent = "Svět Kalidry na tebe počká.";

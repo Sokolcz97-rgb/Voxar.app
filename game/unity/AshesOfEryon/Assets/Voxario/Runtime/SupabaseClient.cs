@@ -22,6 +22,7 @@ namespace Voxario.Ashes
 
         [Serializable] class PasswordLogin { public string email; public string password; }
         [Serializable] class RefreshLogin { public string refresh_token; }
+        [Serializable] class TicketLogin { public string type = "magiclink"; public string token_hash; }
         [Serializable] class TokenResponse { public string access_token; public string refresh_token; public User user; public string error_description; public string msg; }
         [Serializable] class User { public string email; }
         [Serializable] class ErrorResponse { public string message; public string error_description; public string msg; }
@@ -38,6 +39,26 @@ namespace Voxario.Ashes
                 Email = t.user != null ? t.user.email : email;
                 PlayerPrefs.SetString("ashes.refresh", RefreshToken ?? "");
                 done(null);
+            });
+        }
+
+        /// <summary>
+        /// Přihlášení jednorázovým lístkem z launcheru (účet StudioVoxario přihlášený v launcheru).
+        /// Hra si z něj udělá vlastní relaci – heslo nezná ani launcher, ani hra.
+        /// </summary>
+        public IEnumerator SignInWithTicket(string tokenHash, Action<bool> done)
+        {
+            var body = JsonUtility.ToJson(new TicketLogin { token_hash = tokenHash });
+            yield return Send($"{Url}/auth/v1/verify", body, false, (ok, text) =>
+            {
+                if (!ok) { done(false); return; }
+                var t = JsonUtility.FromJson<TokenResponse>(text);
+                if (t == null || string.IsNullOrEmpty(t.access_token)) { done(false); return; }
+                AccessToken = t.access_token;
+                RefreshToken = t.refresh_token;
+                Email = t.user != null ? t.user.email : "";
+                PlayerPrefs.SetString("ashes.refresh", RefreshToken ?? "");
+                done(true);
             });
         }
 

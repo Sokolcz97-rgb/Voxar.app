@@ -93,7 +93,7 @@ const Auth = () => {
         </Link>
 
         <div className="glass rounded-2xl p-8 border-glow">
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={searchParams.get("mode") === "signup" ? "signup" : "signin"} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-secondary/50">
               <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
               <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>

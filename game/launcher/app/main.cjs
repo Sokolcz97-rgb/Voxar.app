@@ -7,6 +7,7 @@ const { app, BrowserWindow, dialog, ipcMain, screen, session, shell } = require(
 const { createUpdater } = require("./updater.cjs");
 const services = require("./services.cjs");
 const { createUnityGame } = require("./unityGame.cjs");
+const { createAuth } = require("./auth.cjs");
 
 // ------------------------------------------------------------------ odolný start
 // Když složku s daty launcheru vytvořil proces spuštěný jako správce (např. instalátor),
@@ -57,6 +58,7 @@ let mainWindow = null;
 let gameWindow = null;
 let updater = null;
 let unity = null;
+let auth = null;
 
 const gameRunning = () => Boolean((gameWindow && !gameWindow.isDestroyed()) || unity?.running);
 
@@ -74,10 +76,14 @@ function afterGameClosed() {
 }
 
 /** Hrát: Unity verze (DirectX 12, DLSS), když je nainstalovaná a vybraná, jinak webová verze. */
-function play() {
+async function play() {
+  if (!auth?.status().signedIn) return { opened: false, error: "signed_out" };
   const settings = services.loadSettings();
   if (settings.engine === "unity" && unity?.status?.state === "ready") {
-    const result = unity.play(() => afterGameClosed());
+    // hra dostane vlastní jednorázový lístek a přeskočí přihlašovací obrazovku
+    const ticket = await auth.gameTicket();
+    if (!auth.status().signedIn) return { opened: false, error: "signed_out" };
+    const result = unity.play(() => afterGameClosed(), [], ticket ? { ASHES_LAUNCHER_TICKET: ticket } : {});
     if (result.opened) {
       if (settings.afterPlay === "hide") mainWindow?.hide();
       else if (settings.afterPlay === "minimize") mainWindow?.minimize();
@@ -288,7 +294,17 @@ function registerIpc() {
   ipcMain.handle("launcher:unity:install", () => unity?.install() ?? null);
 
   ipcMain.handle("launcher:open-account", () => {
-    void shell.openExternal(`${GAME_ORIGIN}/auth?next=/hra`);
+    void shell.openExternal(`${GAME_ORIGIN}/dashboard`);
+  });
+  ipcMain.handle("launcher:auth:status", () => auth?.status() ?? null);
+  ipcMain.handle("launcher:auth:sign-in", () => auth?.signIn() ?? null);
+  ipcMain.handle("launcher:auth:cancel", () => auth?.cancel() ?? null);
+  ipcMain.handle("launcher:auth:sign-out", () => auth?.signOut() ?? null);
+  ipcMain.handle("launcher:auth:register", () => {
+    void shell.openExternal(`${GAME_ORIGIN}/auth?mode=signup`);
+  });
+  ipcMain.handle("launcher:auth:forgot", () => {
+    void shell.openExternal(`${GAME_ORIGIN}/reset-password`);
   });
 
   ipcMain.handle("launcher:info", () => services.info());
@@ -346,6 +362,15 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
+    auth = createAuth({
+      webOrigin: GAME_ORIGIN,
+      onStatus: (status) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("launcher:auth", status);
+      },
+      log,
+    });
+    void auth.init();
+    setInterval(() => void auth.retryOffline(), 5 * 60 * 1000);
     registerIpc();
     createMainWindow();
     updater = createUpdater({

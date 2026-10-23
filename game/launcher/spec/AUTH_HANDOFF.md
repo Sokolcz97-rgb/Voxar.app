@@ -79,3 +79,12 @@ At minimum:
 - banned users cannot obtain a valid game session
 - admin/editor website roles do not automatically grant gameplay powers
 - game permissions should be separate from website moderation roles unless explicitly mapped
+
+## Implementace (launcher 0.5.0, hra 0.8.0)
+
+- Web: `/game/auth/launcher` (`src/pages/LauncherAuth.tsx`) – potvrzení launcheru, požadavek se přes přihlášení drží v `localStorage` (15 min).
+- Server: edge funkce `launcher-auth` (`start` / `redeem` / `ticket`), tabulka `launcher_auth_codes` (jen SHA-256 otisk kódu, platnost 2 min, jednorázový), `launcher_sessions_log` (90 dní).
+- Launcher: `app/auth.cjs` – PKCE (S256), loopback `127.0.0.1:<náhodný port>/callback`, kontrola `state`, relace z `POST /auth/v1/verify` (token_hash),
+  obnovovací token šifrovaně přes `safeStorage` (DPAPI) v `userData/account.bin`. Bez šifrování se přihlášení neukládá.
+- Hra: launcher před spuštěním vyžádá `ticket` a předá ho v proměnné prostředí `ASHES_LAUNCHER_TICKET`; hra (`SupabaseClient.SignInWithTicket`)
+  si vytvoří vlastní relaci a proměnnou hned smaže. Když lístek selže, použije se uložené přihlášení / přihlašovací obrazovka hry.

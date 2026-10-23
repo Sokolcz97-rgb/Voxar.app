@@ -23,6 +23,9 @@ project_id = "rioexuvgvmdwvidfakxy"
     verify_jwt = false
   [functions.yt-websub]
     verify_jwt = false
+  [functions.launcher-auth]
+    # "redeem" volá launcher bez relace; "start" a "ticket" ověřují uživatele samy.
+    verify_jwt = false
   [functions.protect-attestation]
     # The function accepts only an authenticated Supabase user session.
     verify_jwt = true

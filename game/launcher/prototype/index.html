@@ -23,15 +23,21 @@
         <button class="nav-item" type="button" data-view="support"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.8v.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>Podpora</button>
       </nav>
 
-      <div class="account">
+      <div class="account" id="accountButton" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
         <div class="server"><span class="status-dot" id="serverDot"></span><span id="serverLabel">Servery online</span></div>
         <span class="divider" aria-hidden="true"></span>
-        <div class="avatar" aria-hidden="true"><img src="./assets/ashes-logo.webp" alt="" /></div>
+        <div class="avatar" aria-hidden="true"><img id="accountAvatar" src="./assets/ashes-logo.webp" alt="" /><b id="accountInitial" hidden></b></div>
         <div class="account-copy">
           <strong id="accountName">Nepřihlášen</strong>
           <span id="accountState"><i class="status-dot"></i>StudioVoxario účet</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+      </div>
+
+      <div class="account-menu panel" id="accountMenu" role="menu" hidden>
+        <div class="account-menu-head"><strong id="menuName">—</strong><span id="menuEmail"></span></div>
+        <button type="button" role="menuitem" id="menuWeb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>Můj účet na webu</button>
+        <button type="button" role="menuitem" id="menuSignOut"><svg viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/></svg>Odhlásit se</button>
       </div>
 
       <div class="window-controls" aria-label="Ovládání okna">
@@ -108,6 +114,46 @@
       <div class="progress-track" aria-hidden="true"><span id="progressFill"></span></div>
       <div class="progress-value" id="progressValue">—</div>
     </footer>
+
+
+    <section class="login-gate" id="loginGate" hidden aria-labelledby="gateTitle">
+      <div class="gate-card panel">
+        <div class="gate-crest" aria-hidden="true"><img src="./assets/ashes-logo.webp" alt="" /></div>
+        <div class="eyebrow gate-eyebrow">STUDIOVOXARIO <b>•</b> ÚČET<i></i></div>
+        <h2 id="gateTitle">Vstup do Eryonu</h2>
+        <p class="gate-lead" id="gateLead">Přihlas se svým účtem StudioVoxario – stejným, jaký používáš na webu. Funguje e-mail, Google i Discord.</p>
+
+        <div class="gate-idle" id="gateIdle">
+          <button type="button" class="primary-action gate-primary" id="gateSignIn"><span>Přihlásit se</span></button>
+          <ol class="gate-steps">
+            <li><i>1</i><span>Otevře se tvůj prohlížeč</span></li>
+            <li><i>2</i><span>Přihlásíš se a potvrdíš launcher</span></li>
+            <li><i>3</i><span>Vrátíš se sem – hotovo</span></li>
+          </ol>
+        </div>
+
+        <div class="gate-wait" id="gateWait" hidden>
+          <div class="gate-spinner" aria-hidden="true"></div>
+          <strong>Čekám na potvrzení v prohlížeči…</strong>
+          <p>Dokonči přihlášení na stránce, která se otevřela. Nevidíš ji?</p>
+          <div class="gate-row">
+            <button type="button" class="gate-link-button" id="gateReopen">Otevřít znovu</button>
+            <button type="button" class="gate-link-button" id="gateCancel">Zrušit</button>
+          </div>
+        </div>
+
+        <p class="gate-error" id="gateError" role="alert" hidden></p>
+
+        <div class="gate-links">
+          <button type="button" id="gateRegister">Vytvořit účet</button>
+          <span aria-hidden="true">•</span>
+          <button type="button" id="gateForgot">Zapomenuté heslo</button>
+          <span aria-hidden="true">•</span>
+          <button type="button" id="gateSupport">Podpora</button>
+        </div>
+        <p class="gate-note"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.3 3 8 7 9.5 4-1.5 7-5.2 7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>Launcher tvé heslo nikdy neuvidí. Přihlášení se ukládá šifrovaně ve Windows.</p>
+      </div>
+    </section>
 
     <section class="overlay" id="overlay" hidden>
       <div class="overlay-card panel">
