@@ -47,16 +47,22 @@ export async function onMemberJoin(member) {
     const fresh = await member.guild.members.fetch(member.id).catch(() => null);
     if (fresh && (await grantVerified(fresh, 'Ověření při vstupu na server'))) return;
   }
-  if (cfg.unverified_role_id && !member.roles.cache.has(cfg.verified_role_id)) {
+  // bez auto_verify ověřuje Onboarding – Neověřen nepřidáváme (role se přidají až po dokončení)
+  if (cfg.auto_verify && cfg.unverified_role_id && !member.roles.cache.has(cfg.verified_role_id)) {
     await member.roles.add(cfg.unverified_role_id, 'Nový člen – čeká na ověření').catch(() => {});
   }
 }
 
 /** Člen právě přijal pravidla serveru (pending → false). */
 export async function onMemberUpdate(oldMember, newMember) {
-  if (!(oldMember.pending && !newMember.pending)) return;
   const cfg = await verifyConfig(newMember.guild.id);
-  if (!cfg?.auto_verify) return;
+  if (!cfg) return;
+  // ověřený (např. otázkou v Onboardingu) → odebrat Neověřen
+  if (cfg.unverified_role_id && newMember.roles.cache.has(cfg.verified_role_id) && newMember.roles.cache.has(cfg.unverified_role_id)) {
+    await newMember.roles.remove(cfg.unverified_role_id, 'Ověřen – odebírám Neověřen').catch((e) => console.error('verify cleanup', e?.message || e));
+    return;
+  }
+  if (!(oldMember.pending && !newMember.pending) || !cfg.auto_verify) return;
   await grantVerified(newMember, 'Přijetí pravidel serveru').catch((e) => console.error('verify update', e?.message || e));
 }
 
