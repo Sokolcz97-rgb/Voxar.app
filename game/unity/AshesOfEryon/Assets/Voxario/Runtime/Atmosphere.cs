@@ -22,6 +22,7 @@ namespace Voxario.Ashes
         static VolumeComponent volClouds;
         static Exposure exposure;
         static IndirectLightingController indirect;
+        static ColorAdjustments grading;
         static VolumeComponent lensFlare;
         static float night;
 
@@ -109,6 +110,8 @@ namespace Voxario.Ashes
             ssr = profile.Add<ScreenSpaceReflection>(true);
             ssr.enabled.Override(true);
 
+            grading = profile.Add<ColorAdjustments>(true);
+
             var tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
 
@@ -158,11 +161,18 @@ namespace Voxario.Ashes
             bool changed = Mathf.Abs(n - night) > 0.02f;
             night = n;
             // v noci kamera „otevře clonu“, ať je měsícem nasvícený svět čitelný, ale pořád tmavší
-            exposure.limitMin.Override(Mathf.Lerp(11.5f, 2.2f, n));
-            exposure.limitMax.Override(Mathf.Lerp(15.5f, 6.5f, n));
-            exposure.compensation.Override(Mathf.Lerp(0.3f, 0.1f, n));
-            // v noci víc rozptýleného světla, ať stíny nejsou úplně černé
-            if (indirect != null) indirect.indirectDiffuseLightingMultiplier.Override(Mathf.Lerp(1f, 4f, n));
+            // v noci kamera „otevře clonu“ jen trochu – svět je čitelný, ale je jasně tma
+            exposure.limitMin.Override(Mathf.Lerp(11.5f, 5.2f, n));
+            exposure.limitMax.Override(Mathf.Lerp(15.5f, 8.2f, n));
+            exposure.compensation.Override(Mathf.Lerp(0.3f, -0.5f, n));
+            if (indirect != null) indirect.indirectDiffuseLightingMultiplier.Override(Mathf.Lerp(1f, 2.2f, n));
+            // noční barvy: méně sytosti, chladný modrý nádech (jako při měsíčním světle)
+            if (grading != null)
+            {
+                grading.saturation.Override(Mathf.Lerp(0f, -38f, n));
+                grading.colorFilter.Override(Color.Lerp(Color.white, new Color(0.72f, 0.82f, 1.08f), n));
+                grading.postExposure.Override(Mathf.Lerp(0f, -0.35f, n));
+            }
             float dusk = Mathf.Clamp01(1 - Mathf.Abs(sunAlt - 2f) / 10f); // zlatá hodinka kolem obzoru
             var dayCol = new Color(0.86f, 0.82f, 0.76f);
             var duskCol = new Color(0.95f, 0.68f, 0.48f);

@@ -287,6 +287,20 @@ namespace Voxario.Ashes
                 ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, v.name + ".png"));
                 yield return new WaitForSeconds(1f);
             }
+            // noc (posun času na 23:00 v Praze) – stejný záběr krajiny a nebe
+            var dn = DayNight.Instance;
+            if (dn != null)
+            {
+                int toNight = (23 - DayNight.PragueNow.Hour + 24) % 24;
+                dn.SetTestOffset(toNight);
+                cam.transform.position = WorldMap.ToWorld(-40, 30) + new Vector3(0, 9, 0);
+                cam.transform.LookAt(WorldMap.ToWorld(-20, 0) + Vector3.up * 3);
+                yield return new WaitForSeconds(4f);
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "22-noc.png"));
+                yield return new WaitForSeconds(1f);
+                dn.SetTestOffset(0);
+                yield return new WaitForSeconds(2f);
+            }
             // rozhovor s Nikiasem a velká mapa
             rig.enabled = true;
             player.Respawn(new Vector2(-50.5f, 46.5f));

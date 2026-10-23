@@ -42,13 +42,18 @@ namespace Voxario.Ashes
 
         void Awake() => Instance = this;
 
+        /// <summary>Posun času pro vyzkoušení dne a noci (Ctrl+F9 = +1 h, Ctrl+F10 = skutečný čas).</summary>
+        public static double TestOffsetHours { get; private set; }
+        static DateTime Now => DateTime.UtcNow.AddHours(TestOffsetHours);
+        public void SetTestOffset(double hours) { TestOffsetHours = hours; nextAt = 0; }
+
         // ---------------------------------------------------------------- čas v Praze
         /// <summary>Místní čas v Praze (SEČ / SELČ podle pravidel EU).</summary>
         public static DateTime PragueNow
         {
             get
             {
-                var utc = DateTime.UtcNow;
+                var utc = DateTime.UtcNow.AddHours(TestOffsetHours);
                 return utc.AddHours(IsSummerTime(utc) ? 2 : 1);
             }
         }
@@ -327,6 +332,9 @@ namespace Voxario.Ashes
         void Update()
         {
             if (sun == null) return;
+            bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            if (ctrl && Input.GetKeyDown(KeyCode.F9)) { TestOffsetHours = (TestOffsetHours + 1) % 24; nextAt = 0; }
+            if (ctrl && Input.GetKeyDown(KeyCode.F10)) { TestOffsetHours = 0; nextAt = 0; }
             // hvězdy putují s kamerou (jsou „nekonečně“ daleko)
             var cam = boot != null ? boot.cam : Camera.main;
             if (stars != null && cam != null) stars.transform.position = cam.transform.position;
@@ -336,7 +344,7 @@ namespace Voxario.Ashes
             if (Time.unscaledTime < nextAt) return;
             nextAt = Time.unscaledTime + 1f;
 
-            var utc = DateTime.UtcNow;
+            var utc = Now;
             SunPosition(utc, out double sAlt, out double sAz, out double sunLon);
             MoonPosition(utc, sunLon, out double mAlt, out double mAz, out double illum);
             SunAltitude = (float)sAlt;
@@ -383,7 +391,7 @@ namespace Voxario.Ashes
                 if (!moonUp) mDir = Dir(55, sAz + 180);
                 moon.transform.rotation = Quaternion.LookRotation(-mDir);
                 float phase = moonUp ? 0.35f + 0.65f * MoonIllumination : 0.25f;
-                moon.intensity = Night * 40f * phase;
+                moon.intensity = Night * 26f * phase;
                 moon.enabled = Night > 0.02f;
                 SetProp(moonHd, "angularDiameter", moonUp ? 2.2f : 0f);
                 // stíny vrhá vždy to silnější světlo (HDRP zvládne jen jedno směrové se stíny)
@@ -406,7 +414,7 @@ namespace Voxario.Ashes
         {
             var t = PragueNow;
             string part = SunAltitude > 6 ? "den" : SunAltitude > -6 ? (t.Hour < 12 ? "svítání" : "soumrak") : "noc";
-            return $"Praha {t:HH:mm} · {part}";
+            return $"Praha {t:HH:mm} · {part}" + (TestOffsetHours != 0 ? $" (zkušebně +{TestOffsetHours:0} h)" : "");
         }
     }
 }
