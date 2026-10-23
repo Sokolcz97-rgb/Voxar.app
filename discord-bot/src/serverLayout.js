@@ -167,6 +167,21 @@ export async function applyLayout(guild, plan, log, created = []) {
   await guild.channels.setPositions(positions);
   log(`↕ pořadí ${positions.length} položek`);
 
+  // 4b) smazat jen nově vytvořené kanály/kategorie (pojistka: vytvořené po plan.created_after)
+  if (plan.delete_new && plan.created_after) {
+    const after = Date.parse(plan.created_after);
+    for (const id of plan.delete_new) {
+      const ch = guild.channels.cache.get(id);
+      if (!ch) continue;
+      if (!(ch.createdTimestamp > after)) { log(`! ${ch.name} je starší – nemažu`); continue; }
+      if (ch.type === ChannelType.GuildCategory && guild.channels.cache.some((x) => x.parentId === id)) { log(`! kategorie ${ch.name} není prázdná – nemažu`); continue; }
+      await ch.delete('Přestavba serveru – duplicitní kanál');
+      log(`- ${ch.name} (duplikát)`);
+      await sleep(300);
+    }
+    await guild.channels.fetch();
+  }
+
   // 5) prázdné staré kategorie
   await guild.channels.fetch();
   for (const id of plan.delete_empty_categories || []) {
@@ -211,6 +226,11 @@ export async function handleLayoutJob(client, job, supabase) {
   const p = job.payload || {};
   if (!['guild_snapshot', 'guild_restructure', 'guild_restore'].includes(p.action)) return false;
   const done = (patch) => supabase.from('bot_outbound_queue').update({ sent_at: new Date().toISOString(), ...patch }).eq('id', job.id);
+  // zamknout úlohu (fronta se kontroluje každých 5 s – dlouhá úloha se nesmí spustit znovu)
+  const { data: claimed } = await supabase.from('bot_outbound_queue')
+    .update({ sent_at: new Date().toISOString(), error: 'processing' })
+    .eq('id', job.id).is('sent_at', null).select('id');
+  if (!claimed?.length) return true;
   const guild = p.guild_id ? await client.guilds.fetch(p.guild_id).catch(() => null) : null;
   if (!guild) { await done({ error: 'guild not found' }); return true; }
   const steps = [];
