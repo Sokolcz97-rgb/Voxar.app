@@ -64,6 +64,7 @@ namespace Voxario.Ashes
 
         void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint) return;
             if (!boot.inWorld) return;
             var gameUi = boot.GetComponent<GameUI>();
             if (gameUi != null && gameUi.SettingsOpen) return;

@@ -208,7 +208,18 @@ namespace Voxario.Ashes
             // dech: nepatrné „nadechnutí“ celé postavy
             float br = 1 + Mathf.Sin(breath * 1.8f) * 0.006f;
             body.localScale = new Vector3(1 + (br - 1) * 0.6f, br, 1 + (br - 1) * 0.6f);
-            legs?.Update(phase, amount, run, 0, idleT >= 0 ? idle : walk, ww, jog, gw, idleT);
+            if (legs != null)
+            {
+                var cam = Camera.main;
+                float d = cam != null ? (cam.transform.position - transform.position).sqrMagnitude : 0;
+                bool near = detailedIdle || d < 18f * 18f;
+                bool mid = d < 45f * 45f;
+                // blízko každý snímek, ve střední vzdálenosti každý druhý, daleko jen tělo
+                if (near || (mid && ((Time.frameCount + (int)(lookSeed * 10)) & 1) == 0))
+                    legs.Update(phase, amount, run, 0, idleT >= 0 ? idle : walk, ww, jog, gw, idleT);
+                else if (!mid && amount < 0.01f)
+                    legs.Update(phase, 0, 0); // vrátit do klidu, ať v dálce nestojí v půli kroku
+            }
         }
     }
 }

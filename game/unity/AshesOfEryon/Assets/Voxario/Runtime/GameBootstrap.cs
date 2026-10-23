@@ -92,7 +92,18 @@ namespace Voxario.Ashes
             cam.nearClipPlane = 0.2f;
             cam.farClipPlane = 900f;
             cam.fieldOfView = 55;
-            camGo.AddComponent<HDAdditionalCameraData>();
+            var hdCam = camGo.AddComponent<HDAdditionalCameraData>();
+            // funkce, které hra nepoužívá, se vůbec nepočítají (vzhled beze změny)
+            hdCam.customRenderingSettings = true;
+            var fsMask = hdCam.renderingPathCustomFrameSettingsOverrideMask;
+            var fs = hdCam.renderingPathCustomFrameSettings;
+            foreach (var f in new[] { FrameSettingsField.SubsurfaceScattering, FrameSettingsField.Transmission, FrameSettingsField.Decals, FrameSettingsField.MotionBlur })
+            {
+                fsMask.mask[(uint)f] = true;
+                fs.SetEnabled(f, false);
+            }
+            hdCam.renderingPathCustomFrameSettingsOverrideMask = fsMask;
+            hdCam.renderingPathCustomFrameSettings = fs;
             camGo.AddComponent<AudioListener>();
             camGo.transform.position = new Vector3(-52, 25, -30);
             camGo.transform.LookAt(new Vector3(0, 0, 0));
