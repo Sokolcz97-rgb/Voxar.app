@@ -162,10 +162,10 @@ namespace Voxario.Ashes
             night = n;
             // v noci kamera „otevře clonu“, ať je měsícem nasvícený svět čitelný, ale pořád tmavší
             // v noci kamera „otevře clonu“ jen trochu – svět je čitelný, ale je jasně tma
-            exposure.limitMin.Override(Mathf.Lerp(11.5f, 5.2f, n));
-            exposure.limitMax.Override(Mathf.Lerp(15.5f, 8.2f, n));
-            exposure.compensation.Override(Mathf.Lerp(0.3f, -0.5f, n));
-            if (indirect != null) indirect.indirectDiffuseLightingMultiplier.Override(Mathf.Lerp(1f, 2.2f, n));
+            exposure.limitMin.Override(Mathf.Lerp(11.5f, 3.8f, n));
+            exposure.limitMax.Override(Mathf.Lerp(15.5f, 7.2f, n));
+            exposure.compensation.Override(Mathf.Lerp(0.3f, -0.2f, n));
+            if (indirect != null) indirect.indirectDiffuseLightingMultiplier.Override(Mathf.Lerp(1f, 3f, n));
             // noční barvy: méně sytosti, chladný modrý nádech (jako při měsíčním světle)
             if (grading != null)
             {

@@ -295,7 +295,7 @@ namespace Voxario.Ashes
                 dn.SetTestOffset(toNight);
                 cam.transform.position = WorldMap.ToWorld(-40, 30) + new Vector3(0, 9, 0);
                 cam.transform.LookAt(WorldMap.ToWorld(-20, 0) + Vector3.up * 3);
-                yield return new WaitForSeconds(4f);
+                yield return new WaitForSeconds(12f); // expozice se přizpůsobuje postupně
                 ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "22-noc.png"));
                 yield return new WaitForSeconds(1f);
                 dn.SetTestOffset(0);
