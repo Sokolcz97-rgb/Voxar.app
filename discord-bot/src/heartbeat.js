@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 
-const DEFAULT_BOT_VERSION = 'layout2-2026-10-23';
+const DEFAULT_BOT_VERSION = 'layout3-2026-10-23';
 
 export function startHeartbeat(client) {
   const send = async () => {

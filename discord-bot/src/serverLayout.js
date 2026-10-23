@@ -95,6 +95,12 @@ export async function applyLayout(guild, plan, log, created = []) {
     throw new Error('bot potřebuje oprávnění Spravovat kanály a Spravovat role');
   }
   const catIds = {};
+  // volitelně nejdřív upravit výchozí kanály Onboardingu (musí být čitelné pro všechny)
+  if (Array.isArray(plan.onboarding_default_channels) && plan.onboarding_default_channels.length) {
+    await guild.editOnboarding({ defaultChannels: plan.onboarding_default_channels, reason: 'Přestavba serveru – výchozí kanály pro nováčky' });
+    log(`✎ Onboarding: výchozí kanály nastaveny (${plan.onboarding_default_channels.length})`);
+    await sleep(500);
+  }
   const onboarding = await guild.fetchOnboarding().catch(() => null);
   const onboardingIds = new Set(onboarding?.defaultChannels ? [...onboarding.defaultChannels.keys()] : []);
   if (onboardingIds.size) log(`ℹ Onboarding: ${onboardingIds.size} kanálů zůstane čitelných pro všechny`);
