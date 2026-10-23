@@ -2166,3 +2166,79 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; }
   [role="tablist"] { border-radius: 0 !important; }
   [role="tab"] { border-radius: 0 !important; }
 }
+
+/* ===== Správce bota – moderní „app“ vzhled (jen uvnitř .bot-dash) ===== */
+@layer utilities {
+  .bot-dash {
+    --dash-surface: 222 28% 7%;
+    --dash-line: 220 20% 100% / 0.07;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .bot-dash .font-display { font-family: 'Inter', system-ui, sans-serif !important; letter-spacing: -0.01em; font-weight: 600 !important; }
+  .bot-dash .text-glow { text-shadow: none !important; }
+
+  /* karty */
+  .bot-dash .ui-card,
+  .bot-dash .glass {
+    clip-path: none !important;
+    border-radius: 14px !important;
+    background: hsl(var(--dash-surface) / 0.78) !important;
+    border: 1px solid hsl(var(--dash-line)) !important;
+    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.03) inset, 0 12px 32px -18px hsl(0 0% 0% / 0.8) !important;
+    backdrop-filter: blur(10px);
+  }
+  .bot-dash .ui-card:hover { border-color: hsl(220 20% 100% / 0.11) !important; box-shadow: 0 1px 0 hsl(0 0% 100% / 0.03) inset, 0 12px 32px -18px hsl(0 0% 0% / 0.8) !important; }
+
+  /* pole formulářů */
+  .bot-dash input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .bot-dash textarea,
+  .bot-dash select,
+  .bot-dash [role="combobox"] {
+    border-radius: 10px !important;
+    background-color: hsl(222 30% 4% / 0.7) !important;
+    border-color: hsl(220 20% 100% / 0.09) !important;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .bot-dash input:focus-visible, .bot-dash textarea:focus-visible, .bot-dash select:focus-visible, .bot-dash [role="combobox"]:focus-visible {
+    border-color: hsl(var(--primary) / 0.55) !important;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15) !important;
+    outline: none;
+  }
+  .bot-dash button:not([role="switch"]):not(.rounded-full) { border-radius: 10px !important; }
+  .bot-dash [role="tablist"], .bot-dash [role="tab"] { border-radius: 10px !important; }
+  .bot-dash code { font-family: 'JetBrains Mono', 'Share Tech Mono', ui-monospace, monospace; }
+
+  /* boční navigace */
+  .bot-dash .dash-nav [role="tab"] { position: relative; }
+  .bot-dash .dash-nav [role="tab"][data-state="active"]::before {
+    content: ''; position: absolute; left: -9px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px;
+    background: hsl(var(--primary));
+  }
+
+  /* dlaždice souhrnu */
+  .bot-dash .dash-tile { text-align: left; border-radius: 14px; padding: 16px 18px; background: hsl(var(--dash-surface) / 0.78); border: 1px solid hsl(var(--dash-line)); transition: border-color .15s ease, transform .15s ease, background .15s ease; }
+  .bot-dash .dash-tile:hover { border-color: hsl(var(--primary) / 0.35); transform: translateY(-1px); background: hsl(222 28% 9% / 0.85); }
+
+
+  /* tlačítka a zaoblení – bez hranatého HUD stylu */
+  .bot-dash .btn-3d {
+    clip-path: none !important; border-radius: 10px !important; text-transform: none !important; letter-spacing: normal !important;
+    font-weight: 500; background: hsl(0 0% 100% / 0.04) !important; border: 1px solid hsl(220 20% 100% / 0.1) !important;
+    box-shadow: none !important; color: hsl(var(--foreground)) !important;
+  }
+  .bot-dash .btn-3d::before { display: none; }
+  .bot-dash .btn-3d:hover { background: hsl(0 0% 100% / 0.08) !important; border-color: hsl(220 20% 100% / 0.18) !important; color: hsl(var(--foreground)) !important; box-shadow: none !important; transform: none; }
+  .bot-dash .btn-3d-primary, .bot-dash .btn-3d-primary:hover {
+    background: hsl(var(--primary)) !important; color: hsl(var(--primary-foreground)) !important; border-color: transparent !important; font-weight: 600;
+  }
+  .bot-dash .btn-3d-primary:hover { filter: brightness(1.08); }
+  .bot-dash .btn-3d-danger, .bot-dash .btn-3d-danger:hover { background: hsl(var(--destructive)) !important; color: hsl(var(--destructive-foreground)) !important; border-color: transparent !important; }
+  .bot-dash .rounded-lg:not(.rounded-full):not(.x-r) { border-radius: 10px !important; }
+  .bot-dash .rounded-xl:not(.rounded-full):not(.x-r) { border-radius: 12px !important; }
+  .bot-dash .rounded-2xl:not(.rounded-full):not(.x-r) { border-radius: 16px !important; }
+  .bot-dash .rounded-md:not(.rounded-full):not(.x-r) { border-radius: 8px !important; }
+
+  /* lišta s neuloženými změnami */
+  .dash-savebar { animation: dash-savebar-in .22s ease both; }
+  @keyframes dash-savebar-in { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+}
