@@ -46,7 +46,14 @@ export async function snapshotGuild(guild) {
   const onboarding = await guild.fetchOnboarding().catch(() => null);
   return {
     taken_at: new Date().toISOString(),
-    onboarding: onboarding ? { enabled: !!onboarding.enabled, default_channel_ids: [...(onboarding.defaultChannels?.keys?.() ?? [])] } : null,
+    onboarding: onboarding ? {
+      enabled: !!onboarding.enabled,
+      default_channel_ids: [...(onboarding.defaultChannels?.keys?.() ?? [])],
+      prompts: [...(onboarding.prompts?.values?.() ?? [])].map((pr) => ({
+        id: pr.id, title: pr.title, required: pr.required, in_onboarding: pr.inOnboarding,
+        options: [...pr.options.values()].map((o) => ({ title: o.title, channels: [...o.channels.keys()], roles: [...o.roles.keys()] })),
+      })),
+    } : null,
     guild: { id: guild.id, name: guild.name, owner_id: guild.ownerId, members: guild.memberCount, everyone_id: guild.roles.everyone.id },
     bot: { id: me.id, top_role: me.roles.highest?.name, permissions: flagNames(me.permissions.bitfield) },
     roles,
@@ -96,6 +103,22 @@ export async function applyLayout(guild, plan, log, created = []) {
   }
   const catIds = {};
   // volitelně nejdřív upravit výchozí kanály Onboardingu (musí být čitelné pro všechny)
+  // kanály skryté neověřeným nesmí být ani v odpovědích otázek Onboardingu (role zůstávají)
+  if (Array.isArray(plan.onboarding_hide_channels) && plan.onboarding_hide_channels.length) {
+    const hide = new Set(plan.onboarding_hide_channels);
+    const ob = await guild.fetchOnboarding();
+    let removed = 0;
+    const prompts = [...ob.prompts.values()].map((pr) => ({
+      id: pr.id, title: pr.title, singleSelect: pr.singleSelect, required: pr.required, inOnboarding: pr.inOnboarding, type: pr.type,
+      options: [...pr.options.values()].map((o) => {
+        const channels = [...o.channels.keys()].filter((id) => { const h = hide.has(id); if (h) removed += 1; return !h; });
+        return { id: o.id, title: o.title, description: o.description ?? undefined, emoji: o.emoji?.id ?? o.emoji?.name ?? undefined, channels, roles: [...o.roles.keys()] };
+      }),
+    }));
+    await guild.editOnboarding({ prompts, reason: 'Přestavba serveru – chat jen pro ověřené' });
+    log(`✎ Onboarding: z otázek odebráno ${removed} odkazů na kanály (role zůstaly)`);
+    await sleep(500);
+  }
   if (Array.isArray(plan.onboarding_default_channels) && plan.onboarding_default_channels.length) {
     await guild.editOnboarding({ defaultChannels: plan.onboarding_default_channels, reason: 'Přestavba serveru – výchozí kanály pro nováčky' });
     log(`✎ Onboarding: výchozí kanály nastaveny (${plan.onboarding_default_channels.length})`);
