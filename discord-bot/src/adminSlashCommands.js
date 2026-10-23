@@ -512,6 +512,8 @@ export function buildHelpEmbeds() {
       { name: '/purge <počet>', value: 'Smaže N posledních zpráv (1–100). *Manage Messages*' },
       { name: '/kick <uživatel> [důvod]', value: 'Vyhodí uživatele. *Kick Members*' },
       { name: '/ban <uživatel> [důvod]', value: 'Zabanuje uživatele. *Ban Members*' },
+      { name: '/timeout <uživatel> <doba> [důvod]', value: 'Dočasně ztlumí uživatele (nebo timeout zruší). *Moderate Members*' },
+      { name: 'Potvrzení', value: 'Ban, kick i timeout se před provedením potvrzují tlačítkem a zapíšou do log kanálu i dashboardu.' },
     );
 
   const admin = new EmbedBuilder()
