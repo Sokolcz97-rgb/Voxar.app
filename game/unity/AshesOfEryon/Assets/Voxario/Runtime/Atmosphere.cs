@@ -125,18 +125,31 @@ namespace Voxario.Ashes
             if (volume == null) return;
             shadows.maxShadowDistance.Override(q switch { 0 => 50f, 1 => 90f, 2 => 150f, _ => 250f });
             contact.enable.Override(q >= 2);
-            ssao.active = q >= 1;
+            // okluze i na nízké kvalitě (v poloviční velikosti) – dodává hloubku za málo výkonu
+            ssao.active = true;
+            RayTracing.Param(ssao, "fullResolution", q >= 2);
             fog.enableVolumetricFog.Override(q >= 3 || RayTracing.Enabled);
-            bloom.active = q >= 1;
+            bloom.active = true;
             foreach (var t in Object.FindObjectsByType<Terrain>(FindObjectsSortMode.None))
-                t.heightmapPixelError = q switch { 0 => 12, 1 => 7, 2 => 4, _ => 2 };
+                t.heightmapPixelError = q switch { 0 => 8, 1 => 5, 2 => 4, _ => 2 };
             var sun = Object.FindObjectsByType<HDAdditionalLightData>(FindObjectsSortMode.None);
             foreach (var l in sun)
             {
                 try { l.SetShadowResolutionLevel(q switch { 0 => 0, 1 => 1, 2 => 2, _ => 3 }); } catch { }
             }
             var cam = Camera.main;
-            if (cam != null) cam.farClipPlane = q switch { 0 => 400f, 1 => 650f, _ => 900f };
+            if (cam != null)
+            {
+                cam.farClipPlane = q switch { 0 => 400f, 1 => 650f, _ => 900f };
+                // tráva a drobné kameny jen v dohledu (detail zblízka zůstává i na nízké kvalitě)
+                var d = new float[32];
+                d[Scenery.GrassLayer] = q switch { 0 => 45f, 1 => 65f, 2 => 90f, _ => 130f };
+                d[Scenery.SmallPropsLayer] = q switch { 0 => 120f, 1 => 170f, 2 => 240f, _ => 0f };
+                cam.layerCullDistances = d;
+                cam.layerCullSpherical = true;
+            }
+            // stíny: počet kaskád podle kvality
+            shadows.cascadeShadowSplitCount.Override(q switch { 0 => 2, 1 => 3, _ => 4 });
             QualitySettings.lodBias = q switch { 0 => 0.6f, 1 => 1f, 2 => 1.5f, _ => 2.5f };
             if (ssr != null) ssr.active = q >= 2 || RayTracing.Enabled;
             if (volClouds != null) volClouds.active = q >= 2;
