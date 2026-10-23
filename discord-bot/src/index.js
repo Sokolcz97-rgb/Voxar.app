@@ -16,6 +16,7 @@ import { startServerStats } from './serverStats.js';
 import { startTwitchChat } from './twitchChat.js';
 import { startYouTubeChat } from './youtubeChat.js';
 import { initVoicePoints, handleVoiceStateUpdate } from './voicePoints.js';
+import { onMemberJoin, onMemberUpdate, handleVerifyButton } from './verify.js';
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
@@ -141,9 +142,20 @@ client.on('guildMemberAdd', async (member) => {
     // Anti-bot ochrana → ban podezřelých/čerstvých účtů
     const banned = await runAntiBot(member);
     if (banned) return;
+    onMemberJoin(member).catch((e) => console.error('verify join', e?.message || e));
     await sendWelcome(member);
   } catch (e) {
     console.error('guildMemberAdd', e);
+  }
+});
+
+// Ověření po přijetí pravidel serveru (pending → false)
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+  try {
+    if (!(await isGuildApproved(newMember.guild.id))) return;
+    await onMemberUpdate(oldMember, newMember);
+  } catch (e) {
+    console.error('guildMemberUpdate', e?.message || e);
   }
 });
 
@@ -209,6 +221,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
+    if (await handleVerifyButton(interaction)) return;
     if (await handleAntiScamInteraction(interaction)) return;
     if (await handleBuiltinComponent(interaction)) return;
     if (interaction.isChatInputCommand?.()) {
