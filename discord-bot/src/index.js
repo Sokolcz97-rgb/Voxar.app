@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import 'dotenv/config';
 import { runAutomod } from './automod.js';
 import { runAntiScam, runAntiBot, handleAntiScamInteraction } from './antiScam.js';
+import { handleBuiltinComponent } from './slashCommands.js';
 import { handleCommand } from './commands.js';
 import { sendWelcome } from './welcome.js';
 import { handleInteraction, setupTicketPanel, startTicketsConfigRealtime } from './tickets.js';
@@ -209,6 +210,7 @@ client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
     if (await handleAntiScamInteraction(interaction)) return;
+    if (await handleBuiltinComponent(interaction)) return;
     if (interaction.isChatInputCommand?.()) {
       const handled = await handleSlashCommand(interaction);
       if (handled) return;
