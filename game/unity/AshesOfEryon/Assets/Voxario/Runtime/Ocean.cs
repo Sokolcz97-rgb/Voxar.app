@@ -94,12 +94,13 @@ namespace Voxario.Ashes
         static Type HdType(string name) => typeof(HDRenderPipelineAsset).Assembly.GetType("UnityEngine.Rendering.HighDefinition." + name);
 
         // ---------------------------------------------------------------- kvalita
-        /// <summary>0 = rovná hladina, 1 = vlny, 2 = + pěna a kaustiky, 3 = + plné rozlišení a vlny u břehu</summary>
+        /// <summary>0–1 = vlny, 2 = + pěna a kaustiky, 3 = + teselace a příboj u břehu</summary>
         public void Apply(int q)
         {
             if (q == quality) return;
             quality = q;
-            bool water = q >= 1 && WaterSupported();
+            // vlny jsou na všech kvalitách (na nízké bez pěny, kaustik a teselace)
+            bool water = WaterSupported();
             if (flatSea != null) flatSea.SetActive(!water);
             if (!water)
             {

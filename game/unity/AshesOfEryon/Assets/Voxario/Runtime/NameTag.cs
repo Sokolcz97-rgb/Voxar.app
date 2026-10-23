@@ -14,8 +14,11 @@ namespace Voxario.Ashes
         public float height = 2.2f;
         static GUIStyle titleStyle, subStyle, markStyle;
 
+        void Awake() => useGUILayout = false;
+
         void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint) return;
             var cam = Camera.main;
             if (cam == null || !cam.enabled) return;
             var world = transform.position + Vector3.up * height;

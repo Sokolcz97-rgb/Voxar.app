@@ -52,6 +52,7 @@ namespace Voxario.Ashes
 
         void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint) return;
             if (!boot.inWorld || boot.player == null) return;
             if (map == null) Build();
             EryonSkin.Begin();

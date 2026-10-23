@@ -62,8 +62,11 @@ namespace Voxario.Ashes
                 Consider(wb.View.transform.position, "Thalassos – světový boss", 1f);
         }
 
+        void Awake() => useGUILayout = false;
+
         void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint) return;
             if (target == null || !boot.inWorld || PlayerPrefs.GetInt("ui.guide.hidden", 0) == 1) return;
             var gameUi = boot.GetComponent<GameUI>();
             if (gameUi != null && gameUi.SettingsOpen) return;

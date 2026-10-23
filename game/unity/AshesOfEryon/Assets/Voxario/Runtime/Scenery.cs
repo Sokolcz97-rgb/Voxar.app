@@ -49,22 +49,28 @@ namespace Voxario.Ashes
             return Vector2.Distance(p, a + ab * t);
         }
 
+        /// <summary>Vrstvy s vlastní dohledovou vzdáleností (Camera.layerCullDistances).</summary>
+        public const int GrassLayer = 20, SmallPropsLayer = 21;
+
         class Cells
         {
-            readonly MeshKit[] kits = new MeshKit[9];
+            // 8 × 8 dlaždic (~31 m): kamera kreslí jen dlaždice v záběru a v dohledu
+            const int N = 8;
+            readonly MeshKit[] kits = new MeshKit[N * N];
             public MeshKit At(Vector3 unityPos)
             {
-                float cell = Half * 2 / 3;
-                int cx = Mathf.Clamp(Mathf.FloorToInt((unityPos.x + Half) / cell), 0, 2);
-                int cz = Mathf.Clamp(Mathf.FloorToInt((unityPos.z + Half) / cell), 0, 2);
-                return kits[cx * 3 + cz] ??= new MeshKit();
+                float cell = Half * 2 / N;
+                int cx = Mathf.Clamp(Mathf.FloorToInt((unityPos.x + Half) / cell), 0, N - 1);
+                int cz = Mathf.Clamp(Mathf.FloorToInt((unityPos.z + Half) / cell), 0, N - 1);
+                return kits[cx * N + cz] ??= new MeshKit();
             }
-            public void Emit(Transform parent, string name, Material mat, bool shadows = true)
+            public void Emit(Transform parent, string name, Material mat, bool shadows = true, int layer = 0)
             {
-                for (int i = 0; i < 9; i++)
+                for (int i = 0; i < kits.Length; i++)
                 {
                     if (kits[i] == null || kits[i].Triangles == 0) continue;
                     var go = new GameObject($"{name} {i}");
+                    go.layer = layer;
                     go.transform.SetParent(parent, false);
                     go.AddComponent<MeshFilter>().sharedMesh = kits[i].Build(name);
                     var mr = go.AddComponent<MeshRenderer>();
@@ -166,10 +172,11 @@ namespace Voxario.Ashes
                     c.radius = s * 0.75f;
                 }
             }
-            rocks.Emit(parent, "Kameny", PaletteMat(null, new Color(0.85f, 0.82f, 0.75f), 0.75f));
+            rocks.Emit(parent, "Kameny", PaletteMat(null, new Color(0.85f, 0.82f, 0.75f), 0.75f), true, SmallPropsLayer);
 
             // ---------------------------------------------------------------- tráva
-            int grassN = quality switch { 0 => 0, 1 => 3000, 2 => 6000, _ => 10000 };
+            // tráva je i na nízké kvalitě – kreslí se jen blízko (dohled podle kvality), takže je levná
+            int grassN = quality switch { 0 => 5000, 1 => 8000, 2 => 12000, _ => 18000 };
             if (grassN > 0)
             {
                 var grass = new Cells();
@@ -193,7 +200,7 @@ namespace Voxario.Ashes
                     grass.At(pos).Add(tuft, Matrix4x4.TRS(pos, Quaternion.Euler(0, yaw, 0), new Vector3(1, sy, 1)), (i % 8 + 0.5f) / 8f, 0, 0.6f);
                     placed++;
                 }
-                grass.Emit(parent, "Tráva", PaletteMat(lib != null ? lib.litDouble : null, new Color(0.64f, 0.6f, 0.36f), 0.5f), false);
+                grass.Emit(parent, "Tráva", PaletteMat(lib != null ? lib.litDouble : null, new Color(0.64f, 0.6f, 0.36f), 0.5f), false, GrassLayer);
             }
 
             BuildAqueduct(parent, colliders);
@@ -375,7 +382,9 @@ namespace Voxario.Ashes
                 f.lightSrc.type = LightType.Point;
                 f.lightSrc.color = new Color(1f, 0.55f, 0.2f);
                 f.lightSrc.range = 10 * size + 4;
-                lgo.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
+                var hd = lgo.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
+                // vzdálená světla se nepočítají (jinak se počítají všechna ohně na mapě)
+                try { hd.GetType().GetProperty("fadeDistance")?.SetValue(hd, 70f); } catch { }
                 f.baseIntensity = 20000f * size;
                 f.lightSrc.intensity = f.baseIntensity;
             }
