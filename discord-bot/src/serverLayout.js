@@ -112,7 +112,10 @@ export async function applyLayout(guild, plan, log, created = []) {
       id: pr.id, title: pr.title, singleSelect: pr.singleSelect, required: pr.required, inOnboarding: pr.inOnboarding, type: pr.type,
       options: [...pr.options.values()].map((o) => {
         const channels = [...o.channels.keys()].filter((id) => { const h = hide.has(id); if (h) removed += 1; return !h; });
-        return { id: o.id, title: o.title, description: o.description ?? undefined, emoji: o.emoji?.id ?? o.emoji?.name ?? undefined, channels, roles: [...o.roles.keys()] };
+        const roles = [...o.roles.keys()];
+        // odpověď musí na něco odkazovat – bez kanálu i role dostane náhradní veřejný kanál
+        if (!channels.length && !roles.length && plan.onboarding_fallback_channel) channels.push(plan.onboarding_fallback_channel);
+        return { id: o.id, title: o.title, description: o.description ?? undefined, emoji: o.emoji?.id ?? o.emoji?.name ?? undefined, channels, roles };
       }),
     }));
     await guild.editOnboarding({ prompts, reason: 'Přestavba serveru – chat jen pro ověřené' });
