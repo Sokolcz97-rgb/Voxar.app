@@ -58,7 +58,7 @@ export function BotProtectionPanel({
   setConfig: (c: any) => void;
   isManager: boolean;
   guildId: string | null;
-  onSave: () => void;
+  onSave?: () => void;
   scanButtons?: React.ReactNode;
 }) {
   const [events, setEvents] = useState<ModEvent[]>([]);
@@ -190,7 +190,7 @@ export function BotProtectionPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          <Button onClick={onSave} disabled={!isManager}>Uložit nastavení</Button>
+          {onSave && <Button onClick={onSave} disabled={!isManager}>Uložit nastavení</Button>}
           {scanButtons}
         </div>
       </Card>

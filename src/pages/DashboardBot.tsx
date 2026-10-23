@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
-import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle, Settings2, Shield, Terminal, HandMetal, LayoutTemplate, Ticket, Activity, BarChart3, Trophy, Gamepad2, HelpCircle } from "lucide-react";
+import { Bot, Plus, Trash2, Send, Radio, Loader2, Server, Globe, ShieldAlert, ScanSearch, Twitch, Youtube, MessageCircle, Settings2, Shield, Terminal, HandMetal, LayoutTemplate, Ticket, Activity, BarChart3, Trophy, Gamepad2, HelpCircle, ChevronRight, ChevronsUpDown, Hash, Wrench, Undo2 } from "lucide-react";
 import { ChatBotPlatformPanel } from "@/components/ChatBotPlatformPanel";
 import { DiscordGuildPicker } from "@/components/DiscordGuildPicker";
 import { DiscordMessagePreview } from "@/components/DiscordMessagePreview";
@@ -124,6 +124,34 @@ type TicketCategory = { id: string; guild_id: string; label: string; description
 
 const GLOBAL_KEY = "__global__";
 
+type NavItem = { v: string; l: string; d: string; I: typeof Bot };
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  { title: "Obecné", items: [
+    { v: "basics", l: "Základ", d: "Hlavní kanály bota, prefix příkazů a režim údržby.", I: Settings2 },
+  ] },
+  { title: "Moderace", items: [
+    { v: "protection", l: "Ochrana", d: "Anti-scam a anti-bot ochrana, povolené domény a záznam zásahů.", I: Shield },
+    { v: "automod", l: "Auto-moderace", d: "Filtr nevhodných slov, limity zmínek a emoji, spam a NSFW.", I: ShieldAlert },
+  ] },
+  { title: "Komunita", items: [
+    { v: "welcome", l: "Uvítací zprávy", d: "Zprávy, kterými bot vítá nové členy.", I: HandMetal },
+    { v: "tickets", l: "Tickety", d: "Podpora přes tickety – panel, kategorie a otevřené tickety.", I: Ticket },
+    { v: "points", l: "Bodový systém", d: "Body za aktivitu, odměny a žebříček.", I: Trophy },
+    { v: "serverstats", l: "Statistiky serveru", d: "Automaticky aktualizované kanály se statistikami.", I: BarChart3 },
+  ] },
+  { title: "Automatizace", items: [
+    { v: "commands", l: "Příkazy", d: "Vlastní příkazy a odpovědi bota.", I: Terminal },
+    { v: "embed", l: "Embed / Webhook", d: "Sestav a pošli bohatou zprávu do kanálu.", I: LayoutTemplate },
+    { v: "streams", l: "YouTube / Twitch", d: "Upozornění, když sledovaný kanál začne vysílat.", I: Radio },
+    { v: "status", l: "Monitoring", d: "Hlídání dostupnosti webů a serverů s hlášením do Discordu.", I: Activity },
+  ] },
+  { title: "Ostatní", items: [
+    { v: "games", l: "Hry", d: "Propojení s herními servery.", I: Gamepad2 },
+    { v: "faq", l: "Nápověda", d: "Návod a časté otázky ke správě bota.", I: HelpCircle },
+  ] },
+];
+const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+
 const DashboardBot = () => {
   const { user, loading: authLoading } = useAuth();
   const { can, loading: permsLoading } = usePermissions();
@@ -142,6 +170,17 @@ const DashboardBot = () => {
   );
 
   const [config, setConfig] = useState<AnyConfig | null>(null);
+  const [savedConfig, setSavedConfig] = useState<AnyConfig | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [tab, setTabState] = useState<string>(() => {
+    const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    return NAV_ITEMS.some((i) => i.v === h) ? h : "basics";
+  });
+  const setTab = (v: string) => {
+    setTabState(v);
+    try { window.history.replaceState(null, "", `#${v}`); } catch { /* nic */ }
+  };
+  const currentTab = NAV_ITEMS.find((i) => i.v === tab) ?? NAV_ITEMS[0];
   const [commands, setCommands] = useState<Command[]>([]);
   const [welcomes, setWelcomes] = useState<Welcome[]>([]);
   const [streams, setStreams] = useState<StreamNotif[]>([]);
@@ -262,6 +301,7 @@ const DashboardBot = () => {
       supabase.from("bot_status").select("last_heartbeat, version, guild_count").maybeSingle(),
     ]);
     setConfig(configRow ?? null);
+    setSavedConfig(configRow ?? null);
     setCommands((cmds.data as any) ?? []);
     setWelcomes((w.data as any) ?? []);
     setStreams((s.data as any) ?? []);
@@ -318,10 +358,16 @@ const DashboardBot = () => {
     const table = selectedGuild ? "bot_guild_config" : "bot_config";
     if (!selectedGuild) payload.web_maintenance = (config as any).web_maintenance ?? false;
 
+    setSaving(true);
     const { error } = await supabase.from(table as any).update(payload).eq("id", config.id);
+    setSaving(false);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else toast({ title: "Uloženo" });
+    else {
+      setSavedConfig(config);
+      toast({ title: "Uloženo", description: "Změny se na serveru projeví do minuty." });
+    }
   };
+  const dirty = !!config && !!savedConfig && JSON.stringify(config) !== JSON.stringify(savedConfig);
 
   const addCommand = async () => {
     if (!newCmd.name.trim() || !newCmd.response.trim()) return;
@@ -422,105 +468,129 @@ const DashboardBot = () => {
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 -z-10 gradient-hero" />
-      <div className="fixed inset-0 -z-10 neon-grid opacity-30" />
       <Navbar />
-      <main className="container py-10 animate-fade-in">
-        {/* Hero header */}
-        <div className="mb-8 relative overflow-hidden rounded-2xl ornate-frame runic-overlay rune-sweep p-8 md:p-10">
-          <span className="ornate-corners-bottom" />
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/25 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
-          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary text-glow">
-                {botCategory === "discord" ? "Discord" : botCategory === "twitch" ? "Twitch chat" : "YouTube chat"}
-              </p>
-              <h1 className="font-display font-black text-4xl md:text-5xl mt-2 flex items-center gap-3">
-                <Bot className="h-10 w-10" /> Správce bota
-              </h1>
-              {botCategory === "discord" ? (
-                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                  {selectedGuild ? (
-                    <>
-                      {selectedGuild.icon_url ? (
-                        <GuildAvatar src={selectedGuild.icon_url} name={selectedGuild.name} className="h-5 w-5" textClassName="text-[8px]" />
-                      ) : (
-                        <Server className="h-4 w-4" />
-                      )}
-                      <span className="text-foreground/90 font-medium">{selectedGuild.name}</span>
-                      <code className="text-xs">{selectedGuild.guild_id}</code>
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="h-4 w-4" />
-                      <span className="text-foreground/90 font-medium">Globální / šablony</span>
-                    </>
-                  )}
-                  <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="ml-2 border-primary/40 hover:border-primary/80">
-                    <Server className="h-3.5 w-3.5 mr-1.5" />
-                    Změnit server
-                  </Button>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Sdílený chat bot — moderace, anti-scam, uvítání a vlastní příkazy přímo v chatu streamu.
-                </p>
-              )}
+      <main className="bot-dash container max-w-7xl py-8 pb-28 animate-fade-in">
+        {/* Hlavička */}
+        <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="h-12 w-12 shrink-0 rounded-2xl border border-white/10 bg-gradient-to-br from-primary/25 via-primary/10 to-accent/20 grid place-items-center">
+              <Bot className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex items-center gap-3 flex-wrap shrink-0">
-              {botCategory === "discord" && (
-                <Button variant="outline" onClick={() => (window.location.href = "/dashboard/bot/guilds")} className="border-primary/40 hover:border-primary/80">
-                  <Server className="h-4 w-4 mr-2" />
-                  Servery bota
-                </Button>
-              )}
-              <Card className="glass border-border/60 p-4 flex items-center gap-3 hover:border-primary/60 hover:-translate-y-0.5 transition-all relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className={`h-3 w-3 rounded-full relative ${botOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground"}`} />
-                <div className="relative">
-                  <div className="text-sm font-medium">{botOnline ? "Bot online" : "Bot offline"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {status?.guild_count ?? 0} serverů · {status?.version ?? "—"}
-                  </div>
-                </div>
-              </Card>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
+                <ChevronRight className="h-3 w-3" />
+                <span>Boti</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Správce bota</h1>
             </div>
           </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${botOnline ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/5 text-muted-foreground"}`}>
+              <span className="relative flex h-2 w-2">
+                {botOnline && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
+                <span className={`relative inline-flex h-2 w-2 rounded-full ${botOnline ? "bg-emerald-400" : "bg-muted-foreground"}`} />
+              </span>
+              {botOnline ? "Online" : "Offline"}
+              <span className="text-foreground/40">·</span>
+              <span className="text-foreground/70">{status?.guild_count ?? 0} serverů</span>
+              {status?.version && <span className="hidden sm:inline text-foreground/40">· {status.version}</span>}
+            </div>
+            {botCategory === "discord" && (
+              <Button variant="outline" size="sm" asChild className="border-white/10 bg-white/[0.03] hover:bg-white/[0.06]">
+                <Link to="/dashboard/bot/guilds"><Server className="h-4 w-4 mr-2" />Servery bota</Link>
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* Platforma + server */}
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="inline-flex w-full md:w-auto rounded-xl border border-white/[0.07] bg-white/[0.03] p-1">
+            {([
+              { key: "discord", label: "Discord", Icon: MessageCircle },
+              { key: "twitch", label: "Twitch", Icon: Twitch },
+              { key: "youtube", label: "YouTube", Icon: Youtube },
+            ] as const).map((cat) => {
+              const active = botCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => setBotCategory(cat.key)}
+                  className={`flex flex-1 md:flex-none items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+                    active ? "bg-white/[0.08] text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <cat.Icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {botCategory === "discord" ? (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="group flex items-center gap-3 border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-white/[0.05] md:min-w-[300px]"
+            >
+              {selectedGuild ? (
+                <GuildAvatar src={selectedGuild.icon_url} name={selectedGuild.name} className="h-8 w-8" textClassName="text-[10px]" />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-white/5 grid place-items-center"><Globe className="h-4 w-4 text-muted-foreground" /></div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">{selectedGuild ? selectedGuild.name : "Globální / šablony"}</div>
+                <div className="text-[11px] text-muted-foreground truncate">{selectedGuild ? `ID ${selectedGuild.guild_id}` : "Výchozí nastavení pro všechny servery"}</div>
+              </div>
+              <ChevronsUpDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+            </button>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sdílený chat bot – moderace, uvítání a vlastní příkazy přímo v chatu streamu.</p>
+          )}
         </div>
 
-        {/* Category switcher: Discord / Twitch / YouTube */}
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {([
-            { key: "discord", label: "Discord bot", desc: "Servery, automod, tickety, embed", Icon: MessageCircle },
-            { key: "twitch", label: "Twitch chat bot", desc: "Moderace a příkazy v Twitch chatu", Icon: Twitch },
-            { key: "youtube", label: "YouTube chat bot", desc: "Moderace a příkazy v Live chatu", Icon: Youtube },
-          ] as const).map((cat) => {
-            const active = botCategory === cat.key;
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => setBotCategory(cat.key)}
-                className={`text-left p-4 rounded-xl border transition-all glass ${
-                  active
-                    ? "border-primary bg-primary/10 [box-shadow:var(--glow-soft)]"
-                    : "border-border hover:border-primary/60 hover:-translate-y-0.5"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center border ${active ? "bg-primary/20 border-primary/60" : "bg-secondary/40 border-border"}`}>
-                    <cat.Icon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-display font-bold">{cat.label}</div>
-                    <div className="text-xs text-muted-foreground">{cat.desc}</div>
-                  </div>
+        {/* Souhrn */}
+        {botCategory === "discord" && config && (
+          <div className="mb-8 grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              {
+                tab: "basics", Icon: Activity, label: "Stav bota",
+                value: config.bot_maintenance ? "Údržba" : botOnline ? "V provozu" : "Offline",
+                hint: config.bot_maintenance ? "Bot na serveru nereaguje" : `Prefix ${config.prefix || "!"}`,
+                tone: config.bot_maintenance ? "text-amber-300" : botOnline ? "text-emerald-300" : "text-muted-foreground",
+              },
+              {
+                tab: "protection", Icon: Shield, label: "Ochrana",
+                value: config.antiscam_enabled === false ? "Vypnutá" : "Zapnutá",
+                hint: config.antiscam_enabled === false ? "Podvody se nekontrolují" : `Citlivost: ${({ low: "nízká", normal: "běžná", high: "vysoká" } as const)[config.antiscam_sensitivity ?? "normal"]}`,
+                tone: config.antiscam_enabled === false ? "text-amber-300" : "text-emerald-300",
+              },
+              {
+                tab: "automod", Icon: ShieldAlert, label: "Auto-moderace",
+                value: config.automod_enabled ? "Zapnutá" : "Vypnutá",
+                hint: config.automod_enabled ? `Akce: ${({ warn: "varování", delete: "smazání", mute: "umlčení", kick: "vyhození", ban: "ban" } as Record<string, string>)[config.automod_action] ?? config.automod_action}` : "Jen vestavěný filtr",
+                tone: config.automod_enabled ? "text-emerald-300" : "text-muted-foreground",
+              },
+              {
+                tab: "commands", Icon: Terminal, label: "Automatizace",
+                value: `${commands.length} ${commands.length === 1 ? "příkaz" : commands.length >= 2 && commands.length <= 4 ? "příkazy" : "příkazů"}`,
+                hint: `${welcomes.length} uvítání · ${streams.length} streamů · ${checks.length} monitorů`,
+                tone: "text-foreground",
+              },
+            ].map((t) => (
+              <button key={t.label} type="button" onClick={() => setTab(t.tab)} className="dash-tile">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{t.label}</span>
+                  <t.Icon className="h-4 w-4" />
                 </div>
+                <div className={`mt-2 text-lg font-semibold ${t.tone}`}>{t.value}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground truncate">{t.hint}</div>
               </button>
-            );
-          })}
-        </div>
-
+            ))}
+          </div>
+        )}
 
         {botCategory !== "discord" && (
           <ChatBotPlatformPanel platform={botCategory} />
@@ -644,94 +714,108 @@ const DashboardBot = () => {
 
 
 
-        <Tabs defaultValue="basics" orientation="vertical" className="flex flex-col lg:flex-row gap-6 items-start">
-          <TabsList className="lg:sticky lg:top-20 flex lg:flex-col h-auto w-full lg:w-60 shrink-0 bg-card/40 backdrop-blur-md border border-border rounded-xl p-2 gap-1 overflow-x-auto lg:overflow-visible justify-start">
-            {[
-              { v: "basics", l: "Základ", I: Settings2 },
-              { v: "protection", l: "Ochrana", I: Shield },
-              { v: "automod", l: "Auto-moderace", I: ShieldAlert },
-              { v: "commands", l: "Příkazy", I: Terminal },
-              { v: "welcome", l: "Uvítací zprávy", I: HandMetal },
-              { v: "embed", l: "Embed / Webhook", I: LayoutTemplate },
-              { v: "streams", l: "YT / Twitch", I: Radio },
-              { v: "tickets", l: "Tickety", I: Ticket },
-              { v: "status", l: "Status checks", I: Activity },
-              { v: "serverstats", l: "Server Stats", I: BarChart3 },
-              { v: "points", l: "Bodový systém", I: Trophy },
-              { v: "games", l: "Games", I: Gamepad2 },
-              { v: "faq", l: "FAQ / Návod", I: HelpCircle },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.v}
-                value={tab.v}
-                className="w-full justify-start whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-sm text-muted-foreground transition-all hover:text-foreground hover:bg-secondary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/60 data-[state=active]:[box-shadow:var(--glow-soft)]"
-              >
-                <tab.I className="h-4 w-4 mr-2 shrink-0" />
-                {tab.l}
-              </TabsTrigger>
+        <Tabs value={tab} onValueChange={setTab} orientation="vertical" className="flex flex-col lg:flex-row gap-8 items-start">
+          <TabsList className="dash-nav lg:sticky lg:top-20 flex lg:flex-col h-auto w-full lg:w-56 shrink-0 bg-transparent p-0 gap-0.5 overflow-x-auto lg:overflow-visible justify-start items-stretch no-scrollbar">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.title} className="contents lg:block lg:mb-4">
+                <div className="hidden lg:block px-3 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">{group.title}</div>
+                {group.items.map((item) => (
+                  <TabsTrigger
+                    key={item.v}
+                    value={item.v}
+                    className="w-full justify-start whitespace-nowrap px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-white/[0.04] data-[state=active]:bg-white/[0.06] data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                  >
+                    <item.I className="h-4 w-4 mr-2.5 shrink-0" />
+                    {item.l}
+                  </TabsTrigger>
+                ))}
+              </div>
             ))}
           </TabsList>
 
           <div className="flex-1 min-w-0 w-full">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold tracking-tight">{currentTab.l}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{currentTab.d}</p>
+            </div>
 
           {/* BASICS */}
-          <TabsContent value="basics" className="mt-4">
+          <TabsContent value="basics" className="mt-0 space-y-4">
             {config && (
-              <Card className="glass border-border p-6 space-y-4 max-w-2xl">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Prefix příkazů {selectedGuild && <span className="text-xs text-muted-foreground">(prázdné = použít globální)</span>}</Label>
-                    <Input value={config.prefix ?? ""} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} />
-                  </div>
-                  <div>
-                    <Label>Welcome kanál</Label>
-                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_welcome_channel} onChange={(v) => setConfig({ ...config, default_welcome_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
-                  </div>
-                  <div>
-                    <Label>Log kanál</Label>
-                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_log_channel} onChange={(v) => setConfig({ ...config, default_log_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
-                  </div>
-                  <div>
-                    <Label>Alerts kanál</Label>
-                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_alerts_channel} onChange={(v) => setConfig({ ...config, default_alerts_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
-                  </div>
-                </div>
-                <div className="border-t border-border pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
+              <>
+                <Card className="p-6">
+                  <div className="flex items-start gap-3 mb-5">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 grid place-items-center shrink-0"><Hash className="h-4 w-4 text-primary" /></div>
                     <div>
-                      <div className="font-medium">Maintenance — bot</div>
-                      <p className="text-xs text-muted-foreground">Bot pošle do maintenance kanálu a přestane reagovat na tomto serveru</p>
+                      <div className="font-semibold">Kanály</div>
+                      <p className="text-sm text-muted-foreground">Kam bot posílá uvítání, záznamy o moderaci a upozornění.</p>
                     </div>
-                    <Switch checked={config.bot_maintenance} onCheckedChange={(v) => setConfig({ ...config, bot_maintenance: v })} disabled={!isManager} />
                   </div>
-                  {!selectedGuild && (
-                    <div className="flex items-center justify-between">
+                  <div className="grid sm:grid-cols-2 gap-x-5 gap-y-4">
+                    <div className="space-y-1.5">
+                      <Label>Uvítací kanál</Label>
+                      <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_welcome_channel} onChange={(v) => setConfig({ ...config, default_welcome_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Log kanál</Label>
+                      <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_log_channel} onChange={(v) => setConfig({ ...config, default_log_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Kanál pro upozornění</Label>
+                      <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.default_alerts_channel} onChange={(v) => setConfig({ ...config, default_alerts_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
+                      <p className="text-xs text-muted-foreground">Sem chodí hlášení ochrany s tlačítky pro rychlý zásah.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Prefix příkazů</Label>
+                      <Input value={config.prefix ?? ""} onChange={(e) => setConfig({ ...config, prefix: e.target.value })} disabled={!isManager} placeholder="!" className="font-mono" />
+                      {selectedGuild && <p className="text-xs text-muted-foreground">Prázdné = použije se globální prefix.</p>}
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="h-9 w-9 rounded-lg bg-amber-500/10 grid place-items-center shrink-0"><Wrench className="h-4 w-4 text-amber-300" /></div>
+                    <div>
+                      <div className="font-semibold">Údržba</div>
+                      <p className="text-sm text-muted-foreground">Dočasně vypni bota, když na serveru něco přestavuješ.</p>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-white/[0.06]">
+                    <div className="flex items-center justify-between gap-4 py-3">
                       <div>
-                        <div className="font-medium">Maintenance — web</div>
-                        <p className="text-xs text-muted-foreground">Pošle oznámení o údržbě webu</p>
+                        <div className="text-sm font-medium">Režim údržby bota</div>
+                        <p className="text-xs text-muted-foreground">Bot oznámí údržbu do kanálu níže a přestane na tomto serveru reagovat.</p>
                       </div>
-                      <Switch checked={!!(config as any).web_maintenance} onCheckedChange={(v) => setConfig({ ...config, web_maintenance: v } as any)} disabled={!isManager} />
+                      <Switch checked={config.bot_maintenance} onCheckedChange={(v) => setConfig({ ...config, bot_maintenance: v })} disabled={!isManager} />
                     </div>
-                  )}
-                  <div>
-                    <Label>Maintenance kanál</Label>
-                    <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.maintenance_channel} onChange={(v) => setConfig({ ...config, maintenance_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
+                    {!selectedGuild && (
+                      <div className="flex items-center justify-between gap-4 py-3">
+                        <div>
+                          <div className="text-sm font-medium">Údržba webu</div>
+                          <p className="text-xs text-muted-foreground">Pošle oznámení o údržbě webu.</p>
+                        </div>
+                        <Switch checked={!!(config as any).web_maintenance} onCheckedChange={(v) => setConfig({ ...config, web_maintenance: v } as any)} disabled={!isManager} />
+                      </div>
+                    )}
+                    <div className="pt-3 space-y-1.5">
+                      <Label>Kanál pro oznámení údržby</Label>
+                      <GuildResourceSelect guildId={guildIdOrNull()} kind="text" value={config.maintenance_channel} onChange={(v) => setConfig({ ...config, maintenance_channel: v })} disabled={!isManager} placeholder="Vyber kanál" />
+                    </div>
                   </div>
-                </div>
-                <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
-              </Card>
+                </Card>
+              </>
             )}
           </TabsContent>
 
           {/* OCHRANA */}
-          <TabsContent value="protection" className="mt-4">
+          <TabsContent value="protection" className="mt-0">
             {config && (
               <BotProtectionPanel
                 config={config}
                 setConfig={setConfig}
                 isManager={isManager}
                 guildId={guildIdOrNull()}
-                onSave={saveConfig}
                 scanButtons={selectedGuild ? (
                   <>
                     <ScanMembersButton guildId={selectedGuild.guild_id} disabled={!isManager} />
@@ -743,9 +827,9 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* AUTOMOD */}
-          <TabsContent value="automod" className="mt-4">
+          <TabsContent value="automod" className="mt-0">
             {config && (
-              <Card className="glass border-border p-6 space-y-4 max-w-2xl">
+              <Card className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-base">Auto-moderace zapnutá</Label>
                   <Switch checked={config.automod_enabled} onCheckedChange={(v) => setConfig({ ...config, automod_enabled: v })} disabled={!isManager} />
@@ -815,16 +899,15 @@ const DashboardBot = () => {
                 <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
                   Ochrana proti podvodům a botům, výjimky (bypass role) a kontrola členů jsou v záložce <strong>Ochrana</strong>.
                 </div>
-                <Button onClick={saveConfig} disabled={!isManager}>Uložit</Button>
               </Card>
             )}
           </TabsContent>
 
           {/* COMMANDS */}
-          <TabsContent value="commands" className="mt-4 space-y-4">
+          <TabsContent value="commands" className="mt-0 space-y-4">
             {isManager && (
-              <Card className="glass border-border p-6 space-y-3">
-                <h3 className="font-display text-lg font-bold">
+              <Card className="p-6 space-y-3">
+                <h3 className="text-base font-semibold">
                   Nový vlastní příkaz {selectedGuild ? `· ${selectedGuild.name}` : "· globální"}
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -835,7 +918,7 @@ const DashboardBot = () => {
                 <Button onClick={addCommand}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
               </Card>
             )}
-            <Card className="glass border-border p-6">
+            <Card className="p-6">
               {commands.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Žádné vlastní příkazy.</p>
               ) : (
@@ -864,10 +947,10 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* WELCOME */}
-          <TabsContent value="welcome" className="mt-4 space-y-4">
+          <TabsContent value="welcome" className="mt-0 space-y-4">
             {isManager && (
-              <Card className="glass border-border p-6 space-y-3">
-                <h3 className="font-display text-lg font-bold">Nová uvítací zpráva</h3>
+              <Card className="p-6 space-y-3">
+                <h3 className="text-base font-semibold">Nová uvítací zpráva</h3>
                 <GuildResourceSelect
                   guildId={guildIdOrNull()}
                   kind="text"
@@ -881,7 +964,7 @@ const DashboardBot = () => {
                 <Button onClick={addWelcome}><Plus className="h-4 w-4 mr-2" />Přidat</Button>
               </Card>
             )}
-            <Card className="glass border-border p-6">
+            <Card className="p-6">
               {welcomes.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nic nenastaveno.</p>
               ) : (
@@ -903,7 +986,7 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* EMBED / WEBHOOK */}
-          <TabsContent value="embed" className="mt-4">
+          <TabsContent value="embed" className="mt-0">
             <EmbedBuilder
               guildId={guildIdOrNull()}
               guildName={selectedGuild?.name}
@@ -913,10 +996,10 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* STREAMS */}
-          <TabsContent value="streams" className="mt-4 space-y-4">
+          <TabsContent value="streams" className="mt-0 space-y-4">
             {isManager && (
-              <Card className="glass border-border p-6 space-y-3">
-                <h3 className="font-display text-lg font-bold">Sledovat kanál</h3>
+              <Card className="p-6 space-y-3">
+                <h3 className="text-base font-semibold">Sledovat kanál</h3>
                 <div className="grid sm:grid-cols-4 gap-3 items-end">
                   <div>
                     <Label>Platforma</Label>
@@ -958,7 +1041,7 @@ const DashboardBot = () => {
                 <p className="text-xs text-muted-foreground">Proměnné: <code>{`{handle}`}</code>, <code>{`{title}`}</code>, <code>{`{url}`}</code>, <code>{`{game}`}</code>.</p>
               </Card>
             )}
-            <Card className="glass border-border p-6">
+            <Card className="p-6">
               {streams.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Žádné sledování.</p>
               ) : (
@@ -981,7 +1064,7 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* TICKETS */}
-          <TabsContent value="tickets" className="mt-4">
+          <TabsContent value="tickets" className="mt-0">
             <TicketsConfigCard
               key={selectedGuildId}
               isManager={isManager}
@@ -991,10 +1074,10 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* STATUS CHECKS */}
-          <TabsContent value="status" className="mt-4 space-y-4">
+          <TabsContent value="status" className="mt-0 space-y-4">
             {isManager && (
-              <Card className="glass border-border p-6 space-y-3">
-                <h3 className="font-display text-lg font-bold">Nový monitoring</h3>
+              <Card className="p-6 space-y-3">
+                <h3 className="text-base font-semibold">Nový monitoring</h3>
                 <div className="grid sm:grid-cols-4 gap-3">
                   <Input placeholder="popisek" value={newCheck.label} onChange={(e) => setNewCheck({ ...newCheck, label: e.target.value })} />
                   <Input placeholder="URL k pingu" value={newCheck.target} onChange={(e) => setNewCheck({ ...newCheck, target: e.target.value })} />
@@ -1011,7 +1094,7 @@ const DashboardBot = () => {
                 <Input placeholder="Discord webhook URL (volitelné – bez bota)" value={newCheck.webhook} onChange={(e) => setNewCheck({ ...newCheck, webhook: e.target.value })} />
               </Card>
             )}
-            <Card className="glass border-border p-6 space-y-3">
+            <Card className="p-6 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">Automatická kontrola běží každou minutu. Můžeš ji spustit i ručně.</p>
                 <Button size="sm" variant="secondary" onClick={async () => {
@@ -1043,16 +1126,16 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* SERVER STATS */}
-          <TabsContent value="serverstats" className="mt-4">
+          <TabsContent value="serverstats" className="mt-0">
             <ServerStatsCard guildId={guildIdOrNull()} isManager={isManager} />
           </TabsContent>
 
           {/* GAMES */}
-          <TabsContent value="points" className="mt-4">
+          <TabsContent value="points" className="mt-0">
             <PointsPanel guildId={guildIdOrNull()} isManager={isManager} />
           </TabsContent>
 
-          <TabsContent value="games" className="mt-4">
+          <TabsContent value="games" className="mt-0">
             <Tabs defaultValue="minecraft" className="space-y-4">
               <TabsList className="bg-card/40 border border-border">
                 <TabsTrigger value="minecraft">Minecraft</TabsTrigger>
@@ -1064,12 +1147,30 @@ const DashboardBot = () => {
           </TabsContent>
 
           {/* FAQ */}
-          <TabsContent value="faq" className="mt-4">
+          <TabsContent value="faq" className="mt-0">
             <BotFaq />
           </TabsContent>
           </div>
         </Tabs>
         </>}
+
+        {botCategory === "discord" && dirty && isManager && (
+          <div className="dash-savebar fixed bottom-5 left-1/2 z-50 w-[min(640px,calc(100%-32px))] -translate-x-1/2">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[hsl(222_30%_8%/0.92)] px-4 py-3 shadow-2xl backdrop-blur-xl">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
+              <div className="min-w-0 flex-1 text-sm">
+                <span className="font-medium">Máš neuložené změny</span>
+                <span className="hidden sm:inline text-muted-foreground"> · {selectedGuild ? selectedGuild.name : "globální nastavení"}</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setConfig(savedConfig)} disabled={saving}>
+                <Undo2 className="h-4 w-4 mr-1.5" />Zahodit
+              </Button>
+              <Button size="sm" onClick={saveConfig} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Uložit změny"}
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -1084,13 +1185,13 @@ function EmbedLivePreview({ content, json }: { content: string; json: string }) 
     }
   } catch {
     return (
-      <Card className="glass border-border p-6">
+      <Card className="p-6">
         <p className="text-sm text-destructive">Neplatný JSON — náhled nelze zobrazit.</p>
       </Card>
     );
   }
   return (
-    <Card className="glass border-border p-4">
+    <Card className="p-4">
       <DiscordMessagePreview content={content} embed={embed} />
     </Card>
   );
@@ -1257,7 +1358,7 @@ function TicketsConfigCard({
   return (
     <div className="space-y-4">
     <div className="grid lg:grid-cols-2 gap-4">
-      <Card className="glass border-border p-6 space-y-4">
+      <Card className="p-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label>Discord kategorie (kam vytvářet tickety)</Label>
@@ -1406,7 +1507,7 @@ function TicketsConfigCard({
       <div className="space-y-4 lg:sticky lg:top-24 self-start">
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Náhled panelu</Label>
-          <Card className="glass border-border p-4 space-y-3">
+          <Card className="p-4 space-y-3">
             <DiscordMessagePreview content={cfg.welcome_md || (panelMode === "button" ? "Klikni níže pro otevření ticketu." : "Pro otevření ticketu napiš zprávu.")} />
             {panelMode === "button" && (
               <button
@@ -1480,10 +1581,10 @@ function OpenTicketsList({ guildId, isManager, transcriptsEnabled }: { guildId: 
   };
 
   return (
-    <Card className="glass border-border p-6 space-y-3">
+    <Card className="p-6 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-display text-lg font-bold">Otevřené tickety</h3>
+          <h3 className="text-base font-semibold">Otevřené tickety</h3>
           <p className="text-xs text-muted-foreground">Aktuálně otevřené ticket kanály na tomto serveru.</p>
         </div>
         <Button size="sm" variant="outline" onClick={load}>Obnovit</Button>
@@ -1577,7 +1678,7 @@ function TicketsWebhookPreview({ webhookUrl, isManager }: { webhookUrl: string; 
           <Badge variant="outline" className="text-[10px]">Bez webhooku</Badge>
         )}
       </div>
-      <Card className="glass border-border p-4 space-y-3">
+      <Card className="p-4 space-y-3">
         {trimmed ? (
           <>
             <DiscordMessagePreview
