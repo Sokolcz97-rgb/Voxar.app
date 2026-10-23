@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import 'dotenv/config';
 import { runAutomod } from './automod.js';
-import { runAntiScam, runAntiBot } from './antiScam.js';
+import { runAntiScam, runAntiBot, handleAntiScamInteraction } from './antiScam.js';
 import { handleCommand } from './commands.js';
 import { sendWelcome } from './welcome.js';
 import { handleInteraction, setupTicketPanel, startTicketsConfigRealtime } from './tickets.js';
@@ -80,7 +80,7 @@ client.on('messageCreate', async (message) => {
   try {
     if (!message.guild) return;
     if (!(await isGuildApproved(message.guild.id))) return;
-    // Anti-scam / phishing → okamžitý ban bez varování
+    // Anti-scam / phishing → bodové hodnocení, stupňovaný postih
     const scammed = await runAntiScam(message);
     if (scammed) return;
     const moderated = await runAutomod(message);
@@ -208,6 +208,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 client.on('interactionCreate', async (interaction) => {
   try {
     if (interaction.guild && !(await isGuildApproved(interaction.guild.id))) return;
+    if (await handleAntiScamInteraction(interaction)) return;
     if (interaction.isChatInputCommand?.()) {
       const handled = await handleSlashCommand(interaction);
       if (handled) return;
