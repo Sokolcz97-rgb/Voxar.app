@@ -25,7 +25,7 @@ namespace Voxario.Ashes
     /// Nepřítel, který hráče zahlédne, se k němu rozběhne; dotyk spustí souboj, který
     /// vyhodnotí server (ashes_world_fight) a hra ho přehraje kolo po kole.
     /// </summary>
-    public class Encounters : MonoBehaviour
+    public partial class Encounters : MonoBehaviour
     {
         public GameBootstrap boot;
 
@@ -285,7 +285,7 @@ namespace Voxario.Ashes
                     if (toPlayer < 1.5f)
                     {
                         e.calmUntil = now + 4;
-                        StartCoroutine(RunFight(e));
+                        StartCoroutine(RunLiveFight(e));
                         continue;
                     }
                 }
@@ -620,6 +620,7 @@ namespace Voxario.Ashes
                 EryonSkin.DiamondAt(new Vector2(W / 2, 55), 56, Color.white);
                 GUI.Label(new Rect(W / 2 - 28, 27, 56, 56), "VS", new GUIStyle(EryonSkin.Key) { fontSize = 17 });
             }
+            DrawLiveHud(W, H);
             if (result != null)
             {
                 EryonSkin.Fill(new Rect(0, 0, W, H), new Color(0, 0, 0, 0.45f));

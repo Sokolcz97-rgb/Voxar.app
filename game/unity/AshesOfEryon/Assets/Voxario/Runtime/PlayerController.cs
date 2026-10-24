@@ -12,6 +12,19 @@ namespace Voxario.Ashes
         public float runSpeed = 7f;
         bool autoRun;
         public bool inputEnabled = true;
+        /// <summary>Násobek rychlosti (blok v boji zpomaluje).</summary>
+        public float speedMul = 1f;
+        Vector3 dashVel;
+        float dashT;
+
+        /// <summary>Úskok (úhyb v boji): krátký rychlý pohyb daným směrem.</summary>
+        public void Dash(Vector3 dir)
+        {
+            dir.y = 0;
+            if (dir.sqrMagnitude < 0.01f) return;
+            dashVel = dir.normalized * 13f;
+            dashT = 0.2f;
+        }
         CharacterController cc;
         float vy;
 
@@ -37,7 +50,8 @@ namespace Voxario.Ashes
             Vector3 move = (fwd * input.y + right * input.x);
             if (move.sqrMagnitude > 1) move.Normalize();
             float spd = Input.GetKey(KeyCode.LeftShift) || autoRun ? runSpeed : walkSpeed;
-            Vector3 vel = move * spd;
+            Vector3 vel = move * spd * speedMul;
+            if (dashT > 0) { vel += dashVel; dashT -= dt; }
             if (cc.isGrounded)
             {
                 vy = -2f;

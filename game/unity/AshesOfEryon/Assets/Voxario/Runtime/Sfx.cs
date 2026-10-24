@@ -51,6 +51,8 @@ namespace Voxario.Ashes
                 case "coin": return Synth(id, 0.35f, (t, n) => (Mathf.Sin(t * 2 * Mathf.PI * (t < 0.08f ? 1320 : 1760))) * 0.45f * Env(t, 0.002f, 0.3f));
                 case "level": return Synth(id, 1.1f, (t, n) => Chord(t, new[] { 523.25f, 659.25f, 783.99f, 1046.5f }, 0.12f) * Env(t, 0.01f, 1.0f));
                 case "quest": return Synth(id, 0.7f, (t, n) => Chord(t, new[] { 587.33f, 880f }, 0.15f) * Env(t, 0.01f, 0.6f));
+                case "swing": return Synth(id, 0.2f, (t, n) => Noise(n) * 0.4f * Mathf.Sin(Mathf.PI * t / 0.2f) * (1 - t * 2f));
+                case "warn": return Synth(id, 0.16f, (t, n) => (Mathf.Sin(t * 2 * Mathf.PI * 660) * 0.35f + Mathf.Sin(t * 2 * Mathf.PI * 990) * 0.2f) * Env(t, 0.003f, 0.14f));
                 case "click": return Synth(id, 0.06f, (t, n) => Noise(n) * 0.3f * Env(t, 0.001f, 0.05f));
                 case "fall": return Synth(id, 0.5f, (t, n) => (Noise(n) * 0.5f + Mathf.Sin(t * 2 * Mathf.PI * (90 - t * 80)) * 0.6f) * Env(t, 0.01f, 0.45f));
                 default: return null;
