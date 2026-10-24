@@ -248,13 +248,13 @@ namespace Voxario.Ashes
                 tagLevel = myLevel;
                 foreach (var en in enemies)
                 {
-                    float mid = (en.def.l0 + en.def.l1) / 2f;
+                    // nepřátelé se přizpůsobují úrovni hráče (±1), v těžších oblastech mají aspoň minimum oblasti
+                    int lv = Mathf.Max(myLevel, en.def.l0);
                     string diff; Color c;
-                    if (mid <= myLevel - 2) { diff = "snadný"; c = new Color(0.6f, 0.8f, 0.55f); }
-                    else if (mid <= myLevel + 0.5f) { diff = "vyrovnaný"; c = new Color(0.95f, 0.85f, 0.55f); }
-                    else if (mid <= myLevel + 2) { diff = "silný"; c = new Color(1f, 0.6f, 0.35f); }
+                    if (lv <= myLevel) { diff = "vyrovnaný"; c = new Color(0.95f, 0.85f, 0.55f); }
+                    else if (lv <= myLevel + 2) { diff = "silný"; c = new Color(1f, 0.6f, 0.35f); }
                     else { diff = "nebezpečný"; c = new Color(1f, 0.35f, 0.3f); }
-                    en.tag.subtitle = $"úroveň {en.def.l0}–{en.def.l1} · {diff}";
+                    en.tag.subtitle = $"úroveň {Mathf.Max(1, lv - 1)}–{lv + 1} · {diff}";
                     en.tag.subtitleColor = c;
                 }
             }
