@@ -105,6 +105,7 @@ namespace Voxario.Ashes
         int hp1, hp2, max1, max2;
         readonly List<(Vector3 pos, string text, Color color, float t0)> floats = new List<(Vector3, string, Color, float)>();
         public bool Busy => fighting || result != null;
+        public bool InLiveFight => live;
         /// <summary>Text pod výsledkem příběhového souboje (např. vítězství nad bossem).</summary>
         public string StoryNote;
         bool storyNoteAlways;
@@ -317,7 +318,7 @@ namespace Voxario.Ashes
             }
 
             // vatry a památník (klávesa E)
-            if (!Busy && !Chat.Typing && Input.GetKeyDown(KeyCode.E) && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
+            if (!Busy && !Chat.Typing && KeyBinds.Down("interact") && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
             {
                 foreach (var b in beacons)
                     if (Vector3.Distance(boot.player.transform.position, b.t.position) < 4) StartCoroutine(Interact("beacon", b.id));

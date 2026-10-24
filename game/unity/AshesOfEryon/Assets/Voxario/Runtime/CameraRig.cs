@@ -23,8 +23,8 @@ namespace Voxario.Ashes
                     pitch = Mathf.Clamp(pitch - Input.GetAxis("Mouse Y") * 3f, 5, 70);
                 }
                 // v aktivním boji je Q úhyb – kamera se otáčí jen myší
-                if (!Encounters.LiveCombatActive && Input.GetKey(KeyCode.Q)) yaw -= 90 * dt;
-                if (!Encounters.LiveCombatActive && Input.GetKey(KeyCode.E)) yaw += 90 * dt;
+                if (!Encounters.LiveCombatActive && KeyBinds.Held("cam_left")) yaw -= 90 * dt;
+                if (!Encounters.LiveCombatActive && KeyBinds.Held("cam_right")) yaw += 90 * dt;
                 distance = Mathf.Clamp(distance - Input.mouseScrollDelta.y * 0.8f, 2.5f, 22f);
             }
             transform.position = target.position + Vector3.up * 1.3f;

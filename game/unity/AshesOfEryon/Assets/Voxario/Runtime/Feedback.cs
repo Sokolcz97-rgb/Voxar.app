@@ -21,7 +21,7 @@ namespace Voxario.Ashes
         void Update()
         {
             if (!boot.inWorld) { open = false; return; }
-            if (Input.GetKeyDown(KeyCode.F1) && (open || !Chat.Typing)) { open = !open; msg = null; }
+            if (KeyBinds.Down("feedback") && (open || !Chat.Typing)) { open = !open; msg = null; }
             if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
         }
 

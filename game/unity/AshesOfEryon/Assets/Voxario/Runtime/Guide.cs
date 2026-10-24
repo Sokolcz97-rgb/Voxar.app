@@ -16,7 +16,7 @@ namespace Voxario.Ashes
         void Update()
         {
             if (!boot.inWorld || Chat.Typing) return;
-            if (Input.GetKeyDown(KeyCode.H))
+            if (KeyBinds.Down("guide"))
             {
                 hidden = !hidden;
                 PlayerPrefs.SetInt("ui.guide.hidden", hidden ? 1 : 0);

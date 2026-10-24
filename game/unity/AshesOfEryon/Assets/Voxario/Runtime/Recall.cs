@@ -21,7 +21,7 @@ namespace Voxario.Ashes
         {
             if (!boot.inWorld || boot.player == null) { castStart = -1; return; }
             bool busy = Encounters.Instance != null && Encounters.Instance.Busy;
-            if (!Chat.Typing && Input.GetKeyDown(KeyCode.T) && !busy)
+            if (!Chat.Typing && KeyBinds.Down("recall") && !busy)
             {
                 if (Casting) { castStart = -1; Note("Návrat zrušen."); }
                 else if (Time.time < readyAt) Note($"Návrat půjde znovu za {Mathf.CeilToInt(readyAt - Time.time)} s.");

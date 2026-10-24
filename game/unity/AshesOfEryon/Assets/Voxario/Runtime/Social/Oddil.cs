@@ -58,7 +58,7 @@ namespace Voxario.Ashes
                 refreshAt = Time.unscaledTime + (open ? 15 : 60);
                 StartCoroutine(Call("ashes_oddil_info", "{}", null));
             }
-            if (!Chat.Typing && Input.GetKeyDown(KeyCode.O)) { open = !open; error = ok = null; if (open) refreshAt = 0; }
+            if (!Chat.Typing && KeyBinds.Down("oddil")) { open = !open; error = ok = null; if (open) refreshAt = 0; }
             if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
         }
 

@@ -78,7 +78,7 @@ namespace Voxario.Ashes
             expeditionSeen = left.HasValue;
             doneNotified = done;
             if (Chat.Typing) return;
-            if (Input.GetKeyDown(KeyCode.K)) { if (open) open = false; else Open(); }
+            if (KeyBinds.Down("chronicle")) { if (open) open = false; else Open(); }
             if (open && Input.GetKeyDown(KeyCode.Escape)) { open = false; UiFocus.MarkClosed(); }
         }
 

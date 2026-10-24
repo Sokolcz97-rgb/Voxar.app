@@ -77,7 +77,7 @@ namespace Voxario.Ashes
             if (!liveHelpShown)
             {
                 liveHelpShown = true;
-                Note("Levé tlačítko = útok · 1 = dovednost · Q = úhyb · F (držet) = blok. Uhni, když se nepřítel napřáhne!");
+                Note($"{KeyBinds.Label("attack")} = útok · {KeyBinds.Label("skill")} = dovednost · {KeyBinds.Label("dodge")} = úhyb · {KeyBinds.Label("block")} (držet) = blok. Uhni, když se nepřítel napřáhne! Klávesy změníš v Nastavení → Ovládání.");
             }
 
             bool enemyRanged = e.def.cls == "lucistnik" || e.def.cls == "vestec";
@@ -114,7 +114,7 @@ namespace Voxario.Ashes
                 float range = liveRules.range > 0 ? liveRules.range : 3.2f;
 
                 // --- blok (držet F): pomalejší pohyb, ohlásí se na nejbližší úder
-                blocking = inputOk && Input.GetKey(KeyCode.F);
+                blocking = inputOk && KeyBinds.Held("block");
                 boot.player.speedMul = blocking ? 0.4f : 1f;
                 bool inWindow = now >= swingLandAt - 0.85f && now <= swingLandAt + 0.2f;
                 if (blocking && inWindow && defendedIndex < swingIndex)
@@ -124,7 +124,7 @@ namespace Voxario.Ashes
                 }
 
                 // --- úhyb (Q): odskok bokem; když přijde včas, rána mine
-                if (inputOk && Input.GetKeyDown(KeyCode.Q) && now >= dodgeReadyAt)
+                if (inputOk && KeyBinds.Down("dodge") && now >= dodgeReadyAt)
                 {
                     dodgeReadyAt = now + Mathf.Max(0.9f, liveRules.dodge_ms / 1000f + 0.05f);
                     var toEnemy = e.view.transform.position - boot.player.transform.position; toEnemy.y = 0;
@@ -140,8 +140,8 @@ namespace Voxario.Ashes
                 }
 
                 // --- útok (levé tlačítko myši) a dovednost (1)
-                bool wantAttack = inputOk && !blocking && Input.GetMouseButtonDown(0) && GUIUtility.hotControl == 0;
-                bool wantSkill = inputOk && !blocking && Input.GetKeyDown(KeyCode.Alpha1);
+                bool wantAttack = inputOk && !blocking && KeyBinds.Down("attack") && (KeyBinds.Get("attack") != KeyCode.Mouse0 || GUIUtility.hotControl == 0);
+                bool wantSkill = inputOk && !blocking && KeyBinds.Down("skill");
                 if ((wantAttack && now >= attackReadyAt) || (wantSkill && now >= skillReadyAt))
                 {
                     if (dist > range) Note(range > 5 ? "Nepřítel je příliš daleko." : "Přibliž se k nepříteli.");
@@ -289,7 +289,7 @@ namespace Voxario.Ashes
         {
             if (!live || liveRules == null) return;
             float now = Time.time;
-            string[] keys = { "LMB", "1", "Q", "F" };
+            string[] keys = { KeyBinds.Label("attack"), KeyBinds.Label("skill"), KeyBinds.Label("dodge"), KeyBinds.Label("block") };
             string[] names = { "Útok", liveSkillName, "Úhyb", "Blok" };
             float[] left = {
                 Mathf.Max(0, attackReadyAt - now) / Mathf.Max(0.1f, liveRules.attack_ms / 1000f),
@@ -313,7 +313,7 @@ namespace Voxario.Ashes
             {
                 float a = 0.55f + 0.45f * Mathf.Sin(now * 30f);
                 var wr = new Rect(W / 2 - 220, y - 56, 440, 40);
-                EryonSkin.Shadowed(wr, "Nepřítel se napřahuje – Q úhyb / F blok", new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = 22, normal = { textColor = new Color(1f, 0.35f, 0.28f, a) } });
+                EryonSkin.Shadowed(wr, $"Nepřítel se napřahuje – {KeyBinds.Label("dodge")} úhyb / {KeyBinds.Label("block")} blok", new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = 22, normal = { textColor = new Color(1f, 0.35f, 0.28f, a) } });
             }
         }
     }
