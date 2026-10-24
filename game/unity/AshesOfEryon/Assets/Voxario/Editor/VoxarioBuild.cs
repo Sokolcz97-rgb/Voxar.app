@@ -311,7 +311,7 @@ public static class VoxarioBuild
         PlayerSettings.companyName = "StudioVoxario";
         PlayerSettings.productName = "Ashes of Eryon";
         var ver = Arg("-buildVersion");
-        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.9.0" : ver;
+        PlayerSettings.bundleVersion = string.IsNullOrEmpty(ver) || ver == "none" ? "0.9.1" : ver;
         PlayerSettings.colorSpace = ColorSpace.Linear;
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,

@@ -85,6 +85,20 @@ namespace Voxario.Ashes
             shopLoaded = true;
             if (err != null) { Msg(err, true); shop = new Item[0]; yield break; }
             shop = JsonUtility.FromJson<ItemList>("{\"items\":" + (string.IsNullOrEmpty(json) ? "[]" : json) + "}")?.items ?? new Item[0];
+            // za kolik kovář ukove nové zboží
+            string nj = null;
+            yield return boot.api.Rpc("ashes_shop_next", "{}", (j, e) => { nj = j; });
+            if (int.TryParse(nj?.Trim(), out var secs)) shopRestockAt = Time.realtimeSinceStartup + secs;
+        }
+
+        float shopRestockAt = -1;
+        string RestockText()
+        {
+            if (shopRestockAt < 0) return "";
+            int s = Mathf.Max(0, (int)(shopRestockAt - Time.realtimeSinceStartup));
+            if (s <= 0) return "nové zboží je připravené – otevři kováře znovu";
+            int h = s / 3600, m = s % 3600 / 60;
+            return "nové zboží za " + (h > 0 ? $"{h} h {m} min" : m > 0 ? $"{m} min" : "chvilku");
         }
 
         IEnumerator Call(string fn, string args, string success, bool reloadShop = false)
@@ -410,11 +424,12 @@ namespace Voxario.Ashes
         {
             var st = boot.state;
             GUILayout.BeginArea(body);
-            GUILayout.Label($"{smithName.ToUpperInvariant()}  ·  ZBOŽÍ NA DNEŠEK", EryonSkin.Caps);
-            GUILayout.Label("Kovář každý den ukove nové zboží pro tvé povolání a úroveň. Nákup jde rovnou do batohu.", EryonSkin.Small);
+            string restock = RestockText();
+            GUILayout.Label($"{smithName.ToUpperInvariant()}  ·  ZBOŽÍ" + (restock.Length > 0 ? "  ·  " + restock.ToUpperInvariant() : ""), EryonSkin.Caps);
+            GUILayout.Label("Kovář každé 3 hodiny – a hned po tvé nové úrovni – ukove nové zboží pro tvé povolání a úroveň. Nákup jde rovnou do batohu.", EryonSkin.Small);
             GUILayout.Space(6);
             if (!shopLoaded) { GUILayout.Label("Načítám zboží…", EryonSkin.Body); GUILayout.EndArea(); return; }
-            if (shop == null || shop.Length == 0) { GUILayout.Label("Dnes už kovář nic nemá. Zastav se zítra.", EryonSkin.Body); GUILayout.EndArea(); return; }
+            if (shop == null || shop.Length == 0) { GUILayout.Label("Kovář právě kuje nové zboží – otevři ho znovu.", EryonSkin.Body); GUILayout.EndArea(); return; }
             int bagMax = st.bag_max > 0 ? st.bag_max : 12;
             bool full = st.BagCount >= bagMax;
             if (full) GUILayout.Label("<color=#e0672a>Batoh je plný – nejdřív něco prodej.</color>", new GUIStyle(EryonSkin.BodyBold) { richText = true });
