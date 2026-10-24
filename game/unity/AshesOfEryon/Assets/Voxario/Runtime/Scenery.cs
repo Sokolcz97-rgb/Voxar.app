@@ -24,6 +24,8 @@ namespace Voxario.Ashes
         {
             float h = WorldMap.HeightAt(x, z);
             if (h < 1 || h > 14) return false;
+            // jih vysychá: stromy jen na severu (poušť a útesy staví DesertScenery)
+            if (z > 112 + WorldMap.Fbm(x * 0.1f, 9) * 10) return false;
             if (WorldMap.RoadDistance(x, z) < 4) return false;
             var c = WorldMap.City;
             if (x > c.xMin - 6 && x < c.xMax + 4 && z > c.yMin - 6 && z < c.yMax + 6) return false;
@@ -80,7 +82,7 @@ namespace Voxario.Ashes
             }
         }
 
-        static Material PaletteMat(Material template, Color c, float dark)
+        internal static Material PaletteMat(Material template, Color c, float dark)
         {
             var src = template != null ? template : ModelLibrary.Instance?.lit;
             var m = src != null ? new Material(src) : ModelLibrary.NewLit(Color.white, 0.1f);
@@ -161,7 +163,7 @@ namespace Voxario.Ashes
                 float h = WorldMap.HeightAt(x, z);
                 float s = 0.3f + R() * (h > 6 ? 1.6f : 0.8f);
                 var rot = Quaternion.Euler(R() * 180, R() * 360, R() * 180);
-                if (h < 0.2f || WorldMap.InCity(x, z) || WorldMap.RoadDistance(x, z) < 3) continue;
+                if (h < 0.2f || WorldMap.InCity(x, z) || WorldMap.RoadDistance(x, z) < 3 || z > 120) continue;
                 var pos = new Vector3(x, h + s * 0.2f, -z);
                 rocks.At(pos).Add(rock, Matrix4x4.TRS(pos, rot, new Vector3(s, s * 0.7f, s)), (i % 8 + 0.5f) / 8f, -1, 1);
                 if (s > 0.9f)
@@ -195,7 +197,7 @@ namespace Voxario.Ashes
                     float x = (R() - 0.5f) * 200, z = (R() - 0.5f) * 200;
                     float h = WorldMap.HeightAt(x, z);
                     float sy = 0.7f + R() * 0.8f, yaw = R() * 360;
-                    if (h < 0.9f || h > 9 || WorldMap.InCity(x, z) || WorldMap.RoadDistance(x, z) < 2.4f) continue;
+                    if (h < 0.9f || h > 9 || WorldMap.InCity(x, z) || WorldMap.RoadDistance(x, z) < 2.4f || z > 112) continue;
                     var pos = new Vector3(x, h - 0.02f, -z);
                     grass.At(pos).Add(tuft, Matrix4x4.TRS(pos, Quaternion.Euler(0, yaw, 0), new Vector3(1, sy, 1)), (i % 8 + 0.5f) / 8f, 0, 0.6f);
                     placed++;
@@ -208,7 +210,7 @@ namespace Voxario.Ashes
             BuildCamp(parent);
         }
 
-        static void AddTrunkCollider(Transform parent, Vector3 pos, float r, float h)
+        internal static void AddTrunkCollider(Transform parent, Vector3 pos, float r, float h)
         {
             var go = new GameObject("tree");
             go.transform.SetParent(parent, false);
@@ -299,7 +301,7 @@ namespace Voxario.Ashes
             }
         }
 
-        static void Emit(Transform parent, string name, MeshKit kit, Material mat)
+        internal static void Emit(Transform parent, string name, MeshKit kit, Material mat)
         {
             if (kit.Triangles == 0) return;
             var go = new GameObject(name);
@@ -326,7 +328,7 @@ namespace Voxario.Ashes
             Emit(parent, "Stany", kit, PaletteMat(null, new Color(0.45f, 0.16f, 0.12f), 0.6f));
         }
 
-        static void Banner(Transform parent, float x, float z)
+        internal static void Banner(Transform parent, float x, float z)
         {
             var kit = new MeshKit();
             var pos = WorldMap.ToWorld(x, z);

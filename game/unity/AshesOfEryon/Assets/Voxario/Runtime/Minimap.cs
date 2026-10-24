@@ -9,8 +9,11 @@ namespace Voxario.Ashes
     public class Minimap : MonoBehaviour
     {
         public GameBootstrap boot;
-        const int Res = 512;
-        const float Half = 135f; // web souřadnice -135 … 135
+        // web x -135 … 135, z -135 … 345 (s jižním dílem)
+        const float X0 = WorldMap.MinX, X1 = WorldMap.MaxX, Z0 = WorldMap.MinZ, Z1 = WorldMap.MaxZ;
+        const int ResY = 640;
+        static readonly int ResX = Mathf.RoundToInt(ResY * (X1 - X0) / (Z1 - Z0));
+        static float Aspect => (X1 - X0) / (Z1 - Z0);
         Texture2D map, dot;
         bool big;
 
@@ -21,15 +24,14 @@ namespace Voxario.Ashes
 
         void Build()
         {
-            map = new Texture2D(Res, Res, TextureFormat.RGB24, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-            var px = new Color32[Res * Res];
-            for (int iy = 0; iy < Res; iy++)
-            for (int ix = 0; ix < Res; ix++)
+            map = new Texture2D(ResX, ResY, TextureFormat.RGB24, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[ResX * ResY];
+            for (int iy = 0; iy < ResY; iy++)
+            for (int ix = 0; ix < ResX; ix++)
             {
-                // obrázek: nahoře sever (web z záporné → Unity +Z), x doprava
-                float x = -Half + ix / (float)(Res - 1) * Half * 2;
-                float z = Half - iy / (float)(Res - 1) * Half * 2;
-                z = -z;
+                // obrázek: nahoře sever (web z záporné → Unity +Z), x doprava; řádek iy = 0 je nahoře
+                float x = X0 + ix / (float)(ResX - 1) * (X1 - X0);
+                float z = Z0 + iy / (float)(ResY - 1) * (Z1 - Z0);
                 float h = WorldMap.HeightAt(x, z);
                 Color c;
                 if (h < 0) c = Color.Lerp(new Color(0.12f, 0.27f, 0.33f), new Color(0.05f, 0.13f, 0.19f), Mathf.Clamp01(-h / 6));
@@ -38,8 +40,18 @@ namespace Voxario.Ashes
                 else if (h < 1.1f) c = new Color(0.78f, 0.69f, 0.52f);
                 else if (h > 9) c = Color.Lerp(new Color(0.45f, 0.43f, 0.39f), new Color(0.75f, 0.73f, 0.7f), Mathf.Clamp01((h - 9) / 12));
                 else c = Color.Lerp(new Color(0.33f, 0.4f, 0.19f), new Color(0.5f, 0.45f, 0.28f), Mathf.Clamp01((h - 1) / 8));
+                if (z > 100 && h >= 1.1f)
+                {
+                    // jih: vysychající břeh, rudé útesy, pouštní písek, oáza
+                    float arid = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(104, 200, z));
+                    var desert = Color.Lerp(new Color(0.8f, 0.6f, 0.38f), new Color(0.86f, 0.68f, 0.45f), Mathf.Clamp01((h - 1) / 6));
+                    if (h > 9) desert = Color.Lerp(new Color(0.58f, 0.34f, 0.24f), new Color(0.72f, 0.46f, 0.32f), Mathf.Clamp01((h - 9) / 20));
+                    c = Color.Lerp(c, desert, h > 9 ? Mathf.Max(arid, Mathf.InverseLerp(126, 140, z)) : arid);
+                    if (Vector2.Distance(new Vector2(x, z), WorldMap.Oasis) < WorldMap.OasisR) c = new Color(0.12f, 0.36f, 0.4f);
+                    else if (Vector2.Distance(new Vector2(x, z), WorldMap.Oasis) < WorldMap.OasisR + 6) c = new Color(0.38f, 0.46f, 0.22f);
+                }
                 float shade = 0.85f + Mathf.Clamp(WorldMap.HeightAt(x - 1, z - 1) - h, -1, 1) * 0.15f;
-                px[(Res - 1 - iy) * Res + ix] = c * shade;
+                px[(ResY - 1 - iy) * ResX + ix] = c * shade;
             }
             map.SetPixels32(px);
             map.Apply();
@@ -48,7 +60,7 @@ namespace Voxario.Ashes
             dot.Apply();
         }
 
-        Vector2 ToUv(Vector2 web) => new Vector2((web.x + Half) / (Half * 2), (-web.y + Half) / (Half * 2));
+        Vector2 ToUv(Vector2 web) => new Vector2((web.x - X0) / (X1 - X0), (Z1 - web.y) / (Z1 - Z0));
 
         void OnGUI()
         {
@@ -58,14 +70,17 @@ namespace Voxario.Ashes
             EryonSkin.Begin();
             float W = EryonSkin.W, H = EryonSkin.H;
             var pw = WorldMap.ToWeb(boot.player.transform.position);
+            DrawRegionBanner(RegionName(pw), W, H);
             if (big)
             {
                 EryonSkin.Fill(new Rect(0, 0, W, H), new Color(0, 0, 0, 0.6f));
-                float s = Mathf.Min(W, H) - 160;
-                var outer = new Rect((W - s) / 2 - 16, (H - s) / 2 - 56, s + 32, s + 88);
+                float mh = H - 180, mw = mh * Aspect;
+                if (mw > W - 120) { mw = W - 120; mh = mw / Aspect; }
+                var outer = new Rect((W - mw) / 2 - 16, (H - mh) / 2 - 56, mw + 32, mh + 88);
                 GUI.Box(outer, GUIContent.none, EryonSkin.PanelStyle);
                 GUI.Label(new Rect(outer.x, outer.y + 8, outer.width, 36), "POBŘEŽÍ KALIDRY", new GUIStyle(EryonSkin.H1) { alignment = TextAnchor.MiddleCenter, fontSize = 24 });
-                var r = new Rect((W - s) / 2, (H - s) / 2, s, s);
+                var r = new Rect((W - mw) / 2, (H - mh) / 2, mw, mh);
+                float s = mw;
                 GUI.DrawTexture(r, map);
                 Border(r);
                 DrawMarks(r, new Rect(0, 0, 1, 1), true);
@@ -74,9 +89,10 @@ namespace Voxario.Ashes
             }
             float size = 250;
             var rect = new Rect(W - size - 24, 24, size, size);
-            float zoom = 0.3f;
+            // výřez ~81 × 81 m kolem hráče
+            float zx = 81f / (X1 - X0), zy = 81f / (Z1 - Z0);
             var uv = ToUv(pw);
-            var src = new Rect(uv.x - zoom / 2, uv.y - zoom / 2, zoom, zoom);
+            var src = new Rect(uv.x - zx / 2, uv.y - zy / 2, zx, zy);
             EryonSkin.Fill(new Rect(rect.x - 6, rect.y - 6, size + 12, size + 12), new Color(0.04f, 0.03f, 0.02f, 0.9f));
             GUI.DrawTextureWithTexCoords(rect, map, src);
             DrawMarks(rect, src, false);
@@ -89,6 +105,40 @@ namespace Voxario.Ashes
             if (DayNight.Instance != null)
                 GUI.Label(new Rect(rect.x - 20, rect.yMax + 28, size + 40, 20), DayNight.Instance.ClockText() + (WorldPresence.PingMs > 0 ? $"   ·   odezva {WorldPresence.PingMs} ms" : ""),
                     new GUIStyle(EryonSkin.Small) { alignment = TextAnchor.MiddleCenter, fontSize = 14, wordWrap = false });
+        }
+
+        // ---------------------------------------------------------------- název oblasti při vstupu (jih, verše z písní)
+        static readonly System.Collections.Generic.Dictionary<string, string> Verses = new System.Collections.Generic.Dictionary<string, string>
+        {
+            ["Solný průsmyk"] = "„Třetí den jsme stáli v průsmyku, vítr nesl sůl a dým.“",
+            ["Rudé útesy"] = "„Za městem se kopce zvedly, v dálce rudě hořel kraj.“",
+            ["Solné pobřeží"] = "„Moře si pamatuje. Kámen si pamatuje.“",
+            ["Rudé písky"] = "„Krev mizí v písku, však jméno zůstává.“",
+            ["Ruiny Starého slunce"] = "„A tam, kde kdysi stál poslední štít, dodnes vítr nese jeho jméno.“",
+            ["Oáza Posledního doušku"] = "„Jen podaly chléb a vodu a řekly tiše: Jděte dál.“",
+        };
+        string lastRegion, bannerTitle, bannerVerse;
+        float bannerAt = -100;
+        readonly System.Collections.Generic.HashSet<string> seenRegions = new System.Collections.Generic.HashSet<string>();
+
+        void DrawRegionBanner(string region, float W, float H)
+        {
+            if (region != lastRegion)
+            {
+                lastRegion = region;
+                // jen nové jižní oblasti, každá jednou za hru (ať to neruší při přecházení sem a tam)
+                if (Verses.TryGetValue(region, out var verse) && seenRegions.Add(region))
+                {
+                    bannerTitle = region; bannerVerse = verse; bannerAt = Time.time;
+                }
+            }
+            float t = Time.time - bannerAt;
+            if (t > 6 || bannerTitle == null) return;
+            float a = Mathf.Clamp01(t / 0.8f) * Mathf.Clamp01((6 - t) / 1.2f);
+            var ts = new GUIStyle(EryonSkin.Center) { font = EryonSkin.CinzelBold, fontSize = 46, normal = { textColor = new Color(1f, 0.86f, 0.55f, a) } };
+            var vs = new GUIStyle(EryonSkin.Center) { font = EryonSkin.CormorantBold, fontSize = 24, wordWrap = true, normal = { textColor = new Color(0.95f, 0.9f, 0.8f, a) } };
+            EryonSkin.Shadowed(new Rect(0, H * 0.2f, W, 60), bannerTitle.ToUpperInvariant(), ts);
+            EryonSkin.Shadowed(new Rect(W * 0.2f, H * 0.2f + 62, W * 0.6f, 60), bannerVerse, vs);
         }
 
         static void Border(Rect r)
@@ -105,6 +155,15 @@ namespace Voxario.Ashes
         public static string RegionName(Vector2 p)
         {
             if (WorldMap.InCity(p.x, p.y)) return "Kalidra";
+            if (p.y > 118)
+            {
+                if (Vector2.Distance(p, WorldMap.Oasis) < WorldMap.OasisR + 16) return "Oáza Posledního doušku";
+                if (Vector2.Distance(p, WorldMap.Ruins) < 22) return "Ruiny Starého slunce";
+                if (WorldMap.PathDistance(p.x, p.y, WorldMap.CanyonPath) < 12) return "Solný průsmyk";
+                if (p.y > 206) return "Rudé písky";
+                if (p.x < -44) return "Solné pobřeží";
+                if (p.y > 134) return "Rudé útesy";
+            }
             if (Vector2.Distance(p, new Vector2(60, -68)) < 22) return "Tábor Legie";
             if (Vector2.Distance(p, new Vector2(-64, -74)) < 30) return "Zátoka černých plachet";
             if (p.y < -30) return "Kopce strážních ohňů";

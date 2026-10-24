@@ -205,6 +205,7 @@ namespace Voxario.Ashes
             string faction = string.IsNullOrEmpty(ch.faction) ? "kalidra" : ch.faction;
             WorldBuilder.Build(worldRoot, library, faction);
             Scenery.Build(worldRoot, PlayerPrefs.GetInt("gfx.quality", 2));
+            DesertScenery.Build(worldRoot, PlayerPrefs.GetInt("gfx.quality", 2));
             GetComponent<Encounters>().Build(worldRoot, library, faction);
             GetComponent<WorldBoss>().Build(worldRoot, library);
             GetComponent<Race>().Build(worldRoot);
@@ -230,7 +231,7 @@ namespace Voxario.Ashes
                 var parts = PlayerPrefs.GetString(posKey).Split(';');
                 if (parts.Length == 2 && float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sx)
                     && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sz)
-                    && Mathf.Abs(sx) < 130 && Mathf.Abs(sz) < 130 && WorldMap.HeightAt(sx, sz) > 0.4f)
+                    && WorldMap.InWorld(sx, sz) && WorldMap.HeightAt(sx, sz) > 0.4f)
                     spawn = new Vector2(sx, sz);
             }
             savePosKey = posKey;
@@ -301,6 +302,14 @@ namespace Voxario.Ashes
                 ("20-obloha", WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0), WorldMap.ToWorld(0, 15) + new Vector3(0, 6, 0) + (DayNight.Instance == null ? Vector3.forward : (DayNight.Instance.SunAltitude > 0 ? DayNight.Instance.SunDir : DayNight.Instance.MoonDir) * 50f + Vector3.down * 12f)),
                 ("21-pobrezi", WorldMap.ToWorld(-58, 40) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-85, 38) + Vector3.up * 0.3f),
                 ("19-stadion", WorldMap.ToWorld(-8, 8) + new Vector3(0, 4, 0), WorldMap.ToWorld(0, 15) + Vector3.up * 2.5f),
+                // jih: Solný průsmyk, pobřežní cesta, Rudé písky
+                ("23-breh-k-jihu", WorldMap.ToWorld(-58, 96) + new Vector3(0, 3.5f, 0), WorldMap.ToWorld(-40, 170) + Vector3.up * 4),
+                ("24-prusmyk", WorldMap.ToWorld(-24, 132) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(-8, 158) + Vector3.up * 3),
+                ("25-prusmyk-uvnitr", WorldMap.ToWorld(-12, 174) + new Vector3(0, 2.5f, 0), WorldMap.ToWorld(10, 204) + Vector3.up * 3),
+                ("26-poust", WorldMap.ToWorld(18, 228) + new Vector3(0, 9, 0), WorldMap.ToWorld(40, 280) + Vector3.up * 2),
+                ("27-oaza", WorldMap.ToWorld(24, 262) + new Vector3(0, 4, 0), WorldMap.ToWorld(38, 272) + Vector3.up * 1),
+                ("28-ruiny", WorldMap.ToWorld(-8, 258) + new Vector3(0, 4, 0), WorldMap.ToWorld(-22, 268) + Vector3.up * 2),
+                ("29-jih-shora", WorldMap.ToWorld(0, 120) + new Vector3(0, 120, 0), WorldMap.ToWorld(0, 240)),
             };
             foreach (var v in views)
             {
