@@ -20,7 +20,22 @@ const BUCKET = "game-builds";
 const MANIFEST_PATH = "ashes/latest.json";
 const PART_SIZE = 45 * 1024 * 1024;
 
+/**
+ * Části se ukládají zakódované (XOR s náhodným klíčem z manifestu), aby nevypadaly jako
+ * spustitelný soubor – webová ochrana antivirů/SmartScreen jinak spojení s .exe během
+ * stahování utne („Failed to fetch“). Ověřuje se SHA-256 původního souboru.
+ */
+function xorBytes(data: Uint8Array, key: Uint8Array, offset: number) {
+  const out = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i += 1) out[i] = data[i] ^ key[(offset + i) % key.length];
+  return out;
+}
+const b64ToBytes = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const bytesToB64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+
 type Manifest = {
+  /** base64 klíč – když je uvedený, části jsou zakódované */
+  xor?: string;
   version: string;
   fileName: string;
   size: number;
@@ -127,8 +142,17 @@ export function AshesDownloadCard() {
     setProgress(0);
     try {
       const chunks: Blob[] = [];
+      const key = manifest.xor ? b64ToBytes(manifest.xor) : null;
+      let offset = 0;
       for (let index = 0; index < manifest.parts.length; index += 1) {
-        chunks.push(await downloadPart(manifest.parts[index], index, manifest.parts.length));
+        const part = await downloadPart(manifest.parts[index], index, manifest.parts.length);
+        if (key) {
+          const bytes = new Uint8Array(await part.arrayBuffer());
+          chunks.push(new Blob([xorBytes(bytes, key, offset)]));
+          offset += bytes.length;
+        } else {
+          chunks.push(part);
+        }
         setProgress((index + 1) / manifest.parts.length);
       }
       const file = new Blob(chunks, { type: "application/octet-stream" });
@@ -158,12 +182,16 @@ export function AshesDownloadCard() {
     setMessage("Počítám kontrolní součet…");
     setProgress(0);
     try {
-      const sha256 = await sha256Hex(await file.arrayBuffer());
+      const whole = new Uint8Array(await file.arrayBuffer());
+      const sha256 = await sha256Hex(whole.buffer);
+      const key = crypto.getRandomValues(new Uint8Array(64));
       const parts: string[] = [];
       const count = Math.ceil(file.size / PART_SIZE);
       for (let index = 0; index < count; index += 1) {
-        const path = `ashes/${version}/GameSetup.exe.part${String(index).padStart(3, "0")}`;
-        const { error } = await supabase.storage.from(BUCKET).upload(path, file.slice(index * PART_SIZE, (index + 1) * PART_SIZE), {
+        const path = `ashes/${version}/data.part${String(index).padStart(3, "0")}.bin`;
+        const start = index * PART_SIZE;
+        const encoded = xorBytes(whole.subarray(start, Math.min(start + PART_SIZE, whole.length)), key, start);
+        const { error } = await supabase.storage.from(BUCKET).upload(path, new Blob([encoded]), {
           upsert: true,
           contentType: "application/octet-stream",
         });
@@ -172,7 +200,7 @@ export function AshesDownloadCard() {
         setProgress((index + 1) / count);
         setMessage(`Nahrávám ${index + 1}/${count}…`);
       }
-      const next: Manifest = { version, fileName: "GameSetup.exe", size: file.size, sha256, parts, uploadedAt: new Date().toISOString() };
+      const next: Manifest = { version, fileName: "GameSetup.exe", size: file.size, sha256, parts, uploadedAt: new Date().toISOString(), xor: bytesToB64(key) };
       const { error } = await supabase.storage.from(BUCKET).upload(MANIFEST_PATH, new Blob([JSON.stringify(next, null, 2)], { type: "application/json" }), {
         upsert: true,
         cacheControl: "0",
