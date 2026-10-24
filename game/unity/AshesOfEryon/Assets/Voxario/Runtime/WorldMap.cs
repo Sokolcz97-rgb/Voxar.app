@@ -147,8 +147,14 @@ namespace Voxario.Ashes
             float n = Fbm(x * 0.05f + 17, z * 0.05f + 3);
             float dunes = 1.6f + Fbm(x * 0.022f + 40, z * 0.03f) * 4.2f + Mathf.Abs(Mathf.Sin(x * 0.06f + z * 0.04f + n * 3)) * 1.5f;
             h = Mix(h, dunes, desert);
+            // nepravidelné okraje (žádné rovné hrany)
+            float wz = (Fbm(x * 0.025f + 31, z * 0.025f + 11) - 0.5f) * 26;
+            float wx = (Fbm(x * 0.025f + 5, z * 0.025f + 77) - 0.5f) * 22;
             // rudé útesy: plošina mezi břehem a pouští (na západě volný pruh u moře = pobřežní cesta)
-            float ridge = Step(134, 150, z) * Step(216, 202, z) * Step(-48, -36, x);
+            float jag = (Fbm(x * 0.09f + 3, z * 0.09f + 8) - 0.5f) * 9;
+            wz += jag; wx += jag;
+            float north = 141 + Mathf.Max(0, wz + 13) * 0.45f;
+            float ridge = Step(north, north + 14, z) * Step(218 + wz, 202 + wz, z) * Step(-52 + wx * 1.2f, -38 + wx * 1.2f, x);
             float plateau = Terrace(19 + Fbm(x * 0.04f + 7, z * 0.04f + 2) * 9, 3.2f, 0.55f);
             h = Mix(h, plateau, ridge);
             // stolové hory v poušti
@@ -158,8 +164,8 @@ namespace Voxario.Ashes
                 h = Mix(h, Terrace(m.w + n * 3, 3.2f, 0.55f), Step(m.z + 5, m.z, d));
             }
             // východ: skalní stěna nad mořem, jih: hory Rudého slunce (konec světa)
-            h = Mix(h, 30 + n * 10, Step(78, 100, x) * Step(140, 165, z));
-            h = Mix(h, 32 + n * 10, Step(310, 336, z));
+            h = Mix(h, 30 + n * 10, Step(78 + wx * 1.5f, 100 + wx * 1.5f, x) * Step(140 + wz * 0.3f, 165 + wz * 0.3f, z));
+            h = Mix(h, 32 + n * 10, Step(300 + wz * 0.8f, 324 + wz * 0.8f, z));
             // Solný průsmyk: dno kaňonu prořízne plošinu
             float dc = PathDistance(x, z, CanyonPath);
             float floorH = 1.7f + Fbm(x * 0.12f, z * 0.12f) * 0.7f + Step(120, 200, z) * 0.8f;
