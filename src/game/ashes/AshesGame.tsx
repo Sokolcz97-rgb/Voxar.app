@@ -484,7 +484,7 @@ export default function AshesGame() {
   // ------------------------------------------------------------ ostatní hráči (realtime)
   useEffect(() => {
     if (!character || !user) return;
-    const channel = supabase.channel(`ashes:world:${character.faction ?? "kalidra"}`, { config: { private: true, presence: { key: user.id }, broadcast: { self: false } } });
+    const channel = supabase.channel("ashes:world:all", { config: { private: true, presence: { key: user.id }, broadcast: { self: false } } });
     channelRef.current = channel;
     channel.on("presence", { event: "sync" }, () => {
       const raw = channel.presenceState<PresenceHero & Partial<Pos>>();

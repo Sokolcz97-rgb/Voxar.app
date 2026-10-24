@@ -10,8 +10,8 @@ using UnityEngine;
 namespace Voxario.Ashes
 {
     /// <summary>
-    /// Ostatní hráči ve světě přes Supabase Realtime – stejný soukromý kanál jako webová
-    /// verze (ashes:world:&lt;frakce&gt;), takže se hráči z webu a z Unity vidí navzájem.
+    /// Ostatní hráči ve světě přes Supabase Realtime – společný soukromý kanál ashes:world:all,
+    /// takže se vidí hráči obou frakcí (Kalidra i Legie); frakce je vidět pod jménem.
     /// Presence nese jméno, povolání a vzhled, broadcast „pos“ polohu (4× za sekundu).
     /// </summary>
     public class WorldPresence : MonoBehaviour
@@ -22,7 +22,7 @@ namespace Voxario.Ashes
         CancellationTokenSource cts;
         readonly ConcurrentQueue<string> inbox = new ConcurrentQueue<string>();
         readonly ConcurrentQueue<string> outbox = new ConcurrentQueue<string>();
-        string topic, uid;
+        string topic, uid, myFaction = "kalidra";
         int refNo = 1;
         float heartbeatAt, sendAt, reconnectAt;
         bool joined;
@@ -86,7 +86,9 @@ namespace Voxario.Ashes
             uid = UserIdFromJwt(boot.api.AccessToken);
             if (string.IsNullOrEmpty(uid)) return;
             string faction = string.IsNullOrEmpty(st.character.faction) ? "kalidra" : st.character.faction;
-            topic = $"realtime:ashes:world:{faction}";
+            myFaction = faction;
+            // společný svět pro obě frakce (dřív ashes:world:<frakce>)
+            topic = "realtime:ashes:world:all";
             cts = new CancellationTokenSource();
             _ = Run(cts.Token);
         }
@@ -334,6 +336,10 @@ namespace Voxario.Ashes
             if (cls != "hoplit" && cls != "lucistnik" && cls != "vestec") cls = "hoplit";
             string gender = MiniJson.S(MiniJson.Obj(meta.TryGetValue("appearance", out var ap) ? ap : null), "gender") == "f" ? "f" : "m";
             int level = (int)MiniJson.N(meta, "level", 1);
+            string fac = MiniJson.S(meta, "faction") == "legie" ? "legie" : "kalidra";
+            string sub = $"úroveň {level} · {(fac == "legie" ? "Legie" : "Kalidra")}";
+            // druhá frakce: načervenalý podtitul, vlastní frakce: zlatavý
+            var subColor = fac == myFaction ? new Color(0.92f, 0.80f, 0.52f, 1f) : new Color(0.95f, 0.45f, 0.38f, 1f);
             string tagStr = MiniJson.S(meta, "tag") ?? "";
             if (tagStr.Length > 5) tagStr = tagStr.Substring(0, 5);
             if (others.TryGetValue(key, out var o))
@@ -342,7 +348,8 @@ namespace Voxario.Ashes
                 if (o.view != null)
                 {
                     var nt = o.view.GetComponent<NameTag>();
-                    nt.subtitle = $"úroveň {level}";
+                    nt.subtitle = sub;
+                    nt.subtitleColor = subColor;
                     nt.title = TagName(tagStr, name);
                 }
                 return;
@@ -352,7 +359,8 @@ namespace Voxario.Ashes
             o.view = CharacterView.Create(boot.library.Hero($"{cls}_{gender}_lo") ?? boot.library.Hero($"{cls}_{gender}"), parent, gender == "f" ? 1.55f : 1.62f, "Hráč " + name);
             var tag = o.view.gameObject.AddComponent<NameTag>();
             tag.title = TagName(tagStr, name);
-            tag.subtitle = $"úroveň {level}";
+            tag.subtitle = sub;
+            tag.subtitleColor = subColor;
             tag.isPlayer = true;
             double x = MiniJson.N(meta, "x", double.NaN), z = MiniJson.N(meta, "z", double.NaN);
             if (!double.IsNaN(x) && !double.IsNaN(z) && Math.Abs(x) < 200 && Math.Abs(z) < 200)
