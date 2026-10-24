@@ -32,12 +32,14 @@ namespace Voxario.Ashes
             var dialog = NpcDialog.Instance;
             bool windowOpen = (CharacterWindow.Instance != null && CharacterWindow.Instance.IsOpen) || (Arena.Instance != null && Arena.Instance.IsOpen)
                               || (Chronicle.Instance != null && Chronicle.Instance.IsOpen) || (Feedback.Instance != null && Feedback.Instance.IsOpen);
-            if (Input.GetKeyDown(KeyCode.Escape) && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen && !UiFocus.ClosedThisFrame)
+            if (Input.GetKeyDown(KeyCode.Escape) && rebinding == null && boot.inWorld && !Chat.Typing && (Oddil.Instance == null || !Oddil.Instance.IsOpen) && !windowOpen && !UiFocus.ClosedThisFrame)
             {
                 if (dialog != null && dialog.IsOpen) dialog.Close();
                 else settingsOpen = !settingsOpen;
             }
-            bool blocked = settingsOpen || windowOpen || Chat.Typing || (Oddil.Instance != null && Oddil.Instance.IsOpen) || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy);
+            KeyBinds.Capturing = settingsOpen && rebinding != null;
+            if (!settingsOpen) rebinding = null;
+            bool blocked = settingsOpen || windowOpen || Chat.Typing || (Oddil.Instance != null && Oddil.Instance.IsOpen) || (dialog != null && dialog.IsOpen) || (Encounters.Instance != null && Encounters.Instance.Busy && !Encounters.Instance.InLiveFight);
             if (boot.player != null) boot.player.inputEnabled = !blocked;
             if (boot.rig != null) boot.rig.inputEnabled = !settingsOpen && !Chat.Typing;
         }
@@ -400,7 +402,7 @@ namespace Voxario.Ashes
             // spodní lišta s klávesami (tmavý podklad kvůli čitelnosti na světlém terénu)
             float y = H - 40;
             EryonSkin.Fill(new Rect(0, y - 8, W, 48), new Color(0.03f, 0.02f, 0.015f, 0.55f));
-            string[] keys = { "WASD", "pohyb", "Shift", "běh", "Mezerník", "skok", "E", "mluvit", "C", "postava", "I", "batoh", "K", "kronika", "M", "mapa", "Enter", "chat", "O", "oddíl", "F1", "hlášení", "Esc", "nastavení" };
+            string[] keys = { "WASD", "pohyb", KeyBinds.Label("run"), "běh", KeyBinds.Label("jump"), "skok", KeyBinds.Label("interact"), "mluvit", KeyBinds.Label("character"), "postava", KeyBinds.Label("bag"), "batoh", KeyBinds.Label("chronicle"), "kronika", KeyBinds.Label("map"), "mapa", "Enter", "chat", KeyBinds.Label("oddil"), "oddíl", KeyBinds.Label("feedback"), "hlášení", "Esc", "nastavení" };
             float x = 18;
             for (int i = 0; i < keys.Length; i += 2)
             {
@@ -586,15 +588,66 @@ namespace Voxario.Ashes
             GUILayout.EndHorizontal();
         }
 
+        static string rebinding;      // id akce, na kterou čekáme stisk
+        static float rebindStarted;
+
         static void Controls()
         {
-            Section("Ovládání");
+            Section("Ovládání", "Klikni na klávesu u akce a stiskni novou klávesu nebo tlačítko myši. Esc = zrušit, Backspace = odebrat.");
+
+            // zachycení nové klávesy
+            if (rebinding != null)
+            {
+                var ev = Event.current;
+                KeyCode got = KeyCode.None; bool done = false;
+                if (ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
+                {
+                    if (ev.keyCode == KeyCode.Escape) done = true;
+                    else if (ev.keyCode == KeyCode.Backspace) { KeyBinds.Set(rebinding, KeyCode.None); done = true; }
+                    else { got = ev.keyCode; }
+                }
+                else if (ev.type == EventType.MouseDown && Time.unscaledTime - rebindStarted > 0.25f)
+                    got = KeyCode.Mouse0 + Mathf.Clamp(ev.button, 0, 6);
+                if (got == KeyCode.None)
+                {
+                    // modifikátory (Shift/Ctrl/Alt) nepřicházejí jako KeyDown – zkontrolujeme přímo
+                    foreach (var mk in new[] { KeyCode.LeftShift, KeyCode.RightShift, KeyCode.LeftControl, KeyCode.RightControl, KeyCode.LeftAlt, KeyCode.RightAlt })
+                        if (Input.GetKeyDown(mk)) { got = mk; break; }
+                }
+                if (got != KeyCode.None) { KeyBinds.Set(rebinding, got); done = true; }
+                if (done) { rebinding = null; ev.Use(); }
+            }
+
+            string group = null;
+            foreach (var b in KeyBinds.All)
+            {
+                if (b.group != group)
+                {
+                    group = b.group;
+                    GUILayout.Space(8);
+                    GUILayout.Label(group, new GUIStyle(EryonSkin.BodyBold) { normal = { textColor = EryonSkin.Gold } });
+                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(b.label, EryonSkin.Body, GUILayout.Width(280), GUILayout.Height(34));
+                bool waiting = rebinding == b.id;
+                string cap = waiting ? "Stiskni klávesu…" : KeyBinds.Label(b.id);
+                if (GUILayout.Button(cap, waiting ? EryonSkin.ChipOn : EryonSkin.Chip, GUILayout.Width(200), GUILayout.Height(34)) && rebinding == null)
+                {
+                    rebinding = b.id; rebindStarted = Time.unscaledTime;
+                }
+                string clash = KeyBinds.Conflict(b.id);
+                if (clash != null) GUILayout.Label($"<color=#e0672a>stejná jako „{clash}“</color>", EryonSkin.Small, GUILayout.Height(34));
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.Space(10);
+            if (GUILayout.Button("Obnovit výchozí klávesy", EryonSkin.Button, GUILayout.Height(40), GUILayout.Width(300))) { KeyBinds.ResetAll(); rebinding = null; }
+
+            GUILayout.Space(14);
+            GUILayout.Label("Pevné klávesy", new GUIStyle(EryonSkin.BodyBold) { normal = { textColor = EryonSkin.Gold } });
             (string k, string d)[] rows =
             {
-                ("W A S D", "pohyb"), ("Shift", "běh"), ("R", "automatický běh vpřed"), ("T", "návrat do bezpečí (5 s, jednou za 3 min)"), ("Mezerník", "skok"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
-                ("Q / E", "otáčení kamery klávesami"), ("E", "mluvit s NPC, zapálit vatru, památník"), ("M", "mapa světa"),
-                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("O", "oddíl"), ("C", "postava a trénink"), ("I / B", "batoh a výbava"), ("K", "kronika – výpravy a boss kapitoly"), ("H", "skrýt / zobrazit rádce"), ("F1", "nahlásit chybu nebo nápad vývojářům"),
-                ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
+                ("W A S D", "pohyb"), ("Pravé tlačítko myši", "otáčení kamery"), ("Kolečko myši", "vzdálenost kamery"),
+                ("Enter", "chat (Tab – kanál Svět / Oddíl, /o zpráva do oddílu)"), ("Esc", "nastavení / zavřít okno"), ("F8", "znovu načíst módy"),
             };
             foreach (var (k, d) in rows)
             {

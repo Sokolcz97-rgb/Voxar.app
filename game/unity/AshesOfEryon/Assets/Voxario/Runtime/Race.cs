@@ -102,7 +102,7 @@ namespace Voxario.Ashes
                 }
                 return;
             }
-            if (!busy && !fight && !Chat.Typing && DistTo(pts[0]) < 4f && Input.GetKeyDown(KeyCode.E)
+            if (!busy && !fight && !Chat.Typing && DistTo(pts[0]) < 4f && KeyBinds.Down("interact")
                 && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
                 StartCoroutine(Begin());
         }

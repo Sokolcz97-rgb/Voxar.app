@@ -42,20 +42,20 @@ namespace Voxario.Ashes
         {
             Vector2 input = inputEnabled ? new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")) : Vector2.zero;
             // automatický běh (R): vpřed, dokud hráč nezmáčkne W/S nebo R znovu
-            if (inputEnabled && !Chat.Typing && Input.GetKeyDown(KeyCode.R)) autoRun = !autoRun;
+            if (inputEnabled && !Chat.Typing && KeyBinds.Down("autorun")) autoRun = !autoRun;
             if (!inputEnabled || Input.GetKey(KeyCode.S) || Input.GetKeyDown(KeyCode.W)) autoRun = false;
             if (autoRun && input.y == 0) input.y = 1;
             Vector3 fwd = cameraPivot != null ? Vector3.ProjectOnPlane(cameraPivot.forward, Vector3.up).normalized : Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
             Vector3 move = (fwd * input.y + right * input.x);
             if (move.sqrMagnitude > 1) move.Normalize();
-            float spd = Input.GetKey(KeyCode.LeftShift) || autoRun ? runSpeed : walkSpeed;
+            float spd = KeyBinds.Held("run") || autoRun ? runSpeed : walkSpeed;
             Vector3 vel = move * spd * speedMul;
             if (dashT > 0) { vel += dashVel; dashT -= dt; }
             if (cc.isGrounded)
             {
                 vy = -2f;
-                if (inputEnabled && Input.GetKeyDown(KeyCode.Space)) vy = 6.5f;
+                if (inputEnabled && KeyBinds.Down("jump")) vy = 6.5f;
             }
             else vy -= 20f * dt;
             vel.y = vy;

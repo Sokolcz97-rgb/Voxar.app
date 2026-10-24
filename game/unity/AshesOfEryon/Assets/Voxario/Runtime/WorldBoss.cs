@@ -88,7 +88,7 @@ namespace Voxario.Ashes
             }
             if (state != null && tag != null) tag.subtitle = state.alive ? $"světový boss · ❤ {state.hp} / {state.hp_max}" : "padl";
             bool busy = Encounters.Instance != null && Encounters.Instance.Busy;
-            if (alive && !busy && !Chat.Typing && Dist < 7f && Input.GetKeyDown(KeyCode.E)
+            if (alive && !busy && !Chat.Typing && Dist < 7f && KeyBinds.Down("interact")
                 && (NpcDialog.Instance == null || !NpcDialog.Instance.IsOpen))
             {
                 Encounters.Instance?.StartBossAttack(View, e => { note = e; noteUntil = Time.time + 4; });
