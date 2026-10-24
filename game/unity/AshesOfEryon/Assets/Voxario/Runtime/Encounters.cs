@@ -43,6 +43,8 @@ namespace Voxario.Ashes
                 ["plain"] = new[] { E("kopinik", "Kopiník Rudého slunce", "hoplit", 4, 6), E("knez-slunce", "Kněz Rudého slunce", "vestec", 4, 6) },
                 ["cove"] = new[] { E("strazce-lodi", "Strážce černých lodí", "hoplit", 5, 7) },
                 ["camp"] = new[] { E("garda", "Azkarova garda", "hoplit", 6, 8) },
+                ["pass"] = new[] { E("lapka-prusmyku", "Lapka ze Solného průsmyku", "lucistnik", 3, 5), E("hlidka-slunce", "Hlídka Rudého slunce", "hoplit", 3, 5) },
+                ["sands"] = new[] { E("nomad", "Nomád rudých písků", "hoplit", 5, 7), E("vestec-slunce", "Věštec Rudého slunce", "vestec", 5, 7), E("lucistnik-dun", "Lučištník z dun", "lucistnik", 5, 7) },
             },
             ["legie"] = new Dictionary<string, EnemyDef[]>
             {
@@ -52,6 +54,8 @@ namespace Voxario.Ashes
                 ["hills"] = new[] { E("zved-kalidra", "Kalidrský zvěd", "lucistnik", 3, 5), E("strazce-ohne", "Strážce ohně", "hoplit", 3, 5) },
                 ["plain"] = new[] { E("obrance", "Obránce Kalidry", "hoplit", 4, 6), E("knez-kalidry", "Kněz Kalidry", "vestec", 4, 6) },
                 ["kalidra"] = new[] { E("straz-kalidry", "Stráž Kalidry", "hoplit", 6, 8) },
+                ["pass"] = new[] { E("lapka-prusmyku", "Lapka ze Solného průsmyku", "lucistnik", 3, 5), E("pruzkumnik-kalidry", "Kalidrský průzkumník", "lucistnik", 3, 5) },
+                ["sands"] = new[] { E("nomad", "Nomád rudých písků", "hoplit", 5, 7), E("strazce-ruin", "Strážce Starého slunce", "vestec", 5, 7), E("lucistnik-dun", "Lučištník z dun", "lucistnik", 5, 7) },
             },
         };
 
@@ -64,6 +68,8 @@ namespace Voxario.Ashes
             ("cove", -64, -44), ("cove", -30, -74),
             ("camp", 44, -76), ("camp", 72, -56),
             ("kalidra", 86, 2), ("kalidra", 86, 36),
+            ("pass", -20, 146), ("pass", -12, 172), ("pass", 8, 200),
+            ("sands", -60, 196), ("sands", 22, 240), ("sands", -36, 250), ("sands", 48, 300), ("sands", 20, 288), ("sands", -50, 300), ("sands", 72, 268),
         };
 
         // oblasti bez nepřátel (vlastní město / tábor); zátoka Legie má strážné na útesech mimo bezpečný kruh
