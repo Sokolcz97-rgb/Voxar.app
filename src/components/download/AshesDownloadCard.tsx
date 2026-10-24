@@ -7,11 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Ashes of Eryon – interní stahování jen pro administrátory.
+ * Ashes of Eryon – stahování pro hráče s přístupem do hry (testeři, editoři, správci).
  *
- * Instalátor leží v privátním bucketu `game-builds`; přístup hlídá RLS
- * (has_role(auth.uid(), 'admin')), takže ostatní uživatelé k souborům nemají
- * přístup ani přímým odkazem. Soubor je rozdělený na části (limit velikosti
+ * Instalátor leží v privátním bucketu `game-builds`; čtení hlídá RLS
+ * (public.ashes_can_play()), nahrávání jen správci – ostatní uživatelé k souborům
+ * nemají přístup ani přímým odkazem. Soubor je rozdělený na části (limit velikosti
  * jednoho souboru ve Storage) a v prohlížeči se po stažení složí zpět a ověří
  * přes SHA-256.
  */
@@ -41,7 +41,20 @@ async function sha256Hex(data: ArrayBuffer) {
 }
 
 export function AshesDownloadCard() {
-  const { isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  // přístup do hry (testeři z ashes_access, editoři, správci, nebo hra otevřená všem)
+  const [canPlay, setCanPlay] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) { setCanPlay(false); return; }
+    let cancel = false;
+    // funkce není ve vygenerovaných typech (patří k serveru hry)
+    const rpc = supabase.rpc as unknown as (fn: string) => PromiseLike<{ data: unknown }>;
+    void rpc.call(supabase, "ashes_can_play").then(({ data }) => { if (!cancel) setCanPlay(data === true); });
+    return () => { cancel = true; };
+  }, [user, authLoading]);
+  const loading = authLoading || canPlay === null;
+  const canDownload = isAdmin || canPlay === true;
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [manifestState, setManifestState] = useState<"idle" | "loading" | "missing" | "ready">("idle");
   const [busy, setBusy] = useState<null | "download" | "upload">(null);
@@ -77,8 +90,8 @@ export function AshesDownloadCard() {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) void loadManifest();
-  }, [isAdmin, loadManifest]);
+    if (canDownload) void loadManifest();
+  }, [canDownload, loadManifest]);
 
   const download = async () => {
     if (!manifest) return;
@@ -164,7 +177,7 @@ export function AshesDownloadCard() {
             Temné fantasy RPG ve 3D – 1. akt „Poslední štít“ s otevřeným světem. Instalátor připraví launcher; hra se v něm načítá vždy v nejnovější verzi, takže po aktualizaci webu není potřeba nic stahovat znovu.
           </p>
 
-          {loading ? null : !isAdmin ? (
+          {loading ? null : !canDownload ? (
             <div className="mt-5 flex flex-wrap gap-3">
               <Button size="lg" className="w-full md:w-auto" disabled>
                 <Lock className="h-4 w-4 mr-2" />
@@ -185,7 +198,7 @@ export function AshesDownloadCard() {
                   <Link to="/ashes">Roadmapa</Link>
                 </Button>
                 <span className="inline-flex items-center gap-1.5 text-xs text-amber-200/80">
-                  <ShieldCheck className="h-4 w-4" /> Viditelné jen pro administrátory
+                  <ShieldCheck className="h-4 w-4" /> {isAdmin ? "Správce" : "Máš přístup do testování"}
                 </span>
               </div>
               <p className="text-xs text-amber-100/60">
@@ -194,7 +207,7 @@ export function AshesDownloadCard() {
                 {manifestState === "ready" && manifest &&
                   `Verze ${manifest.version} · ${formatBytes(manifest.size)} · nahráno ${new Date(manifest.uploadedAt).toLocaleString("cs-CZ")} · SHA-256 ${manifest.sha256.slice(0, 12)}…`}
               </p>
-              <details className="text-xs text-amber-100/70">
+              {isAdmin && <details className="text-xs text-amber-100/70">
                 <summary className="cursor-pointer select-none">Nahrát novou verzi</summary>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <input
@@ -209,7 +222,7 @@ export function AshesDownloadCard() {
                     {busy === "upload" ? `Nahrávám ${Math.round(progress * 100)} %` : "Vybrat GameSetup.exe"}
                   </Button>
                 </div>
-              </details>
+              </details>}
               {message && <p className="text-sm text-amber-100">{message}</p>}
             </div>
           )}
