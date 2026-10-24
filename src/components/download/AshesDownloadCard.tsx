@@ -93,6 +93,33 @@ export function AshesDownloadCard() {
     if (canDownload) void loadManifest();
   }, [canDownload, loadManifest]);
 
+  /**
+   * Jedna část instalátoru: krátkodobý podepsaný odkaz (obyčejný GET bez hlaviček – méně
+   * problémů s blokátory a CORS) a až 4 pokusy při výpadku spojení.
+   */
+  const downloadPart = async (path: string, index: number, total: number): Promise<Blob> => {
+    let lastError = "";
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      try {
+        const { data: signed, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 15 * 60);
+        if (error || !signed?.signedUrl) throw new Error(error?.message || "server nevydal odkaz");
+        const res = await fetch(signed.signedUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.blob();
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : String(e);
+        if (attempt < 4) {
+          setMessage(`Spojení zakolísalo (část ${index + 1}/${total}) – zkouším znovu (${attempt + 1}/4)…`);
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+        }
+      }
+    }
+    throw new Error(
+      `Část ${index + 1}/${total} se nepodařilo stáhnout (${lastError}). ` +
+      "Zkontroluj připojení, vypni na chvíli blokátor reklam/antivirovou kontrolu webu a zkus to znovu.",
+    );
+  };
+
   const download = async () => {
     if (!manifest) return;
     setBusy("download");
@@ -101,9 +128,7 @@ export function AshesDownloadCard() {
     try {
       const chunks: Blob[] = [];
       for (let index = 0; index < manifest.parts.length; index += 1) {
-        const { data, error } = await supabase.storage.from(BUCKET).download(manifest.parts[index]);
-        if (error || !data) throw new Error("Část instalátoru se nepodařilo stáhnout.");
-        chunks.push(data);
+        chunks.push(await downloadPart(manifest.parts[index], index, manifest.parts.length));
         setProgress((index + 1) / manifest.parts.length);
       }
       const file = new Blob(chunks, { type: "application/octet-stream" });
@@ -119,7 +144,7 @@ export function AshesDownloadCard() {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      setMessage("Hotovo – instalátor je ověřený a uložený.");
+      setMessage("Hotovo – instalátor je ověřený a uložený. Spusť GameSetup.exe ze složky Stažené soubory.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Stažení se nepodařilo.");
     } finally {
