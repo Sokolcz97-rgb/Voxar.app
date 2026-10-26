@@ -34,6 +34,7 @@ export type ShopSettings = {
   donate_min: number;
   donate_max: number;
   refund_notice: string | null;
+  stripe_enabled: boolean;
 };
 
 export function useShop() {
@@ -59,6 +60,7 @@ export function useShop() {
           iban: string | null;
           account_number: string | null;
           bank_recipient: string | null;
+          stripe_enabled?: boolean | null;
         }
       | undefined;
 
@@ -73,6 +75,7 @@ export function useShop() {
         donate_min: pub.donate_min,
         donate_max: pub.donate_max,
         refund_notice: pub.refund_notice,
+        stripe_enabled: !!pub.stripe_enabled,
       });
     } else {
       setSettings(null);

@@ -77,8 +77,8 @@ const BusinessTerms = () => {
             a zvolíš způsob platby.
           </li>
           <li>
-            Smlouva je uzavřena okamžikem, kdy se objednávka zaznamená v našem systému (kliknutím na tlačítko
-            „Zaplatil(a) jsem – zaznamenat objednávku“). Objednávka zavazuje k zaplacení.
+            Smlouva je uzavřena okamžikem, kdy se objednávka zaznamená v našem systému (kliknutím na „Zaplatit kartou“ nebo na
+            tlačítko „Zaplatil(a) jsem – zaznamenat objednávku“). Objednávka zavazuje k zaplacení.
           </li>
           <li>
             Smlouvu uzavíráme v češtině. Záznam objednávky včetně udělených souhlasů a verze podmínek archivujeme a potvrzení
@@ -90,9 +90,10 @@ const BusinessTerms = () => {
 
       <Sec id="platba" n={5} title="Platba">
         <p>
-          Platí se předem bankovním převodem (i pomocí QR kódu) s variabilním symbolem objednávky. Platbu ověřujeme ručně.
-          Nezaplacená objednávka se po 7 dnech ruší. Platební údaje (přihlášení do banky apod.) nezpracováváme – zadáváš je
-          jen ve své bance. Doklad o zaplacení vystavíme na požádání. Neoprávněné zpětné stornování platby (chargeback) vede k odebrání
+          Platí se předem platební kartou (přes platební bránu Stripe, včetně Apple Pay / Google Pay) nebo bankovním převodem
+          (i pomocí QR kódu) s variabilním symbolem objednávky. Platbu kartou potvrzuje systém automaticky, převod ověřujeme
+          ručně. Nezaplacená objednávka se po 7 dnech ruší. Platební údaje (číslo karty, přihlášení do banky apod.)
+          nezpracováváme – zadáváš je jen u Stripe nebo ve své bance. Doklad o zaplacení vystavíme na požádání. Neoprávněné zpětné stornování platby (chargeback) vede k odebrání
           obsahu a může vést k zablokování účtu.
         </p>
       </Sec>

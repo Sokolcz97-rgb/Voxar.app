@@ -220,6 +220,8 @@ export default function AdminPurchases() {
                           💳{" "}
                           {r.payment_method === "qr"
                             ? "Převod / QR"
+                            : r.payment_method === "stripe"
+                              ? "Karta (Stripe)"
                             : r.payment_method === "renewal"
                               ? "Automatické obnovení – zatím nezaplaceno"
                               : r.payment_method === "paypal"
@@ -238,7 +240,7 @@ export default function AdminPurchases() {
                     {r.refund_requested_at && (
                       <p className="text-xs text-destructive mt-1">
                         Žádost o vrácení {new Date(r.refund_requested_at).toLocaleString("cs-CZ")}
-                        {r.refund_reason ? ` – „${r.refund_reason}“` : ""} · vrať {r.amount_czk} {r.currency} stejnou cestou ({r.payment_method === "paypal" ? "PayPal" : "převodem zpět na účet plátce"})
+                        {r.refund_reason ? ` – „${r.refund_reason}“` : ""} · vrať {r.amount_czk} {r.currency} stejnou cestou ({r.payment_method === "paypal" ? "PayPal" : r.payment_method === "stripe" ? "ve Stripe Dashboard → Platby → Vrátit" : "převodem zpět na účet plátce"})
                       </p>
                     )}
                   </div>

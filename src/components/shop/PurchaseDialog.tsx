@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Landmark, QrCode, ShieldAlert, Loader2, CheckCircle2, Copy } from "lucide-react";
+import { Landmark, QrCode, ShieldAlert, Loader2, CheckCircle2, Copy, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { czAccountFromIban, spayd, variableSymbol } from "@/lib/payments";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +87,47 @@ export function PurchaseDialog({
       () => toast.success(`${label} zkopírováno`),
       () => toast.error("Kopírování se nepovedlo"),
     );
+  };
+
+  const [paying, setPaying] = useState(false);
+  const payByCard = async () => {
+    if (!user) {
+      toast.error("Pro platbu kartou se prosím přihlas.");
+      return;
+    }
+    if (!consented) {
+      toast.error("Nejdřív prosím potvrď souhlasy nad platebními možnostmi.");
+      return;
+    }
+    setPaying(true);
+    const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+      body: renewalId
+        ? { renewal_id: renewalId, terms_version: LEGAL_VERSION, terms_accepted: true }
+        : {
+            kind,
+            item_id: itemId,
+            amount,
+            note,
+            period: kind === "software" ? period ?? "month" : null,
+            auto_renew: kind === "software" ? autoRenew : false,
+            terms_version: LEGAL_VERSION,
+            terms_accepted: true,
+          },
+    });
+    const url = (data as { url?: string } | null)?.url;
+    if (error || !url) {
+      setPaying(false);
+      let msg = (data as { error?: string } | null)?.error;
+      try {
+        const ctx = (error as { context?: Response } | null)?.context;
+        if (!msg && ctx) msg = (await ctx.json())?.error;
+      } catch {
+        /* ignore */
+      }
+      toast.error(msg || "Platební bránu se nepodařilo otevřít. Zkus to znovu nebo zaplať převodem.");
+      return;
+    }
+    window.location.href = url;
   };
 
   const record = async (method: "qr") => {
@@ -184,6 +225,30 @@ export function PurchaseDialog({
             )}
             {kind === "donation" && <p className="text-muted-foreground">Dar je dobrovolný a nevrací se.</p>}
           </div>
+
+          {settings?.stripe_enabled && (
+            <Card className={`glass border-primary/40 p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <CreditCard className="h-4 w-4 text-primary" /> Platba kartou
+              </div>
+              {!user ? (
+                <p className="text-sm text-muted-foreground">Platba kartou je dostupná po přihlášení.</p>
+              ) : amount < 15 ? (
+                <p className="text-sm text-muted-foreground">Kartou lze platit od 15 Kč – pro menší částku použij převod.</p>
+              ) : (
+                <>
+                  <Button className="w-full" disabled={!consented || paying} onClick={() => void payByCard()}>
+                    {paying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                    Zaplatit kartou {amount} Kč
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Zabezpečená platba přes Stripe (karta, Apple Pay, Google Pay). Údaje o kartě zadáváš jen u Stripe –
+                    objednávka se po zaplacení potvrdí sama.
+                  </p>
+                </>
+              )}
+            </Card>
+          )}
 
           <Card className={`glass border-border p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
             <div className="flex items-center gap-2 text-sm font-medium">
