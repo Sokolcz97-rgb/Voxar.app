@@ -199,7 +199,7 @@ const Terms = () => {
 
       <Sec id="treti-strany" n={10} title="Služby a obsah třetích stran">
         <p>
-          Služby obsahují odkazy a data třetích stran (herní servery, Discord, Twitch, YouTube, Kick, IGDB, Steam, PayPal aj.).
+          Služby obsahují odkazy a data třetích stran (herní servery, Discord, Twitch, YouTube, Kick, IGDB, Steam aj.).
           Za jejich obsah, dostupnost a podmínky neodpovídáme; jejich užívání se řídí jejich podmínkami. Provozovatelé serverů
           a komunit zveřejňují své odkazy a obsah na vlastní odpovědnost. Discord bota smí správci serverů používat jen
           v souladu s podmínkami Discordu.

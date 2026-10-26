@@ -6,9 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Check, Loader2, Receipt, X } from "lucide-react";
+import { variableSymbol } from "@/lib/payments";
 
 type Purchase = {
   id: string;
@@ -53,6 +55,7 @@ export default function AdminPurchases() {
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [vsQuery, setVsQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "paid" | "donation">("all");
 
   const load = useCallback(async () => {
@@ -119,10 +122,12 @@ export default function AdminPurchases() {
   };
 
   const filtered = useMemo(() => {
-    if (filter === "all") return rows;
-    if (filter === "donation") return rows.filter((r) => r.kind === "donation");
-    return rows.filter((r) => r.status === filter);
-  }, [rows, filter]);
+    const q = vsQuery.replace(/\D/g, "");
+    const base = q ? rows.filter((r) => variableSymbol(r.id).includes(q)) : rows;
+    if (filter === "all") return base;
+    if (filter === "donation") return base.filter((r) => r.kind === "donation");
+    return base.filter((r) => r.status === filter);
+  }, [rows, filter, vsQuery]);
 
   const totals = useMemo(() => {
     const paid = rows.filter((r) => r.status === "paid");
@@ -167,6 +172,14 @@ export default function AdminPurchases() {
           </Card>
         </div>
 
+        <div className="mb-3 max-w-xs">
+          <Input
+            inputMode="numeric"
+            placeholder="Hledat podle variabilního symbolu"
+            value={vsQuery}
+            onChange={(e) => setVsQuery(e.target.value)}
+          />
+        </div>
         <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="mb-4">
           <TabsList>
             <TabsTrigger value="all">Vše</TabsTrigger>
@@ -206,12 +219,15 @@ export default function AdminPurchases() {
                         <span>
                           💳{" "}
                           {r.payment_method === "qr"
-                            ? "QR platba"
+                            ? "Převod / QR"
                             : r.payment_method === "renewal"
                               ? "Automatické obnovení – zatím nezaplaceno"
-                              : "PayPal"}
+                              : r.payment_method === "paypal"
+                                ? "PayPal (dřív)"
+                                : r.payment_method}
                         </span>
                       )}
+                      <span title="Variabilní symbol – podle něj najdeš platbu v bance">🔢 VS {variableSymbol(r.id)}</span>
                       <span>🕒 {new Date(r.created_at).toLocaleString("cs-CZ")}</span>
                       {r.terms_accepted_at && (
                         <span title={`Podmínky ${r.terms_version ?? ""}`}>
@@ -222,7 +238,7 @@ export default function AdminPurchases() {
                     {r.refund_requested_at && (
                       <p className="text-xs text-destructive mt-1">
                         Žádost o vrácení {new Date(r.refund_requested_at).toLocaleString("cs-CZ")}
-                        {r.refund_reason ? ` – „${r.refund_reason}“` : ""} · vrať {r.amount_czk} {r.currency} stejnou cestou ({r.payment_method === "qr" ? "převod" : "PayPal"})
+                        {r.refund_reason ? ` – „${r.refund_reason}“` : ""} · vrať {r.amount_czk} {r.currency} stejnou cestou ({r.payment_method === "paypal" ? "PayPal" : "převodem zpět na účet plátce"})
                       </p>
                     )}
                   </div>

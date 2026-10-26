@@ -144,8 +144,9 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
     const { error } = await supabase
       .from("shop_settings")
       .update({
-        paypal_email: form.paypal_email || null,
-        paypal_me: form.paypal_me || null,
+        // PayPal se už nepoužívá (platby jen převodem / QR)
+        paypal_email: null,
+        paypal_me: null,
         iban: form.iban || null,
         account_number: form.account_number || null,
         bank_recipient: form.bank_recipient || null,
@@ -212,23 +213,11 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
 
       <Card className="glass border-primary/30 p-5 space-y-4">
         <h3 className="font-display font-bold text-lg">Platební nastavení</h3>
+        <p className="text-xs text-muted-foreground">
+          Zákazníci platí bankovním převodem nebo QR kódem na tento účet. Každá objednávka má vlastní variabilní symbol –
+          podle něj platbu v bance spáruješ a potvrdíš v Admin → Nákupy.
+        </p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>PayPal.me jméno</Label>
-            <Input
-              value={form.paypal_me ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, paypal_me: e.target.value }))}
-              placeholder="napr. studiovoxario"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>PayPal e-mail (záloha)</Label>
-            <Input
-              value={form.paypal_email ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, paypal_email: e.target.value }))}
-              placeholder="platby@studiovoxario.com"
-            />
-          </div>
           <div className="space-y-1.5">
             <Label>IBAN (pro QR platbu)</Label>
             <Input

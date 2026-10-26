@@ -71,7 +71,7 @@ const ShopPage = () => {
     <div className="min-h-screen relative">
       <SEO
         title="Obchod — StudioVoxario"
-        description="Rámečky avatarů, plugin kódy a možnost podpořit projekt StudioVoxario. Platba přes PayPal nebo QR kódem."
+        description="Rámečky avatarů, plugin kódy a možnost podpořit projekt StudioVoxario. Platba bankovním převodem nebo QR kódem."
       />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
