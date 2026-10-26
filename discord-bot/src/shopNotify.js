@@ -3,7 +3,7 @@
 import { EmbedBuilder } from 'discord.js';
 import { supabase } from './supabase.js';
 
-const COLORS = { order: 0xf5b942, paid: 0x3fbf6f, renewal: 0x4aa3df, refund: 0xe0672a };
+const COLORS = { order: 0xf5b942, donation: 0xe0457b, paid: 0x3fbf6f, renewal: 0x4aa3df, refund: 0xe0672a };
 
 export async function handleShopNotifyJob(client, job) {
   const p = job.payload || {};
