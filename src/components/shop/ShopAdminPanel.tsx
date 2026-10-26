@@ -153,6 +153,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
         donate_min: Number(form.donate_min) || 0,
         donate_max: Number(form.donate_max) || 500,
         refund_notice: form.refund_notice || null,
+        stripe_enabled: !!form.stripe_enabled,
       })
       .eq("id", settings.id);
     if (error) return toast.error(error.message);
@@ -213,6 +214,17 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
 
       <Card className="glass border-primary/30 p-5 space-y-4">
         <h3 className="font-display font-bold text-lg">Platební nastavení</h3>
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+          <div className="text-sm">
+            <p className="font-medium">Platba kartou (Stripe)</p>
+            <p className="text-xs text-muted-foreground">
+              Zákazník zaplatí kartou / Apple Pay / Google Pay na stránce Stripe a objednávka se po zaplacení potvrdí sama.
+              Zapni až po nastavení klíčů STRIPE_SECRET_KEY a STRIPE_WEBHOOK_SECRET (Lovable Cloud → Secrets). Vrácení peněz
+              u plateb kartou provedeš ve Stripe Dashboard.
+            </p>
+          </div>
+          <Switch checked={!!form.stripe_enabled} onCheckedChange={(v) => setForm((f) => ({ ...f, stripe_enabled: v }))} />
+        </div>
         <p className="text-xs text-muted-foreground">
           Zákazníci platí bankovním převodem nebo QR kódem na tento účet. Každá objednávka má vlastní variabilní symbol –
           podle něj platbu v bance spáruješ a potvrdíš v Admin → Nákupy.

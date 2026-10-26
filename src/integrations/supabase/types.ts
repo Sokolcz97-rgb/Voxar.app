@@ -2520,6 +2520,8 @@ export type Database = {
           renewal: boolean
           requires_manual: boolean
           status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -2549,6 +2551,8 @@ export type Database = {
           renewal?: boolean
           requires_manual?: boolean
           status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -2578,6 +2582,8 @@ export type Database = {
           renewal?: boolean
           requires_manual?: boolean
           status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -2610,6 +2616,7 @@ export type Database = {
           paypal_email: string | null
           paypal_me: string | null
           refund_notice: string | null
+          stripe_enabled: boolean
           updated_at: string
         }
         Insert: {
@@ -2622,6 +2629,7 @@ export type Database = {
           paypal_email?: string | null
           paypal_me?: string | null
           refund_notice?: string | null
+          stripe_enabled?: boolean
           updated_at?: string
         }
         Update: {
@@ -2634,6 +2642,7 @@ export type Database = {
           paypal_email?: string | null
           paypal_me?: string | null
           refund_notice?: string | null
+          stripe_enabled?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -3772,6 +3781,7 @@ export type Database = {
           id: string
           paypal_me: string
           refund_notice: string
+          stripe_enabled: boolean
         }[]
       }
       get_platform_stats: { Args: never; Returns: Json }

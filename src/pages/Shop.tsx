@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { SEO } from "@/components/SEO";
 import { PageHero } from "@/components/PageHero";
@@ -24,6 +25,22 @@ const ShopPage = () => {
   const canManage = isAdmin || isEditor;
 
   const [adminMode, setAdminMode] = useState(false);
+  const [params, setParams] = useSearchParams();
+
+  // návrat z platební brány Stripe
+  useEffect(() => {
+    const result = params.get("platba");
+    if (!result) return;
+    if (result === "ok") {
+      toast.success("Platba proběhla – děkujeme! Objednávka se potvrdí během chvilky, upozornění najdeš v oznámeních.", { duration: 8000 });
+      setTimeout(() => void refresh(), 4000);
+    } else if (result === "zrusena") {
+      toast("Platba byla zrušena – nic se nestrhlo. Můžeš to zkusit znovu nebo zaplatit převodem.");
+    }
+    const next = new URLSearchParams(params);
+    next.delete("platba");
+    setParams(next, { replace: true });
+  }, [params, setParams, refresh]);
   const [donation, setDonation] = useState(100);
   const [checkout, setCheckout] = useState<{
     title: string;
@@ -71,7 +88,7 @@ const ShopPage = () => {
     <div className="min-h-screen relative">
       <SEO
         title="Obchod — StudioVoxario"
-        description="Rámečky avatarů, plugin kódy a možnost podpořit projekt StudioVoxario. Platba bankovním převodem nebo QR kódem."
+        description="Rámečky avatarů, plugin kódy a možnost podpořit projekt StudioVoxario. Platba kartou, bankovním převodem nebo QR kódem."
       />
       <div className="fixed inset-0 -z-10 gradient-hero" />
       <Navbar />
