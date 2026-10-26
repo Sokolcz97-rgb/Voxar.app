@@ -31,7 +31,7 @@ begin
   if coalesce(array_length(ids, 1), 0) = 0 then return new; end if;
 
   select coalesce(nullif(p.display_name, ''), nullif(p.username, ''), u.email, new.user_id::text) into who
-  from auth.users u left join profiles p on p.id = u.id where u.id = new.user_id;
+  from auth.users u left join profiles p on p.user_id = u.id where u.id = new.user_id limit 1;
   price := coalesce(new.amount_czk::text || ' Kč', '—');
   per := case new.period when 'month' then 'měsíčně' when 'year' then 'ročně' else null end;
   fields := jsonb_build_array(
