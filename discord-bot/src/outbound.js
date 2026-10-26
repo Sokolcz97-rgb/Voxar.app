@@ -11,6 +11,7 @@ import { scanGuildMembers, scanGuildMessages } from './antiScam.js';
 import { getConfig } from './config.js';
 import { handleLayoutJob } from './serverLayout.js';
 import { handleVerifyJob } from './verify.js';
+import { handleShopNotifyJob } from './shopNotify.js';
 
 // Detects bans that were applied by the AI image moderation pipeline.
 // Matches both runAntiScam reason "Scam/phishing (image_scam: ...)" and
@@ -96,6 +97,7 @@ export function startOutboundWorker(client) {
           // Snímek / přestavba rozložení serveru (kategorie, kanály, oprávnění)
           if (await handleLayoutJob(client, job, supabase)) continue;
           if (await handleVerifyJob(client, job)) continue;
+          if (await handleShopNotifyJob(client, job)) continue;
 
           // Special action: manuální anti-bot scan členů serveru
           if (payload.action === 'scan_members') {
