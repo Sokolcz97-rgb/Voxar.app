@@ -103,7 +103,7 @@ const PROCESSORS: [string, string][] = [
   ["Discord", "přihlášení přes Discord, Discord bot"],
   ["Twitch, YouTube (Google), Kick", "zjišťování živých streamů z veřejných údajů"],
   ["IGDB (Twitch) a Steam (Valve)", "údaje o hrách (nepředáváme jim tvé osobní údaje)"],
-  ["PayPal a tvoje banka", "zpracování plateb (jako samostatní správci podle svých podmínek)"],
+  ["Tvoje banka", "zpracování plateb převodem (jako samostatný správce podle svých podmínek)"],
 ];
 
 const Privacy = () => {
@@ -149,7 +149,7 @@ const Privacy = () => {
           ))}
         </div>
         <p>
-          Platební údaje (číslo karty, přihlášení do banky) nezpracováváme – zadáváš je přímo u PayPalu nebo ve své bance.
+          Platební údaje (číslo karty, přihlášení do banky) nezpracováváme – zadáváš je jen ve své bance.
           Do naší databáze neukládáme historii prohlížení z VoxarioBrowseru ani obsah souborů na tvém počítači.
         </p>
       </Sec>
@@ -184,7 +184,7 @@ const Privacy = () => {
 
       <Sec id="mimo-eu" n={6} title="Předávání mimo EU">
         <p>
-          Někteří poskytovatelé (např. Lovable/Supabase, LiveKit, Google, OpenAI, Discord, PayPal) mohou údaje zpracovávat mimo
+          Někteří poskytovatelé (např. Lovable/Supabase, LiveKit, Google, OpenAI, Discord) mohou údaje zpracovávat mimo
           Evropský hospodářský prostor, zejména v USA. Předání probíhá na základě rozhodnutí Evropské komise o odpovídající ochraně
           (EU–US Data Privacy Framework) nebo standardních smluvních doložek schválených Evropskou komisí.
         </p>
@@ -277,7 +277,7 @@ function PrivacyEn() {
       <Sec id="en-3" n={3} title="Recipients and transfers">
         <p>
           Processors: Lovable/Supabase (hosting), LiveKit (voice/video), Google Gemini and OpenAI via Lovable AI Gateway (AI
-          features), Discord, Twitch/YouTube/Kick, PayPal and banks. Transfers outside the EEA rely on the EU–US Data Privacy
+          features), Discord, Twitch/YouTube/Kick and banks. Transfers outside the EEA rely on the EU–US Data Privacy
           Framework or standard contractual clauses. No advertising cookies.
         </p>
       </Sec>

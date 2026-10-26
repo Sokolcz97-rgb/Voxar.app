@@ -3,9 +3,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CreditCard, QrCode, ShieldAlert, Loader2, CheckCircle2 } from "lucide-react";
+import { Landmark, QrCode, ShieldAlert, Loader2, CheckCircle2, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { paypalLink, spayd } from "@/lib/payments";
+import { czAccountFromIban, spayd, variableSymbol } from "@/lib/payments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
@@ -64,16 +64,11 @@ export function PurchaseDialog({
     }
   }, [open]);
 
-  const pp = useMemo(
-    () =>
-      paypalLink({
-        paypalMe: settings?.paypal_me,
-        paypalEmail: settings?.paypal_email,
-        amount,
-        note,
-      }),
-    [settings, amount, note],
-  );
+  // ID objednávky známe předem → variabilní symbol pro spárování platby v bance.
+  // U obnovení předplatného je objednávka už založená (renewalId).
+  const orderId = useMemo(() => renewalId ?? crypto.randomUUID(), [renewalId, open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const vs = useMemo(() => variableSymbol(orderId), [orderId]);
+  const account = settings?.account_number || czAccountFromIban(settings?.iban) || null;
 
   const qr = useMemo(
     () =>
@@ -82,11 +77,19 @@ export function PurchaseDialog({
         amount,
         message: note,
         recipient: settings?.bank_recipient,
+        vs,
       }),
-    [settings, amount, note],
+    [settings, amount, note, vs],
   );
 
-  const record = async (method: "paypal" | "qr") => {
+  const copy = (label: string, value: string) => {
+    void navigator.clipboard?.writeText(value).then(
+      () => toast.success(`${label} zkopírováno`),
+      () => toast.error("Kopírování se nepovedlo"),
+    );
+  };
+
+  const record = async (method: "qr") => {
     if (!user) {
       toast.error("Pro dokončení objednávky se prosím přihlas.");
       return;
@@ -103,6 +106,7 @@ export function PurchaseDialog({
     const { error } = renewalId
       ? await supabase.rpc("shop_renewal_pay", { p_purchase: renewalId, p_method: method, p_terms: LEGAL_VERSION })
       : await supabase.from("shop_purchases").insert({
+          id: orderId,
           user_id: user.id,
           item_id: itemId,
           kind,
@@ -183,43 +187,59 @@ export function PurchaseDialog({
 
           <Card className={`glass border-border p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
             <div className="flex items-center gap-2 text-sm font-medium">
-              <CreditCard className="h-4 w-4 text-primary" /> PayPal
+              <Landmark className="h-4 w-4 text-primary" /> Bankovní převod / QR platba
             </div>
-            {pp ? (
-              <Button asChild className="w-full" disabled={!user || !consented}>
-                <a href={consented ? pp : undefined} tabIndex={consented ? 0 : -1} target="_blank" rel="noopener noreferrer" onClick={() => void record("paypal")}>
-                  Zaplatit přes PayPal
-                </a>
-              </Button>
+            {!user ? (
+              <p className="text-sm text-muted-foreground">Platební údaje se zobrazí po přihlášení.</p>
+            ) : !account && !qr ? (
+              <p className="text-sm text-muted-foreground">Bankovní účet pro platbu zatím není nastaven.</p>
+            ) : !consented ? (
+              <p className="text-sm text-muted-foreground">Platební údaje a QR kód se zobrazí po potvrzení souhlasů výše.</p>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {user ? "PayPal zatím není nastaven." : "Platební údaje se zobrazí po přihlášení."}
-              </p>
-            )}
-          </Card>
-
-          <Card className={`glass border-border p-4 space-y-3 ${consented ? "" : "opacity-50 pointer-events-none select-none"}`} aria-disabled={!consented}>
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <QrCode className="h-4 w-4 text-primary" /> QR platba (české banky)
-            </div>
-            {qr && !consented ? (
-              <p className="text-sm text-muted-foreground">QR kód se zobrazí po potvrzení souhlasů výše.</p>
-            ) : qr ? (
               <div className="flex flex-col items-center gap-3">
-                <div className="bg-background p-3 border border-border">
-                  <QRCodeSVG value={qr} size={176} />
+                {qr && (
+                  <>
+                    <div className="bg-white p-3 border border-border rounded">
+                      <QRCodeSVG value={qr} size={184} />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center flex items-center gap-1">
+                      <QrCode className="h-3.5 w-3.5" /> Naskenuj v aplikaci své banky – údaje se vyplní samy.
+                    </p>
+                  </>
+                )}
+                <div className="w-full grid grid-cols-[auto_1fr_auto] gap-x-3 gap-y-1.5 text-sm items-center">
+                  {(
+                    [
+                      ["Číslo účtu", account],
+                      ["IBAN", settings?.iban ? settings.iban.replace(/\s+/g, "").replace(/(.{4})/g, "$1 ").trim() : null],
+                      ["Částka", `${amount} Kč`],
+                      ["Variabilní symbol", vs],
+                      ["Zpráva", note],
+                      ["Příjemce", settings?.bank_recipient],
+                    ] as [string, string | null | undefined][]
+                  )
+                    .filter(([, v]) => !!v)
+                    .map(([label, value]) => (
+                      <div key={label} className="contents">
+                        <span className="text-muted-foreground text-xs">{label}</span>
+                        <span className={`break-all ${label === "Variabilní symbol" || label === "Částka" ? "font-bold text-primary" : ""}`}>{value}</span>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-primary p-1"
+                          aria-label={`Kopírovat: ${label}`}
+                          onClick={() => copy(label, label === "Částka" ? String(amount) : String(value).replace(/\s+/g, label === "IBAN" ? "" : " "))}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
                 </div>
-                <p className="text-xs text-muted-foreground text-center break-all">
-                  {settings?.account_number || settings?.iban}
-                  {settings?.bank_recipient ? ` · ${settings.bank_recipient}` : ""}
-                </p>
                 <p className="text-xs text-muted-foreground text-center">
-                  Zpráva pro příjemce: <span className="text-foreground">{note}</span>
+                  Při ručním zadání převodu nezapomeň na <strong>variabilní symbol</strong> – podle něj platbu přiřadíme k objednávce.
                 </p>
                 <Button
-                  variant="outline"
                   className="w-full"
-                  disabled={!user || saving || recorded}
+                  disabled={saving || recorded}
                   onClick={() => void record("qr")}
                 >
                   {saving ? (
@@ -227,13 +247,9 @@ export function PurchaseDialog({
                   ) : recorded ? (
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                   ) : null}
-                  {recorded ? "Objednávka zaznamenána" : "Zaplaceno – zaznamenat objednávku"}
+                  {recorded ? "Objednávka zaznamenána" : "Zaplatil(a) jsem – zaznamenat objednávku"}
                 </Button>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {user ? "Bankovní účet pro QR platbu zatím není nastaven." : "Platební údaje se zobrazí po přihlášení."}
-              </p>
             )}
           </Card>
 

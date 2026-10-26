@@ -107,7 +107,7 @@ export function CommunityShop() {
               <section className="sv-feature-card sv-donation-card">
                 <span className="sv-feature-kicker">SUPPORT STUDIOVOXARIO</span>
                 <h3>Pomoz s provozem a dalším vývojem</h3>
-                <p>Vyber částku od {min} do {max} Kč. Platba používá současný PayPal / QR systém.</p>
+                <p>Vyber částku od {min} do {max} Kč. Platí se bankovním převodem nebo QR kódem.</p>
                 <div className="sv-donation-amount">{donation} <small>Kč</small></div>
                 <input type="range" min={min} max={max} step={10} value={donation} onChange={(event) => setDonation(Number(event.target.value))} />
                 <div className="sv-donation-presets">
