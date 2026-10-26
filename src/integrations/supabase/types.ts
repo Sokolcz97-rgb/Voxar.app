@@ -14,38 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
-      ashes_feedback: {
+      abuse_events: {
         Row: {
-          character_name: string | null
-          context: Json
+          action: string
           created_at: string
-          id: number
-          kind: string
-          resolved: boolean
-          text: string
+          delete_after: string | null
+          deleted_at: string | null
+          id: string
+          reasons: Json
+          risk_score: number
+          severity: string
+          source: string
+          subject_snapshot: Json
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          delete_after?: string | null
+          deleted_at?: string | null
+          id?: string
+          reasons?: Json
+          risk_score: number
+          severity: string
+          source?: string
+          subject_snapshot?: Json
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          delete_after?: string | null
+          deleted_at?: string | null
+          id?: string
+          reasons?: Json
+          risk_score?: number
+          severity?: string
+          source?: string
+          subject_snapshot?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          model: string
+          title: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          character_name?: string | null
-          context?: Json
           created_at?: string
-          id?: never
-          kind?: string
-          resolved?: boolean
-          text: string
+          id?: string
+          model?: string
+          title?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          character_name?: string | null
-          context?: Json
           created_at?: string
-          id?: never
-          kind?: string
-          resolved?: boolean
-          text?: string
+          id?: string
+          model?: string
+          title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_access_ips: {
         Row: {
@@ -81,6 +152,829 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ashes_access: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_changelog: {
+        Row: {
+          created_at: string
+          id: string
+          image: string | null
+          kind: string
+          published_at: string
+          text_cs: string
+          text_en: string | null
+          title_cs: string
+          title_en: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image?: string | null
+          kind?: string
+          published_at?: string
+          text_cs?: string
+          text_en?: string | null
+          title_cs: string
+          title_en?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image?: string | null
+          kind?: string
+          published_at?: string
+          text_cs?: string
+          text_en?: string | null
+          title_cs?: string
+          title_en?: string | null
+        }
+        Relationships: []
+      }
+      ashes_character_slots: {
+        Row: {
+          appearance: Json
+          class: string
+          data: Json
+          faction: string
+          id: string
+          items: Json
+          level: number
+          name: string
+          quests: Json
+          saved_at: string
+          user_id: string
+          wquests: Json
+        }
+        Insert: {
+          appearance?: Json
+          class: string
+          data: Json
+          faction?: string
+          id?: string
+          items?: Json
+          level?: number
+          name: string
+          quests?: Json
+          saved_at?: string
+          user_id: string
+          wquests?: Json
+        }
+        Update: {
+          appearance?: Json
+          class?: string
+          data?: Json
+          faction?: string
+          id?: string
+          items?: Json
+          level?: number
+          name?: string
+          quests?: Json
+          saved_at?: string
+          user_id?: string
+          wquests?: Json
+        }
+        Relationships: []
+      }
+      ashes_characters: {
+        Row: {
+          appearance: Json
+          arena_ready_at: string
+          boss_ready_at: string
+          chapter: number
+          chapter_progress: number
+          class: string
+          courage: number
+          courage_day: string
+          created_at: string
+          daily_gift_day: string | null
+          faction: string
+          gold: number
+          honor: number
+          intelekt: number
+          is_azkar: boolean
+          is_eryon: boolean
+          last_seen: string
+          last_world_fight_at: string
+          level: number
+          losses: number
+          name: string
+          obratnost: number
+          shop_at: string | null
+          shop_day: string | null
+          shop_level: number | null
+          sila: number
+          stesti: number
+          user_id: string
+          vydrz: number
+          wins: number
+          xp: number
+        }
+        Insert: {
+          appearance?: Json
+          arena_ready_at?: string
+          boss_ready_at?: string
+          chapter?: number
+          chapter_progress?: number
+          class: string
+          courage?: number
+          courage_day?: string
+          created_at?: string
+          daily_gift_day?: string | null
+          faction?: string
+          gold?: number
+          honor?: number
+          intelekt?: number
+          is_azkar?: boolean
+          is_eryon?: boolean
+          last_seen?: string
+          last_world_fight_at?: string
+          level?: number
+          losses?: number
+          name: string
+          obratnost?: number
+          shop_at?: string | null
+          shop_day?: string | null
+          shop_level?: number | null
+          sila?: number
+          stesti?: number
+          user_id: string
+          vydrz?: number
+          wins?: number
+          xp?: number
+        }
+        Update: {
+          appearance?: Json
+          arena_ready_at?: string
+          boss_ready_at?: string
+          chapter?: number
+          chapter_progress?: number
+          class?: string
+          courage?: number
+          courage_day?: string
+          created_at?: string
+          daily_gift_day?: string | null
+          faction?: string
+          gold?: number
+          honor?: number
+          intelekt?: number
+          is_azkar?: boolean
+          is_eryon?: boolean
+          last_seen?: string
+          last_world_fight_at?: string
+          level?: number
+          losses?: number
+          name?: string
+          obratnost?: number
+          shop_at?: string | null
+          shop_day?: string | null
+          shop_level?: number | null
+          sila?: number
+          stesti?: number
+          user_id?: string
+          vydrz?: number
+          wins?: number
+          xp?: number
+        }
+        Relationships: []
+      }
+      ashes_chat: {
+        Row: {
+          channel: string
+          created_at: string
+          id: number
+          name: string
+          tag: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: number
+          name: string
+          tag?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: number
+          name?: string
+          tag?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_chronicle: {
+        Row: {
+          created_at: string
+          id: number
+          kind: string
+          text: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          kind: string
+          text: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          kind?: string
+          text?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ashes_crash_reports: {
+        Row: {
+          created_at: string
+          gpu: string | null
+          id: number
+          log: string | null
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          gpu?: string | null
+          id?: number
+          log?: string | null
+          user_id?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          gpu?: string | null
+          id?: number
+          log?: string | null
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      ashes_feedback: {
+        Row: {
+          character_name: string | null
+          context: Json
+          created_at: string
+          id: number
+          kind: string
+          resolved: boolean
+          text: string
+          user_id: string
+        }
+        Insert: {
+          character_name?: string | null
+          context?: Json
+          created_at?: string
+          id?: never
+          kind?: string
+          resolved?: boolean
+          text: string
+          user_id: string
+        }
+        Update: {
+          character_name?: string | null
+          context?: Json
+          created_at?: string
+          id?: never
+          kind?: string
+          resolved?: boolean
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_items: {
+        Row: {
+          armor: number
+          created_at: string
+          equipped: boolean
+          id: string
+          in_shop: boolean
+          intelekt: number
+          level: number
+          name: string
+          obratnost: number
+          price: number
+          rarity: number
+          sila: number
+          slot: string
+          stesti: number
+          user_id: string
+          vydrz: number
+          wmax: number
+          wmin: number
+        }
+        Insert: {
+          armor?: number
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          in_shop?: boolean
+          intelekt?: number
+          level?: number
+          name: string
+          obratnost?: number
+          price?: number
+          rarity?: number
+          sila?: number
+          slot: string
+          stesti?: number
+          user_id: string
+          vydrz?: number
+          wmax?: number
+          wmin?: number
+        }
+        Update: {
+          armor?: number
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          in_shop?: boolean
+          intelekt?: number
+          level?: number
+          name?: string
+          obratnost?: number
+          price?: number
+          rarity?: number
+          sila?: number
+          slot?: string
+          stesti?: number
+          user_id?: string
+          vydrz?: number
+          wmax?: number
+          wmin?: number
+        }
+        Relationships: []
+      }
+      ashes_live_fights: {
+        Row: {
+          calls: number
+          defenses: Json
+          e: Json
+          enemy_id: string
+          finished_at: string | null
+          hp_e: number
+          hp_p: number
+          id: string
+          last_attack_at: string | null
+          last_dodge_at: string | null
+          last_skill_at: string | null
+          lvl: number
+          max_e: number
+          max_p: number
+          next_swing_at: string
+          p: Json
+          region: string
+          result: Json | null
+          started_at: string
+          status: string
+          swing_index: number
+          swing_ms: number
+          user_id: string
+        }
+        Insert: {
+          calls?: number
+          defenses?: Json
+          e: Json
+          enemy_id: string
+          finished_at?: string | null
+          hp_e: number
+          hp_p: number
+          id?: string
+          last_attack_at?: string | null
+          last_dodge_at?: string | null
+          last_skill_at?: string | null
+          lvl: number
+          max_e: number
+          max_p: number
+          next_swing_at: string
+          p: Json
+          region: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+          swing_index?: number
+          swing_ms: number
+          user_id: string
+        }
+        Update: {
+          calls?: number
+          defenses?: Json
+          e?: Json
+          enemy_id?: string
+          finished_at?: string | null
+          hp_e?: number
+          hp_p?: number
+          id?: string
+          last_attack_at?: string | null
+          last_dodge_at?: string | null
+          last_skill_at?: string | null
+          lvl?: number
+          max_e?: number
+          max_p?: number
+          next_swing_at?: string
+          p?: Json
+          region?: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+          swing_index?: number
+          swing_ms?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_oddil: {
+        Row: {
+          created_at: string
+          faction: string
+          id: string
+          leader: string
+          motto: string
+          name: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          faction: string
+          id?: string
+          leader: string
+          motto?: string
+          name: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          faction?: string
+          id?: string
+          leader?: string
+          motto?: string
+          name?: string
+          tag?: string
+        }
+        Relationships: []
+      }
+      ashes_oddil_invites: {
+        Row: {
+          created_at: string
+          invited_by: string
+          oddil_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          invited_by: string
+          oddil_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          invited_by?: string
+          oddil_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ashes_oddil_invites_oddil_id_fkey"
+            columns: ["oddil_id"]
+            isOneToOne: false
+            referencedRelation: "ashes_oddil"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ashes_oddil_members: {
+        Row: {
+          joined_at: string
+          oddil_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          oddil_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          oddil_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ashes_oddil_members_oddil_id_fkey"
+            columns: ["oddil_id"]
+            isOneToOne: false
+            referencedRelation: "ashes_oddil"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ashes_quests: {
+        Row: {
+          chapter: number
+          created_at: string
+          ends_at: string | null
+          enemy: Json
+          gold: number
+          id: string
+          item_chance: number
+          minutes: number
+          started_at: string | null
+          state: string
+          story: string
+          title: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          chapter: number
+          created_at?: string
+          ends_at?: string | null
+          enemy: Json
+          gold: number
+          id?: string
+          item_chance?: number
+          minutes: number
+          started_at?: string | null
+          state?: string
+          story: string
+          title: string
+          user_id: string
+          xp: number
+        }
+        Update: {
+          chapter?: number
+          created_at?: string
+          ends_at?: string | null
+          enemy?: Json
+          gold?: number
+          id?: string
+          item_chance?: number
+          minutes?: number
+          started_at?: string | null
+          state?: string
+          story?: string
+          title?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      ashes_races: {
+        Row: {
+          best_ms: number | null
+          day: string | null
+          runs_today: number
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          best_ms?: number | null
+          day?: string | null
+          runs_today?: number
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          best_ms?: number | null
+          day?: string | null
+          runs_today?: number
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_rate: {
+        Row: {
+          calls: number
+          user_id: string
+          win_start: string
+        }
+        Insert: {
+          calls?: number
+          user_id: string
+          win_start?: string
+        }
+        Update: {
+          calls?: number
+          user_id?: string
+          win_start?: string
+        }
+        Relationships: []
+      }
+      ashes_roadmap: {
+        Row: {
+          act: string | null
+          id: string
+          items: Json
+          sort: number
+          starts_at: string | null
+          status: string
+          text_cs: string
+          text_en: string
+          title_cs: string
+          title_en: string
+          updated_at: string
+          when_cs: string
+          when_en: string
+        }
+        Insert: {
+          act?: string | null
+          id?: string
+          items?: Json
+          sort?: number
+          starts_at?: string | null
+          status?: string
+          text_cs?: string
+          text_en?: string
+          title_cs?: string
+          title_en?: string
+          updated_at?: string
+          when_cs?: string
+          when_en?: string
+        }
+        Update: {
+          act?: string | null
+          id?: string
+          items?: Json
+          sort?: number
+          starts_at?: string | null
+          status?: string
+          text_cs?: string
+          text_en?: string
+          title_cs?: string
+          title_en?: string
+          updated_at?: string
+          when_cs?: string
+          when_en?: string
+        }
+        Relationships: []
+      }
+      ashes_world: {
+        Row: {
+          arena_cooldown_s: number
+          azkar_shout: string | null
+          azkar_shout_at: string | null
+          boss_cooldown_s: number
+          eryon_shout: string | null
+          eryon_shout_at: string | null
+          id: number
+          open_to_all: boolean
+          quest_minutes_max: number
+          quest_minutes_min: number
+          wall_points: number
+          wall_updated_at: string
+        }
+        Insert: {
+          arena_cooldown_s?: number
+          azkar_shout?: string | null
+          azkar_shout_at?: string | null
+          boss_cooldown_s?: number
+          eryon_shout?: string | null
+          eryon_shout_at?: string | null
+          id?: number
+          open_to_all?: boolean
+          quest_minutes_max?: number
+          quest_minutes_min?: number
+          wall_points?: number
+          wall_updated_at?: string
+        }
+        Update: {
+          arena_cooldown_s?: number
+          azkar_shout?: string | null
+          azkar_shout_at?: string | null
+          boss_cooldown_s?: number
+          eryon_shout?: string | null
+          eryon_shout_at?: string | null
+          id?: number
+          open_to_all?: boolean
+          quest_minutes_max?: number
+          quest_minutes_min?: number
+          wall_points?: number
+          wall_updated_at?: string
+        }
+        Relationships: []
+      }
+      ashes_world_boss: {
+        Row: {
+          cls: string
+          generation: number
+          hp: number
+          hp_max: number
+          id: number
+          killed_at: string | null
+          killer: string | null
+          name: string
+          spawned_at: string
+        }
+        Insert: {
+          cls?: string
+          generation?: number
+          hp?: number
+          hp_max?: number
+          id?: number
+          killed_at?: string | null
+          killer?: string | null
+          name?: string
+          spawned_at?: string
+        }
+        Update: {
+          cls?: string
+          generation?: number
+          hp?: number
+          hp_max?: number
+          id?: number
+          killed_at?: string | null
+          killer?: string | null
+          name?: string
+          spawned_at?: string
+        }
+        Relationships: []
+      }
+      ashes_world_boss_hits: {
+        Row: {
+          damage: number
+          generation: number
+          hits: number
+          name: string | null
+          user_id: string
+        }
+        Insert: {
+          damage?: number
+          generation: number
+          hits?: number
+          name?: string | null
+          user_id: string
+        }
+        Update: {
+          damage?: number
+          generation?: number
+          hits?: number
+          name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ashes_wquests: {
+        Row: {
+          created_at: string
+          progress: number
+          quest_id: string
+          state: string
+          targets: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          progress?: number
+          quest_id: string
+          state?: string
+          targets?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          progress?: number
+          quest_id?: string
+          state?: string
+          targets?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       bot_commands: {
         Row: {
@@ -123,6 +1017,11 @@ export type Database = {
       }
       bot_config: {
         Row: {
+          antiscam_allow_invites: boolean
+          antiscam_allowed_domains: string[]
+          antiscam_blocked_domains: string[]
+          antiscam_enabled: boolean
+          antiscam_sensitivity: string
           automod_action: string
           automod_blocked_words: string[]
           automod_enabled: boolean
@@ -145,6 +1044,11 @@ export type Database = {
           web_maintenance: boolean
         }
         Insert: {
+          antiscam_allow_invites?: boolean
+          antiscam_allowed_domains?: string[]
+          antiscam_blocked_domains?: string[]
+          antiscam_enabled?: boolean
+          antiscam_sensitivity?: string
           automod_action?: string
           automod_blocked_words?: string[]
           automod_enabled?: boolean
@@ -167,6 +1071,11 @@ export type Database = {
           web_maintenance?: boolean
         }
         Update: {
+          antiscam_allow_invites?: boolean
+          antiscam_allowed_domains?: string[]
+          antiscam_blocked_domains?: string[]
+          antiscam_enabled?: boolean
+          antiscam_sensitivity?: string
           automod_action?: string
           automod_blocked_words?: string[]
           automod_enabled?: boolean
@@ -192,6 +1101,12 @@ export type Database = {
       }
       bot_guild_config: {
         Row: {
+          antiscam_allow_invites: boolean
+          antiscam_allowed_domains: string[]
+          antiscam_blocked_domains: string[]
+          antiscam_enabled: boolean
+          antiscam_sensitivity: string
+          auto_verify: boolean
           automod_action: string
           automod_blocked_words: string[]
           automod_enabled: boolean
@@ -209,10 +1124,18 @@ export type Database = {
           nsfw_allowed_channels: string[]
           nsfw_protection: boolean
           prefix: string | null
+          unverified_role_id: string | null
           updated_at: string
           updated_by: string | null
+          verified_role_id: string | null
         }
         Insert: {
+          antiscam_allow_invites?: boolean
+          antiscam_allowed_domains?: string[]
+          antiscam_blocked_domains?: string[]
+          antiscam_enabled?: boolean
+          antiscam_sensitivity?: string
+          auto_verify?: boolean
           automod_action?: string
           automod_blocked_words?: string[]
           automod_enabled?: boolean
@@ -230,10 +1153,18 @@ export type Database = {
           nsfw_allowed_channels?: string[]
           nsfw_protection?: boolean
           prefix?: string | null
+          unverified_role_id?: string | null
           updated_at?: string
           updated_by?: string | null
+          verified_role_id?: string | null
         }
         Update: {
+          antiscam_allow_invites?: boolean
+          antiscam_allowed_domains?: string[]
+          antiscam_blocked_domains?: string[]
+          antiscam_enabled?: boolean
+          antiscam_sensitivity?: string
+          auto_verify?: boolean
           automod_action?: string
           automod_blocked_words?: string[]
           automod_enabled?: boolean
@@ -251,8 +1182,10 @@ export type Database = {
           nsfw_allowed_channels?: string[]
           nsfw_protection?: boolean
           prefix?: string | null
+          unverified_role_id?: string | null
           updated_at?: string
           updated_by?: string | null
+          verified_role_id?: string | null
         }
         Relationships: [
           {
@@ -502,6 +1435,57 @@ export type Database = {
             referencedColumns: ["guild_id"]
           },
         ]
+      }
+      bot_moderation_events: {
+        Row: {
+          channel_id: string | null
+          content: string | null
+          created_at: string
+          guild_id: string
+          id: number
+          level: string
+          moderator: string | null
+          reasons: string[]
+          resolution: string | null
+          resolved_at: string | null
+          score: number | null
+          source: string
+          user_id: string
+          user_tag: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string
+          guild_id: string
+          id?: never
+          level: string
+          moderator?: string | null
+          reasons?: string[]
+          resolution?: string | null
+          resolved_at?: string | null
+          score?: number | null
+          source?: string
+          user_id: string
+          user_tag?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string
+          guild_id?: string
+          id?: never
+          level?: string
+          moderator?: string | null
+          reasons?: string[]
+          resolution?: string | null
+          resolved_at?: string | null
+          score?: number | null
+          source?: string
+          user_id?: string
+          user_tag?: string | null
+        }
+        Relationships: []
       }
       bot_open_tickets: {
         Row: {
@@ -1829,6 +2813,60 @@ export type Database = {
         }
         Relationships: []
       }
+      launcher_auth_codes: {
+        Row: {
+          challenge: string
+          code_hash: string
+          created_at: string
+          device: string | null
+          expires_at: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge: string
+          code_hash: string
+          created_at?: string
+          device?: string | null
+          expires_at?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge?: string
+          code_hash?: string
+          created_at?: string
+          device?: string | null
+          expires_at?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      launcher_sessions_log: {
+        Row: {
+          created_at: string
+          device: string | null
+          event: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          event: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          event?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       lfg_requests: {
         Row: {
           created_at: string
@@ -2318,6 +3356,27 @@ export type Database = {
         }
         Relationships: []
       }
+      security_blocked_email_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          enabled: boolean
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          enabled?: boolean
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          enabled?: boolean
+          reason?: string
+        }
+        Relationships: []
+      }
       servers: {
         Row: {
           created_at: string
@@ -2391,39 +3450,54 @@ export type Database = {
       }
       shop_entitlements: {
         Row: {
-          download_count: number
-          first_download_at: string | null
-          revoked_at: string | null
           created_at: string
+          download_count: number
           expires_at: string
+          first_download_at: string | null
           id: string
           item_id: string
           purchase_id: string | null
+          revoked_at: string | null
           user_id: string
         }
         Insert: {
-          download_count?: number
-          first_download_at?: string | null
-          revoked_at?: string | null
           created_at?: string
+          download_count?: number
           expires_at: string
+          first_download_at?: string | null
           id?: string
           item_id: string
           purchase_id?: string | null
+          revoked_at?: string | null
           user_id: string
         }
         Update: {
-          download_count?: number
-          first_download_at?: string | null
-          revoked_at?: string | null
           created_at?: string
+          download_count?: number
           expires_at?: string
+          first_download_at?: string | null
           id?: string
           item_id?: string
           purchase_id?: string | null
+          revoked_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shop_entitlements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_entitlements_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "shop_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_items: {
         Row: {
@@ -2450,17 +3524,17 @@ export type Database = {
         }
         Insert: {
           access_minutes?: number | null
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
           file_name?: string | null
           file_parts?: string[]
           file_sha256?: string | null
           file_size?: number | null
           file_uploaded_at?: string | null
           file_version?: string | null
-          active?: boolean
-          cosmetic_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[]
           id?: string
           image_url?: string | null
           kind?: string
@@ -2472,17 +3546,17 @@ export type Database = {
         }
         Update: {
           access_minutes?: number | null
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
           file_name?: string | null
           file_parts?: string[]
           file_sha256?: string | null
           file_size?: number | null
           file_uploaded_at?: string | null
           file_version?: string | null
-          active?: boolean
-          cosmetic_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[]
           id?: string
           image_url?: string | null
           kind?: string
@@ -2496,13 +3570,8 @@ export type Database = {
       }
       shop_purchases: {
         Row: {
-          refund_reason: string | null
-          refund_requested_at: string | null
-          refunded_at: string | null
-          terms_accepted_at: string | null
-          terms_version: string | null
-          waiver_accepted_at: string | null
           amount_czk: number
+          auto_renew: boolean
           contact: string | null
           cosmetic_id: string | null
           created_at: string
@@ -2514,26 +3583,26 @@ export type Database = {
           note: string | null
           order_id: string | null
           paid_at: string | null
-          auto_renew: boolean
           payment_method: string | null
           period: string | null
+          refund_reason: string | null
+          refund_requested_at: string | null
+          refunded_at: string | null
           renewal: boolean
           requires_manual: boolean
           status: string
           stripe_payment_intent: string | null
           stripe_session_id: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           title: string
           updated_at: string
           user_id: string | null
+          waiver_accepted_at: string | null
         }
         Insert: {
-          refund_reason?: string | null
-          refund_requested_at?: string | null
-          refunded_at?: string | null
-          terms_accepted_at?: string | null
-          terms_version?: string | null
-          waiver_accepted_at?: string | null
           amount_czk?: number
+          auto_renew?: boolean
           contact?: string | null
           cosmetic_id?: string | null
           created_at?: string
@@ -2545,26 +3614,26 @@ export type Database = {
           note?: string | null
           order_id?: string | null
           paid_at?: string | null
-          auto_renew?: boolean
           payment_method?: string | null
           period?: string | null
+          refund_reason?: string | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
           renewal?: boolean
           requires_manual?: boolean
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
+          waiver_accepted_at?: string | null
         }
         Update: {
-          refund_reason?: string | null
-          refund_requested_at?: string | null
-          refunded_at?: string | null
-          terms_accepted_at?: string | null
-          terms_version?: string | null
-          waiver_accepted_at?: string | null
           amount_czk?: number
+          auto_renew?: boolean
           contact?: string | null
           cosmetic_id?: string | null
           created_at?: string
@@ -2576,17 +3645,22 @@ export type Database = {
           note?: string | null
           order_id?: string | null
           paid_at?: string | null
-          auto_renew?: boolean
           payment_method?: string | null
           period?: string | null
+          refund_reason?: string | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
           renewal?: boolean
           requires_manual?: boolean
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
+          waiver_accepted_at?: string | null
         }
         Relationships: [
           {
@@ -2646,6 +3720,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      shop_subscriptions: {
+        Row: {
+          auto_renew: boolean
+          item_id: string
+          period: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          item_id: string
+          period?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean
+          item_id?: string
+          period?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_subscriptions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_announcements: {
         Row: {
@@ -3593,6 +4699,105 @@ export type Database = {
         }
         Relationships: []
       }
+      vox_protect_build_policies: {
+        Row: {
+          active: boolean
+          app_version: string
+          created_at: string
+          enforcement: string
+          id: string
+          integrity_hash: string
+          platform: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          app_version: string
+          created_at?: string
+          enforcement?: string
+          id?: string
+          integrity_hash: string
+          platform: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          app_version?: string
+          created_at?: string
+          enforcement?: string
+          id?: string
+          integrity_hash?: string
+          platform?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vox_protect_challenges: {
+        Row: {
+          created_at: string
+          decision: string | null
+          expires_at: string
+          id: string
+          nonce_hash: string
+          scope: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision?: string | null
+          expires_at: string
+          id?: string
+          nonce_hash: string
+          scope?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string | null
+          expires_at?: string
+          id?: string
+          nonce_hash?: string
+          scope?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vox_protect_incidents: {
+        Row: {
+          app_version: string
+          created_at: string
+          flags: string[]
+          id: string
+          integrity_hash: string
+          kind: string
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          app_version: string
+          created_at?: string
+          flags?: string[]
+          id?: string
+          integrity_hash: string
+          kind: string
+          scope: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string
+          created_at?: string
+          flags?: string[]
+          id?: string
+          integrity_hash?: string
+          kind?: string
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vox_roles: {
         Row: {
           badge_url: string | null
@@ -3733,6 +4938,178 @@ export type Database = {
       }
     }
     Functions: {
+      ashes_admin_access_grant: {
+        Args: { p_note?: string; p_who: string }
+        Returns: Json
+      }
+      ashes_admin_access_list: { Args: never; Returns: Json }
+      ashes_admin_access_revoke: { Args: { p_user: string }; Returns: Json }
+      ashes_admin_world: { Args: { p_open: boolean }; Returns: Json }
+      ashes_archive_active: { Args: { uid: string }; Returns: undefined }
+      ashes_arena_fight: { Args: { p_target: string }; Returns: Json }
+      ashes_arena_opponents: { Args: never; Returns: Json }
+      ashes_arena_spar: { Args: never; Returns: Json }
+      ashes_bag_count: { Args: { uid: string }; Returns: number }
+      ashes_boss_attack: { Args: never; Returns: Json }
+      ashes_boss_respawn_if_due: { Args: never; Returns: undefined }
+      ashes_boss_state: { Args: never; Returns: Json }
+      ashes_buy: { Args: { p_item: string }; Returns: Json }
+      ashes_can_play: { Args: never; Returns: boolean }
+      ashes_chapter: { Args: { ch: number }; Returns: Json }
+      ashes_chapter_for: {
+        Args: { ch: number; p_faction: string }
+        Returns: Json
+      }
+      ashes_chapter_legie: { Args: { ch: number }; Returns: Json }
+      ashes_characters_list: { Args: never; Returns: Json }
+      ashes_chat_recent: { Args: { p_after?: number }; Returns: Json }
+      ashes_chat_send: {
+        Args: { p_channel: string; p_text: string }
+        Returns: Json
+      }
+      ashes_claim_hero: { Args: { p_on: boolean }; Returns: Json }
+      ashes_clean_text: { Args: { p: string; p_max: number }; Returns: string }
+      ashes_create_character: {
+        Args: {
+          p_appearance: Json
+          p_class: string
+          p_faction?: string
+          p_name: string
+        }
+        Returns: Json
+      }
+      ashes_daily_gift: { Args: never; Returns: Json }
+      ashes_delete_character: { Args: { p_slot: string }; Returns: Json }
+      ashes_display_name: {
+        Args: { ch: Database["public"]["Tables"]["ashes_characters"]["Row"] }
+        Returns: string
+      }
+      ashes_enemy: {
+        Args: {
+          cls: string
+          diff: number
+          look?: Json
+          lvl: number
+          nm: string
+        }
+        Returns: Json
+      }
+      ashes_equip: { Args: { p_item: string; p_on?: boolean }; Returns: Json }
+      ashes_feedback_send: {
+        Args: { p_context?: Json; p_kind: string; p_text: string }
+        Returns: Json
+      }
+      ashes_fight_boss: { Args: never; Returns: Json }
+      ashes_fighter: { Args: { uid: string }; Returns: Json }
+      ashes_finish_quest: { Args: { p_skip?: boolean }; Returns: Json }
+      ashes_grant: {
+        Args: { add_gold: number; add_xp: number; uid: string }
+        Returns: number
+      }
+      ashes_hall_of_fame: { Args: never; Returns: Json }
+      ashes_hero_say: { Args: { p_text: string }; Returns: Json }
+      ashes_hp: { Args: { f: Json }; Returns: number }
+      ashes_is_admin: { Args: never; Returns: boolean }
+      ashes_live_act: {
+        Args: { p_action: string; p_id: string; p_index?: number }
+        Returns: Json
+      }
+      ashes_live_begin: {
+        Args: { p_enemy: string; p_region: string }
+        Returns: Json
+      }
+      ashes_live_hit: {
+        Args: { att: Json; def: Json; mult: number; passive: number }
+        Returns: Json
+      }
+      ashes_live_reward: {
+        Args: { lvl: number; p_enemy: string; uid: string }
+        Returns: Json
+      }
+      ashes_live_rules: { Args: { cls: string }; Returns: Json }
+      ashes_log: { Args: { kind: string; msg: string }; Returns: undefined }
+      ashes_main: { Args: { f: Json }; Returns: number }
+      ashes_make_item: {
+        Args: {
+          cls: string
+          lvl: number
+          rarity_bonus?: number
+          shop?: boolean
+          uid: string
+          want_slot?: string
+        }
+        Returns: string
+      }
+      ashes_my_oddil: {
+        Args: { p_uid: string }
+        Returns: {
+          faction: string
+          oddil_id: string
+          role: string
+          tag: string
+        }[]
+      }
+      ashes_n: { Args: { j: Json; k: string }; Returns: number }
+      ashes_new_character: { Args: never; Returns: Json }
+      ashes_oddil_answer: {
+        Args: { p_accept: boolean; p_oddil: string }
+        Returns: Json
+      }
+      ashes_oddil_create: {
+        Args: { p_motto?: string; p_name: string; p_tag: string }
+        Returns: Json
+      }
+      ashes_oddil_info: { Args: never; Returns: Json }
+      ashes_oddil_invite: { Args: { p_name: string }; Returns: Json }
+      ashes_oddil_leave: { Args: never; Returns: Json }
+      ashes_oddil_member: {
+        Args: { p_action: string; p_user: string }
+        Returns: Json
+      }
+      ashes_offer_quests: { Args: { uid: string }; Returns: undefined }
+      ashes_race_finish: { Args: never; Returns: Json }
+      ashes_race_start: { Args: never; Returns: Json }
+      ashes_race_top: { Args: never; Returns: Json }
+      ashes_region_enemies: { Args: never; Returns: Json }
+      ashes_report_crash: {
+        Args: { p_gpu: string; p_log: string; p_version: string }
+        Returns: boolean
+      }
+      ashes_require: { Args: never; Returns: string }
+      ashes_scaled_enemy_level: {
+        Args: { player_level: number; region_min: number }
+        Returns: number
+      }
+      ashes_sell: { Args: { p_item: string }; Returns: Json }
+      ashes_shop: { Args: never; Returns: Json }
+      ashes_shop_next: { Args: never; Returns: number }
+      ashes_simulate: {
+        Args: { a: Json; a_mult?: number; b: Json }
+        Returns: Json
+      }
+      ashes_start_quest: { Args: { p_quest: string }; Returns: Json }
+      ashes_state: { Args: never; Returns: Json }
+      ashes_switch_character: { Args: { p_slot: string }; Returns: Json }
+      ashes_train: { Args: { p_stat: string }; Returns: Json }
+      ashes_train_cost: { Args: { val: number }; Returns: number }
+      ashes_wall_add: { Args: { delta: number }; Returns: number }
+      ashes_world_fight: {
+        Args: { p_enemy: string; p_region: string }
+        Returns: Json
+      }
+      ashes_wq_accept: { Args: { p_quest: string }; Returns: Json }
+      ashes_wq_catalog: { Args: never; Returns: Json }
+      ashes_wq_event: {
+        Args: { p_kind: string; p_target: string }
+        Returns: Json
+      }
+      ashes_wq_reqs_done: {
+        Args: { reqs: Json; uid: string }
+        Returns: boolean
+      }
+      ashes_wq_turnin: { Args: { p_quest: string }; Returns: Json }
+      ashes_xp_need: { Args: { lvl: number }; Returns: number }
+      bot_moderation_events_cleanup: { Args: never; Returns: undefined }
       bounty_complete: { Args: { _contract_id: string }; Returns: undefined }
       can: { Args: { _action: string; _module: string }; Returns: boolean }
       can_manage_vox_events: {
@@ -3770,6 +5147,7 @@ export type Database = {
         Returns: string
       }
       get_page_draft_blocks: { Args: { _slug: string }; Returns: Json }
+      get_platform_stats: { Args: never; Returns: Json }
       get_public_shop_config: {
         Args: never
         Returns: {
@@ -3782,15 +5160,6 @@ export type Database = {
           paypal_me: string
           refund_notice: string
           stripe_enabled: boolean
-        }[]
-      }
-      get_platform_stats: { Args: never; Returns: Json }
-      get_public_team: {
-        Args: never
-        Returns: {
-          avatar_url: string | null
-          display_name: string | null
-          role: string
         }[]
       }
       get_public_site_settings: {
@@ -3817,6 +5186,14 @@ export type Database = {
           site_tagline: string
         }[]
       }
+      get_public_team: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          role: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3840,22 +5217,33 @@ export type Database = {
         Args: { _guild: string; _user: string }
         Returns: boolean
       }
+      launcher_auth_cleanup: { Args: never; Returns: undefined }
       mark_conversation_read: {
         Args: { _conversation_id: string }
         Returns: number
       }
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
       redeem_download_code: { Args: { _code: string }; Returns: boolean }
+      security_evaluate_user: { Args: { _user_id: string }; Returns: number }
+      security_html_escape: { Args: { _value: string }; Returns: string }
+      security_purge_abusive_users: { Args: never; Returns: number }
+      security_send_admin_dm: { Args: { _content: string }; Returns: undefined }
+      security_system_user_id: { Args: never; Returns: string }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       shop_can_download: { Args: { p_item: string }; Returns: boolean }
+      shop_fulfill_purchase: { Args: { _id: string }; Returns: undefined }
       shop_grant_download: {
         Args: { p_item: string; p_minutes: number; p_user: string }
         Returns: undefined
       }
+      shop_log_download: { Args: { p_item: string }; Returns: undefined }
+      shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
       shop_my_downloads: {
         Args: never
         Returns: {
+          activated_at: string
           active: boolean
+          auto_renew: boolean
           expires_at: string
           file_name: string
           file_parts: string[]
@@ -3863,31 +5251,34 @@ export type Database = {
           file_size: number
           file_version: string
           item_id: string
+          pending_amount: number
+          pending_period: string
+          pending_purchase: string
+          period: string
+          refundable_until: string
           title: string
-          period: string | null
-          auto_renew: boolean
-          pending_purchase: string | null
-          pending_amount: number | null
-          pending_period: string | null
-          activated_at: string | null
-          refundable_until: string | null
         }[]
       }
-      shop_log_download: { Args: { p_item: string }; Returns: undefined }
-      shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
-      shop_request_refund: {
-        Args: { p_item: string; p_reason?: string | null }
-        Returns: Json
+      shop_notify_recipients: { Args: never; Returns: string[] }
+      shop_period_interval: { Args: { p_period: string }; Returns: string }
+      shop_refund_used: {
+        Args: { p_item: string; p_user: string }
+        Returns: boolean
       }
       shop_renewal_pay: {
         Args: { p_method: string; p_purchase: string; p_terms?: string }
         Returns: undefined
+      }
+      shop_request_refund: {
+        Args: { p_item: string; p_reason?: string }
+        Returns: Json
       }
       shop_run_renewals: { Args: never; Returns: number }
       shop_set_auto_renew: {
         Args: { p_item: string; p_on: boolean; p_period?: string }
         Returns: undefined
       }
+      shop_vs: { Args: { p_id: string }; Returns: string }
       user_can_do: { Args: { _capability: string }; Returns: boolean }
       user_has_permission: {
         Args: { _action: string; _module: string; _user_id: string }
@@ -3914,6 +5305,7 @@ export type Database = {
         Args: { _guild: string; _user: string }
         Returns: undefined
       }
+      vox_legal_cleanup: { Args: never; Returns: undefined }
       vox_member_role: {
         Args: { _guild: string; _user: string }
         Returns: Database["public"]["Enums"]["vox_member_role"]
