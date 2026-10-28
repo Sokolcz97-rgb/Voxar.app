@@ -5278,6 +5278,10 @@ export type Database = {
         Returns: boolean
       }
       launcher_auth_cleanup: { Args: never; Returns: undefined }
+      lfg_players_with_game: {
+        Args: { _candidate_ids: string[]; _game_id: string }
+        Returns: string[]
+      }
       mark_conversation_read: {
         Args: { _conversation_id: string }
         Returns: number
