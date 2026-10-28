@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Check, Loader2, Receipt, X } from "lucide-react";
+import { Ban, Check, Loader2, Receipt, Trash2, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { variableSymbol } from "@/lib/payments";
 
 type Purchase = {
@@ -41,6 +52,7 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Zrušeno",
   refund_requested: "Žádost o vrácení",
   refunded: "Peníze vráceny",
+  rejected: "Zamítnuto",
 };
 
 const KIND_LABEL: Record<string, string> = {
@@ -56,7 +68,9 @@ export default function AdminPurchases() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [vsQuery, setVsQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending" | "paid" | "donation">("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "paid" | "donation" | "rejected">("all");
+  const { isAdmin } = useAuth();
+  const [confirm, setConfirm] = useState<{ kind: "reject" | "delete"; row: Purchase } | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -105,6 +119,30 @@ export default function AdminPurchases() {
       toast.error(error.message);
       return;
     }
+    await load();
+  };
+
+  const reject = async (id: string) => {
+    setBusy(id);
+    const { error } = await supabase.rpc("shop_admin_reject", { _id: id });
+    setBusy(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Transakce zamítnuta – nepočítá se do tržeb a případný přístup byl odebrán.");
+    await load();
+  };
+
+  const remove = async (id: string) => {
+    setBusy(id);
+    const { error } = await supabase.rpc("shop_admin_delete", { _id: id });
+    setBusy(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Transakce smazána.");
     await load();
   };
 
@@ -187,6 +225,7 @@ export default function AdminPurchases() {
             <TabsTrigger value="paid">Zaplacené</TabsTrigger>
             <TabsTrigger value="refund_requested">Vrácení</TabsTrigger>
             <TabsTrigger value="donation">Dary</TabsTrigger>
+            <TabsTrigger value="rejected">Zamítnuté</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -207,7 +246,7 @@ export default function AdminPurchases() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{r.title}</h3>
                       <Badge variant="outline">{KIND_LABEL[r.kind] ?? r.kind}</Badge>
-                      <Badge variant={r.status === "paid" ? "default" : r.status === "cancelled" ? "destructive" : "secondary"}>
+                      <Badge variant={r.status === "paid" ? "default" : r.status === "cancelled" || r.status === "rejected" ? "destructive" : "secondary"}>
                         {STATUS_LABEL[r.status] ?? r.status}
                       </Badge>
                       {r.order_id && <Badge variant="outline">Zakázka založena</Badge>}
@@ -266,6 +305,29 @@ export default function AdminPurchases() {
                         <X className="h-4 w-4 mr-1" /> Zrušit
                       </Button>
                     )}
+                    {r.status !== "rejected" && r.status !== "refunded" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === r.id}
+                        onClick={() => setConfirm({ kind: "reject", row: r })}
+                        title="Např. zkušební nebo neplatná transakce – nebude se počítat do tržeb."
+                      >
+                        <Ban className="h-4 w-4 mr-1" /> Zamítnout
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        disabled={busy === r.id}
+                        onClick={() => setConfirm({ kind: "delete", row: r })}
+                        title="Smazat záznam natrvalo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -273,6 +335,42 @@ export default function AdminPurchases() {
           </div>
         )}
       </main>
+
+      <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm?.kind === "delete" ? "Smazat transakci natrvalo?" : "Zamítnout transakci?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{confirm?.row.title}“ · {confirm?.row.amount_czk} {confirm?.row.currency} · VS {confirm ? variableSymbol(confirm.row.id) : ""}
+              <br />
+              {confirm?.kind === "delete"
+                ? "Záznam zmizí ze seznamu i ze součtů a nejde vrátit zpět. Případný přístup (předplatné, rámeček) se odebere."
+                : "Záznam zůstane v seznamu jako „Zamítnuto“, nebude se počítat do tržeb a případný přístup (předplatné, rámeček) se odebere."}
+              {confirm?.row.payment_method === "stripe" && confirm?.row.status === "paid" && (
+                <>
+                  <br />
+                  Pokud byla platba kartou skutečně stržena, peníze vrať ve Stripe Dashboard – tady se nic nevrací.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zpět</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirm?.kind === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              onClick={() => {
+                if (!confirm) return;
+                const id = confirm.row.id;
+                const kind = confirm.kind;
+                setConfirm(null);
+                void (kind === "delete" ? remove(id) : reject(id));
+              }}
+            >
+              {confirm?.kind === "delete" ? "Smazat" : "Zamítnout"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
