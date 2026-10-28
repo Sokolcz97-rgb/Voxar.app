@@ -26,26 +26,23 @@ vi.mock("@/components/ui/dialog", () => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: (table: string) => {
-      const query: any = {
-        select: () => query,
-        eq: () => query,
-        order: () => query,
-        limit: () => query,
-        in: () => {
-          if (table === "user_games") mock.crossUserGameRead = true;
-          return query;
-        },
-        then: (resolve: any) =>
+    from: (table: string) => ({
+      select: () => ({
+        eq: () =>
           Promise.resolve({
             data:
               table === "user_games"
                 ? [{ games: { id: "windrose", name: "Windrose", color_tag: "#0ff" } }]
-                : [{ user_id: "other", display_name: "Other", username: "other", avatar_url: null }],
-          }).then(resolve),
-      };
-      return query;
-    },
+                : [],
+          }),
+        in: () => {
+          if (table === "user_games") mock.crossUserGameRead = true;
+          return Promise.resolve({
+            data: [{ user_id: "other", display_name: "Other", username: "other", avatar_url: null }],
+          });
+        },
+      }),
+    }),
     rpc: (name: string, args: any) => {
       mock.rpc(name, args);
       return Promise.resolve({ data: ["other"] });
