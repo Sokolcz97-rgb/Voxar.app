@@ -3499,6 +3499,90 @@ export type Database = {
           },
         ]
       }
+      shop_items: {
+        Row: {
+          access_minutes: number | null
+          active: boolean
+          cosmetic_id: string | null
+          created_at: string
+          description: string | null
+          features: string[]
+          file_name: string | null
+          file_parts: string[]
+          file_sha256: string | null
+          file_size: number | null
+          file_uploaded_at: string | null
+          file_version: string | null
+          id: string
+          image_url: string | null
+          kind: string
+          license_updates_days: number
+          pass_month_czk: number | null
+          pass_year_czk: number | null
+          price_czk: number
+          price_year_czk: number | null
+          product_key: string | null
+          sale_mode: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          access_minutes?: number | null
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          file_name?: string | null
+          file_parts?: string[]
+          file_sha256?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_version?: string | null
+          id?: string
+          image_url?: string | null
+          kind?: string
+          license_updates_days?: number
+          pass_month_czk?: number | null
+          pass_year_czk?: number | null
+          price_czk?: number
+          price_year_czk?: number | null
+          product_key?: string | null
+          sale_mode?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          access_minutes?: number | null
+          active?: boolean
+          cosmetic_id?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          file_name?: string | null
+          file_parts?: string[]
+          file_sha256?: string | null
+          file_size?: number | null
+          file_uploaded_at?: string | null
+          file_version?: string | null
+          id?: string
+          image_url?: string | null
+          kind?: string
+          license_updates_days?: number
+          pass_month_czk?: number | null
+          pass_year_czk?: number | null
+          price_czk?: number
+          price_year_czk?: number | null
+          product_key?: string | null
+          sale_mode?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shop_licenses: {
         Row: {
           item_id: string
@@ -3527,91 +3611,22 @@ export type Database = {
           updates_until?: string
           user_id?: string
         }
-        Relationships: []
-      }
-      shop_items: {
-        Row: {
-          access_minutes: number | null
-          active: boolean
-          cosmetic_id: string | null
-          created_at: string
-          description: string | null
-          features: string[]
-          file_name: string | null
-          file_parts: string[]
-          file_sha256: string | null
-          file_size: number | null
-          file_uploaded_at: string | null
-          file_version: string | null
-          id: string
-          image_url: string | null
-          kind: string
-          price_czk: number
-          price_year_czk: number | null
-          license_updates_days: number
-          pass_month_czk: number | null
-          pass_year_czk: number | null
-          product_key: string | null
-          sale_mode: string
-          sort_order: number
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          access_minutes?: number | null
-          active?: boolean
-          cosmetic_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[]
-          file_name?: string | null
-          file_parts?: string[]
-          file_sha256?: string | null
-          file_size?: number | null
-          file_uploaded_at?: string | null
-          file_version?: string | null
-          id?: string
-          image_url?: string | null
-          kind?: string
-          price_czk?: number
-          price_year_czk?: number | null
-          license_updates_days?: number
-          pass_month_czk?: number | null
-          pass_year_czk?: number | null
-          product_key?: string | null
-          sale_mode?: string
-          sort_order?: number
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          access_minutes?: number | null
-          active?: boolean
-          cosmetic_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[]
-          file_name?: string | null
-          file_parts?: string[]
-          file_sha256?: string | null
-          file_size?: number | null
-          file_uploaded_at?: string | null
-          file_version?: string | null
-          id?: string
-          image_url?: string | null
-          kind?: string
-          price_czk?: number
-          price_year_czk?: number | null
-          license_updates_days?: number
-          pass_month_czk?: number | null
-          pass_year_czk?: number | null
-          product_key?: string | null
-          sale_mode?: string
-          sort_order?: number
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shop_licenses_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_licenses_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "shop_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_purchases: {
         Row: {
@@ -5278,6 +5293,13 @@ export type Database = {
       shop_admin_reject: { Args: { _id: string }; Returns: undefined }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       shop_can_download: { Args: { p_item: string }; Returns: boolean }
+      shop_fulfill_license: {
+        Args: {
+          it: Database["public"]["Tables"]["shop_items"]["Row"]
+          p: Database["public"]["Tables"]["shop_purchases"]["Row"]
+        }
+        Returns: undefined
+      }
       shop_fulfill_purchase: { Args: { _id: string }; Returns: undefined }
       shop_grant_download: {
         Args: { p_item: string; p_minutes: number; p_user: string }
@@ -5286,16 +5308,6 @@ export type Database = {
       shop_license_status: { Args: { p_product: string }; Returns: Json }
       shop_log_download: { Args: { p_item: string }; Returns: undefined }
       shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
-      shop_my_licenses: {
-        Args: never
-        Returns: {
-          can_download: boolean
-          item_id: string
-          purchased_at: string
-          updates_active: boolean
-          updates_until: string
-        }[]
-      }
       shop_my_downloads: {
         Args: never
         Returns: {
@@ -5317,7 +5329,18 @@ export type Database = {
           title: string
         }[]
       }
+      shop_my_licenses: {
+        Args: never
+        Returns: {
+          can_download: boolean
+          item_id: string
+          purchased_at: string
+          updates_active: boolean
+          updates_until: string
+        }[]
+      }
       shop_notify_recipients: { Args: never; Returns: string[] }
+      shop_pass_interval: { Args: { p_period: string }; Returns: string }
       shop_period_interval: { Args: { p_period: string }; Returns: string }
       shop_refund_used: {
         Args: { p_item: string; p_user: string }
@@ -5330,6 +5353,14 @@ export type Database = {
       shop_request_refund: {
         Args: { p_item: string; p_reason?: string }
         Returns: Json
+      }
+      shop_revoke_license_part: {
+        Args: { p: Database["public"]["Tables"]["shop_purchases"]["Row"] }
+        Returns: undefined
+      }
+      shop_revoke_purchase_content: {
+        Args: { p: Database["public"]["Tables"]["shop_purchases"]["Row"] }
+        Returns: undefined
       }
       shop_run_renewals: { Args: never; Returns: number }
       shop_set_auto_renew: {
