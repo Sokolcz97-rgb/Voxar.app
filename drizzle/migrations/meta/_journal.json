@@ -29,6 +29,13 @@
       "when": 1793040647449,
       "tag": "0003_forum_bounty_members_only",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793206556137,
+      "tag": "0004_narrow_user_games_lfg_rls",
+      "breakpoints": true
     }
   ]
 }

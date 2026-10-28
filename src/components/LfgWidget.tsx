@@ -53,12 +53,13 @@ export const LfgWidget = () => {
       setScanning(false);
       return;
     }
-    const { data: ug } = await supabase
-      .from("user_games")
-      .select("user_id")
-      .eq("game_id", gameId)
-      .in("user_id", others);
-    const ids = (ug ?? []).map((r) => r.user_id);
+    // Přes serverovou funkci: vlastníknout cizí herní knihovnu nikdo nemusí,
+    // stačí zjistit, kdo z online hráčů tuto hru hraje.
+    const { data: ug } = await supabase.rpc("lfg_players_with_game", {
+      _game_id: gameId,
+      _candidate_ids: others,
+    });
+    const ids = (ug ?? []) as string[];
     if (ids.length === 0) {
       setMatches([]);
       setScanning(false);
