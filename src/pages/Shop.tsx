@@ -26,6 +26,15 @@ const ShopPage = () => {
 
   const [adminMode, setAdminMode] = useState(false);
   const [params, setParams] = useSearchParams();
+  // odkaz z aplikace (engine): /obchod?tab=software&licence=<klíč> nebo &pass=<klíč>[&obdobi=mesic|rok]
+  const [appLink] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    const pass = q.get("pass");
+    const lic = q.get("licence");
+    if (!pass && !lic) return null;
+    const o = q.get("obdobi");
+    return { key: (pass ?? lic)!, mode: pass ? ("pass" as const) : ("licence" as const), period: o === "mesic" ? ("month" as const) : o === "rok" ? ("year" as const) : undefined };
+  });
 
   // návrat z platební brány Stripe
   useEffect(() => {
@@ -49,7 +58,7 @@ const ShopPage = () => {
     kind: "frame" | "plugin" | "software" | "donation";
     itemId: string | null;
     cosmeticId: string | null;
-    period?: "month" | "year" | null;
+    period?: "month" | "year" | "license" | "pass_month" | "pass_year" | null;
     autoRenew?: boolean;
     renewalId?: string | null;
   } | null>(null);
@@ -113,7 +122,7 @@ const ShopPage = () => {
         )}
 
         {!adminMode && (
-          <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") ?? "frames"} className="space-y-6">
+          <Tabs defaultValue={appLink ? "software" : new URLSearchParams(window.location.search).get("tab") ?? "frames"} className="space-y-6">
             <TabsList>
               <TabsTrigger value="frames">
                 <Sparkles className="h-4 w-4 mr-2" /> Orámování
@@ -122,7 +131,7 @@ const ShopPage = () => {
                 <Code2 className="h-4 w-4 mr-2" /> Plugin code
               </TabsTrigger>
               <TabsTrigger value="software">
-                <Crown className="h-4 w-4 mr-2" /> Předplatné
+                <Crown className="h-4 w-4 mr-2" /> Software
               </TabsTrigger>
               <TabsTrigger value="donate">
                 <HeartHandshake className="h-4 w-4 mr-2" /> Podpořit projekt
@@ -195,7 +204,7 @@ const ShopPage = () => {
             </TabsContent>
 
             <TabsContent value="software">
-              {loading ? <p className="text-muted-foreground">Načítám…</p> : <SoftwareTab items={software} onBuy={buy} />}
+              {loading ? <p className="text-muted-foreground">Načítám…</p> : <SoftwareTab items={software} onBuy={buy} focus={appLink} />}
             </TabsContent>
 
             <TabsContent value="donate">

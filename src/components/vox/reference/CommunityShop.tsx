@@ -17,7 +17,7 @@ type Checkout = {
   kind: "frame" | "plugin" | "software" | "donation";
   itemId: string | null;
   cosmeticId: string | null;
-  period?: "month" | "year" | null;
+  period?: "month" | "year" | "license" | "pass_month" | "pass_year" | null;
   autoRenew?: boolean;
   renewalId?: string | null;
 };

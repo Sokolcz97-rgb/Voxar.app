@@ -68,7 +68,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
   };
 
   const openNew = (kind: "frame" | "plugin" | "software") => {
-    setEditing({ ...EMPTY, kind });
+    setEditing(kind === "software" ? { ...EMPTY, kind, sale_mode: "license", license_updates_days: 365 } : { ...EMPTY, kind });
     setFeaturesText("");
     resetSoftware(null);
   };
@@ -93,7 +93,12 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
     const payload = {
       kind: editing.kind ?? "frame",
       access_minutes: software ? UNIT_MINUTES.months : null,
-      price_year_czk: software && editing.price_year_czk ? Math.max(0, Number(editing.price_year_czk)) : null,
+      price_year_czk: software && editing.sale_mode !== "license" && editing.price_year_czk ? Math.max(0, Number(editing.price_year_czk)) : null,
+      sale_mode: software ? editing.sale_mode ?? "subscription" : "subscription",
+      license_updates_days: software ? Math.max(0, Number(editing.license_updates_days ?? 365)) : 365,
+      pass_month_czk: software && editing.sale_mode === "license" && editing.pass_month_czk ? Math.max(0, Number(editing.pass_month_czk)) : null,
+      pass_year_czk: software && editing.sale_mode === "license" && editing.pass_year_czk ? Math.max(0, Number(editing.pass_year_czk)) : null,
+      product_key: software && editing.product_key?.trim() ? editing.product_key.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-") : null,
       file_version: software ? editing.file_version || null : null,
       title: editing.title.trim(),
       description: editing.description || null,
@@ -174,7 +179,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               <Plus className="h-4 w-4 mr-1" /> Plugin
             </Button>
             <Button size="sm" variant="outline" onClick={() => openNew("software")}>
-              <Plus className="h-4 w-4 mr-1" /> Předplatné
+              <Plus className="h-4 w-4 mr-1" /> Software
             </Button>
           </div>
         </div>
@@ -186,13 +191,16 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               className="flex flex-wrap items-center gap-3 border border-border/60 px-3 py-2 text-sm"
             >
               <span className="text-xs uppercase tracking-wider text-muted-foreground w-16">
-                {item.kind === "frame" ? "Rámeček" : item.kind === "software" ? "Předplatné" : "Plugin"}
+                {item.kind === "frame" ? "Rámeček" : item.kind === "software" ? (item.sale_mode === "license" ? "Licence" : "Předplatné") : "Plugin"}
               </span>
               <span className="font-medium flex-1 min-w-[140px]">
                 {item.title}
                 {item.kind === "software" && (
                   <span className="block text-xs text-muted-foreground font-normal">
-                    {item.price_year_czk ? `${item.price_czk} Kč/měs. · ${item.price_year_czk} Kč/rok` : `${item.price_czk} Kč/měs.`} · {item.file_name ? `${item.file_name} (${formatBytes(item.file_size)})` : "soubor chybí"}
+                    {item.sale_mode === "license"
+                      ? `${item.price_czk} Kč licence · aktualizace ${item.license_updates_days ?? 365} dní · pass ${item.pass_month_czk ?? "–"} Kč/měs., ${item.pass_year_czk ?? "–"} Kč/rok`
+                      : item.price_year_czk ? `${item.price_czk} Kč/měs. · ${item.price_year_czk} Kč/rok` : `${item.price_czk} Kč/měs.`}{" "}
+                    · {item.file_name ? `${item.file_name} (${formatBytes(item.file_size)})` : "soubor chybí"}
                   </span>
                 )}
               </span>
@@ -301,12 +309,12 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
                 <SelectContent>
                   <SelectItem value="frame">Orámování (badge)</SelectItem>
                   <SelectItem value="plugin">Plugin code</SelectItem>
-                  <SelectItem value="software">Předplatné (se souborem ke stažení)</SelectItem>
+                  <SelectItem value="software">Software (licence nebo předplatné, se souborem ke stažení)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{editing?.kind === "plugin" ? "Název pluginu" : editing?.kind === "software" ? "Název předplatného" : "Název rámečku"}</Label>
+              <Label>{editing?.kind === "plugin" ? "Název pluginu" : editing?.kind === "software" ? "Název produktu" : "Název rámečku"}</Label>
               <Input
                 value={editing?.title ?? ""}
                 onChange={(e) => setEditing((x) => ({ ...x, title: e.target.value }))}
@@ -334,6 +342,75 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
             )}
             {editing?.kind === "software" && (
               <div className="space-y-4 border border-primary/30 p-3">
+                <div className="space-y-1.5">
+                  <Label>Způsob prodeje</Label>
+                  <Select
+                    value={editing?.sale_mode ?? "subscription"}
+                    onValueChange={(v) => setEditing((x) => ({ ...x, sale_mode: v as "subscription" | "license" }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="license">Jednorázová licence + Upgrade pass</SelectItem>
+                      <SelectItem value="subscription">Předplatné (měsíční / roční)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editing?.sale_mode === "license" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Cena licence (Kč, jednorázově)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={editing?.price_czk ?? 0}
+                        onChange={(e) => setEditing((x) => ({ ...x, price_czk: Number(e.target.value) }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Aktualizace v ceně (dní)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={editing?.license_updates_days ?? 365}
+                        onChange={(e) => setEditing((x) => ({ ...x, license_updates_days: Number(e.target.value) }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Upgrade pass – měsíc (Kč)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="prázdné = nenabízet"
+                        value={editing?.pass_month_czk ?? ""}
+                        onChange={(e) => setEditing((x) => ({ ...x, pass_month_czk: e.target.value === "" ? null : Number(e.target.value) }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Upgrade pass – rok (Kč)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="prázdné = nenabízet"
+                        value={editing?.pass_year_czk ?? ""}
+                        onChange={(e) => setEditing((x) => ({ ...x, pass_year_czk: e.target.value === "" ? null : Number(e.target.value) }))}
+                      />
+                    </div>
+                    <div className="col-span-2 space-y-1.5">
+                      <Label>Klíč produktu pro aplikaci</Label>
+                      <Input
+                        value={editing?.product_key ?? ""}
+                        placeholder="např. voxario-studio-engine"
+                        onChange={(e) => setEditing((x) => ({ ...x, product_key: e.target.value }))}
+                      />
+                    </div>
+                    <p className="col-span-2 text-xs text-muted-foreground">
+                      Licence je trvalá. Aktualizace (nové verze ke stažení) platí uvedený počet dní od koupě; potom si je zákazník
+                      prodlouží Upgrade passem – v obchodě nebo z aplikace přes odkaz
+                      {" "}<code>/obchod?pass={editing?.product_key || "klíč"}</code>. Pass navazuje na konec aktualizací. Aplikace
+                      zjistí stav licence přes <code>shop_license_status(&quot;{editing?.product_key || "klíč"}&quot;)</code>.
+                    </p>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Měsíční cena (Kč / 30 dní)</Label>
@@ -361,6 +438,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
                     mu systém připraví platbu a pošle upozornění; po potvrzení platby se předplatné prodlouží.
                   </p>
                 </div>
+                )}
                 <div className="space-y-1.5">
                   <Label>Verze (nepovinné)</Label>
                   <Input

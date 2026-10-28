@@ -22,6 +22,15 @@ export type ShopItem = {
   file_version?: string | null;
   file_parts?: string[];
   file_uploaded_at?: string | null;
+  /** Software: "subscription" = měsíční/roční předplatné, "license" = jednorázová licence + Upgrade pass. */
+  sale_mode?: "subscription" | "license";
+  /** Licence: počet dní aktualizací v ceně licence (price_czk). */
+  license_updates_days?: number;
+  /** Licence: cena Upgrade passu (prodloužení aktualizací) na měsíc / rok. */
+  pass_month_czk?: number | null;
+  pass_year_czk?: number | null;
+  /** Klíč produktu pro aplikaci (např. voxario-studio-engine) – odkazy z enginu do obchodu. */
+  product_key?: string | null;
 };
 
 export type ShopSettings = {

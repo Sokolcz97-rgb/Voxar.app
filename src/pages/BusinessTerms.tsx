@@ -101,12 +101,12 @@ const BusinessTerms = () => {
       <Sec id="dodani" n={6} title="Dodání">
         <p>
           Digitální obsah dodáváme zpřístupněním v účtu (aktivací) po připsání a ověření platby, zpravidla do 72 hodin. Rámečky
-          se aktivují v profilu, soubory a instalátory jsou ke stažení v Obchodě → Předplatné, pluginy dodáváme podle popisu
+          se aktivují v profilu, soubory a instalátory jsou ke stažení v Obchodě → Software, pluginy dodáváme podle popisu
           položky (u zakázek jako zakázku). O aktivaci tě informujeme oznámením v účtu, které slouží i jako potvrzení smlouvy.
         </p>
       </Sec>
 
-      <Sec id="predplatne" n={7} title="Předplatné">
+      <Sec id="predplatne" n={7} title="Předplatné a licence">
         <Ul>
           <li>
             <strong>Tarify:</strong> měsíční (30 dní) a – pokud je u položky nabízen – roční (365 dní). Období začíná aktivací;
@@ -128,6 +128,23 @@ const BusinessTerms = () => {
           <li>
             Během předplatného smíš program užívat podle <L to="/licence">Licenčních podmínek</L>. Po skončení předplatného
             zaniká právo program stahovat a užívat; projekty, které jsi v programu vytvořil(a), zůstávají tvé.
+          </li>
+        </Ul>
+        <p className="text-foreground font-semibold">Jednorázová licence a Upgrade pass</p>
+        <Ul>
+          <li>
+            U položek prodávaných jako <strong>jednorázová licence</strong> získáš trvalé právo program užívat podle{" "}
+            <L to="/licence">Licenčních podmínek</L>. V ceně jsou <strong>aktualizace</strong> (nové verze ke stažení) na dobu
+            uvedenou u položky, počítanou od zaplacení.
+          </li>
+          <li>
+            Po skončení aktualizací program funguje dál ve verzi, kterou máš. Nové verze si můžeš odemknout
+            <strong> Upgrade passem</strong> (měsíc 30 dní / rok 365 dní). Upgrade pass navazuje na konec aktualizací; pokud už
+            skončily, platí ode dne zaplacení. Nic se neobnovuje ani nestrhává automaticky.
+          </li>
+          <li>
+            Zakoupenou licenci nelze převést na jiný účet. Dobrovolná záruka vrácení peněz podle bodu 10 se na licenci a Upgrade
+            pass nevztahuje; zákonná práva (např. z vadného plnění) tím nejsou dotčena.
           </li>
         </Ul>
       </Sec>
@@ -178,7 +195,7 @@ const BusinessTerms = () => {
         </p>
         <Ul>
           <li>
-            o vrácení požádáš tlačítkem „Požádat o vrácení peněz“ v Obchodě → Předplatné <strong>nejpozději do 30 minut od
+            o vrácení požádáš tlačítkem „Požádat o vrácení peněz“ v Obchodě → Software <strong>nejpozději do 30 minut od
             aktivace</strong> předplatného (čas aktivace a konec lhůty vidíš u předplatného a v potvrzení);
           </li>
           <li>

@@ -26,7 +26,7 @@ interface Props {
   itemId?: string | null;
   cosmeticId?: string | null;
   /** Předplatné: tarif a automatické obnovení. */
-  period?: "month" | "year" | null;
+  period?: "month" | "year" | "license" | "pass_month" | "pass_year" | null;
   autoRenew?: boolean;
   /** Platba za obnovení, kterou už připravil systém (jen se zaznamená způsob platby). */
   renewalId?: string | null;
@@ -182,8 +182,16 @@ export function PurchaseDialog({
             Částka k úhradě: <span className="text-primary font-bold">{amount} Kč</span>
             {kind === "software" && (
               <span className="block mt-1">
-                {period === "year" ? "Roční předplatné (365 dní)" : "Měsíční předplatné (30 dní)"}
-                {autoRenew ? " · automatické obnovení zapnuto" : ""}
+                {period === "license"
+                  ? "Jednorázová trvalá licence (včetně aktualizací na dobu uvedenou u produktu)"
+                  : period === "pass_year"
+                    ? "Upgrade pass – prodloužení aktualizací o 365 dní"
+                    : period === "pass_month"
+                      ? "Upgrade pass – prodloužení aktualizací o 30 dní"
+                      : period === "year"
+                        ? "Roční předplatné (365 dní)"
+                        : "Měsíční předplatné (30 dní)"}
+                {autoRenew && (period === "month" || period === "year") ? " · automatické obnovení zapnuto" : ""}
               </span>
             )}
           </DialogDescription>
@@ -216,10 +224,10 @@ export function PurchaseDialog({
               <label className="flex gap-2 items-start cursor-pointer">
                 <Checkbox checked={accWaiver} onCheckedChange={(v) => setAccWaiver(v === true)} className="mt-0.5" />
                 <span>
-                  Výslovně žádám o okamžité dodání digitálního obsahu{kind === "software" ? " (zahájení předplatného)" : ""} před
+                  Výslovně žádám o okamžité dodání digitálního obsahu{kind === "software" ? (period === "month" || period === "year" ? " (zahájení předplatného)" : " (aktivace licence / aktualizací)") : ""} před
                   uplynutím 14denní lhůty pro odstoupení a beru na vědomí, že jeho aktivací <strong>ztrácím právo na odstoupení
                   od smlouvy</strong> (§ 1837 písm. l) občanského zákoníku).
-                  {kind === "software" && " U předplatného mohu do 30 minut od aktivace požádat o vrácení peněz podle bodu 10 obchodních podmínek."}
+                  {kind === "software" && (period === "month" || period === "year") && " U předplatného mohu do 30 minut od aktivace požádat o vrácení peněz podle bodu 10 obchodních podmínek."}
                 </span>
               </label>
             )}
@@ -326,7 +334,7 @@ export function PurchaseDialog({
           {kind === "software" && autoRenew && (
             <p className="text-xs text-muted-foreground">
               Automatické obnovení: 3 dny před koncem ti připravíme platbu za další období a pošleme upozornění.
-              Stačí ji zaplatit – předplatné se po ověření prodlouží. Vypnout to můžeš kdykoli v Obchodě → Předplatné.
+              Stačí ji zaplatit – předplatné se po ověření prodlouží. Vypnout to můžeš kdykoli v Obchodě → Software.
             </p>
           )}
           <p className="text-xs text-muted-foreground">
