@@ -5275,6 +5275,28 @@ export type Database = {
       security_send_admin_dm: { Args: { _content: string }; Returns: undefined }
       security_system_user_id: { Args: never; Returns: string }
       shop_admin_delete: { Args: { _id: string }; Returns: undefined }
+      shop_admin_find_user: {
+        Args: { p_query: string }
+        Returns: { email: string; name: string; user_id: string }[]
+      }
+      shop_admin_grant_license: {
+        Args: { p_days: number; p_item: string; p_note?: string | null; p_user: string }
+        Returns: string
+      }
+      shop_admin_licenses: {
+        Args: { p_item: string }
+        Returns: {
+          email: string
+          granted: boolean
+          name: string
+          note: string
+          purchased_at: string
+          revoked_at: string
+          updates_until: string
+          user_id: string
+        }[]
+      }
+      shop_admin_revoke_license: { Args: { p_item: string; p_user: string }; Returns: undefined }
       shop_admin_reject: { Args: { _id: string }; Returns: undefined }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       shop_can_download: { Args: { p_item: string }; Returns: boolean }

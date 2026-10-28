@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { LicenseAdminDialog } from "@/components/shop/LicenseAdminDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Pencil, Save, Upload, FileDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, Upload, FileDown, KeyRound } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { formatBytes, formatDuration, removeShopFiles, uploadShopFile } from "@/lib/shopFiles";
 import { useCosmeticStyles } from "@/hooks/useCosmeticStyles";
@@ -54,6 +55,7 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
   const [durationUnit, setDurationUnit] = useState<DurationUnit>("days");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<{ k: number; msg: string } | null>(null);
+  const [licItem, setLicItem] = useState<ShopItem | null>(null);
 
   useEffect(() => {
     if (settings) setForm(settings);
@@ -206,6 +208,11 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
               </span>
               <span className="text-primary font-bold">{item.price_czk} Kč</span>
               {!item.active && <span className="text-xs text-destructive">skryto</span>}
+              {item.kind === "software" && item.sale_mode === "license" && (
+                <Button size="sm" variant="outline" onClick={() => setLicItem(item)} title="Přidělit / spravovat licence">
+                  <KeyRound className="h-4 w-4 mr-1" /> Licence
+                </Button>
+              )}
               <Button size="icon" variant="ghost" onClick={() => openEdit(item)}>
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -292,6 +299,8 @@ export function ShopAdminPanel({ items, settings, onRefresh }: Props) {
           <Save className="h-4 w-4 mr-1" /> Uložit nastavení
         </Button>
       </Card>
+
+      <LicenseAdminDialog item={licItem} onClose={() => setLicItem(null)} />
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
