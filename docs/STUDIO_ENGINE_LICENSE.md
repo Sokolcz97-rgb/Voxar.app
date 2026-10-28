@@ -17,16 +17,50 @@ obchod v prohlížeči. Platby, potvrzení a vrácení řeší web.
 V obchodě (Správa nabídky → položka Software → „Klíč produktu pro aplikaci“) má engine klíč,
 doporučeně `voxario-studio-engine`. Engine si ho drží jako konstantu.
 
-## Přihlášení
+## Přihlášení stejným účtem jako na webu (bez nové registrace)
 
-Engine potřebuje relaci uživatele StudioVoxario (Supabase Auth) – stejný účet jako na webu.
-Možnosti: přihlášení e-mailem a heslem přes Supabase Auth, nebo předání relace z prohlížeče
-(PKCE + 127.0.0.1 callback – stejný princip jako launcher Ashes of Eryon,
-viz `supabase/functions/launcher-auth` a `src/pages/LauncherAuth.tsx`).
+Engine **nemá vlastní registraci ani formulář na heslo**. Přihlašuje se přes prohlížeč stejným účtem
+StudioVoxario jako na webu – funguje to pro e-mail + heslo i pro přihlášení přes Google. Je to stejný postup,
+jaký používá launcher Ashes of Eryon (`game/launcher/app/auth.cjs` – vzorová implementace v Node/Electronu).
 
-- URL: `https://rioexuvgvmdwvidfakxy.supabase.co`
+- URL Supabase: `https://rioexuvgvmdwvidfakxy.supabase.co`
 - Veřejný (publishable) klíč: `sb_publishable_s0KxdrY9Wm7_j2mtI-PnJg_eYbQln9-` (smí být v aplikaci)
-- Žádný tajný klíč do aplikace nepatří.
+- Žádný tajný klíč do aplikace nepatří. Heslo uživatele engine nikdy neuvidí.
+
+Postup:
+
+1. Engine vytvoří náhodný `verifier` (32 bajtů, base64url) a `state` (base64url),
+   `challenge = base64url(SHA-256(verifier))`.
+2. Spustí dočasný HTTP server na `127.0.0.1` s volným portem (např. 49152–65535).
+3. Otevře v prohlížeči:
+   `https://studiovoxario.com/auth/aplikace?app=studio&state=<state>&challenge=<challenge>&port=<port>&device=<název PC>`
+   Uživatel se na webu přihlásí (nebo už přihlášený je) a klikne **Povolit**.
+4. Web přesměruje prohlížeč na `http://127.0.0.1:<port>/callback?code=<kód>&state=<state>`
+   (nebo `?error=denied&state=…`). Engine ověří, že `state` sedí, a prohlížeči vrátí jednoduchou stránku
+   „Hotovo, vrať se do aplikace“.
+5. Engine vymění kód za relaci:
+   ```
+   POST https://rioexuvgvmdwvidfakxy.supabase.co/functions/v1/launcher-auth
+   apikey: <publishable klíč>
+   Content-Type: application/json
+
+   { "action": "redeem", "code": "<kód>", "verifier": "<verifier>", "device": "<název PC>" }
+   → { "token_hash": "…", "email": "…" }
+   ```
+   a hned potom:
+   ```
+   POST https://rioexuvgvmdwvidfakxy.supabase.co/auth/v1/verify
+   apikey: <publishable klíč>
+   Content-Type: application/json
+
+   { "type": "magiclink", "token_hash": "<token_hash>" }
+   → { "access_token": "…", "refresh_token": "…", "expires_in": 3600, "user": { … } }
+   ```
+   Kód platí 2 minuty a jde použít jen jednou.
+6. `refresh_token` uložit šifrovaně (Windows: DPAPI / Credential Manager), nikdy do logu.
+   Obnovení relace:
+   `POST /auth/v1/token?grant_type=refresh_token` s `{ "refresh_token": "…" }` (hlavička `apikey`).
+7. Odhlášení = smazat uložené tokeny (volitelně `POST /auth/v1/logout` s `Authorization: Bearer <access_token>`).
 
 ## Stav licence
 
