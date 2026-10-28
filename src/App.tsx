@@ -100,6 +100,7 @@ const AppRoutes = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/game/auth/launcher" element={<LauncherAuth />} />
+        <Route path="/auth/aplikace" element={<LauncherAuth />} />
         <Route path="/discord-oauth-complete" element={<DiscordOAuthComplete />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/bot" element={<ProtectedRoute><DashboardBot /></ProtectedRoute>} />
