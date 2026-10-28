@@ -4,20 +4,26 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({
   rpc: vi.fn(),
   crossUserGameRead: false,
-}));
-
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "self" } }) }));
-vi.mock("@/contexts/PresenceContext", () => ({
-  usePresence: () => ({
+  presence: {
     onlineIds: new Set(["self", "other"]),
     isOnline: () => true,
     visitorCount: 0,
     registeredCount: 0,
-  }),
+  },
 }));
+
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "self" } }) }));
+vi.mock("@/contexts/PresenceContext", () => ({ usePresence: () => mock.presence }));
 vi.mock("react-router-dom", () => ({ Link: ({ children }: any) => <a>{children}</a> }));
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }));
 vi.mock("@/components/UserAvatar", () => ({ UserAvatar: () => <div /> }));
+// Radix Dialog measures the DOM; in jsdom it never settles, so the dialog is stubbed to render inline.
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children }: any) => <div>{children}</div>,
+  DialogContent: ({ children }: any) => <div>{children}</div>,
+  DialogHeader: ({ children }: any) => <div>{children}</div>,
+  DialogTitle: ({ children }: any) => <div>{children}</div>,
+}));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: (table: string) => {
@@ -58,7 +64,6 @@ afterEach(() => {
 describe("LFG matchmaking", () => {
   it("asks the server who plays the game instead of reading other members' game libraries", async () => {
     render(<LfgWidget />);
-    fireEvent.click(await screen.findByText("Najít skupinu"));
     const chips = await screen.findAllByText("Windrose");
     fireEvent.click(chips[chips.length - 1]);
 
