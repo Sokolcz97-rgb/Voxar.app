@@ -3846,6 +3846,8 @@ export type Database = {
       }
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
       redeem_download_code: { Args: { _code: string }; Returns: boolean }
+      shop_admin_delete: { Args: { _id: string }; Returns: undefined }
+      shop_admin_reject: { Args: { _id: string }; Returns: undefined }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       shop_can_download: { Args: { p_item: string }; Returns: boolean }
       shop_grant_download: {
