@@ -3499,6 +3499,36 @@ export type Database = {
           },
         ]
       }
+      shop_licenses: {
+        Row: {
+          item_id: string
+          purchase_id: string | null
+          purchased_at: string
+          revoked_at: string | null
+          updated_at: string
+          updates_until: string
+          user_id: string
+        }
+        Insert: {
+          item_id: string
+          purchase_id?: string | null
+          purchased_at?: string
+          revoked_at?: string | null
+          updated_at?: string
+          updates_until: string
+          user_id: string
+        }
+        Update: {
+          item_id?: string
+          purchase_id?: string | null
+          purchased_at?: string
+          revoked_at?: string | null
+          updated_at?: string
+          updates_until?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shop_items: {
         Row: {
           access_minutes: number | null
@@ -3518,6 +3548,11 @@ export type Database = {
           kind: string
           price_czk: number
           price_year_czk: number | null
+          license_updates_days: number
+          pass_month_czk: number | null
+          pass_year_czk: number | null
+          product_key: string | null
+          sale_mode: string
           sort_order: number
           title: string
           updated_at: string
@@ -3540,6 +3575,11 @@ export type Database = {
           kind?: string
           price_czk?: number
           price_year_czk?: number | null
+          license_updates_days?: number
+          pass_month_czk?: number | null
+          pass_year_czk?: number | null
+          product_key?: string | null
+          sale_mode?: string
           sort_order?: number
           title: string
           updated_at?: string
@@ -3562,6 +3602,11 @@ export type Database = {
           kind?: string
           price_czk?: number
           price_year_czk?: number | null
+          license_updates_days?: number
+          pass_month_czk?: number | null
+          pass_year_czk?: number | null
+          product_key?: string | null
+          sale_mode?: string
           sort_order?: number
           title?: string
           updated_at?: string
@@ -5238,8 +5283,19 @@ export type Database = {
         Args: { p_item: string; p_minutes: number; p_user: string }
         Returns: undefined
       }
+      shop_license_status: { Args: { p_product: string }; Returns: Json }
       shop_log_download: { Args: { p_item: string }; Returns: undefined }
       shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
+      shop_my_licenses: {
+        Args: never
+        Returns: {
+          can_download: boolean
+          item_id: string
+          purchased_at: string
+          updates_active: boolean
+          updates_until: string
+        }[]
+      }
       shop_my_downloads: {
         Args: never
         Returns: {

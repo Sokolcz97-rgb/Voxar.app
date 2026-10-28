@@ -88,12 +88,32 @@ Deno.serve(async (req) => {
       note = note || "Dar StudioVoxario";
     } else if (["frame", "plugin", "software"].includes(kind)) {
       const { data: item } = await admin.from("shop_items")
-        .select("id, kind, title, price_czk, price_year_czk, cosmetic_id, active").eq("id", String(body.item_id ?? "")).maybeSingle();
+        .select("id, kind, title, price_czk, price_year_czk, cosmetic_id, active, sale_mode, pass_month_czk, pass_year_czk")
+        .eq("id", String(body.item_id ?? "")).maybeSingle();
       if (!item || !item.active || item.kind !== kind) return json({ error: "Položka není v nabídce." }, 404);
       itemId = item.id;
       cosmeticId = item.cosmetic_id;
       title = item.title;
-      if (kind === "software") {
+      if (kind === "software" && item.sale_mode === "license") {
+        // jednorázová licence nebo Upgrade pass (prodloužení aktualizací)
+        const { data: lic } = await admin.from("shop_licenses")
+          .select("updates_until").eq("user_id", user.id).eq("item_id", item.id).is("revoked_at", null).maybeSingle();
+        if (body.period === "license") {
+          if (lic) return json({ error: "Licenci už vlastníš – pro další aktualizace si kup Upgrade pass." }, 409);
+          period = "license";
+          amount = item.price_czk;
+          title = `${item.title} – licence`;
+        } else if (body.period === "pass_month" || body.period === "pass_year") {
+          if (!lic) return json({ error: "Upgrade pass jde koupit až k zakoupené licenci." }, 409);
+          const price = body.period === "pass_year" ? item.pass_year_czk : item.pass_month_czk;
+          if (!price) return json({ error: "Tento Upgrade pass není v nabídce." }, 404);
+          period = body.period;
+          amount = price;
+          title = `${item.title} – Upgrade pass (${body.period === "pass_year" ? "rok" : "měsíc"})`;
+        } else {
+          return json({ error: "Neznámý druh nákupu." }, 400);
+        }
+      } else if (kind === "software") {
         period = body.period === "year" && item.price_year_czk ? "year" : "month";
         amount = period === "year" ? item.price_year_czk! : item.price_czk;
         autoRenew = body.auto_renew === true;
