@@ -1,0 +1,7 @@
+Library/
+# kopie z Unity verze (tools/sync-assets.sh)
+Assets/Models/heroes/
+Assets/Models/animals/
+Assets/Models/buildings/
+Assets/UI/
+Assets/Data/content.json

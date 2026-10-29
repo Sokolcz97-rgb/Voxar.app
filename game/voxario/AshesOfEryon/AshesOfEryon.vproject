@@ -1,0 +1,21 @@
+{
+    "EngineVersion": "1.3.0",
+    "MainFile": "Scenes/Main.vscene",
+    "ProjectName": "Ashes of Eryon",
+    "ProjectType": "Game",
+    "Settings": {
+        "Graphics": {
+            "DefaultAPI": "Vulkan",
+            "EnableDLSS": true,
+            "GlobalIllumination": "RayTraced"
+        },
+        "Physics": {
+            "Gravity": [
+                0.0,
+                -9.8100004196167,
+                0.0
+            ]
+        }
+    },
+    "StartupScene": "Scenes/Main.vscene"
+}
