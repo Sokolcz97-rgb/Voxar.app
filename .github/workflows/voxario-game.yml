@@ -180,6 +180,9 @@ jobs:
           if (-not $icd) { throw "lvp_icd.x86_64.json nenalezen" }
           "VK_ICD_FILENAMES=$($icd.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "ICD: $($icd.FullName)"
+          # runner běží jako admin – loader pak VK_ICD_FILENAMES ignoruje, ovladač musí být v registru
+          New-Item -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Force | Out-Null
+          New-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Name $icd.FullName -PropertyType DWord -Value 0 -Force | Out-Null
           # runner nemá Vulkan loader (u hráčů ho instaluje ovladač grafiky) – vulkan-1.dll od LunarG vedle hry
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-runtime-components.zip" -OutFile vkrt.zip
           Expand-Archive vkrt.zip -DestinationPath vkrt -Force
