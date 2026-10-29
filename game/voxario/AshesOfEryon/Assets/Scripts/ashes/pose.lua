@@ -31,4 +31,21 @@ function M.Step(p, dt)
     return fwd, dy, pitch, fall
 end
 
+-- Procedurální chůze (LegRig.cs) – kroky počítá vertex shader enginu (entity.set_gait).
+-- Ruka s předmětem (štít, luk, hůl) se nekývá: model je z jednoho kusu a předmět by se zkroutil.
+function M.GaitOptions(model)
+    local key = tostring(model or ""):match("([^/]+)$") or ""
+    local arms = "both"
+    if key:find("^hoplit_m") then arms = "none"        -- štít + kopí
+    elseif key:find("^lucistnik") then arms = "right"  -- luk v levé
+    elseif key:find("^vestec") then arms = "left" end  -- hůl v pravé
+    return { legs = 0.3, arms = arms }
+end
+M.QuadOptions = { legs = 0.45, quad = true, arms = "none" }
+
+-- phase = fáze kroku (rad), speed = rychlost (m/s); walk = rychlost chůze modelu (plný krok)
+function M.Gait(id, phase, speed, opts, walk)
+    entity.set_gait(id, phase, math.min(1.2, (speed or 0) / (walk or 4.2)), opts)
+end
+
 return M

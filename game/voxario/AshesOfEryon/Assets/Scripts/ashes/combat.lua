@@ -119,7 +119,7 @@ function M.Build(b, p, h, fac)
                     { fit = 1.62, lod = "auto", lod_distance = 20, name = def.name, tag = "enemy" })
                 M.enemies[#M.enemies + 1] = { def = def, region = region, id = id, hx = hx, hz = hz, x = hx, z = hz,
                     tx = hx, tz = hz, wait = R() * 3, calmUntil = 0, respawnAt = 0, alive = true, yaw = R() * 360,
-                    speed = 0, phase = 0, pose = pose.New(), sub = "", subColor = skin.Text }
+                    speed = 0, phase = 0, pose = pose.New(), sub = "", subColor = skin.Text, gait = pose.GaitOptions(def.cls .. "_m") }
             end
         end
     end
@@ -200,6 +200,7 @@ end
 
 local function placeEnemy(e, dt)
     e.phase = e.phase + dt * e.speed * 1.9
+    pose.Gait(e.id, e.phase, e.pose.fallen and 0 or e.speed, e.gait)
     local bob = math.abs(math.sin(e.phase)) * min(e.speed, 7) * 0.012
     local fwd, dy, pitch, fall = pose.Step(e.pose, dt)
     local yr = math.rad(e.yaw)

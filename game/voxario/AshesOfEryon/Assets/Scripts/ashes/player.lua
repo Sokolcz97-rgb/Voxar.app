@@ -26,6 +26,7 @@ function M.Create(cls, gender, name, spawn)
         { visible = false, name = "Player", tag = "player",
           character = { radius = 0.35, height = 1.6, step = 0.45, slope = 55 } })
     M.view = world.spawn(model, spawn.x, map.Ground(spawn.x, spawn.z), spawn.z, { fit = h, name = name, lod = "auto", lod_distance = 25 })
+    M.gait = pose.GaitOptions(model)
     M.height = h
     M.name = name
     M.camera = entity.find("Camera")
@@ -38,6 +39,7 @@ function M.ReplaceModel(path, height)
     local x, y, z = M.Position()
     entity.destroy(M.view)
     M.view = world.spawn(path, x, y, z, { fit = height or M.height, name = M.name })
+    M.gait = pose.GaitOptions(path)
     M.height = height or M.height
 end
 
@@ -109,6 +111,8 @@ function M.Update(dt, respawnPoint)
     -- model následuje kapsli + procedurální chůze (pohupování a náklon; Gait.cs zjednodušeně)
     local px, py, pz = M.Position()
     M.walkPhase = (M.walkPhase or 0) + dt * M.speed * 1.9
+    if M.testGait then pose.Gait(M.view, M.testGait, 4.2, M.gait)   -- samotest: zastavený krok
+    else pose.Gait(M.view, M.walkPhase, M.pose.fallen and 0 or M.speed, M.gait) end
     local bob = math.abs(sin(M.walkPhase)) * min(M.speed, 7) * 0.012
     local lean = min(M.speed, 7) * 1.1
     local fwd, dy, pitch, fall = pose.Step(M.pose, dt)

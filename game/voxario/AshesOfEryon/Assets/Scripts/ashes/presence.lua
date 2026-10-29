@@ -3,6 +3,7 @@
 -- broadcast „pos“ polohu a rychlost. Formát je stejný jako u Unity a webové verze.
 local map = require("ashes.worldmap")
 local api = require("ashes.api")
+local pose = require("ashes.pose")
 
 local M = { others = {}, joined = false, count = 0 }
 
@@ -46,7 +47,8 @@ local function join(key, metas)
     end
     local x, z = tonumber(meta.x) or 0, tonumber(meta.z) or 0
     o = { name = name, cls = cls, gender = gender, level = meta.level or 1, faction = fac, tag = tostring(meta.tag or ""):sub(1, 5),
-          pos = { x, z }, target = { x, z }, vel = { 0, 0 }, stamp = game.time(), ry = tonumber(meta.ry) or 0, yaw = 0 }
+          pos = { x, z }, target = { x, z }, vel = { 0, 0 }, stamp = game.time(), ry = tonumber(meta.ry) or 0, yaw = 0,
+          phase = 0, gait = pose.GaitOptions(cls .. "_" .. gender) }
     o.id = world.spawn("Models/heroes/" .. cls .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
         { fit = gender == "f" and 1.55 or 1.62, lod = "auto", lod_distance = 20, name = name, tag = "other_player" })
     M.others[key] = o
@@ -125,7 +127,11 @@ function M.Update(dt, player)
         local age = math.min(now - o.stamp, 0.6)
         local px, pz = o.target[1] + o.vel[1] * age, o.target[2] + o.vel[2] * age
         local k = 1 - math.exp(-10 * dt)
+        local ox, oz = o.pos[1], o.pos[2]
         o.pos[1], o.pos[2] = o.pos[1] + (px - o.pos[1]) * k, o.pos[2] + (pz - o.pos[2]) * k
+        local spd = dt > 0 and math.sqrt((o.pos[1] - ox) ^ 2 + (o.pos[2] - oz) ^ 2) / dt or 0
+        o.phase = o.phase + dt * spd * 1.9
+        pose.Gait(o.id, o.phase, spd, o.gait)
         local want = math.deg(o.ry)
         o.yaw = o.yaw + ((want - o.yaw + 540) % 360 - 180) * k
         entity.set_position(o.id, o.pos[1], map.Ground(o.pos[1], o.pos[2]), o.pos[2])

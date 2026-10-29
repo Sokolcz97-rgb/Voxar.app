@@ -1,6 +1,7 @@
 -- Stavba světa 1. aktu (WorldBuilder.cs, TerrainBuilder.cs, Scenery.cs, DesertScenery.cs):
 -- terén (sever + jih), moře, oáza, Kalidra s hradbami a budovami, NPC, zvířata a krajina.
 local map = require("ashes.worldmap")
+local pose = require("ashes.pose")
 
 local M = { npcs = {}, animals = {}, fires = {} }
 
@@ -150,6 +151,7 @@ local HERDS = {
     { "chicken", 80, 22, 5, 5, 0.45 }, { "gull", -64, 40, 10, 4, 0.5 },
 }
 local YAW_FIX = { chicken = -90 }
+local QUAD = { dog = true, horse = true, sheep = true, cow = true, goat = true, stag = true, doe = true, boar = true }
 
 function M.BuildAnimals()
     local R = map.Rng(4242)
@@ -187,10 +189,17 @@ function M.UpdateAnimals(dt)
             local want = math.deg(math.atan(dx, dz))
             local diff = (want - a.yaw + 540) % 360 - 180
             a.yaw = a.yaw + diff * (1 - math.exp(-6 * dt))
-            -- pohupování při chůzi (procedurální krok jako LegRig – zjednodušeně)
-            local bob = abs(sin(game.time() * a.speed * 6 + a.id)) * 0.04
+            -- krok: čtyřnožci střídají diagonální páry (LegRig.cs), drůbež se jen pohupuje
+            a.phase = (a.phase or 0) + dt * a.speed * 6
+            local bob = abs(sin(a.phase)) * 0.04
+            if QUAD[a.kind] then pose.Gait(a.id, a.phase, a.speed, pose.QuadOptions, a.speed) end
             entity.set_position(a.id, a.x, Ground(a.x, a.z) + bob, a.z)
             entity.set_rotation(a.id, 0, a.yaw + (YAW_FIX[a.kind] or 0), 0)
+            a.walking = true
+        end
+        if d < 0.3 and a.walking then
+            a.walking = false
+            if QUAD[a.kind] then pose.Gait(a.id, 0, 0) end
         end
     end
 end

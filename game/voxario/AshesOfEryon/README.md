@@ -66,8 +66,9 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
 - [x] Krok 7: ostatní hráči, chat Svět / Oddíl, oddíl.
 - [x] Krok 8: hudba a zvuky.
 - [x] Krok 9: módy (`Dokumenty/Ashes of Eryon/Mods`, ukázka Deník poutníka, nastavení → Módy, F8).
-- [ ] Procedurální chůze nohou (`LegRig.cs`) – Unity deformuje vrcholy na CPU. Zatím se postavy pohupují
-  a naklánějí; skutečné kroky potřebují deformaci ve vertex shaderu enginu.
+- [x] Procedurální chůze nohou (`LegRig.cs`): kroky počítá vertex shader enginu (`entity.set_gait`) – nohy
+  v kyčlích s pokrčením kolene, paže proti nohám (ruka se štítem, lukem nebo holí zůstává), u sukní jen
+  lem, čtyřnožci diagonální páry.
 
 ## Sestavení a testy (fáze 9)
 

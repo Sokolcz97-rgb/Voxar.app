@@ -255,6 +255,15 @@ local function Selftest()
     feedback.Close()
     oddil.TestOpen(); timer.sleep(0.4); shot("13-oddil")
     oddil.Close()
+    -- chůze nohou (zastavený krok, z boku)
+    player.Respawn({ x = -40, z = 34 })
+    player.facing = 0
+    player.testGait = math.pi / 2
+    local gx, gy, gz = player.Position()
+    lookFrom(gx + 3.2, gy + 1.2, gz, gx, gy + 0.8, gz)
+    timer.sleep(1.0); shot("6h-chuze")
+    player.testGait = nil
+    player.cameraOverride = nil
     -- kamera u stromu: strom mezi hráčem a kamerou, kamera se přiblíží před korunu
     local c = world.NearestCanopy(-20, 10)
     if c then
