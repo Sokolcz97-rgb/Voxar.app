@@ -27,6 +27,14 @@ Not implemented yet:
 - installer EXE
 - GitHub release publishing
 
+## Testovací kanál hry
+
+Nastavení → **Kanál hry**: *Ostrý* čte `game-updates/unity/latest.json`, *Testovací* čte
+`game-updates/unity/latest-beta.json` (verze Ashes of Eryon na Voxario Studio Engine, workflow
+`.github/workflows/voxario-game.yml`). Testovací verze se instaluje do vlastní složky (`Game-beta`,
+případně `%LOCALAPPDATA%\StudioVoxario\AshesOfEryon-beta`), takže ostrá instalace zůstane a přepnutí
+zpět nic nestahuje. Spuštění, lístek přihlášení i aktualizace fungují stejně.
+
 ## Development
 
 From `game/launcher/app`:

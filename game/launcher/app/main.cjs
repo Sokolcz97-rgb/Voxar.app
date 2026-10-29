@@ -313,6 +313,8 @@ function registerIpc() {
     const saved = services.saveSettings(next);
     services.syncShortcuts(saved);
     services.applyLoginItem(saved);
+    // testovací kanál: jiný manifest a vlastní složka hry
+    if (unity && saved.channel !== unity.channel) void unity.setChannel(saved.channel);
     return saved;
   });
   ipcMain.handle("launcher:news", () => services.loadNews());
@@ -379,13 +381,14 @@ if (!app.requestSingleInstanceLock()) {
       },
       canRestart: () => !gameRunning()
     });
+    const settings = services.loadSettings();
     unity = createUnityGame({
       onStatus: (status) => {
         if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("launcher:unity", status);
       },
       log,
+      channel: settings.channel,
     });
-    const settings = services.loadSettings();
     if (settings.autoUpdate) updater.start();
     // Unity verze: zjistit stav a při zapnutých automatických aktualizacích rovnou stáhnout
     void unity.check().then((st) => {

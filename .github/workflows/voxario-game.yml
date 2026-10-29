@@ -1,0 +1,187 @@
+name: Voxario game build (Ashes of Eryon)
+
+# Fáze 9 převodu (docs/ASHES_OF_ERYON_PORT.md v repozitáři enginu):
+#   1. stáhne Voxario Studio z release enginu (Linux tar.gz + Windows portable ZIP),
+#   2. složí hru tools/package-game.sh (jako VoxarioEditor --build-game),
+#   3. pustí samotest (software Vulkan, virtuální displej) – záběry jako Unity selftest,
+#      chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
+#   4. připraví soubory pro testovací kanál launcheru (unity/latest-beta.json),
+#   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta).
+#
+# Secrets:
+#   VOXARIO_ENGINE_TOKEN     – token se čtením repozitáře Sokolcz97-rgb/Voxario-Studio-Engine (release)
+#   SUPABASE_SERVICE_ROLE_KEY – jen pro publish_beta (zápis do bucketu game-updates)
+
+on:
+  push:
+    paths:
+      - 'game/voxario/**'
+      - 'game/unity/AshesOfEryon/Assets/Models/**'
+      - 'game/unity/AshesOfEryon/Assets/Voxario/Resources/**'
+      - 'game/unity/make-manifest.cjs'
+      - '.github/workflows/voxario-game.yml'
+  workflow_dispatch:
+    inputs:
+      engine_tag:
+        description: 'Tag release enginu (prázdné = nejnovější)'
+        required: false
+        default: ''
+      version:
+        description: 'Verze hry (prázdné = 0.11.0-beta.<číslo běhu>)'
+        required: false
+        default: ''
+      publish_beta:
+        description: 'Nahrát do testovacího kanálu launcheru (unity/latest-beta.json)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: voxario-game-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ENGINE_REPO: Sokolcz97-rgb/Voxario-Studio-Engine
+  PROJECT: game/voxario/AshesOfEryon
+
+jobs:
+  selftest:
+    name: Samotest (Linux, software Vulkan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verze
+        id: ver
+        run: |
+          v="${{ inputs.version }}"
+          [ -n "$v" ] || v="0.11.0-beta.${{ github.run_number }}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Verze hry: $v"
+
+      - name: Stáhnout Voxario Studio (Linux)
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Chybí secret VOXARIO_ENGINE_TOKEN (čtení release z $ENGINE_REPO)."
+            exit 1
+          fi
+          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'voxario-studio-*-linux-x86_64.tar.gz' -D "$RUNNER_TEMP/engine"
+          tar -xzf "$RUNNER_TEMP"/engine/*.tar.gz -C "$RUNNER_TEMP/engine"
+          find "$RUNNER_TEMP/engine" -name VoxarioPlayer -type f
+
+      - name: Závislosti (Mesa Vulkan, Xvfb)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers libvulkan1 xvfb libxrandr2 libxinerama1 libxcursor1 libxi6 libxkbcommon0
+
+      - name: Složit hru (Linux)
+        run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/game-linux" "${{ steps.ver.outputs.version }}"
+
+      - name: Samotest
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP"
+          VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game-linux/AshesOfEryon -ashes-launcher --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
+          cd "$GITHUB_WORKSPACE"
+          shots=$(ls selftest/*.png | wc -l)
+          echo "Záběrů: $shots"
+          if grep -E "Script error|disabled after repeated errors" player.log; then
+            echo "::error::Chyba skriptu hry (viz player.log)"
+            exit 1
+          fi
+          grep -q "SELFTEST hotovo" player.log || { echo "::error::Samotest nedoběhl"; exit 1; }
+          [ "$shots" -ge 25 ] || { echo "::error::Málo záběrů ($shots)"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AshesOfEryon-selftest
+          path: |
+            player.log
+            selftest/
+          retention-days: 14
+
+  windows:
+    name: Hra pro Windows + soubory pro launcher
+    needs: selftest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stáhnout Voxario Studio (Windows)
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
+          unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
+          find "$RUNNER_TEMP/engine" -name VoxarioPlayer.exe -type f
+
+      - name: Složit hru (Windows)
+        run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/AshesOfEryon" "${{ needs.selftest.outputs.version }}"
+
+      - name: Manifest testovacího kanálu
+        run: |
+          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "${{ needs.selftest.outputs.version }}" latest-beta.json
+          head -c 400 "$RUNNER_TEMP/updates/latest-beta.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AshesOfEryon-Windows
+          path: ${{ runner.temp }}/AshesOfEryon
+          if-no-files-found: error
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AshesOfEryon-beta-upload
+          path: ${{ runner.temp }}/updates
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-beta:
+    name: Nahrát do testovacího kanálu launcheru
+    needs: [selftest, windows]
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_beta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: AshesOfEryon-beta-upload
+          path: updates
+
+      - name: Nahrát do game-updates/unity/
+        env:
+          SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY – soubory jsou v artefaktu AshesOfEryon-beta-upload, nahraj je ručně."
+            exit 1
+          fi
+          cd updates
+          upload() {
+            local file="$1" type="${2:-application/octet-stream}"
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
+                -H "Authorization: Bearer $KEY" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                --data-binary "@$file")
+              [ "$code" = "200" ] && return 0
+              echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
+              sleep $((attempt * 4))
+            done
+            return 1
+          }
+          # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
+          find . -type f ! -name latest-beta.json | sed 's|^\./||' | while read -r f; do upload "$f"; done
+          upload latest-beta.json application/json
+          echo "Testovací kanál: verze ${{ needs.selftest.outputs.version }}"

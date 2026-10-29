@@ -392,6 +392,25 @@
     engine.append(engineCopy, engineChoice);
     overlayBody.append(engine);
 
+    // testovací kanál: verze na Voxario Studio Engine pro testery (vlastní složka, ostrá hra zůstane)
+    const channel = el("div", "setting");
+    const channelCopy = el("div");
+    channelCopy.append(el("b", "", "Kanál hry"), el("small", "", "Testovací: nová verze na enginu Voxario Studio ještě před vydáním. Instaluje se zvlášť, ostrá hra zůstane nainstalovaná."));
+    const channelChoice = el("div", "choice");
+    [["stable", "Ostrý"], ["beta", "Testovací"]].forEach(([value, label]) => {
+      const b = el("button", "", label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String((settings.channel || "stable") === value));
+      b.addEventListener("click", async () => {
+        settings = await desktop.settings.set({ channel: value });
+        channelChoice.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+      });
+      channelChoice.append(b);
+    });
+    channel.append(channelCopy, channelChoice);
+    overlayBody.append(channel);
+
     const after = el("div", "setting");
     const copy = el("div");
     copy.append(el("b", "", "Po spuštění hry"), el("small", "", "Co má udělat launcher, když se otevře herní okno."));
@@ -530,7 +549,7 @@
     const v = st.latest ? ` ${st.latest}` : "";
     if (st.state === "install") {
       label.textContent = "Instalovat";
-      progressTitle.textContent = `Unity verze${v} je připravená ke stažení`;
+      progressTitle.textContent = st.channel === "beta" ? `Testovací verze${v} je připravená ke stažení` : `Unity verze${v} je připravená ke stažení`;
       progressDetail.textContent = `DirectX 12, NVIDIA DLSS, AMD FSR 2 · ${fmtSize(st.size)}`;
       progressValue.textContent = fmtSize(st.size);
       progressFill.style.width = "0%";
@@ -550,7 +569,7 @@
     } else if (st.state === "ready") {
       label.textContent = "Hrát";
       progressTitle.textContent = `Hra je aktuální${v}`;
-      progressDetail.textContent = "Unity verze · DirectX 12 · DLSS / FSR 2";
+      progressDetail.textContent = st.channel === "beta" ? "Testovací kanál · Voxario Studio Engine · Vulkan · DLSS" : "Unity verze · DirectX 12 · DLSS / FSR 2";
       progressFill.style.width = "100%";
       progressValue.textContent = "100 %";
       installedVersion.textContent = st.installed || st.latest || "—";
