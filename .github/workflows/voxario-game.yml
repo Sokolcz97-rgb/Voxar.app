@@ -180,6 +180,13 @@ jobs:
           if (-not $icd) { throw "lvp_icd.x86_64.json nenalezen" }
           "VK_ICD_FILENAMES=$($icd.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "ICD: $($icd.FullName)"
+          # runner nemá Vulkan loader (u hráčů ho instaluje ovladač grafiky) – vulkan-1.dll od LunarG vedle hry
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-runtime-components.zip" -OutFile vkrt.zip
+          Expand-Archive vkrt.zip -DestinationPath vkrt -Force
+          $loader = Get-ChildItem vkrt -Recurse -Filter vulkan-1.dll | Where-Object { $_.Directory.Name -eq "x64" } | Select-Object -First 1
+          if (-not $loader) { throw "vulkan-1.dll nenalezen" }
+          Copy-Item $loader.FullName game\vulkan-1.dll
+          Write-Host "Vulkan loader: $($loader.FullName)"
 
       - name: Spustit hru (přihlašovací obrazovka, denní svět)
         shell: pwsh
