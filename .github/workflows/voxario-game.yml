@@ -3,8 +3,9 @@ name: Voxario game build (Ashes of Eryon)
 # Fáze 9 převodu (docs/ASHES_OF_ERYON_PORT.md v repozitáři enginu):
 #   1. stáhne Voxario Studio z release enginu (Linux tar.gz + Windows portable ZIP),
 #   2. složí hru tools/package-game.sh (jako VoxarioEditor --build-game),
-#   3. pustí samotest (software Vulkan, virtuální displej) – záběry jako Unity selftest,
-#      chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
+#   3. pustí samotest (software Vulkan, virtuální displej) – záběry jako Unity selftest ve dne
+#      (--time 13), chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
+#   3b. hotovou hru pro Windows spustí na Windows runneru (Mesa lavapipe) a vyfotí,
 #   4. připraví soubory pro testovací kanál launcheru (unity/latest-beta.json),
 #   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta).
 #
@@ -89,7 +90,7 @@ jobs:
         run: |
           set -o pipefail
           cd "$RUNNER_TEMP"
-          VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game-linux/AshesOfEryon -ashes-launcher --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
+          VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game-linux/AshesOfEryon -ashes-launcher --time 13 --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
           cd "$GITHUB_WORKSPACE"
           shots=$(ls selftest/*.png | wc -l)
           echo "Záběrů: $shots"
@@ -147,9 +148,63 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  windows-test:
+    name: Test exportu pro Windows (spuštění hry, software Vulkan)
+    needs: windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: AshesOfEryon-Windows
+          path: game
+
+      - name: Kontrola balíčku
+        shell: pwsh
+        run: |
+          foreach ($f in "game\AshesOfEryon.exe", "game\game.vgame", "game\GameData\Scenes\Main.vscene", "game\GameData\Scripts\main.lua", "game\GameData\Data\content.json") {
+            if (-not (Test-Path $f)) { throw "Chybí $f" }
+          }
+          $vgame = Get-Content game\game.vgame | ConvertFrom-Json
+          if ($vgame.StartupScene -ne "Scenes/Main.vscene") { throw "Špatná startovní scéna" }
+          Write-Host "Balíček OK ($((Get-ChildItem game -Recurse | Measure-Object -Sum Length).Sum / 1MB) MB)"
+
+      - name: Mesa lavapipe (Vulkan bez GPU)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo pal1000/mesa-dist-win --pattern "mesa3d-*-release-msvc.7z" -D mesa
+          7z x (Get-ChildItem mesa\*.7z).FullName -omesa -y | Out-Null
+          $icd = Get-ChildItem mesa -Recurse -Filter lvp_icd.x86_64.json | Where-Object { $_.FullName -match "x64" } | Select-Object -First 1
+          if (-not $icd) { throw "lvp_icd.x86_64.json nenalezen" }
+          "VK_ICD_FILENAMES=$($icd.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "ICD: $($icd.FullName)"
+
+      - name: Spustit hru (přihlašovací obrazovka, denní svět)
+        shell: pwsh
+        run: |
+          $env:VOXARIO_NO_AUDIO = "1"
+          $p = Start-Process -FilePath "game\AshesOfEryon.exe" -ArgumentList "-ashes-launcher", "--time", "13", "--frames", "400", "--screenshot", "$pwd\windows-login.png" -PassThru -RedirectStandardOutput windows.log -RedirectStandardError windows-err.log
+          if (-not $p.WaitForExit(900000)) { Stop-Process -Id $p.Id -Force; throw "Hra neskončila včas" }
+          Get-Content windows.log -Tail 40
+          if ($p.ExitCode -ne 0) { throw "Hra skončila s kódem $($p.ExitCode)" }
+          if (-not (Test-Path windows-login.png)) { throw "Chybí snímek" }
+          if (Select-String -Path windows.log -Pattern "Script error") { throw "Chyba skriptu" }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AshesOfEryon-windows-test
+          path: |
+            windows-login.png
+            windows.log
+            windows-err.log
+          retention-days: 14
+
   publish-beta:
     name: Nahrát do testovacího kanálu launcheru
-    needs: [selftest, windows]
+    needs: [selftest, windows, windows-test]
     if: github.event_name == 'workflow_dispatch' && inputs.publish_beta
     runs-on: ubuntu-24.04
     timeout-minutes: 30
