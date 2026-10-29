@@ -13,7 +13,7 @@ engine="${1:?složka enginu}"
 out="${2:?výstupní složka}"
 version="${3:-dev}"
 
-player="$(find "$engine" -maxdepth 3 -type f \( -name VoxarioPlayer.exe -o -name VoxarioPlayer \) | head -n 1)"
+player="$(find "$engine" -maxdepth 6 -type f \( -name VoxarioPlayer.exe -o -name VoxarioPlayer \) | head -n 1)"
 if [ -z "$player" ]; then
   echo "VoxarioPlayer nebyl ve složce $engine nalezen" >&2
   exit 1
