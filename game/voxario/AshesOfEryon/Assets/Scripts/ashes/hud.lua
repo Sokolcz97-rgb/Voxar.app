@@ -15,6 +15,9 @@ local function Content()
     end
     return content
 end
+function M.QuestDef(id)
+    for _, q in ipairs(Content().quests) do if q.id == id then return q end end
+end
 function M.Talk(id)
     for _, n in ipairs(Content().npcs) do if n.id == id then return n end end
 end
@@ -109,6 +112,8 @@ local function prompt(W, H, key, text)
     ui.text(x + 33, y + 15, key, { size = 15, font = "h2", color = skin.Bg, align = "center", shadow = false })
     ui.text(x + 62, y + 12, text, { size = 22, font = "bold", color = skin.GoldBright })
 end
+
+M.Prompt = prompt
 
 local function dialogWindow(boot, W, H)
     local o = M.open

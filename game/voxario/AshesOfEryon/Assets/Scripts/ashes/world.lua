@@ -136,7 +136,7 @@ function M.BuildNpcs(faction)
                 lod = "auto", lod_distance = 30, name = n.name, tag = "npc" })
             -- kapsle proti procházení (statická)
             world.spawn("cylinder", n.x, Ground(n.x, n.z) + h / 2, n.z, { size = { 0.7, h, 0.7 }, visible = false,
-                collider = "capsule", name = n.name .. " (kolize)" })
+                collider = "capsule", name = n.name .. " (kolize)", tag = "npc" })
             M.npcs[#M.npcs + 1] = { id = id, def = n, height = h, x = n.x, z = n.z }
         end
     end
@@ -226,6 +226,81 @@ local function treeOk(x, z)
     return true
 end
 
+-- ------------------------------------------------------------------ koruny stromů pro kameru
+-- Kolizi mají jen kmeny; kamera se ale nesmí zanořit ani do koruny. Koruna = svislý válec.
+local CELL = 8
+local canopyGrid = {}
+local function cellKey(cx, cz) return cx * 4096 + cz end
+function M.AddCanopy(x, z, y0, y1, r)
+    local c = { x = x, z = z, y0 = y0, y1 = y1, r = r }
+    for cx = floor((x - r) / CELL), floor((x + r) / CELL) do
+        for cz = floor((z - r) / CELL), floor((z + r) / CELL) do
+            local k = cellKey(cx, cz)
+            local list = canopyGrid[k]
+            if not list then list = {}; canopyGrid[k] = list end
+            list[#list + 1] = c
+        end
+    end
+end
+
+-- Nejbližší koruna k bodu (samotest kamery)
+function M.NearestCanopy(x, z)
+    local best, bd
+    for _, list in pairs(canopyGrid) do
+        for _, c in ipairs(list) do
+            local d = (c.x - x) ^ 2 + (c.z - z) ^ 2
+            if not bd or d < bd then best, bd = c, d end
+        end
+    end
+    return best
+end
+
+-- Kde úsečka A→B poprvé vstoupí do koruny: t v 0..1, nebo nil
+function M.CanopyHit(ax, ay, az, bx, by, bz)
+    local dx, dy, dz = bx - ax, by - ay, bz - az
+    local best
+    local seen = {}
+    local x0, x1 = math.min(ax, bx), math.max(ax, bx)
+    local z0, z1 = math.min(az, bz), math.max(az, bz)
+    for cx = floor(x0 / CELL), floor(x1 / CELL) do
+        for cz = floor(z0 / CELL), floor(z1 / CELL) do
+            for _, c in ipairs(canopyGrid[cellKey(cx, cz)] or {}) do
+                if not seen[c] then
+                    seen[c] = true
+                    local ox, oz = ax - c.x, az - c.z
+                    local qa = dx * dx + dz * dz
+                    local qb = 2 * (ox * dx + oz * dz)
+                    local qc = ox * ox + oz * oz - c.r * c.r
+                    -- hráč stojí pod korunou: pohled zespodu nevadí, jen průchod korunou
+                    local t
+                    if qc <= 0 then
+                        if ay < c.y0 and dy > 0 then t = (c.y0 - ay) / dy
+                        elseif ay > c.y1 and dy < 0 then t = (c.y1 - ay) / dy end
+                    elseif qa > 1e-6 then
+                        local disc = qb * qb - 4 * qa * qc
+                        if disc >= 0 then
+                            local sq = math.sqrt(disc)
+                            local tin, tout = (-qb - sq) / (2 * qa), (-qb + sq) / (2 * qa)
+                            local yin = ay + dy * tin
+                            if yin >= c.y0 and yin <= c.y1 then t = tin
+                            else
+                                -- vstup víkem nebo dnem válce
+                                local cap = (yin > c.y1) and c.y1 or c.y0
+                                if math.abs(dy) > 1e-6 then
+                                    local tc = (cap - ay) / dy
+                                    if tc >= tin and tc <= tout then t = tc end
+                                end
+                            end
+                        end
+                    end
+                    if t and t >= 0 and t <= 1 and (not best or t < best) then best = t end
+                end
+            end
+        end
+    end
+    return best
+end
+
 function M.BuildScenery(quality)
     quality = quality or 2
     local half = map.WorldHalf
@@ -249,6 +324,9 @@ function M.BuildScenery(quality)
     end
     local cypress = place(floor(520 * density + 0.5))
     local olive = place(floor(380 * density + 0.5))
+    -- koruny pro kolizi kamery (rozměry z tools/make_scenery_models.py)
+    for _, t in ipairs(cypress) do M.AddCanopy(t[1], t[3], t[2] + 0.9 * t[6], t[2] + 5.5 * t[6], 0.72 * t[5]) end
+    for _, t in ipairs(olive) do M.AddCanopy(t[1], t[3], t[2] + 1.6 * t[6], t[2] + 4.0 * t[6], 1.7 * t[5]) end
     world.instances("Models/scenery/cypress.gltf", cypress, { collider = "capsule", radius = 0.25, height = 3, distance = 320 })
     world.instances("Models/scenery/olive.gltf", olive, { collider = "capsule", radius = 0.35, height = 2.5, distance = 320 })
 
@@ -397,6 +475,7 @@ function M.BuildDesert(quality)
         local x, z = map.Oasis.x + cos(a) * r, map.Oasis.z + sin(a) * r
         palms[#palms + 1] = { x, HeightAt(x, z) - 0.1, z, R() * 360, 0.9 + R() * 0.3 }
     end
+    for _, t in ipairs(palms) do M.AddCanopy(t[1], t[3], t[2] + 4.2 * t[5], t[2] + 5.1 * t[5], 2.4 * t[5]) end
     world.instances("Models/scenery/palm.gltf", palms, { collider = "capsule", radius = 0.25, height = 3 })
     -- ruiny Starého slunce: podstava, sloupy (rozbité)
     local cx, cz = map.Ruins.x, map.Ruins.z

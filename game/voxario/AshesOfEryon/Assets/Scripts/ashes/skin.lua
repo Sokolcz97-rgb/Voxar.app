@@ -85,6 +85,13 @@ function M.Spinner(cx, cy)
     end
 end
 
+-- Barva vzácnosti předmětu (CharacterWindow.RarityColor)
+function M.RarityColor(r)
+    if r == 1 then return { 0.55, 0.85, 0.45 } elseif r == 2 then return { 0.45, 0.7, 1 }
+    elseif r == 3 then return { 0.78, 0.55, 1 } elseif r == 4 then return { 1, 0.6, 0.2 } end
+    return M.Text
+end
+
 M.ClassNames = { hoplit = "Hoplít", lucistnik = "Lučištník", vestec = "Věštec" }
 M.FactionNames = { kalidra = "Obránci Kalidry", legie = "Legie Rudého slunce" }
 function M.ClassName(c) return M.ClassNames[c] or c or "" end

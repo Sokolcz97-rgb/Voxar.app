@@ -1,11 +1,13 @@
 -- Hráč (PlayerController.cs) a kamera ve třetí osobě (CameraRig.cs)
 local map = require("ashes.worldmap")
 local keys = require("ashes.keybinds")
+local pose = require("ashes.pose")
 
 local M = {
     walkSpeed = 4.2, runSpeed = 7,
     inputEnabled = true, cameraInput = true,
     speedMul = 1,
+    pose = pose.New(),
     yaw = 0, facing = 0,
     cam = { distance = 7, yaw = 0, pitch = 22, x = 0, y = 0, z = 0 },
 }
@@ -42,6 +44,12 @@ end
 function M.Position()
     local p = entity.get_position(M.body)
     return p.x, p.y, p.z
+end
+
+-- Natočí hráče k bodu (boj)
+function M.FaceTo(x, z)
+    local px, _, pz = M.Position()
+    if (x - px) ^ 2 + (z - pz) ^ 2 > 0.0001 then M.facing = deg(math.atan(x - px, z - pz)) end
 end
 
 -- Úskok (v boji): krátký rychlý pohyb
@@ -94,11 +102,21 @@ function M.Update(dt, respawnPoint)
     M.walkPhase = (M.walkPhase or 0) + dt * M.speed * 1.9
     local bob = math.abs(sin(M.walkPhase)) * min(M.speed, 7) * 0.012
     local lean = min(M.speed, 7) * 1.1
-    entity.set_position(M.view, px, py + bob, pz)
-    entity.set_rotation(M.view, lean, M.facing, sin(M.walkPhase) * min(M.speed, 7) * 0.35)
+    local fwd, dy, pitch, fall = pose.Step(M.pose, dt)
+    local fr = rad(M.facing)
+    entity.set_position(M.view, px + sin(fr) * fwd, py + bob + dy, pz + cos(fr) * fwd)
+    entity.set_rotation(M.view, fall or (lean + pitch), M.facing, fall and 0 or sin(M.walkPhase) * min(M.speed, 7) * 0.35)
 
     -- pád do moře: zpět na břeh
     if py < -3 then M.Respawn(respawnPoint or map.SpawnKalidra) end
+end
+
+-- Postavy (NPC, nepřátelé, ostatní hráči) kameru nezastaví – jen svět
+local ignoreTags = { npc = true, enemy = true, other_player = true, animal = true }
+function M.IgnoreCamera(id)
+    if not id then return false end
+    local tag = entity.get_tag and entity.get_tag(id)
+    return tag ~= nil and ignoreTags[tag] == true
 end
 
 -- Kamera: pravé tlačítko = otáčení, kolečko = vzdálenost, Q/E = otáčení klávesami
@@ -124,7 +142,30 @@ function M.UpdateCamera(dt, liveCombat)
     -- nesmí pod terén
     local ground = map.HeightAt(wx, wz) + 0.6
     if wy < ground then wy = ground end
+    -- nesmí skrz stromy, budovy a hradby: přiblíží se k hráči před překážku
+    local want = c.distance
+    local ddx, ddy, ddz = wx - tx, wy - ty, wz - tz
+    local len = sqrt(ddx * ddx + ddy * ddy + ddz * ddz)
+    local blocked = false
+    if len > 0.5 then
+        local ux, uy, uz = ddx / len, ddy / len, ddz / len
+        local hit = physics.spherecast(tx, ty, tz, 0.3, ux, uy, uz, len, M.body)
+        if hit and hit.entity ~= M.view and not M.IgnoreCamera(hit.entity) then want = math.min(want, hit.distance) end
+        if M.canopyHit then
+            local t = M.canopyHit(tx, ty, tz, wx, wy, wz)
+            -- koruna přímo nad hráčem kameru nepřitáhne až k hlavě
+            if t then want = math.min(want, max(2.5, t * len - 0.4)) end
+        end
+        if want < len then
+            blocked = true
+            want = max(0.8, want)
+            wx, wy, wz = tx + ux * want, ty + uy * want, tz + uz * want
+        end
+    end
+    -- k hráči skočí hned (jinak by kamera na chvíli prošla překážkou), od hráče plynule
     local k = 1 - exp(-14 * dt)
+    local cd = sqrt((c.x - tx) ^ 2 + (c.y - ty) ^ 2 + (c.z - tz) ^ 2)
+    if blocked and want < cd then k = 1 end
     c.x, c.y, c.z = c.x + (wx - c.x) * k, c.y + (wy - c.y) * k, c.z + (wz - c.z) * k
     -- natočení kamery na hráče (kamera v enginu hledí po -Z)
     local dx, dy, dz = tx - c.x, ty - c.y, tz - c.z
