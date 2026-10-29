@@ -32,7 +32,7 @@ function M.PollNow() pollAt = 0; lastNews = game.time() end
 -- Systémová zpráva (jen u tebe)
 function M.System(text) add({ channel = "system", name = "", text = text }) end
 
-local function poll()
+local function poll(boot)
     api.Rpc("ashes_chat_recent", { p_after = lastId }, function(rows)
         if type(rows) ~= "table" then return end
         for _, r in ipairs(rows) do
@@ -40,6 +40,7 @@ local function poll()
             if id > lastId then
                 lastId = id
                 add({ channel = tostring(r.channel or ""), name = tostring(r.name or ""), tag = r.tag, text = tostring(r.text or ""), mine = r.mine == true })
+                if r.mine ~= true and boot.mods then boot.mods.fire("chat", tostring(r.channel or ""):sub(1, 5) == "oddil" and "oddil" or "svet", tostring(r.name or ""), tostring(r.text or "")) end
             end
         end
     end)
@@ -80,7 +81,7 @@ function M.Update(boot, blocked)
         -- nové zprávy ohlásí Realtime (PollNow), dotaz na server je jen pojistka
         local recent = now - lastNews < 30
         pollAt = now + (M.typing and 2 or recent and 4 or 8)
-        poll()
+        poll(boot)
     end
     if not M.typing then
         if (input.pressed("Enter")) and not blocked then

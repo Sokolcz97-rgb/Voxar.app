@@ -32,6 +32,15 @@ function M.Create(cls, gender, name, spawn)
     M.Respawn(spawn)
 end
 
+-- Vlastní model hráče (mód): nahradí model, kapsle a kamera zůstanou
+function M.ReplaceModel(path, height)
+    if not M.view then return end
+    local x, y, z = M.Position()
+    entity.destroy(M.view)
+    M.view = world.spawn(path, x, y, z, { fit = height or M.height, name = M.name })
+    M.height = height or M.height
+end
+
 function M.Respawn(p)
     local y = map.Ground(p.x, p.z)
     local hit = physics.raycast(p.x, y + 50, p.z, 0, -1, 0, 100, M.body)

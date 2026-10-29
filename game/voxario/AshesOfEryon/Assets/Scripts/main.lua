@@ -19,16 +19,19 @@ local charwindow = require("ashes.charwindow")
 local chronicle = require("ashes.chronicle")
 local guide = require("ashes.guide")
 local feedback = require("ashes.feedback")
+local oddil = require("ashes.oddil")
+local modhost = require("ashes.modhost")
 
 -- Otevřené okno (postava, kronika, aréna, hlášení) – hráč se nehýbe, rádce se schová
 local function windowOpen()
-    return charwindow.IsOpen() or chronicle.IsOpen() or activities.IsOpen() or feedback.IsOpen()
+    return charwindow.IsOpen() or chronicle.IsOpen() or activities.IsOpen() or feedback.IsOpen() or oddil.IsOpen()
 end
 local function closeWindow()
     if feedback.IsOpen() then feedback.Close() return true end
     if charwindow.IsOpen() then charwindow.Close() return true end
     if chronicle.IsOpen() then chronicle.Close() return true end
     if activities.IsOpen() then activities.Close() return true end
+    if oddil.IsOpen() then oddil.Close() return true end
     return false
 end
 
@@ -118,8 +121,8 @@ function EnterWorld()
     local cls = (ch.class and ch.class ~= "") and ch.class or "hoplit"
     local spawn = faction == "legie" and map.SpawnLegie or map.SpawnKalidra
     -- pokračovat tam, kde hráč skončil (uloženo v tomto počítači)
-    savePosKey = "ashes.pos." .. ch.name .. "." .. faction
-    local saved = settings.get(savePosKey)
+    savePosKey = not boot.selftest and ("ashes.pos." .. ch.name .. "." .. faction) or nil
+    local saved = savePosKey and settings.get(savePosKey)
     if type(saved) == "table" and saved[1] and map.InWorld(saved[1], saved[2]) and map.HeightAt(saved[1], saved[2]) > 0.4 then
         spawn = { x = saved[1], z = saved[2] }
     end
@@ -131,10 +134,13 @@ function EnterWorld()
     charwindow.Build(boot)
     chronicle.Build(boot, combat)
     feedback.Build(boot, player, minimap)
+    oddil.Build(boot, player, presence, chat)
+    modhost.Build(boot, player, minimap, hud)
     guide.Build(boot, { player = player, hud = hud, world = world, combat = combat, activities = activities,
         chronicle = chronicle, windows = windowOpen })
     boot.spawn = faction == "legie" and map.SpawnLegie or map.SpawnKalidra
     boot.inWorld, boot.loading, boot.status = true, false, ""
+    if boot.mods then boot.mods.fire("enter_world") end
     if not boot.selftest then
         presence.Connect(boot, player)
         sound.StartMusic(ch.chapter)
@@ -247,6 +253,8 @@ local function Selftest()
     chronicle.Close()
     feedback.open, feedback.focus = true, true; timer.sleep(0.4); shot("12-hlaseni")
     feedback.Close()
+    oddil.TestOpen(); timer.sleep(0.4); shot("13-oddil")
+    oddil.Close()
     -- kamera u stromu: strom mezi hráčem a kamerou, kamera se přiblíží před korunu
     local c = world.NearestCanopy(-20, 10)
     if c then
@@ -296,6 +304,8 @@ function on_update(dt)
     boot.typing = ui.wants_keyboard() or chat.typing or feedback.IsOpen()
     feedback.Update()
     charwindow.Update()
+    oddil.Update()
+    modhost.Update(dt)
     chronicle.Update()
     local cardEsc = guide.Update()
     if input.pressed("Escape") and not options.rebinding and not chatEsc then
@@ -350,13 +360,15 @@ function on_gui()
     hud.Draw(boot, world, player)
     minimap.Draw(boot, player, hud.Marker)
     chat.Draw(boot)
-    -- okna kreslit až nakonec, ať jsou nad HUD
     local W, H = ui.screen()
+    modhost.Draw(W, H, not options.open and not hud.IsOpen())
+    -- okna kreslit až nakonec, ať jsou nad HUD
     guide.Draw(W, H)
     combat.Draw(W, H)
     activities.Draw(W, H)
     chronicle.Draw(W, H)
     charwindow.Draw(W, H)
     feedback.Draw(W, H)
+    oddil.Draw(W, H)
     options.Draw(boot)
 end

@@ -130,6 +130,28 @@ function M.Draw(boot)
                 if ui.button("Obnovit výchozí", 260, 0) then keys.ResetAll() end
                 ui.end_tab()
             end
+            if ui.tab("Módy") then
+                local modhost = require("ashes.modhost")
+                ui.label("Doplňky v Lua ve složce:", skin.Muted)
+                ui.label(modhost.Folder)
+                ui.spacing(6)
+                if ui.begin_list("mods", 0, 380) then
+                    if #modhost.list == 0 then ui.label("Žádné módy. Ukázka Deník poutníka se vytvoří při prvním spuštění.", skin.Muted) end
+                    for _, m in ipairs(modhost.list) do
+                        local on = ui.checkbox(string.format("%s  ·  %s  ·  %s##%s", m.name, m.version, m.author, m.id), m.enabled)
+                        if on ~= m.enabled then modhost.SetEnabled(m.id, on) end
+                        if m.description and m.description ~= "" then ui.text_wrapped(m.description) end
+                        if m.error then ui.label("Chyba: " .. tostring(m.error):sub(1, 200), skin.Ember)
+                        elseif m.disabled then ui.label("Vypnuto po mnoha chybách.", skin.Ember) end
+                        ui.spacing(6)
+                    end
+                    ui.end_list()
+                end
+                if ui.button("Načíst znovu (F8)", 260, 0) then modhost.Reload() end
+                ui.same_line()
+                ui.label("Módy nemění pravidla hry – souboje a odměny hlídá server.", skin.Muted)
+                ui.end_tab()
+            end
             if ui.tab("Účet") then
                 local api = require("ashes.api")
                 ui.label("Přihlášen: " .. api.Email())
