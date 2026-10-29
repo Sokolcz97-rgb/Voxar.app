@@ -1,0 +1,8 @@
+{
+  "id": "UkazkaEryon",
+  "name": "Deník poutníka",
+  "version": "1.0",
+  "author": "StudioVoxario",
+  "description": "Ukázkový mód: okno s přehledem postavy, počítadlo vítězství a upozornění na nové úkoly. Klávesa J.",
+  "main": "main.lua"
+}

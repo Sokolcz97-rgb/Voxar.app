@@ -11,6 +11,10 @@
  *
  * Launcher hru instaluje do %LOCALAPPDATA%\StudioVoxario\AshesOfEryon (bez práv správce).
  * Při aktualizaci stáhne jen změněné soubory (porovná SHA-256), ověří je a pak spustí hru.
+ *
+ * Testovací kanál (nastavení launcheru „Kanál hry“ = beta): manifest unity/latest-beta.json
+ * (verze na Voxario Studio Engine pro testery) a vlastní složka „…-beta“, takže ostrá
+ * instalace zůstane nedotčená a přepnutí zpět nic nestahuje.
  */
 
 const path = require("node:path");
@@ -26,20 +30,24 @@ const BASE = process.env.ASHES_UNITY_BASE
   || "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/unity/";
 const SAFE_PATH = /^[A-Za-z0-9 _.\-()+\/]+$/;
 
-let chosenDir = null;
+const CHANNELS = { stable: { manifest: "latest.json", suffix: "" }, beta: { manifest: "latest-beta.json", suffix: "-beta" } };
+let channel = "stable";
+const chosenDirs = {};
 /**
  * Složka hry: vedle launcheru (např. E:\Ashes of Eryon\Game), aby hra byla na disku,
  * který si hráč vybral v GameSetupu. Když tam nejde zapisovat, %LOCALAPPDATA%.
+ * Testovací kanál má vlastní složku se stejným jménem a příponou „-beta“.
  */
 function installDir() {
-  if (chosenDir) return chosenDir;
-  const fallback = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "StudioVoxario", "AshesOfEryon");
+  if (chosenDirs[channel]) return chosenDirs[channel];
+  const suffix = CHANNELS[channel].suffix;
+  const fallback = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "StudioVoxario", `AshesOfEryon${suffix}`);
   const candidates = [];
-  if (app.isPackaged) candidates.push(path.join(path.dirname(path.dirname(process.execPath)), "Game"));
+  if (app.isPackaged) candidates.push(path.join(path.dirname(path.dirname(process.execPath)), `Game${suffix}`));
   candidates.push(fallback);
   // už nainstalovaná hra má přednost
   for (const dir of candidates) {
-    if (fs.existsSync(path.join(dir, "install.json"))) return (chosenDir = dir);
+    if (fs.existsSync(path.join(dir, "install.json"))) return (chosenDirs[channel] = dir);
   }
   for (const dir of candidates) {
     try {
@@ -47,10 +55,10 @@ function installDir() {
       const probe = path.join(dir, `.probe-${process.pid}`);
       fs.writeFileSync(probe, "ok");
       fs.rmSync(probe, { force: true });
-      return (chosenDir = dir);
+      return (chosenDirs[channel] = dir);
     } catch {}
   }
-  return (chosenDir = fallback);
+  return (chosenDirs[channel] = fallback);
 }
 
 function stateFile() {
@@ -104,20 +112,21 @@ function hashFile(file) {
   });
 }
 
-function createUnityGame({ onStatus, log }) {
+function createUnityGame({ onStatus, log, channel: initialChannel }) {
+  if (CHANNELS[initialChannel]) channel = initialChannel;
   let status = { state: "unknown" };
   let manifest = null;
   let busy = false;
   let child = null;
 
   function emit(next) {
-    status = { ...next, installed: readInstalled()?.version || null };
+    status = { ...next, channel, installed: readInstalled()?.version || null };
     try { onStatus?.(status); } catch {}
     return status;
   }
 
   async function loadManifest() {
-    const m = JSON.parse((await fetchBuffer(`${BASE}latest.json?t=${Date.now()}`)).toString("utf8"));
+    const m = JSON.parse((await fetchBuffer(`${BASE}${CHANNELS[channel].manifest}?t=${Date.now()}`)).toString("utf8"));
     if (!m?.version || !Array.isArray(m.files) || !m.exe) throw new Error("Neplatný manifest hry");
     for (const f of m.files) {
       const rel = String(f.path || "");
@@ -251,10 +260,22 @@ function createUnityGame({ onStatus, log }) {
     return { opened: true };
   }
 
+  /** Přepne kanál (stable / beta) a zjistí jeho stav. Během stahování nebo hraní nejde. */
+  async function setChannel(next) {
+    if (!CHANNELS[next] || next === channel) return status;
+    if (busy || child) return status;
+    channel = next;
+    manifest = null;
+    log?.(`Kanál hry: ${channel}`);
+    return check();
+  }
+
   return {
     check,
     install,
     play,
+    setChannel,
+    get channel() { return channel; },
     installDir,
     get status() { return status; },
     get running() { return Boolean(child); },
