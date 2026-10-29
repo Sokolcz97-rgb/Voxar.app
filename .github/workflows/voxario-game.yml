@@ -186,11 +186,15 @@ jobs:
         run: |
           $env:VOXARIO_NO_AUDIO = "1"
           $p = Start-Process -FilePath "game\AshesOfEryon.exe" -ArgumentList "-ashes-launcher", "--time", "13", "--frames", "400", "--screenshot", "$pwd\windows-login.png" -PassThru -RedirectStandardOutput windows.log -RedirectStandardError windows-err.log
-          if (-not $p.WaitForExit(900000)) { Stop-Process -Id $p.Id -Force; throw "Hra neskončila včas" }
+          $finished = $p.WaitForExit(360000)
+          # log hry (Windows aplikace nepíše na standardní výstup)
+          $log = Join-Path $env:APPDATA "Voxario Studio\Logs\VoxarioPlayer.log"
+          if (Test-Path $log) { Copy-Item $log voxario-player.log; Get-Content $log -Tail 80 } else { Write-Host "Log hry nenalezen: $log" }
+          if (-not $finished) { Stop-Process -Id $p.Id -Force; throw "Hra neskončila včas (viz log výše)" }
           Get-Content windows.log -Tail 40
           if ($p.ExitCode -ne 0) { throw "Hra skončila s kódem $($p.ExitCode)" }
           if (-not (Test-Path windows-login.png)) { throw "Chybí snímek" }
-          if (Select-String -Path windows.log -Pattern "Script error") { throw "Chyba skriptu" }
+          if (Select-String -Path voxario-player.log -Pattern "Script error" -ErrorAction SilentlyContinue) { throw "Chyba skriptu" }
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -200,6 +204,7 @@ jobs:
             windows-login.png
             windows.log
             windows-err.log
+            voxario-player.log
           retention-days: 14
 
   publish-beta:
