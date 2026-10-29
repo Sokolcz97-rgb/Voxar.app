@@ -70,14 +70,28 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
   v kyčlích s pokrčením kolene, paže proti nohám (ruka se štítem, lukem nebo holí zůstává), u sukní jen
   lem, čtyřnožci diagonální páry.
 
+## Grafika a výkon (beta 0.11.0-beta.4, engine 1.6.0)
+
+- **VSync** používá MAILBOX (trojité bufferování), takže se FPS nepůlí; v nastavení je limit FPS 30/60/120/144.
+- **Nastavení** jako v Unity verzi (Grafika, Zobrazení, Zvuk, Ovládání, Módy, Postavy): předvolby Nízká–Ultra,
+  DLSS / AMD FSR 1 / vlastní měřítko, stíny, dohled, hustota trávy, mraky, kvalita vody, ray tracing (jen na kartách
+  s Vulkan ray query), režim okna, V-Sync, limit FPS, přepínání postav a nová postava.
+- **Obloha**: dvě vrstvy animovaných mraků ve dne i v noci, stín mraků na zemi.
+- **Voda**: až 12 vln a hustší síť, drobné vlnky, pěna u břehu a na hřebenech, průhledná mělčina s kaustikami.
+- **Krajina**: prolínání povrchů podle výšky, detailní normála, víc trávy, keře, vítr, LOD s plynulým prolnutím.
+- **Noc**: modré měsíční světlo, noční ambient a světlo u hráče.
+- **Měření výkonu**: `VoxarioPlayer . --benchmark 20 --benchmark-out vysledek.json` obíhá svět se zkušební postavou
+  a zapíše FPS i časy CPU; `ASHES_PROFILE=1` vypíše, kolik stojí jednotlivé části skriptu.
+
 ## Sestavení a testy (fáze 9)
 
 Workflow `.github/workflows/voxario-game.yml` (při změně `game/voxario/**` nebo ručně):
 
 1. stáhne Voxario Studio z release enginu (secret `VOXARIO_ENGINE_TOKEN`, čtení repozitáře enginu),
 2. složí hru `tools/package-game.sh` pro Linux i Windows,
-3. pustí samotest na softwarovém Vulkanu – shodí ho chyba skriptu, chybějící `SELFTEST hotovo` nebo málo
-   záběrů; artefakt `AshesOfEryon-selftest` má všechny záběry a log,
+3. pustí samotest na softwarovém Vulkanu ve dne (`--time 13`) – shodí ho chyba skriptu, chybějící
+   `SELFTEST hotovo` nebo málo záběrů; artefakt `AshesOfEryon-selftest` má všechny záběry a log,
+3b. hotovou hru pro Windows spustí na Windows runneru (Mesa lavapipe) a vyfotí (`AshesOfEryon-windows-test`),
 4. artefakty `AshesOfEryon-Windows` (hotová hra) a `AshesOfEryon-beta-upload` (soubory a
    `latest-beta.json` pro launcher),
 5. ruční spuštění s `publish_beta` je nahraje do `game-updates/unity/` (secret
