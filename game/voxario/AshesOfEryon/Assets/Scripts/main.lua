@@ -14,6 +14,7 @@ local options = require("ashes.options")
 local minimap = require("ashes.minimap")
 local chat = require("ashes.chat")
 local combat = require("ashes.combat")
+local activities = require("ashes.activities")
 
 local boot = {
     version = "0.8.0 (Voxario)",
@@ -110,6 +111,7 @@ function EnterWorld()
     player.canopyHit = world.CanopyHit
     player.Create(cls, gender, (ch.display_name and ch.display_name ~= "") and ch.display_name or ch.name, spawn)
     combat.Build(boot, player, hud, faction)
+    activities.Build(boot, player, hud, combat)
     boot.spawn = faction == "legie" and map.SpawnLegie or map.SpawnKalidra
     boot.inWorld, boot.loading, boot.status = true, false, ""
     if not boot.selftest then
@@ -190,6 +192,13 @@ local function Selftest()
     combat.TestResult()
     timer.sleep(0.4); shot("6d-vitezstvi")
     combat.CloseResult()
+    -- světový boss a aréna
+    lookFrom(28, G(28, 44) + 3, 44, 20, G(20, 50) + 1.5, 50)
+    timer.sleep(1.0); shot("6f-boss")
+    player.cameraOverride = nil
+    activities.TestArena()
+    timer.sleep(0.4); shot("6g-arena")
+    activities.Close()
     -- kamera u stromu: strom mezi hráčem a kamerou, kamera se přiblíží před korunu
     local c = world.NearestCanopy(-20, 10)
     if c then
@@ -238,10 +247,12 @@ function on_update(dt)
     local chatEsc = chat.Update(boot, hud.IsOpen() or options.open or combat.result ~= nil)
     boot.typing = ui.wants_keyboard() or chat.typing
     if input.pressed("Escape") and not options.rebinding and not chatEsc then
-        if hud.IsOpen() then hud.Close() else options.Toggle() end
+        if hud.IsOpen() then hud.Close()
+        elseif activities.IsOpen() then activities.Close()
+        elseif not combat.result then options.Toggle() end
     end
     boot.optionsOpen = options.open
-    player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open and not combat.LocksInput()
+    player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open and not combat.LocksInput() and not activities.IsOpen()
     player.cameraInput = not options.open and not boot.typing
     player.Update(dt, boot.spawn)
     if player.cameraOverride then
@@ -259,6 +270,7 @@ function on_update(dt)
     hud.Update(boot, world, px, pz)
     minimap.Update(boot)
     combat.Update(dt)
+    activities.Update(dt)
     -- návrat do bezpečí (T): 3 s soustředění, pohyb ho přeruší
     if keys.Down("recall") and not recallT and not combat.Busy() and not boot.typing then recallT = 3; hud.Notice("Návrat do bezpečí… (nehýbej se)") end
     if recallT then
@@ -286,6 +298,7 @@ function on_gui()
     hud.Draw(boot, world, player)
     local W, H = ui.screen()
     combat.Draw(W, H)
+    activities.Draw(W, H)
     minimap.Draw(boot, player, hud.Marker)
     chat.Draw(boot)
     options.Draw(boot)

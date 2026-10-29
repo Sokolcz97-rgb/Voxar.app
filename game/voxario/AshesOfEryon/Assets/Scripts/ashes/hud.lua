@@ -178,6 +178,17 @@ local function dialogWindow(boot, W, H)
             o.offer, o.title, o.text = q, q.title, q.offer or ""
         end
     end
+    local id = n.def.id
+    if (id == "tharos" or id == "rukmar") and boot.openSmith and option("Ukaž mi své zboží (obchod)", skin.GoldBright) then
+        M.Close(); boot.openSmith(n.def.name .. " · " .. n.def.role)
+    end
+    if (id == "gorgias" or id == "sabra") and boot.openChronicle and option("Jaké výpravy jsou k mání? (Kronika)", skin.GoldBright) then
+        M.Close(); boot.openChronicle()
+    end
+    if (id == "arena-k" or id == "arena-l") and boot.openArena and option("Chci zápasit v aréně", skin.Ember) then
+        M.Close(); boot.openArena()
+    end
+    if not M.open then return end
     local talk = M.Talk(n.def.id)
     if talk and talk.lore then
         for _, l in ipairs(talk.lore) do

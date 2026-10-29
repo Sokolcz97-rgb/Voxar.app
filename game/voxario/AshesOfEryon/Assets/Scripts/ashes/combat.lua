@@ -689,7 +689,7 @@ local function resultWindow(W, H)
         if r.levels > 0 then line("NOVÁ ÚROVEŇ!", { size = 28, font = "title", color = skin.GoldBright }) end
         if (r.won or r.noteAlways) and r.note and r.note ~= "" then line(r.note, { size = 20 }) end
     elseif r.arena then
-        local hon = r.honor >= 0 and ("✦ +" .. r.honor .. " cti") or ("✦ " .. r.honor .. " cti")
+        local hon = r.honor >= 0 and ("+" .. r.honor .. " cti") or (r.honor .. " cti")
         local parts = { hon }
         if r.xp > 0 then parts[2] = "+" .. r.xp .. " zk." end
         rewardLine(W / 2, cy, parts, r.gold); cy = cy + 40
