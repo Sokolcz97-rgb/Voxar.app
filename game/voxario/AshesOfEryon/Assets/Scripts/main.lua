@@ -284,6 +284,10 @@ local function Selftest()
     feedback.Close()
     oddil.TestOpen(); timer.sleep(0.4); shot("13-oddil")
     oddil.Close()
+    options.TestOpen(1); timer.sleep(0.5); shot("14-nastaveni-grafika")
+    options.TestOpen(2); timer.sleep(0.4); shot("14b-nastaveni-zobrazeni")
+    options.TestOpen(6); timer.sleep(0.4); shot("14c-postavy")
+    options.open = false
     -- chůze nohou (zastavený krok, z boku)
     player.Respawn({ x = -40, z = 34 })
     player.facing = 0
@@ -314,7 +318,8 @@ function on_start()
     sound.ApplyVolumes()
     options.Apply()
     game.custom_pause(true)   -- Esc = nastavení hry (ne menu přehrávače)
-    _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35 })
+    _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35,
+                           clouds = 0.5 })
     if game.benchmark() then timer.start(Benchmark); return end
     if game.selftest() then timer.start(Selftest); return end
     boot.busy = true
@@ -435,5 +440,9 @@ function on_gui()
     feedback.Draw(W, H)
     oddil.Draw(W, H)
     options.Draw(boot)
+    if settings.get("ui.fps", false) then
+        local info = graphics.info()
+        ui.text(W - 16, H - 28, string.format("%.0f FPS", info.fps or 0), { size = 16, font = "bold", color = skin.GoldBright, align = "right" })
+    end
     profReport()
 end

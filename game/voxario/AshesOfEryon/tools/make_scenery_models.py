@@ -238,3 +238,5 @@ for k in range(7):
     wreck += move(rot(box(0.22, 2.6, 0.25), az=-25), dx=1.4, dy=1.1, dz=-4 + k * 1.3)
 wreck += move(rot(cylinder(0.14, 0.1, 6, 6), az=70), dy=0.5, dz=1)
 write_gltf("wreck", [(wreck, (0.78, 0.72, 0.62), False)])
+# zelený keř (sever: louky a okraje lesa) – stejný tvar, svěží barva
+write_gltf("bush_green", [(bush, (0.27, 0.36, 0.16), True)])

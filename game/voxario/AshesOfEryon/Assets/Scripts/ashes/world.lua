@@ -347,8 +347,8 @@ function M.BuildScenery(quality)
     -- koruny pro kolizi kamery (rozměry z tools/make_scenery_models.py)
     for _, t in ipairs(cypress) do M.AddCanopy(t[1], t[3], t[2] + 0.9 * t[6], t[2] + 5.5 * t[6], 0.72 * t[5]) end
     for _, t in ipairs(olive) do M.AddCanopy(t[1], t[3], t[2] + 1.6 * t[6], t[2] + 4.0 * t[6], 1.7 * t[5]) end
-    world.instances("Models/scenery/cypress.gltf", cypress, { collider = "capsule", radius = 0.25, height = 3, distance = 320 })
-    world.instances("Models/scenery/olive.gltf", olive, { collider = "capsule", radius = 0.35, height = 2.5, distance = 320 })
+    world.instances("Models/scenery/cypress.gltf", cypress, { collider = "capsule", radius = 0.25, height = 3, distance = 320, wind = 0.12 })
+    world.instances("Models/scenery/olive.gltf", olive, { collider = "capsule", radius = 0.35, height = 2.5, distance = 320, wind = 0.08 })
 
     -- kameny (stejné pořadí volání generátoru jako v Unity)
     local rocks = {}
@@ -364,7 +364,8 @@ function M.BuildScenery(quality)
     world.instances("Models/scenery/rock.gltf", rocks, { distance = 180 })
 
     -- tráva (jen blízko kamery)
-    local grassN = quality == 0 and 5000 or (quality == 1 and 8000 or (quality == 2 and 12000 or 18000))
+    -- hodně trávy: hustotu za běhu ztenčí nastavení (graphics.detail_density)
+    local grassN = quality == 0 and 7000 or (quality == 1 and 12000 or (quality == 2 and 20000 or 28000))
     local grass, placed = {}, 0
     for _ = 1, grassN * 3 do
         if placed >= grassN then break end
@@ -376,7 +377,19 @@ function M.BuildScenery(quality)
             placed = placed + 1
         end
     end
-    world.instances("Models/scenery/grass.gltf", grass, { distance = 70 })
+    world.instances("Models/scenery/grass.gltf", grass, { distance = 75, detail = true, wind = 0.12 })
+    -- zelené keře na severu (louky, okraje lesa)
+    local bushes = {}
+    for _ = 1, floor(900 * density + 0.5) * 3 do
+        if #bushes >= floor(900 * density + 0.5) then break end
+        local x, z = (R() - 0.5) * half * 2, (R() - 0.5) * half * 2
+        local h = HeightAt(x, z)
+        local s, yaw = 0.6 + R() * 0.8, R() * 360
+        if h > 1.0 and h < 11 and z < 108 and not map.InCity(x, z) and map.RoadDistance(x, z) > 3 then
+            bushes[#bushes + 1] = { x, h - 0.05, z, yaw, s }
+        end
+    end
+    world.instances("Models/scenery/bush_green.gltf", bushes, { distance = 120, detail = true, wind = 0.06 })
 
     M.BuildAqueduct()
     M.BuildShips()
@@ -504,7 +517,7 @@ function M.BuildDesert(quality)
             bn = bn - 1
         end
     end
-    world.instances("Models/scenery/bush.gltf", bushes, { distance = 110 })
+    world.instances("Models/scenery/bush.gltf", bushes, { distance = 110, detail = true, wind = 0.05 })
     -- palmy kolem oázy
     local palms = {}
     for k = 0, 10 do
@@ -514,7 +527,7 @@ function M.BuildDesert(quality)
         palms[#palms + 1] = { x, HeightAt(x, z) - 0.1, z, R() * 360, 0.9 + R() * 0.3 }
     end
     for _, t in ipairs(palms) do M.AddCanopy(t[1], t[3], t[2] + 4.2 * t[5], t[2] + 5.1 * t[5], 2.4 * t[5]) end
-    world.instances("Models/scenery/palm.gltf", palms, { collider = "capsule", radius = 0.25, height = 3 })
+    world.instances("Models/scenery/palm.gltf", palms, { collider = "capsule", radius = 0.25, height = 3, wind = 0.15 })
     -- rákos na břehu oázy
     local reeds = {}
     for _ = 1, 140 do
@@ -523,7 +536,7 @@ function M.BuildDesert(quality)
         reeds[#reeds + 1] = { x, math.max(HeightAt(x, z), map.OasisWater - 0.3), z, R() * 360, 0.7 + R() * 0.6, 0.7 + R() * 0.6, 0.7 + R() * 0.6,
                               R() * 14 - 7, R() * 14 - 7 }
     end
-    world.instances("Models/scenery/reed.gltf", reeds, { distance = 90 })
+    world.instances("Models/scenery/reed.gltf", reeds, { distance = 90, detail = true, wind = 0.1 })
     -- hlídka Legie v Solném průsmyku: oheň, prapor, zátarasa s průchodem, stan
     local p0, pa, pb = map.CanyonPath[3], map.CanyonPath[2], map.CanyonPath[3]
     fire(p0.x + 3, p0.z + 1, 0.9, false)
