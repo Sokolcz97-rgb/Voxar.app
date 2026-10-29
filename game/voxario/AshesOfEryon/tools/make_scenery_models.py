@@ -186,3 +186,55 @@ for k in range(7):
     d = (math.cos(a), math.sin(a))
     fronds += [(0, 5.0, 0), (d[0] * 2.6 - d[1] * 0.35, 4.3, d[1] * 2.6 + d[0] * 0.35), (d[0] * 2.6 + d[1] * 0.35, 4.3, d[1] * 2.6 - d[0] * 0.35)]
 write_gltf("palm", [(cylinder(0.22, 0.14, 5.0, 7), (0.55, 0.42, 0.3), False), (fronds, (0.3, 0.45, 0.18), True)])
+
+# ---------------------------------------------------------------- další tvary z Unity verze (MeshKit)
+def box(sx, sy, sz):
+    """Kvádr se středem v počátku (MeshKit.Box)."""
+    x, y, z = sx / 2, sy / 2, sz / 2
+    c = [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z), (-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)]
+    faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (3, 7, 6, 2), (0, 4, 7, 3), (1, 2, 6, 5)]
+    tris = []
+    for a, b, cc, d in faces:
+        tris += [c[a], c[b], c[cc], c[a], c[cc], c[d]]
+    return orient(tris, lambda g: (0.0, 0.0, 0.0))
+
+
+def rot(tris, ax=0.0, ay=0.0, az=0.0):
+    """Otočení ve stupních v pořadí Unity (Z, pak X, pak Y)."""
+    def r(p):
+        x, y, z = p
+        a = math.radians(az); x, y = x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a)
+        a = math.radians(ax); y, z = y * math.cos(a) - z * math.sin(a), y * math.sin(a) + z * math.cos(a)
+        a = math.radians(ay); x, z = x * math.cos(a) + z * math.sin(a), -x * math.sin(a) + z * math.cos(a)
+        return (x, y, z)
+    return [r(p) for p in tris]
+
+
+def move(tris, dx=0.0, dy=0.0, dz=0.0, s=(1.0, 1.0, 1.0)):
+    return [(p[0] * s[0] + dx, p[1] * s[1] + dy, p[2] * s[2] + dz) for p in tris]
+
+
+# stan Legie: jehlan o čtyřech stranách (Scenery.BuildCamp: Cone(2.2, 2.6, 4, 1))
+write_gltf("tent", [(cone(2.2, 2.6, 4, 1, 0.0, 0, 0.0), (0.45, 0.16, 0.12), False)])
+# suchý keř (DesertScenery): sedm tenkých prutů a zploštělý chomáč
+bush = []
+for k in range(7):
+    a = k / 7 * 2 * math.pi
+    bush += rot(cone(0.05, 0.9, 3, 1, 0.0, 0, 0.0), ax=math.cos(a) * 45, az=math.sin(a) * 45)
+bush += move(ico(0.35, (0, 0, 0), (1, 1, 1), 2, 0.4, 0), dy=0.25, s=(1.3, 0.6, 1.3))
+write_gltf("bush", [(bush, (0.5, 0.4, 0.27), True)])
+# rákos u oázy
+write_gltf("reed", [(cone(0.04, 1.4, 3, 1, 0.0, 0, 0.0), (0.55, 0.55, 0.3), True)])
+# kůl zátarasy
+write_gltf("stake", [(cylinder(0.14, 0.05, 2.2, 5), (0.5, 0.38, 0.26), False)])
+# černá loď Legie: trup, příď (jehlan), stěžeň, plachta (Scenery.cs)
+hull = move(box(2.6, 1.2, 10), dy=0.4) + move(rot(cone(1.3, 2.8, 4, 1, 0.0, 0, 0.0), ax=90), dy=0.5, dz=5)
+write_gltf("ship", [(hull, (0.09, 0.08, 0.08), False),
+                    (move(cylinder(0.12, 0.09, 8, 6), dy=0.5), (0.35, 0.27, 0.2), False),
+                    (move(box(4.4, 3.6, 0.08), dy=5.3, dz=0.2), (0.12, 0.09, 0.09), True)])
+# vybělený vrak na Solném pobřeží (DesertScenery.BuildWreck)
+wreck = box(3, 1.2, 9)
+for k in range(7):
+    wreck += move(rot(box(0.22, 2.6, 0.25), az=-25), dx=1.4, dy=1.1, dz=-4 + k * 1.3)
+wreck += move(rot(cylinder(0.14, 0.1, 6, 6), az=70), dy=0.5, dz=1)
+write_gltf("wreck", [(wreck, (0.78, 0.72, 0.62), False)])

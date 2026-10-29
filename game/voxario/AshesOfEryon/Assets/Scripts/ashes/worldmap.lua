@@ -181,7 +181,14 @@ end
 function M.InCity(x, z) return x > City.xMin and x < City.xMax and z > City.yMin and z < City.yMax end
 
 -- Výška pro postavy a stavby (moře = 0)
-function M.Ground(x, z) return max(M.HeightAt(x, z), 0) end
+-- Výška povrchu (pod hladinou = 0). Po postavení terénu se čte z enginu (rychlé, a přesně podle
+-- vykresleného terénu), předtím se počítá šumem jako v Unity verzi.
+local engineHeight = _G.world and _G.world.height
+function M.Ground(x, z)
+    local h = engineHeight and engineHeight(x, z)
+    if h then return max(h, 0) end
+    return max(M.HeightAt(x, z), 0)
+end
 
 -- Webový úhel natočení (dopředu = (sin a, cos a)) -> yaw ve stupních pro modely (glTF: +Z dopředu)
 function M.FaceToYaw(a) return math.deg(a) end

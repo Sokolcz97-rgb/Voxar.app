@@ -155,12 +155,8 @@ local function lookFrom(x, y, z, tx, ty, tz)
     player.cameraOverride = { x, y, z, tx, ty, tz }
 end
 
-local function Selftest()
-    boot.selftest = true
-    timer.sleep(2.0); shot("0-prihlaseni")
-    boot.state = { allowed = true, character = {} }
-    timer.sleep(1.5); shot("0b-tvorba-postavy")
-    boot.state = {
+local function TestState()
+    return {
         allowed = true, hp = 165, bag_max = 12,
         character = { name = "Tester", display_name = "Tester", class = "hoplit", faction = "kalidra", level = 3, xp = 140,
                       xp_need = 300, gold = 172, honor = 12, appearance = { gender = "m" },
@@ -185,6 +181,39 @@ local function Selftest()
         chronicle = { { text = "Ariadna porazila Thalassose, vůdce pirátů.", created_at = "2026-10-29T10:12:00Z" } },
         wquests = { { quest_id = "k1", state = "done" }, { quest_id = "k2", state = "active", progress = 1 }, { quest_id = "k3", state = "ready" } },
     }
+end
+
+-- Měření výkonu (VoxarioPlayer --benchmark): svět se zkušební postavou, hráč obíhá Kalidru
+-- a krajinu kolem (typická scéna: město, les, NPC, ohně). Měření začne až po načtení světa.
+local function Benchmark()
+    boot.selftest = true
+    boot.state = TestState()
+    boot.loading = true
+    timer.sleep(0.3)
+    EnterWorld()
+    timer.sleep(4)
+    player.Respawn({ x = 20, z = 30 })
+    game.benchmark_begin()
+    local t0 = game.time()
+    while true do
+        -- kamera krouží kolem hráče a ten pomalu obchází pláň před branou
+        local t = game.time() - t0
+        player.cam.yaw = (t * 18) % 360
+        player.facing = player.cam.yaw
+        timer.sleep(0)
+    end
+end
+
+local function Selftest()
+    boot.selftest = true
+    -- denní záběry: čas z --time (CI), jinak pevně 13:00 (ne skutečný pražský čas)
+    local env0 = _G.world.environment()
+    if env0.real_time then _G.world.environment({ real_time = false, time_of_day = 13 }) end
+    local dayTime = _G.world.environment().time_of_day
+    timer.sleep(2.0); shot("0-prihlaseni")
+    boot.state = { allowed = true, character = {} }
+    timer.sleep(1.5); shot("0b-tvorba-postavy")
+    boot.state = TestState()
     boot.loading = true
     timer.sleep(0.5)
     EnterWorld()
@@ -213,7 +242,7 @@ local function Selftest()
     _G.world.environment({ real_time = false, time_of_day = 23 })
     lookFrom(-40, G(-40, 30) + 9, 30, -20, G(-20, 0) + 3, 0)
     timer.sleep(4); shot("22-noc")
-    _G.world.environment({ real_time = true })
+    _G.world.environment({ real_time = false, time_of_day = dayTime })
     -- rozhovor s Nikiasem
     player.cameraOverride = nil
     player.Respawn({ x = -50.5, z = 46.5 })
@@ -286,6 +315,7 @@ function on_start()
     options.Apply()
     game.custom_pause(true)   -- Esc = nastavení hry (ne menu přehrávače)
     _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35 })
+    if game.benchmark() then timer.start(Benchmark); return end
     if game.selftest() then timer.start(Selftest); return end
     boot.busy = true
     local function resume()
@@ -307,6 +337,30 @@ function on_start()
     end
 end
 
+-- Měření času částí skriptu (ASHES_PROFILE=1): průměr za 5 s do logu
+local profiling = os.getenv and os.getenv("ASHES_PROFILE")
+local prof, profAt, profN = {}, 0, 0
+local function P(name, fn, ...)
+    if not profiling then return fn(...) end
+    local t = os.clock()
+    local r = fn(...)
+    prof[name] = (prof[name] or 0) + (os.clock() - t)
+    return r
+end
+local function profReport()
+    if not profiling then return end
+    profN = profN + 1
+    if game.time() < profAt then return end
+    profAt = game.time() + 5
+    local parts = {}
+    for k, v in pairs(prof) do parts[#parts + 1] = { k, v } end
+    table.sort(parts, function(a, b) return a[2] > b[2] end)
+    local out = {}
+    for _, p in ipairs(parts) do out[#out + 1] = string.format("%s %.2f", p[1], p[2] / math.max(1, profN) * 1000) end
+    game.log("profil ms/snímek: " .. table.concat(out, ", "))
+    prof, profN = {}, 0
+end
+
 function on_update(dt)
     if not boot.inWorld then return end
     local chatEsc = chat.Update(boot, hud.IsOpen() or options.open or combat.result ~= nil or windowOpen())
@@ -314,9 +368,9 @@ function on_update(dt)
     feedback.Update()
     charwindow.Update()
     oddil.Update()
-    modhost.Update(dt)
+    P("mods", modhost.Update, dt)
     chronicle.Update()
-    local cardEsc = guide.Update()
+    local cardEsc = P("guide", guide.Update)
     if input.pressed("Escape") and not options.rebinding and not chatEsc then
         if hud.IsOpen() then hud.Close()
         elseif closeWindow() then
@@ -325,7 +379,7 @@ function on_update(dt)
     boot.optionsOpen = options.open
     player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open and not combat.LocksInput() and not windowOpen() and not guide.CardOpen()
     player.cameraInput = not options.open and not boot.typing
-    player.Update(dt, boot.spawn)
+    P("player", player.Update, dt, boot.spawn)
     if player.cameraOverride then
         local o = player.cameraOverride
         local cam = entity.find("Camera")
@@ -333,15 +387,16 @@ function on_update(dt)
         entity.set_position(cam, o[1], o[2], o[3])
         entity.set_rotation(cam, math.deg(math.atan(dy, math.sqrt(dx * dx + dz * dz))), math.deg(math.atan(-dx, -dz)), 0)
     else
-        player.UpdateCamera(dt, combat.InLive())
+        P("camera", player.UpdateCamera, dt, combat.InLive())
     end
-    world.Update(dt)
-    presence.Update(dt, player)
+    world.viewerX, _, world.viewerZ = player.Position()
+    P("world", world.Update, dt)
+    P("presence", presence.Update, dt, player)
     local px, _, pz = player.Position()
-    hud.Update(boot, world, px, pz)
+    P("hud", hud.Update, boot, world, px, pz)
     minimap.Update(boot)
-    combat.Update(dt)
-    activities.Update(dt)
+    P("combat", combat.Update, dt)
+    P("activities", activities.Update, dt)
     -- návrat do bezpečí (T): 3 s soustředění, pohyb ho přeruší
     if keys.Down("recall") and not recallT and not combat.Busy() and not boot.typing then recallT = 3; hud.Notice("Návrat do bezpečí… (nehýbej se)") end
     if recallT then
@@ -365,19 +420,20 @@ function on_gui()
         else screens.Login(boot) end
         return
     end
-    presence.Draw()
-    hud.Draw(boot, world, player)
-    minimap.Draw(boot, player, hud.Marker)
-    chat.Draw(boot)
+    P("g.presence", presence.Draw)
+    P("g.hud", hud.Draw, boot, world, player)
+    P("g.minimap", minimap.Draw, boot, player, hud.Marker)
+    P("g.chat", chat.Draw, boot)
     local W, H = ui.screen()
-    modhost.Draw(W, H, not options.open and not hud.IsOpen())
+    P("g.mods", modhost.Draw, W, H, not options.open and not hud.IsOpen())
     -- okna kreslit až nakonec, ať jsou nad HUD
-    guide.Draw(W, H)
-    combat.Draw(W, H)
-    activities.Draw(W, H)
+    P("g.guide", guide.Draw, W, H)
+    P("g.combat", combat.Draw, W, H)
+    P("g.activities", activities.Draw, W, H)
     chronicle.Draw(W, H)
     charwindow.Draw(W, H)
     feedback.Draw(W, H)
     oddil.Draw(W, H)
     options.Draw(boot)
+    profReport()
 end

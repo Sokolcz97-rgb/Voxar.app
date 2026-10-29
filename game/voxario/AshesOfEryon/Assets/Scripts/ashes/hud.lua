@@ -109,9 +109,10 @@ end
 local function prompt(W, H, key, text)
     local x, y = W / 2 - 220, H - 170
     ui.panel("Textures/ui/panel.png", x, y, 440, 50, 12, 16)
-    ui.rect(x + 16, y + 11, 34, 28, skin.Gold, 3)
-    ui.text(x + 33, y + 15, key, { size = 15, font = "h2", color = skin.Bg, align = "center", shadow = false })
-    ui.text(x + 62, y + 12, text, { size = 22, font = "bold", color = skin.GoldBright })
+    local kw = math.max(34, (ui.text_size(key, { size = 15, font = "h2" }) or 0) + 16)
+    ui.rect(x + 16, y + 11, kw, 28, skin.Gold, 3)
+    ui.text(x + 16 + kw / 2, y + 15, key, { size = 15, font = "h2", color = skin.Bg, align = "center", shadow = false })
+    ui.text(x + 28 + kw, y + 12, text, { size = 22, font = "bold", color = skin.GoldBright })
 end
 
 M.Prompt = prompt
@@ -251,13 +252,21 @@ function M.Draw(boot, world, player)
     -- klávesová lišta dole
     local hints = { { keys.Label("interact"), "Mluvit" }, { keys.Label("run"), "Běh" }, { keys.Label("jump"), "Skok" },
                     { keys.Label("autorun"), "Auto běh" }, { keys.Label("recall"), "Návrat" }, { "Esc", "Pauza" } }
-    local bw = #hints * 150
-    local bx = W / 2 - bw / 2
+    -- kapsa klávesy podle šířky textu („Mezerník“ je delší než „E“)
+    local items, total = {}, 0
     for i, hnt in ipairs(hints) do
-        local hx = bx + (i - 1) * 150
-        ui.rect(hx, H - 52, 40, 28, "#d2ae68e6", 3)
-        ui.text(hx + 20, H - 48, hnt[1], { size = 14, font = "h2", color = skin.Bg, align = "center", shadow = false })
-        ui.text(hx + 48, H - 50, hnt[2], { size = 17, font = "body", color = skin.Text })
+        local kw = math.max(40, (ui.text_size(hnt[1], { size = 14, font = "h2" }) or 0) + 18)
+        local lw = ui.text_size(hnt[2], { size = 17, font = "body" }) or 60
+        items[i] = { kw, lw }
+        total = total + kw + 8 + lw + (i < #hints and 34 or 0)
+    end
+    local hx = W / 2 - total / 2
+    for i, hnt in ipairs(hints) do
+        local kw, lw = items[i][1], items[i][2]
+        ui.rect(hx, H - 52, kw, 28, "#d2ae68e6", 3)
+        ui.text(hx + kw / 2, H - 48, hnt[1], { size = 14, font = "h2", color = skin.Bg, align = "center", shadow = false })
+        ui.text(hx + kw + 8, H - 50, hnt[2], { size = 17, font = "body", color = skin.Text })
+        hx = hx + kw + 8 + lw + 34
     end
     if M.notice and game.time() < M.noticeUntil then
         ui.panel("Textures/ui/panel.png", W / 2 - 330, 110, 660, 54, 12, 16)

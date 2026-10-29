@@ -29,6 +29,9 @@ function M.Create(cls, gender, name, spawn)
     M.gait = pose.GaitOptions(model)
     M.height = h
     M.name = name
+    -- v noci teplé světlo kolem hráče (jako lucerna), ať je svět kolem čitelný
+    M.lamp = world.spawn("light", spawn.x, map.Ground(spawn.x, spawn.z) + 2.4, spawn.z,
+        { light = { color = { 1.0, 0.78, 0.55 }, intensity = 9, range = 11, night_only = true }, name = "Světlo hráče" })
     M.camera = entity.find("Camera")
     M.Respawn(spawn)
 end
@@ -120,6 +123,7 @@ function M.Update(dt, respawnPoint)
     entity.set_position(M.view, px + sin(fr) * fwd, py + bob + dy, pz + cos(fr) * fwd)
     entity.set_rotation(M.view, fall or (lean + pitch), M.facing, fall and 0 or sin(M.walkPhase) * min(M.speed, 7) * 0.35)
 
+    if M.lamp then entity.set_position(M.lamp, px, py + 2.4, pz) end
     -- pád do moře: zpět na břeh
     if py < -3 then M.Respawn(respawnPoint or map.SpawnKalidra) end
 end

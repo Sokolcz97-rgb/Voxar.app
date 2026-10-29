@@ -199,6 +199,11 @@ local function turnTo(e, dx, dz, k)
 end
 
 local function placeEnemy(e, dt)
+    -- stojí a nic se neděje: poloha se nemění, nic nepřepočítávat
+    local p = e.pose
+    if e.speed == 0 and e.lastSpeed == 0 and p.lunge < 0 and p.flinch < 0 and not p.fallen and e.placedYaw == e.yaw
+        and e.placedX == e.x and e.placedZ == e.z then return end
+    e.lastSpeed, e.placedYaw, e.placedX, e.placedZ = e.speed, e.yaw, e.x, e.z
     e.phase = e.phase + dt * e.speed * 1.9
     pose.Gait(e.id, e.phase, e.pose.fallen and 0 or e.speed, e.gait)
     local bob = math.abs(math.sin(e.phase)) * min(e.speed, 7) * 0.012
@@ -210,10 +215,18 @@ end
 
 local liveBegin
 
-local function updateEnemies(dt, px, pz)
+local function updateEnemies(frameDt, px, pz)
     local now = game.time()
     local calm = M.Busy() or inSafe(px, pz) or hud.IsOpen() or boot.selftest
     for _, e in ipairs(M.enemies) do
+        -- vzdálení nepřátelé se jen toulají: stačí 4× za sekundu (šetří CPU)
+        local dt = frameDt
+        local far = (e.x - px) ^ 2 + (e.z - pz) ^ 2 > 60 * 60 and not (M.live and M.live.e == e)
+        if far then
+            e.acc = (e.acc or 0) + frameDt
+            if e.acc < 0.25 then goto continue end
+            dt, e.acc = e.acc, 0
+        end
         if not e.alive then
             if now > e.respawnAt then
                 e.alive, e.x, e.z, e.calmUntil = true, e.hx, e.hz, now + 2
@@ -260,6 +273,7 @@ local function updateEnemies(dt, px, pz)
             e.speed = speed
             placeEnemy(e, dt)
         end
+        ::continue::
     end
 end
 
@@ -656,7 +670,7 @@ local function liveHud(W, H, L)
         ui.rect(x, y, bw, 74, { 0.05, 0.04, 0.03, 0.78 })
         if left[i] > 0 then ui.rect(x, y, bw * min(1, left[i]), 74, { 0, 0, 0, 0.55 }) end
         if active then ui.rect(x, y + 70, bw, 4, i == 4 and skin.Sky or skin.GoldBright) end
-        local kw = 14 + #labels[i] * 10
+        local kw = math.min(bw - 16, math.max(28, (ui.text_size(labels[i], { size = 14, font = "h2" }) or 0) + 16))
         ui.rect(x + 8, y + 8, kw, 24, skin.Gold, 3)
         ui.text(x + 8 + kw / 2, y + 11, labels[i], { size = 14, font = "h2", color = skin.Bg, align = "center", shadow = false })
         ui.text(x + 8, y + 42, names[i], { size = 17, font = "body", color = active and skin.GoldBright or { 0.7, 0.65, 0.58 } })
