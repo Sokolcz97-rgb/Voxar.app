@@ -189,7 +189,7 @@ local function questTracker(boot, W)
     local active = {}
     for _, q in ipairs(st.wquests) do if q.state == "active" or q.state == "ready" then active[#active + 1] = q end end
     if #active == 0 then return end
-    local w, x, y = 380, W - 400, 330
+    local w, x, y = 380, W - 400, 380
     ui.text(x, y, "ÚKOLY", { size = 19, font = "h2", color = skin.Gold })
     ui.line(x, y + 30, x + w, y + 30, "#c9a45c59", 1)
     y = y + 40
@@ -207,16 +207,6 @@ local function questTracker(boot, W)
 end
 
 -- Oblast podle polohy (jméno na kompasu)
-local function region(x, z)
-    if map.InCity(x, z) then return "Kalidra" end
-    if z > 226 then return "Rudé písky" end
-    if z > 122 and map.PathDistance(x, z, map.CanyonPath) < 14 then return "Solný průsmyk" end
-    if z > 122 then return "Rudé útesy" end
-    if x < map.CoastX(z) + 16 and z > 20 then return "Bezejmenný břeh" end
-    if math.sqrt((x - map.Cove.x) ^ 2 + (z - map.Cove.z) ^ 2) < map.CoveR + 14 then return "Zátoka černých lodí" end
-    if z < -55 then return "Tábor Legie" end
-    return "Pobřeží Kalidry"
-end
 
 function M.Draw(boot, world, player)
     local W, H = ui.screen()
@@ -239,12 +229,7 @@ function M.Draw(boot, world, player)
     local hp = st and st.hp or hpMax
     ui.bar(152, 88, 280, 18, math.min(1, hp / math.max(hpMax, 1)), "#9c2a1c", string.format("%d / %d", math.floor(hp), hpMax))
     ui.bar(152, 112, 280, 10, math.min(1, (ch.xp or 0) / math.max(ch.xp_need or 1, 1)), "#a87a3a")
-    ui.text(W - 30, 24, string.format("%d zlata", ch.gold or 0), { size = 20, font = "bold", color = skin.GoldBright, align = "right" })
-    -- oblast a čas (Praha)
-    local px, _, pz = player.Position()
-    local p = time.prague()
-    ui.text(W / 2, 22, string.upper(region(px, pz)), { size = 18, font = "caps", color = skin.Gold, align = "center" })
-    ui.text(W / 2, 46, string.format("%02d:%02d", p.hour, p.min), { size = 16, font = "body", color = skin.Muted, align = "center" })
+    ui.text(470, 30, string.format("%d zlata", ch.gold or 0), { size = 20, font = "bold", color = skin.GoldBright })
     questTracker(boot, W)
     -- klávesová lišta dole
     local hints = { { keys.Label("interact"), "Mluvit" }, { keys.Label("run"), "Běh" }, { keys.Label("jump"), "Skok" },

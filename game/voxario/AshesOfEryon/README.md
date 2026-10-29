@@ -31,6 +31,8 @@ StudioVoxario).
 | `ashes/screens.lua` | přihlášení a tvorba postavy (`GameUI.cs`), výběr existující postavy (`CharacterSlots.cs`) |
 | `ashes/presence.lua` | `WorldPresence.cs` – ostatní hráči (stejný formát zpráv jako Unity a web) |
 | `ashes/sound.lua` | `Music.cs` (album z úložiště `ashes-music`), `Sfx.cs` (zvuky generované v kódu) |
+| `ashes/minimap.lua` | `Minimap.cs` – minimapa, velká mapa (M), názvy oblastí a verše při vstupu |
+| `ashes/chat.lua` | `Social/Chat.cs` – chat frakce a oddílu (`ashes_chat_send` / `ashes_chat_recent`) |
 | `ashes/options.lua` | nastavení: zobrazení, grafika, zvuk, ovládání, účet |
 | `ashes/skin.lua` | `EryonSkin.cs` – barvy, písma Cinzel / Cormorant, panely |
 | `tools/make_scenery_models.py` | modely krajiny (cypřiš, olivovník, kámen, tráva, palma) jako `MeshKit` |
@@ -48,11 +50,13 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
 - [x] Krok 3: hráč, kamera, klávesy, návrat do bezpečí (T), uložení polohy.
 - [x] Krok 4 (část): rozhovory s NPC, úkoly (nabídka, přijetí, odevzdání, „promluv si“), značky `!` a `?`.
 - [x] Krok 7 (část): ostatní hráči přes Realtime (presence a poloha).
+- [x] Krok 6 (část): minimapa a velká mapa, názvy oblastí s verši.
+- [x] Krok 7 (část): chat (kanál Svět, příkazy `/o` a `/s`, signál přes Realtime).
 - [x] Krok 8: hudba a zvuky.
 - [ ] Krok 4: Rádce (`Guide.cs`), příběhové karty (`StoryCards.cs`).
 - [ ] Krok 5: boj (`Encounters*.cs`, `WorldBoss.cs`, `Arena.cs`, `Race.cs`).
-- [ ] Krok 6: okna postavy, batohu a kováře, kronika, minimapa, hlášení chyb.
-- [ ] Krok 7: chat a oddíl (`Social/*`).
+- [ ] Krok 6: okna postavy, batohu a kováře, kronika, hlášení chyb.
+- [ ] Krok 7: oddíl (`Social/Oddil.cs`); chat už posílá do kanálu oddílu, jen chybí jeho okno.
 - [ ] Krok 9: módy (`Mods/*`, engine má `voxario.mods`).
 - [ ] Procedurální chůze nohou (`LegRig.cs`). Zatím se postavy jen pohupují a naklánějí, protože modely
   hry nemají kostru.

@@ -11,6 +11,8 @@ local keys = require("ashes.keybinds")
 local presence = require("ashes.presence")
 local sound = require("ashes.sound")
 local options = require("ashes.options")
+local minimap = require("ashes.minimap")
+local chat = require("ashes.chat")
 
 local boot = {
     version = "0.8.0 (Voxario)",
@@ -103,6 +105,7 @@ function EnterWorld()
     if type(saved) == "table" and saved[1] and map.InWorld(saved[1], saved[2]) and map.HeightAt(saved[1], saved[2]) > 0.4 then
         spawn = { x = saved[1], z = saved[2] }
     end
+    minimap.Build()
     player.Create(cls, gender, (ch.display_name and ch.display_name ~= "") and ch.display_name or ch.name, spawn)
     boot.spawn = faction == "legie" and map.SpawnLegie or map.SpawnKalidra
     boot.inWorld, boot.loading, boot.status = true, false, ""
@@ -168,12 +171,20 @@ local function Selftest()
     for _, n in ipairs(world.npcs) do if n.def.id == "nikias" then hud.Open(boot, n) end end
     timer.sleep(1.5); shot("5-rozhovor")
     hud.Close()
+    minimap.big = true
+    timer.sleep(0.5); shot("6-mapa")
+    minimap.big = false
+    chat.TestFill()
+    timer.sleep(0.5); shot("6b-chat")
+    chat.Close()
     game.log("SELFTEST hotovo")
     game.quit()
 end
 
 -- ------------------------------------------------------------------ životní cyklus
 boot.sound = sound
+boot.chat = chat
+boot.presence = presence
 
 function on_start()
     skin.Init()
@@ -204,8 +215,9 @@ end
 
 function on_update(dt)
     if not boot.inWorld then return end
-    boot.typing = ui.wants_keyboard()
-    if input.pressed("Escape") and not options.rebinding then
+    local chatEsc = chat.Update(boot, hud.IsOpen() or options.open)
+    boot.typing = ui.wants_keyboard() or chat.typing
+    if input.pressed("Escape") and not options.rebinding and not chatEsc then
         if hud.IsOpen() then hud.Close() else options.Toggle() end
     end
     player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open
@@ -224,6 +236,7 @@ function on_update(dt)
     presence.Update(dt, player)
     local px, _, pz = player.Position()
     hud.Update(boot, world, px, pz)
+    minimap.Update(boot)
     -- návrat do bezpečí (T): 3 s soustředění, pohyb ho přeruší
     if keys.Down("recall") and not recallT then recallT = 3; hud.Notice("Návrat do bezpečí… (nehýbej se)") end
     if recallT then
@@ -249,5 +262,7 @@ function on_gui()
     end
     presence.Draw()
     hud.Draw(boot, world, player)
+    minimap.Draw(boot, player, hud.Marker)
+    chat.Draw(boot)
     options.Draw(boot)
 end
