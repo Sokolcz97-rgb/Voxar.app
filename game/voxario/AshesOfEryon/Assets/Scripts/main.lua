@@ -15,6 +15,22 @@ local minimap = require("ashes.minimap")
 local chat = require("ashes.chat")
 local combat = require("ashes.combat")
 local activities = require("ashes.activities")
+local charwindow = require("ashes.charwindow")
+local chronicle = require("ashes.chronicle")
+local guide = require("ashes.guide")
+local feedback = require("ashes.feedback")
+
+-- Otevřené okno (postava, kronika, aréna, hlášení) – hráč se nehýbe, rádce se schová
+local function windowOpen()
+    return charwindow.IsOpen() or chronicle.IsOpen() or activities.IsOpen() or feedback.IsOpen()
+end
+local function closeWindow()
+    if feedback.IsOpen() then feedback.Close() return true end
+    if charwindow.IsOpen() then charwindow.Close() return true end
+    if chronicle.IsOpen() then chronicle.Close() return true end
+    if activities.IsOpen() then activities.Close() return true end
+    return false
+end
 
 local boot = {
     version = "0.8.0 (Voxario)",
@@ -112,6 +128,11 @@ function EnterWorld()
     player.Create(cls, gender, (ch.display_name and ch.display_name ~= "") and ch.display_name or ch.name, spawn)
     combat.Build(boot, player, hud, faction)
     activities.Build(boot, player, hud, combat)
+    charwindow.Build(boot)
+    chronicle.Build(boot, combat)
+    feedback.Build(boot, player, minimap)
+    guide.Build(boot, { player = player, hud = hud, world = world, combat = combat, activities = activities,
+        chronicle = chronicle, windows = windowOpen })
     boot.spawn = faction == "legie" and map.SpawnLegie or map.SpawnKalidra
     boot.inWorld, boot.loading, boot.status = true, false, ""
     if not boot.selftest then
@@ -136,8 +157,26 @@ local function Selftest()
     boot.state = {
         allowed = true, hp = 165, bag_max = 12,
         character = { name = "Tester", display_name = "Tester", class = "hoplit", faction = "kalidra", level = 3, xp = 140,
-                      xp_need = 300, gold = 172, honor = 12, appearance = { gender = "m" } },
-        fighter = { level = 3, sila = 15, vydrz = 13 },
+                      xp_need = 300, gold = 172, honor = 12, appearance = { gender = "m" },
+                      sila = 13, obratnost = 8, intelekt = 6, vydrz = 11, stesti = 7, wins = 4, losses = 1, courage = 64,
+                      chapter_progress = 1, daily_gift_day = "2026-10-28" },
+        fighter = { level = 3, sila = 15, obratnost = 8, intelekt = 6, vydrz = 13, stesti = 7, wmin = 6, wmax = 11, armor = 12, shield = true },
+        train_cost = { sila = 40, obratnost = 22, intelekt = 18, vydrz = 34, stesti = 20 },
+        items = {
+            { id = "i1", slot = "zbran", name = "Bronzový meč", rarity = 1, level = 3, wmin = 6, wmax = 11, sila = 2, price = 140, equipped = true },
+            { id = "i2", slot = "stit", name = "Kulatý štít", rarity = 0, level = 2, armor = 6, price = 80, equipped = true },
+            { id = "i3", slot = "helma", name = "Helma s hřebenem", rarity = 2, level = 3, armor = 6, vydrz = 2, price = 210 },
+            { id = "i4", slot = "boty", name = "Kožené sandály", rarity = 0, level = 1, armor = 2, price = 30 },
+        },
+        now = "2026-10-29T12:00:00Z",
+        chapter = { n = 1, title = "Popel na pobřeží", need = 3, intro = "Lodě Rudého slunce přistály za úsvitu. Kalidra potřebuje každou paži, která unese štít.",
+                    boss = { e = "Velitel Kerys", t = "předvoj Legie", s = "Kerys vede průzkumníky Legie na kopcích nad městem.", c = "hoplit" } },
+        quests = {
+            { id = "e1", state = "offered", title = "Hlídka u akvaduktu", story = "Na akvaduktu prý někdo v noci kreslí znamení slunce.", minutes = 5, xp = 60, gold = 25, item_chance = 20, enemy = { name = "Kultista popela", class = "vestec" } },
+            { id = "e2", state = "offered", title = "Stopy v písku", story = "Rybáři našli stopy, které nevedou k žádné lodi.", minutes = 10, xp = 110, gold = 40, item_chance = 30 },
+        },
+        world = { wall = 640, wall_max = 1000, heroes = 128, kalidra = 71, legie = 57 },
+        chronicle = { { text = "Ariadna porazila Thalassose, vůdce pirátů.", created_at = "2026-10-29T10:12:00Z" } },
         wquests = { { quest_id = "k1", state = "done" }, { quest_id = "k2", state = "active", progress = 1 }, { quest_id = "k3", state = "ready" } },
     }
     boot.loading = true
@@ -199,6 +238,15 @@ local function Selftest()
     activities.TestArena()
     timer.sleep(0.4); shot("6g-arena")
     activities.Close()
+    -- okna: postava, batoh, kovář, kronika, hlášení
+    charwindow.TestOpen(1); timer.sleep(0.4); shot("10-postava")
+    charwindow.TestOpen(2); timer.sleep(0.4); shot("10b-batoh")
+    charwindow.TestOpen(3); timer.sleep(0.4); shot("10c-kovar")
+    charwindow.Close()
+    chronicle.Open(); timer.sleep(0.4); shot("11-kronika")
+    chronicle.Close()
+    feedback.open, feedback.focus = true, true; timer.sleep(0.4); shot("12-hlaseni")
+    feedback.Close()
     -- kamera u stromu: strom mezi hráčem a kamerou, kamera se přiblíží před korunu
     local c = world.NearestCanopy(-20, 10)
     if c then
@@ -244,15 +292,19 @@ end
 
 function on_update(dt)
     if not boot.inWorld then return end
-    local chatEsc = chat.Update(boot, hud.IsOpen() or options.open or combat.result ~= nil)
-    boot.typing = ui.wants_keyboard() or chat.typing
+    local chatEsc = chat.Update(boot, hud.IsOpen() or options.open or combat.result ~= nil or windowOpen())
+    boot.typing = ui.wants_keyboard() or chat.typing or feedback.IsOpen()
+    feedback.Update()
+    charwindow.Update()
+    chronicle.Update()
+    local cardEsc = guide.Update()
     if input.pressed("Escape") and not options.rebinding and not chatEsc then
         if hud.IsOpen() then hud.Close()
-        elseif activities.IsOpen() then activities.Close()
-        elseif not combat.result then options.Toggle() end
+        elseif closeWindow() then
+        elseif not combat.result and not cardEsc then options.Toggle() end
     end
     boot.optionsOpen = options.open
-    player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open and not combat.LocksInput() and not activities.IsOpen()
+    player.inputEnabled = not hud.IsOpen() and not boot.typing and not options.open and not combat.LocksInput() and not windowOpen() and not guide.CardOpen()
     player.cameraInput = not options.open and not boot.typing
     player.Update(dt, boot.spawn)
     if player.cameraOverride then
@@ -296,10 +348,15 @@ function on_gui()
     end
     presence.Draw()
     hud.Draw(boot, world, player)
-    local W, H = ui.screen()
-    combat.Draw(W, H)
-    activities.Draw(W, H)
     minimap.Draw(boot, player, hud.Marker)
     chat.Draw(boot)
+    -- okna kreslit až nakonec, ať jsou nad HUD
+    local W, H = ui.screen()
+    guide.Draw(W, H)
+    combat.Draw(W, H)
+    activities.Draw(W, H)
+    chronicle.Draw(W, H)
+    charwindow.Draw(W, H)
+    feedback.Draw(W, H)
     options.Draw(boot)
 end

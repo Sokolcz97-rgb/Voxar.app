@@ -81,21 +81,7 @@ local function updateBoss(dt)
     end
 end
 
--- čas z ISO 8601 (UTC) na sekundy od epochy
-local function isoToEpoch(s)
-    local y, mo, d, h, mi, se = tostring(s or ""):match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
-    if not y then return nil end
-    -- dny od 1970 (algoritmus „days from civil“)
-    y, mo, d = tonumber(y), tonumber(mo), tonumber(d)
-    if mo <= 2 then y = y - 1 end
-    local era = math.floor(y / 400)
-    local yoe = y - era * 400
-    local mp = (mo + 9) % 12
-    local doy = math.floor((153 * mp + 2) / 5) + d - 1
-    local doe = yoe * 365 + math.floor(yoe / 4) - math.floor(yoe / 100) + doy
-    local days = era * 146097 + doe - 719468
-    return days * 86400 + tonumber(h) * 3600 + tonumber(mi) * 60 + tonumber(se)
-end
+local isoToEpoch = require("ashes.util").IsoToEpoch
 
 local function drawBoss(W, H)
     if not Boss.id then return end

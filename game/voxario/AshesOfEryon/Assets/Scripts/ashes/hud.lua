@@ -15,6 +15,7 @@ local function Content()
     end
     return content
 end
+function M.Quests() return Content().quests end
 function M.QuestDef(id)
     for _, q in ipairs(Content().quests) do if q.id == id then return q end end
 end
