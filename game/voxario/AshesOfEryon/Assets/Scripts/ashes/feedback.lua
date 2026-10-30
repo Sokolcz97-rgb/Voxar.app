@@ -8,7 +8,7 @@ local M = { open = false }
 local boot, player, minimap
 local busy, kind, text, msg, msgOk = false, "bug", "", nil, false
 
-M.Version = "0.11.1"
+M.Version = "0.11.2"
 
 function M.Build(b, p, mm) boot, player, minimap = b, p, mm end
 function M.IsOpen() return M.open end

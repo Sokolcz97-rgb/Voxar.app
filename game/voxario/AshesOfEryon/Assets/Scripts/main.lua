@@ -365,7 +365,7 @@ function on_start()
     options.Apply()
     game.custom_pause(true)   -- Esc = nastavení hry (ne menu přehrávače)
     _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35,
-                           exposure = 0.75, night_exposure = 2.6, contrast = 1.12, saturation = 1.18,   -- den méně přepálený, noc tmavší (realističtější)
+                           exposure = 0.75, night_exposure = 1.28, contrast = 1.12, saturation = 1.18,   -- den méně přepálený, noc tmavší (realističtější)
                            clouds = 0.5 })
     if game.benchmark() then timer.start(Benchmark); return end
     if game.selftest() then timer.start(Selftest); return end
