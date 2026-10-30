@@ -210,6 +210,27 @@ local function Selftest()
     local env0 = _G.world.environment()
     if env0.real_time then _G.world.environment({ real_time = false, time_of_day = 13 }) end
     local dayTime = _G.world.environment().time_of_day
+    -- jen noc (ladění nočního osvětlení): krajina, město, hráč u ohně, obloha s měsícem
+    if game.env and game.env("ASHES_SELFTEST_ONLY") == "night" then
+        boot.state = TestState()
+        boot.loading = true
+        timer.sleep(0.5)
+        EnterWorld()
+        _G.world.environment({ real_time = false, time_of_day = 23 })
+        local G = map.Ground
+        timer.sleep(4); shot("n1-hrac")
+        local env = _G.world.environment()
+        local m = env.moon_direction
+        lookFrom(-40, G(-40, 30) + 9, 30, -20, G(-20, 0) + 3, 0); timer.sleep(3); shot("n2-krajina")
+        lookFrom(40, G(40, 15) + 18, 15, 74, G(74, 15), 15); timer.sleep(3); shot("n3-mesto")
+        if m then
+            local x, y, z = -40, G(-40, 30) + 3, 30
+            lookFrom(x, y, z, x + m[1] * 50, y + m[2] * 50, z + m[3] * 50); timer.sleep(3); shot("n4-mesic")
+        end
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     -- jen UI (CI při 2560 × 1440): HUD a nastavení, pak konec
     if game.env and game.env("ASHES_SELFTEST_ONLY") == "ui" then
         boot.state = TestState()
@@ -343,7 +364,7 @@ function on_start()
     options.Apply()
     game.custom_pause(true)   -- Esc = nastavení hry (ne menu přehrávače)
     _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35,
-                           exposure = 0.75, night_exposure = 3.47, contrast = 1.12, saturation = 1.18,   -- den méně přepálený, noc beze změny (2.6 / 0.75)
+                           exposure = 0.75, night_exposure = 2.6, contrast = 1.12, saturation = 1.18,   -- den méně přepálený, noc tmavší (realističtější)
                            clouds = 0.5 })
     if game.benchmark() then timer.start(Benchmark); return end
     if game.selftest() then timer.start(Selftest); return end
