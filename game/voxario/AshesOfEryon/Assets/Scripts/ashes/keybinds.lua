@@ -39,6 +39,20 @@ function M.Set(id, key)
     settings.set("ashes.key." .. id, key)
 end
 
+-- Klávesy z Unity verze 0.10 (launcher je při prvním spuštění předá v ASHES_IMPORT_KEYS „akce=klávesa;…“)
+function M.ImportFromLauncher()
+    local raw = game.env and game.env("ASHES_IMPORT_KEYS")
+    if not raw or raw == "" or settings.get("ashes.keys_imported", false) then return 0 end
+    local known, n = {}, 0
+    for _, b in ipairs(M.All) do known[b[1]] = true end
+    for id, key in raw:gmatch("([%w_]+)=([%w]+)") do
+        if known[id] then M.Set(id, key); n = n + 1 end
+    end
+    settings.set("ashes.keys_imported", true)
+    game.log(string.format("Klávesy z Unity verze převzaty (%d)", n))
+    return n
+end
+
 function M.ResetAll()
     for _, b in ipairs(M.All) do settings.set("ashes.key." .. b[1], nil) end
     cache = {}

@@ -56,6 +56,8 @@ local function set(k, v) settings.set(k, v); M.Apply() end
 
 -- ------------------------------------------------------------------ prvky
 local cx, cy, cw   -- kurzor uvnitř karty
+local viewTop, viewBottom = 0, 1080   -- viditelná část posuvné oblasti (ImGui prvky mimo ni se nekreslí)
+local scroll = {}                      -- posun obsahu každé karty
 local function section(title, hint)
     cy = cy + 8
     ui.text(cx, cy, string.upper(title), { size = 19, font = "h2", color = skin.Gold })
@@ -84,6 +86,12 @@ end
 local function slider(label, value, minV, maxV, fmt)
     ui.text(cx, cy + 4, label, { size = 18, font = "body", color = skin.Text })
     local out = value
+    -- posuvník je samostatné okno ImGui – ořez oblasti na něj nepůsobí, takže jen když je celý vidět
+    if cy - 6 < viewTop or cy + 38 > viewBottom then
+        ui.bar(cx + 248, cy + 8, cw - 300, 14, (value - minV) / math.max(1e-6, maxV - minV), "#8a6a34")
+        cy = cy + 44
+        return nil
+    end
     ui.window("##sl_" .. label, cx + 240, cy - 6, cw - 240, 44, { title = false, background = false, scroll = false, move = false, resize = false, font = "body", font_size = 20 }, function()
         ui.item_width(cw - 300)
         local v, changed = ui.slider("##" .. label, value, minV, maxV, fmt)
@@ -316,7 +324,7 @@ function M.Draw(boot)
     if not M.open then return end
     local W, H = ui.screen()
     ui.fade(0.55)
-    local w, h = 1040, math.min(860, H - 60)
+    local w, h = math.min(1040, W - 40), math.max(420, math.min(900, H - 60))
     local x, y = (W - w) / 2, (H - h) / 2
     local ix, iy, iw, ih = skin.Panel(x, y, w, h, "Nastavení")
     -- karty
@@ -330,23 +338,54 @@ function M.Draw(boot)
         end
         ui.text(tx + tw / 2, iy + 2, t, { size = 17, font = "h2", color = M.tab == i and skin.GoldBright or skin.Text, align = "center" })
     end
-    cx, cy, cw = ix, iy + 44, iw
+    -- obsah karty v posuvné oblasti (kolečko myši / tažení lišty), tlačítka dole pevně mimo ni
+    local by = iy + ih - 50
+    local top, bottom = iy + 40, by - 14
+    local viewH = bottom - top
+    local off = scroll[M.tab] or 0
+    viewTop, viewBottom = top, bottom
+    ui.clip(ix - 4, top, iw + 8, viewH)
+    cx, cy, cw = ix, top + 4 - off, iw - 22
     if M.tab == 1 then graphicsTab()
     elseif M.tab == 2 then displayTab()
     elseif M.tab == 3 then soundTab()
     elseif M.tab == 4 then controlsTab()
     elseif M.tab == 5 then modsTab()
     else charactersTab(boot) end
+    ui.pop_clip()
+    viewTop, viewBottom = 0, H
+    local contentH = cy + off - top + 8
+    local maxOff = math.max(0, contentH - viewH)
+    local mx, my = ui.mouse()
+    if mx >= x and mx <= x + w and my >= top and my <= bottom then
+        local wheel = input.wheel()
+        if wheel ~= 0 then off = off - wheel * 70 end
+    end
+    if maxOff > 0 then
+        -- lišta vpravo: táhlo odpovídá viditelné části
+        local tx, tw2 = ix + iw - 10, 8
+        local th = math.max(40, viewH * viewH / contentH)
+        local ty = top + (viewH - th) * (off / maxOff)
+        ui.rect(tx, top, tw2, viewH, "#00000055", 4)
+        ui.rect(tx, ty, tw2, th, "#c9a45caa", 4)
+        if input.key("Mouse1") and mx >= tx - 8 and mx <= tx + tw2 + 8 and my >= top and my <= bottom then
+            off = (my - top - th / 2) / math.max(1, viewH - th) * maxOff
+        end
+        -- jemný přechod naznačí, že obsah pokračuje
+        if off < maxOff - 1 then ui.text(ix + iw / 2, bottom - 22, "↓", { size = 20, color = skin.Muted, align = "center" }) end
+    end
+    scroll[M.tab] = math.max(0, math.min(maxOff, off))
+    M.scrollMax = maxOff
     -- spodní lišta
-    local by = iy + ih - 50
     if skin.Button(ix, by, 280, 50, "ZPĚT DO HRY", true) then M.Toggle() end
     if skin.Button(ix + iw - 420, by, 200, 50, "Odhlásit se") then M.open = false; boot.SignOut(); boot.Reload() end
     if skin.Button(ix + iw - 200, by, 200, 50, "Ukončit hru") then game.quit() end
 end
 
 -- Samotest: otevřít kartu
-function M.TestOpen(tab)
+function M.TestOpen(tab, scrollTo)
     M.open, M.tab = true, tab
+    scroll[tab] = scrollTo or 0
     if tab == 6 then
         slots = { max = 4, active = { id = "a", name = "Tester", class = "hoplit", faction = "kalidra", level = 3, appearance = { gender = "m" } },
                   others = { { id = "b", name = "Kassandra", class = "vestec", faction = "legie", level = 5, appearance = { gender = "f" } } } }

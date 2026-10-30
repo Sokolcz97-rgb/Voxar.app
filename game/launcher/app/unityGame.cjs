@@ -12,6 +12,15 @@
  * Launcher hru instaluje do %LOCALAPPDATA%\StudioVoxario\AshesOfEryon (bez práv správce).
  * Při aktualizaci stáhne jen změněné soubory (porovná SHA-256), ověří je a pak spustí hru.
  *
+ * Přechod mezi verzemi (i z Unity 0.10 na Voxario 0.11 s jiným spustitelným souborem a jinými soubory):
+ * nové soubory se nejdřív celé stáhnou a ověří do složky .staging; teprve pak se staré soubory
+ * (…_Data, UnityPlayer.dll…) přesunou do .rollback a nové na jejich místo. Když nová verze při prvním
+ * spuštění do 20 s spadne (nebo nejde spustit), launcher vrátí předchozí verzi z .rollback a tuto verzi
+ * už sám znovu neinstaluje. Po prvním úspěšném spuštění se .rollback smaže.
+ * Přihlášení: hra dostává jednorázový lístek od launcheru (ASHES_LAUNCHER_TICKET), účet launcheru se nemění.
+ * Klávesy z Unity (PlayerPrefs v registru HKCU\Software\StudioVoxario\Ashes of Eryon) se Voxario verzi
+ * předají jednou při prvním spuštění (ASHES_IMPORT_KEYS) – hra si je uloží do vlastního nastavení.
+ *
  * Testovací kanál (nastavení launcheru „Kanál hry“ = beta): manifest unity/latest-beta.json
  * (verze na Voxario Studio Engine pro testery) a vlastní složka „…-beta“, takže ostrá
  * instalace zůstane nedotčená a přepnutí zpět nic nestahuje.
@@ -63,6 +72,60 @@ function installDir() {
 
 function stateFile() {
   return path.join(installDir(), "install.json");
+}
+
+/** Engine sestavení podle manifestu (Voxario sestavení má game.vgame). */
+function engineOf(m) {
+  if (!m) return "unity";
+  if (m.engine) return m.engine;
+  return (m.files || []).some((f) => (f.path || f) === "game.vgame") ? "voxario" : "unity";
+}
+
+const VERIFY_SECONDS = 20;
+
+// Unity KeyCode -> názvy kláves Voxario (GameUI.cpp)
+const UNITY_KEYS = {
+  Mouse0: "Mouse1", Mouse1: "Mouse2", Mouse2: "Mouse3", Mouse3: "Mouse4", Mouse4: "Mouse5",
+  LeftShift: "Shift", RightShift: "Shift", LeftControl: "Ctrl", RightControl: "Ctrl", LeftAlt: "Alt", RightAlt: "Alt",
+  Return: "Enter", KeypadEnter: "Enter", UpArrow: "Up", DownArrow: "Down", LeftArrow: "Left", RightArrow: "Right",
+  Quote: "Apostrophe", BackQuote: "Grave", KeypadPlus: "NumPlus", KeypadMinus: "NumMinus",
+  Space: "Space", Tab: "Tab", Escape: "Escape", Backspace: "Backspace", Delete: "Delete", Insert: "Insert",
+  Home: "Home", End: "End", PageUp: "PageUp", PageDown: "PageDown", CapsLock: "CapsLock", Minus: "Minus",
+  Equals: "Equals", Comma: "Comma", Period: "Period", Slash: "Slash", Semicolon: "Semicolon",
+  LeftBracket: "LeftBracket", RightBracket: "RightBracket", Backslash: "Backslash",
+};
+function mapUnityKey(code) {
+  if (UNITY_KEYS[code]) return UNITY_KEYS[code];
+  let m = /^Alpha([0-9])$/.exec(code);
+  if (m) return m[1];
+  m = /^Keypad([0-9])$/.exec(code);
+  if (m) return `Num${m[1]}`;
+  if (/^[A-Z]$/.test(code) || /^F([1-9]|1[0-2])$/.test(code)) return code;
+  return null;
+}
+
+/**
+ * Klávesy nastavené v Unity verzi (PlayerPrefs: hodnoty „ashes.key.<akce>_h<hash>“ typu REG_BINARY
+ * s textem KeyCode zakončeným nulou). Vrací „akce=klávesa;…“ nebo "".
+ */
+function readUnityKeyBinds() {
+  if (process.platform !== "win32") return "";
+  try {
+    const { spawnSync } = require("node:child_process");
+    const res = spawnSync("reg.exe", ["query", "HKCU\\Software\\StudioVoxario\\Ashes of Eryon"], { encoding: "utf8", windowsHide: true, timeout: 8000 });
+    if (res.status !== 0 || !res.stdout) return "";
+    const pairs = [];
+    for (const line of res.stdout.split(/\r?\n/)) {
+      const m = /^\s*ashes\.key\.([a-z_]+?)_h\d+\s+REG_BINARY\s+([0-9A-Fa-f]*)\s*$/.exec(line);
+      if (!m) continue;
+      const code = Buffer.from(m[2], "hex").toString("utf8").replace(/\0+$/, "");
+      const key = mapUnityKey(code);
+      if (key && /^[a-z_]+$/.test(m[1])) pairs.push(`${m[1]}=${key}`);
+    }
+    return pairs.join(";");
+  } catch {
+    return "";
+  }
 }
 
 function readInstalled() {
@@ -150,6 +213,11 @@ function createUnityGame({ onStatus, log, channel: initialChannel }) {
     if (installed && installed.version === manifest.version && exe && fs.existsSync(exe)) {
       return emit({ state: "ready", latest: manifest.version, size: totalSize(manifest) });
     }
+    // tato verze se už jednou vrátila (nešla spustit) – automaticky ji znovu neinstalovat
+    if (installed && installed.failedVersion === manifest.version && exe && fs.existsSync(exe)) {
+      return emit({ state: "ready", latest: manifest.version, size: totalSize(manifest), failedUpdate: manifest.version,
+        error: `Verze ${manifest.version} se na tomto počítači nespustila – hraješ verzi ${installed.version}.` });
+    }
     return emit({ state: installed ? "update" : "install", latest: manifest.version, size: totalSize(manifest) });
   }
 
@@ -202,9 +270,13 @@ function createUnityGame({ onStatus, log, channel: initialChannel }) {
         emit({ state: "verifying", latest: manifest.version, progress: checked / manifest.files.length });
       }
       const total = todo.reduce((a, f) => a + (Number(f.size) || 0), 0);
+      const prev = readInstalled();
+      // 1) vše stáhnout a ověřit do .staging – nainstalovaná verze zůstane do té doby netknutá
+      const staging = path.join(dir, ".staging");
+      fs.rmSync(staging, { recursive: true, force: true });
       let done = 0;
       for (const f of todo) {
-        await downloadFile(f, path.join(dir, ...f.path.split("/")), (n) => {
+        await downloadFile(f, path.join(staging, ...f.path.split("/")), (n) => {
           done += n;
           emit({ state: "downloading", latest: manifest.version, progress: total ? done / total : 1, done, total });
         }, (ms) => {
@@ -213,25 +285,100 @@ function createUnityGame({ onStatus, log, channel: initialChannel }) {
         // malá pauza mezi soubory, ať server nezahltíme
         await sleep(120);
       }
-      // staré soubory z předchozí verze smazat (jen uvnitř složky hry)
+      // 2) přepnutí: přepisované a už nepotřebné soubory staré verze do .rollback, nové na místo
+      emit({ state: "verifying", latest: manifest.version, progress: 1 });
+      const rollback = path.join(dir, ".rollback");
+      fs.rmSync(rollback, { recursive: true, force: true });
+      const moved = [];   // [{ from, to }] pro vrácení při chybě
+      const put = (from, to) => {
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.renameSync(from, to);
+        moved.push({ from, to });
+      };
       const keep = new Set(manifest.files.map((f) => path.join(dir, ...f.path.split("/")).toLowerCase()));
       keep.add(stateFile().toLowerCase());
-      const prev = readInstalled();
+      try {
+        for (const f of todo) {
+          const target = path.join(dir, ...f.path.split("/"));
+          if (fs.existsSync(target)) put(target, path.join(rollback, ...f.path.split("/")));
+          put(path.join(staging, ...f.path.split("/")), target);
+        }
+        for (const rel of prev?.files || []) {
+          const p = path.join(dir, ...String(rel).split("/"));
+          if (!keep.has(p.toLowerCase()) && p.startsWith(dir) && fs.existsSync(p)) put(p, path.join(rollback, ...String(rel).split("/")));
+        }
+      } catch (error) {
+        // přesun se nepovedl (soubor drží jiný program) – vrátit vše, jak bylo
+        for (const m of moved.reverse()) { try { fs.renameSync(m.to, m.from); } catch {} }
+        throw error;
+      }
+      fs.rmSync(staging, { recursive: true, force: true });
+      // prázdné složky po staré verzi (např. AshesOfEryon_Data)
       for (const rel of prev?.files || []) {
-        const p = path.join(dir, ...String(rel).split("/"));
-        if (!keep.has(p.toLowerCase()) && p.startsWith(dir)) {
-          try { fs.rmSync(p, { force: true }); } catch {}
+        let d = path.dirname(path.join(dir, ...String(rel).split("/")));
+        while (d.startsWith(dir) && d !== dir) {
+          try { fs.rmdirSync(d); } catch { break; }
+          d = path.dirname(d);
         }
       }
-      fs.writeFileSync(stateFile(), JSON.stringify({ version: manifest.version, exe: manifest.exe, files: manifest.files.map((f) => f.path), installedAt: new Date().toISOString() }, null, 2));
-      log?.(`Unity verze ${manifest.version} nainstalována (${todo.length} souborů staženo)`);
+      const previous = prev && prev.version !== manifest.version ? { version: prev.version, exe: prev.exe, engine: prev.engine || engineOf(prev), files: prev.files } : null;
+      fs.writeFileSync(stateFile(), JSON.stringify({ version: manifest.version, exe: manifest.exe, engine: engineOf(manifest),
+        files: manifest.files.map((f) => f.path), installedAt: new Date().toISOString(),
+        verified: !previous, previous }, null, 2));
+      log?.(`Hra ${manifest.version} (${engineOf(manifest)}) nainstalována (${todo.length} souborů staženo)`);
       return emit({ state: "ready", latest: manifest.version, size: totalSize(manifest) });
     } catch (error) {
-      log?.(`Instalace Unity verze selhala: ${error?.stack || error}`);
+      log?.(`Instalace hry selhala: ${error?.stack || error}`);
       return emit({ state: "error", error: String(error?.message || error) });
     } finally {
       busy = false;
     }
+  }
+
+  /** Vrátí předchozí verzi z .rollback (nová verze nešla spustit). */
+  function rollback(reason) {
+    const installed = readInstalled();
+    const prev = installed?.previous;
+    if (!installed || !prev) return false;
+    const dir = installDir();
+    const back = path.join(dir, ".rollback");
+    try {
+      const old = new Set((prev.files || []).map((f) => String(f).toLowerCase()));
+      // soubory nové verze, které stará neměla, pryč
+      for (const rel of installed.files || []) {
+        if (old.has(String(rel).toLowerCase())) continue;
+        const p = path.join(dir, ...String(rel).split("/"));
+        if (p.startsWith(dir)) { try { fs.rmSync(p, { force: true }); } catch {} }
+      }
+      // staré soubory zpět na místo
+      for (const rel of prev.files || []) {
+        const from = path.join(back, ...String(rel).split("/"));
+        const to = path.join(dir, ...String(rel).split("/"));
+        if (!fs.existsSync(from)) continue;
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        try { fs.rmSync(to, { force: true }); } catch {}
+        fs.renameSync(from, to);
+      }
+      fs.rmSync(back, { recursive: true, force: true });
+      fs.writeFileSync(stateFile(), JSON.stringify({ ...prev, installedAt: new Date().toISOString(), verified: true,
+        failedVersion: installed.version, failedReason: reason }, null, 2));
+      log?.(`Verze ${installed.version} se nespustila (${reason}) – vrácena verze ${prev.version}`);
+      return true;
+    } catch (error) {
+      log?.(`Návrat na verzi ${prev.version} selhal: ${error?.stack || error}`);
+      return false;
+    }
+  }
+
+  /** První úspěšné spuštění nové verze: záloha staré už není potřeba. */
+  function markVerified() {
+    const installed = readInstalled();
+    if (!installed || installed.verified !== false) return;
+    try {
+      fs.writeFileSync(stateFile(), JSON.stringify({ ...installed, verified: true, previous: null }, null, 2));
+      fs.rm(path.join(installDir(), ".rollback"), { recursive: true, force: true }, () => {});
+      log?.(`Verze ${installed.version} ověřena (první spuštění proběhlo)`);
+    } catch {}
   }
 
   /** Spustí nainstalovanou hru. `onExit` se zavolá po jejím ukončení. */
@@ -241,19 +388,57 @@ function createUnityGame({ onStatus, log, channel: initialChannel }) {
     if (child) return { opened: true, running: true };
     const exe = path.join(installDir(), installed.exe);
     if (!fs.existsSync(exe)) return { opened: false, error: "Chybí spustitelný soubor hry" };
-    child = spawn(exe, ["-ashes-launcher", ...args], {
-      cwd: path.dirname(exe),
-      detached: false,
-      stdio: "ignore",
-      windowsHide: false,
-      // jednorázový lístek přihlášení jde přes proměnnou prostředí (není vidět v seznamu procesů)
-      env: { ...process.env, ...env },
+    const extraEnv = { ...env };
+    // Voxario verze: klávesy z Unity verze jednou převzít (hra si je pak uloží sama)
+    if ((installed.engine || engineOf(installed)) === "voxario") {
+      const flag = path.join(app.getPath("userData"), "unity-keys-imported");
+      if (!fs.existsSync(flag)) {
+        const keys = readUnityKeyBinds();
+        if (keys) extraEnv.ASHES_IMPORT_KEYS = keys;
+        try { fs.writeFileSync(flag, keys || "-"); } catch {}
+      }
+    }
+    const verifying = installed.verified === false && installed.previous;
+    const startedAt = Date.now();
+    let failed = false;
+    const fail = (reason) => {
+      if (failed || !verifying) return;
+      failed = true;
+      if (rollback(reason)) emit({ ...status, state: "ready", failedUpdate: installed.version,
+        error: `Nová verze ${installed.version} se nespustila – vrátil jsem verzi ${installed.previous.version}. Zkus to prosím znovu později.` });
+    };
+    let verifyTimer = null;
+    try {
+      child = spawn(exe, ["-ashes-launcher", ...args], {
+        cwd: path.dirname(exe),
+        detached: false,
+        stdio: "ignore",
+        windowsHide: false,
+        // jednorázový lístek přihlášení jde přes proměnnou prostředí (není vidět v seznamu procesů)
+        env: { ...process.env, ...extraEnv },
+      });
+    } catch (error) {
+      child = null;
+      fail(String(error?.message || error));
+      return { opened: false, error: "Hru se nepodařilo spustit" };
+    }
+    if (verifying) verifyTimer = setTimeout(() => markVerified(), VERIFY_SECONDS * 1000);
+    child.on("error", (error) => {
+      log?.(`Spuštění hry selhalo: ${error?.message || error}`);
+      if (verifyTimer) clearTimeout(verifyTimer);
+      child = null;
+      fail(String(error?.message || error));
+      onExit?.(-1);
     });
-    child.on("error", (error) => log?.(`Spuštění hry selhalo: ${error?.message || error}`));
     child.on("exit", (code) => {
       log?.(`Hra skončila (${code})`);
       child = null;
-      emit({ ...status, state: "ready" });
+      if (verifyTimer) clearTimeout(verifyTimer);
+      if (verifying && !failed) {
+        if (code !== 0 && Date.now() - startedAt < VERIFY_SECONDS * 1000) fail(`kód ${code} po ${Math.round((Date.now() - startedAt) / 1000)} s`);
+        else markVerified();
+      }
+      if (!failed) emit({ ...status, state: "ready" });
       onExit?.(code);
     });
     emit({ ...status, state: "running" });

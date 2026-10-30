@@ -1,7 +1,7 @@
 {
   "name": "ashes-of-eryon-launcher",
   "productName": "Ashes of Eryon Launcher",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Desktop launcher runtime for Ashes of Eryon",
   "author": "StudioVoxario",
   "main": "main.cjs",

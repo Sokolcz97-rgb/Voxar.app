@@ -7,7 +7,10 @@ name: Voxario game build (Ashes of Eryon)
 #      (--time 13), chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
 #   3b. hotovou hru pro Windows spustí na Windows runneru (Mesa lavapipe) a vyfotí,
 #   4. připraví soubory pro testovací kanál launcheru (unity/latest-beta.json),
-#   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta).
+#   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta),
+#   6. prepare_stable: ostrá verze (např. 0.11.0) se nahraje do game-updates/unity/<verze>/ a manifest
+#      jen jako unity/latest-candidate.json – ostrý kanál (latest.json) se tím NEPŘEPNE. Přepnutí =
+#      zkopírovat latest-candidate.json na latest.json (docs/PRECHOD_NA_VOXARIO.md).
 #
 # Secrets:
 #   VOXARIO_ENGINE_TOKEN     – token se čtením repozitáře Sokolcz97-rgb/Voxario-Studio-Engine (release)
@@ -33,6 +36,11 @@ on:
         default: ''
       publish_beta:
         description: 'Nahrát do testovacího kanálu launcheru (unity/latest-beta.json)'
+        type: boolean
+        required: false
+        default: false
+      prepare_stable:
+        description: 'Připravit ostrou verzi (soubory + unity/latest-candidate.json, latest.json se NEMĚNÍ)'
         type: boolean
         required: false
         default: false
@@ -100,6 +108,38 @@ jobs:
           fi
           grep -q "SELFTEST hotovo" player.log || { echo "::error::Samotest nedoběhl"; exit 1; }
           [ "$shots" -ge 25 ] || { echo "::error::Málo záběrů ($shots)"; exit 1; }
+          # žádný načtený model nesmí být bez barvy (bílé siluety LOD)
+          if grep -a "Model without color" player.log; then
+            echo "::error::Model bez textury, barvy materiálu i barev vrcholů (vykreslí se bíle)"
+            exit 1
+          fi
+
+      - name: Klidný obraz (stojící hráč, dva snímky po sobě)
+        run: |
+          python3 -m pip install --quiet pillow numpy
+          python3 - <<'PY'
+          import numpy as np
+          from PIL import Image
+          a = np.asarray(Image.open("selftest/15a-klid.png").convert("RGB")).astype(np.int16)
+          b = np.asarray(Image.open("selftest/15b-klid.png").convert("RGB")).astype(np.int16)
+          # tráva, stromy ve větru a zvířata se hýbou (část obrazu), chvění kamery ale změní skoro všechny
+          # pixely (posun o 1 px = medián rozdílu >= 1) – proto percentily, ne průměr
+          d = np.abs(a - b).max(axis=2)
+          p60, p75 = float(np.percentile(d, 60)), float(np.percentile(d, 75))
+          print(f"rozdíl snímků: průměr {d.mean():.2f}, 60. percentil {p60:.1f}, 75. percentil {p75:.1f} (z 255)")
+          if p60 > 0.5 or p75 > 3:
+              raise SystemExit("::error::Obraz stojícího hráče se mezi snímky mění (chvění kamery)")
+          PY
+
+      - name: Samotest UI v 2560 × 1440
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP"
+          ASHES_SELFTEST_ONLY=ui VOXARIO_NO_AUDIO=1 timeout 600 xvfb-run -a -s "-screen 0 2600x1500x24" ./game-linux/AshesOfEryon -ashes-launcher --time 13 --window 2560x1440 --selftest "$GITHUB_WORKSPACE/selftest-1440p" 2>&1 | tee "$GITHUB_WORKSPACE/player-1440p.log"
+          cd "$GITHUB_WORKSPACE"
+          grep -q "SELFTEST hotovo" player-1440p.log || { echo "::error::Samotest UI nedoběhl"; exit 1; }
+          if grep -E "Script error" player-1440p.log; then echo "::error::Chyba skriptu (1440p)"; exit 1; fi
+          python3 -c "from PIL import Image; im = Image.open('selftest-1440p/ui-nastaveni-grafika.png'); print('1440p snímek', im.size); assert im.size == (2560, 1440)"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -107,7 +147,9 @@ jobs:
           name: AshesOfEryon-selftest
           path: |
             player.log
+            player-1440p.log
             selftest/
+            selftest-1440p/
           retention-days: 14
 
   windows:
@@ -133,6 +175,22 @@ jobs:
         run: |
           node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "${{ needs.selftest.outputs.version }}" latest-beta.json
           head -c 400 "$RUNNER_TEMP/updates/latest-beta.json"
+
+      - name: Manifest ostré verze (kandidát – latest.json se nemění)
+        if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
+        run: |
+          v="${{ needs.selftest.outputs.version }}"
+          if [[ "$v" == *-* ]]; then echo "::error::Ostrá verze nesmí mít příponu (je $v)"; exit 1; fi
+          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/stable" "$v" latest-candidate.json
+          head -c 400 "$RUNNER_TEMP/stable/latest-candidate.json"
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
+        with:
+          name: AshesOfEryon-stable-candidate
+          path: ${{ runner.temp }}/stable
+          if-no-files-found: error
+          retention-days: 30
 
       - uses: actions/upload-artifact@v4
         with:
@@ -239,11 +297,14 @@ jobs:
             exit 1
           fi
           cd updates
+          # nové klíče sb_secret_… patří jen do hlavičky apikey; Authorization: Bearer jen pro starý JWT klíč
+          AUTH=()
+          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
           upload() {
             local file="$1" type="${2:-application/octet-stream}"
             for attempt in 1 2 3 4 5; do
               code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
-                -H "Authorization: Bearer $KEY" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
                 --data-binary "@$file")
               [ "$code" = "200" ] && return 0
               echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
@@ -252,6 +313,48 @@ jobs:
             return 1
           }
           # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
-          find . -type f ! -name latest-beta.json | sed 's|^\./||' | while read -r f; do upload "$f"; done
+          find . -type f ! -name latest-beta.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
           upload latest-beta.json application/json
           echo "Testovací kanál: verze ${{ needs.selftest.outputs.version }}"
+
+  publish-stable-candidate:
+    name: Nahrát kandidáta ostré verze (bez přepnutí latest.json)
+    needs: [selftest, windows, windows-test]
+    if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: AshesOfEryon-stable-candidate
+          path: updates
+
+      - name: Nahrát do game-updates/unity/
+        env:
+          SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY – soubory jsou v artefaktu AshesOfEryon-stable-candidate, nahraj je ručně."
+            exit 1
+          fi
+          cd updates
+          # nové klíče sb_secret_… patří jen do hlavičky apikey; Authorization: Bearer jen pro starý JWT klíč
+          AUTH=()
+          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
+          upload() {
+            local file="$1" type="${2:-application/octet-stream}"
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
+                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                --data-binary "@$file")
+              [ "$code" = "200" ] && return 0
+              echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
+              sleep $((attempt * 4))
+            done
+            return 1
+          }
+          # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
+          find . -type f ! -name latest-candidate.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
+          upload latest-candidate.json application/json
+          echo "Kandidát ostré verze (latest.json beze změny): verze ${{ needs.selftest.outputs.version }}"

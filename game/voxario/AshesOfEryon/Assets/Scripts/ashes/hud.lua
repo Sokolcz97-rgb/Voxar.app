@@ -3,6 +3,7 @@ local skin = require("ashes.skin")
 local keys = require("ashes.keybinds")
 local map = require("ashes.worldmap")
 local api = require("ashes.api")
+local util = require("ashes.util")
 
 local M = { open = nil, near = nil, notice = nil, noticeUntil = 0, busy = false }
 
@@ -243,8 +244,7 @@ function M.Draw(boot, world, player)
     ui.draw_image(skin.Portrait(ch.class, ch.appearance and ch.appearance.gender), 34, 32, 104, 104)
     ui.text(152, 34, ch.display_name or ch.name or "", { size = 22, font = "h2", color = skin.GoldBright })
     ui.text(152, 62, skin.ClassName(ch.class) .. "  ·  úroveň " .. tostring(ch.level or 1), { size = 17, font = "body", color = skin.Muted })
-    local hpMax = (st and st.fighter and st.fighter.vydrz or 10) * 15
-    local hp = st and st.hp or hpMax
+    local hp, hpMax = util.Hp(st)
     ui.bar(152, 88, 280, 18, math.min(1, hp / math.max(hpMax, 1)), "#9c2a1c", string.format("%d / %d", math.floor(hp), hpMax))
     ui.bar(152, 112, 280, 10, math.min(1, (ch.xp or 0) / math.max(ch.xp_need or 1, 1)), "#a87a3a")
     ui.text(470, 30, string.format("%d zlata", ch.gold or 0), { size = 20, font = "bold", color = skin.GoldBright })

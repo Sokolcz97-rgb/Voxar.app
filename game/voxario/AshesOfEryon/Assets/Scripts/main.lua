@@ -210,6 +210,22 @@ local function Selftest()
     local env0 = _G.world.environment()
     if env0.real_time then _G.world.environment({ real_time = false, time_of_day = 13 }) end
     local dayTime = _G.world.environment().time_of_day
+    -- jen UI (CI při 2560 × 1440): HUD a nastavení, pak konec
+    if game.env and game.env("ASHES_SELFTEST_ONLY") == "ui" then
+        boot.state = TestState()
+        boot.loading = true
+        timer.sleep(0.5)
+        EnterWorld()
+        timer.sleep(5); shot("ui-hud")
+        options.TestOpen(1); timer.sleep(0.5); shot("ui-nastaveni-grafika")
+        options.TestOpen(1, 9999); timer.sleep(0.5); shot("ui-nastaveni-grafika-dole")
+        options.TestOpen(4); timer.sleep(0.4); shot("ui-nastaveni-ovladani")
+        options.open = false
+        game.log(string.format("SELFTEST UI hotovo (nastavení: posun až %d)", math.floor(options.scrollMax or 0)))
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     timer.sleep(2.0); shot("0-prihlaseni")
     boot.state = { allowed = true, character = {} }
     timer.sleep(1.5); shot("0b-tvorba-postavy")
@@ -287,7 +303,14 @@ local function Selftest()
     options.TestOpen(1); timer.sleep(0.5); shot("14-nastaveni-grafika")
     options.TestOpen(2); timer.sleep(0.4); shot("14b-nastaveni-zobrazeni")
     options.TestOpen(6); timer.sleep(0.4); shot("14c-postavy")
+    options.TestOpen(1, 9999); timer.sleep(0.5); shot("14d-nastaveni-grafika-dole")
     options.open = false
+    -- klidný obraz: hráč stojí, kamera za ním – dva snímky po sobě se nesmí lišit (CI je porovná)
+    player.Respawn({ x = -40, z = 34 })
+    player.cam.yaw, player.cam.pitch, player.cam.distance = 200, 16, 7
+    player.facing = 200
+    timer.sleep(2.0); shot("15a-klid")
+    timer.sleep(0.6); shot("15b-klid")
     -- chůze nohou (zastavený krok, z boku)
     player.Respawn({ x = -40, z = 34 })
     player.facing = 0
@@ -315,10 +338,12 @@ boot.presence = presence
 
 function on_start()
     skin.Init()
+    keys.ImportFromLauncher()
     sound.ApplyVolumes()
     options.Apply()
     game.custom_pause(true)   -- Esc = nastavení hry (ne menu přehrávače)
     _G.world.environment({ day_night = true, real_time = true, fog = 0.0016, fog_height = 0, shadow_distance = 200, haze = 0.35,
+                           exposure = 0.75, night_exposure = 3.47, contrast = 1.12, saturation = 1.18,   -- den méně přepálený, noc beze změny (2.6 / 0.75)
                            clouds = 0.5 })
     if game.benchmark() then timer.start(Benchmark); return end
     if game.selftest() then timer.start(Selftest); return end

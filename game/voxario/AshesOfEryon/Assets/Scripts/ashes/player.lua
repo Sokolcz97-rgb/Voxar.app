@@ -60,6 +60,17 @@ function M.Position()
     return p.x, p.y, p.z
 end
 
+-- Poloha pro model a kameru: kapsle fyziky se ve stoji chvěje o zlomky milimetru (dotlačování k zemi),
+-- s DLSS/TAA by to rozechvělo celý obraz – drobné posuny pod 4 mm se ignorují.
+local stable
+function M.StablePosition()
+    local x, y, z = M.Position()
+    if not stable or (x - stable[1]) ^ 2 + (y - stable[2]) ^ 2 + (z - stable[3]) ^ 2 > 0.004 ^ 2 then
+        stable = { x, y, z }
+    end
+    return stable[1], stable[2], stable[3]
+end
+
 -- Natočí hráče k bodu (boj)
 function M.FaceTo(x, z)
     local px, _, pz = M.Position()
@@ -112,7 +123,7 @@ function M.Update(dt, respawnPoint)
     M.speed = sqrt(hvx * hvx + hvz * hvz)
 
     -- model následuje kapsli + procedurální chůze (pohupování a náklon; Gait.cs zjednodušeně)
-    local px, py, pz = M.Position()
+    local px, py, pz = M.StablePosition()
     M.walkPhase = (M.walkPhase or 0) + dt * M.speed * 1.9
     if M.testGait then pose.Gait(M.view, M.testGait, 4.2, M.gait)   -- samotest: zastavený krok
     else pose.Gait(M.view, M.walkPhase, M.pose.fallen and 0 or M.speed, M.gait) end
@@ -150,7 +161,7 @@ function M.UpdateCamera(dt, liveCombat)
         if not liveCombat and keys.Held("cam_right") then c.yaw = c.yaw - 90 * dt end
         c.distance = max(2.5, min(22, c.distance - input.wheel() * 0.8))
     end
-    local px, py, pz = M.Position()
+    local px, py, pz = M.StablePosition()
     local tx, ty, tz = px, py + 1.3, pz
     -- kamera za hráčem: směr pohledu (sin yaw, cos yaw), náklon dolů pitch
     local cp, sp = cos(rad(c.pitch)), sin(rad(c.pitch))
