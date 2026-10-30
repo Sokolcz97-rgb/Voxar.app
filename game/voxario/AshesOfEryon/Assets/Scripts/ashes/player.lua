@@ -164,6 +164,17 @@ function M.UpdateCamera(dt, liveCombat)
         c.distance = max(2.5, min(22, c.distance - input.wheel() * 0.8))
     end
     local px, py, pz = M.StablePosition()
+    -- vyhlazený cíl kamery: kapsle hráče ve městě (zdi, schody, okraje dlažby) poskakuje o centimetry
+    -- a kamera se s ní nesnesitelně třásla; při teleportu (> 3 m) skočí hned
+    local ct = M.camTarget
+    if not ct or (px - ct[1]) ^ 2 + (py - ct[2]) ^ 2 + (pz - ct[3]) ^ 2 > 9 then
+        ct = { px, py, pz }
+    else
+        local kt, kv = 1 - exp(-20 * dt), 1 - exp(-8 * dt)   -- svisle klidněji (schody, hrany)
+        ct = { ct[1] + (px - ct[1]) * kt, ct[2] + (py - ct[2]) * kv, ct[3] + (pz - ct[3]) * kt }
+    end
+    M.camTarget = ct
+    px, py, pz = ct[1], ct[2], ct[3]
     local tx, ty, tz = px, py + 1.3, pz
     -- kamera za hráčem: směr pohledu (sin yaw, cos yaw), náklon dolů pitch
     local cp, sp = cos(rad(c.pitch)), sin(rad(c.pitch))
