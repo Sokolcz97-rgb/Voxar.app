@@ -69,8 +69,9 @@ function M.BuildTerrain()
     -- sever (pobřeží Kalidry) 270 x 270 m a jih (Solný průsmyk, Rudé písky) – okraje přesně navazují
     M.north = world.terrain({ size = { 270, 270 }, cell = 1, origin = { -135, -135 }, height = HeightAt,
         splat = northWeights, tiling = 4,
-        layers = { { color = c255(80, 95, 44) }, { color = c255(140, 116, 78) },
-                   { color = c255(195, 172, 131) }, { color = c255(150, 142, 126) } } })
+        -- sytější tráva, teplejší hlína a písek, chladnější skála (ve stylu ručně malovaných MMO)
+        layers = { { color = c255(84, 110, 46) }, { color = c255(148, 118, 78) },
+                   { color = c255(206, 180, 134) }, { color = c255(138, 130, 116) } } })
     M.south = world.terrain({ size = { 270, map.SouthEdge - 135 }, cell = 1, origin = { -135, 135 }, height = HeightAt,
         splat = southWeights, tiling = 5,
         layers = { { color = c255(140, 116, 78) }, { color = c255(195, 172, 131) },

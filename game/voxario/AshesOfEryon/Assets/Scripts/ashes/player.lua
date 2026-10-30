@@ -186,9 +186,10 @@ function M.UpdateCamera(dt, liveCombat)
             -- koruna přímo nad hráčem kameru nepřitáhne až k hlavě
             if t then want = math.min(want, max(2.5, t * len - 0.4)) end
         end
-        if want < len then
+        -- hysteréze: kamera se k překážce nepřitahuje kvůli pár centimetrům (jinak se zasekávala)
+        if want < len - 0.1 then
             blocked = true
-            want = max(0.8, want)
+            want = max(1.2, want - 0.1)
             wx, wy, wz = tx + ux * want, ty + uy * want, tz + uz * want
         end
     end
@@ -196,7 +197,8 @@ function M.UpdateCamera(dt, liveCombat)
     -- drobné rozdíly (pod 15 cm) jen plynule, ať se kamera u překážky netřese
     local k = 1 - exp(-14 * dt)
     local cd = sqrt((c.x - tx) ^ 2 + (c.y - ty) ^ 2 + (c.z - tz) ^ 2)
-    if blocked and want < cd - 0.15 then k = 1 end
+    -- ve městě (zdi, domy, stánky): k překážce rychle, ale plynule; skok jen při velkém průniku
+    if blocked and want < cd - 1.2 then k = 1 elseif blocked and want < cd then k = 1 - exp(-30 * dt) end
     c.x, c.y, c.z = c.x + (wx - c.x) * k, c.y + (wy - c.y) * k, c.z + (wz - c.z) * k
     -- natočení kamery na hráče (kamera v enginu hledí po -Z)
     local dx, dy, dz = tx - c.x, ty - c.y, tz - c.z

@@ -156,20 +156,68 @@ def write_gltf(name, parts):
     print("wrote", name, sum(len(p[0]) // 3 for p in parts), "triangles")
 
 
+def box(sx, sy, sz):
+    """Kvádr se středem v počátku (MeshKit.Box)."""
+    x, y, z = sx / 2, sy / 2, sz / 2
+    c = [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z), (-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)]
+    faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (3, 7, 6, 2), (0, 4, 7, 3), (1, 2, 6, 5)]
+    tris = []
+    for a, b, cc, d in faces:
+        tris += [c[a], c[b], c[cc], c[a], c[cc], c[d]]
+    return orient(tris, lambda g: (0.0, 0.0, 0.0))
+
+
+def rot(tris, ax=0.0, ay=0.0, az=0.0):
+    """Otočení ve stupních v pořadí Unity (Z, pak X, pak Y)."""
+    def r(p):
+        x, y, z = p
+        a = math.radians(az); x, y = x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a)
+        a = math.radians(ax); y, z = y * math.cos(a) - z * math.sin(a), y * math.sin(a) + z * math.cos(a)
+        a = math.radians(ay); x, z = x * math.cos(a) + z * math.sin(a), -x * math.sin(a) + z * math.cos(a)
+        return (x, y, z)
+    return [r(p) for p in tris]
+
+
+def move(tris, dx=0.0, dy=0.0, dz=0.0, s=(1.0, 1.0, 1.0)):
+    return [(p[0] * s[0] + dx, p[1] * s[1] + dy, p[2] * s[2] + dz) for p in tris]
+
+
 trunk = (0.63 * 0.7, 0.54 * 0.7, 0.44 * 0.7)
-# cypřiš: štíhlý kužel (Scenery.cs: Cone(0.72, 4.6, 9, 6) posunutý o 0.9 m, kmen 1.2 m)
-write_gltf("cypress", [(cylinder(0.16, 0.1, 1.2, 6), trunk, False),
-                       (cone(0.72, 4.6, 9, 6, 0.9, 3, 0.32), (0.24 * 0.75, 0.29 * 0.75, 0.17 * 0.75), False)])
-# olivovník: kmen 1.9 m a pět kulovitých chomáčů
-blobs = [(0, 2.7, 0, 1.25), (0.8, 2.4, 0.3, 0.9), (-0.7, 2.5, -0.4, 0.95), (0.1, 3.2, -0.6, 0.85), (-0.3, 2.3, 0.8, 0.8)]
-crown = []
+# cypřiš: štíhlý kmen a tři navazující organické kužele ve dvou odstínech (světlejší špička)
+cyp_dark, cyp_light = [], []
+for i, (r, h, y0) in enumerate([(0.82, 2.6, 0.7), (0.66, 2.4, 2.0), (0.42, 2.0, 3.4)]):
+    part = cone(r, h, 10, 4, y0, 3 + i * 5, 0.38)
+    (cyp_light if i == 2 else cyp_dark).extend(part)
+write_gltf("cypress", [(cylinder(0.17, 0.1, 1.3, 7), (0.36, 0.27, 0.2), False),
+                       (cyp_dark, (0.17, 0.25, 0.12), False), (cyp_light, (0.24, 0.33, 0.15), False)])
+# olivovník: pokroucený dvojitý kmen a koruna z chomáčů ve dvou odstínech (stříbřitě zelená)
+trunk_a = rot(cylinder(0.26, 0.17, 1.4, 7), az=12)
+trunk_b = move(rot(cylinder(0.17, 0.1, 1.2, 6), az=-28, ax=10), dx=0.28, dy=1.3)
+trunk_c = move(rot(cylinder(0.15, 0.09, 1.1, 6), az=30, ax=-12), dx=0.2, dy=1.25)
+blobs = [(0, 2.8, 0, 1.15), (0.9, 2.5, 0.3, 0.85), (-0.8, 2.6, -0.4, 0.9), (0.1, 3.3, -0.6, 0.8),
+         (-0.3, 2.4, 0.85, 0.78), (0.6, 3.1, 0.7, 0.7), (-0.7, 3.2, 0.3, 0.66)]
+crown_dark, crown_light = [], []
 for i, (x, y, z, r) in enumerate(blobs):
-    crown += ico(r, (x, y, z), (1.15, 0.75, 1.15), i * 3.1, 0.35, 1)
-write_gltf("olive", [(cylinder(0.3, 0.16, 1.9, 7), trunk, False), (crown, (0.42 * 0.8, 0.46 * 0.8, 0.31 * 0.8), False)])
-# kámen: zdeformovaná ikosféra (zploštělá)
-write_gltf("rock", [(ico(1.0, (0, 0, 0), (1, 0.7, 1), 7, 0.25, 1), (0.85 * 0.75, 0.82 * 0.75, 0.75 * 0.75), False)])
+    (crown_light if y > 2.9 else crown_dark).extend(ico(r, (x, y, z), (1.15, 0.72, 1.15), i * 3.1, 0.35, 1))
+write_gltf("olive", [(trunk_a + trunk_b + trunk_c, (0.4, 0.33, 0.26), False),
+                     (crown_dark, (0.3, 0.36, 0.22), False), (crown_light, (0.42, 0.48, 0.32), False)])
+# kámen: zdeformovaná ikosféra se světlejším horním a tmavším spodním dílem (+ mech nahoře)
+def two_tone_rock(seed, scale, top, bottom, moss=None):
+    tris = ico(1.0, (0, 0, 0), scale, seed, 0.28, 1)
+    up, down = [], []
+    for i in range(0, len(tris), 3):
+        t = tris[i:i + 3]
+        (up if sum(p[1] for p in t) / 3 > 0.12 else down).extend(t)
+    parts = [(up, top, False), (down, bottom, False)]
+    if moss:
+        mossy = [p for i in range(0, len(up), 3) for p in up[i:i + 3] if sum(q[1] for q in up[i:i + 3]) / 3 > 0.45]
+        if mossy:
+            parts[0] = ([p for i in range(0, len(up), 3) for p in up[i:i + 3] if sum(q[1] for q in up[i:i + 3]) / 3 <= 0.45], top, False)
+            parts.append((mossy, moss, False))
+    return parts
+write_gltf("rock", two_tone_rock(7, (1, 0.7, 1), (0.7, 0.68, 0.62), (0.5, 0.48, 0.44), moss=(0.36, 0.42, 0.22)))
 # písečný kámen jihu (rudý)
-write_gltf("rock_red", [(ico(1.0, (0, 0, 0), (1, 0.75, 1), 11, 0.3, 1), (0.61, 0.36, 0.24), False)])
+write_gltf("rock_red", two_tone_rock(11, (1, 0.75, 1), (0.7, 0.42, 0.28), (0.48, 0.27, 0.18)))
 # tráva: šest stébel
 tuft = []
 for k in range(6):
@@ -235,32 +283,6 @@ def palm_model(seed=0):
 write_gltf("palm", palm_model())
 
 # ---------------------------------------------------------------- další tvary z Unity verze (MeshKit)
-def box(sx, sy, sz):
-    """Kvádr se středem v počátku (MeshKit.Box)."""
-    x, y, z = sx / 2, sy / 2, sz / 2
-    c = [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z), (-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)]
-    faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (3, 7, 6, 2), (0, 4, 7, 3), (1, 2, 6, 5)]
-    tris = []
-    for a, b, cc, d in faces:
-        tris += [c[a], c[b], c[cc], c[a], c[cc], c[d]]
-    return orient(tris, lambda g: (0.0, 0.0, 0.0))
-
-
-def rot(tris, ax=0.0, ay=0.0, az=0.0):
-    """Otočení ve stupních v pořadí Unity (Z, pak X, pak Y)."""
-    def r(p):
-        x, y, z = p
-        a = math.radians(az); x, y = x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a)
-        a = math.radians(ax); y, z = y * math.cos(a) - z * math.sin(a), y * math.sin(a) + z * math.cos(a)
-        a = math.radians(ay); x, z = x * math.cos(a) + z * math.sin(a), -x * math.sin(a) + z * math.cos(a)
-        return (x, y, z)
-    return [r(p) for p in tris]
-
-
-def move(tris, dx=0.0, dy=0.0, dz=0.0, s=(1.0, 1.0, 1.0)):
-    return [(p[0] * s[0] + dx, p[1] * s[1] + dy, p[2] * s[2] + dz) for p in tris]
-
-
 # stan Legie: jehlan o čtyřech stranách (Scenery.BuildCamp: Cone(2.2, 2.6, 4, 1))
 write_gltf("tent", [(cone(2.2, 2.6, 4, 1, 0.0, 0, 0.0), (0.45, 0.16, 0.12), False)])
 # suchý keř (DesertScenery): sedm tenkých prutů a zploštělý chomáč
