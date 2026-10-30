@@ -128,6 +128,7 @@ function EnterWorld()
     end
     minimap.Build()
     player.canopyHit = world.CanopyHit
+    player.terrainIds = { [world.north or -1] = true, [world.south or -2] = true }
     player.Create(cls, gender, (ch.display_name and ch.display_name ~= "") and ch.display_name or ch.name, spawn)
     combat.Build(boot, player, hud, faction)
     activities.Build(boot, player, hud, combat)

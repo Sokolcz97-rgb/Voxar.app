@@ -44,6 +44,11 @@ on:
         type: boolean
         required: false
         default: false
+      promote_stable:
+        description: 'S prepare_stable: po nahrání PŘEPNOUT ostrý kanál (unity/latest.json) na tuto verzi'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -357,4 +362,9 @@ jobs:
           # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
           find . -type f ! -name latest-candidate.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
           upload latest-candidate.json application/json
-          echo "Kandidát ostré verze (latest.json beze změny): verze ${{ needs.selftest.outputs.version }}"
+          echo "Kandidát ostré verze: verze ${{ needs.selftest.outputs.version }}"
+          if [ "${{ inputs.promote_stable }}" = "true" ]; then
+            cp latest-candidate.json latest.json
+            upload latest.json application/json
+            echo "OSTRÝ KANÁL PŘEPNUT: unity/latest.json = verze ${{ needs.selftest.outputs.version }}"
+          fi

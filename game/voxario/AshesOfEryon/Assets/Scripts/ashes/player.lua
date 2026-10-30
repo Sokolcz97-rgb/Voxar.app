@@ -143,6 +143,8 @@ end
 local ignoreTags = { npc = true, enemy = true, other_player = true, animal = true }
 function M.IgnoreCamera(id)
     if not id then return false end
+    -- terén kameru nezastavuje (hlídá ji výška nad zemí níže) – jinak se u země třásla
+    if M.terrainIds and M.terrainIds[id] then return true end
     local tag = entity.get_tag and entity.get_tag(id)
     return tag ~= nil and ignoreTags[tag] == true
 end
@@ -190,10 +192,11 @@ function M.UpdateCamera(dt, liveCombat)
             wx, wy, wz = tx + ux * want, ty + uy * want, tz + uz * want
         end
     end
-    -- k hráči skočí hned (jinak by kamera na chvíli prošla překážkou), od hráče plynule
+    -- k hráči skočí hned (jinak by kamera na chvíli prošla překážkou), od hráče plynule;
+    -- drobné rozdíly (pod 15 cm) jen plynule, ať se kamera u překážky netřese
     local k = 1 - exp(-14 * dt)
     local cd = sqrt((c.x - tx) ^ 2 + (c.y - ty) ^ 2 + (c.z - tz) ^ 2)
-    if blocked and want < cd then k = 1 end
+    if blocked and want < cd - 0.15 then k = 1 end
     c.x, c.y, c.z = c.x + (wx - c.x) * k, c.y + (wy - c.y) * k, c.z + (wz - c.z) * k
     -- natočení kamery na hráče (kamera v enginu hledí po -Z)
     local dx, dy, dz = tx - c.x, ty - c.y, tz - c.z
