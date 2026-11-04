@@ -22,6 +22,7 @@ local G = map.HeightAt
 -- ------------------------------------------------------------------ samotest: záběry lokace a počasí
 local function Selftest()
     local only = game.env and game.env("VOXARIO_SELFTEST_ONLY")
+    if graphics and graphics.detail_density then graphics.detail_density(0.35) end   -- software Vulkan v CI
     _G.world.environment({ real_time = false, day_night = true, time_of_day = 15, day_length = 0 })
     _G.world.weather({ rain = 0, snow = 0, storm = 0, wind = 0.3, instant = true })
     timer.sleep(3)
@@ -29,6 +30,54 @@ local function Selftest()
         lookFrom(x, G(x, z) + y, z, tx, G(tx, tz) + ty, tz)
         timer.sleep(wait or 2.5)
         shot(name)
+    end
+    if only == "chars" then
+        -- postavy vedle sebe s výbavou (show_part) a oblečenými díly z jiných postav (equip)
+        local outfit = require("eryndor.outfit")
+        _G.world.environment({ time_of_day = 16 })
+        local bx, bz = 8, -64
+        local row = {
+            { "knight_sylvaria", { "1H_Sword", "Round_Shield", "Knight_Helmet", "Knight_Cape" } },
+            { "mage_sylvaria", { "2H_Staff", "Mage_Hat", "Mage_Cape" } },
+            { "ranger_sylvaria", { "2H_Crossbow", "Rogue_Cape" } },
+            { "knight_aethel", { "2H_Sword", "Knight_Cape" }, { { "mage_sylvaria", "Mage_Hat" } } },
+            { "warden_aethel", { "2H_Axe", "Barbarian_Hat", "Barbarian_Cape" } },
+            { "engineer_aethel", { "1H_Crossbow", "Knife_Offhand" }, { { "warden_aethel", "Barbarian_Cape" } } },
+            { "cultist", { "Knife", "Knife_Offhand", "Rogue_Cape" } },
+            { "crusher", { "2H_Axe" } },
+            { "lyrise", { "Spellbook_open", "1H_Wand", "Mage_Cape" } },
+        }
+        local ids = {}
+        for i, r in ipairs(row) do
+            local x = bx + (i - 5) * 1.7
+            local id = _G.world.spawn("Models/heroes/" .. r[1] .. ".glb", x, G(x, bz), bz, { yaw = 0, name = r[1],
+                scale = r[1] == "crusher" and 1.2 or 1.0 })
+            outfit.Wear(id, r[1], r[2])
+            for _, e in ipairs(r[3] or {}) do outfit.Equip(id, e[1], e[2]) end
+            ids[i] = id
+        end
+        lookFrom(bx + 1.0, G(bx, bz) + 1.6, bz + 9.0, bx, G(bx, bz) + 1.0, bz)
+        timer.sleep(3)
+        game.log("DILY: " .. table.concat(entity.parts(ids[1]), ", "))
+        local function all(clip, t, name)
+            for _, id in ipairs(ids) do anim.play(id, clip, 0, not clip:find("Death")) end
+            timer.sleep(t); shot(name)
+        end
+        all("Idle", 1.0, "c1-klid")
+        all("2H_Melee_Idle", 0.8, "c2-boj-postoj")
+        all("Running_A", 0.2, "c3-beh")
+        all("1H_Melee_Attack_Chop", 0.45, "c4-utok1")
+        all("2H_Melee_Attack_Spin", 0.5, "c5-utok-rotace")
+        all("Spellcasting", 0.5, "c6-kouzlo")
+        all("Block", 0.4, "c7-blok")
+        all("Death_A", 1.6, "c8-pad")
+        lookFrom(bx + 7, G(bx, bz) + 1.4, bz + 1, bx, G(bx, bz) + 1.0, bz)
+        all("Walking_A", 0.3, "c9-chuze-bok")
+        lookFrom(bx - 6.1, G(bx, bz) + 1.5, bz + 3.0, bx - 6.6, G(bx, bz) + 1.3, bz)
+        all("Idle", 0.6, "c10-detail")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
     end
     if only ~= "weather" then
         view("01-udoli", 6, 22, -96, 0, 2, 30, 4)
