@@ -204,7 +204,12 @@ jobs:
           New-Item -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Force | Out-Null
           New-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Name $icd.FullName -PropertyType DWord -Value 0 -Force | Out-Null
           # runner nemá Vulkan loader (u hráčů ho instaluje ovladač grafiky) – vulkan-1.dll od LunarG vedle hry
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-runtime-components.zip" -OutFile vkrt.zip
+          # pevná verze (adresa „latest“ u LunarG občas ukazuje na neexistující soubor), záloha latest
+          $ok = $false
+          foreach ($v in @("1.4.363.0", "1.4.335.0", "latest")) {
+            try { Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$v/windows/vulkan-runtime-components.zip" -OutFile vkrt.zip; $ok = $true; break } catch { Write-Host "Vulkan runtime $v nedostupný" }
+          }
+          if (-not $ok) { throw "Vulkan runtime nelze stáhnout" }
           Expand-Archive vkrt.zip -DestinationPath vkrt -Force
           $loader = Get-ChildItem vkrt -Recurse -Filter vulkan-1.dll | Where-Object { $_.Directory.Name -eq "x64" } | Select-Object -First 1
           if (-not $loader) { throw "vulkan-1.dll nenalezen" }
