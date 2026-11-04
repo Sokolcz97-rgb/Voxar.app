@@ -20,6 +20,7 @@ on:
   push:
     paths:
       - 'game/voxario/**'
+      - '!game/voxario/Eryndor/**'
       - 'game/unity/AshesOfEryon/Assets/Models/**'
       - 'game/unity/AshesOfEryon/Assets/Voxario/Resources/**'
       - 'game/unity/make-manifest.cjs'

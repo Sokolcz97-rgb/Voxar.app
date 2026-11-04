@@ -24,6 +24,7 @@
  * Testovací kanál (nastavení launcheru „Kanál hry“ = beta): manifest unity/latest-beta.json
  * (verze na Voxario Studio Engine pro testery) a vlastní složka „…-beta“, takže ostrá
  * instalace zůstane nedotčená a přepnutí zpět nic nestahuje.
+ * Kanál „Fantasy“ (fantasy): testovací hra Eryndor, manifest unity/latest-fantasy.json, složka „…-fantasy“.
  */
 
 const path = require("node:path");
@@ -39,7 +40,9 @@ const BASE = process.env.ASHES_UNITY_BASE
   || "https://rioexuvgvmdwvidfakxy.supabase.co/storage/v1/object/public/game-updates/unity/";
 const SAFE_PATH = /^[A-Za-z0-9 _.\-()+\/]+$/;
 
-const CHANNELS = { stable: { manifest: "latest.json", suffix: "" }, beta: { manifest: "latest-beta.json", suffix: "-beta" } };
+// fantasy = testovací kanál nové hry Eryndor (Velký Rozkol) na Voxario Studio Engine – vlastní složka
+const CHANNELS = { stable: { manifest: "latest.json", suffix: "" }, beta: { manifest: "latest-beta.json", suffix: "-beta" },
+                   fantasy: { manifest: "latest-fantasy.json", suffix: "-fantasy" } };
 let channel = "stable";
 const chosenDirs = {};
 /**

@@ -395,9 +395,9 @@
     // testovací kanál: verze na Voxario Studio Engine pro testery (vlastní složka, ostrá hra zůstane)
     const channel = el("div", "setting");
     const channelCopy = el("div");
-    channelCopy.append(el("b", "", "Kanál hry"), el("small", "", "Testovací: nová verze na enginu Voxario Studio ještě před vydáním. Instaluje se zvlášť, ostrá hra zůstane nainstalovaná."));
+    channelCopy.append(el("b", "", "Kanál hry"), el("small", "", "Testovací: nová verze na enginu Voxario Studio ještě před vydáním. Fantasy: testovací ukázka nové hry Eryndor (Velký Rozkol). Oba se instalují zvlášť, ostrá hra zůstane nainstalovaná."));
     const channelChoice = el("div", "choice");
-    [["stable", "Ostrý"], ["beta", "Testovací"]].forEach(([value, label]) => {
+    [["stable", "Ostrý"], ["beta", "Testovací"], ["fantasy", "Fantasy"]].forEach(([value, label]) => {
       const b = el("button", "", label);
       b.type = "button";
       b.setAttribute("aria-pressed", String((settings.channel || "stable") === value));
@@ -549,7 +549,8 @@
     const v = st.latest ? ` ${st.latest}` : "";
     if (st.state === "install") {
       label.textContent = "Instalovat";
-      progressTitle.textContent = st.channel === "beta" ? `Testovací verze${v} je připravená ke stažení` : `Unity verze${v} je připravená ke stažení`;
+      progressTitle.textContent = st.channel === "fantasy" ? `Eryndor${v} (Fantasy) je připravený ke stažení`
+        : st.channel === "beta" ? `Testovací verze${v} je připravená ke stažení` : `Unity verze${v} je připravená ke stažení`;
       progressDetail.textContent = `DirectX 12, NVIDIA DLSS, AMD FSR 2 · ${fmtSize(st.size)}`;
       progressValue.textContent = fmtSize(st.size);
       progressFill.style.width = "0%";
@@ -569,7 +570,8 @@
     } else if (st.state === "ready") {
       label.textContent = "Hrát";
       progressTitle.textContent = `Hra je aktuální${v}`;
-      progressDetail.textContent = st.channel === "beta" ? "Testovací kanál · Voxario Studio Engine · Vulkan · DLSS" : "Unity verze · DirectX 12 · DLSS / FSR 2";
+      progressDetail.textContent = st.channel === "fantasy" ? "Kanál Fantasy · Eryndor · Voxario Studio Engine · Vulkan"
+        : st.channel === "beta" ? "Testovací kanál · Voxario Studio Engine · Vulkan · DLSS" : "Unity verze · DirectX 12 · DLSS / FSR 2";
       progressFill.style.width = "100%";
       progressValue.textContent = "100 %";
       installedVersion.textContent = st.installed || st.latest || "—";
