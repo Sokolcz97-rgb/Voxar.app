@@ -155,72 +155,26 @@ jobs:
             player-1440p.log
             selftest/
             selftest-1440p/
-          retention-days: 14
-
-  windows:
-    name: Hra pro Windows + soubory pro launcher
-    needs: selftest
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Stáhnout Voxario Studio (Windows)
-        env:
-          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
-        run: |
-          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
-          unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
-          find "$RUNNER_TEMP/engine" -name VoxarioPlayer.exe -type f
-
-      - name: Složit hru (Windows)
-        run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/AshesOfEryon" "${{ needs.selftest.outputs.version }}"
-
-      - name: Manifest testovacího kanálu
-        run: |
-          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "${{ needs.selftest.outputs.version }}" latest-beta.json
-          head -c 400 "$RUNNER_TEMP/updates/latest-beta.json"
-
-      - name: Manifest ostré verze (kandidát – latest.json se nemění)
-        if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
-        run: |
-          v="${{ needs.selftest.outputs.version }}"
-          if [[ "$v" == *-* ]]; then echo "::error::Ostrá verze nesmí mít příponu (je $v)"; exit 1; fi
-          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/stable" "$v" latest-candidate.json
-          head -c 400 "$RUNNER_TEMP/stable/latest-candidate.json"
-
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
-        with:
-          name: AshesOfEryon-stable-candidate
-          path: ${{ runner.temp }}/stable
-          if-no-files-found: error
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AshesOfEryon-Windows
-          path: ${{ runner.temp }}/AshesOfEryon
-          if-no-files-found: error
-          retention-days: 14
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AshesOfEryon-beta-upload
-          path: ${{ runner.temp }}/updates
-          if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
+        continue-on-error: true
 
   windows-test:
     name: Test exportu pro Windows (spuštění hry, software Vulkan)
-    needs: windows
+    needs: selftest
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: AshesOfEryon-Windows
-          path: game
+      # hra se složí přímo tady (bez artefaktů – úložiště artefaktů Actions má limit)
+      - uses: actions/checkout@v4
+
+      - name: Stáhnout Voxario Studio (Windows) a složit hru
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D engine
+          7z x engine/*.zip -oengine -y > /dev/null
+          $PROJECT/tools/package-game.sh engine game "${{ needs.selftest.outputs.version }}"
 
       - name: Kontrola balíčku
         shell: pwsh
@@ -278,30 +232,41 @@ jobs:
             windows.log
             windows-err.log
             voxario-player.log
-          retention-days: 14
+          retention-days: 3
+        continue-on-error: true
 
-  publish-beta:
-    name: Nahrát do testovacího kanálu launcheru
-    needs: [selftest, windows, windows-test]
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_beta
+  windows:
+    name: Hra pro Windows + nahrání do launcheru
+    needs: [selftest, windows-test]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: AshesOfEryon-beta-upload
-          path: updates
+      - uses: actions/checkout@v4
 
-      - name: Nahrát do game-updates/unity/
+      - name: Stáhnout Voxario Studio (Windows)
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
+          unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
+
+      - name: Složit hru (Windows) a manifesty
+        run: |
+          v="${{ needs.selftest.outputs.version }}"
+          $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/AshesOfEryon" "$v"
+          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "$v" latest-beta.json
+          if [ "${{ inputs.prepare_stable }}" = "true" ]; then
+            if [[ "$v" == *-* ]]; then echo "::error::Ostrá verze nesmí mít příponu (je $v)"; exit 1; fi
+            node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/stable" "$v" latest-candidate.json
+          fi
+
+      - name: Nahrát do game-updates/unity/ (beta / ostrá)
+        if: github.event_name == 'workflow_dispatch' && (inputs.publish_beta || inputs.prepare_stable)
         env:
           SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
           KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$KEY" ]; then
-            echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY – soubory jsou v artefaktu AshesOfEryon-beta-upload, nahraj je ručně."
-            exit 1
-          fi
-          cd updates
+          if [ -z "$KEY" ]; then echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY"; exit 1; fi
           # nové klíče sb_secret_… patří jen do hlavičky apikey; Authorization: Bearer jen pro starý JWT klíč
           AUTH=()
           if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
@@ -317,54 +282,17 @@ jobs:
             done
             return 1
           }
-          # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
-          find . -type f ! -name latest-beta.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
-          upload latest-beta.json application/json
-          echo "Testovací kanál: verze ${{ needs.selftest.outputs.version }}"
-
-  publish-stable-candidate:
-    name: Nahrát kandidáta ostré verze (bez přepnutí latest.json)
-    needs: [selftest, windows, windows-test]
-    if: github.event_name == 'workflow_dispatch' && inputs.prepare_stable
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: AshesOfEryon-stable-candidate
-          path: updates
-
-      - name: Nahrát do game-updates/unity/
-        env:
-          SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
-          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$KEY" ]; then
-            echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY – soubory jsou v artefaktu AshesOfEryon-stable-candidate, nahraj je ručně."
-            exit 1
-          fi
-          cd updates
-          # nové klíče sb_secret_… patří jen do hlavičky apikey; Authorization: Bearer jen pro starý JWT klíč
-          AUTH=()
-          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
-          upload() {
-            local file="$1" type="${2:-application/octet-stream}"
-            for attempt in 1 2 3 4 5; do
-              code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
-                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
-                --data-binary "@$file")
-              [ "$code" = "200" ] && return 0
-              echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
-              sleep $((attempt * 4))
-            done
-            return 1
+          publish() {   # $1 = složka, $2 = manifest
+            ( cd "$1" && find . -type f ! -name "$2" | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done && upload "$2" application/json )
           }
-          # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
-          find . -type f ! -name latest-candidate.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
-          upload latest-candidate.json application/json
-          echo "Kandidát ostré verze: verze ${{ needs.selftest.outputs.version }}"
-          if [ "${{ inputs.promote_stable }}" = "true" ]; then
-            cp latest-candidate.json latest.json
-            upload latest.json application/json
-            echo "OSTRÝ KANÁL PŘEPNUT: unity/latest.json = verze ${{ needs.selftest.outputs.version }}"
+          v="${{ needs.selftest.outputs.version }}"
+          if [ "${{ inputs.publish_beta }}" = "true" ]; then publish "$RUNNER_TEMP/updates" latest-beta.json; echo "Testovací kanál: verze $v"; fi
+          if [ "${{ inputs.prepare_stable }}" = "true" ]; then
+            publish "$RUNNER_TEMP/stable" latest-candidate.json
+            echo "Kandidát ostré verze: $v"
+            if [ "${{ inputs.promote_stable }}" = "true" ]; then
+              cp "$RUNNER_TEMP/stable/latest-candidate.json" "$RUNNER_TEMP/stable/latest.json"
+              ( cd "$RUNNER_TEMP/stable" && upload latest.json application/json )
+              echo "OSTRÝ KANÁL PŘEPNUT: unity/latest.json = verze $v"
+            fi
           fi
