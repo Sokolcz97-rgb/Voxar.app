@@ -124,68 +124,111 @@ local FACTIONS = {
     { "legie", "Legie Rudého slunce", "Vojsko Azkara, Syna Rudého slunce. Vystoupíš z černých lodí v zátoce a povedeš útok na Kalidru." },
 }
 
+-- vlastnosti povolání pro přehled (relativně 0..1: síla, obratnost, intelekt, výdrž)
+local CLASS_STATS = {
+    hoplit = { 0.9, 0.45, 0.3, 0.9 },
+    lucistnik = { 0.5, 0.95, 0.45, 0.6 },
+    vestec = { 0.3, 0.5, 0.95, 0.45 },
+}
+local stage = require("ashes.stage")
+local lastT
+
+-- Tvorba postavy jako v MMO: hrdina ve 3D uprostřed chrámu, volby v panelech vlevo a vpravo
 function M.Creator(boot)
     local W, H = ui.screen()
-    background(W, H)
-    ui.rect(0, 0, W, H, { 0.03, 0.02, 0.015, 0.5 })
-    local w, h = math.min(1300, W - 60), math.min(900, H - 60)
-    local x0, y0 = (W - w) / 2, (H - h) / 2
-    local ix, iy, iw, ih = skin.Panel(x0, y0, w, h, "Zrození hrdiny")
-    ui.text(ix, iy, "Každá volba zanechá jizvu. Jméno, strana i povolání zůstanou s tvým hrdinou navždy.", { size = 22, font = "body", color = skin.Text })
-    local y = iy + 40
-    ui.text(ix, y, "STRANA VÁLKY", { size = 15, font = "caps", color = skin.Muted })
-    y = y + 26
-    local fw = (iw - 16) / 2
-    for i, f in ipairs(FACTIONS) do
-        local fx = ix + (i - 1) * (fw + 16)
-        local on = c.faction == f[1]
-        if skin.Chip(fx, y, fw, 110, on) then c.faction = f[1] end
-        ui.text(fx + 16, y + 12, f[2], { size = 21, font = "h2", color = on and skin.GoldBright or skin.Text })
-        ui.text(fx + 16, y + 44, f[3], { size = 17, font = "body", color = skin.Muted, wrap = fw - 32 })
-    end
-    y = y + 126
-    ui.text(ix, y, "POVOLÁNÍ", { size = 15, font = "caps", color = skin.Muted })
-    y = y + 26
-    local cw = (iw - 20) / 3
-    for i, cl in ipairs(CLASSES) do
-        local cx = ix + (i - 1) * (cw + 10)
-        local on = c.class == cl[1]
-        if skin.Chip(cx, y, cw, 250, on) then c.class = cl[1] end
-        ui.draw_image(skin.Portrait(cl[1], c.gender), cx + cw / 2 - 61, y + 10, 122, 122)
-        ui.text(cx + cw / 2, y + 140, skin.ClassName(cl[1]), { size = 21, font = "h2", color = on and skin.GoldBright or skin.Text, align = "center" })
-        ui.text(cx + 18, y + 176, cl[2], { size = 17, font = "body", color = skin.Muted, wrap = cw - 36 })
-    end
-    y = y + 266
-    ui.text(ix, y, "JMÉNO HRDINY (3–20 znaků)", { size = 15, font = "caps", color = skin.Muted })
-    ui.text(ix + 560, y, "POSTAVA", { size = 15, font = "caps", color = skin.Muted })
-    ui.window("##creator_name", ix - 14, y + 16, 548, 70, { title = false, background = false, scroll = false, font = "body", font_size = 22 }, function()
-        c.name = ui.input("##heroname", c.name, { width = 520, max = 20, hint = "Jméno" })
-    end)
-    if skin.Chip(ix + 560, y + 26, 150, 46, c.gender == "m") then c.gender = "m" end
-    ui.text(ix + 635, y + 37, "Muž", { size = 18, font = "h2", align = "center", color = c.gender == "m" and skin.GoldBright or skin.Text })
-    if skin.Chip(ix + 720, y + 26, 150, 46, c.gender == "f") then c.gender = "f" end
-    ui.text(ix + 795, y + 37, "Žena", { size = 18, font = "h2", align = "center", color = c.gender == "f" and skin.GoldBright or skin.Text })
+    local now = game.time()
+    local dt = lastT and math.min(0.1, now - lastT) or 0
+    lastT = now
+    stage.Show(c.class, c.gender)
+    -- jemné ztmavení okrajů, střed s hrdinou zůstává čistý
+    ui.draw_image("Textures/ui/vignette.png", 0, 0, W, H)
 
-    -- existující postavy (CharacterSlots)
+    local pw, ph = 470, math.min(H - 150, 880)
+    local lx, rx, py = 36, W - 36 - pw, 40
+    local mx, my = ui.mouse()
+    local overUi = (mx < lx + pw) or (mx > rx) or (my > H - 130)
+    stage.Update(dt, mx, input.key("Mouse1"), overUi)
+
+    -- levý panel: strana, povolání, pohlaví
+    local ix, iy, iw, ih = skin.Panel(lx, py, pw, ph, "Zrození hrdiny")
+    local y = iy
+    ui.text(ix, y, "STRANA VÁLKY", { size = 15, font = "caps", color = skin.Muted }); y = y + 24
+    for _, f in ipairs(FACTIONS) do
+        local on = c.faction == f[1]
+        if skin.Chip(ix, y, iw, 86, on) then c.faction = f[1] end
+        ui.text(ix + 14, y + 10, f[2], { size = 20, font = "h2", color = on and skin.GoldBright or skin.Text })
+        ui.text(ix + 14, y + 38, f[3], { size = 15, font = "body", color = skin.Muted, wrap = iw - 28 })
+        y = y + 94
+    end
+    y = y + 8
+    ui.text(ix, y, "POVOLÁNÍ", { size = 15, font = "caps", color = skin.Muted }); y = y + 24
+    for _, cl in ipairs(CLASSES) do
+        local on = c.class == cl[1]
+        if skin.Chip(ix, y, iw, 92, on) then c.class = cl[1] end
+        ui.draw_image(skin.Portrait(cl[1], c.gender), ix + 8, y + 6, 80, 80)
+        ui.text(ix + 100, y + 10, skin.ClassName(cl[1]), { size = 20, font = "h2", color = on and skin.GoldBright or skin.Text })
+        ui.text(ix + 100, y + 38, cl[2], { size = 15, font = "body", color = skin.Muted, wrap = iw - 112 })
+        y = y + 100
+    end
+    y = y + 8
+    ui.text(ix, y, "POSTAVA", { size = 15, font = "caps", color = skin.Muted }); y = y + 24
+    local gw = (iw - 10) / 2
+    for i, g in ipairs({ { "m", "Muž" }, { "f", "Žena" } }) do
+        local gx = ix + (i - 1) * (gw + 10)
+        if skin.Chip(gx, y, gw, 46, c.gender == g[1]) then c.gender = g[1] end
+        ui.text(gx + gw / 2, y + 12, g[2], { size = 18, font = "h2", align = "center", color = c.gender == g[1] and skin.GoldBright or skin.Text })
+    end
+
+    -- pravý panel: jméno, vlastnosti, uložené postavy
+    ix, iy, iw, ih = skin.Panel(rx, py, pw, ph, "Tvůj hrdina")
+    y = iy
+    ui.text(ix, y, "JMÉNO HRDINY (3–20 znaků)", { size = 15, font = "caps", color = skin.Muted })
+    ui.window("##creator_name", ix - 14, y + 14, iw + 28, 70, { title = false, background = false, scroll = false, font = "body", font_size = 22 }, function()
+        c.name = ui.input("##heroname", c.name, { width = iw, max = 20, hint = "Jméno" })
+    end)
+    y = y + 84
+    ui.text(ix, y, "VLASTNOSTI POVOLÁNÍ", { size = 15, font = "caps", color = skin.Muted }); y = y + 26
+    local st = CLASS_STATS[c.class] or CLASS_STATS.hoplit
+    for i, nm in ipairs({ "Síla", "Obratnost", "Intelekt", "Výdrž" }) do
+        ui.text(ix, y, nm, { size = 17, font = "body", color = skin.Text })
+        ui.bar(ix + 130, y + 4, iw - 130, 14, st[i], "#a87a3a")
+        y = y + 30
+    end
+    y = y + 10
+    ui.text(ix, y, c.faction == "legie" and "Začneš na černých lodích v Zátoce černých plachet." or "Probudíš se na Bezejmenném břehu nedaleko Kalidry.",
+        { size = 16, font = "body", color = skin.Muted, wrap = iw })
+    y = y + 56
     if boot.slots and boot.slots.others and #boot.slots.others > 0 then
-        local sy = y + 90
-        ui.text(ix, sy, "NEBO POKRAČUJ S EXISTUJÍCÍ POSTAVOU", { size = 15, font = "caps", color = skin.Muted })
-        for i, s in ipairs(boot.slots.others) do
-            local sx = ix + (i - 1) * 300
-            if skin.Chip(sx, sy + 24, 290, 64, false) then boot.SwitchCharacter(s) end
-            ui.draw_image(skin.Portrait(s.class, s.appearance and s.appearance.gender), sx + 8, sy + 30, 52, 52)
-            ui.text(sx + 70, sy + 32, s.name or "", { size = 19, font = "bold", color = skin.Text })
-            ui.text(sx + 70, sy + 56, skin.ClassName(s.class) .. " · úroveň " .. tostring(s.level or 1), { size = 15, font = "body", color = skin.Muted })
+        ui.text(ix, y, "NEBO POKRAČUJ S EXISTUJÍCÍ POSTAVOU", { size = 15, font = "caps", color = skin.Muted }); y = y + 24
+        for _, s in ipairs(boot.slots.others) do
+            if y > iy + ih - 120 then break end
+            if skin.Chip(ix, y, iw - 110, 64, false) then boot.SwitchCharacter(s) end
+            ui.draw_image(skin.Portrait(s.class, s.appearance and s.appearance.gender), ix + 6, y + 6, 52, 52)
+            ui.text(ix + 66, y + 8, s.name or "", { size = 19, font = "bold", color = skin.Text })
+            ui.text(ix + 66, y + 34, skin.ClassName(s.class) .. " · úroveň " .. tostring(s.level or 1), { size = 15, font = "body", color = skin.Muted })
+            -- smazat (druhé kliknutí do 4 s potvrdí – nevratné)
+            local confirm = c.confirmDelete == s.id and game.time() - (c.confirmAt or 0) < 4
+            if skin.Button(ix + iw - 100, y + 12, 100, 40, confirm and "Opravdu?" or "Smazat", false, not boot.busy) then
+                if confirm then c.confirmDelete = nil; boot.DeleteCharacter(s, function(err) c.error = err end)
+                else c.confirmDelete, c.confirmAt = s.id, game.time() end
+            end
+            y = y + 72
         end
     end
-    if c.error then ui.text(ix, iy + ih - 100, c.error, { size = 20, font = "bold", color = skin.Ember }) end
-    if skin.Button(ix, iy + ih - 50, 220, 50, "Odhlásit se") then boot.SignOut() end
+    if c.error then ui.text(ix, iy + ih - 100, c.error, { size = 18, font = "bold", color = skin.Ember, wrap = iw }) end
+    if skin.Button(ix, iy + ih - 50, 200, 50, "Odhlásit se") then stage.Hide(); boot.SignOut() end
+
+    -- dole uprostřed: vstup do světa
     local nm = c.name:gsub("^%s+", ""):gsub("%s+$", "")
-    if skin.Button(ix + iw - 380, iy + ih - 58, 380, 58, "VSTOUPIT DO SVĚTA", true, utf8.len(nm) and utf8.len(nm) >= 3 and not boot.busy) then
+    ui.text(W / 2, H - 132, "Táhni myší pro otočení postavy", { size = 15, font = "body", color = "#ede3d1aa", align = "center" })
+    if skin.Button(W / 2 - 200, H - 100, 400, 64, "VSTOUPIT DO SVĚTA", true, utf8.len(nm) and utf8.len(nm) >= 3 and not boot.busy) then
         c.error = nil
         boot.CreateCharacter(nm, c.class, c.gender, c.faction, function(err) c.error = err end)
     end
 end
+
+-- volá se při vstupu do světa / odhlášení: zbourat scénu tvorby postavy
+function M.HideStage() stage.Hide() end
 
 -- Načítání (stavba světa)
 function M.Loading(boot)

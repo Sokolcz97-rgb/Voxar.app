@@ -48,7 +48,7 @@ local recallT = nil
 -- ------------------------------------------------------------------ server
 local function NeedsCharacter()
     local st = boot.state
-    return st and st.allowed and (not st.character or not st.character.name or st.character.name == "")
+    return st and st.allowed and (type(st.character) ~= "table" or not st.character.name or st.character.name == "")
 end
 
 local function RefreshSlots()
@@ -103,6 +103,15 @@ end
 -- Znovu od začátku (odhlášení, změna postavy): scéna se načte znovu
 function boot.Reload() game.load_scene("Scenes/Main.vscene") end
 
+function boot.DeleteCharacter(slot, onError)
+    boot.busy, boot.status = true, "Mažu postavu…"
+    api.Rpc("ashes_delete_character", { p_slot = slot.id }, function(data, err)
+        boot.busy, boot.status = false, ""
+        if err then return onError and onError(err) end
+        boot.slots = data
+    end)
+end
+
 function boot.SwitchCharacter(slot)
     boot.busy, boot.status = true, "Přepínám postavu…"
     api.Rpc("ashes_switch_character", { p_slot = slot.id }, function(_, err)
@@ -113,6 +122,7 @@ end
 
 -- ------------------------------------------------------------------ svět
 function EnterWorld()
+    screens.HideStage()
     local ch = boot.state.character
     local faction = (ch.faction and ch.faction ~= "") and ch.faction or "kalidra"
     local quality = settings.get("gfx.quality", 2)
@@ -467,9 +477,9 @@ end
 
 function on_gui()
     if not boot.inWorld then
-        if boot.loading then screens.Loading(boot)
-        elseif NeedsCharacter() and not boot.busy then screens.Creator(boot)
-        else screens.Login(boot) end
+        if boot.loading then screens.HideStage(); screens.Loading(boot)
+        elseif NeedsCharacter() then screens.Creator(boot)
+        else screens.HideStage(); screens.Login(boot) end
         return
     end
     P("g.presence", presence.Draw)

@@ -71,7 +71,7 @@ function M.BuildTerrain()
         splat = northWeights, tiling = 4,
         -- sytější tráva, teplejší hlína a písek, chladnější skála (ve stylu ručně malovaných MMO)
         layers = { { color = c255(84, 110, 46) }, { color = c255(148, 118, 78) },
-                   { color = c255(206, 180, 134) }, { color = c255(138, 130, 116) } } })
+                   { color = c255(206, 180, 134) }, { color = c255(150, 132, 104) } } })
     M.south = world.terrain({ size = { 270, map.SouthEdge - 135 }, cell = 1, origin = { -135, 135 }, height = HeightAt,
         splat = southWeights, tiling = 5,
         layers = { { color = c255(140, 116, 78) }, { color = c255(195, 172, 131) },
@@ -83,7 +83,7 @@ function M.BuildTerrain()
 end
 
 -- ---------------------------------------------------------------- Kalidra (WorldBuilder.BuildCity)
-local WALL = { 0.93, 0.9, 0.84 }
+local WALL = { 0.86, 0.8, 0.7 }   -- teplý vápenec (malovaný řecký styl)
 local ROOF = { 0.72, 0.33, 0.2 }
 
 local function wall(x, z, w, d, baseY, h)
@@ -410,9 +410,9 @@ function M.BuildAqueduct()
         local broken = sin(i * 12.9898) > 0.55
         local h = broken and (3 + abs(sin(i * 7)) * 3) or 8
         local y = HeightAt(x, z) - 0.3
-        world.spawn("cube", x, y + h / 2, z, { size = { 1.4, h, 1.4 }, yaw = yaw, color = { 0.78, 0.75, 0.68 }, collider = "box" })
+        world.spawn("cube", x, y + h / 2, z, { size = { 1.4, h, 1.4 }, yaw = yaw, color = { 0.8, 0.72, 0.6 }, collider = "box" })
         if not broken and i < n then
-            world.spawn("cube", x + dx * 2.5, y + h - 0.2 + 0.3, z + dz * 2.5, { size = { 1.6, 1.2, 5 }, yaw = yaw, color = { 0.78, 0.75, 0.68 } })
+            world.spawn("cube", x + dx * 2.5, y + h - 0.2 + 0.3, z + dz * 2.5, { size = { 1.6, 1.2, 5 }, yaw = yaw, color = { 0.8, 0.72, 0.6 } })
         end
     end
 end

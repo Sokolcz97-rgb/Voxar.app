@@ -306,6 +306,22 @@ local function charactersTab(boot)
         if not e.active and skin.Button(cx + cw - 260, cy + 10, 260, 48, "Hrát za tuto postavu", true, not slotsBusy) then
             act(boot, "ashes_switch_character", { p_slot = s.id })
         end
+        -- smazání uložené postavy: druhé kliknutí do 4 s potvrdí (nevratné)
+        if not e.active then
+            local confirm = M.confirmDelete == s.id and game.time() - (M.confirmAt or 0) < 4
+            if skin.Button(cx + cw - 420, cy + 10, 150, 48, confirm and "Opravdu?" or "Smazat", false, not slotsBusy) then
+                if confirm then
+                    M.confirmDelete = nil
+                    slotsBusy = true
+                    api.Rpc("ashes_delete_character", { p_slot = s.id }, function(data, err)
+                        slotsBusy = false
+                        if err then slotsErr = err else slots, slotsErr = data, nil end
+                    end)
+                else
+                    M.confirmDelete, M.confirmAt = s.id, game.time()
+                end
+            end
+        end
         cy = cy + 78
         ui.line(cx, cy - 6, cx + cw, cy - 6, "#c9a45c33", 1)
     end
