@@ -2,6 +2,11 @@
 -- Počáteční lokace Hraniční údolí Zlomu podle lore „Svět Eryndor a Velký Rozkol“.
 local map = require("eryndor.map")
 local world = require("eryndor.world")
+local player = require("eryndor.player")
+local combat = require("eryndor.combat")
+local hud = require("eryndor.hud")
+local quest = require("eryndor.quest")
+local outfit = require("eryndor.outfit")
 
 local deg, atan, sqrt = math.deg, math.atan, math.sqrt
 local game_ = { built = false, camera = nil, shot = nil }
@@ -20,8 +25,10 @@ local function shot(name) game.screenshot(name .. ".png"); timer.sleep(0.3) end
 local G = map.HeightAt
 
 -- ------------------------------------------------------------------ samotest: záběry lokace a počasí
-local function Selftest()
+local Selftest
+function Selftest()
     local only = game.env and game.env("VOXARIO_SELFTEST_ONLY")
+    game_.SetMode("test")
     if graphics and graphics.detail_density then graphics.detail_density(0.35) end   -- software Vulkan v CI
     _G.world.environment({ real_time = false, day_night = true, time_of_day = 15, day_length = 0 })
     _G.world.weather({ rain = 0, snow = 0, storm = 0, wind = 0.3, instant = true })
@@ -30,6 +37,37 @@ local function Selftest()
         lookFrom(x, G(x, z) + y, z, tx, G(tx, tz) + ty, tz)
         timer.sleep(wait or 2.5)
         shot(name)
+    end
+    if only == "game" then
+        -- výběr povolání, vstup, boj s vlky (Tab, automatický útok, dovednosti), rozhovor s Lyrise
+        _G.world.environment({ time_of_day = 15.5 })
+        game_.SetMode("select"); game_.Preview(1)
+        timer.sleep(2.5); shot("g0-vyber")
+        game_.EnterWorld(1)
+        timer.sleep(2)
+        player.Teleport(16, -72)
+        player.cam.yaw = 50
+        timer.sleep(2); shot("g1-hrac")
+        combat.TabTarget(); combat.StartAttack()
+        timer.sleep(3.5); shot("g2-boj")
+        combat.UseSkill(1); timer.sleep(0.45); shot("g3-dovednost")
+        timer.sleep(1.2); combat.UseSkill(3); timer.sleep(0.5); shot("g4-vir-cepele")
+        timer.sleep(5); shot("g5-boj-dal")
+        player.Teleport(map.Lyrise.x + 1.5, map.Lyrise.z - 2.5)
+        player.cam.yaw = -20
+        timer.sleep(1.5); quest.Talk(); timer.sleep(0.6); shot("g6-lyrise")
+        quest.dialog = nil
+        -- mág u trhliny
+        game_.Reset()
+        game_.EnterWorld(2)
+        player.Teleport(-12, 92); player.cam.yaw = 25
+        timer.sleep(2)
+        combat.TabTarget(); combat.UseSkill(1)
+        timer.sleep(0.8); shot("g7-mag-sesilani")
+        timer.sleep(2.5); shot("g8-mag-boj")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
     end
     if only == "chars" then
         -- postavy vedle sebe s výbavou (show_part) a oblečenými díly z jiných postav (equip)
@@ -111,18 +149,138 @@ local function Selftest()
     game.quit()
 end
 
+-- ------------------------------------------------------------------ výběr povolání a vstup do hry
+local sel = { index = 1, changed = true }
+local mode = "select"
+
+local function showPreview()
+    if sel.preview then entity.destroy(sel.preview) end
+    local c = combat.Classes[sel.index]
+    local x, z = map.Start.x, map.Start.z
+    sel.preview = _G.world.spawn("Models/heroes/" .. c.model .. ".glb", x, G(x, z), z, { yaw = 200, name = c.name })
+    outfit.Wear(sel.preview, c.model, c.gear)
+    anim.play(sel.preview, "Cheer", 0.1, false, true)
+    sel.anim = game.time() + 1.6
+    lookFrom(x - 1.2, G(x, z) + 1.5, z - 4.6, x, G(x, z) + 1.0, z)
+end
+
+local function enterWorld()
+    if sel.preview then entity.destroy(sel.preview); sel.preview = nil end
+    local c = combat.Classes[sel.index]
+    player.Create(c, map.Start)
+    combat.SetupPlayer(c)
+    combat.SpawnAll()
+    quest.Spawn()
+    combat.Log("Vítej v Hraničním údolí Zlomu, Ozvěno.", { 0.8, 0.9, 1.0 })
+    combat.Log("Tab cíl · R útok · 1–5 dovednosti · F mluvit · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
+    mode = "play"
+    game_.mode = mode
+end
+game_.EnterWorld = function(i) sel.index = i or sel.index; enterWorld() end
+game_.SetMode = function(m) mode = m; game_.mode = m; sel.changed = false end
+game_.Preview = function(i) sel.index = i; showPreview() end
+-- (samotest) zpět před vstup: hráč, nepřátelé a Lyrise pryč
+game_.Reset = function()
+    for _, m in ipairs(combat.mobs) do entity.destroy(m.id) end
+    combat.mobs, combat.target, combat.auto, combat.floats = {}, nil, false, {}
+    if player.view then entity.destroy(player.view); entity.destroy(player.body); entity.destroy(player.lamp) end
+    if quest.npc then entity.destroy(quest.npc); entity.destroy(quest.light) end
+    player.dead = false
+end
+
+-- počasí se v údolí střídá (jasno, oblačno, déšť, bouřka; v noci občas mlha)
+local nextWeather = 0
+local function weatherCycle()
+    if game.time() < nextWeather then return end
+    nextWeather = game.time() + 150 + math.random() * 150
+    local r = math.random()
+    if r < 0.45 then _G.world.weather({ rain = 0, storm = 0, wind = 0.25 })
+    elseif r < 0.7 then _G.world.weather({ rain = 0, storm = 0, wind = 0.55 }); _G.world.environment({ clouds = 0.75 })
+    elseif r < 0.9 then _G.world.weather({ rain = 0.8, storm = 0, wind = 0.5 })
+    else _G.world.weather({ rain = 1, storm = 1, wind = 0.9 }) end
+end
+
 function on_start()
+    hud.Init()
     _G.world.environment({ day_night = true, real_time = false, time_of_day = 15, day_length = 60, fog = 0.0022,
                            shadow_distance = 220, haze = 0.45, exposure = 0.85, night_exposure = 1.6,
                            contrast = 1.1, saturation = 1.22, clouds = 0.45, bloom = 0.12 })
     world.Build()
     game_.built = true
+    if game.custom_pause then game.custom_pause(true) end
     if game.selftest() then timer.start(Selftest); return end
-    lookFrom(6, G(6, -96) + 22, -96, 0, G(0, 30) + 2, 30)
+    showPreview()
+    nextWeather = game.time() + 120
 end
 
+local lastThunder = 0
 function on_update(dt)
+    if mode ~= "play" and mode ~= "select" then return end
+    if mode == "select" then
+        if sel.anim and game.time() > sel.anim and sel.preview then anim.play(sel.preview, "Idle", 0.3); sel.anim = nil end
+        return
+    end
+    if not ui.wants_keyboard() and not quest.dialog then
+        if input.pressed("Tab") then combat.TabTarget() end
+        if input.pressed("R") then combat.StartAttack() end
+        if input.pressed("Escape") then combat.target, combat.auto = nil, false end
+        for i = 1, 6 do if input.pressed(tostring(i)) then combat.UseSkill(i) end end
+        if input.pressed("F") then quest.Talk() end
+    end
+    combat.Update(dt)
+    player.Update(dt, combat.inCombat, combat.moveTo, combat.me and combat.me.casting ~= nil)
+    player.UpdateCamera(dt)
+    weatherCycle()
+    local w = _G.world.weather()
+    if w.lightning ~= lastThunder then lastThunder = w.lightning end
+end
+
+-- výběr cíle myší: nejbližší nepřítel u kurzoru (levé tlačítko vybere, pravé vybere a zaútočí)
+local rightDown
+local function pick()
+    local mx, my = ui.mouse()
+    local best, bd = nil, 70 * 70
+    for _, m in ipairs(combat.Hostiles()) do
+        local x, y, vis = ui.world_to_screen(m.x, G(m.x, m.z) + 1.0 * (m.t.scale or 1), m.z)
+        if vis then
+            local d = (x - mx) ^ 2 + (y - my) ^ 2
+            if d < bd then best, bd = m, d end
+        end
+    end
+    return best
 end
 
 function on_gui()
+    if mode == "select" then
+        hud.DrawSelect(sel)
+        if sel.changed then sel.changed = false; showPreview() end
+        if sel.enter then sel.enter = false; enterWorld() end
+        return
+    end
+    if mode ~= "play" then return end
+    if not ui.wants_mouse() then
+        if input.pressed("Mouse1") then
+            local m = pick()
+            if m then combat.Select(m) end
+        end
+        if input.pressed("Mouse2") then rightDown = { game.time(), ui.mouse() } end
+        if rightDown and not input.key("Mouse2") then
+            if game.time() - rightDown[1] < 0.3 then
+                local m = pick()
+                if m then combat.Select(m); combat.StartAttack() end
+            end
+            rightDown = nil
+        end
+    end
+    -- jmenovka Lyrise
+    local l = map.Lyrise
+    ui.world_label(l.x, G(l.x, l.z) + 2.6, l.z, quest.step == 1 and "! Archivářka Lyrise" or "Archivářka Lyrise",
+        { color = "#9fc8ff", size = 20, max_distance = 40 })
+    if quest.NearNpc() and not quest.dialog then
+        local sw, sh = ui.screen()
+        ui.font("body"); ui.text(sw / 2, sh - 190, "[F] Mluvit", { align = "center", color = "#ffe8b0", shadow = true }); ui.pop_font()
+    end
+    hud.DrawGame()
+    hud.DrawQuest(quest.Tracker())
+    hud.DrawDialog(quest.dialog)
 end

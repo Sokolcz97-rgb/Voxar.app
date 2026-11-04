@@ -9,12 +9,12 @@ local M = {}
 M.Size = 520                 -- strana mapy (m), střed v 0, 0
 M.LakeY = 2.0                -- hladina jezera
 M.Lake = { x = 0, z = 10, r = 46 }
-M.Start = { x = 4, z = -58 }
+M.Start = { x = 4, z = -80 }
 M.Giant = { x = -112, z = 24 }
 M.Shrine = { x = -78, z = -22 }
 M.Tower = { x = 112, z = 4 }
 M.Rift = { x = 6, z = 132 }
-M.Lyrise = { x = -2, z = -46 }
+M.Lyrise = { x = -3, z = -70 }
 
 local floor, sin, cos, sqrt, max, min, abs = math.floor, math.sin, math.cos, math.sqrt, math.max, math.min, math.abs
 
