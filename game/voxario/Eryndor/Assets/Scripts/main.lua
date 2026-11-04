@@ -6,7 +6,6 @@ local player = require("eryndor.player")
 local combat = require("eryndor.combat")
 local hud = require("eryndor.hud")
 local quest = require("eryndor.quest")
-local outfit = require("eryndor.outfit")
 
 local deg, atan, sqrt = math.deg, math.atan, math.sqrt
 local game_ = { built = false, camera = nil, shot = nil }
@@ -69,50 +68,39 @@ function Selftest()
         game.quit()
         return
     end
-    if only == "chars" then
-        -- postavy vedle sebe s výbavou (show_part) a oblečenými díly z jiných postav (equip)
-        local outfit = require("eryndor.outfit")
-        _G.world.environment({ time_of_day = 16 })
-        local bx, bz = 8, -64
-        local row = {
-            { "knight_sylvaria", { "1H_Sword", "Round_Shield", "Knight_Helmet", "Knight_Cape" } },
-            { "mage_sylvaria", { "2H_Staff", "Mage_Hat", "Mage_Cape" } },
-            { "ranger_sylvaria", { "2H_Crossbow", "Rogue_Cape" } },
-            { "knight_aethel", { "2H_Sword", "Knight_Cape" }, { { "mage_sylvaria", "Mage_Hat" } } },
-            { "warden_aethel", { "2H_Axe", "Barbarian_Hat", "Barbarian_Cape" } },
-            { "engineer_aethel", { "1H_Crossbow", "Knife_Offhand" }, { { "warden_aethel", "Barbarian_Cape" } } },
-            { "cultist", { "Knife", "Knife_Offhand", "Rogue_Cape" } },
-            { "crusher", { "2H_Axe" } },
-            { "lyrise", { "Spellbook_open", "1H_Wand", "Mage_Cape" } },
-        }
+    if only == "humans" then
+        -- realistické postavy (MakeHuman CC0) v animacích přenesených z KayKitu
+        _G.world.environment({ time_of_day = 15.5 })
+        local list = game.env("VOXARIO_HUMANS") or "test_male"
         local ids = {}
-        for i, r in ipairs(row) do
-            local x = bx + (i - 5) * 1.7
-            local id = _G.world.spawn("Models/heroes/" .. r[1] .. ".glb", x, G(x, bz), bz, { yaw = 0, name = r[1],
-                scale = r[1] == "crusher" and 1.2 or 1.0 })
-            outfit.Wear(id, r[1], r[2])
-            for _, e in ipairs(r[3] or {}) do outfit.Equip(id, e[1], e[2]) end
-            ids[i] = id
+        local bx, bz = 8, -82
+        local n = 0
+        for name in list:gmatch("[^,]+") do n = n + 1 end
+        local i = 0
+        local looks = { syl_knight_m = { right = "sword", left = "shield" }, syl_mage_f = { right = "staff" },
+                        aeth_heavy_m = { right = "sword2", helm = true }, aeth_engineer_f = { right = "crossbow", left = "dagger" },
+                        cultist_m = { right = "dagger", left = "dagger" }, crusher = { right = "axe2" }, lyrise = { left = "book" } }
+        for name in list:gmatch("[^,]+") do
+            i = i + 1
+            local x = bx + (i - (n + 1) / 2) * 1.4
+            ids[#ids + 1] = require("eryndor.humans").Spawn(name, x, G(x, bz), bz, looks[name] or {})
         end
-        lookFrom(bx + 1.0, G(bx, bz) + 1.6, bz + 9.0, bx, G(bx, bz) + 1.0, bz)
+        lookFrom(bx + 0.6, G(bx, bz) + 1.45, bz + 2.2 + n * 0.9, bx, G(bx, bz) + 1.0, bz)
         timer.sleep(3)
-        game.log("DILY: " .. table.concat(entity.parts(ids[1]), ", "))
         local function all(clip, t, name)
             for _, id in ipairs(ids) do anim.play(id, clip, 0, not clip:find("Death")) end
             timer.sleep(t); shot(name)
         end
-        all("Idle", 1.0, "c1-klid")
-        all("2H_Melee_Idle", 0.8, "c2-boj-postoj")
-        all("Running_A", 0.2, "c3-beh")
-        all("1H_Melee_Attack_Chop", 0.45, "c4-utok1")
-        all("2H_Melee_Attack_Spin", 0.5, "c5-utok-rotace")
-        all("Spellcasting", 0.5, "c6-kouzlo")
-        all("Block", 0.4, "c7-blok")
-        all("Death_A", 1.6, "c8-pad")
-        lookFrom(bx + 7, G(bx, bz) + 1.4, bz + 1, bx, G(bx, bz) + 1.0, bz)
-        all("Walking_A", 0.3, "c9-chuze-bok")
-        lookFrom(bx - 6.1, G(bx, bz) + 1.5, bz + 3.0, bx - 6.6, G(bx, bz) + 1.3, bz)
-        all("Idle", 0.6, "c10-detail")
+        all("Idle", 1.0, "h1-klid")
+        all("Walking_A", 0.3, "h2-chuze")
+        all("1H_Melee_Attack_Chop", 0.45, "h3-sek")
+        all("2H_Melee_Attack_Spin", 0.5, "h4-rotace")
+        all("Spellcasting", 0.5, "h5-kouzlo")
+        all("Block", 0.4, "h6-blok")
+        lookFrom(bx + 3.2, G(bx, bz) + 1.3, bz + 0.4, bx, G(bx, bz) + 1.0, bz)
+        all("Running_A", 0.25, "h7-beh-bok")
+        lookFrom(bx + 0.25, G(bx, bz) + 1.72, bz + 0.85, bx, G(bx, bz) + 1.62, bz)
+        all("Idle", 0.5, "h8-oblicej")
         game.log("SELFTEST hotovo")
         game.quit()
         return
@@ -157,8 +145,8 @@ local function showPreview()
     if sel.preview then entity.destroy(sel.preview) end
     local c = combat.Classes[sel.index]
     local x, z = map.Start.x, map.Start.z
-    sel.preview = _G.world.spawn("Models/heroes/" .. c.model .. ".glb", x, G(x, z), z, { yaw = 200, name = c.name })
-    outfit.Wear(sel.preview, c.model, c.gear)
+    sel.preview = require("eryndor.humans").Spawn(c.model, x, G(x, z), z, { yaw = 200, name = c.name, right = c.look.right,
+        left = c.look.left, helm = c.look.helm })
     anim.play(sel.preview, "Cheer", 0.1, false, true)
     sel.anim = game.time() + 1.6
     lookFrom(x - 1.2, G(x, z) + 1.5, z - 4.6, x, G(x, z) + 1.0, z)

@@ -2,7 +2,7 @@
 local map = require("eryndor.map")
 local player = require("eryndor.player")
 local combat = require("eryndor.combat")
-local outfit = require("eryndor.outfit")
+local humans = require("eryndor.humans")
 local M = { step = 0, dialog = nil }
 
 local STEPS = {
@@ -15,8 +15,7 @@ local STEPS = {
 
 function M.Spawn()
     local l = map.Lyrise
-    M.npc = _G.world.spawn("Models/heroes/lyrise.glb", l.x, map.HeightAt(l.x, l.z) + 0.25, l.z, { yaw = 160, name = "Archivářka Lyrise" })
-    outfit.Wear(M.npc, "lyrise", { "Spellbook_open", "Mage_Cape" })
+    M.npc = humans.Spawn("lyrise", l.x, map.HeightAt(l.x, l.z) + 0.25, l.z, { yaw = 160, name = "Archivářka Lyrise", left = "book" })
     anim.play(M.npc, "Spellcasting", 0.2, true)
     anim.speed(M.npc, 0.45)
     M.light = _G.world.spawn("light", l.x, map.HeightAt(l.x, l.z) + 2.4, l.z, { light = { color = { 0.4, 0.55, 1.0 }, intensity = 25, range = 10 } })

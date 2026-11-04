@@ -1,7 +1,7 @@
 -- Ozvěna (hráč): kapsle pro pohyb po terénu, model KayKit s výbavou, kamera za zády (MMO).
 --   WASD / šipky pohyb, Shift chůze, Space skok, pravé tlačítko myši otáčí kamerou, kolečko zoom.
 local map = require("eryndor.map")
-local outfit = require("eryndor.outfit")
+local humans = require("eryndor.humans")
 local M = { cam = { yaw = 180, pitch = 18, distance = 7.5 }, facing = 180, speed = 0, moving = false,
             inputEnabled = true, runSpeed = 6.2, walkSpeed = 2.4 }
 
@@ -19,8 +19,8 @@ function M.Create(class, spawn)
     local y = map.HeightAt(x, z)
     M.body = _G.world.spawn("cylinder", x, y + 1.0, z, { visible = false, name = "Player", tag = "player",
         character = { radius = 0.35, height = 1.7, step = 0.45, slope = 50 } })
-    M.view = _G.world.spawn("Models/heroes/" .. class.model .. ".glb", x, y, z, { name = class.name })
-    outfit.Wear(M.view, class.model, class.gear)
+    M.view = humans.Spawn(class.model, x, y, z, { name = class.name, right = class.look.right, left = class.look.left,
+        helm = class.look.helm })
     M.camera = entity.find("Camera")
     M.lamp = _G.world.spawn("light", x, y + 2.5, z, { light = { color = { 1.0, 0.8, 0.6 }, intensity = 8, range = 10, night_only = true } })
     M.anim = nil

@@ -5,7 +5,7 @@
 -- návrat nepřítele na místo (leash) s doplněním života, oživení.
 local map = require("eryndor.map")
 local player = require("eryndor.player")
-local outfit = require("eryndor.outfit")
+local humans = require("eryndor.humans")
 local fx = require("eryndor.fx")
 local M = { mobs = {}, floats = {}, log = {}, target = nil, auto = false }
 
@@ -15,8 +15,8 @@ local GCD = 1.0
 -- ------------------------------------------------------------------ povolání (podle armád z lore)
 M.Classes = {
     {
-        id = "knight", faction = "Sylvaria", name = "Duchovní rytíř", model = "knight_sylvaria",
-        gear = { "1H_Sword", "Round_Shield", "Knight_Helmet", "Knight_Cape" }, combatIdle = "Idle",
+        id = "knight", faction = "Sylvaria", name = "Duchovní rytíř", model = "syl_knight_m",
+        look = { right = "sword", left = "shield", helm = false }, combatIdle = "Idle",
         desc = "Rytíř v lehké, magií protkané zbroji. Drží nepřátele u sebe a chrání spojence.",
         hp = 260, mp = 90, atk = 22, def = 14, range = 2.4, speed = 1.5, combo = { "1H_Melee_Attack_Chop", "1H_Melee_Attack_Slice_Diagonal", "1H_Melee_Attack_Stab" },
         skills = {
@@ -28,8 +28,8 @@ M.Classes = {
         },
     },
     {
-        id = "mage", faction = "Sylvaria", name = "Válečný mág", model = "mage_sylvaria",
-        gear = { "2H_Staff", "Mage_Hat", "Mage_Cape" }, combatIdle = "Idle",
+        id = "mage", faction = "Sylvaria", name = "Válečná mágyně", model = "syl_mage_f",
+        look = { right = "staff" }, combatIdle = "Idle",
         desc = "Ovládá surovou elementární magii Zřídla. Útočí zdálky, je ale zranitelný.",
         hp = 170, mp = 220, atk = 18, def = 6, range = 16, speed = 1.9, ranged = true, matk = 30,
         combo = { "Spellcast_Shoot" },
@@ -42,8 +42,8 @@ M.Classes = {
         },
     },
     {
-        id = "warden", faction = "Aethelgard", name = "Těžkooděnec", model = "knight_aethel",
-        gear = { "2H_Sword", "Knight_Helmet", "Knight_Cape" }, combatIdle = "2H_Melee_Idle",
+        id = "warden", faction = "Aethelgard", name = "Těžkooděnec", model = "aeth_heavy_m",
+        look = { right = "sword2", helm = true }, combatIdle = "2H_Melee_Idle",
         desc = "Disciplína Ocelového slunce v plátové zbroji a s obouručním mečem. Silné, pomalé údery.",
         hp = 300, mp = 80, atk = 28, def = 16, range = 2.6, speed = 2.0, combo = { "2H_Melee_Attack_Chop", "2H_Melee_Attack_Slice", "2H_Melee_Attack_Stab" },
         skills = {
@@ -55,8 +55,8 @@ M.Classes = {
         },
     },
     {
-        id = "engineer", faction = "Aethelgard", name = "Inženýr", model = "engineer_aethel",
-        gear = { "1H_Crossbow", "Knife_Offhand" }, combatIdle = "Idle",
+        id = "engineer", faction = "Aethelgard", name = "Inženýrka", model = "aeth_engineer_f",
+        look = { right = "crossbow", left = "dagger" }, combatIdle = "Idle",
         desc = "Runová kuše a výbušné krystaly. Střílí zdálky a nepřátele zpomaluje.",
         hp = 200, mp = 140, atk = 24, def = 9, range = 18, speed = 1.4, ranged = true,
         combo = { "1H_Ranged_Shoot" },
@@ -74,11 +74,11 @@ M.Classes = {
 M.MobTypes = {
     wolf = { name = "Zkažený vlk", model = "Models/chars/wolf.glb", level = 1, hp = 90, atk = 9, def = 3, range = 1.9, speed = 1.6,
              aggro = 9, run = 6.5, walk = 1.6, xp = 28, anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack1" }, hit = "Hit", death = "Death" }, scale = 1.25 },
-    cultist = { name = "Kultista Prázdnoty", model = "Models/heroes/cultist.glb", level = 3, hp = 150, atk = 13, def = 6, range = 2.0, speed = 1.7,
-                aggro = 11, run = 5.2, walk = 1.5, xp = 55, gear = { "Knife", "Knife_Offhand", "Rogue_Cape" },
+    cultist = { name = "Kultista Prázdnoty", human = "cultist_m", level = 3, hp = 150, atk = 13, def = 6, range = 2.0, speed = 1.7,
+                aggro = 11, run = 5.2, walk = 1.5, xp = 55, look = { right = "dagger", left = "dagger" },
                 anims = { idle = "Idle", walk = "Walking_A", run = "Running_A", attack = { "Dualwield_Melee_Attack_Chop", "Dualwield_Melee_Attack_Slice", "Dualwield_Melee_Attack_Stab" }, hit = "Hit_A", death = "Death_A" } },
-    crusher = { name = "Drtič popela", model = "Models/heroes/crusher.glb", level = 5, hp = 620, atk = 26, def = 14, range = 2.8, speed = 2.4,
-                aggro = 12, run = 4.6, walk = 1.3, xp = 220, elite = true, scale = 1.25, gear = { "2H_Axe" },
+    crusher = { name = "Drtič popela", human = "crusher", level = 5, hp = 620, atk = 26, def = 14, range = 2.8, speed = 2.4,
+                aggro = 12, run = 4.6, walk = 1.3, xp = 220, elite = true, scale = 1.05, look = { right = "axe2" },
                 anims = { idle = "2H_Melee_Idle", walk = "Walking_A", run = "Running_B", attack = { "2H_Melee_Attack_Chop", "2H_Melee_Attack_Spin" }, hit = "Hit_B", death = "Death_B" } },
 }
 
@@ -148,8 +148,12 @@ local function spawnMob(kind, x, z)
     local t = M.MobTypes[kind]
     local m = { kind = kind, t = t, hx = x, hz = z, x = x, z = z, yaw = random() * 360, hp = t.hp, maxhp = t.hp,
                 level = t.level, state = "idle", wanderT = game.time() + random() * 5 }
-    m.id = _G.world.spawn(t.model, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy" })
-    if t.gear then outfit.Wear(m.id, t.model:match("([^/]+)%.glb$"), t.gear) end
+    if t.human then
+        m.id = humans.Spawn(t.human, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
+            right = t.look.right, left = t.look.left })
+    else
+        m.id = _G.world.spawn(t.model, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy" })
+    end
     anim.play(m.id, t.anims.idle, 0.2, true)
     m.anim = t.anims.idle
     M.mobs[#M.mobs + 1] = m

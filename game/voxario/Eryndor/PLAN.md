@@ -46,3 +46,8 @@ voda. Vše přes Voxario Studio Engine.
 - Samotesty: `VOXARIO_SELFTEST_ONLY=game` (výběr, boj, Lyrise), `=chars` (postavy), `=weather`, bez proměnné = lokace a počasí.
 - Ovládání: WASD, Shift chůze, Space skok, pravé tlačítko kamera / klik na nepřítele = útok, levé = cíl, Tab cíl,
   R automatický útok, 1–5 dovednosti, F mluvit, Esc zrušit cíl.
+- Realistické postavy: `ERYNDOR_MH_DIR=<složka s mpfb2 a mhsys> python3 tools/mh_build.py` (MakeHuman CC0: MPFB2 data
+  `src/mpfb/data` z github.com/makehumancommunity/mpfb2 a `makehuman_system_assets_cc0.zip` z files.makehumancommunity.org).
+  Tělo + morfy + kůže + oči/obočí/řasy/vlasy, kostra game_engine, brnění a oděvy na míru tělu (skořepiny z oblastí těla, panely
+  sukní, plášť, tuhé nárameníky a helmy), animace přenesené z KayKit Knight.glb (76 klipů), úchyty zbraní handslot.r/l.
+  Výstup `Assets/Models/humans/*.glb`. Test: `VOXARIO_SELFTEST_ONLY=humans VOXARIO_HUMANS=syl_knight_m,...`.
