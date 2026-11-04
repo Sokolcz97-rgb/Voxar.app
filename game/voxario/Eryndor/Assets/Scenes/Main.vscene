@@ -1,0 +1,14 @@
+{
+  "EngineVersion": "1.9.0",
+  "Entities": [
+    { "Id": 1, "Name": "Game", "Script": "Scripts/main.lua", "Position": [0, 0, 0], "Rotation": [0, 0, 0], "Scale": [1, 1, 1], "Visible": false },
+    { "Id": 2, "Name": "Camera", "Camera": { "Fov": 55.0, "Follow": "", "Offset": [0, 3, 6] },
+      "Position": [0, 12, -80], "Rotation": [-10, 180, 0], "Scale": [1, 1, 1], "Visible": true }
+  ],
+  "Environment": {
+    "DayNight": true, "RealTime": false, "TimeOfDay": 15.0, "DayLengthMinutes": 60.0, "Latitude": 47.0, "DayOfYear": 200,
+    "FogDensity": 0.0022, "FogHeight": 0.0, "FogFalloff": 0.03, "Haze": 0.45, "Stars": 1.0, "Bloom": 0.12,
+    "Vignette": 0.18, "ShadowDistance": 220.0, "NightExposure": 1.6, "SunIntensity": 3.0, "Ambient": 0.4, "Exposure": 0.85
+  },
+  "Timeline": { "Length": 5.0, "Loop": true }
+}

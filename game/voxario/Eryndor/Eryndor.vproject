@@ -1,0 +1,11 @@
+{
+    "EngineVersion": "1.9.0",
+    "MainFile": "Scenes/Main.vscene",
+    "ProjectName": "Eryndor",
+    "ProjectType": "Game",
+    "Settings": {
+        "Graphics": { "DefaultAPI": "Vulkan", "EnableDLSS": true, "GlobalIllumination": "RayTraced" },
+        "Physics": { "Gravity": [0.0, -9.81, 0.0] }
+    },
+    "StartupScene": "Scenes/Main.vscene"
+}
