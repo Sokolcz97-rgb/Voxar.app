@@ -42,6 +42,7 @@ StudioVoxario).
 | `ashes/oddil.lua` | `Social/Oddil.cs` |
 | `ashes/modhost.lua` | `Mods/*` – módy v sandboxu enginu, stejné `eryon.*` a `ui.*` jako v Unity verzi |
 | `ashes/pose.lua` | bojové pózy z `CharacterView.cs` (výpad, zásah, pád); u hrdinů s kostrou kosterní klipy (`anim.*`) |
+| `tools/rig_check.py` | kontrola rigu: deformace na CPU a počet natažených trojúhelníků v každém klipu |
 | `tools/rig_heroes.py` | auto-rig hrdinů: z původních statických modelů `Models/heroes/*.glb` udělá `Models/heroes_rig/*.glb` s kostrou (18 kostí), vahami a klipy Idle, Walk, Run, Attack, Block, Cast, Hit, Cheer, Death |
 | `tools/package-game.sh` | složení hry z VoxarioPlayeru (jako `--build-game`, bez licence editoru – pro CI) |
 | `ashes/options.lua` | nastavení: zobrazení, grafika, zvuk, ovládání, účet |
@@ -75,6 +76,9 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
   vrcholů podle oblastí těla (předmět v ruce jede s rukou) a devět klipů. Hra přehrává Idle / Walk / Run
   podle rychlosti, akce (útok, blok, kouzlo, zásah) jako vrstvu od pasu nahoru, radost a pád přes celé
   tělo. Kontrola: `ASHES_SELFTEST_ONLY=anim` (všech šest modelů v každém klipu).
+  Váhy se po síti modelu vyhlazují (vliv kostí přechází plynule, paže není „přilepená“ k trupu),
+  rekvizity zůstávají tuhé. `python3 tools/rig_check.py <modely> [náhled klipy]` spočítá deformaci
+  jako engine a ukáže natažené trojúhelníky (hra 0.13.1: z 3 000–6 700 na 50–180 na model).
 
 ## Grafika a výkon (beta 0.11.0-beta.4, engine 1.6.0)
 

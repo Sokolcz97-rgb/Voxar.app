@@ -74,6 +74,35 @@ def skeleton(robe):
     return J
 
 
+def welded_tris(P, I):
+    """Trojúhelníky + spojení vrcholů se stejnou polohou (švy UV), ať jde síť projít jako celek."""
+    _, weld = np.unique(np.round(P, 4), axis=0, return_inverse=True)
+    weld = weld.reshape(-1)
+    first = np.full(weld.max() + 1, -1, np.int64)
+    first[weld[::-1]] = np.arange(len(P))[::-1]
+    tris = np.concatenate([I, first[weld[I]]], axis=0)
+    return np.concatenate([tris, np.stack([np.arange(len(P)), first[weld], first[weld]], 1)], axis=0)
+
+
+SMOOTH_ITERS = 120     # vyhlazení vah po síti (rozprostření vlivu kostí, žádné ostré švy)
+SMOOTH_STEP = 0.6
+
+
+def smooth_weights(W, tris, fixed, iters=SMOOTH_ITERS, step=SMOOTH_STEP):
+    """Laplaceovo vyhlazení vah po hranách sítě; pevné vrcholy (rekvizity) se nemění."""
+    e = np.concatenate([tris[:, [0, 1]], tris[:, [1, 2]], tris[:, [2, 0]]], axis=0)
+    e = e[e[:, 0] != e[:, 1]]
+    e = np.concatenate([e, e[:, ::-1]], axis=0)
+    deg = np.bincount(e[:, 0], minlength=len(W)).astype(np.float32)
+    deg[deg == 0] = 1
+    free = (~fixed)[:, None]
+    for _ in range(iters):
+        acc = np.zeros_like(W)
+        np.add.at(acc, e[:, 0], W[e[:, 1]])
+        W = np.where(free, (1 - step) * W + step * acc / deg[:, None], W)
+    return W
+
+
 def ramp(v, a, b):
     """0 pod a, 1 nad b, plynule mezi."""
     t = np.clip((v - a) / max(b - a, 1e-6), 0.0, 1.0)
@@ -197,6 +226,9 @@ def compute_weights(P, joints, y0, H, robe, tris=None, quiver=False, shield=Fals
     add("Head", hm * hw)
     add("Neck", hm * (1 - hw))
 
+    if tris is not None and SMOOTH_ITERS > 0:
+        W = smooth_weights(W, tris, prop)
+
     # 4 nejsilnější kosti na vrchol, normalizace
     order = np.argsort(-W, axis=1)[:, :4]
     ws = np.take_along_axis(W, order, axis=1)
@@ -237,7 +269,22 @@ def env(t, a, b, c, d):
 
 # Znaménka (model hledí k +Z): ruka / noha dopředu = záporná rotace kolem X; trup dopředu = kladná;
 # levá ruka od těla = kladná kolem Z, pravá záporná.
-def clip_pose(name, t, dur, weapon, H):
+def model_opts(name):
+    """Nastavení podle modelu (název souboru bez přípony, např. vestec_m_lo)."""
+    cls, g = name.split("_")[:2]
+    return {
+        "weapon": "left" if cls == "lucistnik" else "right",
+        "robe": cls == "vestec" or g == "f",
+        "quiver": cls == "lucistnik",           # toulec přes pravé rameno
+        "shield": cls == "hoplit" and g == "m",  # kulatý štít na levé paži
+        "drape": cls == "vestec",               # tóga přes levou paži až na zem
+        # tóga: levá paže je zavinutá v látce – hýbe se jen málo, jinak by látku roztrhla
+        # hoplít: pancíř z velkých ploch, paže se štítem a kopím jen s menším rozmachem
+        "calm": {"vestec": {"L": 0.3, "R": 0.85}, "hoplit": {"L": 0.6, "R": 0.65} if g == "m" else {"R": 0.8}}.get(cls, {}),
+    }
+
+
+def clip_pose(name, t, dur, weapon, H, calm=None):
     """Vrací {kost: (rx, ry, rz)} a posun pánve (dy, dz) v čase t."""
     R, T = {}, [0.0, 0.0]
     W = "L" if weapon == "left" else "R"          # zbraňová ruka
@@ -248,6 +295,8 @@ def clip_pose(name, t, dur, weapon, H):
 
     def arm(s, x=0.0, y=0.0, z=0.0, ex=0.0):
         side = 1.0 if s == "L" else -1.0
+        k = (calm or {}).get(s, 1.0)
+        x, y, z, ex = x * k, y * k, z * k, ex * k
         R["UpperArm." + s] = (x, y, z + arms_rest * side)
         R["LowerArm." + s] = (ex, 0, 0)
 
@@ -286,9 +335,10 @@ def clip_pose(name, t, dur, weapon, H):
             u = t / dur
             wind = env(u, 0.0, 0.3, 0.3, 0.45)
             strike = env(u, 0.3, 0.45, 0.65, 1.0)
-            arm(W, 45 * wind - 100 * strike, 0, (25 * wind + 5 * strike) * ws, -35 * wind - 10 * strike)
+            # výpad vpřed (kopí, hůl) – paže nejde nad hlavu, aby se netrhal bok róby / pancíře
+            arm(W, 30 * wind - 70 * strike, 0, (18 * wind + 4 * strike) * ws, -35 * wind + 15 * strike)
             arm(O, -25 * strike, 0, 8 * (1 if O == "L" else -1), -30 * strike)   # štít vpřed
-            R["Spine"] = (10 * strike, (25 * wind - 30 * strike) * ws, 0)
+            R["Spine"] = (12 * strike, (28 * wind - 34 * strike) * ws, 0)
             R["Hips"] = (0, -10 * strike * ws, 0)
             R["UpperLeg." + W] = (-20 * strike, 0, 0)
             R["LowerLeg." + W] = (25 * strike, 0, 0)
@@ -325,7 +375,7 @@ def clip_pose(name, t, dur, weapon, H):
         u = t / dur
         h = env(u, 0.0, 0.2, 0.8, 1.0)
         jump = math.sin(math.pi * min(1.0, max(0.0, (u - 0.15) / 0.5)))
-        arm(W, -125 * h, 0, 10 * ws * h, -10 * h)
+        arm(W, -95 * h, 0, 14 * ws * h, -35 * h)
         arm(O, -30 * h, 0, 20 * (1 if O == "L" else -1) * h, -30 * h)
         R["Spine"] = (-8 * h, 0, 0)
         R["Head"] = (-15 * h, 0, 0)
@@ -386,7 +436,9 @@ class Bin:
         return len(self.accs) - 1
 
 
-def rig(src, dst, weapon, robe):
+def rig(src, dst):
+    opts = model_opts(os.path.splitext(os.path.basename(src))[0])
+    weapon, robe = opts["weapon"], opts["robe"]
     j, bn = load_glb(src)
     prim = j["meshes"][0]["primitives"][0]
     attrs = prim["attributes"]
@@ -400,17 +452,10 @@ def rig(src, dst, weapon, robe):
         world[n] = np.array([x, y0 + fy * H, zz], np.float32)
     idx_acc = prim.get("indices")
     tris = None
-    if idx_acc is not None:   # svařené vrcholy (stejná poloha = stejný bod), ať záplava projde švy UV
-        _, weld = np.unique(np.round(P, 4), axis=0, return_inverse=True)
-        weld = weld.reshape(-1)
-        I = read_acc(j, bn, idx_acc).reshape(-1, 3).astype(np.int64)
-        first = np.full(weld.max() + 1, -1, np.int64)
-        first[weld[::-1]] = np.arange(len(P))[::-1]
-        tris = np.concatenate([I, first[weld[I]]], axis=0)   # trojúhelníky + spojení se svařeným bodem
-        tris = np.concatenate([tris, np.stack([np.arange(len(P)), first[weld], first[weld]], 1)], axis=0)
-    ji, jw = compute_weights(P, joints, y0, H, robe, tris, quiver=weapon == "left",
-                             shield=os.path.basename(src).startswith("hoplit_m"),
-                             drape=os.path.basename(src).startswith("vestec"))   # tóga přes paži
+    if idx_acc is not None:
+        tris = welded_tris(P, read_acc(j, bn, idx_acc).reshape(-1, 3).astype(np.int64))
+    ji, jw = compute_weights(P, joints, y0, H, robe, tris, quiver=opts["quiver"], shield=opts["shield"],
+                             drape=opts["drape"])
 
     out = Bin()
     # původní atributy (rozbalené, bez prokládání)
@@ -461,7 +506,7 @@ def rig(src, dst, weapon, robe):
         hips_t = np.zeros((nf, 3), np.float32)
         for k, t in enumerate(times):
             tt = float(t) if not loop or k < nf - 1 else 0.0   # smyčka: poslední snímek = první
-            R, T = clip_pose(cname, tt, dur, weapon, H)
+            R, T = clip_pose(cname, tt, dur, weapon, H, opts["calm"])
             for n in names:
                 rx, ry, rz = R.get(n, (0, 0, 0))
                 rots[n][k] = quat_euler(rx, ry, rz)
@@ -517,9 +562,7 @@ def main():
                 if not os.path.exists(src):
                     print("chybí", src)
                     continue
-                weapon = "left" if cls == "lucistnik" else "right"
-                robe = cls == "vestec" or g == "f"
-                rig(src, os.path.join(OUT, name), weapon, robe)
+                rig(src, os.path.join(OUT, name))
 
 
 if __name__ == "__main__":
