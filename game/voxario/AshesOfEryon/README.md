@@ -78,7 +78,7 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
   tělo. Kontrola: `ASHES_SELFTEST_ONLY=anim` (všech šest modelů v každém klipu).
   Váhy se po síti modelu vyhlazují (vliv kostí přechází plynule, paže není „přilepená“ k trupu),
   rekvizity zůstávají tuhé. `python3 tools/rig_check.py <modely> [náhled klipy]` spočítá deformaci
-  jako engine a ukáže natažené trojúhelníky (hra 0.13.1: z 3 000–6 700 na 50–180 na model).
+  jako engine a ukáže natažené trojúhelníky (hra 0.13.2: z 3 000–6 700 na 25–110 na model; kouzlo a vítězné gesto jdou předloktím, ne celou paží).
 
 ## Grafika a výkon (beta 0.11.0-beta.4, engine 1.6.0)
 

@@ -280,8 +280,15 @@ def model_opts(name):
         "drape": cls == "vestec",               # tóga přes levou paži až na zem
         # tóga: levá paže je zavinutá v látce – hýbe se jen málo, jinak by látku roztrhla
         # hoplít: pancíř z velkých ploch, paže se štítem a kopím jen s menším rozmachem
-        "calm": {"vestec": {"L": 0.3, "R": 0.85}, "hoplit": {"L": 0.6, "R": 0.65} if g == "m" else {"R": 0.8}}.get(cls, {}),
+        "calm": {"vestec": {"L": 0.3, "R": 0.85, "jump": 0.3, "twist": 0.0}, "hoplit": {"L": 0.6, "R": 0.65} if g == "m" else {"R": 0.8}}.get(cls, {}),
     }
+
+
+# kouzlo a vítězné gesto: (rameno vpřed/nahoru, od těla, loket) – ruka jde nahoru hlavně předloktím,
+# rameno se od trupu odlepí jen málo (paže je s tělem z jednoho kusu)
+# (vybráno měřením tools/rig_check.py: méně natažených trojúhelníků při stále výrazném gestu)
+CAST_ARM = (-55.0, 22.0, -15.0)    # ruce vpřed před hruď, hůl s nimi
+CHEER_ARM = (-60.0, 16.0, -25.0)   # pěst vpřed nahoru k bradě, předloktí pumpuje
 
 
 def clip_pose(name, t, dur, weapon, H, calm=None):
@@ -359,10 +366,11 @@ def clip_pose(name, t, dur, weapon, H, calm=None):
         u = t / dur
         up = env(u, 0.0, 0.35, 0.7, 1.0)
         push = env(u, 0.45, 0.6, 0.7, 1.0)
-        arm("L", -95 * up + 25 * push, 0, 12 * up, -20 * up)
-        arm("R", -95 * up + 25 * push, 0, -12 * up, -20 * up)
-        R["Spine"] = (-10 * up + 14 * push, 0, 0)
-        R["Head"] = (-12 * up + 8 * push, 0, 0)
+        ca, cz, ce = CAST_ARM
+        arm("L", ca * up + 25 * push, 0, cz * up, ce * up)
+        arm("R", ca * up + 25 * push, 0, -cz * up, ce * up)
+        R["Spine"] = (-8 * up + 16 * push, 0, 0)   # nádech, pak vyslání kouzla vpřed
+        R["Head"] = (-10 * up + 8 * push, 0, 0)
         T[0] = 0.02 * H * up
     elif name == "Hit":
         u = env(t / dur, 0.0, 0.2, 0.35, 1.0)
@@ -375,10 +383,18 @@ def clip_pose(name, t, dur, weapon, H, calm=None):
         u = t / dur
         h = env(u, 0.0, 0.2, 0.8, 1.0)
         jump = math.sin(math.pi * min(1.0, max(0.0, (u - 0.15) / 0.5)))
-        arm(W, -95 * h, 0, 14 * ws * h, -35 * h)
+        jump *= (calm or {}).get("jump", 1.0)   # vlečka tógy leží na zemi – věštec jen nadskočí
+        ha, hz, he = CHEER_ARM
+        pump = math.sin(2 * math.pi * 3.0 * u) * env(u, 0.15, 0.3, 0.7, 0.85)   # tři zatnutí pěsti
+        arm(W, (ha - 8 * pump) * h, 0, hz * ws * h, (he - 22 * pump) * h)
         arm(O, -30 * h, 0, 20 * (1 if O == "L" else -1) * h, -30 * h)
-        R["Spine"] = (-8 * h, 0, 0)
-        R["Head"] = (-15 * h, 0, 0)
+        tw = (calm or {}).get("twist", 1.0)       # natočení trupu by táhlo vlečku tógy po zemi
+        R["Spine"] = (-12 * h, 8 * ws * h * tw, 0)    # záklon a natočení k vítězné ruce
+        R["Head"] = (-18 * h, 0, 0)
+        R["UpperLeg.L"] = (-14 * jump, 0, 0)    # poskok s pokrčenými koleny
+        R["UpperLeg.R"] = (-14 * jump, 0, 0)
+        R["LowerLeg.L"] = (26 * jump, 0, 0)
+        R["LowerLeg.R"] = (26 * jump, 0, 0)
         T[0] = 0.12 * H * jump
     elif name == "Death":
         u = sm(t / dur)
