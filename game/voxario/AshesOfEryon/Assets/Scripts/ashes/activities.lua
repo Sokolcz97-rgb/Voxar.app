@@ -30,6 +30,7 @@ local function buildBoss()
     Boss.pose = pose.New()
     Boss.id = world.spawn("Models/heroes/hoplit_m.glb", sx, map.Ground(sx, sz), sz,
         { fit = 1.9, yaw = 200, name = "Thalassos", tag = "enemy" })
+    if entity.set_gait then entity.set_gait(Boss.id, 0, 0, pose.GaitOptions("hoplit_m")) end
     Boss.crew = {}
     for i = 0, 3 do
         local a = i * math.pi / 2 + 0.6
@@ -70,7 +71,7 @@ local function updateBoss(dt)
         for _, c in ipairs(Boss.crew) do entity.set_visible(c.id, alive) end
         if alive then pose.Stand(Boss.pose) end
     end
-    local fwd, dy, pitch, fall = pose.Step(Boss.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(Boss.pose, dt, Boss.id)
     local yr = math.rad(Boss.yaw)
     entity.set_position(Boss.id, Boss.x + math.sin(yr) * fwd, map.Ground(Boss.x, Boss.z) + dy, Boss.z + math.cos(yr) * fwd)
     entity.set_rotation(Boss.id, fall or pitch, Boss.yaw, 0)

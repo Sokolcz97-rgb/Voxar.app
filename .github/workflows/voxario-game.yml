@@ -164,8 +164,11 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
-      # hra se složí přímo tady (bez artefaktů – úložiště artefaktů Actions má limit)
+      # hra se složí přímo tady (bez artefaktů – úložiště artefaktů Actions má limit);
+      # zdrojáky do src/, aby se nepletly se složkou hotové hry "game"
       - uses: actions/checkout@v4
+        with:
+          path: src
 
       - name: Stáhnout Voxario Studio (Windows) a složit hru
         shell: bash
@@ -174,7 +177,7 @@ jobs:
         run: |
           gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D engine
           7z x engine/*.zip -oengine -y > /dev/null
-          $PROJECT/tools/package-game.sh engine game "${{ needs.selftest.outputs.version }}"
+          src/$PROJECT/tools/package-game.sh engine game "${{ needs.selftest.outputs.version }}"
 
       - name: Kontrola balíčku
         shell: pwsh

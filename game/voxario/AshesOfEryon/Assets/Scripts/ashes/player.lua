@@ -19,6 +19,7 @@ local hvx, hvz = 0, 0
 
 -- Vytvoří hráče: model hrdiny (bez kostry – chůze procedurálně) + kapsle pro pohyb po terénu
 function M.Create(cls, gender, name, spawn)
+    M.pose.cast = cls == "vestec"   -- věštec při útoku kouzlí obě rukama
     local h = gender == "f" and 1.55 or 1.62
     local model = "Models/heroes/" .. cls .. "_" .. gender .. ".glb"
     -- kapsle (neviditelná) nese polohu, model ji následuje
@@ -129,7 +130,7 @@ function M.Update(dt, respawnPoint)
     else pose.Gait(M.view, M.walkPhase, M.pose.fallen and 0 or M.speed, M.gait) end
     local bob = math.abs(sin(M.walkPhase)) * min(M.speed, 7) * 0.012
     local lean = min(M.speed, 7) * 1.1
-    local fwd, dy, pitch, fall = pose.Step(M.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(M.pose, dt, M.view)
     local fr = rad(M.facing)
     entity.set_position(M.view, px + sin(fr) * fwd, py + bob + dy, pz + cos(fr) * fwd)
     entity.set_rotation(M.view, fall or (lean + pitch), M.facing, fall and 0 or sin(M.walkPhase) * min(M.speed, 7) * 0.35)

@@ -5,7 +5,9 @@ local M = {}
 
 local X, Y, Z = 0, 0, 0          -- střed podstavce
 local parts, hero, heroKey = nil, nil, nil
-local yaw, spin, dragX = 20, 0, nil   -- 20° = tváří ke kameře, lehce z boku
+local yaw, spin, dragX = 20, 0, nil
+local pose = require("ashes.pose")
+local showT, showAct = nil, nil   -- předvedení útoku / kouzla po změně povolání   -- 20° = tváří ke kameře, lehce z boku
 
 local MARBLE = { 0.8, 0.74, 0.64 }
 local MARBLE_DARK = { 0.55, 0.49, 0.42 }
@@ -65,6 +67,8 @@ function M.Show(cls, gender)
         hero = world.spawn(key, X, Y + 0.54, Z, { fit = (gender == "f") and 1.62 or 1.72, yaw = yaw, name = "Hrdina" })
         heroKey = key
         spin = 1.0   -- krátká otočka při změně
+        if entity.set_gait then entity.set_gait(hero, 0, 0, pose.GaitOptions(key)) end   -- dýchání, rozhlížení
+        showT, showAct = game.time() + 0.7, (cls == "vestec") and "cast" or "attack"
     end
 end
 
@@ -79,7 +83,14 @@ function M.Update(dt, mouseX, mouseDown, overUi)
         yaw = yaw + dt * (6 + 220 * spin)
     end
     spin = math.max(0, spin - dt * 1.6)
-    if hero then entity.set_rotation(hero, 0, yaw, 0) end
+    if hero then
+        entity.set_rotation(hero, 0, yaw, 0)
+        if showT and entity.set_action then
+            local t = (game.time() - showT) / 0.9
+            if t >= 1 then entity.set_action(hero, nil, 0); showT = nil
+            elseif t >= 0 then entity.set_action(hero, showAct, t) end
+        end
+    end
     local cam = entity.find("Camera")
     if cam then
         entity.set_position(cam, X, Y + 1.75, Z + 5.8)

@@ -136,6 +136,8 @@ function M.BuildNpcs(faction)
             local model = "Models/heroes/" .. n.cls .. "_" .. (fem and "f" or "m") .. ".glb"
             local id = world.spawn(model, n.x, Ground(n.x, n.z), n.z, { fit = h, yaw = map.FaceToYaw(n.face),
                 lod = "auto", lod_distance = 30, name = n.name, tag = "npc" })
+            -- stojící NPC dýchají a rozhlížejí se (procedurální pohyb enginu)
+            if entity.set_gait then entity.set_gait(id, 0, 0, pose.GaitOptions(model)) end
             -- kapsle proti procházení (statická)
             world.spawn("cylinder", n.x, Ground(n.x, n.z) + h / 2, n.z, { size = { 0.7, h, 0.7 }, visible = false,
                 collider = "capsule", name = n.name .. " (kolize)", tag = "npc" })

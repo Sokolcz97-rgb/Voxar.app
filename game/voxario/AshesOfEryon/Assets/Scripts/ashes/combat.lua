@@ -207,7 +207,7 @@ local function placeEnemy(e, dt)
     e.phase = e.phase + dt * e.speed * 1.9
     pose.Gait(e.id, e.phase, e.pose.fallen and 0 or e.speed, e.gait)
     local bob = math.abs(math.sin(e.phase)) * min(e.speed, 7) * 0.012
-    local fwd, dy, pitch, fall = pose.Step(e.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(e.pose, dt, e.id)
     local yr = math.rad(e.yaw)
     entity.set_position(e.id, e.x + math.sin(yr) * fwd, map.Ground(e.x, e.z) + bob + dy, e.z + math.cos(yr) * fwd)
     entity.set_rotation(e.id, fall or (min(e.speed, 7) * 1.1 + pitch), e.yaw, 0)
@@ -421,6 +421,7 @@ local function finishLive(L)
         setState(fin.state)
         M.RefreshBeacons()
         M.result = { won = fin.won, xp = fin.xp or 0, gold = fin.gold or 0, levels = fin.levels or 0, quests = fin.quests, item = fin.item }
+        if fin.won then pose.Cheer(player.pose) end
         resultSound()
         if boot.mods then boot.mods.fire("fight_end", fin.won and "won" or "lost", e.def.name) end
         M.fighting = false
@@ -458,6 +459,7 @@ local function updateLive(dt)
     local range = (L.rules.range or 0) > 0 and L.rules.range or 3.2
     -- blok (držet): pomalejší pohyb, ohlásí se na nejbližší úder
     L.blocking = inputOk and keys.Held("block")
+    player.pose.block = L.blocking   -- štít před tělo (animace)
     player.speedMul = L.blocking and 0.4 or 1
     local inWindow = now >= L.swingLandAt - 0.85 and now <= L.swingLandAt + 0.2
     if L.blocking and inWindow and L.defended < L.swingIndex then
@@ -620,7 +622,7 @@ function M.Update(dt)
     updateLive(dt)
     if M.arenaFoe then
         local f = M.arenaFoe
-        local fwd, dy, pitch, fall = pose.Step(f.pose, dt)
+        local fwd, dy, pitch, fall = pose.Step(f.pose, dt, f.id)
         local yr = math.rad(f.yaw)
         entity.set_position(f.id, f.x + math.sin(yr) * fwd, map.Ground(f.x, f.z) + dy, f.z + math.cos(yr) * fwd)
         entity.set_rotation(f.id, fall or pitch, f.yaw, 0)
