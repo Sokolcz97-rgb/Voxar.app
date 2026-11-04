@@ -242,6 +242,43 @@ local function Selftest()
         game.quit()
         return
     end
+    -- jen kosterní animace hrdinů: všech šest modelů vedle sebe v každém klipu (ladění kostry a vah)
+    if game.env and game.env("ASHES_SELFTEST_ONLY") == "anim" then
+        boot.state = TestState()
+        boot.loading = true
+        timer.sleep(0.5)
+        EnterWorld()
+        local G = map.Ground
+        local bx, bz = -40, 30
+        local ids = {}
+        for i, key in ipairs({ "hoplit_m", "hoplit_f", "lucistnik_m", "lucistnik_f", "vestec_m", "vestec_f" }) do
+            local x = bx + (i - 3.5) * 1.6
+            ids[i] = _G.world.spawn("Models/heroes_rig/" .. key .. ".glb", x, G(x, bz), bz, { fit = 1.62, yaw = 0, name = key })
+        end
+        player.Respawn({ x = bx, z = bz - 8 })
+        lookFrom(bx + 1.5, G(bx, bz) + 1.4, bz + 7.5, bx, G(bx, bz) + 0.9, bz)
+        timer.sleep(4)
+        local function each(f) for _, id in ipairs(ids) do f(id) end end
+        each(function(id) anim.play(id, "Idle", 0) end); timer.sleep(1.0); shot("a1-klid")
+        each(function(id) anim.play(id, "Walk", 0) end); timer.sleep(0.25); shot("a2-chuze")
+        each(function(id) anim.play(id, "Run", 0) end); timer.sleep(0.15); shot("a3-beh")
+        each(function(id) anim.play(id, "Idle", 0) end)
+        for _, c in ipairs({ { "Attack", 0.42, "a4-utok" }, { "Block", 0.5, "a5-blok" }, { "Cast", 0.55, "a6-kouzlo" },
+                             { "Hit", 0.16, "a7-zasah" }, { "Cheer", 0.6, "a8-radost" } }) do
+            each(function(id) anim.layer(id, c[1], c[1] == "Cheer" and "Hips" or "Spine", 0.05, c[1] == "Block") end)
+            timer.sleep(c[2]); shot(c[3])
+            each(function(id) anim.stop_layer(id, 0.05) end); timer.sleep(0.6)
+        end
+        each(function(id) anim.play(id, "Death", 0.1, false, true) end); timer.sleep(1.6); shot("a9-pad")
+        -- z boku (krok, výpad)
+        each(function(id) anim.play(id, "Walk", 0) end)
+        lookFrom(bx + 9, G(bx, bz) + 1.2, bz + 1.0, bx, G(bx, bz) + 0.9, bz); timer.sleep(0.3); shot("a10-chuze-bok")
+        each(function(id) anim.play(id, "Idle", 0); anim.layer(id, "Attack", "Spine", 0.05, false) end)
+        timer.sleep(0.42); shot("a11-utok-bok")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     -- jen UI (CI při 2560 × 1440): HUD a nastavení, pak konec
     if game.env and game.env("ASHES_SELFTEST_ONLY") == "ui" then
         boot.state = TestState()

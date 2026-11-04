@@ -50,7 +50,7 @@ end
 
 local function modelPath(cls, gender)
     cls = (cls == "lucistnik" or cls == "vestec") and cls or "hoplit"
-    return "Models/heroes/" .. cls .. "_" .. (gender == "f" and "f" or "m") .. ".glb"
+    return "Models/heroes_rig/" .. cls .. "_" .. (gender == "f" and "f" or "m") .. ".glb"
 end
 
 function M.Active() return parts ~= nil end
@@ -63,12 +63,12 @@ function M.Show(cls, gender)
     end
     local key = modelPath(cls, gender)
     if key ~= heroKey then
-        if hero then entity.destroy(hero) end
+        if hero then entity.destroy(hero); pose.Forget(hero) end
         hero = world.spawn(key, X, Y + 0.54, Z, { fit = (gender == "f") and 1.62 or 1.72, yaw = yaw, name = "Hrdina" })
         heroKey = key
         spin = 1.0   -- krátká otočka při změně
-        if entity.set_gait then entity.set_gait(hero, 0, 0, pose.GaitOptions(key)) end   -- dýchání, rozhlížení
-        showT, showAct = game.time() + 0.7, (cls == "vestec") and "cast" or "attack"
+        pose.Idle(hero, key)   -- kosterní Idle: dýchání, rozhlížení
+        showT, showAct = game.time() + 0.7, (cls == "vestec") and "Cast" or "Attack"
     end
 end
 
@@ -85,10 +85,12 @@ function M.Update(dt, mouseX, mouseDown, overUi)
     spin = math.max(0, spin - dt * 1.6)
     if hero then
         entity.set_rotation(hero, 0, yaw, 0)
-        if showT and entity.set_action then
-            local t = (game.time() - showT) / 0.9
-            if t >= 1 then entity.set_action(hero, nil, 0); showT = nil
-            elseif t >= 0 then entity.set_action(hero, showAct, t) end
+        -- předvedení útoku / kouzla (kosterní klip jako vrstva od pasu nahoru); model se načítá
+        -- asynchronně, takže se čeká, až má klipy
+        if showT and game.time() >= showT and pose.Animated(hero) then
+            anim.play(hero, "Idle", 0.2)
+            anim.layer(hero, showAct, "Spine", 0.1, false)
+            showT = nil
         end
     end
     local cam = entity.find("Camera")
@@ -101,7 +103,7 @@ end
 function M.Hide()
     if not parts then return end
     for _, id in ipairs(parts) do entity.destroy(id) end
-    if hero then entity.destroy(hero) end
+    if hero then entity.destroy(hero); pose.Forget(hero) end
     parts, hero, heroKey = nil, nil, nil
     _G.world.environment({ real_time = true })
 end

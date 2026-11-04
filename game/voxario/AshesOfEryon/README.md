@@ -41,7 +41,8 @@ StudioVoxario).
 | `ashes/feedback.lua` | `Feedback.cs` – hlášení chyb (F1) |
 | `ashes/oddil.lua` | `Social/Oddil.cs` |
 | `ashes/modhost.lua` | `Mods/*` – módy v sandboxu enginu, stejné `eryon.*` a `ui.*` jako v Unity verzi |
-| `ashes/pose.lua` | bojové pózy z `CharacterView.cs` (výpad, zásah, pád) |
+| `ashes/pose.lua` | bojové pózy z `CharacterView.cs` (výpad, zásah, pád); u hrdinů s kostrou kosterní klipy (`anim.*`) |
+| `tools/rig_heroes.py` | auto-rig hrdinů: z původních statických modelů `Models/heroes/*.glb` udělá `Models/heroes_rig/*.glb` s kostrou (18 kostí), vahami a klipy Idle, Walk, Run, Attack, Block, Cast, Hit, Cheer, Death |
 | `tools/package-game.sh` | složení hry z VoxarioPlayeru (jako `--build-game`, bez licence editoru – pro CI) |
 | `ashes/options.lua` | nastavení: zobrazení, grafika, zvuk, ovládání, účet |
 | `ashes/skin.lua` | `EryonSkin.cs` – barvy, písma Cinzel / Cormorant, panely |
@@ -68,7 +69,12 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
 - [x] Krok 9: módy (`Dokumenty/Ashes of Eryon/Mods`, ukázka Deník poutníka, nastavení → Módy, F8).
 - [x] Procedurální chůze nohou (`LegRig.cs`): kroky počítá vertex shader enginu (`entity.set_gait`) – nohy
   v kyčlích s pokrčením kolene, paže proti nohám (ruka se štítem, lukem nebo holí zůstává), u sukní jen
-  lem, čtyřnožci diagonální páry.
+  lem, čtyřnožci diagonální páry. Teď platí jen pro zvířata a modely bez kostry.
+- [x] Kosterní animace hrdinů (hra 0.13.0): `python3 tools/rig_heroes.py` přidá ke statickým modelům
+  kostru (kyčle, páteř, hrudník, krk, hlava, paže, předloktí, ruce, stehna, holeně, chodidla), váhy
+  vrcholů podle oblastí těla (předmět v ruce jede s rukou) a devět klipů. Hra přehrává Idle / Walk / Run
+  podle rychlosti, akce (útok, blok, kouzlo, zásah) jako vrstvu od pasu nahoru, radost a pád přes celé
+  tělo. Kontrola: `ASHES_SELFTEST_ONLY=anim` (všech šest modelů v každém klipu).
 
 ## Grafika a výkon (beta 0.11.0-beta.4, engine 1.6.0)
 

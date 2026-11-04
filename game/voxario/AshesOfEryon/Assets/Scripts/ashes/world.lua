@@ -133,11 +133,11 @@ function M.BuildNpcs(faction)
         if n.faction == faction then
             local fem = n.id == "thalia" or n.id == "sabra"
             local h = (n.id == "eryon" or n.id == "azkar") and 1.85 or (fem and 1.55 or 1.62)
-            local model = "Models/heroes/" .. n.cls .. "_" .. (fem and "f" or "m") .. ".glb"
+            local model = "Models/heroes_rig/" .. n.cls .. "_" .. (fem and "f" or "m") .. ".glb"
             local id = world.spawn(model, n.x, Ground(n.x, n.z), n.z, { fit = h, yaw = map.FaceToYaw(n.face),
                 lod = "auto", lod_distance = 30, name = n.name, tag = "npc" })
-            -- stojící NPC dýchají a rozhlížejí se (procedurální pohyb enginu)
-            if entity.set_gait then entity.set_gait(id, 0, 0, pose.GaitOptions(model)) end
+            -- stojící NPC: kosterní klip Idle (dýchání, přešlapování, rozhlížení)
+            pose.Idle(id, model)
             -- kapsle proti procházení (statická)
             world.spawn("cylinder", n.x, Ground(n.x, n.z) + h / 2, n.z, { size = { 0.7, h, 0.7 }, visible = false,
                 collider = "capsule", name = n.name .. " (kolize)", tag = "npc" })

@@ -28,14 +28,14 @@ local function buildBoss()
     end
     Boss.x, Boss.z, Boss.yaw, Boss.scale = sx, sz, 200, 1.9 / 1.62
     Boss.pose = pose.New()
-    Boss.id = world.spawn("Models/heroes/hoplit_m.glb", sx, map.Ground(sx, sz), sz,
+    Boss.id = world.spawn("Models/heroes_rig/hoplit_m.glb", sx, map.Ground(sx, sz), sz,
         { fit = 1.9, yaw = 200, name = "Thalassos", tag = "enemy" })
-    if entity.set_gait then entity.set_gait(Boss.id, 0, 0, pose.GaitOptions("hoplit_m")) end
+    pose.Idle(Boss.id, "hoplit_m")
     Boss.crew = {}
     for i = 0, 3 do
         local a = i * math.pi / 2 + 0.6
         local x, z = sx + math.cos(a) * 3.2, sz + math.sin(a) * 3.2
-        local id = world.spawn("Models/heroes/" .. (i % 2 == 0 and "lucistnik" or "hoplit") .. "_m.glb", x, map.Ground(x, z), z,
+        local id = world.spawn("Models/heroes_rig/" .. (i % 2 == 0 and "lucistnik" or "hoplit") .. "_m.glb", x, map.Ground(x, z), z,
             { fit = 1.62, yaw = 200 + i * 25, lod = "auto", lod_distance = 20, name = "Pirát", tag = "enemy" })
         Boss.crew[#Boss.crew + 1] = { id = id, x = x, z = z, title = i % 2 == 0 and "Pirátský lukostřelec" or "Pirátský kopiník" }
     end

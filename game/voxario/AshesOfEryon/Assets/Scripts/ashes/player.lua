@@ -21,7 +21,7 @@ local hvx, hvz = 0, 0
 function M.Create(cls, gender, name, spawn)
     M.pose.cast = cls == "vestec"   -- věštec při útoku kouzlí obě rukama
     local h = gender == "f" and 1.55 or 1.62
-    local model = "Models/heroes/" .. cls .. "_" .. gender .. ".glb"
+    local model = "Models/heroes_rig/" .. cls .. "_" .. gender .. ".glb"
     -- kapsle (neviditelná) nese polohu, model ji následuje
     M.body = world.spawn("cylinder", spawn.x, map.Ground(spawn.x, spawn.z) + 0.2, spawn.z,
         { visible = false, name = "Player", tag = "player",
@@ -42,6 +42,7 @@ function M.ReplaceModel(path, height)
     if not M.view then return end
     local x, y, z = M.Position()
     entity.destroy(M.view)
+    pose.Forget(M.view)
     M.view = world.spawn(path, x, y, z, { fit = height or M.height, name = M.name })
     M.gait = pose.GaitOptions(path)
     M.height = height or M.height

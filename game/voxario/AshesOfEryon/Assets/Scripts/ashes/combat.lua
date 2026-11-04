@@ -115,7 +115,7 @@ function M.Build(b, p, h, fac)
             for _ = 1, count do
                 local def = defs[floor(R() * #defs) + 1]
                 local hx, hz = camp[2] + (R() - 0.5) * 6, camp[3] + (R() - 0.5) * 6
-                local id = world.spawn("Models/heroes/" .. def.cls .. "_m.glb", hx, map.Ground(hx, hz), hz,
+                local id = world.spawn("Models/heroes_rig/" .. def.cls .. "_m.glb", hx, map.Ground(hx, hz), hz,
                     { fit = 1.62, lod = "auto", lod_distance = 20, name = def.name, tag = "enemy" })
                 M.enemies[#M.enemies + 1] = { def = def, region = region, id = id, hx = hx, hz = hz, x = hx, z = hz,
                     tx = hx, tz = hz, wait = R() * 3, calmUntil = 0, respawnAt = 0, alive = true, yaw = R() * 360,
@@ -568,7 +568,7 @@ function M.ServerFight(fn, args, opts)
                 local x, z = px + math.sin(fr) * 2.4, pz + math.cos(fr) * 2.4
                 local scale = fn == "ashes_fight_boss" and 1.3 or 1
                 local h = (gender == "f" and 1.55 or 1.62) * scale
-                local id = world.spawn("Models/heroes/" .. (cls or "hoplit") .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
+                local id = world.spawn("Models/heroes_rig/" .. (cls or "hoplit") .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
                     { fit = h, yaw = (player.facing or 0) + 180, name = label, tag = "enemy" })
                 foe = { id = id, pose = pose.New(), x = x, z = z, yaw = (player.facing or 0) + 180, scale = scale, label = label,
                         sub = fn == "ashes_fight_boss" and "strážce kapitoly" or nil }
@@ -608,7 +608,7 @@ local function closeResult()
     local lost = r and not r.won and not r.arena
     M.result = nil
     pose.Stand(player.pose)
-    if M.arenaFoe then entity.destroy(M.arenaFoe.id); M.arenaFoe = nil end
+    if M.arenaFoe then entity.destroy(M.arenaFoe.id); pose.Forget(M.arenaFoe.id); M.arenaFoe = nil end
     if lost then player.Respawn(faction == "legie" and M.RespawnLegie or M.RespawnKalidra) end
 end
 M.CloseResult = closeResult
