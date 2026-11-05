@@ -14,7 +14,7 @@ voda. Vše přes Voxario Studio Engine.
 - [x] A2 Globální vítr (směr, síla, nárazy): tráva, stromy, mraky, vlny vody
 - [x] A2b Oblékání: `entity.show_part`, `entity.parts`, `entity.equip` (díly z jiného modelu na kostře nositele)
 - [ ] A3 Částice (kouzla, jiskry krystalů, světlušky, prach) – `world.particles`
-- [ ] A4 Vydání enginu (1.9.0)
+- [x] A4 Vydání enginu (1.9.0)
 
 ### B. Assety (generátor `tools/eryndor_assets.py`, vlastní tvorba)
 - [x] B1 Postavy: Ozvěna (muž / žena), zbroj Sylvarie a Aethelgardu – kostra od začátku (tuhé díly = bez natažení)
@@ -33,9 +33,9 @@ voda. Vše přes Voxario Studio Engine.
 - [x] C7 Snímky
 
 ### D. Launcher a vydání
-- [ ] D1 Kanál „fantasy“ v launcheru (vlastní složka `…-fantasy`, manifest `unity/latest-fantasy.json`)
-- [ ] D2 Workflow pro sestavení a nahrání Eryndoru do kanálu
-- [ ] D3 Vydání launcheru s novým kanálem
+- [x] D1 Kanál „fantasy“ v launcheru (vlastní složka `…-fantasy`, manifest `unity/latest-fantasy.json`)
+- [x] D2 Workflow pro sestavení a nahrání Eryndoru do kanálu
+- [x] D3 Vydání launcheru s novým kanálem
 
 ## Poznámky
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
@@ -51,3 +51,6 @@ voda. Vše přes Voxario Studio Engine.
   Tělo + morfy + kůže + oči/obočí/řasy/vlasy, kostra game_engine, brnění a oděvy na míru tělu (skořepiny z oblastí těla, panely
   sukní, plášť, tuhé nárameníky a helmy), animace přenesené z KayKit Knight.glb (76 klipů), úchyty zbraní handslot.r/l.
   Výstup `Assets/Models/humans/*.glb`. Test: `VOXARIO_SELFTEST_ONLY=humans VOXARIO_HUMANS=syl_knight_m,...`.
+- Vydáno (2026-11-05): engine v1.9.0, Eryndor 0.1.0 v kanálu Fantasy (unity/latest-fantasy.json), launcher 0.7.0.
+  Vydání: workflow `eryndor-game.yml` (engine_tag, version, publish, publish_launcher).
+- Další kroky (návrhy): částice (A3), více lokací a výprav, ladění 4Story mechanik podle podkladů vlastníka.
