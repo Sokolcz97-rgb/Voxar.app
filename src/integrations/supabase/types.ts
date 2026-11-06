@@ -3499,36 +3499,6 @@ export type Database = {
           },
         ]
       }
-      shop_licenses: {
-        Row: {
-          item_id: string
-          purchase_id: string | null
-          purchased_at: string
-          revoked_at: string | null
-          updated_at: string
-          updates_until: string
-          user_id: string
-        }
-        Insert: {
-          item_id: string
-          purchase_id?: string | null
-          purchased_at?: string
-          revoked_at?: string | null
-          updated_at?: string
-          updates_until: string
-          user_id: string
-        }
-        Update: {
-          item_id?: string
-          purchase_id?: string | null
-          purchased_at?: string
-          revoked_at?: string | null
-          updated_at?: string
-          updates_until?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       shop_items: {
         Row: {
           access_minutes: number | null
@@ -3546,11 +3516,11 @@ export type Database = {
           id: string
           image_url: string | null
           kind: string
-          price_czk: number
-          price_year_czk: number | null
           license_updates_days: number
           pass_month_czk: number | null
           pass_year_czk: number | null
+          price_czk: number
+          price_year_czk: number | null
           product_key: string | null
           sale_mode: string
           sort_order: number
@@ -3573,11 +3543,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           kind?: string
-          price_czk?: number
-          price_year_czk?: number | null
           license_updates_days?: number
           pass_month_czk?: number | null
           pass_year_czk?: number | null
+          price_czk?: number
+          price_year_czk?: number | null
           product_key?: string | null
           sale_mode?: string
           sort_order?: number
@@ -3600,11 +3570,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           kind?: string
-          price_czk?: number
-          price_year_czk?: number | null
           license_updates_days?: number
           pass_month_czk?: number | null
           pass_year_czk?: number | null
+          price_czk?: number
+          price_year_czk?: number | null
           product_key?: string | null
           sale_mode?: string
           sort_order?: number
@@ -3612,6 +3582,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      shop_licenses: {
+        Row: {
+          granted_by: string | null
+          item_id: string
+          note: string | null
+          purchase_id: string | null
+          purchased_at: string
+          revoked_at: string | null
+          updated_at: string
+          updates_until: string
+          user_id: string
+        }
+        Insert: {
+          granted_by?: string | null
+          item_id: string
+          note?: string | null
+          purchase_id?: string | null
+          purchased_at?: string
+          revoked_at?: string | null
+          updated_at?: string
+          updates_until: string
+          user_id: string
+        }
+        Update: {
+          granted_by?: string | null
+          item_id?: string
+          note?: string | null
+          purchase_id?: string | null
+          purchased_at?: string
+          revoked_at?: string | null
+          updated_at?: string
+          updates_until?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_licenses_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_licenses_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "shop_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_purchases: {
         Row: {
@@ -5263,6 +5284,10 @@ export type Database = {
         Returns: boolean
       }
       launcher_auth_cleanup: { Args: never; Returns: undefined }
+      lfg_players_with_game: {
+        Args: { _candidate_ids: string[]; _game_id: string }
+        Returns: string[]
+      }
       mark_conversation_read: {
         Args: { _conversation_id: string }
         Returns: number
@@ -5277,10 +5302,19 @@ export type Database = {
       shop_admin_delete: { Args: { _id: string }; Returns: undefined }
       shop_admin_find_user: {
         Args: { p_query: string }
-        Returns: { email: string; name: string; user_id: string }[]
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
       }
       shop_admin_grant_license: {
-        Args: { p_days: number; p_item: string; p_note?: string | null; p_user: string }
+        Args: {
+          p_days: number
+          p_item: string
+          p_note?: string
+          p_user: string
+        }
         Returns: string
       }
       shop_admin_licenses: {
@@ -5296,10 +5330,20 @@ export type Database = {
           user_id: string
         }[]
       }
-      shop_admin_revoke_license: { Args: { p_item: string; p_user: string }; Returns: undefined }
       shop_admin_reject: { Args: { _id: string }; Returns: undefined }
+      shop_admin_revoke_license: {
+        Args: { p_item: string; p_user: string }
+        Returns: undefined
+      }
       shop_approve_purchase: { Args: { _id: string }; Returns: undefined }
       shop_can_download: { Args: { p_item: string }; Returns: boolean }
+      shop_fulfill_license: {
+        Args: {
+          it: Database["public"]["Tables"]["shop_items"]["Row"]
+          p: Database["public"]["Tables"]["shop_purchases"]["Row"]
+        }
+        Returns: undefined
+      }
       shop_fulfill_purchase: { Args: { _id: string }; Returns: undefined }
       shop_grant_download: {
         Args: { p_item: string; p_minutes: number; p_user: string }
@@ -5308,16 +5352,6 @@ export type Database = {
       shop_license_status: { Args: { p_product: string }; Returns: Json }
       shop_log_download: { Args: { p_item: string }; Returns: undefined }
       shop_mark_refunded: { Args: { _id: string }; Returns: undefined }
-      shop_my_licenses: {
-        Args: never
-        Returns: {
-          can_download: boolean
-          item_id: string
-          purchased_at: string
-          updates_active: boolean
-          updates_until: string
-        }[]
-      }
       shop_my_downloads: {
         Args: never
         Returns: {
@@ -5339,7 +5373,18 @@ export type Database = {
           title: string
         }[]
       }
+      shop_my_licenses: {
+        Args: never
+        Returns: {
+          can_download: boolean
+          item_id: string
+          purchased_at: string
+          updates_active: boolean
+          updates_until: string
+        }[]
+      }
       shop_notify_recipients: { Args: never; Returns: string[] }
+      shop_pass_interval: { Args: { p_period: string }; Returns: string }
       shop_period_interval: { Args: { p_period: string }; Returns: string }
       shop_refund_used: {
         Args: { p_item: string; p_user: string }
@@ -5352,6 +5397,14 @@ export type Database = {
       shop_request_refund: {
         Args: { p_item: string; p_reason?: string }
         Returns: Json
+      }
+      shop_revoke_license_part: {
+        Args: { p: Database["public"]["Tables"]["shop_purchases"]["Row"] }
+        Returns: undefined
+      }
+      shop_revoke_purchase_content: {
+        Args: { p: Database["public"]["Tables"]["shop_purchases"]["Row"] }
+        Returns: undefined
       }
       shop_run_renewals: { Args: never; Returns: number }
       shop_set_auto_renew: {
