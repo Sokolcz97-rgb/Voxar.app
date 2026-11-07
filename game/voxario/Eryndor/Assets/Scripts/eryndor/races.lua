@@ -1,0 +1,121 @@
+-- Hratelné rasy Eryndoru (podle „Rasy a tvorba postavy“): modely z Meshy (image-to-3d z obrázků dokumentace,
+-- vlastní postavy z textu), engine je napasoval na kostru postav (VoxarioImageTo3D --rig-model --pose a-pose),
+-- takže umí všech 76 animací (boj, kouzla, chůze, emoce). Výroba: tools/eryndor_races.sh.
+-- Vzhled = tabulka `a` (ukládá se, posílá ostatním hráčům); Apply ho nasadí na entitu:
+--   tvar těla entity.bone_scale / bone_offset, barevný nádech entity.material_color.
+local M = {}
+
+local function hex(h)
+    return { tonumber(h:sub(2, 3), 16) / 255, tonumber(h:sub(4, 5), 16) / 255, tonumber(h:sub(6, 7), 16) / 255 }
+end
+M.Hex = hex
+
+M.Order = { "clovek", "trpaslik", "elf", "vila", "obr", "kocka" }
+M.Defs = {
+    clovek = { name = "Člověk", tag = "Všestranný dobrodruh", gender = "m", height = 1.0,
+        desc = "Lidé z tábořišť a hraničních pevností. Bez zvláštních darů, ale vytrvalí a přizpůsobiví – hodí se k jakémukoli povolání." },
+    trpaslik = { name = "Trpaslík", tag = "Kovář z hlubin", gender = "m", height = 0.8, shoulders = 1.08,
+        desc = "Malí, ale mohutní mistři výhní a run. Vousy si zdobí kroužky a kladivo nosí jako jiní meč." },
+    elf = { name = "Elf", tag = "Strážkyně lesů", gender = "f", height = 1.04,
+        desc = "Štíhlí strážci prastarých lesů Sylvarie. Bystré oči, tichý krok a luk, který nemine." },
+    vila = { name = "Víla", tag = "Křídla a třpyt", gender = "f", height = 0.78,
+        desc = "Křehké a éterické bytosti s průsvitnými křídly. Magie jim proudí v žilách jako světlo hub v noci." },
+    obr = { name = "Kamenný obr", tag = "Kámen a kožešiny", gender = "m", height = 1.3, shoulders = 1.1,
+        desc = "Obři z hor Frostfang s kůží jako žula. Mohutná ramena a hruď, pomalí, ale nezastavitelní." },
+    kocka = { name = "Kočičí lid", tag = "Hbitý a tichý", gender = "m", height = 0.96,
+        desc = "Hbití kočičí poutníci z pouštních tržišť. Ostré smysly, kápě a dýka vždy po ruce." },
+}
+M.Tints = { "#ffffff", "#ffe2c8", "#d8e8ff", "#e0ffd8", "#ffd8f0", "#d0d0d0", "#fff0b0", "#c8b8ff" }
+
+function M.Default(race)
+    local d = M.Defs[race] or M.Defs.clovek
+    return { v = 2, race = M.Defs[race] and race or "clovek", name = "", cls = 1,
+             height = d.height or 1.0, limbs = 1.0, shoulders = d.shoulders or 1.0, muscle = 1.0, head = 1.0,
+             tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff") }
+end
+
+local function num(v, lo, hi, def)
+    v = tonumber(v) or def
+    return math.max(lo, math.min(hi, v))
+end
+local function col(c, def)
+    if type(c) ~= "table" then return def end
+    return { num(c[1], 0, 1, def[1]), num(c[2], 0, 1, def[2]), num(c[3], 0, 1, def[3]) }
+end
+
+-- ošetří vzhled (z uložení nebo od jiného hráče přes síť)
+function M.Sanitize(a)
+    a = type(a) == "table" and a or {}
+    local d = M.Default(a.race)
+    local r = {}
+    for k, v in pairs(d) do r[k] = v end
+    r.name = type(a.name) == "string" and a.name:sub(1, 24) or ""
+    r.cls = math.floor(num(a.cls, 1, 4, 1))
+    r.height = num(a.height, 0.7, 1.4, d.height)
+    for _, k in ipairs({ "limbs", "shoulders", "muscle", "head" }) do r[k] = num(a[k], 0.8, 1.3, d[k]) end
+    r.tintAmount = num(a.tintAmount, 0, 1, 0)
+    r.glow = num(a.glow, 0, 1, 0)
+    r.tint = col(a.tint, d.tint)
+    r.glowColor = col(a.glowColor, d.glowColor)
+    return r
+end
+
+function M.Model(a) return "Models/races/" .. a.race .. ".glb" end
+function M.Gender(a) return (M.Defs[a.race] or M.Defs.clovek).gender end
+
+-- nasadí vzhled na entitu
+function M.Apply(id, a)
+    -- barevný nádech textury (0 = barvy z modelu) a magická záře
+    entity.material_color(id)
+    local t = a.tintAmount
+    local c = { 1 + (a.tint[1] - 1) * t, 1 + (a.tint[2] - 1) * t, 1 + (a.tint[3] - 1) * t }
+    local e = a.glow > 0.001 and { a.glowColor[1] * a.glow * 0.12, a.glowColor[2] * a.glow * 0.12, a.glowColor[3] * a.glow * 0.12 } or nil
+    if t > 0.001 or e then entity.material_color(id, "*", c, e) end
+
+    -- tvar těla (kosti lidské kostry; stejné měřítko ve všech osách – osy kostí se mezi modely liší)
+    entity.bone_scale(id)
+    local L, S, Mu, H = a.limbs, a.shoulders, a.muscle, a.head
+    if math.abs(a.height - 1) > 0.001 then entity.bone_scale(id, "Root", a.height, a.height, a.height) end
+    if math.abs(L - 1) > 0.001 then
+        for _, b in ipairs({ "upperarm_l", "upperarm_r", "thigh_l", "thigh_r" }) do entity.bone_scale(id, b, L, L, L) end
+        entity.bone_offset(id, "pelvis", 0, (L - 1) * M.LegLift, 0)   -- delší nohy -> pánev výš (chodidla na zemi)
+    end
+    if math.abs(S - 1) > 0.001 then
+        entity.bone_scale(id, "clavicle_l", S, S, S); entity.bone_scale(id, "clavicle_r", S, S, S)
+        entity.bone_scale(id, "spine_03", S, S, S, false)
+    end
+    if math.abs(Mu - 1) > 0.001 then
+        for _, b in ipairs({ "upperarm_l", "upperarm_r", "lowerarm_l", "lowerarm_r", "thigh_l", "thigh_r", "calf_l", "calf_r", "spine_02" }) do
+            entity.bone_scale(id, b, Mu, Mu, Mu, false)
+        end
+    end
+    if math.abs(H - 1) > 0.001 then entity.bone_scale(id, "head", H, H, H, false) end
+end
+M.LegLift = 0.9
+
+-- spawn postavy s rasou, vzhledem a zbraněmi povolání
+function M.Spawn(a, x, y, z, opts)
+    opts = opts or {}
+    local id = _G.world.spawn(M.Model(a), x, y, z, { yaw = opts.yaw or 0, name = opts.name or a.name, tag = opts.tag })
+    local items = require("eryndor.humans").Dress(id, { right = opts.right, left = opts.left })   -- zbraně na handslot
+    M.Apply(id, a)
+    return id, items
+end
+
+-- kompaktní vzhled pro síť (barvy jako hex)
+local function tohex(c) return string.format("#%02x%02x%02x", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5)) end
+function M.Pack(a)
+    local p = {}
+    for k, v in pairs(a) do p[k] = type(v) == "table" and tohex(v) or v end
+    return p
+end
+function M.Unpack(p)
+    if type(p) ~= "table" then return M.Sanitize(nil) end
+    local a = {}
+    for k, v in pairs(p) do
+        if k ~= "name" and type(v) == "string" and v:match("^#%x%x%x%x%x%x$") then a[k] = hex(v) else a[k] = v end
+    end
+    return M.Sanitize(a)
+end
+
+return M

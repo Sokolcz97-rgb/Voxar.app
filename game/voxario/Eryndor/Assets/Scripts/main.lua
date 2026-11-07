@@ -97,6 +97,77 @@ function Selftest()
         game.quit()
         return
     end
+    if only == "creator" then
+        -- tvorba postavy: všechny rasy, tvar těla, nádech a záře, animace
+        local races = require("eryndor.races")
+        local cr = game_.Creator
+        _G.world.environment({ time_of_day = 16 })
+        game_.SetMode("select"); cr.Show()
+        local n = 0
+        local function set(r, tab, fn)
+            cr.a = races.Default(r); cr.a.name = "Tester"; cr.rebuild = true
+            if fn then fn(cr.a) end
+            cr.forceTab, cr.tab = tab, tab
+            timer.sleep(2.5)
+        end
+        local function snap(name) n = n + 1; shot(string.format("c%02d-%s", n, name)) end
+        for _, r in ipairs(races.Order) do
+            set(r, "race"); snap(r)
+            cr.rot = 150; timer.sleep(0.8); snap(r .. "-zezadu"); cr.rot = 0
+        end
+        set("clovek", "body", function(a) a.height, a.shoulders, a.muscle, a.limbs = 1.15, 1.25, 1.28, 1.1 end); snap("telo-mohutne")
+        set("clovek", "body", function(a) a.height, a.shoulders, a.muscle, a.limbs = 0.85, 0.85, 0.82, 0.9 end); snap("telo-stihle")
+        set("vila", "look", function(a) a.glow, a.glowColor = 0.8, races.Hex("#b06cff") end); snap("vzhled-zare")
+        set("obr", "look", function(a) a.tint, a.tintAmount = races.Hex("#d8e8ff"), 0.7 end); snap("vzhled-nadech")
+        set("elf", "race"); cr.Pose("Spellcast_Shoot"); timer.sleep(0.6); snap("animace-kouzlo")
+        set("trpaslik", "race"); cr.Pose(combat.Classes[1].skills[1].anim); timer.sleep(0.5); snap("animace-utok")
+        set("kocka", "race"); cr.Pose("Running_A"); timer.sleep(0.5); snap("animace-beh")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "mp" then
+        -- dva testeři naráz (dvě instance hry): VOXARIO_MP_ROLE = a | b
+        local races = require("eryndor.races")
+        local presence = require("eryndor.presence")
+        local role = game.env("VOXARIO_MP_ROLE") or "a"
+        _G.world.environment({ time_of_day = 15.5 })
+        game_.SetMode("select")
+        local cr = game_.Creator
+        cr.Load()
+        cr.a = races.Default(role == "a" and "obr" or "vila")
+        cr.a.name = role == "a" and "Tester Obr" or "Testerka Víla"
+        cr.a.cls = role == "a" and 1 or 2
+        game_.EnterWorld()
+        local S = map.Start
+        if role == "a" then
+            player.Teleport(S.x + 4, S.z - 6)
+            for i = 1, 60 do   -- chodí sem a tam a útočí
+                timer.sleep(0.5)
+                player.Teleport(S.x + 4 + math.sin(i * 0.3) * 2, S.z - 6)
+                if i % 8 == 0 then player.Action("1H_Melee_Attack_Chop", 0.9) end
+            end
+        else
+            player.Teleport(S.x + 1, S.z - 1)
+            player.cam.yaw = 160
+            local t = 0
+            while presence.count == 0 and t < 40 do timer.sleep(0.5); t = t + 0.5 end
+            game.log("MP: ostatních hráčů = " .. presence.count)
+            timer.sleep(3); shot("m1-dalsi-tester")
+            local o
+            for _, v in pairs(presence.others) do o = v end
+            if o then
+                lookFrom(o.pos[1] - 3, G(o.pos[1], o.pos[2]) + 1.8, o.pos[2] + 3.5, o.pos[1], G(o.pos[1], o.pos[2]) + 1.1, o.pos[2])
+                player.inputEnabled = false
+                game_.freeCam = true
+                timer.sleep(1.5); shot("m2-tester-zblizka")
+                timer.sleep(2.5); shot("m3-tester-utok")
+            end
+        end
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     if only == "spider" or only == "dragon" then
         -- tvor z Creature Forge zblízka: klid, chůze, útok, smrt, ve dne a v noci
         combat.SpawnAll()
@@ -258,36 +329,41 @@ function Selftest()
     game.quit()
 end
 
--- ------------------------------------------------------------------ výběr povolání a vstup do hry
-local sel = { index = 1, changed = true }
+-- ------------------------------------------------------------------ tvorba postavy a vstup do hry
+local creator = require("eryndor.creator")
+local presence = require("eryndor.presence")
 local mode = "select"
+game_.Creator = creator
 
-local function showPreview()
-    if sel.preview then entity.destroy(sel.preview) end
-    local c = combat.Classes[sel.index]
-    local x, z = map.Start.x, map.Start.z
-    sel.preview = require("eryndor.humans").Spawn(c.model, x, G(x, z), z, { yaw = 200, name = c.name, right = c.look.right,
-        left = c.look.left, helm = c.look.helm })
-    anim.play(sel.preview, "Cheer", 0.1, false, true)
-    sel.anim = game.time() + 1.6
-    lookFrom(x - 1.2, G(x, z) + 1.5, z - 4.6, x, G(x, z) + 1.0, z)
-end
+local function showPreview() creator.Show() end
 
 local function enterWorld()
-    if sel.preview then entity.destroy(sel.preview); sel.preview = nil end
-    local c = combat.Classes[sel.index]
-    player.Create(c, map.Start)
+    if not creator.a then creator.Load() end
+    creator.Hide()
+    local a = creator.a
+    if a.name == "" then a.name = require("eryndor.races").Defs[a.race].name:match("^(%S+)") .. " Ozvěna" end
+    local c = combat.Classes[a.cls] or combat.Classes[1]
+    player.Create(c, map.Start, a)
     combat.SetupPlayer(c)
     combat.SpawnAll()
     quest.Spawn()
-    combat.Log("Vítej v Aethelgardu, Ozvěno. Základna Serpentine stojí uprostřed kontinentu.", { 0.8, 0.9, 1.0 })
+    local rname = require("eryndor.races").Defs[a.race].name
+    combat.Log("Vítej v Aethelgardu, " .. a.name .. " (" .. rname .. ", " .. c.name .. ").", { 0.8, 0.9, 1.0 })
     combat.Log("Tab cíl · R útok · 1–5 dovednosti · F mluvit · M mapa · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
     mode = "play"
     game_.mode = mode
+    presence.Start(a)
 end
-game_.EnterWorld = function(i) sel.index = i or sel.index; enterWorld() end
-game_.SetMode = function(m) mode = m; game_.mode = m; sel.changed = false end
-game_.Preview = function(i) sel.index = i; showPreview() end
+game_.EnterWorld = function(i)
+    if not creator.a then creator.Load() end
+    if i then creator.a.cls = i end
+    enterWorld()
+end
+game_.SetMode = function(m) mode = m; game_.mode = m end
+game_.Preview = function(i)
+    creator.Show()
+    if i then creator.a.cls = i; creator.rebuild = true end
+end
 -- (samotest) zpět před vstup: hráč, nepřátelé a Lyrise pryč
 game_.Reset = function()
     for _, m in ipairs(combat.mobs) do entity.destroy(m.id); if m.light then entity.destroy(m.light) end end
@@ -339,10 +415,8 @@ local lastThunder = 0
 function on_update(dt)
     if game_.built then world.Update(dt) end   -- leviatani na moři (i v samotestu)
     if mode ~= "play" and mode ~= "select" then return end
-    if mode == "select" then
-        if sel.anim and game.time() > sel.anim and sel.preview then anim.play(sel.preview, "Idle", 0.3); sel.anim = nil end
-        return
-    end
+    if mode == "select" then creator.Update(dt); return end
+    presence.Update(dt)
     if not ui.wants_keyboard() and not quest.dialog then
         if input.pressed("Tab") then combat.TabTarget() end
         if input.pressed("R") then combat.StartAttack() end
@@ -353,7 +427,7 @@ function on_update(dt)
     end
     combat.Update(dt)
     player.Update(dt, combat.inCombat, combat.moveTo, combat.me and combat.me.casting ~= nil)
-    player.UpdateCamera(dt)
+    if not game_.freeCam then player.UpdateCamera(dt) end
     weatherCycle()
     local w = _G.world.weather()
     if w.lightning ~= lastThunder then lastThunder = w.lightning end
@@ -376,9 +450,8 @@ end
 
 function on_gui()
     if mode == "select" then
-        hud.DrawSelect(sel)
-        if sel.changed then sel.changed = false; showPreview() end
-        if sel.enter then sel.enter = false; enterWorld() end
+        creator.Draw()
+        if creator.enter then creator.enter = false; enterWorld() end
         return
     end
     if mode ~= "play" then return end
@@ -404,6 +477,7 @@ function on_gui()
         local sw, sh = ui.screen()
         ui.font("body"); ui.text(sw / 2, sh - 190, "[F] Mluvit", { align = "center", color = "#ffe8b0", shadow = true }); ui.pop_font()
     end
+    presence.DrawLabels()
     hud.DrawGame()
     hud.DrawQuest(quest.Tracker())
     hud.DrawDialog(quest.dialog)
