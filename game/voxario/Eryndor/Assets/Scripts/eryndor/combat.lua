@@ -80,6 +80,13 @@ M.MobTypes = {
     crusher = { name = "Drtič popela", human = "crusher", level = 5, hp = 620, atk = 26, def = 14, range = 2.8, speed = 2.4,
                 aggro = 12, run = 4.6, walk = 1.3, xp = 220, elite = true, scale = 1.05, look = { right = "axe2" },
                 anims = { idle = "2H_Melee_Idle", walk = "Walking_A", run = "Running_B", attack = { "2H_Melee_Attack_Chop", "2H_Melee_Attack_Spin" }, hit = "Hit_B", death = "Death_B" } },
+    -- tvor z Creature Forge (VoxarioCreatureForge, tools/creatures/lavovy_pavouk.creature.json): kamenný zadeček
+    -- s lávovými prasklinami, žhnoucí klouby, oči a klepítka; vlastní kostra a klipy, kolem sebe svítí
+    spider = { name = "Lávový pavouk", model = "Models/chars/lavovy_pavouk.glb", level = 4, hp = 380, atk = 19, def = 10, range = 2.6,
+               speed = 2.1, aggro = 11, run = 5.5, walk = 1.5, xp = 140, scale = 0.85, lod = true,
+               attackTime = 1.05, hitDelay = 0.62, hitBone = "Cephalothorax",
+               light = { color = { 1, 0.32, 0.06 }, intensity = 7, range = 7, flicker = true },
+               anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack" }, hit = "Hit", death = "Death" } },
 }
 
 -- rozmístění podle lore: Zkažení u okraje lesa a louky, kultisté kolem trhliny, Drtič u trhliny
@@ -87,6 +94,8 @@ local SPAWNS = {
     { "wolf", 26, -62 }, { "wolf", 36, -56 }, { "wolf", 18, -50 }, { "wolf", 40, -70 }, { "wolf", -30, 58 }, { "wolf", -22, 66 }, { "wolf", 44, 60 },
     { "wolf", 52, 70 }, { "cultist", -14, 112 }, { "cultist", 22, 110 }, { "cultist", 30, 128 }, { "cultist", -20, 132 },
     { "crusher", 6, 146 },
+    -- popelavé návrší (sopečné skály mezi táborem Aethelgardu a trhlinou): hnízdo lávových pavouků
+    { "spider", 78, 88 }, { "spider", 92, 74 }, { "spider", 66, 102 },
 }
 
 local function pos(id) return player.Pos(id) end
@@ -152,8 +161,10 @@ local function spawnMob(kind, x, z)
         m.id = humans.Spawn(t.human, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
             right = t.look.right, left = t.look.left })
     else
-        m.id = _G.world.spawn(t.model, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy" })
+        m.id = _G.world.spawn(t.model, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
+            lod = t.lod and "auto" or nil, lod_distance = 30 })
     end
+    if t.light then m.light = _G.world.spawn("light", x, map.HeightAt(x, z) + 0.6, z, { light = t.light }) end
     anim.play(m.id, t.anims.idle, 0.2, true)
     m.anim = t.anims.idle
     M.mobs[#M.mobs + 1] = m
@@ -207,7 +218,7 @@ local function damageMob(m, mult, magic, skill)
         if M.onKill then M.onKill(m) end
         if M.target == m then M.target, M.auto = nil, false end
     elseif random() < 0.35 then
-        anim.layer(m.id, m.t.anims.hit, "spine", 0.06, false)
+        anim.layer(m.id, m.t.anims.hit, m.t.hitBone or "spine", 0.06, false)
     end
 end
 
@@ -468,8 +479,10 @@ end
 function M.UpdateMob(m, dt, now, px, pz)
     local t = m.t
     if m.state == "dead" then
+        if m.light and now - m.deadT > 1.2 then entity.set_visible(m.light, false) end   -- žár po smrti vyhasne
         if now - m.deadT > 22 then   -- respawn na původním místě
             m.x, m.z, m.hp, m.state, m.aggro = m.hx, m.hz, m.maxhp, "idle", false
+            if m.light then entity.set_visible(m.light, true); entity.set_position(m.light, m.x, map.HeightAt(m.x, m.z) + 0.6, m.z) end
             entity.set_position(m.id, m.x, map.HeightAt(m.x, m.z), m.z)
             mobPlay(m, t.anims.idle, true, true)
         end
@@ -508,8 +521,8 @@ function M.UpdateMob(m, dt, now, px, pz)
             m.nextAttack = now + t.speed
             local clips = t.anims.attack
             mobPlay(m, clips[random(#clips)], false, true)
-            m.actionT = now + 0.8
-            m.hitT = now + 0.35
+            m.actionT = now + (t.attackTime or 0.8)
+            m.hitT = now + (t.hitDelay or 0.35)
         end
         m.yaw = deg(atan(px - m.x, pz - m.z))
     elseif m.state == "return" then
@@ -532,6 +545,7 @@ function M.UpdateMob(m, dt, now, px, pz)
     end
     entity.set_position(m.id, m.x, map.HeightAt(m.x, m.z), m.z)
     entity.set_rotation(m.id, 0, m.yaw, 0)
+    if m.light then entity.set_position(m.light, m.x, map.HeightAt(m.x, m.z) + 0.6, m.z) end
     if not (m.actionT and now < m.actionT) then
         if spd > 3 then mobPlay(m, t.anims.run)
         elseif spd > 0.2 then mobPlay(m, t.anims.walk)

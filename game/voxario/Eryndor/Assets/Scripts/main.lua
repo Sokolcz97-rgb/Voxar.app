@@ -64,6 +64,37 @@ function Selftest()
         combat.TabTarget(); combat.UseSkill(1)
         timer.sleep(0.8); shot("g7-mag-sesilani")
         timer.sleep(2.5); shot("g8-mag-boj")
+        -- rytíř proti lávovému pavoukovi (Creature Forge) na popelavém návrší
+        game_.Reset()
+        game_.EnterWorld(1)
+        player.Teleport(68, 76); player.cam.yaw = 40
+        timer.sleep(2.5); shot("g9-lavovy-pavouk")
+        combat.TabTarget(); combat.StartAttack()
+        timer.sleep(3.0); shot("g10-boj-s-pavoukem")
+        combat.UseSkill(1); timer.sleep(0.5); shot("g11-uder-zridla-pavouk")
+        timer.sleep(3.5); shot("g12-pavouk-utoci")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "spider" then
+        -- lávový pavouk zblízka: klid, chůze, útok, smrt, ve dne a v noci
+        combat.SpawnAll()
+        local sp
+        for _, m in ipairs(combat.mobs) do if m.kind == "spider" then sp = m; break end end
+        local x, z = sp.x, sp.z
+        entity.set_rotation(sp.id, 0, 215, 0)
+        local function at(name, dx, dy, dz, wait) lookFrom(x + dx, G(x, z) + dy, z + dz, x, G(x, z) + 0.7, z); timer.sleep(wait or 1.5); shot(name) end
+        at("s1-pavouk", -3.6, 1.8, -3.4, 3)
+        at("s2-pavouk-bok", -4.4, 1.4, 0.6)
+        at("s3-pavouk-oci", -1.4, 1.0, -2.0)
+        anim.play(sp.id, "Walk", 0.1, true, true); at("s4-chuze", -3.6, 1.8, -3.4, 0.5)
+        anim.play(sp.id, "Attack", 0.05, false, true); at("s5-utok", -3.6, 1.8, -3.4, 0.42)
+        anim.play(sp.id, "Death", 0.1, false, true); at("s6-smrt", -3.6, 1.8, -3.4, 1.6)
+        anim.play(sp.id, "Idle", 0.1, true, true)
+        _G.world.environment({ time_of_day = 22.5 })
+        at("s7-pavouk-noc", -3.6, 1.8, -3.4, 3)
+        at("s8-hnizdo-noc", -14, 6, -14, 1.5)
         game.log("SELFTEST hotovo")
         game.quit()
         return
@@ -169,7 +200,7 @@ game_.SetMode = function(m) mode = m; game_.mode = m; sel.changed = false end
 game_.Preview = function(i) sel.index = i; showPreview() end
 -- (samotest) zpět před vstup: hráč, nepřátelé a Lyrise pryč
 game_.Reset = function()
-    for _, m in ipairs(combat.mobs) do entity.destroy(m.id) end
+    for _, m in ipairs(combat.mobs) do entity.destroy(m.id); if m.light then entity.destroy(m.light) end end
     combat.mobs, combat.target, combat.auto, combat.floats = {}, nil, false, {}
     if player.view then entity.destroy(player.view); entity.destroy(player.body); entity.destroy(player.lamp) end
     if quest.npc then entity.destroy(quest.npc); entity.destroy(quest.light) end

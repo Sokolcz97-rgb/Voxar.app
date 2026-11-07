@@ -21,6 +21,10 @@ voda. Vše přes Voxario Studio Engine.
 - [x] B2 Nepřátelé: Zkažený vlk (krystaly Umbria), Kultista Prázdnoty, Drtič popela
 - [x] B3 Krajina: obří živý strom, bioluminiscenční houby a kapradí, krystaly Aetheria, skály, bílý mramor
 - [x] B4 Stavby: sylvarská mramorová svatyně, aethelgardská železná strážní věž s ozubenými koly, Stínová trhlina
+- [x] B5 Lávový pavouk (Creature Forge enginu): `tools/creatures/lavovy_pavouk.creature.json` →
+      `VoxarioCreatureForge … Assets/Models/chars/lavovy_pavouk.glb --lod …_lo.glb` (kostra, klipy Idle/Walk/Run/Attack/Hit/Death,
+      lávové praskliny a žhnoucí klouby jako emise). Ve hře `spider` v `eryndor/combat.lua`: úroveň 4, hnízdo na popelavém
+      návrší (78, 88), (92, 74), (66, 102), svítí kolem sebe. Samotest `VOXARIO_SELFTEST_ONLY=spider`, v `game` záběry g9–g12.
 
 ### C. Hra `game/voxario/Eryndor`
 - [x] C1 Kostra projektu (game.vgame, main.lua, balení, samotest)

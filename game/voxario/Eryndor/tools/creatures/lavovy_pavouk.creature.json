@@ -1,0 +1,39 @@
+{
+  "name": "LavovyPavouk",
+  "archetype": "arachnid",
+  "seed": 1337,
+  "scale": 1.0,
+  "body_radius": 0.34,
+  "abdomen_radius": 0.8,
+  "abdomen_lift": 0.32,
+  "leg_length": 1.0,
+  "leg_thickness": 1.05,
+  "spikes": 1.35,
+  "plates": 26,
+  "bristles": 1.0,
+  "shell_color": [
+    0.04,
+    0.036,
+    0.034
+  ],
+  "rock_color": [
+    0.08,
+    0.074,
+    0.068
+  ],
+  "glow_color": [
+    1.0,
+    0.2,
+    0.015
+  ],
+  "eye_color": [
+    1.0,
+    0.12,
+    0.02
+  ],
+  "glow_strength": 2.2,
+  "crack_width": 0.05,
+  "roughness": 0.6,
+  "metallic": 0.05,
+  "texture_size": 1024
+}
