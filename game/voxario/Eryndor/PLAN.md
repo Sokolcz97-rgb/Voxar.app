@@ -33,6 +33,11 @@ voda. Vše přes Voxario Studio Engine.
       napasovaný na kostru draka: `VoxarioImageTo3D ledovy_drak.jpg ledovy_drak.glb --rig ledovy_drak.creature.json --glow 4`.
       LOD `_lo`: `gltf-transform simplify --ratio 0.25 --error 0.002` + `resize 1024` (~44k trojúhelníků).
       Kostra a 8 klipů zůstávají z Creature Forge. Záře prasklin: `--glow 4` (emisní mapa z namalované azurové).
+- [x] A6 Textury z listu přírodních textur (`tools/textures/prirodni_textury.jpg` → `tools/eryndor_textures.sh <engine/bin>`,
+      `VoxarioTextureTool`: výřez, navazující dlaždice, vyrovnaný jas): terén (tráva, tyrkysový mech Sylvarie, hlína
+      Aethelgardu, skála), dno jezera (písek), stromy a smrky (kůra, listí), obří strom (bělavá kůra, tyrkysové listí),
+      kameny a kamenné díly staveb (skála). Modely: `meshkit.write_glb` umí `texture` + UV promítnutím ze tří stran.
+      Nepoužité zatím: voda, mrak, slunce, úplněk, oheň, blesk, vítr, krystaly (efekty a obloha), sníh a led, láva.
 - [x] A5 Realistické vykreslování (`world.environment{style = "realistic"}`): fyzikální PBR + SSAO, textury drsnosti,
       průsvitné materiály (engine, větev `claude/creature-forge-ice-dragon`). Eryndor ho zapíná v `on_start`.
       Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
