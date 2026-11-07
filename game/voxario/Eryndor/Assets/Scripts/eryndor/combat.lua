@@ -87,6 +87,13 @@ M.MobTypes = {
                attackTime = 1.05, hitDelay = 0.62, hitBone = "Cephalothorax",
                light = { color = { 1, 0.32, 0.06 }, intensity = 7, range = 7, flicker = true },
                anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack" }, hit = "Hit", death = "Death" } },
+    -- ledový drak z Creature Forge (tools/creatures/ledovy_drak.creature.json): elitní strážce severních skal,
+    -- průsvitná ledová křídla, krystaly, žhnoucí praskliny; při zahlédnutí hráče zařve (Roar)
+    dragon = { name = "Ledový drak", model = "Models/chars/ledovy_drak.glb", level = 6, hp = 1600, atk = 30, def = 16, range = 4.2,
+               speed = 2.6, aggro = 16, run = 6.0, walk = 1.8, xp = 520, elite = true, scale = 0.8, lod = true, labelY = 5.4,
+               attackTime = 1.25, hitDelay = 0.62, hitBone = "Pelvis", aggroTime = 2.0,
+               light = { color = { 0.35, 0.7, 1.0 }, intensity = 10, range = 11, flicker = false },
+               anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack" }, hit = "Hit", death = "Death", aggro = "Roar" } },
 }
 
 -- rozmístění podle lore: Zkažení u okraje lesa a louky, kultisté kolem trhliny, Drtič u trhliny
@@ -96,6 +103,8 @@ local SPAWNS = {
     { "crusher", 6, 146 },
     -- popelavé návrší (sopečné skály mezi táborem Aethelgardu a trhlinou): hnízdo lávových pavouků
     { "spider", 78, 88 }, { "spider", 92, 74 }, { "spider", 66, 102 },
+    -- severozápadní skály nad lesem: ledový drak
+    { "dragon", -58, 152 },
 }
 
 local function pos(id) return player.Pos(id) end
@@ -488,13 +497,21 @@ function M.UpdateMob(m, dt, now, px, pz)
         end
         return
     end
-    local stunned = m.stunT and now < m.stunT
+    local stunned = (m.stunT and now < m.stunT) or (m.holdT and now < m.holdT)
     local speedMul = (m.slowT and now < m.slowT) and 0.5 or 1
     local d = sqrt(dist2(px, pz, m.x, m.z))
     local home = sqrt(dist2(m.hx, m.hz, m.x, m.z))
     local moveX, moveZ, spd = 0, 0, 0
     if m.state == "idle" then
-        if not player.dead and d < t.aggro then m.state = "chase"; m.aggro = true end
+        if not player.dead and d < t.aggro then
+            m.state = "chase"; m.aggro = true
+            if t.anims.aggro then   -- řev: chvíli stojí, pak vyrazí
+                mobPlay(m, t.anims.aggro, false, true)
+                m.actionT = now + (t.aggroTime or 1.5)
+                m.holdT = now + (t.aggroTime or 1.5)   -- stojí (není omráčený)
+                m.yaw = deg(atan(px - m.x, pz - m.z))
+            end
+        end
         if now > m.wanderT then
             m.wanderT = now + 4 + random() * 6
             local a = random() * 2 * pi

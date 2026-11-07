@@ -25,6 +25,14 @@ voda. Vše přes Voxario Studio Engine.
       `VoxarioCreatureForge … Assets/Models/chars/lavovy_pavouk.glb --lod …_lo.glb` (kostra, klipy Idle/Walk/Run/Attack/Hit/Death,
       lávové praskliny a žhnoucí klouby jako emise). Ve hře `spider` v `eryndor/combat.lua`: úroveň 4, hnízdo na popelavém
       návrší (78, 88), (92, 74), (66, 102), svítí kolem sebe. Samotest `VOXARIO_SELFTEST_ONLY=spider`, v `game` záběry g9–g12.
+- [x] B6 Ledový drak (Creature Forge, archetyp `dragon`): `tools/creatures/ledovy_drak.creature.json` →
+      `Assets/Models/chars/ledovy_drak.glb` (+ `_lo`): 3 materiály (šupiny s normálovou a ORM mapou, průsvitný led,
+      průsvitná blána), 32 kostí, klipy Idle/Walk/Run/Flap/Attack/Roar/Hit/Death. Ve hře `dragon` (elita, úroveň 6) na
+      severozápadních skalách (−58, 152), při zahlédnutí hráče zařve. Samotest `VOXARIO_SELFTEST_ONLY=dragon`, v `game` g13–g16.
+- [x] A5 Realistické vykreslování (`world.environment{style = "realistic"}`): fyzikální PBR + SSAO, textury drsnosti,
+      průsvitné materiály (engine, větev `claude/creature-forge-ice-dragon`). Eryndor ho zapíná v `on_start`.
+      Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
+      nové assety.
 
 ### C. Hra `game/voxario/Eryndor`
 - [x] C1 Kostra projektu (game.vgame, main.lua, balení, samotest)

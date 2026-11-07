@@ -1,0 +1,21 @@
+{
+  "name": "LedovyDrak",
+  "archetype": "dragon",
+  "seed": 2077,
+  "scale": 1.0,
+  "neck_length": 0.8,
+  "tail_length": 1.0,
+  "wing_span": 1.0,
+  "horns": 1.0,
+  "spikes": 1.0,
+  "shell_color": [0.020, 0.040, 0.130],
+  "crystal_color": [0.55, 0.78, 0.97],
+  "membrane_color": [0.09, 0.24, 0.52],
+  "glow_color": [0.15, 0.55, 1.0],
+  "eye_color": [0.08, 0.5, 1.0],
+  "glow_strength": 3.0,
+  "crack_width": 0.06,
+  "roughness": 0.45,
+  "metallic": 0.0,
+  "texture_size": 2048
+}

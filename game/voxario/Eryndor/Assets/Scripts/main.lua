@@ -73,15 +73,46 @@ function Selftest()
         timer.sleep(3.0); shot("g10-boj-s-pavoukem")
         combat.UseSkill(1); timer.sleep(0.5); shot("g11-uder-zridla-pavouk")
         timer.sleep(3.5); shot("g12-pavouk-utoci")
+        -- ledový drak (elitní, Creature Forge): řev při zahlédnutí, boj
+        game_.Reset()
+        game_.EnterWorld(3)
+        player.Teleport(-46, 138); player.cam.yaw = -40
+        timer.sleep(2.5); shot("g13-ledovy-drak")
+        combat.TabTarget(); combat.StartAttack()
+        timer.sleep(1.2); shot("g14-drak-rve")
+        timer.sleep(3.0); shot("g15-boj-s-drakem")
+        combat.UseSkill(1); timer.sleep(0.5); shot("g16-drak-utok")
         game.log("SELFTEST hotovo")
         game.quit()
         return
     end
-    if only == "spider" then
-        -- lávový pavouk zblízka: klid, chůze, útok, smrt, ve dne a v noci
+    if only == "spider" or only == "dragon" then
+        -- tvor z Creature Forge zblízka: klid, chůze, útok, smrt, ve dne a v noci
         combat.SpawnAll()
         local sp
-        for _, m in ipairs(combat.mobs) do if m.kind == "spider" then sp = m; break end end
+        for _, m in ipairs(combat.mobs) do if m.kind == only then sp = m; break end end
+        if only == "dragon" then
+            local x, z = sp.x, sp.z
+            local function at(name, dx, dy, dz, ty, wait)
+                lookFrom(x + dx, G(x, z) + dy, z + dz, x, G(x, z) + ty, z); timer.sleep(wait or 1.5); shot(name)
+            end
+            entity.set_rotation(sp.id, 0, 200, 0)
+            at("d1-drak", -6.5, 3.2, -7.5, 2.2, 3)
+            at("d2-drak-bok", -9.5, 2.6, 1.5, 2.2)
+            at("d3-drak-hlava", -2.4, 4.0, -4.8, 3.6)
+            anim.play(sp.id, "Roar", 0.1, false, true); at("d4-rev", -6.5, 3.2, -7.5, 2.4, 0.8)
+            anim.play(sp.id, "Flap", 0.1, true, true); at("d5-kridla", -6.5, 3.2, -7.5, 2.4, 0.45)
+            anim.play(sp.id, "Attack", 0.05, false, true); at("d6-utok", -6.5, 3.2, -7.5, 2.2, 0.62)
+            anim.play(sp.id, "Idle", 0.1, true, true)
+            _G.world.weather({ snow = 0.8, wind = 0.5, instant = true })
+            at("d7-snezeni", -6.5, 3.2, -7.5, 2.2, 2)
+            _G.world.weather({ snow = 0, wind = 0.25, instant = true })
+            _G.world.environment({ time_of_day = 22.5 })
+            at("d8-drak-noc", -6.5, 3.2, -7.5, 2.2, 3)
+            game.log("SELFTEST hotovo")
+            game.quit()
+            return
+        end
         local x, z = sp.x, sp.z
         entity.set_rotation(sp.id, 0, 215, 0)
         local function at(name, dx, dy, dz, wait) lookFrom(x + dx, G(x, z) + dy, z + dz, x, G(x, z) + 0.7, z); timer.sleep(wait or 1.5); shot(name) end
@@ -223,7 +254,8 @@ function on_start()
     hud.Init()
     _G.world.environment({ day_night = true, real_time = false, time_of_day = 15, day_length = 60, fog = 0.0022,
                            shadow_distance = 220, haze = 0.45, exposure = 0.85, night_exposure = 1.6,
-                           contrast = 1.1, saturation = 1.22, clouds = 0.45, bloom = 0.12 })
+                           contrast = 1.1, saturation = 1.22, clouds = 0.45, bloom = 0.12,
+                           style = "realistic" })   -- realistické vykreslování enginu (fyzikální PBR + SSAO)
     world.Build()
     game_.built = true
     if game.custom_pause then game.custom_pause(true) end
