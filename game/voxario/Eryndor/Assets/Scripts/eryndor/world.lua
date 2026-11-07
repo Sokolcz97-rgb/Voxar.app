@@ -95,8 +95,10 @@ function M.BuildTerrain()
                    { texture = "Textures/terrain/ametyst.jpg", color = c255(140, 80, 180) } } }) -- 8 ametyst (Crystalarium)
     -- Azure Ocean + Serpentine River: jedna hladina v úrovni moře kolem kamery až k obzoru; voda se kreslí jen tam,
     -- kde je terén pod hladinou (koryto řeky je vyhloubené pod úroveň moře), dno mělčin je písek
-    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.32, 0.72, 0.95 }, wave = 0.22, wavelength = 11, foam = 0.45,
-        shallow = 6, bed = "Textures/terrain/pisek.jpg" })
+    -- kreslený styl (Herní dokumentace: Azurový oceán): pásma smaragd / tyrkys / námořnická modř, bílé kudrlinky pěny,
+    -- pod hladinou zářící korály
+    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.62, 0.66, 0.66 }, wave = 0.3, wavelength = 12, foam = 0.6,
+        shallow = 6, bed = "Textures/terrain/pisek.jpg", style = "stylized" })
 end
 
 -- mosty přes Serpentine River (dřevěná mostovka na kamenných pilířích, s kolizí)
@@ -247,6 +249,73 @@ function M.BuildCrystalarium()
     end
 end
 
+-- Azure Ocean: korálové útesy u pobřeží, mořská monstra (Coral Siren, Razorfin Eel – boj) a Abyssal Leviathan
+-- (obři kroužící na otevřeném moři). Modely: tools/eryndor_sea.py (kreslený styl s obrysy).
+M.Leviathans = {}
+function M.BuildOcean()
+    -- útesy: zářící korály vystupující z mělčin (−1.6 až −0.2 m pod hladinou)
+    for k = 0, 2 do
+        W.instances("Models/sea/coral_" .. k .. ".glb", scatter(500, "ob", { hmin = -1.6, hmax = -0.2, slope = 0.5, smin = 0.8, smax = 1.8,
+            sink = 0.3, tries = 30 }), { distance = 700 })
+    end
+    -- sirény na mělčinách u pobřeží, úhoři v řece Serpentine (nejvíc u základny – dosažitelné z břehu)
+    local spawns = map.Data.Spawns
+    local s = map.Start
+    local deep = function(x, z, h) return h < -1.6 end
+    local function add(kind, list)
+        for _, p in ipairs(list) do spawns[#spawns + 1] = { kind, p[1], p[3] } end
+    end
+    add("eel", scatter(10, "r", { x = s.x, z = s.z, radius = 1600, hmin = -8, hmax = -1.8, slope = 1, test = deep, tries = 400 }))
+    add("eel", scatter(10, "r", { hmin = -8, hmax = -1.8, slope = 1, test = deep, tries = 60 }))
+    add("siren", scatter(6, "o", { x = s.x - 900, z = s.z + 900, radius = 2600, hmin = -3.5, hmax = -1.6, slope = 1, tries = 600 }))
+    add("siren", scatter(14, "o", { hmin = -3.5, hmax = -1.6, slope = 1, tries = 80 }))
+    -- leviatani: kruhové dráhy na otevřeném moři (hlubina) kolem kontinentu
+    local paths = { { -3650, -200, 420, 0.010 }, { 3450, -3300, 380, -0.012 }, { 600, 3750, 460, 0.009 } }
+    -- celá kružnice musí ležet v hluboké vodě (> 18 m): jinak střed posunout dál od pevniny
+    local function deepCircle(cx, cz, r)
+        for k = 0, 31 do
+            local a = k / 32 * 2 * pi
+            if map.HeightAt(cx + cos(a) * (r + 40), cz + sin(a) * (r + 40)) > map.SeaY - 18 then return false end
+        end
+        return true
+    end
+    for _, p in ipairs(paths) do
+        local d = sqrt(p[1] * p[1] + p[2] * p[2])
+        for _ = 1, 30 do
+            if deepCircle(p[1], p[2], p[3]) then break end
+            p[1], p[2] = p[1] + p[1] / d * 150, p[2] + p[2] / d * 150
+        end
+    end
+    for i, p in ipairs(paths) do
+        local id = W.spawn("Models/sea/leviathan.glb", p[1] + p[3], map.SeaY - 2.4, p[2], { name = "Abyssal Leviathan", scale = 1.0 })
+        anim.play(id, "Swim", 0.5, true)
+        local glowL = W.spawn("light", p[1], map.SeaY + 4, p[2], { light = { color = { 0.25, 0.95, 1.0 }, intensity = 160, range = 60 } })
+        M.Leviathans[i] = { id = id, light = glowL, cx = p[1], cz = p[2], r = p[3], w = p[4], a = i * 2.1, x = p[1], z = p[2],
+                            diveT = 20 + i * 17 }
+    end
+end
+
+-- leviatani plavou po kruhu, občas se ponoří (Dive) a zase vynoří
+function M.Update(dt)
+    local now = game.time()
+    for _, l in ipairs(M.Leviathans) do
+        l.a = l.a + l.w * dt * 6
+        l.x, l.z = l.cx + cos(l.a) * l.r, l.cz + sin(l.a) * l.r
+        local dx, dz = -sin(l.a) * (l.w > 0 and 1 or -1), cos(l.a) * (l.w > 0 and 1 or -1)
+        if now > l.diveT then
+            l.diveT = now + 45 + (l.r % 20)
+            anim.play(l.id, "Dive", 0.4, false, true)
+            l.surfaceT = now + 6
+        elseif l.surfaceT and now > l.surfaceT then
+            l.surfaceT = nil
+            anim.play(l.id, "Swim", 0.6, true)
+        end
+        entity.set_position(l.id, l.x, map.SeaY - 2.4, l.z)
+        entity.set_rotation(l.id, 0, math.deg(math.atan(dx, dz)), 0)
+        entity.set_position(l.light, l.x, map.SeaY + 4, l.z)
+    end
+end
+
 function M.Build()
     M.BuildTerrain()
     M.BuildBridges()
@@ -256,6 +325,7 @@ function M.Build()
     M.BuildFrostfang()
     M.BuildIgnis()
     M.BuildCrystalarium()
+    M.BuildOcean()
 end
 
 return M

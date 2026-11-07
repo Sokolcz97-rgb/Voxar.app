@@ -282,6 +282,27 @@ def double_sided(m):
     return merge(m, back)
 
 
+def outline(m, thickness=0.03, color=(0.02, 0.02, 0.05)):
+    """Obrys v kresleném stylu (inverted hull): kopie sítě nafouknutá podél normál s obráceným pořadím vrcholů.
+    S ořezem odvrácených stěn je vidět jen její vnitřek za okrajem siluety = černá linka kolem modelu."""
+    o = m.copy()
+    o.flat = False
+    N = m.copy().normals() if not m.flat else m.normals()
+    # svařené normály (i u plošně stínovaných dílů), ať se slupka na hranách neroztrhne
+    P = m.P.astype(np.float64)
+    _, weld = np.unique(np.round(P, 4), axis=0, return_inverse=True)
+    weld = weld.reshape(-1)
+    acc = np.zeros((weld.max() + 1, 3))
+    np.add.at(acc, weld, N)
+    Nw = acc[weld]
+    Nw /= np.maximum(np.linalg.norm(Nw, axis=1, keepdims=True), 1e-9)
+    o.P = (m.P + Nw * thickness).astype(np.float32)
+    o.I = m.I[:, ::-1].copy()
+    o.C = np.tile(np.array(list(color) + [1.0], np.float32), (len(o.P), 1))
+    o.N = None
+    return o
+
+
 def displace(m, amount, scale=1.0, seed=0, along_normal=True):
     N = m.normals()
     n = (fbm(m.P, scale, 3, seed) - 0.5) * 2 * amount

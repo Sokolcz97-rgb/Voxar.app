@@ -94,12 +94,31 @@ M.MobTypes = {
                attackTime = 1.25, hitDelay = 0.62, hitBone = "Pelvis", aggroTime = 2.0,
                light = { color = { 0.35, 0.7, 1.0 }, intensity = 10, range = 11, flicker = false },
                anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack" }, hit = "Hit", death = "Death", aggro = "Roar" } },
+    -- Azure Ocean (tools/eryndor_sea.py, kreslený styl s obrysy): plavou u hladiny a na souš nevylezou
+    siren = { name = "Korálová siréna", model = "Models/sea/siren.glb", level = 4, hp = 300, atk = 17, def = 8, range = 3.4,
+              speed = 1.8, aggro = 15, run = 4.5, walk = 1.2, xp = 120, scale = 1.25, swim = true, swimDepth = 0.85, labelY = 3.4,
+              attackTime = 0.9, hitDelay = 0.5,
+              light = { color = { 1.0, 0.35, 0.85 }, intensity = 6, range = 7, flicker = false },
+              anims = { idle = "Idle", walk = "Swim", run = "Swim", attack = { "Attack" }, hit = "Hit", death = "Death" } },
+    eel = { name = "Ostnatý úhoř", model = "Models/sea/eel.glb", level = 3, hp = 210, atk = 15, def = 6, range = 3.6,
+            speed = 1.3, aggro = 13, run = 7.5, walk = 2.0, xp = 90, scale = 0.9, swim = true, swimDepth = 0.25, labelY = 1.6,
+            attackTime = 0.7, hitDelay = 0.38,
+            light = { color = { 0.35, 0.75, 1.0 }, intensity = 5, range = 6, flicker = true },
+            anims = { idle = "Idle", walk = "Swim", run = "Swim", attack = { "Attack" }, hit = "Hit", death = "Death" } },
 }
+
+-- výška nepřítele: plavci u hladiny (moře a řeka Serpentine mají jednu hladinu), ostatní na terénu
+function M.MobY(m)
+    if m.t.swim then return map.SeaY - (m.t.swimDepth or 0.4) + 0.12 * math.sin(game.time() * 1.7 + m.hx) end
+    return map.HeightAt(m.x, m.z)
+end
+-- plavec smí jen tam, kde je dost hluboká voda
+local function water(t, x, z) return not t.swim or map.HeightAt(x, z) < map.SeaY - (t.minDepth or 0.7) end
 
 -- rozmístění ve světě Aethelgard (tools/aethelgard_world.py -> world_data.lua): Zkažení vlci na loukách u základny
 -- a v Verdant Canopy, kultisté a Drtič u Stínové trhliny v Crystalariu, lávoví pavouci u sopek v Ignis Scar,
 -- ledový drak u zamrzlého jezera ve Frostfang Peaks
-local SPAWNS = map.Data.Spawns
+local SPAWNS = map.Data.Spawns   -- world.lua sem přidá mořská monstra (útesy a řeka)
 
 local function pos(id) return player.Pos(id) end
 local function dist2(ax, az, bx, bz) return (ax - bx) ^ 2 + (az - bz) ^ 2 end
@@ -160,14 +179,15 @@ local function spawnMob(kind, x, z)
     local t = M.MobTypes[kind]
     local m = { kind = kind, t = t, hx = x, hz = z, x = x, z = z, yaw = random() * 360, hp = t.hp, maxhp = t.hp,
                 level = t.level, state = "idle", wanderT = game.time() + random() * 5 }
+    local y0 = t.swim and map.SeaY - (t.swimDepth or 0.4) or map.HeightAt(x, z)
     if t.human then
-        m.id = humans.Spawn(t.human, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
+        m.id = humans.Spawn(t.human, x, y0, z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
             right = t.look.right, left = t.look.left })
     else
-        m.id = _G.world.spawn(t.model, x, map.HeightAt(x, z), z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
+        m.id = _G.world.spawn(t.model, x, y0, z, { yaw = m.yaw, name = t.name, scale = t.scale or 1, tag = "enemy",
             lod = t.lod and "auto" or nil, lod_distance = 30 })
     end
-    if t.light then m.light = _G.world.spawn("light", x, map.HeightAt(x, z) + 0.6, z, { light = t.light }) end
+    if t.light then m.light = _G.world.spawn("light", x, y0 + 0.6, z, { light = t.light }) end
     anim.play(m.id, t.anims.idle, 0.2, true)
     m.anim = t.anims.idle
     M.mobs[#M.mobs + 1] = m
@@ -485,8 +505,8 @@ function M.UpdateMob(m, dt, now, px, pz)
         if m.light and now - m.deadT > 1.2 then entity.set_visible(m.light, false) end   -- žár po smrti vyhasne
         if now - m.deadT > 22 then   -- respawn na původním místě
             m.x, m.z, m.hp, m.state, m.aggro = m.hx, m.hz, m.maxhp, "idle", false
-            if m.light then entity.set_visible(m.light, true); entity.set_position(m.light, m.x, map.HeightAt(m.x, m.z) + 0.6, m.z) end
-            entity.set_position(m.id, m.x, map.HeightAt(m.x, m.z), m.z)
+            if m.light then entity.set_visible(m.light, true); entity.set_position(m.light, m.x, M.MobY(m) + 0.6, m.z) end
+            entity.set_position(m.id, m.x, M.MobY(m), m.z)
             mobPlay(m, t.anims.idle, true, true)
         end
         return
@@ -551,12 +571,15 @@ function M.UpdateMob(m, dt, now, px, pz)
     if stunned then spd = 0 end
     spd = spd * speedMul
     if spd > 0 then
-        m.x, m.z = m.x + moveX * spd * dt, m.z + moveZ * spd * dt
+        local nx, nz = m.x + moveX * spd * dt, m.z + moveZ * spd * dt
+        if water(t, nx, nz) then m.x, m.z = nx, nz
+        else spd = 0; if m.state == "idle" then m.wx = nil end end   -- plavec nevyleze na břeh
         m.yaw = deg(atan(moveX, moveZ))
     end
-    entity.set_position(m.id, m.x, map.HeightAt(m.x, m.z), m.z)
+    local my = M.MobY(m)
+    entity.set_position(m.id, m.x, my, m.z)
     entity.set_rotation(m.id, 0, m.yaw, 0)
-    if m.light then entity.set_position(m.light, m.x, map.HeightAt(m.x, m.z) + 0.6, m.z) end
+    if m.light then entity.set_position(m.light, m.x, my + 0.6, m.z) end
     if not (m.actionT and now < m.actionT) then
         if spd > 3 then mobPlay(m, t.anims.run)
         elseif spd > 0.2 then mobPlay(m, t.anims.walk)

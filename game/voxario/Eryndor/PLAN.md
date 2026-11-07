@@ -45,6 +45,10 @@ voda. Vše přes Voxario Studio Engine.
       nevisí ve vzduchu) s mosty. Členitá krajina (kopce, hřbety, údolí). Generátor `tools/aethelgard_world.py` →
       `Assets/Terrain/*.png`, `UI/aethelgard_map.jpg`, `eryndor/world_data.lua`. Klávesa **M** = mapa světa, minimapa
       v rohu, počasí podle regionu. Samotest bez proměnné = 22 záběrů regionů, noci, mapy a počasí. Engine ≥ 1.11.0.
+- [x] A8 Azure Ocean a mořská monstra (podle „Herní dokumentace: Azurový oceán a mořská monstra“, kreslený styl):
+      `tools/eryndor_sea.py` → `Assets/Models/sea/` – Abyssal Leviathan (3 kroužící v hlubině, na mapě M), Coral Siren
+      (nepřítel u pobřeží), Razorfin Eel (nepřítel v řece Serpentine), zářící korály; černé obrysy (inverted hull,
+      `meshkit.outline`). Oceán `style = "stylized"` (engine ≥ 1.12.0): pásma barev, kudrlinky pěny, svítící korály na dně.
 - [x] A5 Realistické vykreslování (`world.environment{style = "realistic"}`): fyzikální PBR + SSAO, textury drsnosti,
       průsvitné materiály (engine, větev `claude/creature-forge-ice-dragon`). Eryndor ho zapíná v `on_start`.
       Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
