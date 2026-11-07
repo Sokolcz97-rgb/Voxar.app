@@ -21,7 +21,7 @@ const DEFAULTS = {
   desktopShortcut: true,
   startWithWindows: false,
   engine: "unity", // "unity" (DirectX 12, DLSS) | "web"
-  channel: "stable", // "stable" (unity/latest.json) | "beta" (testovací kanál: unity/latest-beta.json)
+  channel: "stable", // "stable" (unity/latest.json) | "beta" (unity/latest-beta.json) | "fantasy" (Eryndor: unity/latest-fantasy.json)
 };
 
 function settingsFile() {
@@ -43,7 +43,7 @@ function saveSettings(next) {
   }
   if (!["minimize", "hide", "keep"].includes(clean.afterPlay)) clean.afterPlay = DEFAULTS.afterPlay;
   if (!["unity", "web"].includes(clean.engine)) clean.engine = DEFAULTS.engine;
-  if (!["stable", "beta"].includes(clean.channel)) clean.channel = DEFAULTS.channel;
+  if (!["stable", "beta", "fantasy"].includes(clean.channel)) clean.channel = DEFAULTS.channel;
   try {
     fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
     fs.writeFileSync(settingsFile(), JSON.stringify(clean, null, 2));

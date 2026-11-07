@@ -62,11 +62,22 @@ function M.SignOut()
 end
 
 -- Serverová funkce: done(data, err)
+-- JSON null přichází jako json.null (lightuserdata – v Lua „pravda“). Hra s ním počítá jako s nil:
+-- jinak např. účet bez aktivní postavy (character: null) shodil skript a zbyla jen obloha.
+local function stripNull(v)
+    if v == json.null or type(v) == "userdata" then return nil end
+    if type(v) == "table" then
+        for k, x in pairs(v) do v[k] = stripNull(x) end
+    end
+    return v
+end
+M.StripNull = stripNull
+
 function M.Rpc(fn, args, done)
     net.rpc(fn, args or {}, function(r)
         if r.ok then
             remember()   -- token se mohl obnovit
-            if done then done(r.data, nil) end
+            if done then done(stripNull(r.data), nil) end
         else
             if done then done(nil, readError(r, "Server odmítl požadavek.")) end
         end
@@ -76,7 +87,7 @@ end
 -- Novinky na přihlašovací obrazovce (ashes_changelog)
 function M.News(done)
     net.select("ashes_changelog", "select=title_cs,text_cs,published_at&kind=eq.game&order=published_at.desc&limit=3",
-        function(r) done(r.ok and r.data or nil, r.ok) end)
+        function(r) done(r.ok and stripNull(r.data) or nil, r.ok) end)
 end
 
 return M

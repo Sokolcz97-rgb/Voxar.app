@@ -115,7 +115,7 @@ function M.Build(b, p, h, fac)
             for _ = 1, count do
                 local def = defs[floor(R() * #defs) + 1]
                 local hx, hz = camp[2] + (R() - 0.5) * 6, camp[3] + (R() - 0.5) * 6
-                local id = world.spawn("Models/heroes/" .. def.cls .. "_m.glb", hx, map.Ground(hx, hz), hz,
+                local id = world.spawn("Models/heroes_rig/" .. def.cls .. "_m.glb", hx, map.Ground(hx, hz), hz,
                     { fit = 1.62, lod = "auto", lod_distance = 20, name = def.name, tag = "enemy" })
                 M.enemies[#M.enemies + 1] = { def = def, region = region, id = id, hx = hx, hz = hz, x = hx, z = hz,
                     tx = hx, tz = hz, wait = R() * 3, calmUntil = 0, respawnAt = 0, alive = true, yaw = R() * 360,
@@ -199,10 +199,15 @@ local function turnTo(e, dx, dz, k)
 end
 
 local function placeEnemy(e, dt)
+    -- stojí a nic se neděje: poloha se nemění, nic nepřepočítávat
+    local p = e.pose
+    if e.speed == 0 and e.lastSpeed == 0 and p.lunge < 0 and p.flinch < 0 and not p.fallen and e.placedYaw == e.yaw
+        and e.placedX == e.x and e.placedZ == e.z then return end
+    e.lastSpeed, e.placedYaw, e.placedX, e.placedZ = e.speed, e.yaw, e.x, e.z
     e.phase = e.phase + dt * e.speed * 1.9
     pose.Gait(e.id, e.phase, e.pose.fallen and 0 or e.speed, e.gait)
     local bob = math.abs(math.sin(e.phase)) * min(e.speed, 7) * 0.012
-    local fwd, dy, pitch, fall = pose.Step(e.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(e.pose, dt, e.id)
     local yr = math.rad(e.yaw)
     entity.set_position(e.id, e.x + math.sin(yr) * fwd, map.Ground(e.x, e.z) + bob + dy, e.z + math.cos(yr) * fwd)
     entity.set_rotation(e.id, fall or (min(e.speed, 7) * 1.1 + pitch), e.yaw, 0)
@@ -210,10 +215,18 @@ end
 
 local liveBegin
 
-local function updateEnemies(dt, px, pz)
+local function updateEnemies(frameDt, px, pz)
     local now = game.time()
     local calm = M.Busy() or inSafe(px, pz) or hud.IsOpen() or boot.selftest
     for _, e in ipairs(M.enemies) do
+        -- vzdálení nepřátelé se jen toulají: stačí 4× za sekundu (šetří CPU)
+        local dt = frameDt
+        local far = (e.x - px) ^ 2 + (e.z - pz) ^ 2 > 60 * 60 and not (M.live and M.live.e == e)
+        if far then
+            e.acc = (e.acc or 0) + frameDt
+            if e.acc < 0.25 then goto continue end
+            dt, e.acc = e.acc, 0
+        end
         if not e.alive then
             if now > e.respawnAt then
                 e.alive, e.x, e.z, e.calmUntil = true, e.hx, e.hz, now + 2
@@ -260,6 +273,7 @@ local function updateEnemies(dt, px, pz)
             e.speed = speed
             placeEnemy(e, dt)
         end
+        ::continue::
     end
 end
 
@@ -407,6 +421,7 @@ local function finishLive(L)
         setState(fin.state)
         M.RefreshBeacons()
         M.result = { won = fin.won, xp = fin.xp or 0, gold = fin.gold or 0, levels = fin.levels or 0, quests = fin.quests, item = fin.item }
+        if fin.won then pose.Cheer(player.pose) end
         resultSound()
         if boot.mods then boot.mods.fire("fight_end", fin.won and "won" or "lost", e.def.name) end
         M.fighting = false
@@ -444,6 +459,7 @@ local function updateLive(dt)
     local range = (L.rules.range or 0) > 0 and L.rules.range or 3.2
     -- blok (držet): pomalejší pohyb, ohlásí se na nejbližší úder
     L.blocking = inputOk and keys.Held("block")
+    player.pose.block = L.blocking   -- štít před tělo (animace)
     player.speedMul = L.blocking and 0.4 or 1
     local inWindow = now >= L.swingLandAt - 0.85 and now <= L.swingLandAt + 0.2
     if L.blocking and inWindow and L.defended < L.swingIndex then
@@ -552,7 +568,7 @@ function M.ServerFight(fn, args, opts)
                 local x, z = px + math.sin(fr) * 2.4, pz + math.cos(fr) * 2.4
                 local scale = fn == "ashes_fight_boss" and 1.3 or 1
                 local h = (gender == "f" and 1.55 or 1.62) * scale
-                local id = world.spawn("Models/heroes/" .. (cls or "hoplit") .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
+                local id = world.spawn("Models/heroes_rig/" .. (cls or "hoplit") .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
                     { fit = h, yaw = (player.facing or 0) + 180, name = label, tag = "enemy" })
                 foe = { id = id, pose = pose.New(), x = x, z = z, yaw = (player.facing or 0) + 180, scale = scale, label = label,
                         sub = fn == "ashes_fight_boss" and "strážce kapitoly" or nil }
@@ -592,7 +608,7 @@ local function closeResult()
     local lost = r and not r.won and not r.arena
     M.result = nil
     pose.Stand(player.pose)
-    if M.arenaFoe then entity.destroy(M.arenaFoe.id); M.arenaFoe = nil end
+    if M.arenaFoe then entity.destroy(M.arenaFoe.id); pose.Forget(M.arenaFoe.id); M.arenaFoe = nil end
     if lost then player.Respawn(faction == "legie" and M.RespawnLegie or M.RespawnKalidra) end
 end
 M.CloseResult = closeResult
@@ -606,7 +622,7 @@ function M.Update(dt)
     updateLive(dt)
     if M.arenaFoe then
         local f = M.arenaFoe
-        local fwd, dy, pitch, fall = pose.Step(f.pose, dt)
+        local fwd, dy, pitch, fall = pose.Step(f.pose, dt, f.id)
         local yr = math.rad(f.yaw)
         entity.set_position(f.id, f.x + math.sin(yr) * fwd, map.Ground(f.x, f.z) + dy, f.z + math.cos(yr) * fwd)
         entity.set_rotation(f.id, fall or pitch, f.yaw, 0)
@@ -656,7 +672,7 @@ local function liveHud(W, H, L)
         ui.rect(x, y, bw, 74, { 0.05, 0.04, 0.03, 0.78 })
         if left[i] > 0 then ui.rect(x, y, bw * min(1, left[i]), 74, { 0, 0, 0, 0.55 }) end
         if active then ui.rect(x, y + 70, bw, 4, i == 4 and skin.Sky or skin.GoldBright) end
-        local kw = 14 + #labels[i] * 10
+        local kw = math.min(bw - 16, math.max(28, (ui.text_size(labels[i], { size = 14, font = "h2" }) or 0) + 16))
         ui.rect(x + 8, y + 8, kw, 24, skin.Gold, 3)
         ui.text(x + 8 + kw / 2, y + 11, labels[i], { size = 14, font = "h2", color = skin.Bg, align = "center", shadow = false })
         ui.text(x + 8, y + 42, names[i], { size = 17, font = "body", color = active and skin.GoldBright or { 0.7, 0.65, 0.58 } })

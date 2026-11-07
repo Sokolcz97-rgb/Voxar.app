@@ -1,0 +1,172 @@
+name: Eryndor (kanál Fantasy)
+
+# Testovací fantasy hra Eryndor (game/voxario/Eryndor) na Voxario Studio Engine:
+#   * samotest na Linuxu (software Vulkan): výběr povolání, boj, rozhovor s Lyrise
+#   * sestavení pro Windows a nahrání do bucketu game-updates/unity/fantasy/<verze>/ + unity/latest-fantasy.json
+#     (launcher od 0.7.0: Nastavení → Kanál hry → Fantasy)
+#   * volitelně vydání launcheru (game-updates/launcher/, stable.json jako poslední)
+# Secrets: VOXARIO_ENGINE_TOKEN (čtení release enginu), SUPABASE_SERVICE_ROLE_KEY (zápis do bucketu)
+
+on:
+  push:
+    paths:
+      - 'game/voxario/Eryndor/**'
+      - '.github/workflows/eryndor-game.yml'
+  workflow_dispatch:
+    inputs:
+      engine_tag:
+        description: 'Tag release enginu'
+        required: false
+        default: 'v1.9.0'
+      version:
+        description: 'Verze hry (prázdné = 0.1.0-dev.<číslo běhu>)'
+        required: false
+        default: ''
+      publish:
+        description: 'Nahrát do kanálu Fantasy (unity/latest-fantasy.json)'
+        type: boolean
+        required: false
+        default: false
+      publish_launcher:
+        description: 'Vydat launcher (verze z game/launcher/app/package.json) s kanálem Fantasy'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eryndor-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ENGINE_REPO: Sokolcz97-rgb/Voxario-Studio-Engine
+  PROJECT: game/voxario/Eryndor
+  ENGINE_TAG: ${{ inputs.engine_tag || 'v1.9.0' }}
+
+jobs:
+  selftest:
+    name: Samotest (Linux, software Vulkan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verze
+        id: ver
+        run: |
+          v="${{ inputs.version }}"
+          [ -n "$v" ] || v="0.1.0-dev.${{ github.run_number }}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Stáhnout Voxario Studio (Linux)
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'voxario-studio-*-linux-x86_64.tar.gz' -D "$RUNNER_TEMP/engine"
+          tar -xzf "$RUNNER_TEMP"/engine/*.tar.gz -C "$RUNNER_TEMP/engine"
+      - name: Závislosti
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers libvulkan1 xvfb libxrandr2 libxinerama1 libxcursor1 libxi6 libxkbcommon0
+      - name: Složit hru (Linux)
+        run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/game" "${{ steps.ver.outputs.version }}"
+      - name: Samotest (hra)
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=game VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player.log; then echo "::error::Chyba skriptu"; exit 1; fi
+          grep -q "SELFTEST hotovo" player.log || { echo "::error::Samotest nedoběhl"; exit 1; }
+          echo "Záběrů: $(ls selftest/*.png | wc -l)"
+
+  publish:
+    name: Hra pro Windows + kanál Fantasy
+    needs: selftest
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stáhnout Voxario Studio (Windows)
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
+          unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
+      - name: Složit hru (Windows) a manifest
+        run: |
+          v="${{ needs.selftest.outputs.version }}"
+          $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/Eryndor" "$v"
+          test -f "$RUNNER_TEMP/Eryndor/Eryndor.exe"
+          node game/unity/make-manifest.cjs "$RUNNER_TEMP/Eryndor" "$RUNNER_TEMP/updates" "$v" latest-fantasy.json fantasy/
+      - name: Nahrát do game-updates/unity/fantasy/
+        env:
+          SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY"; exit 1; fi
+          AUTH=()
+          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
+          upload() {
+            local file="$1" type="${2:-application/octet-stream}"
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
+                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                --data-binary "@$file")
+              [ "$code" = "200" ] && return 0
+              echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
+              sleep $((attempt * 4))
+            done
+            return 1
+          }
+          cd "$RUNNER_TEMP/updates"
+          find . -type f ! -name latest-fantasy.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
+          upload latest-fantasy.json application/json
+          echo "Kanál Fantasy: Eryndor ${{ needs.selftest.outputs.version }}"
+
+  launcher:
+    name: Launcher s kanálem Fantasy
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_launcher
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+      - name: Sestavit launcher
+        working-directory: game/launcher/app
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm run pack:win
+      - name: Připravit a nahrát aktualizaci launcheru
+        shell: bash
+        env:
+          SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY"; exit 1; fi
+          cd game/launcher/app
+          node make-update.cjs dist/win-unpacked/resources "$RUNNER_TEMP/launcher-update"
+          AUTH=()
+          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
+          upload() {
+            local file="$1" type="${2:-application/octet-stream}"
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/launcher/$file" \
+                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                --data-binary "@$file")
+              [ "$code" = "200" ] && return 0
+              echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
+              sleep $((attempt * 4))
+            done
+            return 1
+          }
+          cd "$RUNNER_TEMP/launcher-update"
+          find . -type f ! -name stable.json | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done
+          upload stable.json application/json
+          echo "Launcher vydán: $(node -p "require('$GITHUB_WORKSPACE/game/launcher/app/package.json').version")"

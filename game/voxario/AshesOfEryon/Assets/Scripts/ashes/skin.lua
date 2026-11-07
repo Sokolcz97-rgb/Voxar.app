@@ -13,12 +13,14 @@ M.Good = "#8cc06b"
 M.Sky = "#9fd4f0"
 
 function M.Init()
-    ui.load_font("title", "UI/Cinzel-SemiBold.ttf", 54)
-    ui.load_font("h1", "UI/Cinzel-SemiBold.ttf", 30)
-    ui.load_font("h2", "UI/Cinzel-SemiBold.ttf", 21)
-    ui.load_font("caps", "UI/Cinzel-Regular.ttf", 15)
-    ui.load_font("body", "UI/Cormorant-Medium.ttf", 22)
-    ui.load_font("bold", "UI/Cormorant-SemiBold.ttf", 22)
+    -- 4. číslo = největší velikost, ve které se písmo kreslí (menu, Rádce, boj) – atlas se připraví
+    -- v ní, takže větší nadpisy a texty nejsou roztažené a rozmazané
+    ui.load_font("title", "UI/Cinzel-SemiBold.ttf", 54, 64)
+    ui.load_font("h1", "UI/Cinzel-SemiBold.ttf", 30, 36)
+    ui.load_font("h2", "UI/Cinzel-SemiBold.ttf", 21, 28)
+    ui.load_font("caps", "UI/Cinzel-Regular.ttf", 15, 24)
+    ui.load_font("body", "UI/Cormorant-Medium.ttf", 22, 28)
+    ui.load_font("bold", "UI/Cormorant-SemiBold.ttf", 22, 32)
     ui.style({
         window_bg = "#110e0ce6", text = M.Text, text_disabled = M.Muted,
         button = "#2a1f17f2", button_hover = "#40301ff7", button_active = "#140f0cf7",

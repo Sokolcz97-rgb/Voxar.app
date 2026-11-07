@@ -26,7 +26,7 @@ end
 local function leave(key)
     local o = M.others[key]
     if not o then return end
-    if o.id then entity.destroy(o.id) end
+    if o.id then entity.destroy(o.id); pose.Forget(o.id) end
     M.others[key] = nil
     M.count = M.count - 1
 end
@@ -49,7 +49,7 @@ local function join(key, metas)
     o = { name = name, cls = cls, gender = gender, level = meta.level or 1, faction = fac, tag = tostring(meta.tag or ""):sub(1, 5),
           pos = { x, z }, target = { x, z }, vel = { 0, 0 }, stamp = game.time(), ry = tonumber(meta.ry) or 0, yaw = 0,
           phase = 0, gait = pose.GaitOptions(cls .. "_" .. gender) }
-    o.id = world.spawn("Models/heroes/" .. cls .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
+    o.id = world.spawn("Models/heroes_rig/" .. cls .. "_" .. gender .. ".glb", x, map.Ground(x, z), z,
         { fit = gender == "f" and 1.55 or 1.62, lod = "auto", lod_distance = 20, name = name, tag = "other_player" })
     M.others[key] = o
     M.count = M.count + 1

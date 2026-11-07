@@ -3,10 +3,14 @@ name: Voxario game build (Ashes of Eryon)
 # Fáze 9 převodu (docs/ASHES_OF_ERYON_PORT.md v repozitáři enginu):
 #   1. stáhne Voxario Studio z release enginu (Linux tar.gz + Windows portable ZIP),
 #   2. složí hru tools/package-game.sh (jako VoxarioEditor --build-game),
-#   3. pustí samotest (software Vulkan, virtuální displej) – záběry jako Unity selftest,
-#      chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
+#   3. pustí samotest (software Vulkan, virtuální displej) – záběry jako Unity selftest ve dne
+#      (--time 13), chyba skriptu nebo chybějící „SELFTEST hotovo“ shodí běh,
+#   3b. hotovou hru pro Windows spustí na Windows runneru (Mesa lavapipe) a vyfotí,
 #   4. připraví soubory pro testovací kanál launcheru (unity/latest-beta.json),
-#   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta).
+#   5. na vyžádání je nahraje do bucketu game-updates (jen ruční spuštění s publish_beta),
+#   6. prepare_stable: ostrá verze (např. 0.11.0) se nahraje do game-updates/unity/<verze>/ a manifest
+#      jen jako unity/latest-candidate.json – ostrý kanál (latest.json) se tím NEPŘEPNE. Přepnutí =
+#      zkopírovat latest-candidate.json na latest.json (docs/PRECHOD_NA_VOXARIO.md).
 #
 # Secrets:
 #   VOXARIO_ENGINE_TOKEN     – token se čtením repozitáře Sokolcz97-rgb/Voxario-Studio-Engine (release)
@@ -16,6 +20,7 @@ on:
   push:
     paths:
       - 'game/voxario/**'
+      - '!game/voxario/Eryndor/**'
       - 'game/unity/AshesOfEryon/Assets/Models/**'
       - 'game/unity/AshesOfEryon/Assets/Voxario/Resources/**'
       - 'game/unity/make-manifest.cjs'
@@ -32,6 +37,16 @@ on:
         default: ''
       publish_beta:
         description: 'Nahrát do testovacího kanálu launcheru (unity/latest-beta.json)'
+        type: boolean
+        required: false
+        default: false
+      prepare_stable:
+        description: 'Připravit ostrou verzi (soubory + unity/latest-candidate.json, latest.json se NEMĚNÍ)'
+        type: boolean
+        required: false
+        default: false
+      promote_stable:
+        description: 'S prepare_stable: po nahrání PŘEPNOUT ostrý kanál (unity/latest.json) na tuto verzi'
         type: boolean
         required: false
         default: false
@@ -89,7 +104,7 @@ jobs:
         run: |
           set -o pipefail
           cd "$RUNNER_TEMP"
-          VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game-linux/AshesOfEryon -ashes-launcher --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
+          VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game-linux/AshesOfEryon -ashes-launcher --time 13 --selftest "$GITHUB_WORKSPACE/selftest" 2>&1 | tee "$GITHUB_WORKSPACE/player.log"
           cd "$GITHUB_WORKSPACE"
           shots=$(ls selftest/*.png | wc -l)
           echo "Záběrů: $shots"
@@ -99,6 +114,38 @@ jobs:
           fi
           grep -q "SELFTEST hotovo" player.log || { echo "::error::Samotest nedoběhl"; exit 1; }
           [ "$shots" -ge 25 ] || { echo "::error::Málo záběrů ($shots)"; exit 1; }
+          # žádný načtený model nesmí být bez barvy (bílé siluety LOD)
+          if grep -a "Model without color" player.log; then
+            echo "::error::Model bez textury, barvy materiálu i barev vrcholů (vykreslí se bíle)"
+            exit 1
+          fi
+
+      - name: Klidný obraz (stojící hráč, dva snímky po sobě)
+        run: |
+          python3 -m pip install --quiet pillow numpy
+          python3 - <<'PY'
+          import numpy as np
+          from PIL import Image
+          a = np.asarray(Image.open("selftest/15a-klid.png").convert("RGB")).astype(np.int16)
+          b = np.asarray(Image.open("selftest/15b-klid.png").convert("RGB")).astype(np.int16)
+          # tráva, stromy ve větru a zvířata se hýbou (část obrazu), chvění kamery ale změní skoro všechny
+          # pixely (posun o 1 px = medián rozdílu >= 1) – proto percentily, ne průměr
+          d = np.abs(a - b).max(axis=2)
+          p60, p75 = float(np.percentile(d, 60)), float(np.percentile(d, 75))
+          print(f"rozdíl snímků: průměr {d.mean():.2f}, 60. percentil {p60:.1f}, 75. percentil {p75:.1f} (z 255)")
+          if p60 > 0.5 or p75 > 3:
+              raise SystemExit("::error::Obraz stojícího hráče se mezi snímky mění (chvění kamery)")
+          PY
+
+      - name: Samotest UI v 2560 × 1440
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP"
+          ASHES_SELFTEST_ONLY=ui VOXARIO_NO_AUDIO=1 timeout 600 xvfb-run -a -s "-screen 0 2600x1500x24" ./game-linux/AshesOfEryon -ashes-launcher --time 13 --window 2560x1440 --selftest "$GITHUB_WORKSPACE/selftest-1440p" 2>&1 | tee "$GITHUB_WORKSPACE/player-1440p.log"
+          cd "$GITHUB_WORKSPACE"
+          grep -q "SELFTEST hotovo" player-1440p.log || { echo "::error::Samotest UI nedoběhl"; exit 1; }
+          if grep -E "Script error" player-1440p.log; then echo "::error::Chyba skriptu (1440p)"; exit 1; fi
+          python3 -c "from PIL import Image; im = Image.open('selftest-1440p/ui-nastaveni-grafika.png'); print('1440p snímek', im.size); assert im.size == (2560, 1440)"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -106,14 +153,102 @@ jobs:
           name: AshesOfEryon-selftest
           path: |
             player.log
+            player-1440p.log
             selftest/
-          retention-days: 14
+            selftest-1440p/
+          retention-days: 3
+        continue-on-error: true
+
+  windows-test:
+    name: Test exportu pro Windows (spuštění hry, software Vulkan)
+    needs: selftest
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      # hra se složí přímo tady (bez artefaktů – úložiště artefaktů Actions má limit);
+      # zdrojáky do src/, aby se nepletly se složkou hotové hry "game"
+      - uses: actions/checkout@v4
+        with:
+          path: src
+
+      - name: Stáhnout Voxario Studio (Windows) a složit hru
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
+        run: |
+          gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D engine
+          7z x engine/*.zip -oengine -y > /dev/null
+          src/$PROJECT/tools/package-game.sh engine game "${{ needs.selftest.outputs.version }}"
+
+      - name: Kontrola balíčku
+        shell: pwsh
+        run: |
+          foreach ($f in "game\AshesOfEryon.exe", "game\game.vgame", "game\GameData\Scenes\Main.vscene", "game\GameData\Scripts\main.lua", "game\GameData\Data\content.json") {
+            if (-not (Test-Path $f)) { throw "Chybí $f" }
+          }
+          $vgame = Get-Content game\game.vgame | ConvertFrom-Json
+          if ($vgame.StartupScene -ne "Scenes/Main.vscene") { throw "Špatná startovní scéna" }
+          Write-Host "Balíček OK ($((Get-ChildItem game -Recurse | Measure-Object -Sum Length).Sum / 1MB) MB)"
+
+      - name: Mesa lavapipe (Vulkan bez GPU)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo pal1000/mesa-dist-win --pattern "mesa3d-*-release-msvc.7z" -D mesa
+          7z x (Get-ChildItem mesa\*.7z).FullName -omesa -y | Out-Null
+          $icd = Get-ChildItem mesa -Recurse -Filter lvp_icd.x86_64.json | Where-Object { $_.FullName -match "x64" } | Select-Object -First 1
+          if (-not $icd) { throw "lvp_icd.x86_64.json nenalezen" }
+          "VK_ICD_FILENAMES=$($icd.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "ICD: $($icd.FullName)"
+          # runner běží jako admin – loader pak VK_ICD_FILENAMES ignoruje, ovladač musí být v registru
+          New-Item -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Force | Out-Null
+          New-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\Vulkan\Drivers" -Name $icd.FullName -PropertyType DWord -Value 0 -Force | Out-Null
+          # runner nemá Vulkan loader (u hráčů ho instaluje ovladač grafiky) – vulkan-1.dll od LunarG vedle hry
+          # pevná verze (adresa „latest“ u LunarG občas ukazuje na neexistující soubor), záloha latest
+          $ok = $false
+          foreach ($v in @("1.4.363.0", "1.4.335.0", "latest")) {
+            try { Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$v/windows/vulkan-runtime-components.zip" -OutFile vkrt.zip; $ok = $true; break } catch { Write-Host "Vulkan runtime $v nedostupný" }
+          }
+          if (-not $ok) { throw "Vulkan runtime nelze stáhnout" }
+          Expand-Archive vkrt.zip -DestinationPath vkrt -Force
+          $loader = Get-ChildItem vkrt -Recurse -Filter vulkan-1.dll | Where-Object { $_.Directory.Name -eq "x64" } | Select-Object -First 1
+          if (-not $loader) { throw "vulkan-1.dll nenalezen" }
+          Copy-Item $loader.FullName game\vulkan-1.dll
+          Write-Host "Vulkan loader: $($loader.FullName)"
+
+      - name: Spustit hru (přihlašovací obrazovka, denní svět)
+        shell: pwsh
+        run: |
+          $env:VOXARIO_NO_AUDIO = "1"
+          $p = Start-Process -FilePath "game\AshesOfEryon.exe" -ArgumentList "-ashes-launcher", "--time", "13", "--frames", "400", "--screenshot", "$pwd\windows-login.png" -PassThru -RedirectStandardOutput windows.log -RedirectStandardError windows-err.log
+          $finished = $p.WaitForExit(360000)
+          # log hry (Windows aplikace nepíše na standardní výstup)
+          $log = Join-Path $env:APPDATA "Voxario Studio\Logs\VoxarioPlayer.log"
+          if (Test-Path $log) { Copy-Item $log voxario-player.log; Get-Content $log -Tail 80 } else { Write-Host "Log hry nenalezen: $log" }
+          if (-not $finished) { Stop-Process -Id $p.Id -Force; throw "Hra neskončila včas (viz log výše)" }
+          Get-Content windows.log -Tail 40
+          if ($p.ExitCode -ne 0) { throw "Hra skončila s kódem $($p.ExitCode)" }
+          if (-not (Test-Path windows-login.png)) { throw "Chybí snímek" }
+          if (Select-String -Path voxario-player.log -Pattern "Script error" -ErrorAction SilentlyContinue) { throw "Chyba skriptu" }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AshesOfEryon-windows-test
+          path: |
+            windows-login.png
+            windows.log
+            windows-err.log
+            voxario-player.log
+          retention-days: 3
+        continue-on-error: true
 
   windows:
-    name: Hra pro Windows + soubory pro launcher
-    needs: selftest
+    name: Hra pro Windows + nahrání do launcheru
+    needs: [selftest, windows-test]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -123,57 +258,32 @@ jobs:
         run: |
           gh release download ${{ inputs.engine_tag }} --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
           unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
-          find "$RUNNER_TEMP/engine" -name VoxarioPlayer.exe -type f
 
-      - name: Složit hru (Windows)
-        run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/AshesOfEryon" "${{ needs.selftest.outputs.version }}"
-
-      - name: Manifest testovacího kanálu
+      - name: Složit hru (Windows) a manifesty
         run: |
-          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "${{ needs.selftest.outputs.version }}" latest-beta.json
-          head -c 400 "$RUNNER_TEMP/updates/latest-beta.json"
+          v="${{ needs.selftest.outputs.version }}"
+          $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/AshesOfEryon" "$v"
+          node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/updates" "$v" latest-beta.json
+          if [ "${{ inputs.prepare_stable }}" = "true" ]; then
+            if [[ "$v" == *-* ]]; then echo "::error::Ostrá verze nesmí mít příponu (je $v)"; exit 1; fi
+            node game/unity/make-manifest.cjs "$RUNNER_TEMP/AshesOfEryon" "$RUNNER_TEMP/stable" "$v" latest-candidate.json
+          fi
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AshesOfEryon-Windows
-          path: ${{ runner.temp }}/AshesOfEryon
-          if-no-files-found: error
-          retention-days: 14
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AshesOfEryon-beta-upload
-          path: ${{ runner.temp }}/updates
-          if-no-files-found: error
-          retention-days: 14
-
-  publish-beta:
-    name: Nahrát do testovacího kanálu launcheru
-    needs: [selftest, windows]
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_beta
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: AshesOfEryon-beta-upload
-          path: updates
-
-      - name: Nahrát do game-updates/unity/
+      - name: Nahrát do game-updates/unity/ (beta / ostrá)
+        if: github.event_name == 'workflow_dispatch' && (inputs.publish_beta || inputs.prepare_stable)
         env:
           SUPABASE_URL: https://rioexuvgvmdwvidfakxy.supabase.co
           KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$KEY" ]; then
-            echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY – soubory jsou v artefaktu AshesOfEryon-beta-upload, nahraj je ručně."
-            exit 1
-          fi
-          cd updates
+          if [ -z "$KEY" ]; then echo "::error::Chybí secret SUPABASE_SERVICE_ROLE_KEY"; exit 1; fi
+          # nové klíče sb_secret_… patří jen do hlavičky apikey; Authorization: Bearer jen pro starý JWT klíč
+          AUTH=()
+          if [[ "$KEY" == *.*.* ]]; then AUTH=(-H "Authorization: Bearer $KEY"); fi
           upload() {
             local file="$1" type="${2:-application/octet-stream}"
             for attempt in 1 2 3 4 5; do
               code=$(curl -s -o /tmp/resp -w "%{http_code}" -X POST "$SUPABASE_URL/storage/v1/object/game-updates/unity/$file" \
-                -H "Authorization: Bearer $KEY" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
+                -H "apikey: $KEY" "${AUTH[@]}" -H "x-upsert: true" -H "Content-Type: $type" -H "Cache-Control: max-age=60" \
                 --data-binary "@$file")
               [ "$code" = "200" ] && return 0
               echo "HTTP $code pro $file (pokus $attempt): $(head -c 200 /tmp/resp)"
@@ -181,7 +291,17 @@ jobs:
             done
             return 1
           }
-          # nejdřív soubory verze, manifest až nakonec (launcher nesmí vidět neúplnou verzi)
-          find . -type f ! -name latest-beta.json | sed 's|^\./||' | while read -r f; do upload "$f"; done
-          upload latest-beta.json application/json
-          echo "Testovací kanál: verze ${{ needs.selftest.outputs.version }}"
+          publish() {   # $1 = složka, $2 = manifest
+            ( cd "$1" && find . -type f ! -name "$2" | sed 's|^\./||' | while read -r f; do upload "$f" || exit 1; done && upload "$2" application/json )
+          }
+          v="${{ needs.selftest.outputs.version }}"
+          if [ "${{ inputs.publish_beta }}" = "true" ]; then publish "$RUNNER_TEMP/updates" latest-beta.json; echo "Testovací kanál: verze $v"; fi
+          if [ "${{ inputs.prepare_stable }}" = "true" ]; then
+            publish "$RUNNER_TEMP/stable" latest-candidate.json
+            echo "Kandidát ostré verze: $v"
+            if [ "${{ inputs.promote_stable }}" = "true" ]; then
+              cp "$RUNNER_TEMP/stable/latest-candidate.json" "$RUNNER_TEMP/stable/latest.json"
+              ( cd "$RUNNER_TEMP/stable" && upload latest.json application/json )
+              echo "OSTRÝ KANÁL PŘEPNUT: unity/latest.json = verze $v"
+            fi
+          fi

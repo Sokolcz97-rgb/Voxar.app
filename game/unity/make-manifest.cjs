@@ -3,9 +3,11 @@
 
 /**
  * Připraví sestavení hry (Unity nebo Voxario) k nahrání do bucketu game-updates/unity:
- *   node game/unity/make-manifest.cjs <složka sestavení> <výstup> <verze> [latest.json | latest-beta.json]
+ *   node game/unity/make-manifest.cjs <složka sestavení> <výstup> <verze> [latest.json | latest-beta.json | latest-candidate.json | latest-fantasy.json] [předpona]
+ * Předpona (např. „fantasy/“) oddělí soubory jiné hry ve stejném bucketu (Eryndor v kanálu Fantasy).
  * Výstup: <výstup>/<verze>/<soubory> (velké soubory rozdělené na .partN) a <výstup>/<manifest>.
- * latest-beta.json je testovací kanál launcheru.
+ * latest-beta.json je testovací kanál launcheru, latest-candidate.json připravená ostrá verze
+ * (ostrý kanál ji uvidí až po zkopírování na latest.json).
  */
 
 const fs = require("node:fs");
@@ -13,9 +15,9 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const PART = 45 * 1024 * 1024;
-const [src, out, version, manifestName = "latest.json"] = process.argv.slice(2);
-if (!src || !out || !version || !/^latest(-beta)?\.json$/.test(manifestName)) {
-  console.error("Použití: make-manifest.cjs <build> <out> <verze> [latest.json | latest-beta.json]");
+const [src, out, version, manifestName = "latest.json", prefix = ""] = process.argv.slice(2);
+if (!src || !out || !version || !/^latest(-beta|-candidate|-fantasy)?\.json$/.test(manifestName) || !/^([a-z0-9-]+\/)?$/.test(prefix)) {
+  console.error("Použití: make-manifest.cjs <build> <out> <verze> [latest.json | latest-beta.json | latest-candidate.json]");
   process.exit(1);
 }
 
@@ -33,11 +35,13 @@ const files = [];
 const exe = files.map((f) => path.relative(src, f)).find((f) => /^[^/\\]+\.exe$/i.test(f) && !/UnityCrashHandler/i.test(f));
 if (!exe) throw new Error("Ve složce není .exe hry");
 
-const manifest = { version, exe, publishedAt: new Date().toISOString(), files: [] };
+// Voxario sestavení poznáme podle game.vgame (launcher podle toho převezme klávesy z Unity verze)
+const engine = files.some((f) => path.relative(src, f) === "game.vgame") ? "voxario" : "unity";
+const manifest = { version, exe, engine, publishedAt: new Date().toISOString(), files: [] };
 for (const file of files) {
   const rel = path.relative(src, file).split(path.sep).join("/");
   const data = fs.readFileSync(file);
-  const url = `${version}/${rel}`;
+  const url = `${prefix}${version}/${rel}`;
   const target = path.join(out, ...url.split("/"));
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const parts = Math.ceil(data.length / PART) || 1;

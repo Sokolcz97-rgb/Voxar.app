@@ -41,7 +41,9 @@ StudioVoxario).
 | `ashes/feedback.lua` | `Feedback.cs` – hlášení chyb (F1) |
 | `ashes/oddil.lua` | `Social/Oddil.cs` |
 | `ashes/modhost.lua` | `Mods/*` – módy v sandboxu enginu, stejné `eryon.*` a `ui.*` jako v Unity verzi |
-| `ashes/pose.lua` | bojové pózy z `CharacterView.cs` (výpad, zásah, pád) |
+| `ashes/pose.lua` | bojové pózy z `CharacterView.cs` (výpad, zásah, pád); u hrdinů s kostrou kosterní klipy (`anim.*`) |
+| `tools/rig_check.py` | kontrola rigu: deformace na CPU a počet natažených trojúhelníků v každém klipu |
+| `tools/rig_heroes.py` | auto-rig hrdinů: z původních statických modelů `Models/heroes/*.glb` udělá `Models/heroes_rig/*.glb` s kostrou (18 kostí), vahami a klipy Idle, Walk, Run, Attack, Block, Cast, Hit, Cheer, Death |
 | `tools/package-game.sh` | složení hry z VoxarioPlayeru (jako `--build-game`, bez licence editoru – pro CI) |
 | `ashes/options.lua` | nastavení: zobrazení, grafika, zvuk, ovládání, účet |
 | `ashes/skin.lua` | `EryonSkin.cs` – barvy, písma Cinzel / Cormorant, panely |
@@ -68,7 +70,28 @@ Poloha posílaná ostatním hráčům je proto stejná jako u webu i Unity.
 - [x] Krok 9: módy (`Dokumenty/Ashes of Eryon/Mods`, ukázka Deník poutníka, nastavení → Módy, F8).
 - [x] Procedurální chůze nohou (`LegRig.cs`): kroky počítá vertex shader enginu (`entity.set_gait`) – nohy
   v kyčlích s pokrčením kolene, paže proti nohám (ruka se štítem, lukem nebo holí zůstává), u sukní jen
-  lem, čtyřnožci diagonální páry.
+  lem, čtyřnožci diagonální páry. Teď platí jen pro zvířata a modely bez kostry.
+- [x] Kosterní animace hrdinů (hra 0.13.0): `python3 tools/rig_heroes.py` přidá ke statickým modelům
+  kostru (kyčle, páteř, hrudník, krk, hlava, paže, předloktí, ruce, stehna, holeně, chodidla), váhy
+  vrcholů podle oblastí těla (předmět v ruce jede s rukou) a devět klipů. Hra přehrává Idle / Walk / Run
+  podle rychlosti, akce (útok, blok, kouzlo, zásah) jako vrstvu od pasu nahoru, radost a pád přes celé
+  tělo. Kontrola: `ASHES_SELFTEST_ONLY=anim` (všech šest modelů v každém klipu).
+  Váhy se po síti modelu vyhlazují (vliv kostí přechází plynule, paže není „přilepená“ k trupu),
+  rekvizity zůstávají tuhé. `python3 tools/rig_check.py <modely> [náhled klipy]` spočítá deformaci
+  jako engine a ukáže natažené trojúhelníky (hra 0.13.2: z 3 000–6 700 na 25–110 na model; kouzlo a vítězné gesto jdou předloktím, ne celou paží).
+
+## Grafika a výkon (beta 0.11.0-beta.4, engine 1.6.0)
+
+- **VSync** používá MAILBOX (trojité bufferování), takže se FPS nepůlí; v nastavení je limit FPS 30/60/120/144.
+- **Nastavení** jako v Unity verzi (Grafika, Zobrazení, Zvuk, Ovládání, Módy, Postavy): předvolby Nízká–Ultra,
+  DLSS / AMD FSR 1 / vlastní měřítko, stíny, dohled, hustota trávy, mraky, kvalita vody, ray tracing (jen na kartách
+  s Vulkan ray query), režim okna, V-Sync, limit FPS, přepínání postav a nová postava.
+- **Obloha**: dvě vrstvy animovaných mraků ve dne i v noci, stín mraků na zemi.
+- **Voda**: až 12 vln a hustší síť, drobné vlnky, pěna u břehu a na hřebenech, průhledná mělčina s kaustikami.
+- **Krajina**: prolínání povrchů podle výšky, detailní normála, víc trávy, keře, vítr, LOD s plynulým prolnutím.
+- **Noc**: modré měsíční světlo, noční ambient a světlo u hráče.
+- **Měření výkonu**: `VoxarioPlayer . --benchmark 20 --benchmark-out vysledek.json` obíhá svět se zkušební postavou
+  a zapíše FPS i časy CPU; `ASHES_PROFILE=1` vypíše, kolik stojí jednotlivé části skriptu.
 
 ## Sestavení a testy (fáze 9)
 
@@ -76,8 +99,9 @@ Workflow `.github/workflows/voxario-game.yml` (při změně `game/voxario/**` ne
 
 1. stáhne Voxario Studio z release enginu (secret `VOXARIO_ENGINE_TOKEN`, čtení repozitáře enginu),
 2. složí hru `tools/package-game.sh` pro Linux i Windows,
-3. pustí samotest na softwarovém Vulkanu – shodí ho chyba skriptu, chybějící `SELFTEST hotovo` nebo málo
-   záběrů; artefakt `AshesOfEryon-selftest` má všechny záběry a log,
+3. pustí samotest na softwarovém Vulkanu ve dne (`--time 13`) – shodí ho chyba skriptu, chybějící
+   `SELFTEST hotovo` nebo málo záběrů; artefakt `AshesOfEryon-selftest` má všechny záběry a log,
+3b. hotovou hru pro Windows spustí na Windows runneru (Mesa lavapipe) a vyfotí (`AshesOfEryon-windows-test`),
 4. artefakty `AshesOfEryon-Windows` (hotová hra) a `AshesOfEryon-beta-upload` (soubory a
    `latest-beta.json` pro launcher),
 5. ruční spuštění s `publish_beta` je nahraje do `game-updates/unity/` (secret

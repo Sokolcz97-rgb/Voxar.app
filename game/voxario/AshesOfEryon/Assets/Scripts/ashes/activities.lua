@@ -28,13 +28,14 @@ local function buildBoss()
     end
     Boss.x, Boss.z, Boss.yaw, Boss.scale = sx, sz, 200, 1.9 / 1.62
     Boss.pose = pose.New()
-    Boss.id = world.spawn("Models/heroes/hoplit_m.glb", sx, map.Ground(sx, sz), sz,
+    Boss.id = world.spawn("Models/heroes_rig/hoplit_m.glb", sx, map.Ground(sx, sz), sz,
         { fit = 1.9, yaw = 200, name = "Thalassos", tag = "enemy" })
+    pose.Idle(Boss.id, "hoplit_m")
     Boss.crew = {}
     for i = 0, 3 do
         local a = i * math.pi / 2 + 0.6
         local x, z = sx + math.cos(a) * 3.2, sz + math.sin(a) * 3.2
-        local id = world.spawn("Models/heroes/" .. (i % 2 == 0 and "lucistnik" or "hoplit") .. "_m.glb", x, map.Ground(x, z), z,
+        local id = world.spawn("Models/heroes_rig/" .. (i % 2 == 0 and "lucistnik" or "hoplit") .. "_m.glb", x, map.Ground(x, z), z,
             { fit = 1.62, yaw = 200 + i * 25, lod = "auto", lod_distance = 20, name = "Pirát", tag = "enemy" })
         Boss.crew[#Boss.crew + 1] = { id = id, x = x, z = z, title = i % 2 == 0 and "Pirátský lukostřelec" or "Pirátský kopiník" }
     end
@@ -70,7 +71,7 @@ local function updateBoss(dt)
         for _, c in ipairs(Boss.crew) do entity.set_visible(c.id, alive) end
         if alive then pose.Stand(Boss.pose) end
     end
-    local fwd, dy, pitch, fall = pose.Step(Boss.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(Boss.pose, dt, Boss.id)
     local yr = math.rad(Boss.yaw)
     entity.set_position(Boss.id, Boss.x + math.sin(yr) * fwd, map.Ground(Boss.x, Boss.z) + dy, Boss.z + math.cos(yr) * fwd)
     entity.set_rotation(Boss.id, fall or pitch, Boss.yaw, 0)

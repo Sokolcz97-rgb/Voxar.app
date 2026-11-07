@@ -53,6 +53,7 @@ jobs:
 
       - name: Upload launcher update files
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # úložiště artefaktů může být plné
         with:
           name: Ashes-of-Eryon-launcher-update
           path: |
@@ -75,6 +76,7 @@ jobs:
 
       - name: Upload installer visual comparison
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # úložiště artefaktů může být plné
         with:
           name: Ashes-of-Eryon-Installer-Visual-Check
           path: |
@@ -215,6 +217,7 @@ jobs:
 
       - name: Upload test GameSetup artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # úložiště artefaktů může být plné
         with:
           name: Ashes-of-Eryon-GameSetup-test
           path: |
@@ -227,8 +230,8 @@ jobs:
       # NEVEŘEJNÉHO konceptu vydání (draft). Koncepty vidí jen správci
       # repozitáře; veřejně se nic nepublikuje. Z konceptu se instalátor
       # přenáší do privátního úložiště webu (jen pro adminy).
-      - name: Store internal GameSetup build (draft release, main only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Store internal GameSetup build (draft release; main nebo ruční spuštění)
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

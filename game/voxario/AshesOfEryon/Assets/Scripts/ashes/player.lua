@@ -19,8 +19,9 @@ local hvx, hvz = 0, 0
 
 -- Vytvoří hráče: model hrdiny (bez kostry – chůze procedurálně) + kapsle pro pohyb po terénu
 function M.Create(cls, gender, name, spawn)
+    M.pose.cast = cls == "vestec"   -- věštec při útoku kouzlí obě rukama
     local h = gender == "f" and 1.55 or 1.62
-    local model = "Models/heroes/" .. cls .. "_" .. gender .. ".glb"
+    local model = "Models/heroes_rig/" .. cls .. "_" .. gender .. ".glb"
     -- kapsle (neviditelná) nese polohu, model ji následuje
     M.body = world.spawn("cylinder", spawn.x, map.Ground(spawn.x, spawn.z) + 0.2, spawn.z,
         { visible = false, name = "Player", tag = "player",
@@ -29,6 +30,9 @@ function M.Create(cls, gender, name, spawn)
     M.gait = pose.GaitOptions(model)
     M.height = h
     M.name = name
+    -- v noci teplé světlo kolem hráče (jako lucerna), ať je svět kolem čitelný
+    M.lamp = world.spawn("light", spawn.x, map.Ground(spawn.x, spawn.z) + 2.4, spawn.z,
+        { light = { color = { 1.0, 0.78, 0.55 }, intensity = 9, range = 11, night_only = true }, name = "Světlo hráče" })
     M.camera = entity.find("Camera")
     M.Respawn(spawn)
 end
@@ -38,6 +42,7 @@ function M.ReplaceModel(path, height)
     if not M.view then return end
     local x, y, z = M.Position()
     entity.destroy(M.view)
+    pose.Forget(M.view)
     M.view = world.spawn(path, x, y, z, { fit = height or M.height, name = M.name })
     M.gait = pose.GaitOptions(path)
     M.height = height or M.height
@@ -55,6 +60,17 @@ end
 function M.Position()
     local p = entity.get_position(M.body)
     return p.x, p.y, p.z
+end
+
+-- Poloha pro model a kameru: kapsle fyziky se ve stoji chvěje o zlomky milimetru (dotlačování k zemi),
+-- s DLSS/TAA by to rozechvělo celý obraz – drobné posuny pod 4 mm se ignorují.
+local stable
+function M.StablePosition()
+    local x, y, z = M.Position()
+    if not stable or (x - stable[1]) ^ 2 + (y - stable[2]) ^ 2 + (z - stable[3]) ^ 2 > 0.004 ^ 2 then
+        stable = { x, y, z }
+    end
+    return stable[1], stable[2], stable[3]
 end
 
 -- Natočí hráče k bodu (boj)
@@ -109,17 +125,18 @@ function M.Update(dt, respawnPoint)
     M.speed = sqrt(hvx * hvx + hvz * hvz)
 
     -- model následuje kapsli + procedurální chůze (pohupování a náklon; Gait.cs zjednodušeně)
-    local px, py, pz = M.Position()
+    local px, py, pz = M.StablePosition()
     M.walkPhase = (M.walkPhase or 0) + dt * M.speed * 1.9
     if M.testGait then pose.Gait(M.view, M.testGait, 4.2, M.gait)   -- samotest: zastavený krok
     else pose.Gait(M.view, M.walkPhase, M.pose.fallen and 0 or M.speed, M.gait) end
     local bob = math.abs(sin(M.walkPhase)) * min(M.speed, 7) * 0.012
     local lean = min(M.speed, 7) * 1.1
-    local fwd, dy, pitch, fall = pose.Step(M.pose, dt)
+    local fwd, dy, pitch, fall = pose.Step(M.pose, dt, M.view)
     local fr = rad(M.facing)
     entity.set_position(M.view, px + sin(fr) * fwd, py + bob + dy, pz + cos(fr) * fwd)
     entity.set_rotation(M.view, fall or (lean + pitch), M.facing, fall and 0 or sin(M.walkPhase) * min(M.speed, 7) * 0.35)
 
+    if M.lamp then entity.set_position(M.lamp, px, py + 2.4, pz) end
     -- pád do moře: zpět na břeh
     if py < -3 then M.Respawn(respawnPoint or map.SpawnKalidra) end
 end
@@ -128,6 +145,8 @@ end
 local ignoreTags = { npc = true, enemy = true, other_player = true, animal = true }
 function M.IgnoreCamera(id)
     if not id then return false end
+    -- terén kameru nezastavuje (hlídá ji výška nad zemí níže) – jinak se u země třásla
+    if M.terrainIds and M.terrainIds[id] then return true end
     local tag = entity.get_tag and entity.get_tag(id)
     return tag ~= nil and ignoreTags[tag] == true
 end
@@ -146,7 +165,18 @@ function M.UpdateCamera(dt, liveCombat)
         if not liveCombat and keys.Held("cam_right") then c.yaw = c.yaw - 90 * dt end
         c.distance = max(2.5, min(22, c.distance - input.wheel() * 0.8))
     end
-    local px, py, pz = M.Position()
+    local px, py, pz = M.StablePosition()
+    -- vyhlazený cíl kamery: kapsle hráče ve městě (zdi, schody, okraje dlažby) poskakuje o centimetry
+    -- a kamera se s ní nesnesitelně třásla; při teleportu (> 3 m) skočí hned
+    local ct = M.camTarget
+    if not ct or (px - ct[1]) ^ 2 + (py - ct[2]) ^ 2 + (pz - ct[3]) ^ 2 > 9 then
+        ct = { px, py, pz }
+    else
+        local kt, kv = 1 - exp(-20 * dt), 1 - exp(-8 * dt)   -- svisle klidněji (schody, hrany)
+        ct = { ct[1] + (px - ct[1]) * kt, ct[2] + (py - ct[2]) * kv, ct[3] + (pz - ct[3]) * kt }
+    end
+    M.camTarget = ct
+    px, py, pz = ct[1], ct[2], ct[3]
     local tx, ty, tz = px, py + 1.3, pz
     -- kamera za hráčem: směr pohledu (sin yaw, cos yaw), náklon dolů pitch
     local cp, sp = cos(rad(c.pitch)), sin(rad(c.pitch))
@@ -169,16 +199,19 @@ function M.UpdateCamera(dt, liveCombat)
             -- koruna přímo nad hráčem kameru nepřitáhne až k hlavě
             if t then want = math.min(want, max(2.5, t * len - 0.4)) end
         end
-        if want < len then
+        -- hysteréze: kamera se k překážce nepřitahuje kvůli pár centimetrům (jinak se zasekávala)
+        if want < len - 0.1 then
             blocked = true
-            want = max(0.8, want)
+            want = max(1.2, want - 0.1)
             wx, wy, wz = tx + ux * want, ty + uy * want, tz + uz * want
         end
     end
-    -- k hráči skočí hned (jinak by kamera na chvíli prošla překážkou), od hráče plynule
+    -- k hráči skočí hned (jinak by kamera na chvíli prošla překážkou), od hráče plynule;
+    -- drobné rozdíly (pod 15 cm) jen plynule, ať se kamera u překážky netřese
     local k = 1 - exp(-14 * dt)
     local cd = sqrt((c.x - tx) ^ 2 + (c.y - ty) ^ 2 + (c.z - tz) ^ 2)
-    if blocked and want < cd then k = 1 end
+    -- ve městě (zdi, domy, stánky): k překážce rychle, ale plynule; skok jen při velkém průniku
+    if blocked and want < cd - 1.2 then k = 1 elseif blocked and want < cd then k = 1 - exp(-30 * dt) end
     c.x, c.y, c.z = c.x + (wx - c.x) * k, c.y + (wy - c.y) * k, c.z + (wz - c.z) * k
     -- natočení kamery na hráče (kamera v enginu hledí po -Z)
     local dx, dy, dz = tx - c.x, ty - c.y, tz - c.z

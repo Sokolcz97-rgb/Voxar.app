@@ -69,8 +69,9 @@ function M.BuildTerrain()
     -- sever (pobřeží Kalidry) 270 x 270 m a jih (Solný průsmyk, Rudé písky) – okraje přesně navazují
     M.north = world.terrain({ size = { 270, 270 }, cell = 1, origin = { -135, -135 }, height = HeightAt,
         splat = northWeights, tiling = 4,
-        layers = { { color = c255(80, 95, 44) }, { color = c255(140, 116, 78) },
-                   { color = c255(195, 172, 131) }, { color = c255(150, 142, 126) } } })
+        -- sytější tráva, teplejší hlína a písek, chladnější skála (ve stylu ručně malovaných MMO)
+        layers = { { color = c255(84, 110, 46) }, { color = c255(148, 118, 78) },
+                   { color = c255(206, 180, 134) }, { color = c255(150, 132, 104) } } })
     M.south = world.terrain({ size = { 270, map.SouthEdge - 135 }, cell = 1, origin = { -135, 135 }, height = HeightAt,
         splat = southWeights, tiling = 5,
         layers = { { color = c255(140, 116, 78) }, { color = c255(195, 172, 131) },
@@ -82,7 +83,7 @@ function M.BuildTerrain()
 end
 
 -- ---------------------------------------------------------------- Kalidra (WorldBuilder.BuildCity)
-local WALL = { 0.93, 0.9, 0.84 }
+local WALL = { 0.86, 0.8, 0.7 }   -- teplý vápenec (malovaný řecký styl)
 local ROOF = { 0.72, 0.33, 0.2 }
 
 local function wall(x, z, w, d, baseY, h)
@@ -97,7 +98,7 @@ end
 
 local function placeModel(path, x, z, w, d, face, name)
     world.spawn(path, x, Ground(x, z) - 0.08, z, { fit_footprint = { w, d }, yaw = map.FaceToYaw(face),
-        collider = "box", name = name })
+        collider = "box", name = name, lod = "auto", lod_distance = 45 })
 end
 
 function M.BuildCity()
@@ -132,9 +133,11 @@ function M.BuildNpcs(faction)
         if n.faction == faction then
             local fem = n.id == "thalia" or n.id == "sabra"
             local h = (n.id == "eryon" or n.id == "azkar") and 1.85 or (fem and 1.55 or 1.62)
-            local model = "Models/heroes/" .. n.cls .. "_" .. (fem and "f" or "m") .. ".glb"
+            local model = "Models/heroes_rig/" .. n.cls .. "_" .. (fem and "f" or "m") .. ".glb"
             local id = world.spawn(model, n.x, Ground(n.x, n.z), n.z, { fit = h, yaw = map.FaceToYaw(n.face),
                 lod = "auto", lod_distance = 30, name = n.name, tag = "npc" })
+            -- stojící NPC: kosterní klip Idle (dýchání, přešlapování, rozhlížení)
+            pose.Idle(id, model)
             -- kapsle proti procházení (statická)
             world.spawn("cylinder", n.x, Ground(n.x, n.z) + h / 2, n.z, { size = { 0.7, h, 0.7 }, visible = false,
                 collider = "capsule", name = n.name .. " (kolize)", tag = "npc" })
@@ -171,8 +174,17 @@ function M.BuildAnimals()
 end
 
 -- Toulání kolem domova (Wanderer.cs)
-function M.UpdateAnimals(dt)
+function M.UpdateAnimals(frameDt)
+    local vx, vz = M.viewerX or 0, M.viewerZ or 0
     for _, a in ipairs(M.animals) do
+        -- vzdálená zvířata 4× za sekundu
+        local dt = frameDt
+        if (a.x - vx) ^ 2 + (a.z - vz) ^ 2 > 70 * 70 then
+            a.acc = (a.acc or 0) + frameDt
+            if a.acc < 0.25 then goto continue end
+            dt, a.acc = a.acc, 0
+        end
+        do
         local dx, dz = a.tx - a.x, a.tz - a.z
         local d = sqrt(dx * dx + dz * dz)
         if d < 0.3 then
@@ -201,6 +213,8 @@ function M.UpdateAnimals(dt)
             a.walking = false
             if QUAD[a.kind] then pose.Gait(a.id, 0, 0) end
         end
+        end
+        ::continue::
     end
 end
 
@@ -336,8 +350,8 @@ function M.BuildScenery(quality)
     -- koruny pro kolizi kamery (rozměry z tools/make_scenery_models.py)
     for _, t in ipairs(cypress) do M.AddCanopy(t[1], t[3], t[2] + 0.9 * t[6], t[2] + 5.5 * t[6], 0.72 * t[5]) end
     for _, t in ipairs(olive) do M.AddCanopy(t[1], t[3], t[2] + 1.6 * t[6], t[2] + 4.0 * t[6], 1.7 * t[5]) end
-    world.instances("Models/scenery/cypress.gltf", cypress, { collider = "capsule", radius = 0.25, height = 3, distance = 320 })
-    world.instances("Models/scenery/olive.gltf", olive, { collider = "capsule", radius = 0.35, height = 2.5, distance = 320 })
+    world.instances("Models/scenery/cypress.gltf", cypress, { collider = "capsule", radius = 0.25, height = 3, distance = 320, wind = 0.12 })
+    world.instances("Models/scenery/olive.gltf", olive, { collider = "capsule", radius = 0.35, height = 2.5, distance = 320, wind = 0.08 })
 
     -- kameny (stejné pořadí volání generátoru jako v Unity)
     local rocks = {}
@@ -353,7 +367,8 @@ function M.BuildScenery(quality)
     world.instances("Models/scenery/rock.gltf", rocks, { distance = 180 })
 
     -- tráva (jen blízko kamery)
-    local grassN = quality == 0 and 5000 or (quality == 1 and 8000 or (quality == 2 and 12000 or 18000))
+    -- hodně trávy: hustotu za běhu ztenčí nastavení (graphics.detail_density)
+    local grassN = quality == 0 and 7000 or (quality == 1 and 12000 or (quality == 2 and 20000 or 28000))
     local grass, placed = {}, 0
     for _ = 1, grassN * 3 do
         if placed >= grassN then break end
@@ -365,7 +380,19 @@ function M.BuildScenery(quality)
             placed = placed + 1
         end
     end
-    world.instances("Models/scenery/grass.gltf", grass, { distance = 70 })
+    world.instances("Models/scenery/grass.gltf", grass, { distance = 75, detail = true, wind = 0.12 })
+    -- zelené keře na severu (louky, okraje lesa)
+    local bushes = {}
+    for _ = 1, floor(900 * density + 0.5) * 3 do
+        if #bushes >= floor(900 * density + 0.5) then break end
+        local x, z = (R() - 0.5) * half * 2, (R() - 0.5) * half * 2
+        local h = HeightAt(x, z)
+        local s, yaw = 0.6 + R() * 0.8, R() * 360
+        if h > 1.0 and h < 11 and z < 108 and not map.InCity(x, z) and map.RoadDistance(x, z) > 3 then
+            bushes[#bushes + 1] = { x, h - 0.05, z, yaw, s }
+        end
+    end
+    world.instances("Models/scenery/bush_green.gltf", bushes, { distance = 120, detail = true, wind = 0.06 })
 
     M.BuildAqueduct()
     M.BuildShips()
@@ -385,9 +412,9 @@ function M.BuildAqueduct()
         local broken = sin(i * 12.9898) > 0.55
         local h = broken and (3 + abs(sin(i * 7)) * 3) or 8
         local y = HeightAt(x, z) - 0.3
-        world.spawn("cube", x, y + h / 2, z, { size = { 1.4, h, 1.4 }, yaw = yaw, color = { 0.78, 0.75, 0.68 }, collider = "box" })
+        world.spawn("cube", x, y + h / 2, z, { size = { 1.4, h, 1.4 }, yaw = yaw, color = { 0.8, 0.72, 0.6 }, collider = "box" })
         if not broken and i < n then
-            world.spawn("cube", x + dx * 2.5, y + h - 0.2 + 0.3, z + dz * 2.5, { size = { 1.6, 1.2, 5 }, yaw = yaw, color = { 0.78, 0.75, 0.68 } })
+            world.spawn("cube", x + dx * 2.5, y + h - 0.2 + 0.3, z + dz * 2.5, { size = { 1.6, 1.2, 5 }, yaw = yaw, color = { 0.8, 0.72, 0.6 } })
         end
     end
 end
@@ -401,10 +428,9 @@ function M.BuildShips()
     M.ships = {}
     for _, s in ipairs({ { -66, -78, 0.4 }, { -74, -68, 1.0 }, { -58, -86, 0.9 }, { -78, -82, 0.6 } }) do
         local x, z, r = s[1], s[2], s[3]
-        local hull = world.spawn("cube", x, 0.4, z, { size = { 2.6, 1.2, 10 }, yaw = math.deg(r), color = { 0.09, 0.08, 0.08 } })
-        local mast = world.spawn("cylinder", x, 4.5, z, { size = { 0.24, 8, 0.24 }, color = { 0.35, 0.27, 0.2 } })
-        local sail = world.spawn("cube", x, 5.3, z, { size = { 4.4, 3.6, 0.08 }, yaw = math.deg(r), color = { 0.12, 0.09, 0.09 } })
-        M.ships[#M.ships + 1] = { parts = { hull, mast, sail }, base = { 0.4, 4.5, 5.3 }, x = x, z = z, phase = r * 3 }
+        -- trup s přídí (jehlan), stěžeň a plachta jako jeden model (Scenery.cs)
+        local ship = world.spawn("Models/scenery/ship.gltf", x, 0, z, { yaw = -math.deg(r), name = "Černá loď" })
+        M.ships[#M.ships + 1] = { parts = { ship }, base = { 0 }, x = x, z = z, phase = r * 3 }
     end
 end
 
@@ -429,19 +455,23 @@ local function fire(x, z, size, night_only)
     M.fires[#M.fires + 1] = id
 end
 
+-- prapor Legie na žerdi (Scenery.Banner)
+local function banner(x, z)
+    world.spawn("cylinder", x, Ground(x, z) + 2.75, z, { size = { 0.14, 5.5, 0.14 }, color = { 0.35, 0.27, 0.2 } })
+    world.spawn("cube", x + 0.75, Ground(x, z) + 4, z, { size = { 1.4, 2.4, 0.05 }, color = { 0.5, 0.08, 0.05 } })
+end
+
 function M.BuildCamp()
     fire(CAMP[1] - 2, CAMP[2] + 2, 1.1, false)
     fire(-46, -52, 0.9, false)
+    -- stany: jehlany o čtyřech stranách (Scenery.BuildCamp: Cone(2.2, 2.6, 4, 1)), natočené o 45°
     for i = 0, 5 do
         local a = i / 6 * math.pi * 2
         local x, z = CAMP[1] + cos(a) * 11, CAMP[2] + sin(a) * 11
-        world.spawn("cylinder", x, Ground(x, z) + 1.3, z, { size = { 3.4, 2.6, 3.4 }, color = { 0.45, 0.16, 0.12 }, collider = "box" })
+        world.spawn("Models/scenery/tent.gltf", x, Ground(x, z), z, { yaw = -(math.deg(a) + 45), collider = "box", name = "Stan" })
     end
-    for _, b in ipairs({ { -40, -50 }, { 48, -58 } }) do
-        local x, z = b[1], b[2]
-        world.spawn("cylinder", x, Ground(x, z) + 2.75, z, { size = { 0.14, 5.5, 0.14 }, color = { 0.35, 0.27, 0.2 } })
-        world.spawn("cube", x + 0.75, Ground(x, z) + 4, z, { size = { 1.4, 2.4, 0.05 }, color = { 0.5, 0.08, 0.05 } })
-    end
+    banner(-40, -50)
+    banner(48, -58)
 end
 
 -- ---------------------------------------------------------------- jih (DesertScenery.cs)
@@ -476,6 +506,21 @@ function M.BuildDesert(quality)
         end
     end
     world.instances("Models/scenery/rock_red.gltf", rocks, { distance = 220 })
+    -- suché keře (DesertScenery: 700 × hustota)
+    local bushes = {}
+    local bn = floor(700 * density + 0.5)
+    i = 0
+    while i < bn * 3 and bn > 0 do
+        i = i + 1
+        local x, z = randX(), randZ()
+        local h = HeightAt(x, z)
+        if h >= 1.1 and h <= 12 and clear(x, z) and map.PathDistance(x, z, map.CanyonPath) > 3 then
+            local sc = 0.6 + R() * 0.9
+            bushes[#bushes + 1] = { x, h - 0.05, z, R() * 360, sc }
+            bn = bn - 1
+        end
+    end
+    world.instances("Models/scenery/bush.gltf", bushes, { distance = 110, detail = true, wind = 0.05 })
     -- palmy kolem oázy
     local palms = {}
     for k = 0, 10 do
@@ -485,7 +530,43 @@ function M.BuildDesert(quality)
         palms[#palms + 1] = { x, HeightAt(x, z) - 0.1, z, R() * 360, 0.9 + R() * 0.3 }
     end
     for _, t in ipairs(palms) do M.AddCanopy(t[1], t[3], t[2] + 4.2 * t[5], t[2] + 5.1 * t[5], 2.4 * t[5]) end
-    world.instances("Models/scenery/palm.gltf", palms, { collider = "capsule", radius = 0.25, height = 3 })
+    world.instances("Models/scenery/palm.gltf", palms, { collider = "capsule", radius = 0.25, height = 3, wind = 0.15 })
+    -- rákos na břehu oázy
+    local reeds = {}
+    for _ = 1, 140 do
+        local a, r = R() * math.pi * 2, map.OasisR - 0.5 + R() * 3
+        local x, z = map.Oasis.x + cos(a) * r, map.Oasis.z + sin(a) * r
+        reeds[#reeds + 1] = { x, math.max(HeightAt(x, z), map.OasisWater - 0.3), z, R() * 360, 0.7 + R() * 0.6, 0.7 + R() * 0.6, 0.7 + R() * 0.6,
+                              R() * 14 - 7, R() * 14 - 7 }
+    end
+    world.instances("Models/scenery/reed.gltf", reeds, { distance = 90, detail = true, wind = 0.1 })
+    -- hlídka Legie v Solném průsmyku: oheň, prapor, zátarasa s průchodem, stan
+    local p0, pa, pb = map.CanyonPath[3], map.CanyonPath[2], map.CanyonPath[3]
+    fire(p0.x + 3, p0.z + 1, 0.9, false)
+    banner(p0.x - 3.5, p0.z - 2)
+    do
+        local dx, dz = pb.x - pa.x, pb.z - pa.z
+        local l = sqrt(dx * dx + dz * dz)
+        dx, dz = dx / l, dz / l
+        local sx, sz = -dz, dx
+        local stakes = {}
+        for k = -4, 4 do
+            if abs(k) > 1 then
+                local wx = pa.x + (pb.x - pa.x) * 0.55 + sx * k * 1.1
+                local wz = pa.z + (pb.z - pa.z) * 0.55 + sz * k * 1.1
+                stakes[#stakes + 1] = { wx, HeightAt(wx, wz), wz, math.deg(math.atan(dx, dz)), 1, 1, 1, -30 + (k % 2) * 8, 0 }
+            end
+        end
+        world.instances("Models/scenery/stake.gltf", stakes, { collider = "capsule", radius = 0.25, height = 1.6 })
+    end
+    world.spawn("Models/scenery/tent.gltf", p0.x - 4, HeightAt(p0.x - 4, p0.z + 4), p0.z + 4,
+        { size = { 2 / 2.2, 2.4 / 2.6, 2 / 2.2 }, yaw = -30, collider = "box", name = "Stan hlídky" })
+    -- vybělený vrak na Solném pobřeží
+    do
+        local wz = 232
+        local wx = map.CoastX(wz) + 8
+        world.spawn("Models/scenery/wreck.gltf", wx, HeightAt(wx, wz) + 0.3, wz, { rotation = { 0, -20, -18 }, name = "Vybělený vrak" })
+    end
     -- ruiny Starého slunce: podstava, sloupy (rozbité)
     local cx, cz = map.Ruins.x, map.Ruins.z
     local y0 = HeightAt(cx, cz)
@@ -500,7 +581,26 @@ function M.BuildDesert(quality)
         local px = cx + lx * cos(rad) + lz * sin(rad)
         local pz = cz - lx * sin(rad) + lz * cos(rad)
         world.spawn("cylinder", px, y0 + 0.6 + h / 2, pz, { size = { 1.1, h, 1.1 }, color = { 0.82, 0.72, 0.56 }, collider = "capsule" })
+        -- hlavice na dvou celých sloupech
+        if k == 3 or k == 8 then
+            world.spawn("cube", px, y0 + 0.6 + h + 0.25, pz, { size = { 1.6, 0.5, 1.6 }, yaw = -12, color = { 0.82, 0.72, 0.56 } })
+        end
     end
+    -- povalené sloupy a kvádry v písku
+    for k = 0, 3 do
+        local a = math.rad(40 + k * 85)
+        local d = 10 + k
+        local px, pz = cx + math.sin(a) * d, cz - math.cos(a) * d
+        local yaw = -(30 + k * 50)
+        local fy = math.rad(yaw)
+        -- válec ležící podél směru yaw (v Unity začíná v bodě p, ne ve středu)
+        local mx, mz = px + math.sin(fy) * 1.75, pz + math.cos(fy) * 1.75
+        world.spawn("cylinder", mx, y0 + 0.4 + 0.5, mz, { size = { 1.0, 3.5, 1.0 }, rotation = { 90, yaw, 0 }, color = { 0.86, 0.74, 0.58 }, collider = "box" })
+        world.spawn("cube", px + 2, y0 + 0.4, pz - 1.5, { size = { 1.2, 0.8, 1.6 }, rotation = { 8, -k * 37, 5 }, color = { 0.8, 0.68, 0.52 } })
+    end
+    -- socha Starého slunce: kotouč na podstavci (bez tváře)
+    world.spawn("cube", cx, y0 + 0.6 + 1.1, cz, { size = { 1.6, 2.2, 1.6 }, yaw = -12, color = { 0.86, 0.74, 0.58 }, collider = "box" })
+    world.spawn("cylinder", cx, y0 + 0.6 + 3.8, cz, { size = { 3.0, 0.3, 3.0 }, rotation = { 90, -12, 0 }, color = { 0.9, 0.78, 0.6 } })
 end
 
 -- Celý svět
