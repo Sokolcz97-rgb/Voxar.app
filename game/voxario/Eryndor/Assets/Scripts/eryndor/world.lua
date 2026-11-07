@@ -51,13 +51,16 @@ local function c255(r, g, b) return { r / 255, g / 255, b / 255 } end
 function M.BuildTerrain()
     local half = map.Size / 2
     M.terrain = W.terrain({ size = { map.Size, map.Size }, cell = 1, origin = { -half, -half }, height = map.HeightAt,
-        splat = map.Splat, tiling = 4,
+        splat = map.Splat, tiling = 5,
         -- 1 louka, 2 tyrkysový mech Sylvarie, 3 popel a hlína Aethelgardu, 4 skála / zkažená zem trhliny
-        layers = { { color = c255(58, 104, 30) }, { color = c255(26, 92, 84) },
-                   { color = c255(66, 54, 46) }, { color = c255(64, 58, 70) } } })
+        -- (textury z listu přírodních textur: tools/eryndor_textures.sh; barva = záloha bez textury)
+        layers = { { texture = "Textures/terrain/trava.jpg", color = c255(58, 104, 30) },
+                   { texture = "Textures/terrain/mech.jpg", color = c255(26, 92, 84) },
+                   { texture = "Textures/terrain/zeme.jpg", color = c255(66, 54, 46) },
+                   { texture = "Textures/terrain/skala.jpg", color = c255(64, 58, 70) } } })
     -- křišťálové jezero (průzračné, tyrkysové) a vzdálené moře mlhy za horami se nevykresluje
     W.water(map.Lake.x, map.LakeY, map.Lake.z, map.Lake.r * 2.9, map.Lake.r * 2.6,
-        { color = { 0.38, 0.86, 0.92 }, wave = 0.06, wavelength = 6, foam = 0.35 })
+        { color = { 0.38, 0.86, 0.92 }, wave = 0.06, wavelength = 6, foam = 0.35, bed = "Textures/terrain/pisek.jpg" })
 end
 
 local avoid = {}   -- místa staveb a cest (bez stromů)

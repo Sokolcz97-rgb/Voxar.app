@@ -21,9 +21,13 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Assets", 
 NAT = os.path.join(ROOT, "nature")
 BLD = os.path.join(ROOT, "build")
 
-BARK = dict(name="bark", roughness=0.95)
-LEAF = dict(name="leaf", roughness=0.8, double=True)
-STONE = dict(name="stone", roughness=0.9)
+# textury z listu přírodních textur (tools/eryndor_textures.sh), vloží se do modelů; uv_scale = m na dlaždici
+TEX = os.path.join(ROOT, "..", "Textures", "nature")
+BARK = dict(name="bark", roughness=0.95, texture=os.path.join(TEX, "kura.jpg"), uv_scale=0.9)
+LEAF = dict(name="leaf", roughness=0.8, double=True, texture=os.path.join(TEX, "listi.jpg"), uv_scale=1.3)
+STONE = dict(name="stone", roughness=0.9, texture=os.path.join(TEX, "skala.jpg"), uv_scale=1.1)
+GIANT_BARK = dict(BARK, texture=os.path.join(TEX, "kura_bila.jpg"), uv_scale=2.2)
+GIANT_LEAF = dict(LEAF, texture=os.path.join(TEX, "listi_sylvarie.jpg"), uv_scale=2.6)
 MARBLE = dict(name="marble", roughness=0.45)
 GOLD = dict(name="gold", roughness=0.35, metallic=0.85)
 IRON = dict(name="iron", roughness=0.55, metallic=0.7)
@@ -129,7 +133,7 @@ def giant_tree():
         fruits.append(f)
     fr = merge(*fruits).color(rgb("#9ff7ff"))
     write_glb(os.path.join(NAT, "giant_tree.glb"),
-              [(merge(t, *branches), BARK), (leaves, LEAF), (fr, glow(rgb("#5ee6ff"), 6.0))], name="GiantTree")
+              [(merge(t, *branches), GIANT_BARK), (leaves, GIANT_LEAF), (fr, glow(rgb("#5ee6ff"), 6.0))], name="GiantTree")
 
 
 def broadleaf(seed, out):

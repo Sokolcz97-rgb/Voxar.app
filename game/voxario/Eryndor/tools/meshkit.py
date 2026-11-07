@@ -341,23 +341,62 @@ def _expand_flat(m):
     return out
 
 
+def _box_uv(P, N, scale):
+    """UV promítnutím ze tří stran podle převládající osy normály (box mapping), `scale` = metrů na dlaždici."""
+    a = np.argmax(np.abs(N), axis=1)
+    uv = np.where((a == 0)[:, None], P[:, [2, 1]], np.where((a == 1)[:, None], P[:, [0, 2]], P[:, [0, 1]]))
+    uv = uv / float(scale)
+    uv[:, 1] = -uv[:, 1]   # obrázek má řádky shora dolů: +Y modelu = nahoru v textuře
+    return uv.astype(np.float32)
+
+
+def _relative_tint(C):
+    """Barvy vrcholů jako odstín k textuře: nejsvětlejší místa = plná textura, tmavší = stín / nádech."""
+    ref = np.percentile(C[:, :3], 95, axis=0)
+    out = C.copy()
+    out[:, :3] = np.clip(C[:, :3] / np.maximum(ref, 1e-3), 0, 1)
+    return out
+
+
 def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
-    """parts: [(Mesh, materiál dict)]; materiál: color, roughness, metallic, emissive, emissive_strength, double.
+    """parts: [(Mesh, materiál dict)]; materiál: color, roughness, metallic, emissive, emissive_strength, double,
+    texture (cesta k .jpg/.png, vloží se do .glb; UV promítnutím ze tří stran), uv_scale (m na dlaždici), normal (mapa).
     skeleton: [(jméno, rodič|None, (x, y, z) svět)] – pak se zapíše skin (váha 1 na kost Mesh.B).
     animations: [(jméno, délka, smyčka, fn(t) -> {kost: (rx, ry, rz)}, translace pánve fn(t)->(dx,dy,dz))]."""
     out = _Bin()
     materials, primitives = [], []
+    images, image_index = [], {}
+
+    def image(file):
+        if file not in image_index:
+            with open(file, "rb") as f:
+                raw = f.read()
+            mime = "image/png" if file.lower().endswith(".png") else "image/jpeg"
+            images.append({"bufferView": out.view(raw), "mimeType": mime})
+            image_index[file] = len(images) - 1
+        return image_index[file]
     skinned = skeleton is not None
     for mesh, mat in parts:
         if not len(mesh.P):
             continue
         m = _expand_flat(mesh) if mesh.flat else mesh
         N = m.normals()
+        axisN = N
+        if mat.get("texture") and not mesh.flat:
+            # každá stěna vlastní vrcholy (jedna osa promítnutí na stěnu), hladké normály zůstanou
+            I = m.I.reshape(-1)
+            fn = np.cross(m.P[m.I[:, 1]] - m.P[m.I[:, 0]], m.P[m.I[:, 2]] - m.P[m.I[:, 0]])
+            e = Mesh(m.P[I], np.arange(len(I)).reshape(-1, 3), m.C[I], m.B[I])
+            e.N = N[I]
+            m, N, axisN = e, e.N, np.repeat(fn, 3, axis=0)
         attrs = {
             "POSITION": out.acc(m.P.astype(np.float32), 5126, "VEC3", 34962, minmax=True),
             "NORMAL": out.acc(N.astype(np.float32), 5126, "VEC3", 34962),
-            "COLOR_0": out.acc(np.clip(m.C, 0, 1).astype(np.float32), 5126, "VEC4", 34962),
+            "COLOR_0": out.acc(np.clip(_relative_tint(m.C) if mat.get("texture") else m.C, 0, 1).astype(np.float32),
+                               5126, "VEC4", 34962),
         }
+        if mat.get("texture"):
+            attrs["TEXCOORD_0"] = out.acc(_box_uv(m.P, axisN, mat.get("uv_scale", 1.0)), 5126, "VEC2", 34962)
         if skinned:
             J = np.zeros((len(m.P), 4), np.uint16)
             J[:, 0] = m.B
@@ -369,6 +408,10 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
         pbr = {"baseColorFactor": list(mat.get("color", (1, 1, 1))) + [1.0],
                "roughnessFactor": float(mat.get("roughness", 0.85)), "metallicFactor": float(mat.get("metallic", 0.0))}
         material = {"name": mat.get("name", "m%d" % len(materials)), "pbrMetallicRoughness": pbr}
+        if mat.get("texture"):
+            pbr["baseColorTexture"] = {"index": image(mat["texture"])}
+            if mat.get("normal"):
+                material["normalTexture"] = {"index": image(mat["normal"])}
         if mat.get("emissive"):
             material["emissiveFactor"] = list(mat["emissive"])
             if mat.get("emissive_strength", 1.0) != 1.0:
@@ -381,6 +424,11 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
     nodes = [{"name": name, "mesh": 0}]
     gltf = {"asset": {"version": "2.0", "generator": "Eryndor meshkit"}, "scene": 0, "scenes": [{"nodes": [0]}],
             "nodes": nodes, "meshes": [{"name": name, "primitives": primitives}], "materials": materials}
+    if images:
+        # textury = obrázky 1:1 (index textury = index obrázku), opakování dlaždic
+        gltf["images"] = images
+        gltf["samplers"] = [{"magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497}]
+        gltf["textures"] = [{"sampler": 0, "source": i} for i in range(len(images))]
     if any("extensions" in m for m in materials):
         gltf["extensionsUsed"] = ["KHR_materials_emissive_strength"]
     if skinned:
