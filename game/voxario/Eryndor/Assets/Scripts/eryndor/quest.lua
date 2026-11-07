@@ -7,9 +7,9 @@ local M = { step = 0, dialog = nil }
 
 local STEPS = {
     { title = "Ozvěna", goal = "Promluv s Archivářkou Lyrise (F)" },
-    { title = "Zkažená fauna", goal = "Zab Zkažené vlky", kind = "wolf", need = 4 },
-    { title = "Kultisté Prázdnoty", goal = "Zab Kultisty u Stínové trhliny", kind = "cultist", need = 3 },
-    { title = "Drtič popela", goal = "Poraz Drtiče popela u trhliny", kind = "crusher", need = 1 },
+    { title = "Zkažená fauna", goal = "Zab Zkažené vlky na loukách Serpentine", kind = "wolf", need = 4 },
+    { title = "Kultisté Prázdnoty", goal = "Zab Kultisty u Stínové trhliny v Crystalariu (východ)", kind = "cultist", need = 3 },
+    { title = "Drtič popela", goal = "Poraz Drtiče popela u trhliny v Crystalariu", kind = "crusher", need = 1 },
     { title = "Ozvěna", goal = "Vrať se k Lyrise (F)" },
 }
 
@@ -37,7 +37,7 @@ end
 
 function M.Tracker()
     local st = STEPS[M.step]
-    if not st then return { title = "Ozvěna", lines = { { text = "Hraniční údolí je zatím v bezpečí.", done = true } } } end
+    if not st then return { title = "Ozvěna", lines = { { text = "Aethelgard je zatím v bezpečí.", done = true } } } end
     local text = st.goal
     if st.need then text = string.format("%s: %d / %d", st.goal, M.count, st.need) end
     return { title = st.title, lines = { { text = text } } }
@@ -54,9 +54,10 @@ function M.Talk()
     local close = function() M.dialog = nil end
     if M.step == 1 then
         M.dialog = { who = "Archivářka Lyrise", text =
-            "Probudil ses, Ozvěno. Před pěti sty lety se Zřídlo roztrhlo ve Velkém Rozkolu a jeho střepy – Aetherium – leží " ..
-            "rozeseté po celém Eryndoru. Ty jediný je dokážeš vstřebat, aniž bys zešílel. Sylvaria i Aethelgard tě budou chtít " ..
-            "jako zbraň… ale z trhliny na severu už prosakuje Umbra. Zvířata v údolí se mění. Zastav je.",
+            "Probudil ses, Ozvěno. Vítej v Aethelgardu. Na západě šumí prastaré lesy Verdant Canopy, na severu se tyčí " ..
+            "ledové Frostfang Peaks, na jihu doutná sopečná Ignis Scar a na východě září Crystalarium. Řeka Serpentine je " ..
+            "drží od sebe… jenže z trhliny v Crystalariu prosakuje Umbra a zvířata na loukách se mění. Zastav je. " ..
+            "(Klávesa M ukáže mapu celého světa.)",
             options = { { label = "Přijímám", fn = function() M.Advance(); close() end }, { label = "Později", fn = close } } }
     elseif M.step == #STEPS then
         M.dialog = { who = "Archivářka Lyrise", text =

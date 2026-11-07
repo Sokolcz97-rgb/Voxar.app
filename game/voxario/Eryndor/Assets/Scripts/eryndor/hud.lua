@@ -199,4 +199,85 @@ function M.DrawDialog(d)
     end
 end
 
+
+-- ------------------------------------------------------------------ mapa světa Aethelgard
+local MAP_IMG = "UI/aethelgard_map.jpg"
+local REGION_LABELS = {
+    { "verdant", "Verdant Canopy", "#c8f0a0" }, { "frost", "Frostfang Peaks", "#e8f4ff" },
+    { "ignis", "Ignis Scar", "#ffb070" }, { "crystal", "Crystalarium", "#f0b0ff" },
+}
+
+local function playerArrow(cx, cy, size, yaw)
+    local a = math.rad(yaw or 0)
+    local fx, fy = math.sin(a), math.cos(a)          -- dopředu na mapě (+X vpravo, +Z dolů; sever nahoře)
+    local rx, ry = -fy, fx
+    ui.line(cx - fx * size * 0.5 + rx * size * 0.45, cy - fy * size * 0.5 + ry * size * 0.45, cx + fx * size, cy + fy * size, "#ffe070", 3)
+    ui.line(cx - fx * size * 0.5 - rx * size * 0.45, cy - fy * size * 0.5 - ry * size * 0.45, cx + fx * size, cy + fy * size, "#ffe070", 3)
+    ui.rect(cx - 4, cy - 4, 8, 8, "#fff6c0", 4)
+end
+
+-- minimapa v pravém horním rohu (výřez velké mapy kolem hráče)
+function M.DrawMinimap()
+    local sw = ui.screen()
+    local size, x, y = 210, sw - 230, 20
+    local px, _, pz = player.Pos()
+    local u, v = map.ToMap(px, pz)
+    local span = 600 / map.Size          -- 600 m na šířku minimapy
+    frame(x - 6, y - 6, size + 12, size + 40)
+    ui.draw_image(MAP_IMG, x, y, size, size, nil, u - span / 2, v - span / 2, u + span / 2, v + span / 2)
+    playerArrow(x + size / 2, y + size / 2, 10, player.facing)
+    ui.font("small")
+    ui.text(x + size / 2, y + size + 6, map.RegionName(px, pz), { align = "center", color = GOLD, shadow = true })
+    ui.text(x + size - 4, y + 2, "M", { align = "right", color = DIM })
+    ui.pop_font()
+end
+
+-- velká mapa celého světa (klávesa M)
+function M.DrawWorldMap()
+    local sw, sh = ui.screen()
+    ui.rect(0, 0, sw, sh, "#05070cd8", 0)
+    local size = math.floor(math.min(sw, sh) - 90)
+    local x, y = math.floor((sw - size) / 2), 60
+    ui.draw_image(MAP_IMG, x, y, size, size)
+    ui.rect(x, y, size, 2, GOLD, 0); ui.rect(x, y + size - 2, size, 2, GOLD, 0)
+    local function at(wx, wz) local u, v = map.ToMap(wx, wz); return x + u * size, y + v * size end
+    ui.font("h1")
+    ui.text(sw / 2, 14, "Aethelgard", { align = "center", color = GOLD, shadow = true })
+    ui.pop_font()
+    -- názvy regionů
+    ui.font("h2")
+    for _, r in ipairs(REGION_LABELS) do
+        local d = map.Data.Regions[r[1]]
+        local lx, ly = at(d.x, d.z)
+        ui.text(lx, ly - 12, r[2], { align = "center", color = r[3], shadow = true })
+    end
+    ui.pop_font()
+    ui.font("small")
+    local labels = {
+        { map.Data.River[math.floor(#map.Data.River * 0.55)], "Serpentine River", "#bfe8ff" },
+        { { -3300, 3700 }, "Azure Ocean", "#a8d0ff" }, { { 3300, -3500 }, "Azure Ocean", "#a8d0ff" },
+    }
+    for _, l in ipairs(labels) do
+        local lx, ly = at(l[1][1] or l[1].x, l[1][2] or l[1].z)
+        ui.text(lx, ly, l[2], { align = "center", color = l[3], shadow = true })
+    end
+    -- body zájmu
+    local pois = { { map.Start, "Základna Serpentine" }, { map.Giant, "Tisíciletý strom" }, { map.Shrine, "Elfí svatyně" },
+                   { map.Rift, "Stínová trhlina" }, { map.DragonLair, "Zamrzlé jezero" }, { map.SpiderNest, "Sopky" } }
+    for _, p in ipairs(pois) do
+        local lx, ly = at(p[1].x, p[1].z)
+        ui.rect(lx - 4, ly - 4, 8, 8, "#d8b25a", 4)
+        ui.text(lx + 8, ly - 10, p[2], { color = TEXT, shadow = true })
+    end
+    ui.pop_font()
+    -- hráč
+    local px, _, pz = player.Pos()
+    local lx, ly = at(px, pz)
+    playerArrow(lx, ly, 14, player.facing)
+    ui.font("body")
+    ui.text(sw / 2, y + size + 6, string.format("%s  ·  %.1f x %.1f km  ·  [M] zavřít", map.RegionName(px, pz),
+        map.Size / 1000, map.Size / 1000), { align = "center", color = DIM, shadow = true })
+    ui.pop_font()
+end
+
 return M

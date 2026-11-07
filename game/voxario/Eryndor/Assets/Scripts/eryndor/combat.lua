@@ -96,16 +96,10 @@ M.MobTypes = {
                anims = { idle = "Idle", walk = "Walk", run = "Run", attack = { "Attack" }, hit = "Hit", death = "Death", aggro = "Roar" } },
 }
 
--- rozmístění podle lore: Zkažení u okraje lesa a louky, kultisté kolem trhliny, Drtič u trhliny
-local SPAWNS = {
-    { "wolf", 26, -62 }, { "wolf", 36, -56 }, { "wolf", 18, -50 }, { "wolf", 40, -70 }, { "wolf", -30, 58 }, { "wolf", -22, 66 }, { "wolf", 44, 60 },
-    { "wolf", 52, 70 }, { "cultist", -14, 112 }, { "cultist", 22, 110 }, { "cultist", 30, 128 }, { "cultist", -20, 132 },
-    { "crusher", 6, 146 },
-    -- popelavé návrší (sopečné skály mezi táborem Aethelgardu a trhlinou): hnízdo lávových pavouků
-    { "spider", 78, 88 }, { "spider", 92, 74 }, { "spider", 66, 102 },
-    -- severozápadní skály nad lesem: ledový drak
-    { "dragon", -58, 152 },
-}
+-- rozmístění ve světě Aethelgard (tools/aethelgard_world.py -> world_data.lua): Zkažení vlci na loukách u základny
+-- a v Verdant Canopy, kultisté a Drtič u Stínové trhliny v Crystalariu, lávoví pavouci u sopek v Ignis Scar,
+-- ledový drak u zamrzlého jezera ve Frostfang Peaks
+local SPAWNS = map.Data.Spawns
 
 local function pos(id) return player.Pos(id) end
 local function dist2(ax, az, bx, bz) return (ax - bx) ^ 2 + (az - bz) ^ 2 end

@@ -31,6 +31,9 @@ tile 2 2 "$terrain/skala.jpg" 1024
 tile 0 3 "$terrain/pisek.jpg" 1024
 tile 3 2 "$terrain/snih_led.jpg" 1024
 tile 0 2 "$terrain/lava.jpg" 1024
+# Aethelgard: čedič a popel (Ignis Scar), ametystová půda (Crystalarium)
+tile 2 2 "$terrain/cedic.jpg" 1024 --saturation 0.35 --brightness 0.85
+tile 3 2 "$terrain/ametyst.jpg" 1024 --hue -75 --saturation 1.5 --brightness 0.5
 
 # modely (stromy, smrky, kameny, obří strom Sylvarie)
 tile 0 0 "$nature/kura.jpg" 512

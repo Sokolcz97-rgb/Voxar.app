@@ -1,5 +1,6 @@
 -- Eryndor – testovací fantasy kanál (Voxario Studio Engine).
--- Počáteční lokace Hraniční údolí Zlomu podle lore „Svět Eryndor a Velký Rozkol“.
+-- Svět Aethelgard (8 x 8 km) podle „Herní dokumentace: Svět Aethelgard“: Verdant Canopy, Frostfang Peaks,
+-- Ignis Scar, Crystalarium, Serpentine River a Azure Ocean. Klávesa M = mapa světa.
 local map = require("eryndor.map")
 local world = require("eryndor.world")
 local player = require("eryndor.player")
@@ -23,6 +24,12 @@ game_.LookFrom = lookFrom
 local function shot(name) game.screenshot(name .. ".png"); timer.sleep(0.3) end
 local G = map.HeightAt
 
+-- první spawn daného druhu nepřítele (samotest)
+local function spawnOf(kind)
+    for _, s in ipairs(map.Data.Spawns) do if s[1] == kind then return s[2], s[3] end end
+    return map.Start.x, map.Start.z
+end
+
 -- ------------------------------------------------------------------ samotest: záběry lokace a počasí
 local Selftest
 function Selftest()
@@ -44,8 +51,9 @@ function Selftest()
         timer.sleep(2.5); shot("g0-vyber")
         game_.EnterWorld(1)
         timer.sleep(2)
-        player.Teleport(16, -72)
-        player.cam.yaw = 50
+        local wx, wz = spawnOf("wolf")
+        player.Teleport(wx - 7, wz - 7)
+        player.cam.yaw = 45
         timer.sleep(2); shot("g1-hrac")
         combat.TabTarget(); combat.StartAttack()
         timer.sleep(3.5); shot("g2-boj")
@@ -59,7 +67,8 @@ function Selftest()
         -- mág u trhliny
         game_.Reset()
         game_.EnterWorld(2)
-        player.Teleport(-12, 92); player.cam.yaw = 25
+        local cx, cz = spawnOf("cultist")
+        player.Teleport(cx - 10, cz - 6); player.cam.yaw = 60
         timer.sleep(2)
         combat.TabTarget(); combat.UseSkill(1)
         timer.sleep(0.8); shot("g7-mag-sesilani")
@@ -67,7 +76,8 @@ function Selftest()
         -- rytíř proti lávovému pavoukovi (Creature Forge) na popelavém návrší
         game_.Reset()
         game_.EnterWorld(1)
-        player.Teleport(68, 76); player.cam.yaw = 40
+        local sx, sz = spawnOf("spider")
+        player.Teleport(sx - 8, sz - 8); player.cam.yaw = 45
         timer.sleep(2.5); shot("g9-lavovy-pavouk")
         combat.TabTarget(); combat.StartAttack()
         timer.sleep(3.0); shot("g10-boj-s-pavoukem")
@@ -76,7 +86,8 @@ function Selftest()
         -- ledový drak (elitní, Creature Forge): řev při zahlédnutí, boj
         game_.Reset()
         game_.EnterWorld(3)
-        player.Teleport(-46, 138); player.cam.yaw = -40
+        local dx, dz = spawnOf("dragon")
+        player.Teleport(dx - 12, dz + 10); player.cam.yaw = -50
         timer.sleep(2.5); shot("g13-ledovy-drak")
         combat.TabTarget(); combat.StartAttack()
         timer.sleep(1.2); shot("g14-drak-rve")
@@ -135,7 +146,7 @@ function Selftest()
         _G.world.environment({ time_of_day = 15.5 })
         local list = game.env("VOXARIO_HUMANS") or "test_male"
         local ids = {}
-        local bx, bz = 8, -82
+        local bx, bz = map.Start.x + 6, map.Start.z - 8
         local n = 0
         for name in list:gmatch("[^,]+") do n = n + 1 end
         local i = 0
@@ -168,32 +179,54 @@ function Selftest()
         return
     end
     if only ~= "weather" then
-        view("01-udoli", 6, 22, -96, 0, 2, 30, 4)
-        view("02-sylvaria", -40, 6, -36, -100, 6, 10)
-        view("03-strom", -88, 4, -6, map.Giant.x, 12, map.Giant.z)
-        view("04-svatyne", -66, 4, -36, map.Shrine.x, 3, map.Shrine.z)
-        view("05-jezero", -30, 3, -30, 20, 1, 30)
-        view("06-aethelgard", 82, 5, -14, map.Tower.x, 6, map.Tower.z)
-        view("07-trhlina", -8, 7, 96, map.Rift.x, 3, map.Rift.z)
+        local S, Gi, Sh, R, L = map.Start, map.Giant, map.Shrine, map.Rift, map.DragonLair
+        local V1 = map.Data.Volcanoes[1]
+        local riv = map.Data.River[math.floor(#map.Data.River * 0.45)]
+        local br = map.Data.Bridges[2]
+        view("01-zakladna", S.x - 34, 12, S.z + 30, map.Tower.x, 6, map.Tower.z, 5)
+        view("02-verdant-canopy", Gi.x + 150, 40, Gi.z + 120, Gi.x, 20, Gi.z, 4)
+        view("03-tisicilety-strom", Gi.x + 34, 5, Gi.z + 26, Gi.x, 16, Gi.z, 3)
+        view("04-elfi-svatyne", Sh.x + 26, 6, Sh.z + 22, Sh.x, 3, Sh.z, 3)
+        view("05-serpentine-most", br.x + 90, 22, br.z + 70, br.x, 2, br.z, 4)
+        view("06-serpentine-reka", riv[1] + 160, 45, riv[2] - 120, riv[1], 0, riv[2], 3)
+        view("07-frostfang-peaks", L.x + 30, 30, L.z + 220, L.x, 120, L.z - 400, 4)
+        view("08-zamrzle-jezero", L.x + 40, 12, L.z + 40, map.FrozenLake.x, 0, map.FrozenLake.z, 3)
+        view("09-ignis-sopka", V1.x + 520, 40, V1.z - 520, V1.x, 140, V1.z, 4)
+        view("10-lavove-reky", V1.x + 60, 70, V1.z + 200, V1.x, 20, V1.z + 500, 3)
+        view("11-crystalarium", R.x - 110, 30, R.z + 90, R.x, 8, R.z, 4)
+        view("12-stinova-trhlina", R.x - 22, 6, R.z + 16, R.x, 3, R.z, 3)
+        view("13-pobrezi-ocean", -3000, 30, 1200, -3600, 0, 900, 3)
+        view("14-vyhled-kontinent", S.x + 400, 900, S.z + 1900, S.x, 0, S.z - 600, 5)
         _G.world.environment({ time_of_day = 22.5 })
-        view("08-noc-les", -40, 6, -36, -100, 6, 10, 3)
-        view("09-noc-trhlina", -8, 7, 96, map.Rift.x, 3, map.Rift.z, 2)
+        view("15-noc-crystalarium", R.x - 110, 30, R.z + 90, R.x, 8, R.z, 3)
+        view("16-noc-ignis", V1.x + 520, 40, V1.z - 520, V1.x, 140, V1.z, 3)
+        view("17-noc-zakladna", S.x - 34, 12, S.z + 30, map.Tower.x, 6, map.Tower.z, 3)
+        -- mapa světa (M) a minimapa ve hře
+        _G.world.environment({ time_of_day = 15 })
+        game_.SetMode("select"); game_.EnterWorld(1)
+        player.cam.yaw = 200
+        timer.sleep(2.5); shot("18-hra-minimapa")
+        game_.mapOpen = true
+        timer.sleep(0.6); shot("19-mapa-sveta-M")
+        game_.mapOpen = false
+        game_.Reset()
+        game_.SetMode("test")
     end
     -- počasí
+    local S, L = map.Start, map.DragonLair
     _G.world.environment({ time_of_day = 14 })
     _G.world.weather({ rain = 0.9, wind = 0.6, instant = true })
-    view("10-dest", -30, 3, -30, 20, 2, 30, 3)
-    view("10b-dest-les", -40, 2.5, -36, -80, 3, -20, 2)
+    view("20-dest", S.x - 34, 12, S.z + 30, map.Tower.x, 6, map.Tower.z, 3)
     _G.world.weather({ rain = 1, storm = 1, wind = 1, instant = true })
     _G.world.environment({ time_of_day = 19.5 })
     for i = 1, 40 do   -- počkat na blesk
         timer.sleep(0.25)
         if _G.world.weather().flash > 0.4 then break end
     end
-    view("11-bourka-blesk", 4, 9, -62, 0, 3, 40, 0.05)
+    view("21-bourka-blesk", S.x - 60, 25, S.z + 60, S.x, 3, S.z, 0.05)
     _G.world.weather({ rain = 0, storm = 0, snow = 1, wind = 0.4, instant = true })
     _G.world.environment({ time_of_day = 11 })
-    view("12-snih", 82, 5, -14, map.Tower.x, 6, map.Tower.z, 3)
+    view("22-snih-frostfang", L.x + 40, 12, L.z + 40, map.FrozenLake.x, 0, map.FrozenLake.z, 3)
     _G.world.weather({ snow = 0, wind = 0.25, instant = true })
     game.log("SELFTEST hotovo")
     game.quit()
@@ -221,8 +254,8 @@ local function enterWorld()
     combat.SetupPlayer(c)
     combat.SpawnAll()
     quest.Spawn()
-    combat.Log("Vítej v Hraničním údolí Zlomu, Ozvěno.", { 0.8, 0.9, 1.0 })
-    combat.Log("Tab cíl · R útok · 1–5 dovednosti · F mluvit · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
+    combat.Log("Vítej v Aethelgardu, Ozvěno. Základna Serpentine stojí uprostřed kontinentu.", { 0.8, 0.9, 1.0 })
+    combat.Log("Tab cíl · R útok · 1–5 dovednosti · F mluvit · M mapa · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
     mode = "play"
     game_.mode = mode
 end
@@ -240,7 +273,19 @@ end
 
 -- počasí se v údolí střídá (jasno, oblačno, déšť, bouřka; v noci občas mlha)
 local nextWeather = 0
+local lastRegion
 local function weatherCycle()
+    -- ve Frostfang Peaks sněží, v Ignis Scar je sucho (popel), jinde se počasí střídá
+    local px, _, pz = player.Pos()
+    local region = map.Region(px, pz)
+    if region ~= lastRegion then
+        if region == "f" or region == "k" then _G.world.weather({ rain = 0, storm = 0, snow = 0.7, wind = 0.6 })
+        elseif lastRegion == "f" or lastRegion == "k" then _G.world.weather({ snow = 0, wind = 0.3 }) end
+        if region == "i" or region == "l" then _G.world.weather({ rain = 0, storm = 0, snow = 0 }) end
+        lastRegion = region
+        combat.Log("Vstupuješ: " .. map.RegionName(px, pz), { 1.0, 0.85, 0.45 })
+    end
+    if region == "f" or region == "k" or region == "i" or region == "l" then return end
     if game.time() < nextWeather then return end
     nextWeather = game.time() + 150 + math.random() * 150
     local r = math.random()
@@ -252,8 +297,8 @@ end
 
 function on_start()
     hud.Init()
-    _G.world.environment({ day_night = true, real_time = false, time_of_day = 15, day_length = 60, fog = 0.0022,
-                           shadow_distance = 220, haze = 0.45, exposure = 0.85, night_exposure = 1.6,
+    _G.world.environment({ day_night = true, real_time = false, time_of_day = 15, day_length = 60, fog = 0.0006,
+                           shadow_distance = 260, haze = 0.45, exposure = 0.85, night_exposure = 1.6,
                            contrast = 1.1, saturation = 1.22, clouds = 0.45, bloom = 0.12,
                            style = "realistic" })   -- realistické vykreslování enginu (fyzikální PBR + SSAO)
     world.Build()
@@ -277,6 +322,7 @@ function on_update(dt)
         if input.pressed("Escape") then combat.target, combat.auto = nil, false end
         for i = 1, 6 do if input.pressed(tostring(i)) then combat.UseSkill(i) end end
         if input.pressed("F") then quest.Talk() end
+        if input.pressed("M") then game_.mapOpen = not game_.mapOpen end
     end
     combat.Update(dt)
     player.Update(dt, combat.inCombat, combat.moveTo, combat.me and combat.me.casting ~= nil)
@@ -334,4 +380,5 @@ function on_gui()
     hud.DrawGame()
     hud.DrawQuest(quest.Tracker())
     hud.DrawDialog(quest.dialog)
+    if game_.mapOpen then hud.DrawWorldMap() else hud.DrawMinimap() end
 end
