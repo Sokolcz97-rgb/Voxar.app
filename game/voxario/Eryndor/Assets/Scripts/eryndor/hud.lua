@@ -14,6 +14,7 @@ function M.Init()
     ui.load_font("h2", "UI/Cinzel-SemiBold.ttf", 19, 24)
     ui.load_font("body", "UI/Cormorant-SemiBold.ttf", 21, 26)
     ui.load_font("small", "UI/Cormorant-Medium.ttf", 17, 20)
+    ui.load_font("panel", "UI/Cormorant-SemiBold.ttf", 27, 33)   -- tvorba postavy
     ui.style({ window_bg = "#0d0f16e8", text = TEXT, button = "#2a2418", button_hover = "#4a3c22", button_active = "#6a5428",
                border = "#d8b25a80", rounding = 4, border_size = 1, padding = 10, font_size = 20 })
 end

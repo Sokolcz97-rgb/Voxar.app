@@ -13,14 +13,21 @@ function M.Pos(id)
     return p.x or p[1], p.y or p[2], p.z or p[3]
 end
 
-function M.Create(class, spawn)
+-- appearance = vzhled z tvorby postavy (eryndor.races); bez něj model povolání
+function M.Create(class, spawn, appearance)
     M.class = class
+    M.appearance = appearance
     local x, z = spawn.x, spawn.z
     local y = map.HeightAt(x, z)
     M.body = _G.world.spawn("cylinder", x, y + 1.0, z, { visible = false, name = "Player", tag = "player",
         character = { radius = 0.35, height = 1.7, step = 0.45, slope = 50 } })
-    M.view = humans.Spawn(class.model, x, y, z, { name = class.name, right = class.look.right, left = class.look.left,
-        helm = class.look.helm })
+    if appearance then
+        M.view = require("eryndor.races").Spawn(appearance, x, y, z, { name = appearance.name, right = class.look.right,
+            left = class.look.left })
+    else
+        M.view = humans.Spawn(class.model, x, y, z, { name = class.name, right = class.look.right, left = class.look.left,
+            helm = class.look.helm })
+    end
     M.camera = entity.find("Camera")
     M.lamp = _G.world.spawn("light", x, y + 2.5, z, { light = { color = { 1.0, 0.8, 0.6 }, intensity = 8, range = 10, night_only = true } })
     M.anim = nil
@@ -46,6 +53,7 @@ function M.Action(clip, dur, speed)
     M.anim = clip
     anim.play(M.view, clip, 0.08, false, true)
     anim.speed(M.view, speed or 1)
+    if M.onAction then M.onAction(clip, dur) end   -- ostatní hráči (eryndor.presence)
 end
 
 local function angleLerp(a, b, t)

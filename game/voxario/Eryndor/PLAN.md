@@ -54,6 +54,14 @@ voda. Vše přes Voxario Studio Engine.
       Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
       nové assety.
 
+- [x] A9 Rasy a tvorba postavy (podle „Rasy a tvorba postavy“, engine ≥ 1.13.0): 6 ras z Meshy napasovaných na kostru
+      postav (76 animací) – `tools/eryndor_races.sh <engine/bin>` → `Assets/Models/races/*.glb`. Kamenný obr a Kočičí lid
+      z obrázků dokumentace (`tools/races/*.png`), Víla tvar z textu (ve stoje) + textura podle obrázku, Člověk, Trpaslík
+      a Elf vlastní z textu (obrázky připomínají skutečné herce). Tvorba postavy `eryndor/creator.lua` (rasa, povolání,
+      jméno, výška, končetiny, ramena, svaly, hlava, barevný nádech, záře; náhled s animacemi), vzhled `eryndor/races.lua`.
+      Ostatní testeři: `eryndor/presence.lua` (veřejný Realtime kanál `eryndor:fantasy:world`, vzhled v presence,
+      poloha a akce broadcastem, jmenovky). Samotesty `VOXARIO_SELFTEST_ONLY=creator`, `=mp` (+ `VOXARIO_MP_ROLE=a|b`).
+
 ### C. Hra `game/voxario/Eryndor`
 - [x] C1 Kostra projektu (game.vgame, main.lua, balení, samotest)
 - [x] C2 Počáteční lokace „Hraniční údolí Zlomu“: terén, křišťálové jezero, les Sylvarie, tábor Aethelgardu, trhlina
