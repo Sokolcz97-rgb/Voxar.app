@@ -30,9 +30,9 @@ voda. Vše přes Voxario Studio Engine.
       průsvitná blána), 32 kostí, klipy Idle/Walk/Run/Flap/Attack/Roar/Hit/Death. Ve hře `dragon` (elita, úroveň 6) na
       severozápadních skalách (−58, 152), při zahlédnutí hráče zařve. Samotest `VOXARIO_SELFTEST_ONLY=dragon`, v `game` g13–g16.
       Model je teď z obrázku `tools/creatures/ledovy_drak.jpg` (Meshy image-to-3D, PBR 2048 px, ~103k trojúhelníků)
-      napasovaný na kostru draka: `VoxarioImageTo3D ledovy_drak.jpg ledovy_drak.glb --rig ledovy_drak.creature.json`.
+      napasovaný na kostru draka: `VoxarioImageTo3D ledovy_drak.jpg ledovy_drak.glb --rig ledovy_drak.creature.json --glow 4`.
       LOD `_lo`: `gltf-transform simplify --ratio 0.25 --error 0.002` + `resize 1024` (~44k trojúhelníků).
-      Kostra a 8 klipů zůstávají z Creature Forge.
+      Kostra a 8 klipů zůstávají z Creature Forge. Záře prasklin: `--glow 4` (emisní mapa z namalované azurové).
 - [x] A5 Realistické vykreslování (`world.environment{style = "realistic"}`): fyzikální PBR + SSAO, textury drsnosti,
       průsvitné materiály (engine, větev `claude/creature-forge-ice-dragon`). Eryndor ho zapíná v `on_start`.
       Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
