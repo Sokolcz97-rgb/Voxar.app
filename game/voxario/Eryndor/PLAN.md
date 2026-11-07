@@ -38,6 +38,13 @@ voda. Vše přes Voxario Studio Engine.
       Aethelgardu, skála), dno jezera (písek), stromy a smrky (kůra, listí), obří strom (bělavá kůra, tyrkysové listí),
       kameny a kamenné díly staveb (skála). Modely: `meshkit.write_glb` umí `texture` + UV promítnutím ze tří stran.
       Nepoužité zatím: voda, mrak, slunce, úplněk, oheň, blesk, vítr, krystaly (efekty a obloha), sníh a led, láva.
+- [x] A7 Svět Aethelgard (podle „Herní dokumentace: Svět Aethelgard“, nahradil Hraniční údolí Zlomu): kontinent 8 x 8 km
+      v Azure Ocean – Verdant Canopy (západ, prastaré lesy, tisícileté stromy, elfí svatyně a ruiny), Frostfang Peaks
+      (sever, štíty do 700 m, zamrzlé jezero), Ignis Scar (jih, čedič, sopky s krátery, lávové řeky – svítící povrch),
+      Crystalarium (východ, terasy a obří krystaly, Stínová trhlina), Serpentine River (na úrovni moře – voda nikde
+      nevisí ve vzduchu) s mosty. Členitá krajina (kopce, hřbety, údolí). Generátor `tools/aethelgard_world.py` →
+      `Assets/Terrain/*.png`, `UI/aethelgard_map.jpg`, `eryndor/world_data.lua`. Klávesa **M** = mapa světa, minimapa
+      v rohu, počasí podle regionu. Samotest bez proměnné = 22 záběrů regionů, noci, mapy a počasí. Engine ≥ 1.11.0.
 - [x] A5 Realistické vykreslování (`world.environment{style = "realistic"}`): fyzikální PBR + SSAO, textury drsnosti,
       průsvitné materiály (engine, větev `claude/creature-forge-ice-dragon`). Eryndor ho zapíná v `on_start`.
       Pozn.: stávající krajina Eryndoru (stromy, tráva) je stylizovaná low-poly – pro plně realistický vzhled potřebuje
