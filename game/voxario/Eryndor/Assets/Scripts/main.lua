@@ -201,6 +201,32 @@ function Selftest()
         view("15-noc-crystalarium", R.x - 110, 30, R.z + 90, R.x, 8, R.z, 3)
         view("16-noc-ignis", V1.x + 520, 40, V1.z - 520, V1.x, 140, V1.z, 3)
         view("17-noc-zakladna", S.x - 34, 12, S.z + 30, map.Tower.x, 6, map.Tower.z, 3)
+        -- Azure Ocean a mořská monstra (kreslený styl)
+        local function firstMob(kind)
+            for _, sp in ipairs(map.Data.Spawns) do if sp[1] == kind then return sp[2], sp[3] end end
+        end
+        local lev = world.Leviathans[1]
+        _G.world.environment({ time_of_day = 14 })
+        timer.sleep(1)
+        -- pobřeží u první sirény: kamera nad mělčinou, pohled dál na moře (od středu kontinentu ven)
+        local ox, oz = firstMob("siren")
+        local dl = math.sqrt(ox * ox + oz * oz)
+        local ux, uz = ox / dl, oz / dl
+        local cx, cz = ox - ux * 60, oz - uz * 60
+        lookFrom(cx, math.max(G(cx, cz), 0) + 14, cz, ox + ux * 400, 0, oz + uz * 400); timer.sleep(3); shot("23-azure-ocean")
+        if lev then
+            local lx, lz = lev.x, lev.z
+            lookFrom(lx + 70, 26, lz + 60, lx, 0, lz); timer.sleep(2); shot("24-abyssal-leviathan")
+        end
+        combat.SpawnAll()
+        local sx, sz = firstMob("siren")
+        if sx then lookFrom(sx + 7, 2.6, sz + 6, sx, 1.4, sz); timer.sleep(2.5); shot("25-coral-siren") end
+        local ex, ez = firstMob("eel")
+        if ex then lookFrom(ex + 8, 4.5, ez + 7, ex, 0.2, ez); timer.sleep(2.5); shot("26-razorfin-eel") end
+        _G.world.environment({ time_of_day = 22.5 })
+        lookFrom(cx, math.max(G(cx, cz), 0) + 14, cz, ox + ux * 400, 0, oz + uz * 400); timer.sleep(3); shot("27-noc-zarici-koraly")
+        if lev then lookFrom(lev.x + 70, 26, lev.z + 60, lev.x, 0, lev.z); timer.sleep(2); shot("28-noc-leviathan") end
+        game_.Reset()
         -- mapa světa (M) a minimapa ve hře
         _G.world.environment({ time_of_day = 15 })
         game_.SetMode("select"); game_.EnterWorld(1)
@@ -311,6 +337,7 @@ end
 
 local lastThunder = 0
 function on_update(dt)
+    if game_.built then world.Update(dt) end   -- leviatani na moři (i v samotestu)
     if mode ~= "play" and mode ~= "select" then return end
     if mode == "select" then
         if sel.anim and game.time() > sel.anim and sel.preview then anim.play(sel.preview, "Idle", 0.3); sel.anim = nil end

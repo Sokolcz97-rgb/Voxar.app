@@ -65,7 +65,7 @@ function M.DrawGame()
         end
         -- značka nad cílem
         local p = entity.get_position(t.id)
-        local x, y, vis = ui.world_to_screen(t.x, map.HeightAt(t.x, t.z) + (t.t.labelY and t.t.labelY + 0.4 or (t.t.elite and 3.4 or 2.4)), t.z)
+        local x, y, vis = ui.world_to_screen(t.x, combat.MobY(t) + (t.t.labelY and t.t.labelY + 0.4 or (t.t.elite and 3.4 or 2.4)), t.z)
         if vis then
             ui.rect(x - 7, y - 7, 14, 14, combat.auto and "#ff5030" or "#ffd060", 7)
         end
@@ -74,7 +74,7 @@ function M.DrawGame()
     local px, _, pz = player.Pos()
     for _, m in ipairs(combat.mobs) do
         if m.state ~= "dead" and (m.x - px) ^ 2 + (m.z - pz) ^ 2 < 30 * 30 then
-            local x, y, vis = ui.world_to_screen(m.x, map.HeightAt(m.x, m.z) + (m.t.labelY or (m.t.elite and 3.0 or 2.0)), m.z)
+            local x, y, vis = ui.world_to_screen(m.x, combat.MobY(m) + (m.t.labelY or (m.t.elite and 3.0 or 2.0)), m.z)
             if vis then
                 ui.font("small")
                 ui.text(x, y - 26, m.t.name .. "  " .. m.level, { align = "center", color = m == t and "#ffe0a0" or "#ff9a80", shadow = true })
@@ -270,6 +270,15 @@ function M.DrawWorldMap()
         ui.text(lx + 8, ly - 10, p[2], { color = TEXT, shadow = true })
     end
     ui.pop_font()
+    -- Abyssal Leviathan (živé polohy)
+    local ok, world = pcall(require, "eryndor.world")
+    if ok and world.Leviathans then
+        for _, l in ipairs(world.Leviathans) do
+            local lx, ly = at(l.x, l.z)
+            ui.rect(lx - 6, ly - 6, 12, 12, "#3ff4ff", 6)
+            ui.text(lx + 9, ly - 10, "Abyssal Leviathan", { color = "#9ff8ff", shadow = true })
+        end
+    end
     -- hráč
     local px, _, pz = player.Pos()
     local lx, ly = at(px, pz)
