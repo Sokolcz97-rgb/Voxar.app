@@ -43,6 +43,10 @@ SKILLS = {
     "p_atk": ("sword", (0.95, 0.45, 0.3)), "p_def": ("shield", (0.7, 0.75, 0.85)), "p_hp": ("heart", (1.0, 0.3, 0.35)),
     "p_mp": ("mana", (0.35, 0.55, 1.0)), "p_crit": ("star", (1.0, 0.85, 0.3)), "p_cdr": ("clock", (0.6, 0.9, 0.95)),
     "p_matk": ("bolt", (0.6, 0.5, 1.0)),
+    # mikro menu (klikatelná tlačítka HUD a ESC menu)
+    "m_talents": ("tree", (1.0, 0.8, 0.35)), "m_map": ("map", (0.55, 0.85, 0.6)), "m_settings": ("gear", (0.6, 0.7, 0.9)),
+    "m_addons": ("puzzle", (0.75, 0.55, 1.0)), "m_menu": ("menu", (0.9, 0.75, 0.5)), "m_quit": ("power", (1.0, 0.35, 0.3)),
+    "m_resume": ("play", (0.4, 0.95, 0.55)),
 }
 
 
@@ -181,6 +185,31 @@ def glyph(kind, col):
             r = 50 if i % 2 == 0 else 20
             pts.append((c + math.cos(a) * r, c + math.sin(a) * r))
         d.polygon(pts, fill=W)
+    elif kind == "tree":
+        nodes = [(c, 28), (40, 64), (88, 64), (c, 100)]
+        for a_, b_ in ((0, 1), (0, 2), (1, 3), (2, 3)):
+            d.line((nodes[a_], nodes[b_]), fill=G, width=5)
+        for x, y in nodes:
+            d.ellipse((x - 11, y - 11, x + 11, y + 11), fill=W, outline=G, width=3)
+    elif kind == "map":
+        d.polygon([(22, 30), (48, 22), (80, 32), (106, 24), (106, 98), (80, 106), (48, 96), (22, 104)], fill=(225, 205, 160, 255))
+        d.line((48, 22, 48, 96), fill=(150, 120, 80, 255), width=3)
+        d.line((80, 32, 80, 106), fill=(150, 120, 80, 255), width=3)
+        d.line((34, 80, 56, 58, 70, 70, 94, 46), fill=(170, 40, 30, 255), width=4)
+        d.ellipse((88, 40, 100, 52), fill=(170, 40, 30, 255))
+    elif kind == "puzzle":
+        d.rectangle((30, 40, 90, 100), fill=W)
+        d.ellipse((50, 22, 72, 44), fill=W)
+        d.ellipse((80, 58, 102, 80), fill=W)
+        d.ellipse((48, 88, 72, 108), fill=c255(col, 0.35))
+    elif kind == "menu":
+        for y in (38, 62, 86):
+            d.rounded_rectangle((28, y - 7, 100, y + 7), radius=6, fill=W)
+    elif kind == "power":
+        d.arc((28, 30, 100, 102), start=-60, end=240, fill=W, width=10)
+        d.line((c, 18, c, 62), fill=W, width=10)
+    elif kind == "play":
+        d.polygon([(42, 28), (100, c), (42, 100)], fill=W)
     elif kind == "clock":
         d.ellipse((24, 24, 104, 104), outline=W, width=7)
         d.line((c, c, c, 40), fill=W, width=6)

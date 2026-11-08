@@ -118,6 +118,7 @@ function M.ActionBar()
     local w = n * size + (n - 1) * gap
     local x0, y0 = sw / 2 - w / 2, sh - 96
     ui.panel("UI/hud/frame.png", x0 - 22, y0 - 18, w + 44, size + 36, 18, 22)
+    require("eryndor.widgets").Block(x0 - 22, y0 - 18, w + 44, size + 36)   -- kliknutí na lištu nevybírá cíl ve světě
     local now = game.time()
     local mx, my = ui.mouse()
     local hover
