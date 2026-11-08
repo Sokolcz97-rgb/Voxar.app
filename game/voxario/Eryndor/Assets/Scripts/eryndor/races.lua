@@ -26,13 +26,22 @@ M.Defs = {
         desc = "Kočkovití válečníci a lovci z horských průsmyků. Pružný krok, bleskové výpady a ostré smysly.",
         variants = { { "kocka", "Sněžný levhart" }, { "kocka_zrzava", "Zrzavý mourek" } } },
 }
+-- výbava rasy (Meshy z obrázku výbavy, Models/gear): zbraně do rukou, zbroj se oblékne na kostru (entity.equip)
+M.Gear = {
+    clovek = { right = "gear/mec_dlouhy", left = "shield", armor = "kyrys", label = "Dlouhý meč, štít, ocelový kyrys" },
+    trpaslik = { right = "gear/kladivo", armor = "krouzkova", label = "Válečné kladivo, kroužková košile" },
+    elf = { left = "gear/luk", armor = "kozena_vesta", label = "Luk s toulcem, kožená vesta s kápí" },
+    vila = { right = "gear/hul", left = "gear/dyka", label = "Hůl s krystalem, hůlka" },
+    obr = { right = "gear/kladivo", armor = "kozesina", label = "Válečné kladivo, kožešinová vesta" },
+    kocka = { right = "gear/mec", left = "gear/dyka", label = "Meč, dýka" },
+}
 M.Tints = { "#ffffff", "#ffe2c8", "#d8e8ff", "#e0ffd8", "#ffd8f0", "#d0d0d0", "#fff0b0", "#c8b8ff" }
 
 function M.Default(race)
     local d = M.Defs[race] or M.Defs.clovek
     return { v = 2, race = M.Defs[race] and race or "clovek", name = "", cls = 1, variant = 1,
              height = d.height or 1.0, limbs = 1.0, shoulders = d.shoulders or 1.0, muscle = 1.0, head = 1.0,
-             tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff") }
+             tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff"), gear = true }
 end
 
 local function num(v, lo, hi, def)
@@ -56,6 +65,7 @@ function M.Sanitize(a)
     r.height = num(a.height, 0.7, 1.4, d.height)
     for _, k in ipairs({ "limbs", "shoulders", "muscle", "head" }) do r[k] = num(a[k], 0.8, 1.3, d[k]) end
     r.tintAmount = num(a.tintAmount, 0, 1, 0)
+    r.gear = a.gear ~= false
     r.glow = num(a.glow, 0, 1, 0)
     r.tint = col(a.tint, d.tint)
     r.glowColor = col(a.glowColor, d.glowColor)
@@ -65,6 +75,12 @@ end
 function M.Model(a)
     local v = (M.Defs[a.race] or {}).variants
     return "Models/races/" .. (v and v[a.variant or 1] and v[a.variant or 1][1] or a.race) .. ".glb"
+end
+-- zbraň v pravé ruce (pro varianty klipů s holí)
+function M.Weapon(a, class)
+    local gear = a and a.gear ~= false and M.Gear[a.race]
+    if gear then return gear.right end
+    return class and class.look and class.look.right
 end
 function M.Gender(a) return (M.Defs[a.race] or M.Defs.clovek).gender end
 
@@ -102,7 +118,15 @@ M.LegLift = 0.9
 function M.Spawn(a, x, y, z, opts)
     opts = opts or {}
     local id = _G.world.spawn(M.Model(a), x, y, z, { yaw = opts.yaw or 0, name = opts.name or a.name, tag = opts.tag })
-    local items = require("eryndor.humans").Dress(id, { right = opts.right, left = opts.left })   -- zbraně na handslot
+    local gear = a.gear ~= false and M.Gear[a.race] or nil
+    local right, left = opts.right, opts.left
+    if gear then right, left = gear.right, gear.left end
+    local items = require("eryndor.humans").Dress(id, { right = right, left = left })   -- zbraně na handslot
+    if gear and gear.armor then   -- zbroj na míru rase, hýbe se s kostrou nositele
+        local ar = _G.world.spawn("Models/gear/" .. gear.armor .. "_" .. a.race .. ".glb", x, y, z, { name = gear.armor })
+        entity.equip(ar, id)
+        items[#items + 1] = ar
+    end
     M.Apply(id, a)
     return id, items
 end

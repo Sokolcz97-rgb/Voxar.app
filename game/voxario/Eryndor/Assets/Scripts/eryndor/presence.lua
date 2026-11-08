@@ -66,7 +66,7 @@ local function join(key, metas)
         leave(key)
     end
     local x, z = tonumber(meta.x) or map.Start.x, tonumber(meta.z) or map.Start.z
-    o = { name = a.name, race = a.race, cls = c, level = tonumber(meta.level) or 1, sig = sig, height = a.height,
+    o = { a = a, name = a.name, race = a.race, cls = c, level = tonumber(meta.level) or 1, sig = sig, height = a.height,
           pos = { x, z }, target = { x, z }, vel = { 0, 0 }, stamp = game.time(), yaw = tonumber(meta.ry) or 0,
           ry = tonumber(meta.ry) or 0 }
     o.id, o.items = races.Spawn(a, x, ground(x, z), z, { yaw = o.yaw, name = a.name, tag = "other_player",
@@ -78,7 +78,7 @@ local function join(key, metas)
 end
 
 local function play(o, clip, loop)
-    clip = player.Clip(clip, o.cls)
+    clip = player.Clip(clip, o.cls, o.a)
     if o.anim == clip then return end
     o.anim = clip
     anim.play(o.id, clip, 0.15, loop ~= false)

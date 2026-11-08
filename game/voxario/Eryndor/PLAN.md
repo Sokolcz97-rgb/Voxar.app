@@ -68,6 +68,12 @@ voda. Vše přes Voxario Studio Engine.
       napasované na modely (paže, nohy), váhy bez natahování sítě (`--reweight`). Kočičí lid nově z Meshy (sněžný
       levhart / zrzavý mourek), víla nově z Meshy. Shift = sprint, Ctrl = chůze. Výroba `tools/eryndor_races.sh`.
 
+- [x] A11 Výbava z obrázku (Meshy, 10 kusů): dlouhý meč a štít + ocelový kyrys (člověk), válečné kladivo + kroužková
+      košile (trpaslík), luk s toulcem + kožená vesta s kápí (elf), hůl s krystalem + hůlka (víla), kladivo + kožešinová
+      vesta (obr), meč + dýka (kočičí lid). Zbraně `Models/gear/*.glb` (fit_prop.py), zbroje napasované na rasu
+      (`*_<rasa>.glb`, fit_garment.py, `entity.equip`). V tvorbě postavy přepínač „Zbraně a zbroj rasy“.
+      Štít a róba z obrázku zatím nevygenerované (došly kredity Meshy) – člověk má štít KayKit.
+
 ### C. Hra `game/voxario/Eryndor`
 - [x] C1 Kostra projektu (game.vgame, main.lua, balení, samotest)
 - [x] C2 Počáteční lokace „Hraniční údolí Zlomu“: terén, křišťálové jezero, les Sylvarie, tábor Aethelgardu, trhlina
