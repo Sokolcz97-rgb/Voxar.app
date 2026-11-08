@@ -283,6 +283,38 @@ local function damagePlayer(m)
     end
 end
 
+-- živel efektu dovednosti (částice enginu: eryndor.fx)
+M.SkillFx = {
+    ["Úder Zřídla"] = "arcane", ["Štítový náraz"] = "spark", ["Vír čepele"] = "spark", ["Požehnání půlměsíce"] = "heal",
+    ["Výzva"] = "holy", ["Aetheriová střela"] = "arcane", ["Mrazivý kruh"] = "frost", ["Bouře krystalů"] = "lightning",
+    ["Kůra Půlměsíce"] = "poison", ["Soustředění"] = "arcane", ["Drtivý sek"] = "fire", ["Runový výpad"] = "holy",
+    ["Ocelová smršť"] = "spark", ["Válečný pokřik"] = "fire", ["Krystalové jádro"] = "holy", ["Mířená rána"] = "spark",
+    ["Krystalová bomba"] = "fire", ["Zpomalující šipka"] = "frost", ["Úskok"] = "shadow", ["Lektvar"] = "heal",
+    ["Hradba"] = "holy", ["Rozsudek"] = "holy", ["Léčivý pramen"] = "heal", ["Ledová nova"] = "frost", ["Meteor"] = "fire",
+    ["Záblesk"] = "arcane", ["Rozpolcení"] = "fire", ["Ocelová zeď"] = "spark", ["Runa slunce"] = "holy",
+    ["Salva"] = "spark", ["Krystalová mina"] = "fire", ["Opravný mechanismus"] = "heal",
+}
+function M.Element(sk) return sk and (sk.fx or M.SkillFx[sk.name]) or "spark" end
+
+-- poškození z prostředí (tonutí): bez úhybu a obrany
+function M.HurtPlayer(amount, text)
+    local s = M.me
+    if not s or player.dead then return end
+    local dmg = math.max(1, floor(amount))
+    s.hp = s.hp - dmg
+    local x, y, z = pos(player.view)
+    float(x + 0.4, y + 1.2, z, "-" .. dmg, { 0.5, 0.7, 1.0 }, 22)
+    if s.hp <= 0 then
+        s.hp = 0
+        player.dead = true
+        player.swim = nil
+        player.Action("Death_A", 99)
+        M.auto, s.casting = false, nil
+        M.Log(text or "Utonul jsi. Ozvěna se vrací ke Zřídlu…", { 1.0, 0.4, 0.4 })
+        M.respawnT = game.time() + 5
+    end
+end
+
 -- ------------------------------------------------------------------ zaměření
 function M.Hostiles()
     local out = {}
@@ -359,6 +391,11 @@ function M.UseSkill(i)
     end
     if sk.cast then
         s.casting = { i = i, start = now, dur = sk.cast, target = tgt }
+        do   -- sesílání: částice živlu u postavy
+            local cx, cy, cz = pos(player.view)
+            local f = math.rad(player.facing or 0)
+            fx.Cast(cx + math.sin(f) * 0.45, cy + 1.25, cz + math.cos(f) * 0.45, M.Element(sk), sk.cast)
+        end
         player.Action(sk.anim == "Spellcast_Shoot" and "Spellcasting" or (sk.anim or "Spellcasting"), sk.cast + 0.3)
         return
     end
@@ -379,7 +416,7 @@ function M.Execute(i, tgt)
         local h = floor(s.maxhp * sk.heal)
         s.hp = min(s.maxhp, s.hp + h)
         float(px, py + 2.3, pz, "+" .. h, { 0.4, 1.0, 0.5 }, 26)
-        fx.Aura(px, pz, sk.color)
+        fx.Aura(px, pz, sk.color, M.Element(sk))
         M.Log(sk.name .. ": +" .. h .. " života", { 0.5, 1.0, 0.6 })
     end
     if sk.mana then
@@ -390,12 +427,13 @@ function M.Execute(i, tgt)
     if sk.buff then
         s.buffs[sk.name] = { until_t = now + sk.buff.t, atk = sk.buff.atk, def = sk.buff.def, name = sk.name, color = sk.color }
         M.Log(sk.name .. " (" .. sk.buff.t .. " s)", sk.color)
-        fx.Aura(px, pz, sk.color)
+        fx.Aura(px, pz, sk.color, M.Element(sk))
     end
     if sk.dodge then
         s.dodgeT = now + 1.2
         local fx, fz = sin(math.rad(player.facing)), cos(math.rad(player.facing))
         player.vx, player.vz = -fx * 14, -fz * 14
+        require("eryndor.fx").Impact(px, py + 0.8, pz, M.Element(sk))
     end
     if sk.mult then
         local hits = {}
@@ -404,7 +442,7 @@ function M.Execute(i, tgt)
             for _, m in ipairs(M.Hostiles()) do
                 if dist2(cx, cz, m.x, m.z) < sk.aoe * sk.aoe then hits[#hits + 1] = m end
             end
-            fx.Burst(cx, cz, sk.aoe, sk.color)
+            fx.Burst(cx, cz, sk.aoe, sk.color, M.Element(sk))
         elseif tgt then
             hits[1] = tgt
         end
@@ -414,10 +452,11 @@ function M.Execute(i, tgt)
             fx.Bolt(px, py + 1.3, pz, m.id, sk.color, s.class.matk and 18 or 30, function()
                 damageMob(m, sk.mult, sk.magic, sk.name)
                 if sk.slow and m.state ~= "dead" then m.slowT = game.time() + sk.slow end
-            end, s.class.matk and 0.45 or 0.18)
+            end, s.class.matk and 0.45 or 0.18, M.Element(sk))
             return
         end
         for _, m in ipairs(hits) do
+            if not sk.aoe then fx.Impact(m.x, M.MobY(m) + 1.0, m.z, M.Element(sk)) end   -- zásah zblízka
             damageMob(m, sk.mult, sk.magic, sk.name)
             if sk.stun and m.state ~= "dead" then m.stunT = now + sk.stun; M.Log(m.t.name .. " je omráčen.", { 1.0, 0.9, 0.5 }) end
             if sk.slow and m.state ~= "dead" then m.slowT = now + sk.slow end
@@ -512,7 +551,7 @@ function M.Update(dt)
             local vx, vy, vz = pos(player.view)
             fx.Bolt(vx, vy + 1.3, vz, sh.m.id, sh.col, s.class.matk and 18 or 32, function()
                 if sh.m.state ~= "dead" then damageMob(sh.m, 1, s.class.matk ~= nil) end
-            end, s.class.matk and 0.35 or 0.15)
+            end, s.class.matk and 0.35 or 0.15, s.class.matk and "arcane" or "spark")
         end
     end
     fx.Update(dt, function(id) return pos(id) end)

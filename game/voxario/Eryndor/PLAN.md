@@ -115,3 +115,10 @@ voda. Vše přes Voxario Studio Engine.
   obličej (oči, rozestup, nos, čelist přes obličejové kosti), hex barvy, osvětlení scény (den / zlatá hodina / soumrak /
   noc + studiová světla). Ikony a rámečky: `python3 tools/eryndor_icons.py`. Oceán realistický (Gerstner, příliv,
   hloubkové zbarvení, měkká pěna). Samotesty `VOXARIO_SELFTEST_ONLY=voda|ui|oblicej`.
+- Eryndor 0.8.0 (engine v1.17.0): plavání a potápění (`player.UpdateSwim`: hlubší voda než po hrudník = plave, nesahá na dno;
+  Space nahoru, Ctrl / C dolů, pod vodou směr kamery), kyslík 30 s + ukazatel, tonutí (`combat.HurtPlayer`), podvodní mlha
+  z enginu; efekty kouzel částicemi enginu (`eryndor/fx.lua`, živel dovednosti `combat.SkillFx`: oheň, mráz, arkána, blesk,
+  léčení, svatost, jed, stín, jiskry; stopa střel, výbuchy, kruhy, aury, sesílání); ESC menu (`eryndor/menu.lua`: pokračovat,
+  nastavení, doplňky, talenty, mapa, změna postavy, ukončit s potvrzením), doplňky (`eryndor/addons.lua`, Dokumenty/Eryndor/AddOns,
+  mod.json + main.lua, API `eryndor.on/notify/player` + `ui`), klikatelná mikro lišta vpravo dole (`eryndor/widgets.lua`),
+  zbroje obepnuté kolem trupu (fit_garment), větší zbraně obra. Samotesty `plavani`, `kouzla`, `ui` (menu, doplňky).

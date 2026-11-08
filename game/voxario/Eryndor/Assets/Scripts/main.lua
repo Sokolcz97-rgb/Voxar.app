@@ -138,6 +138,16 @@ function Selftest()
         options.Load(); options.open = true
         timer.sleep(0.6); shot("u7-nastaveni")
         options.open = false
+        game_.Menu.open = true
+        timer.sleep(0.6); shot("u8-esc-menu")
+        game_.Menu.confirm = { title = "Ukončit hru", text = "Opravdu chceš ukončit Eryndor?", icon = "m_quit", fn = function() end }
+        timer.sleep(0.5); shot("u9-potvrzeni")
+        game_.Menu.open, game_.Menu.confirm = false, nil
+        game_.Addons.Load(); game_.Addons.open = true
+        timer.sleep(0.8); shot("u10-doplnky")
+        game_.Addons.open = false
+        timer.sleep(0.5); shot("u11-doplnek-bezi")
+        game.log("DOPLNKY: " .. #game_.Addons.list)
         game.log("SELFTEST hotovo")
         game.quit()
         return
@@ -161,6 +171,90 @@ function Selftest()
             timer.sleep(0.6); n = n + 1; shot(string.format("f%02d", n))
             entity.destroy(a); entity.destroy(b)
         end
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "kouzla" then
+        -- efekty kouzel: všechny živly vedle sebe (výbuch, kruh, aura, střela), pak mág a rytíř v boji
+        local fx = require("eryndor.fx")
+        _G.world.environment({ time_of_day = 19.2 })
+        _G.world.weather({ rain = 0, storm = 0, wind = 0.2, instant = true })
+        local bx, bz = map.Start.x - 30, map.Start.z - 6
+        local els = { "fire", "frost", "arcane", "lightning", "heal", "holy", "poison", "shadow", "spark" }
+        timer.sleep(2)
+        for i, e in ipairs(els) do
+            local x = bx + (i - 5) * 3.2
+            _G.world.particles(x, G(x, bz) + 0.4, bz, { preset = e, duration = 6, radius = 0.35 })
+        end
+        lookFrom(bx, G(bx, bz) + 3.2, bz - 16, bx, G(bx, bz) + 1.0, bz)
+        timer.sleep(1.4); shot("k1-zivly")
+        for i, e in ipairs(els) do
+            local x = bx + (i - 5) * 3.2
+            fx.Impact(x, G(x, bz) + 1.6, bz, e, 1.2)
+        end
+        timer.sleep(0.25); shot("k2-vybuchy")
+        timer.sleep(3)
+        fx.Burst(bx - 5, bz + 2, 4, { 0.6, 0.9, 1.0 }, "frost")
+        fx.Burst(bx + 5, bz + 2, 4, { 1.0, 0.5, 0.2 }, "fire")
+        timer.sleep(0.3); shot("k3-mrazivy-kruh-a-meteor")
+        timer.sleep(1.5)
+        fx.Aura(bx - 3, bz, { 0.4, 1.0, 0.8 }, "heal")
+        fx.Aura(bx + 3, bz, { 1.0, 0.9, 0.5 }, "holy")
+        timer.sleep(0.6); shot("k4-leceni-a-pozehnani")
+        timer.sleep(2)
+        -- mág v boji
+        _G.world.environment({ time_of_day = 15.5 })
+        game_.EnterWorld(2)
+        local cx, cz = spawnOf("cultist")
+        player.Teleport(cx - 9, cz - 6); player.cam.yaw = 60; player.cam.distance = 6
+        timer.sleep(2)
+        combat.TabTarget(); combat.UseSkill(1)
+        timer.sleep(0.9); shot("k5-mag-sesilani")
+        timer.sleep(0.75); shot("k6-aetheriova-strela")
+        timer.sleep(1.5); combat.me.mp = combat.me.maxmp; combat.me.gcd = 0
+        combat.UseSkill(2)
+        timer.sleep(0.25); shot("k7-mrazivy-kruh")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "plavani" then
+        -- plavání u hladiny, potápění, mlha pod vodou, kyslík (hráč v hluboké vodě u pobřeží)
+        _G.world.environment({ time_of_day = 13.5 })
+        _G.world.weather({ rain = 0, storm = 0, wind = 0.35, instant = true })
+        game_.EnterWorld(1)
+        timer.sleep(2)
+        local sx, sz
+        for _, sp in ipairs(map.Data.Spawns) do if sp[1] == "siren" then sx, sz = sp[2], sp[3]; break end end
+        local dl = math.sqrt(sx * sx + sz * sz)
+        local ux, uz = sx / dl, sz / dl      -- od pevniny ven na moře
+        local px, pz = sx, sz
+        for k = 0, 600, 4 do
+            local x, z = sx + ux * k, sz + uz * k
+            if map.SeaY - G(x, z) > 6 then px, pz = x, z; break end
+        end
+        player.Teleport(px, pz)
+        player.cam.yaw = math.deg(math.atan(ux, uz)) + 150; player.cam.pitch = 14; player.cam.distance = 6
+        timer.sleep(3); shot("p1-slapani-vody")
+        combat.moveTo = { px + ux * 60, pz + uz * 60 }
+        timer.sleep(2.5); shot("p2-kraul")
+        player.cam.yaw = math.deg(math.atan(ux, uz)) + 90
+        timer.sleep(1.2); shot("p3-kraul-z-boku")
+        if player.swim then player.swim.dive = true; player.swim.y = player.swim.y - 3.5 end
+        player.cam.pitch = 8; player.cam.distance = 4.5
+        for _ = 1, 20 do
+            if player.swim then player.swim.dive = true; player.swim.vy = -0.6 end
+            timer.sleep(0.1)
+        end
+        local cx, cy, cz = player.Pos()
+        game.log(string.format("PLAVANI: swim=%s dive=%s kyslik=%.1f y=%.2f hladina=%.2f dno=%.2f", tostring(player.swim ~= nil),
+            tostring(player.swim and player.swim.dive), player.oxygen, cy, _G.world.water_height(cx, cz) or -1, G(cx, cz)))
+        shot("p4-pod-vodou")
+        combat.moveTo = nil
+        player.oxygen = 4
+        timer.sleep(1.5); shot("p5-kyslik-dochazi")
+        game.log(string.format("PLAVANI: kyslik=%.1f hp=%d", player.oxygen, combat.me and combat.me.hp or -1))
         game.log("SELFTEST hotovo")
         game.quit()
         return
@@ -506,6 +600,9 @@ local actionbar = require("eryndor.actionbar")
 local talentui = require("eryndor.talentui")
 local options = require("eryndor.options")
 local presence = require("eryndor.presence")
+local widgets = require("eryndor.widgets")
+local menu = require("eryndor.menu")
+local addons = require("eryndor.addons")
 local mode = "select"
 game_.Creator = creator
 
@@ -587,6 +684,66 @@ local function streamPreload()
     end
 end
 
+-- API pro doplňky (sandbox voxario.mods): události, oznámení do deníku, stav postavy
+addons.Setup(function(info)
+    local mods = require("voxario.mods")
+    return {
+        on = function(event, fn) mods.on(info, event, fn) end,
+        notify = function(text, color)
+            local c = { 0.85, 0.8, 1.0 }
+            if type(color) == "string" and color:match("^#%x%x%x%x%x%x$") then
+                c = { tonumber(color:sub(2, 3), 16) / 255, tonumber(color:sub(4, 5), 16) / 255, tonumber(color:sub(6, 7), 16) / 255 }
+            end
+            combat.Log("[" .. tostring(info.name or info.id) .. "] " .. tostring(text), c)
+        end,
+        player = function()
+            local s = combat.me
+            if not s or not player.body then return nil end
+            local x, y, z = player.Pos()
+            return { name = creator.a and creator.a.name, level = s.level, hp = s.hp, maxhp = s.maxhp, mp = s.mp, maxmp = s.maxmp,
+                     x = x, y = y, z = z, swimming = player.swim ~= nil, oxygen = player.oxygen }
+        end,
+    }
+end)
+
+-- akce ESC menu a mikro lišty
+local function logout()
+    presence.Stop()
+    game_.Reset()
+    talentui.open, options.open, addons.open, game_.mapOpen = false, false, false, false
+    mode = "select"; game_.mode = mode
+    showPreview()
+end
+local menuActions = {
+    options = function() options.open = true end,
+    addons = function() addons.open = true end,
+    talents = function() talentui.open = true end,
+    map = function() game_.mapOpen = true end,
+    logout = logout,
+    quit = function() game.quit() end,
+}
+game_.Menu, game_.Addons, game_.MenuActions = menu, addons, menuActions
+
+-- mikro lišta vpravo dole: klikatelná tlačítka oken (jako v MMO)
+local function microBar()
+    local sw, sh = ui.screen()
+    local s, gap = 46, 10
+    local items = {
+        { "m_talents", "Strom talentů", "N", talentui.open, function() talentui.Toggle() end },
+        { "m_map", "Mapa světa", "M", game_.mapOpen, function() game_.mapOpen = not game_.mapOpen end },
+        { "m_settings", "Nastavení", "O", options.open, function() options.Toggle() end },
+        { "m_addons", "Doplňky", nil, addons.open, function() addons.Toggle() end },
+        { "m_menu", "Menu", "Esc", menu.open, function() menu.Toggle() end },
+    }
+    local w = #items * s + (#items - 1) * gap
+    local x0, y0 = sw - w - 34, sh - 82
+    ui.panel("UI/hud/frame_thin.png", x0 - 16, y0 - 14, w + 32, s + 28, 10, 14)
+    widgets.Block(x0 - 16, y0 - 14, w + 32, s + 28)
+    for i, it in ipairs(items) do
+        if widgets.IconButton(x0 + (i - 1) * (s + gap), y0, s, it[1], it[2], it[3], it[4]) then it[5]() end
+    end
+end
+
 function on_start()
     hud.Init()
     options.Load()
@@ -597,6 +754,7 @@ function on_start()
                            style = "realistic" })   -- realistické vykreslování enginu (fyzikální PBR + SSAO)
     world.Build()
     game_.built = true
+    pcall(addons.Load)
     if game.custom_pause then game.custom_pause(true) end
     if game.selftest() then timer.start(Selftest); return end
     showPreview()
@@ -610,7 +768,7 @@ function on_update(dt)
     if mode == "select" then creator.Update(dt); return end
     presence.Update(dt)
     if not ui.wants_keyboard() and not quest.dialog then
-        local overlay = talentui.open or options.open
+        local overlay = talentui.open or options.open or menu.open or addons.open
         if not overlay then
             if input.pressed("Tab") then combat.TabTarget() end
             if input.pressed("R") then combat.StartAttack() end
@@ -619,14 +777,18 @@ function on_update(dt)
         if input.pressed("N") then talentui.Toggle() end
         if input.pressed("O") then options.Toggle() end
         if input.pressed("Escape") then
-            if talentui.open then talentui.open = false
+            if menu.open then menu.Toggle()
+            elseif addons.open then addons.open = false
+            elseif talentui.open then talentui.open = false
             elseif options.open then options.open = false
+            elseif game_.mapOpen then game_.mapOpen = false
             elseif combat.target then combat.target, combat.auto = nil, false
-            else options.Toggle() end
+            else menu.Toggle() end
         end
         if input.pressed("F") then quest.Talk() end
         if input.pressed("M") then game_.mapOpen = not game_.mapOpen end
     end
+    addons.Fire("update", dt)
     combat.Update(dt)
     player.Update(dt, combat.inCombat, combat.moveTo, combat.me and combat.me.casting ~= nil)
     if not game_.freeCam then player.UpdateCamera(dt) end
@@ -652,13 +814,15 @@ local function pick()
 end
 
 function on_gui()
+    widgets.BeginFrame()
     if mode == "select" then
         creator.Draw()
         if creator.enter then creator.enter = false; enterWorld() end
         return
     end
     if mode ~= "play" then return end
-    if not ui.wants_mouse() and not talentui.open and not options.open then
+    if not ui.wants_mouse() and not talentui.open and not options.open and not menu.open and not addons.open
+        and not widgets.MouseOverUI() then
         if input.pressed("Mouse1") then
             local m = pick()
             if m then combat.Select(m) end
@@ -685,6 +849,10 @@ function on_gui()
     hud.DrawQuest(quest.Tracker())
     hud.DrawDialog(quest.dialog)
     if game_.mapOpen then hud.DrawWorldMap() else hud.DrawMinimap() end
+    addons.Fire("draw")
+    microBar()
     talentui.Draw()
     options.Draw()
+    addons.Draw(widgets)
+    menu.Draw(menuActions)
 end

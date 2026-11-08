@@ -3,7 +3,8 @@
 local map = require("eryndor.map")
 local humans = require("eryndor.humans")
 local M = { cam = { yaw = 180, pitch = 18, distance = 7.5 }, facing = 180, speed = 0, moving = false,
-            inputEnabled = true, runSpeed = 6.2, walkSpeed = 2.0, sprintSpeed = 9.0 }
+            inputEnabled = true, runSpeed = 6.2, walkSpeed = 2.0, sprintSpeed = 9.0,
+            swimSpeed = 3.2, swimFast = 5.0, oxygenMax = 30, oxygen = 30 }
 -- rychlosti, při kterých pohybové klipy enginu nekloužou (tools/motion/humanoid_motion.py, REF) – při jiné
 -- rychlosti se klip zrychlí / zpomalí; menší rasy (výška) dělají kratší kroky
 M.ClipSpeed = { walk = 1.5, run = 5.0, sprint = 7.5 }
@@ -100,10 +101,11 @@ function M.Update(dt, combatPose, moveTo, rooted)
     local spd = M.runSpeed
     if M.inputEnabled and input.key("Shift") and M.manual then spd = M.sprintSpeed
     elseif M.inputEnabled and input.key("Ctrl") then spd = M.walkSpeed end
+    if M.UpdateSwim(dt, mx, mz, ml) then return end
     local k = 1 - exp(-14 * dt)
     M.vx = (M.vx or 0) + (mx * spd - (M.vx or 0)) * k
     M.vz = (M.vz or 0) + (mz * spd - (M.vz or 0)) * k
-    local jump = (M.inputEnabled and not M.dead and input.pressed("Space")) and 6.0 or 0
+    local jump = (M.inputEnabled and not M.dead and not M.swim and input.pressed("Space")) and 6.0 or 0
     local grounded = physics.move_character(M.body, M.vx, M.vz, jump)
     if jump > 0 then M.Action("Jump_Full_Short", 0.9) end
     if ml > 0.05 then M.facing = angleLerp(M.facing, deg(atan(mx, mz)), 1 - exp(-12 * dt)) end
@@ -136,6 +138,119 @@ function M.Update(dt, combatPose, moveTo, rooted)
         elseif combatPose then M.Play("2H_Melee_Idle")
         else M.Play("Idle") end
         anim.speed(M.view, ref and math.max(0.5, math.min(2.2, M.speed / (ref * h))) or 1)
+    end
+end
+
+-- ------------------------------------------------------------------ plavání a potápění
+-- Hlubší voda než po hrudník: postava plave (nesahá na dno). U hladiny kraul / šlapání vody, Ctrl (C) ponoří,
+-- Space vynoří, pod vodou plave směrem kamery (W s kamerou dolů = dolů). Kyslík: 30 s pod vodou, pak tonutí.
+local function waterY(x, z)
+    local f = _G.world.water_height
+    if not f then return nil end
+    return f(x, z)
+end
+M.WaterY = waterY
+
+function M.UpdateSwim(dt, mx, mz, ml)
+    local px, py, pz = M.Pos()
+    local th = map.HeightAt(px, pz)
+    local wy = waterY(px, pz)
+    local h = (M.appearance and M.appearance.height) or 1
+    local foot = M.footOffset or 0.95
+    local deep = wy and (wy - th) > 1.45 * h
+    local s = M.swim
+    if not s then
+        -- vstup: voda hlubší než po hrudník a chodidla pod hladinou
+        if not (deep and (py - foot) < wy - 1.2 * h) or M.dead then
+            M.UpdateOxygen(dt, false)
+            return false
+        end
+        s = { y = py, vy = 0, dive = false, tilt = 0, off = 0 }
+        M.swim = s
+        M.vx, M.vz = M.vx or 0, M.vz or 0
+    end
+    if M.dead then M.swim = nil; return false end
+    -- výstup na mělčinu: zase chodí
+    if not wy or (wy - th) < 1.2 * h then
+        M.swim = nil
+        entity.set_position(M.body, px, math.max(py, th + foot), pz)
+        entity.set_velocity(M.body, 0, 0, 0)
+        return false
+    end
+    local inp = M.inputEnabled
+    local up = inp and input.key("Space")
+    local down = inp and (input.key("Ctrl") or input.key("C"))
+    local fast = inp and input.key("Shift")
+    local surfaceY = wy - 1.25 * h + foot          -- kapsle: hrudník u hladiny
+    if down then s.dive = true end
+    local spd = fast and M.swimFast or M.swimSpeed
+    local k = 1 - exp(-6 * dt)
+    M.vx = (M.vx or 0) + (mx * spd - (M.vx or 0)) * k
+    M.vz = (M.vz or 0) + (mz * spd - (M.vz or 0)) * k
+    local tvy
+    if s.dive then
+        -- pod vodou: vertikálně Space / Ctrl, při pohybu vpřed i podle sklonu kamery; bez vstupu pomalu stoupá
+        tvy = (up and 2.4 or 0) - (down and 2.4 or 0)
+        if ml > 0.05 and M.manual then tvy = tvy - math.sin(rad(M.cam.pitch - 12)) * spd * 0.9 end
+        if not up and not down and not (ml > 0.05 and M.manual) then tvy = 0.35 end
+    else
+        tvy = (surfaceY - s.y) * 4.0                 -- u hladiny: houpe se s vlnami
+    end
+    s.vy = s.vy + (tvy - s.vy) * (1 - exp(-5 * dt))
+    local nx, nz = px + M.vx * dt, pz + M.vz * dt
+    local nth = map.HeightAt(nx, nz)
+    local nwy = waterY(nx, nz) or wy
+    if (nwy - nth) < 0.9 * h and nth > th then nx, nz = px, pz end   -- strmý břeh: nevyplave do skály
+    s.y = s.y + s.vy * dt
+    local bottom = map.HeightAt(nx, nz) + foot * 0.55               -- nad dnem (nikdy nechodí po dně)
+    if s.y < bottom then s.y, s.vy = bottom, math.max(s.vy, 0) end
+    if s.y >= surfaceY then
+        s.y = math.min(s.y, surfaceY + 0.05)
+        if s.dive and not down then s.dive = false end
+    end
+    entity.set_position(M.body, nx, s.y, nz)
+    entity.set_velocity(M.body, 0, 0, 0)
+    M.speed = sqrt(M.vx * M.vx + M.vz * M.vz)
+    M.moving = M.speed > 0.3
+    if ml > 0.05 then M.facing = angleLerp(M.facing, deg(atan(mx, mz)), 1 - exp(-8 * dt)) end
+    -- model: kraul leží u hladiny, šlapání vody stojí (hlava nad vodou)
+    local swimming = M.speed > 0.6
+    local target = swimming and (0.15 * h) or (1.3 * h)
+    s.off = s.off + (target - s.off) * (1 - exp(-6 * dt))
+    local tilt = 0
+    if s.dive and swimming then tilt = math.max(-50, math.min(50, deg(math.atan(-s.vy, math.max(M.speed, 0.1))))) end
+    s.tilt = s.tilt + (tilt - s.tilt) * (1 - exp(-6 * dt))
+    local bodyY = s.y - foot                          -- výška chodidel kapsle
+    local vy_ = s.dive and (bodyY + 1.25 * h - s.off) or (wy - s.off)
+    entity.set_position(M.view, nx, vy_, nz)
+    entity.set_rotation(M.view, s.tilt, M.facing, 0)
+    entity.set_position(M.lamp, nx, vy_ + 2.6, nz)
+    s.head = swimming and (vy_ + 0.12 * h) or (vy_ + 1.6 * h)
+    M.UpdateOxygen(dt, s.head < (nwy or wy) - 0.05)
+    if not (M.actionT and game.time() < M.actionT) then
+        M.actionT = nil
+        if swimming then M.Play("Swimming") else M.Play("Swim_Idle") end
+        anim.speed(M.view, swimming and math.max(0.7, math.min(1.6, M.speed / M.swimSpeed)) or 1)
+    end
+    return true
+end
+
+-- kyslík: pod vodou ubývá, nad hladinou se rychle doplní; prázdný = tonutí (8 % životů za sekundu)
+function M.UpdateOxygen(dt, under)
+    M.underwater = under
+    if under then
+        M.oxygen = math.max(0, M.oxygen - dt)
+        if M.oxygen <= 0 then
+            M.drownT = (M.drownT or 0) + dt
+            if M.drownT >= 1 then
+                M.drownT = M.drownT - 1
+                local c = require("eryndor.combat")
+                if c.me then c.HurtPlayer(c.me.maxhp * 0.08) end
+            end
+        end
+    else
+        M.oxygen = math.min(M.oxygenMax, M.oxygen + dt * 6)
+        M.drownT = 0
     end
 end
 

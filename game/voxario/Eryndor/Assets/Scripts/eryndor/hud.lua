@@ -108,6 +108,23 @@ function M.DrawGame()
     end
     -- akční lišta (12 slotů, kruhové zatmění doby obnovení) a ukazatel sesílání
     ab.ActionBar()
+    -- kyslík (pod vodou): bublinky nad akční lištou
+    if player.oxygen and player.oxygen < player.oxygenMax - 0.01 then
+        local sw2, sh2 = ui.screen()
+        local f = player.oxygen / player.oxygenMax
+        local w, x, y = 300, sw2 / 2 - 150, sh2 - 176
+        ui.panel("UI/hud/frame_thin.png", x - 12, y - 10, w + 24, 40, 10, 14)
+        ui.rect(x, y, w, 20, "#0a0806e8", 3)
+        if f > 0 then ui.rect(x + 1, y + 1, (w - 2) * f, 18, f > 0.25 and "#4ab8ff" or "#ff6a4a", 3) end
+        for i = 0, 9 do
+            local cx = x + 15 + i * 30
+            if (i + 0.5) / 10 <= f then ui.circle(cx, y + 10, 6, "#e8f6ff", false, 1.5) end
+        end
+        ui.font("small")
+        ui.text(x + w / 2, y - 2, f > 0 and string.format("Kyslík %d s", math.ceil(player.oxygen)) or "Topíš se!",
+            { align = "center", color = "#ffffff", shadow = true })
+        ui.pop_font()
+    end
     ab.EndFrame()
     -- záznam boje
     frame(20, sh - 250, 420, 190)
