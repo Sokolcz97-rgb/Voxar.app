@@ -215,6 +215,28 @@ function Selftest()
         timer.sleep(1.5); combat.me.mp = combat.me.maxmp; combat.me.gcd = 0
         combat.UseSkill(2)
         timer.sleep(0.25); shot("k7-mrazivy-kruh")
+        -- kouř: průhledné předvolby vedle sebe, táborák (oheň + kouř), dýmající sopka
+        game_.Reset()
+        game_.freeCam = true
+        _G.world.environment({ time_of_day = 14 })
+        local sx, sz = map.Start.x - 30, map.Start.z - 6
+        for i, e in ipairs({ "smoke", "smoke_dark", "steam", "dust", "mist" }) do
+            local x = sx + (i - 3) * 5
+            _G.world.particles(x, G(x, sz) + 0.3, sz, { preset = e, duration = 30 })
+        end
+        _G.world.particles(sx, G(sx, sz + 8) + 0.2, sz + 8, { preset = "fire", radius = 0.3 })
+        _G.world.particles(sx, G(sx, sz + 8) + 1.0, sz + 8, { preset = "smoke", rate = 10, prewarm = 4 })
+        lookFrom(sx, G(sx, sz) + 3.0, sz - 14, sx, G(sx, sz) + 2.2, sz)
+        timer.sleep(4); shot("k8-koure")
+        lookFrom(sx + 4, G(sx, sz + 8) + 1.6, sz + 3, sx, G(sx, sz + 8) + 1.6, sz + 8)
+        timer.sleep(1); shot("k9-taborak")
+        local v = map.Data.Volcanoes and map.Data.Volcanoes[1]
+        if v then
+            local vy = G(v.x, v.z)
+            _G.world.weather({ rain = 0, storm = 0, instant = true })
+            lookFrom(v.x - 420, vy + 60, v.z - 420, v.x, vy + 140, v.z)
+            timer.sleep(6); shot("k10-sopka")
+        end
         game.log("SELFTEST hotovo")
         game.quit()
         return

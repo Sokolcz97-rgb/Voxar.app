@@ -122,3 +122,5 @@ voda. Vše přes Voxario Studio Engine.
   nastavení, doplňky, talenty, mapa, změna postavy, ukončit s potvrzením), doplňky (`eryndor/addons.lua`, Dokumenty/Eryndor/AddOns,
   mod.json + main.lua, API `eryndor.on/notify/player` + `ui`), klikatelná mikro lišta vpravo dole (`eryndor/widgets.lua`),
   zbroje obepnuté kolem trupu (fit_garment), větší zbraně obra. Samotesty `plavani`, `kouzla`, `ui` (menu, doplňky).
+- Eryndor 0.9.0 (engine v1.18.0): průhledný kouř enginu – dýmající sopky (`world.lua`, smoke_dark s předehřátím, dosah 1400 m),
+  kouř po ohnivých výbuších a pára po mrazivých kouzlech (`fx.lua`), kouzla jako měkké zářící částice; samotest `kouzla` (k8–k10).
