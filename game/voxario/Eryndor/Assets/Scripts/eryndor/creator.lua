@@ -48,7 +48,7 @@ end
 function M.Camera()
     local x, y, z = spot()
     local h = M.a.height
-    if M.tab == "look" then
+    if M.tab == "look" or M.tab == "face" then
         local hy = y + 1.45 * h
         eryndor.LookFrom(x + 0.6 * h, hy + 0.05, z - 1.7 * h, x + 0.36 * h, hy - 0.1, z)
     else
@@ -61,9 +61,13 @@ function M.Show()
     M.Load()
     M.Respawn()
     M.Camera()
+    M.ApplyLight()
 end
 
 function M.Hide()
+    for _, l in ipairs(M.lights or {}) do entity.destroy(l) end
+    M.lights = {}
+    if not game.selftest() then _G.world.environment({ day_length = 60 }) end   -- ve hře zase běží den a noc
     if M.preview then entity.destroy(M.preview); M.preview = nil end
     for _, w in ipairs(M.items or {}) do entity.destroy(w) end
     M.items = {}
@@ -104,6 +108,33 @@ local function color(label, key, presets)
         if ui.swatch("##" .. key .. i, h, 24) then M.a[key] = races.Hex(h); M.dirty = true end
     end
 end
+
+-- hex kód barvy (#rrggbb)
+local function hexInput(key)
+    local c = M.a[key]
+    local cur = string.format("#%02x%02x%02x", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
+    ui.item_width(140)
+    local txt, ch = ui.input("Hex##hex" .. key, cur, { max = 7 })
+    if ch and txt:match("^#%x%x%x%x%x%x$") then M.a[key] = races.Hex(txt); M.dirty = true end
+end
+
+-- osvětlení scény tvorby postavy: denní doba + studiová světla (postava ve dne i v noci)
+M.light = { mode = 1, time = 16.0, studio = true }
+M.LightModes = { { "Den", 13.0 }, { "Zlatá hodina", 18.2 }, { "Soumrak", 19.6 }, { "Noc", 23.0 } }
+local function applyLight()
+    _G.world.environment({ time_of_day = M.light.time, day_length = 0 })
+    for _, l in ipairs(M.lights or {}) do entity.destroy(l) end
+    M.lights = {}
+    if M.light.studio and M.preview then
+        local x, y, z = spot()
+        local night = M.light.time > 19.2 or M.light.time < 5.5
+        M.lights[#M.lights + 1] = _G.world.spawn("light", x + 1.6, y + 2.4, z - 1.8,
+            { light = { color = { 1.0, 0.86, 0.7 }, intensity = night and 30 or 12, range = 7 } })     -- hlavní světlo
+        M.lights[#M.lights + 1] = _G.world.spawn("light", x - 1.4, y + 2.0, z + 1.4,
+            { light = { color = { 0.55, 0.7, 1.0 }, intensity = night and 22 or 9, range = 6 } })      -- kontra (obrys)
+    end
+end
+M.ApplyLight = applyLight
 
 local function tab(id, title, fn)
     local force = M.forceTab == id
@@ -174,9 +205,19 @@ function M.Draw()
                 slider("Svalová hmota", "muscle", 0.8, 1.3)
                 slider("Velikost hlavy", "head", 0.85, 1.2)
             end)
+            tab("face", "Obličej", function()
+                ui.label("Obličejové rysy", GOLD)
+                slider("Velikost očí", "eyes", 0.6, 1.6)
+                slider("Rozestup očí", "eyeGap", -0.015, 0.015, "%.3f m")
+                slider("Velikost nosu", "nose", 0.5, 1.9)
+                slider("Délka nosu", "noseLen", -0.02, 0.03, "%.3f m")
+                slider("Šířka čelisti", "jaw", 0.7, 1.45)
+                slider("Velikost hlavy", "head", 0.85, 1.2)
+            end)
             tab("look", "Vzhled", function()
                 ui.label("Barevný nádech", GOLD)
                 color("Barva", "tint", races.Tints)
+                hexInput("tint")
                 slider("Síla nádechu", "tintAmount", 0, 1)
                 ui.spacing()
                 ui.label("Výbava rasy", GOLD)
@@ -187,7 +228,19 @@ function M.Draw()
                 ui.spacing()
                 ui.label("Magická záře (Aetherium)", GOLD)
                 color("Barva záře", "glowColor", { "#7fdfff", "#b06cff", "#ff8a3a", "#7dff9a" })
+                hexInput("glowColor")
                 slider("Síla záře", "glow", 0, 1)
+                ui.spacing()
+                ui.label("Osvětlení scény", GOLD)
+                for i, lm in ipairs(M.LightModes) do
+                    if i > 1 then ui.same_line() end
+                    if ui.selectable(lm[1] .. "##lm" .. i, M.light.mode == i, 0) then M.light.mode = i; M.light.time = lm[2]; applyLight() end
+                end
+                ui.item_width(-1)
+                local lt, lch = ui.slider("##denni_doba", M.light.time, 0, 24, "denní doba %.1f h")
+                if lch then M.light.time = lt; M.light.mode = 0; applyLight() end
+                local st, sch = ui.checkbox("Studiová světla", M.light.studio)
+                if sch then M.light.studio = st; applyLight() end
             end)
             ui.end_tabs()
         end

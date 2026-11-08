@@ -135,10 +135,14 @@ end
 
 -- ------------------------------------------------------------------ hráč: statistiky
 function M.SetupPlayer(class)
-    local s = { class = class, level = 1, xp = 0, cd = {}, gcd = 0, buffs = {} }
+    local s = { class = class, level = 1, xp = 0, cd = {}, gcd = 0, buffs = {}, potionCd = 0 }
+    s.baseHp, s.baseMp = class.hp, class.mp
     s.maxhp, s.maxmp = class.hp, class.mp
     s.hp, s.mp = s.maxhp, s.maxmp
     s.atk, s.def = class.atk, class.def
+    local talents = require("eryndor.talents")
+    talents.Load(s)
+    talents.Apply(s)     -- modifikátory statů a aktivní talenty (akční lišta)
     M.me = s
     M.combo = 1
     M.nextSwing = 0
@@ -147,7 +151,7 @@ end
 function M.XpNeed(level) return floor(80 * level ^ 1.6) end
 
 local function stat(s, name)
-    local v = s[name] or 0
+    local v = (s[name] or 0) + ((s.mods or {})[name] or 0)
     for _, b in pairs(s.buffs or {}) do
         if b.until_t > game.time() then v = v + (b[name] or 0) end
     end
@@ -162,11 +166,13 @@ local function gainXp(amount)
     while s.xp >= M.XpNeed(s.level) do
         s.xp = s.xp - M.XpNeed(s.level)
         s.level = s.level + 1
-        s.maxhp = floor(s.maxhp * 1.12)
-        s.maxmp = floor(s.maxmp * 1.08)
+        s.baseHp = floor(s.baseHp * 1.12)
+        s.baseMp = floor(s.baseMp * 1.08)
         s.atk = s.atk + 3
         s.def = s.def + 2
+        require("eryndor.talents").Apply(s)
         s.hp, s.mp = s.maxhp, s.maxmp
+        M.Log("Nový bod talentu (N = strom talentů)", { 1.0, 0.85, 0.3 })
         local x, y, z = pos(player.view)
         float(x, y + 2.6, z, "ÚROVEŇ " .. s.level, { 1.0, 0.85, 0.3 }, 34)
         M.Log("Dosáhl jsi úrovně " .. s.level .. "!", { 1.0, 0.85, 0.3 })
@@ -209,10 +215,10 @@ local function hitChance(attLevel, defLevel)
 end
 
 -- poškození (atk * násobek, náhodný rozptyl, obrana tlumí); vrací číslo, nil = minutí
-local function roll(atk, def, mult, attLevel, defLevel)
+local function roll(atk, def, mult, attLevel, defLevel, critChance)
     if random() > hitChance(attLevel, defLevel) then return nil end
     local dmg = atk * (mult or 1) * (0.9 + random() * 0.2) - def * 0.5
-    local crit = random() < 0.08
+    local crit = random() < (critChance or 0.08)
     if crit then dmg = dmg * 1.8 end
     return max(1, floor(dmg + 0.5)), crit
 end
@@ -220,8 +226,8 @@ end
 local function damageMob(m, mult, magic, skill)
     if m.state == "dead" then return end
     local s = M.me
-    local atk = magic and (s.class.matk or s.atk) + (s.level - 1) * 3 or stat(s, "atk")
-    local dmg, crit = roll(atk, m.t.def, mult, s.level, m.level)
+    local atk = magic and (s.class.matk or s.atk) + (s.level - 1) * 3 + ((s.mods or {}).matk or 0) or stat(s, "atk")
+    local dmg, crit = roll(atk, m.t.def, mult, s.level, m.level, 0.08 + ((s.mods or {}).crit or 0) / 100)
     local x, y, z = pos(m.id)
     if not dmg then
         float(x, y + 2.0, z, "Minutí", { 0.8, 0.8, 0.8 }, 20)
@@ -305,6 +311,27 @@ function M.Select(m)
     end
 end
 
+-- lektvary (akční lišta 9 a 0): sdílená doba obnovení 30 s
+M.PotionCd = 30
+function M.UsePotion(kind)
+    local s = M.me
+    if not s or player.dead then return end
+    local now = game.time()
+    if now < (s.potionCd or 0) then M.Log("Lektvar ještě není připraven.", { 0.8, 0.6, 0.6 }); return end
+    s.potionCd = now + M.PotionCd
+    local px, py, pz = pos(player.view)
+    player.Action("Use_Item", 0.9)
+    if kind == "mp" then
+        local g = floor(s.maxmp * 0.35)
+        s.mp = min(s.maxmp, s.mp + g)
+        float(px, py + 2.3, pz, "+" .. g .. " many", { 0.4, 0.6, 1.0 }, 24)
+    else
+        local h = floor(s.maxhp * 0.35)
+        s.hp = min(s.maxhp, s.hp + h)
+        float(px, py + 2.3, pz, "+" .. h, { 0.4, 1.0, 0.5 }, 26)
+    end
+end
+
 function M.StartAttack()
     if M.target and M.target.state ~= "dead" then M.auto = true end
 end
@@ -312,7 +339,7 @@ end
 -- ------------------------------------------------------------------ dovednosti
 function M.UseSkill(i)
     local s = M.me
-    local sk = s and s.class.skills[i]
+    local sk = s and (s.skills or s.class.skills)[i]
     if not sk or player.dead then return end
     local now = game.time()
     if s.casting then return end
@@ -340,10 +367,10 @@ end
 
 function M.Execute(i, tgt)
     local s = M.me
-    local sk = s.class.skills[i]
+    local sk = (s.skills or s.class.skills)[i]
     local now = game.time()
     s.mp = s.mp - sk.mp
-    s.cd[i] = now + (sk.cd or 0)
+    s.cd[i] = now + (sk.cd or 0) * (1 - ((s.mods or {}).cdr or 0) / 100)   -- talenty zkracují obnovení
     s.gcd = now + GCD
     player.Action(sk.anim or "Spellcast_Shoot", 0.9)
     local px, py, pz = pos(player.view)

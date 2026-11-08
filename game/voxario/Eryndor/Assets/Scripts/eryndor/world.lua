@@ -97,8 +97,10 @@ function M.BuildTerrain()
     -- kde je terén pod hladinou (koryto řeky je vyhloubené pod úroveň moře), dno mělčin je písek
     -- kreslený styl (Herní dokumentace: Azurový oceán): pásma smaragd / tyrkys / námořnická modř, bílé kudrlinky pěny,
     -- pod hladinou zářící korály
-    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.62, 0.66, 0.66 }, wave = 0.3, wavelength = 12, foam = 0.6,
-        shallow = 6, bed = "Textures/terrain/pisek.jpg", style = "stylized" })
+    -- realistická voda (engine ≥ 1.16): Gerstnerovy vlny po větru, pohlcování světla (průhledná mělčina, tyrkys,
+    -- temně modrá hloubka), měkká pěna příboje, příliv a odliv
+    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.5, 0.5, 0.5 }, wave = 0.55, wavelength = 18, foam = 1.2,
+        shallow = 8, bed = "Textures/terrain/pisek.jpg", tide = 0.35, speed = 1.0 })
 end
 
 -- mosty přes Serpentine River (dřevěná mostovka na kamenných pilířích, s kolizí)
