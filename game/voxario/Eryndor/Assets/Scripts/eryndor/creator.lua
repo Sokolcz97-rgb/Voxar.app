@@ -41,7 +41,7 @@ function M.Pose(clip)
     M.pose = clip
     if not M.preview then return end
     local loop = clip == "Idle" or clip == "Walking_A" or clip == "Running_A" or clip == "Running_B" or clip == "Spellcasting"
-    anim.play(M.preview, require("eryndor.player").Clip(clip, cls()), 0.15, loop, true)
+    anim.play(M.preview, require("eryndor.player").Clip(clip, cls(), M.a), 0.15, loop, true)
     M.poseEnd = (not loop) and game.time() + 1.8 or nil
 end
 
@@ -178,6 +178,12 @@ function M.Draw()
                 ui.label("Barevný nádech", GOLD)
                 color("Barva", "tint", races.Tints)
                 slider("Síla nádechu", "tintAmount", 0, 1)
+                ui.spacing()
+                ui.label("Výbava rasy", GOLD)
+                local gv, gch = ui.checkbox("Zbraně a zbroj rasy##gear", M.a.gear ~= false)
+                if gch then M.a.gear = gv; M.rebuild = true end
+                local gd = races.Gear[M.a.race]
+                if gd then ui.text_wrapped(M.a.gear ~= false and gd.label or "Zbraně podle povolání", DIM) end
                 ui.spacing()
                 ui.label("Magická záře (Aetherium)", GOLD)
                 color("Barva záře", "glowColor", { "#7fdfff", "#b06cff", "#ff8a3a", "#7dff9a" })

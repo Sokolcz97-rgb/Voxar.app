@@ -46,9 +46,10 @@ end
 -- animace pohybu (útoky a kouzla hrají jako jednorázové přes M.Action); s holí varianta „_Staff“
 local STAFF = { Idle = true, ["2H_Melee_Idle"] = true, Walking_A = true, Walking_Backwards = true, Running_A = true,
                 Running_B = true, Running_Strafe_Left = true, Running_Strafe_Right = true }
-function M.Clip(clip, class)
+function M.Clip(clip, class, appearance)
     class = class or M.class
-    if class and class.look and class.look.right == "staff" and STAFF[clip] then return clip .. "_Staff" end
+    local w = require("eryndor.races").Weapon(appearance or M.appearance, class)
+    if (w == "staff" or w == "gear/hul") and STAFF[clip] then return clip .. "_Staff" end
     return clip
 end
 function M.Play(clip, fade, loop)

@@ -28,8 +28,13 @@ function M.Dress(id, opts)
     for _, side in ipairs({ { "right", "handslot.r" }, { "left", "handslot.l" } }) do
         local item = opts[side[1]]
         if item then
-            -- zbraně KayKit jsou dělané pro menší postavy -> 80 %
-            local w = _G.world.spawn("Models/kaykit/items/" .. (M.Items[item] or item) .. ".gltf", 0, 0, 0, { name = item, scale = 0.8 })
+            -- výbava z Meshy (Models/gear, skutečné rozměry) nebo zbraně KayKit (dělané pro menší postavy -> 80 %)
+            local w
+            if item:sub(1, 5) == "gear/" then
+                w = _G.world.spawn("Models/" .. item .. ".glb", 0, 0, 0, { name = item, scale = opts.gearScale or 1 })
+            else
+                w = _G.world.spawn("Models/kaykit/items/" .. (M.Items[item] or item) .. ".gltf", 0, 0, 0, { name = item, scale = 0.8 })
+            end
             entity.attach(w, id, side[2])
             entity.set_position(w, 0, 0, 0)
             entity.set_rotation(w, 0, 0, 0)
