@@ -22,14 +22,15 @@ M.Defs = {
         desc = "Křehké a éterické bytosti s průsvitnými křídly. Magie jim proudí v žilách jako světlo hub v noci." },
     obr = { name = "Kamenný obr", tag = "Kámen a kožešiny", gender = "m", height = 1.3, shoulders = 1.1,
         desc = "Obři z hor Frostfang s kůží jako žula. Mohutná ramena a hruď, pomalí, ale nezastavitelní." },
-    kocka = { name = "Kočičí lid", tag = "Hbitý a tichý", gender = "m", height = 0.96,
-        desc = "Hbití kočičí poutníci z pouštních tržišť. Ostré smysly, kápě a dýka vždy po ruce." },
+    kocka = { name = "Kočičí lid", tag = "Hbití lovci", gender = "f", height = 0.97,
+        desc = "Kočkovití válečníci a lovci z horských průsmyků. Pružný krok, bleskové výpady a ostré smysly.",
+        variants = { { "kocka", "Sněžný levhart" }, { "kocka_zrzava", "Zrzavý mourek" } } },
 }
 M.Tints = { "#ffffff", "#ffe2c8", "#d8e8ff", "#e0ffd8", "#ffd8f0", "#d0d0d0", "#fff0b0", "#c8b8ff" }
 
 function M.Default(race)
     local d = M.Defs[race] or M.Defs.clovek
-    return { v = 2, race = M.Defs[race] and race or "clovek", name = "", cls = 1,
+    return { v = 2, race = M.Defs[race] and race or "clovek", name = "", cls = 1, variant = 1,
              height = d.height or 1.0, limbs = 1.0, shoulders = d.shoulders or 1.0, muscle = 1.0, head = 1.0,
              tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff") }
 end
@@ -51,6 +52,7 @@ function M.Sanitize(a)
     for k, v in pairs(d) do r[k] = v end
     r.name = type(a.name) == "string" and a.name:sub(1, 24) or ""
     r.cls = math.floor(num(a.cls, 1, 4, 1))
+    r.variant = math.floor(num(a.variant, 1, #((M.Defs[r.race] or {}).variants or { 1 }), 1))
     r.height = num(a.height, 0.7, 1.4, d.height)
     for _, k in ipairs({ "limbs", "shoulders", "muscle", "head" }) do r[k] = num(a[k], 0.8, 1.3, d[k]) end
     r.tintAmount = num(a.tintAmount, 0, 1, 0)
@@ -60,7 +62,10 @@ function M.Sanitize(a)
     return r
 end
 
-function M.Model(a) return "Models/races/" .. a.race .. ".glb" end
+function M.Model(a)
+    local v = (M.Defs[a.race] or {}).variants
+    return "Models/races/" .. (v and v[a.variant or 1] and v[a.variant or 1][1] or a.race) .. ".glb"
+end
 function M.Gender(a) return (M.Defs[a.race] or M.Defs.clovek).gender end
 
 -- nasadí vzhled na entitu

@@ -40,8 +40,8 @@ end
 function M.Pose(clip)
     M.pose = clip
     if not M.preview then return end
-    local loop = clip == "Idle" or clip == "Walking_A" or clip == "Running_A" or clip == "Spellcasting"
-    anim.play(M.preview, clip, 0.15, loop, true)
+    local loop = clip == "Idle" or clip == "Walking_A" or clip == "Running_A" or clip == "Running_B" or clip == "Spellcasting"
+    anim.play(M.preview, require("eryndor.player").Clip(clip, cls()), 0.15, loop, true)
     M.poseEnd = (not loop) and game.time() + 1.8 or nil
 end
 
@@ -151,6 +151,12 @@ function M.Draw()
                 end
                 ui.spacing()
                 ui.text_wrapped(d.desc, DIM)
+                if d.variants then
+                    ui.label("Srst / vzhled", GOLD)
+                    for i, v in ipairs(d.variants) do
+                        if ui.selectable(v[2], M.a.variant == i) and M.a.variant ~= i then M.a.variant = i; M.rebuild = true end
+                    end
+                end
                 ui.spacing()
                 ui.label("Povolání (boj a dovednosti)", GOLD)
                 local names = {}
@@ -186,7 +192,7 @@ function M.Draw()
     end)
 
     -- animace náhledu
-    local poses = { { "Klid", "Idle" }, { "Chůze", "Walking_A" }, { "Běh", "Running_A" }, { "Útok", cls().skills[1].anim },
+    local poses = { { "Klid", "Idle" }, { "Chůze", "Walking_A" }, { "Běh", "Running_A" }, { "Sprint", "Running_B" }, { "Útok", cls().skills[1].anim },
                     { "Kouzlo", "Spellcast_Shoot" }, { "Radost", "Cheer" } }
     local bx = sw / 2 + 250 - (#poses * 120) / 2
     for i, p in ipairs(poses) do

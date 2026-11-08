@@ -62,6 +62,12 @@ voda. Vše přes Voxario Studio Engine.
       Ostatní testeři: `eryndor/presence.lua` (veřejný Realtime kanál `eryndor:fantasy:world`, vzhled v presence,
       poloha a akce broadcastem, jmenovky). Samotesty `VOXARIO_SELFTEST_ONLY=creator`, `=mp` (+ `VOXARIO_MP_ROLE=a|b`).
 
+- [x] A10 Vlastní animace a čisté váhy (engine ≥ 1.14 / Motion Forge, `tools/motion` v enginu): žádné klipy z KayKit –
+      rasy i lidské postavy a NPC mají 86 klipů enginu (chůze, běh, sprint s IK, boj, kouzla, bloky, úhyby, skoky,
+      smrt…) ve stylu rasy, varianty `*_Staff` pro hůl, víla se vznáší a mává křídly (kosti `wing_l/r`). Klouby kostry
+      napasované na modely (paže, nohy), váhy bez natahování sítě (`--reweight`). Kočičí lid nově z Meshy (sněžný
+      levhart / zrzavý mourek), víla nově z Meshy. Shift = sprint, Ctrl = chůze. Výroba `tools/eryndor_races.sh`.
+
 ### C. Hra `game/voxario/Eryndor`
 - [x] C1 Kostra projektu (game.vgame, main.lua, balení, samotest)
 - [x] C2 Počáteční lokace „Hraniční údolí Zlomu“: terén, křišťálové jezero, les Sylvarie, tábor Aethelgardu, trhlina

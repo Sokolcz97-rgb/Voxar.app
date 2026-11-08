@@ -97,6 +97,67 @@ function Selftest()
         game.quit()
         return
     end
+    if only == "snaps" then
+        -- ladění pohybů: statické snímky klipů (VOXARIO_SNAPS = klip@fáze,...) ze 3/4 pohledu
+        _G.world.environment({ time_of_day = 14.5 })
+        local list = {}
+        for p in (game.env("VOXARIO_MODELS") or ""):gmatch("[^,]+") do list[#list + 1] = p end
+        local bx, bz = map.Start.x - 24, map.Start.z - 3
+        local ids = {}
+        for i, p in ipairs(list) do
+            local x = bx + (i - (#list + 1) / 2) * 1.7
+            ids[i] = _G.world.spawn(p, x, G(x, bz), bz, { yaw = 125 })
+            local wl = game.env("VOXARIO_WEAPONS")
+            if wl then
+                local r, l = wl:match("([^,]*),?(.*)")
+                require("eryndor.humans").Dress(ids[i], { right = r ~= "" and r or nil, left = l ~= "" and l or nil })
+            end
+        end
+        local w = #list * 1.7
+        timer.sleep(3)
+        local n = 0
+        for snap in (game.env("VOXARIO_SNAPS") or ""):gmatch("[^,]+") do
+            for _, id in ipairs(ids) do anim.play(id, snap, 0, true, true) end
+            n = n + 1
+            lookFrom(bx + 0.3, G(bx, bz) + 1.1, bz - (1.6 + w * 0.55), bx, G(bx, bz) + 0.95, bz)
+            timer.sleep(0.35); shot(string.format("s%02d_%s", n, snap:gsub("[@]", "-")))
+        end
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "models" then
+        -- náhled modelů vedle sebe (VOXARIO_MODELS = cesty oddělené čárkou): klid zepředu, zezadu, chůze, běh, útok
+        _G.world.environment({ time_of_day = 15.5 })
+        local list = {}
+        for p in (game.env("VOXARIO_MODELS") or ""):gmatch("[^,]+") do list[#list + 1] = p end
+        local bx, bz = map.Start.x - 24, map.Start.z - 3
+        local ids = {}
+        for i, p in ipairs(list) do
+            local x = bx + (i - (#list + 1) / 2) * 1.6
+            ids[i] = _G.world.spawn(p, x, G(x, bz), bz, { yaw = 180 })
+        end
+        local w = #list * 1.6
+        local function cam(name, dz, t)
+            lookFrom(bx, G(bx, bz) + 1.25, bz + dz * (1.6 + w * 0.55), bx, G(bx, bz) + 1.0, bz); timer.sleep(t or 0.4); shot(name)
+        end
+        timer.sleep(3)
+        local function all(clip, yaw, loop)
+            for _, id in ipairs(ids) do entity.set_rotation(id, 0, yaw, 0); anim.play(id, clip, 0, loop ~= false) end
+        end
+        cam("p1-predek", -1, 1)
+        all("Idle", 0); cam("p2-zezadu", -1, 0.6)
+        all("Walking_A", 90); cam("p3-chuze", -1, 0.35)
+        all("Running_A", 90); cam("p4-beh", -1, 0.25)
+        all("Running_B", 90); cam("p5-sprint", -1, 0.2)
+        all("2H_Melee_Idle", 150); cam("p6-bojovy-postoj", -1, 0.8)
+        all("1H_Melee_Attack_Chop", 150, false); cam("p7-utok", -1, 0.45)
+        all("Spellcast_Shoot", 150, false); cam("p8-kouzlo", -1, 0.6)
+        all("Walking_A", 150); cam("p9-chuze-zepredu", -1, 0.5)
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     if only == "creator" then
         -- tvorba postavy: všechny rasy, tvar těla, nádech a záře, animace
         local races = require("eryndor.races")
@@ -349,7 +410,7 @@ local function enterWorld()
     quest.Spawn()
     local rname = require("eryndor.races").Defs[a.race].name
     combat.Log("Vítej v Aethelgardu, " .. a.name .. " (" .. rname .. ", " .. c.name .. ").", { 0.8, 0.9, 1.0 })
-    combat.Log("Tab cíl · R útok · 1–5 dovednosti · F mluvit · M mapa · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
+    combat.Log("Tab cíl · R útok · 1–5 dovednosti · Shift sprint · Ctrl chůze · F mluvit · M mapa · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
     mode = "play"
     game_.mode = mode
     presence.Start(a)
