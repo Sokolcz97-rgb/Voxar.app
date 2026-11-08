@@ -106,3 +106,12 @@ voda. Vše přes Voxario Studio Engine.
 - Vydáno (2026-11-05): engine v1.9.0, Eryndor 0.1.0 v kanálu Fantasy (unity/latest-fantasy.json), launcher 0.7.0.
   Vydání: workflow `eryndor-game.yml` (engine_tag, version, publish, publish_launcher).
 - Další kroky (návrhy): částice (A3), více lokací a výprav, ladění 4Story mechanik podle podkladů vlastníka.
+- UI, optimalizace a voda (dokument „Herní dokumentace: UI, Optimalizace a Systém Vody“, Eryndor 0.7.0 / engine v1.16.0):
+  HUD `eryndor/actionbar.lua` (kované rámečky postavy a cíle, plynulý úbytek životů/many se „stínem“ ztráty, akční lišta
+  12 slotů 1–0, -, = s ikonou, klávesou a kruhovým zatměním obnovení, lektvary 9/0), stromy talentů `eryndor/talents.lua` +
+  okno `eryndor/talentui.lua` (klávesa N; 3 větve × 4 úrovně, pasivní = čtverce, aktivní kouzla = kruhy na lištu 6–8,
+  rozsvícené spojnice, požadované body a předpoklady), nastavení `eryndor/options.lua` (klávesa O; předvolby, stíny,
+  textury, dohled, tráva, ořez, voda, mraky, DLSS/FSR s profily, FPS, VSync, okno – ukládá se), tvorba postavy:
+  obličej (oči, rozestup, nos, čelist přes obličejové kosti), hex barvy, osvětlení scény (den / zlatá hodina / soumrak /
+  noc + studiová světla). Ikony a rámečky: `python3 tools/eryndor_icons.py`. Oceán realistický (Gerstner, příliv,
+  hloubkové zbarvení, měkká pěna). Samotesty `VOXARIO_SELFTEST_ONLY=voda|ui|oblicej`.

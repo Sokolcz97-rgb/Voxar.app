@@ -45,24 +45,33 @@ function M.DrawGame()
     local s = combat.me
     if not s then return end
     local sw, sh = ui.screen()
-    unitFrame(20, 20, s.class.name, s.level, s.hp, s.maxhp, s.mp, s.maxmp, false)
+    local ab = require("eryndor.actionbar")
+    local name = (player.appearance and player.appearance.name ~= "" and player.appearance.name) or s.class.name
+    ab.UnitFrame(20, 18, "me", name, s.level, s.hp, s.maxhp, s.mp, s.maxmp, { icon = s.class.id .. "_1" })
     -- zkušenosti pod rámečkem
-    ui.bar(20, 116, 330, 8, s.xp / combat.XpNeed(s.level), "#8a5ad8")
+    ui.bar(30, 126, 340, 8, s.xp / combat.XpNeed(s.level), "#8a5ad8")
+    local talents = require("eryndor.talents")
+    local free = talents.Points(s) - talents.Spent(s)
+    if free > 0 then
+        ui.font("small"); ui.text(30, 136, free .. " volné body talentů – N", { color = GOLD, shadow = true }); ui.pop_font()
+    end
     -- buffy
-    local bx = 20
+    local bx = 30
     for _, b in pairs(s.buffs) do
         local left = b.until_t - game.time()
-        ui.rect(bx, 130, 34, 34, "#0d0f16d0", 4)
-        ui.rect(bx + 3, 133, 28, 28, b.color or "#888", 3)
-        ui.font("small"); ui.text(bx + 17, 166, tostring(floor(left)), { align = "center", color = TEXT }); ui.pop_font()
-        bx = bx + 40
+        if left > 0 then
+            ui.rect(bx, 160, 34, 34, "#0d0f16d0", 4)
+            ui.rect(bx + 3, 163, 28, 28, b.color or "#888", 3)
+            ui.font("small"); ui.text(bx + 17, 196, tostring(floor(left)), { align = "center", color = TEXT }); ui.pop_font()
+            bx = bx + 40
+        end
     end
     -- cíl
     local t = combat.target
     if t and t.state ~= "dead" then
-        unitFrame(370, 20, t.t.name, t.level, t.hp, t.maxhp, nil, nil, true, t.t.elite)
+        ab.UnitFrame(400, 18, "target", t.t.name, t.level, t.hp, t.maxhp, nil, nil, { hostile = true, elite = t.t.elite })
         if t.stunT and game.time() < t.stunT then
-            ui.font("small"); ui.text(450, 98, "Omráčen", { color = "#ffe080" }); ui.pop_font()
+            ui.font("small"); ui.text(500, 108, "Omráčen", { color = "#ffe080" }); ui.pop_font()
         end
         -- značka nad cílem
         local p = entity.get_position(t.id)
@@ -97,54 +106,15 @@ function M.DrawGame()
             ui.pop_font()
         end
     end
-    -- lišta dovedností
-    local n = #s.class.skills
-    local size, gap = 64, 8
-    local w = n * size + (n - 1) * gap + 2 * size + gap * 2
-    local x0, y0 = sw / 2 - w / 2, sh - 104
-    frame(x0 - 12, y0 - 12, w + 24, size + 24)
-    -- automatický útok (R) a Tab
-    local slots = { { key = "R", name = "Útok", color = { 0.9, 0.3, 0.2 }, active = combat.auto } }
-    for i, sk in ipairs(s.class.skills) do slots[#slots + 1] = { key = sk.key, name = sk.name, color = sk.color, skill = sk, i = i } end
-    slots[#slots + 1] = { key = "Tab", name = "Cíl", color = { 0.8, 0.75, 0.5 } }
-    for k, sl in ipairs(slots) do
-        local x = x0 + (k - 1) * (size + gap)
-        local c = sl.color
-        ui.rect(x, y0, size, size, "#1a1812", 6)
-        ui.rect(x + 3, y0 + 3, size - 6, size - 6, { c[1] * 0.55, c[2] * 0.55, c[3] * 0.55, 1 }, 5)
-        ui.rect(x + 8, y0 + 8, size - 16, size - 16, { c[1], c[2], c[3], 0.85 }, 12)
-        if sl.active then ui.rect(x, y0, size, 3, "#ff6040", 0) end
-        if sl.skill then
-            local sk = sl.skill
-            local left = (s.cd[sl.i] or 0) - now
-            local g = s.gcd - now
-            local frac = 0
-            if left > 0 and sk.cd > 0 then frac = left / sk.cd end
-            if g > 0 then frac = max(frac, g / 1.0) end
-            if frac > 0 then ui.rect(x, y0 + size * (1 - frac), size, size * frac, "#000000b0", 0) end
-            if s.mp < sk.mp then ui.rect(x, y0, size, size, "#1830a070", 6) end
-            if left > 0.05 then
-                ui.font("h2"); ui.text(x + size / 2, y0 + 20, (left > 9.5 and tostring(floor(left)) or string.format("%.1f", left)), { align = "center", color = "#ffffff", shadow = true }); ui.pop_font()
-            end
-        end
-        ui.font("small")
-        ui.text(x + 6, y0 + 2, sl.key, { color = "#ffe8b0", shadow = true })
-        ui.text(x + size / 2, y0 + size + 2, sl.name, { align = "center", color = DIM, size = 14 })
-        ui.pop_font()
-    end
-    -- ukazatel sesílání
-    if s.casting then
-        local c = s.casting
-        local f = min(1, (now - c.start) / (c.dur + (c.pushback or 0)))
-        local sk = s.class.skills[c.i]
-        ui.bar(sw / 2 - 160, y0 - 54, 320, 20, f, "#d8b25a", sk.name)
-    end
+    -- akční lišta (12 slotů, kruhové zatmění doby obnovení) a ukazatel sesílání
+    ab.ActionBar()
+    ab.EndFrame()
     -- záznam boje
-    frame(20, sh - 230, 420, 190)
+    frame(20, sh - 250, 420, 190)
     ui.font("small")
     for i, l in ipairs(combat.log) do
         local a = max(0.35, 1 - (now - l.t) / 25)
-        ui.text(32, sh - 222 + (i - 1) * 22, l.text, { color = { l.color[1], l.color[2], l.color[3], a } })
+        ui.text(32, sh - 242 + (i - 1) * 22, l.text, { color = { l.color[1], l.color[2], l.color[3], a } })
     end
     ui.pop_font()
     -- smrt

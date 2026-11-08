@@ -41,7 +41,8 @@ function M.Default(race)
     local d = M.Defs[race] or M.Defs.clovek
     return { v = 2, race = M.Defs[race] and race or "clovek", name = "", cls = 1, variant = 1,
              height = d.height or 1.0, limbs = 1.0, shoulders = d.shoulders or 1.0, muscle = 1.0, head = 1.0,
-             tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff"), gear = true }
+             tint = { 1, 1, 1 }, tintAmount = 0.0, glow = 0.0, glowColor = hex("#7fdfff"), gear = true,
+             eyes = 1.0, eyeGap = 0.0, nose = 1.0, noseLen = 0.0, jaw = 1.0 }
 end
 
 local function num(v, lo, hi, def)
@@ -66,6 +67,12 @@ function M.Sanitize(a)
     for _, k in ipairs({ "limbs", "shoulders", "muscle", "head" }) do r[k] = num(a[k], 0.8, 1.3, d[k]) end
     r.tintAmount = num(a.tintAmount, 0, 1, 0)
     r.gear = a.gear ~= false
+    -- obličej (kosti eye_l / eye_r / nose / jaw)
+    r.eyes = num(a.eyes, 0.6, 1.6, 1.0)
+    r.eyeGap = num(a.eyeGap, -0.015, 0.015, 0.0)
+    r.nose = num(a.nose, 0.5, 1.9, 1.0)
+    r.noseLen = num(a.noseLen, -0.02, 0.03, 0.0)
+    r.jaw = num(a.jaw, 0.7, 1.45, 1.0)
     r.glow = num(a.glow, 0, 1, 0)
     r.tint = col(a.tint, d.tint)
     r.glowColor = col(a.glowColor, d.glowColor)
@@ -111,6 +118,17 @@ function M.Apply(id, a)
         end
     end
     if math.abs(H - 1) > 0.001 then entity.bone_scale(id, "head", H, H, H, false) end
+    -- obličejové rysy (morfologie bez blendshapes: kosti v obličeji modelu)
+    local e, nz = a.eyes or 1, a.nose or 1
+    if math.abs(e - 1) > 0.001 then
+        entity.bone_scale(id, "eye_l", e, e, e, false); entity.bone_scale(id, "eye_r", e, e, e, false)
+    end
+    if math.abs(a.eyeGap or 0) > 0.0005 then
+        entity.bone_offset(id, "eye_l", a.eyeGap, 0, 0); entity.bone_offset(id, "eye_r", -a.eyeGap, 0, 0)
+    end
+    if math.abs(nz - 1) > 0.001 then entity.bone_scale(id, "nose", nz, nz, nz, false) end
+    if math.abs(a.noseLen or 0) > 0.0005 then entity.bone_offset(id, "nose", 0, 0, a.noseLen) end
+    if math.abs((a.jaw or 1) - 1) > 0.001 then entity.bone_scale(id, "jaw", a.jaw, 1.0 + (a.jaw - 1) * 0.3, 1.0 + (a.jaw - 1) * 0.5, false) end
 end
 M.LegLift = 0.9
 

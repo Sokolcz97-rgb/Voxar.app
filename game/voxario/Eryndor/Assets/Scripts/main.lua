@@ -97,6 +97,116 @@ function Selftest()
         game.quit()
         return
     end
+    if only == "ui" then
+        -- rozhraní podle Technického blueprintu: tvorba postavy (obličej, osvětlení), HUD a akční lišta s dobou obnovení,
+        -- strom talentů, nastavení
+        local races = require("eryndor.races")
+        local cr = game_.Creator
+        local talents = require("eryndor.talents")
+        local talentui = require("eryndor.talentui")
+        local options = require("eryndor.options")
+        _G.world.environment({ time_of_day = 15 })
+        game_.SetMode("select"); cr.Show()
+        cr.a = races.Default("elf"); cr.a.name = "Lyriel"; cr.a.cls = 2
+        cr.a.eyes, cr.a.nose, cr.a.jaw = 1.3, 0.8, 0.9
+        cr.rebuild = true; cr.forceTab, cr.tab = "face", "face"
+        timer.sleep(3); shot("u1-tvorba-oblicej")
+        cr.forceTab, cr.tab = "look", "look"
+        cr.light.mode = 4; cr.light.time = 23.0; cr.ApplyLight()
+        timer.sleep(2.5); shot("u2-tvorba-noc-studio")
+        cr.light.mode = 2; cr.light.time = 18.2; cr.ApplyLight()
+        timer.sleep(2); shot("u3-tvorba-zlata-hodina")
+        game_.EnterWorld()
+        _G.world.environment({ time_of_day = 14 })
+        local wx, wz = spawnOf("wolf")
+        player.Teleport(wx - 7, wz - 7); player.cam.yaw = 45
+        local s = combat.me
+        s.level = 6
+        talents.Apply(s)
+        local tree = talents.Tree(s.class.id)
+        for _, id in ipairs({ "m_chill", "m_chill", "m_chill", "m_frostbite", "m_frostbite", "m_frostbite", "t_mage_nova", "m_focus" }) do
+            talents.Learn(s, talents.Find(tree, id))
+        end
+        timer.sleep(2)
+        combat.TabTarget(); combat.UseSkill(2); timer.sleep(0.4)
+        combat.UsePotion("hp")
+        timer.sleep(1.2); shot("u4-hud-akcni-lista")
+        timer.sleep(2.0); combat.UseSkill(6); timer.sleep(1.0); shot("u5-hud-talent-na-liste")
+        talentui.open = true
+        timer.sleep(0.6); shot("u6-strom-talentu")
+        talentui.open = false
+        options.Load(); options.open = true
+        timer.sleep(0.6); shot("u7-nastaveni")
+        options.open = false
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "oblicej" then
+        -- obličejové kosti (oči, nos, čelist): vlevo výchozí, vpravo upravené posuvníky
+        _G.world.environment({ time_of_day = 13 })
+        local list = {}
+        for p in (game.env("VOXARIO_MODELS") or "Models/races/clovek.glb"):gmatch("[^,]+") do list[#list + 1] = p end
+        local bx, bz = map.Start.x - 24, map.Start.z - 3
+        local n = 0
+        for _, path in ipairs(list) do
+            local a = _G.world.spawn(path, bx - 0.45, G(bx, bz), bz, { yaw = 180 })
+            local b = _G.world.spawn(path, bx + 0.45, G(bx, bz), bz, { yaw = 180 })
+            anim.play(a, "Idle", 0, true); anim.play(b, "Idle", 0, true)
+            entity.bone_scale(b, "eye_l", 1.35, 1.35, 1.35, false); entity.bone_scale(b, "eye_r", 1.35, 1.35, 1.35, false)
+            entity.bone_scale(b, "nose", 1.45, 1.45, 1.45, false); entity.bone_scale(b, "jaw", 1.3, 1.0, 1.15, false)
+            timer.sleep(2.5)
+            local hy = G(bx, bz) + 1.75
+            lookFrom(bx, hy, bz - 1.4, bx, hy - 0.03, bz)
+            timer.sleep(0.6); n = n + 1; shot(string.format("f%02d", n))
+            entity.destroy(a); entity.destroy(b)
+        end
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "voda" then
+        -- realistická voda: pláž jako referenční snímek, západ slunce, vítr a bouře, noc, řeka; výška vln na CPU
+        local races = require("eryndor.races")
+        _G.world.environment({ time_of_day = 13.5 })
+        _G.world.weather({ rain = 0, storm = 0, wind = 0.45, instant = true })
+        -- pláž: od sirény (mělčina u pobřeží) směrem ke středu kontinentu, první místo těsně nad hladinou
+        local sx, sz
+        for _, sp in ipairs(map.Data.Spawns) do if sp[1] == "siren" then sx, sz = sp[2], sp[3]; break end end
+        local dl = math.sqrt(sx * sx + sz * sz)
+        local ux, uz = -sx / dl, -sz / dl
+        local bx, bz = sx, sz
+        for k = 1, 400 do
+            local x, z = sx + ux * k, sz + uz * k
+            if G(x, z) > map.SeaY + 0.6 then bx, bz = x + ux * 3, z + uz * 3; break end
+        end
+        local a = races.Default("kocka")
+        local hero = races.Spawn(a, bx, G(bx, bz), bz, { yaw = math.deg(math.atan(-ux, -uz)) })
+        anim.play(hero, "Idle", 0, true)
+        local function beach(name, wait)
+            lookFrom(bx + ux * 4.5, G(bx, bz) + 2.4, bz + uz * 4.5, bx - ux * 30, map.SeaY, bz - uz * 30); timer.sleep(wait or 2.5); shot(name)
+        end
+        timer.sleep(3)
+        beach("w1-plaz-jako-reference", 3)
+        lookFrom(bx + ux * 2 + uz * 8, G(bx + ux * 2 + uz * 8, bz + uz * 2 - ux * 8) + 2.5, bz + uz * 2 - ux * 8, bx - ux * 6, map.SeaY, bz - uz * 6); timer.sleep(2); shot("w2-prilivova-pena")
+        lookFrom(bx - ux * 15, map.SeaY + 3, bz - uz * 15, bx - ux * 120, map.SeaY, bz - uz * 120); timer.sleep(2); shot("w3-otevrene-more")
+        local h = _G.world.water_height(bx - ux * 15, bz - uz * 15)
+        game.log(string.format("VODA: výška hladiny na CPU = %.2f (klidná %.2f)", h or -999, map.SeaY))
+        _G.world.environment({ time_of_day = 18.6 })
+        beach("w4-zapad-slunce", 3)
+        _G.world.weather({ wind = 1.0, rain = 0.6, storm = 0.4, instant = true })
+        _G.world.environment({ time_of_day = 15 })
+        lookFrom(bx - ux * 15, map.SeaY + 3, bz - uz * 15, bx - ux * 120, map.SeaY, bz - uz * 120); timer.sleep(3); shot("w5-vitr-boure")
+        _G.world.weather({ wind = 0.3, rain = 0, storm = 0, instant = true })
+        _G.world.environment({ time_of_day = 22.5 })
+        beach("w6-noc", 3)
+        _G.world.environment({ time_of_day = 12 })
+        local riv = map.Data.River[math.floor(#map.Data.River * 0.45)]
+        lookFrom(riv[1] + 25, 14, riv[2] - 20, riv[1], 0, riv[2]); timer.sleep(3); shot("w7-reka")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     if only == "snaps" then
         -- ladění pohybů: statické snímky klipů (VOXARIO_SNAPS = klip@fáze,...) ze 3/4 pohledu
         _G.world.environment({ time_of_day = 14.5 })
@@ -392,6 +502,9 @@ end
 
 -- ------------------------------------------------------------------ tvorba postavy a vstup do hry
 local creator = require("eryndor.creator")
+local actionbar = require("eryndor.actionbar")
+local talentui = require("eryndor.talentui")
+local options = require("eryndor.options")
 local presence = require("eryndor.presence")
 local mode = "select"
 game_.Creator = creator
@@ -458,8 +571,26 @@ local function weatherCycle()
     else _G.world.weather({ rain = 1, storm = 1, wind = 0.9 }) end
 end
 
+-- streaming: modely nepřátel v okolí (250 m) se načtou dopředu na pozadí – bez záseků při příchodu do oblasti
+local preloadAt, preloaded = 0, {}
+local function streamPreload()
+    if not _G.world.preload or game.time() < preloadAt then return end
+    preloadAt = game.time() + 2
+    local px, _, pz = player.Pos()
+    for _, sp in ipairs(map.Data.Spawns) do
+        local t = combat.MobTypes and combat.MobTypes[sp[1]]
+        if t and not preloaded[sp[1]] and (sp[2] - px) ^ 2 + (sp[3] - pz) ^ 2 < 250 * 250 then
+            preloaded[sp[1]] = true
+            if t.model then _G.world.preload(t.model) end
+            if t.human then _G.world.preload("Models/humans/" .. t.human .. ".glb") end
+        end
+    end
+end
+
 function on_start()
     hud.Init()
+    options.Load()
+    options.Apply()   -- uložené grafické nastavení (předvolba, stíny, textury, DLSS / FSR, FPS…)
     _G.world.environment({ day_night = true, real_time = false, time_of_day = 15, day_length = 60, fog = 0.0006,
                            shadow_distance = 260, haze = 0.45, exposure = 0.85, night_exposure = 1.6,
                            contrast = 1.1, saturation = 1.22, clouds = 0.45, bloom = 0.12,
@@ -479,10 +610,20 @@ function on_update(dt)
     if mode == "select" then creator.Update(dt); return end
     presence.Update(dt)
     if not ui.wants_keyboard() and not quest.dialog then
-        if input.pressed("Tab") then combat.TabTarget() end
-        if input.pressed("R") then combat.StartAttack() end
-        if input.pressed("Escape") then combat.target, combat.auto = nil, false end
-        for i = 1, 6 do if input.pressed(tostring(i)) then combat.UseSkill(i) end end
+        local overlay = talentui.open or options.open
+        if not overlay then
+            if input.pressed("Tab") then combat.TabTarget() end
+            if input.pressed("R") then combat.StartAttack() end
+            actionbar.HandleKeys()            -- 1–0, -, = : dovednosti, aktivní talenty, lektvary, útok, cíl
+        end
+        if input.pressed("N") then talentui.Toggle() end
+        if input.pressed("O") then options.Toggle() end
+        if input.pressed("Escape") then
+            if talentui.open then talentui.open = false
+            elseif options.open then options.open = false
+            elseif combat.target then combat.target, combat.auto = nil, false
+            else options.Toggle() end
+        end
         if input.pressed("F") then quest.Talk() end
         if input.pressed("M") then game_.mapOpen = not game_.mapOpen end
     end
@@ -490,6 +631,7 @@ function on_update(dt)
     player.Update(dt, combat.inCombat, combat.moveTo, combat.me and combat.me.casting ~= nil)
     if not game_.freeCam then player.UpdateCamera(dt) end
     weatherCycle()
+    streamPreload()
     local w = _G.world.weather()
     if w.lightning ~= lastThunder then lastThunder = w.lightning end
 end
@@ -516,7 +658,7 @@ function on_gui()
         return
     end
     if mode ~= "play" then return end
-    if not ui.wants_mouse() then
+    if not ui.wants_mouse() and not talentui.open and not options.open then
         if input.pressed("Mouse1") then
             local m = pick()
             if m then combat.Select(m) end
@@ -543,4 +685,6 @@ function on_gui()
     hud.DrawQuest(quest.Tracker())
     hud.DrawDialog(quest.dialog)
     if game_.mapOpen then hud.DrawWorldMap() else hud.DrawMinimap() end
+    talentui.Draw()
+    options.Draw()
 end
