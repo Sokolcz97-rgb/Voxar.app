@@ -66,7 +66,7 @@ local function join(key, metas)
         leave(key)
     end
     local x, z = tonumber(meta.x) or map.Start.x, tonumber(meta.z) or map.Start.z
-    o = { name = a.name, race = a.race, cls = c, level = tonumber(meta.level) or 1, sig = sig,
+    o = { name = a.name, race = a.race, cls = c, level = tonumber(meta.level) or 1, sig = sig, height = a.height,
           pos = { x, z }, target = { x, z }, vel = { 0, 0 }, stamp = game.time(), yaw = tonumber(meta.ry) or 0,
           ry = tonumber(meta.ry) or 0 }
     o.id, o.items = races.Spawn(a, x, ground(x, z), z, { yaw = o.yaw, name = a.name, tag = "other_player",
@@ -78,6 +78,7 @@ local function join(key, metas)
 end
 
 local function play(o, clip, loop)
+    clip = player.Clip(clip, o.cls)
     if o.anim == clip then return end
     o.anim = clip
     anim.play(o.id, clip, 0.15, loop ~= false)
@@ -183,7 +184,12 @@ function M.Update(dt)
             -- probíhá akce
         else
             o.actionT = nil
-            if spd > 3.5 then play(o, "Running_A") elseif spd > 0.4 then play(o, "Walking_A") else play(o, "Idle") end
+            local ref
+            if spd > 7.4 then play(o, "Running_B"); ref = player.ClipSpeed.sprint
+            elseif spd > 3.2 then play(o, "Running_A"); ref = player.ClipSpeed.run
+            elseif spd > 0.4 then play(o, "Walking_A"); ref = player.ClipSpeed.walk
+            else play(o, "Idle") end
+            anim.speed(o.id, ref and math.max(0.5, math.min(2.2, spd / (ref * (o.height or 1)))) or 1)
         end
     end
 end

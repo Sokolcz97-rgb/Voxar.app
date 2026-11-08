@@ -1,9 +1,12 @@
 -- Ozvěna (hráč): kapsle pro pohyb po terénu, model KayKit s výbavou, kamera za zády (MMO).
---   WASD / šipky pohyb, Shift chůze, Space skok, pravé tlačítko myši otáčí kamerou, kolečko zoom.
+--   WASD / šipky pohyb, Shift sprint, Ctrl chůze, Space skok, pravé tlačítko myši otáčí kamerou, kolečko zoom.
 local map = require("eryndor.map")
 local humans = require("eryndor.humans")
 local M = { cam = { yaw = 180, pitch = 18, distance = 7.5 }, facing = 180, speed = 0, moving = false,
-            inputEnabled = true, runSpeed = 6.2, walkSpeed = 2.4 }
+            inputEnabled = true, runSpeed = 6.2, walkSpeed = 2.0, sprintSpeed = 9.0 }
+-- rychlosti, při kterých pohybové klipy enginu nekloužou (tools/motion/humanoid_motion.py, REF) – při jiné
+-- rychlosti se klip zrychlí / zpomalí; menší rasy (výška) dělají kratší kroky
+M.ClipSpeed = { walk = 1.5, run = 5.0, sprint = 7.5 }
 
 local sin, cos, rad, deg, sqrt, exp, max, min, atan = math.sin, math.cos, math.rad, math.deg, math.sqrt, math.exp, math.max, math.min, math.atan
 
@@ -40,8 +43,16 @@ function M.Teleport(x, z)
     entity.set_velocity(M.body, 0, 0, 0)
 end
 
--- animace pohybu (útoky a kouzla hrají jako jednorázové přes M.Action)
+-- animace pohybu (útoky a kouzla hrají jako jednorázové přes M.Action); s holí varianta „_Staff“
+local STAFF = { Idle = true, ["2H_Melee_Idle"] = true, Walking_A = true, Walking_Backwards = true, Running_A = true,
+                Running_B = true, Running_Strafe_Left = true, Running_Strafe_Right = true }
+function M.Clip(clip, class)
+    class = class or M.class
+    if class and class.look and class.look.right == "staff" and STAFF[clip] then return clip .. "_Staff" end
+    return clip
+end
 function M.Play(clip, fade, loop)
+    clip = M.Clip(clip)
     if M.anim == clip then return end
     M.anim = clip
     anim.play(M.view, clip, fade or 0.15, loop ~= false)
@@ -85,7 +96,9 @@ function M.Update(dt, combatPose, moveTo, rooted)
     if rooted or M.dead then mx, mz = 0, 0 end
     local ml = sqrt(mx * mx + mz * mz)
     if ml > 1 then mx, mz, ml = mx / ml, mz / ml, 1 end
-    local spd = input.key("Shift") and M.walkSpeed or M.runSpeed
+    local spd = M.runSpeed
+    if M.inputEnabled and input.key("Shift") and M.manual then spd = M.sprintSpeed
+    elseif M.inputEnabled and input.key("Ctrl") then spd = M.walkSpeed end
     local k = 1 - exp(-14 * dt)
     M.vx = (M.vx or 0) + (mx * spd - (M.vx or 0)) * k
     M.vz = (M.vz or 0) + (mz * spd - (M.vz or 0)) * k
@@ -114,11 +127,14 @@ function M.Update(dt, combatPose, moveTo, rooted)
         -- probíhá akce
     else
         M.actionT = nil
-        if M.speed > 3.5 then M.Play("Running_A")
-        elseif M.speed > 0.4 then M.Play("Walking_A")
-        elseif combatPose then M.Play(M.class.combatIdle or "2H_Melee_Idle")
+        local h = (M.appearance and M.appearance.height) or 1
+        local ref
+        if M.speed > 7.4 then M.Play("Running_B"); ref = M.ClipSpeed.sprint
+        elseif M.speed > 3.2 then M.Play("Running_A"); ref = M.ClipSpeed.run
+        elseif M.speed > 0.4 then M.Play("Walking_A"); ref = M.ClipSpeed.walk
+        elseif combatPose then M.Play("2H_Melee_Idle")
         else M.Play("Idle") end
-        anim.speed(M.view, M.speed > 0.4 and math.max(0.7, math.min(1.4, M.speed / (M.speed > 3.5 and M.runSpeed or M.walkSpeed))) or 1)
+        anim.speed(M.view, ref and math.max(0.5, math.min(2.2, M.speed / (ref * h))) or 1)
     end
 end
 
