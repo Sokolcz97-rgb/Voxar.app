@@ -62,6 +62,11 @@ function M.Burst(x, z, r, color, element)
     track(particles(x, y + 0.3, z, { preset = TRAIL[element] or "spark", rate = 0, burst = math.floor(40 + r * 18), duration = 0,
                                      radius = r * 0.9, ring = true, speed = 2.2, spread = 0.35, dir = { 0, 1, 0 }, life = 0.8 }), 1.4)
     M.Impact(x, y + 0.6, z, element)
+    if element == "fire" then   -- po výbuchu stoupá kouř
+        track(particles(x, y + 0.5, z, { preset = "smoke", duration = 0.7, rate = 22, radius = r * 0.45, size = 0.8 + r * 0.12 }), 5.0)
+    elseif element == "frost" then   -- mrazivá pára
+        track(particles(x, y + 0.2, z, { preset = "steam", duration = 0.5, rate = 26, radius = r * 0.6, size = 1.0 }), 3.5)
+    end
 end
 
 -- záře kolem postavy (léčení, posílení): stoupající spirála částic

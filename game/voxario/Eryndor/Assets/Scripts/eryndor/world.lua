@@ -222,6 +222,12 @@ function M.BuildIgnis()
     for _, v in ipairs(D.Volcanoes) do
         local y = ground(v.x, v.z)
         W.spawn("light", v.x, y + 25, v.z, { light = { color = { 1.0, 0.42, 0.1 }, intensity = 400, range = 160, flicker = true } })
+        -- dýmající sopka: sloup tmavého kouře nad kráterem (průhledné částice enginu)
+        if W.particles then
+            W.particles(v.x, y + 28, v.z, { preset = "smoke_dark", rate = 7, life = 26, speed = 9, spread = 0.12, gravity = -1.1,
+                                           drag = 0.08, radius = 14, size = 30, max = 260, distance = 1400, soft = 10, opacity = 0.45,
+                                           prewarm = 26, dir = { 0.25, 1, 0.1 } })
+        end
     end
     -- žár podél lávových řek
     local lava = scatter(70, "l", { hmin = 3, slope = 1.0, tries = 40 })
