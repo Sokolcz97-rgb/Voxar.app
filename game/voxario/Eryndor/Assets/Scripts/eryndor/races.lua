@@ -32,7 +32,7 @@ M.Gear = {
     trpaslik = { right = "gear/kladivo", armor = "krouzkova", label = "Válečné kladivo, kroužková košile" },
     elf = { left = "gear/luk", armor = "kozena_vesta", label = "Luk s toulcem, kožená vesta s kápí" },
     vila = { right = "gear/hul", left = "gear/dyka", label = "Hůl s krystalem, hůlka" },
-    obr = { right = "gear/kladivo", armor = "kozesina", label = "Válečné kladivo, kožešinová vesta" },
+    obr = { right = "gear/kladivo", armor = "kozesina", scale = 1.45, label = "Válečné kladivo, kožešinová vesta" },   -- obří ruce
     kocka = { right = "gear/mec", left = "gear/dyka", label = "Meč, dýka" },
 }
 M.Tints = { "#ffffff", "#ffe2c8", "#d8e8ff", "#e0ffd8", "#ffd8f0", "#d0d0d0", "#fff0b0", "#c8b8ff" }
@@ -139,7 +139,7 @@ function M.Spawn(a, x, y, z, opts)
     local gear = a.gear ~= false and M.Gear[a.race] or nil
     local right, left = opts.right, opts.left
     if gear then right, left = gear.right, gear.left end
-    local items = require("eryndor.humans").Dress(id, { right = right, left = left })   -- zbraně na handslot
+    local items = require("eryndor.humans").Dress(id, { right = right, left = left, gearScale = gear and gear.scale })   -- zbraně na handslot
     if gear and gear.armor then   -- zbroj na míru rase, hýbe se s kostrou nositele
         local ar = _G.world.spawn("Models/gear/" .. gear.armor .. "_" .. a.race .. ".glb", x, y, z, { name = gear.armor })
         entity.equip(ar, id)
