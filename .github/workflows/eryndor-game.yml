@@ -110,6 +110,30 @@ jobs:
             test -s "selftest-particles/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
           done
 
+      - name: Samotest postav zblízka
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-characters"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=oblicej VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-characters" 2>&1 | tee "$GITHUB_WORKSPACE/player-characters.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-characters.log; then echo "::error::Chyba samotestu postav"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-characters.log || { echo "::error::Samotest postav nedoběhl"; exit 1; }
+          test -s selftest-characters/f01.png || { echo "::error::Chybí referenční detail postavy"; exit 1; }
+
+      - name: Samotest vody
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-water"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=voda VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-water" 2>&1 | tee "$GITHUB_WORKSPACE/player-water.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-water.log; then echo "::error::Chyba samotestu vody"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-water.log || { echo "::error::Samotest vody nedoběhl"; exit 1; }
+          for shot in w1-plaz-jako-reference w3-otevrene-more w7-reka; do
+            test -s "selftest-water/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
+          done
+
       - name: Nahrát snímky samotestů
         if: always()
         uses: actions/upload-artifact@v4
@@ -118,6 +142,8 @@ jobs:
           path: |
             selftest/*.png
             selftest-particles/*.png
+            selftest-characters/*.png
+            selftest-water/*.png
           if-no-files-found: warn
           retention-days: 3
 
