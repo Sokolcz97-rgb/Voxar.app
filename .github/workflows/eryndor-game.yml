@@ -17,7 +17,7 @@ on:
       engine_tag:
         description: 'Tag release enginu'
         required: false
-        default: 'v1.18.0'
+        default: 'v1.18.1'
       version:
         description: 'Verze hry (prázdné = 0.1.0-dev.<číslo běhu>)'
         required: false
@@ -43,7 +43,7 @@ concurrency:
 env:
   ENGINE_REPO: Sokolcz97-rgb/Voxario-Studio-Engine
   PROJECT: game/voxario/Eryndor
-  ENGINE_TAG: ${{ inputs.engine_tag || 'v1.18.0' }}
+  ENGINE_TAG: ${{ inputs.engine_tag || 'v1.18.1' }}
 
 jobs:
   selftest:
@@ -87,6 +87,8 @@ jobs:
           sudo apt-get install -y mesa-vulkan-drivers libvulkan1 xvfb libxrandr2 libxinerama1 libxcursor1 libxi6 libxkbcommon0
       - name: Složit hru (Linux)
         run: $PROJECT/tools/package-game.sh "$RUNNER_TEMP/engine" "$RUNNER_TEMP/game" "${{ steps.ver.outputs.version }}"
+      - name: Ověřit modely ras a výbavy
+        run: python3 "$PROJECT/tools/eryndor_model_check.py"
       - name: Samotest (hra)
         run: |
           set -o pipefail
@@ -134,6 +136,45 @@ jobs:
             test -s "selftest-water/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
           done
 
+      - name: Samotest všech ras a výbavy
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-races"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=creator VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-races" 2>&1 | tee "$GITHUB_WORKSPACE/player-races.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-races.log; then echo "::error::Chyba samotestu ras a výbavy"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-races.log || { echo "::error::Samotest ras nedoběhl"; exit 1; }
+          for shot in c01-clovek c03-trpaslik c05-elf c07-vila c09-obr c11-kocka c13-kocka-zrzava; do
+            test -s "selftest-races/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
+          done
+
+      - name: Samotest výběru a správy postav
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-creator-ui"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=creator_ui VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-creator-ui" 2>&1 | tee "$GITHUB_WORKSPACE/player-creator-ui.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-creator-ui.log; then echo "::error::Chyba správy postav"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-creator-ui.log || { echo "::error::Samotest správy postav nedoběhl"; exit 1; }
+          for shot in cu1-vyber-postav cu2-potvrzeni-smazani cu3-postava-smazana cu4-tvorba-postavy; do
+            test -s "selftest-creator-ui/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
+          done
+
+      - name: Samotest tekoucí lávy
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-lava"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=lava VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-lava" 2>&1 | tee "$GITHUB_WORKSPACE/player-lava.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-lava.log; then echo "::error::Chyba samotestu lávy"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-lava.log || { echo "::error::Samotest lávy nedoběhl"; exit 1; }
+          for shot in l1-lava-flow l2-lavova-reka; do
+            test -s "selftest-lava/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
+          done
+
       - name: Nahrát snímky samotestů
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,6 +185,9 @@ jobs:
             selftest-particles/*.png
             selftest-characters/*.png
             selftest-water/*.png
+            selftest-races/*.png
+            selftest-creator-ui/*.png
+            selftest-lava/*.png
           if-no-files-found: warn
           retention-days: 3
 

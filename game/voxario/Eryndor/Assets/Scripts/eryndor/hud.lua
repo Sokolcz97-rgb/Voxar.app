@@ -45,6 +45,8 @@ function M.DrawGame()
     local s = combat.me
     if not s then return end
     local sw, sh = ui.screen()
+    local health = s.hp / max(1, s.maxhp)
+    if health < 0.25 then ui.vignette(0.08 + 0.08 * (0.5 + 0.5 * math.sin(game.time() * 5))) end
     local ab = require("eryndor.actionbar")
     local name = (player.appearance and player.appearance.name ~= "" and player.appearance.name) or s.class.name
     ab.UnitFrame(20, 18, "me", name, s.level, s.hp, s.maxhp, s.mp, s.maxmp, { icon = s.class.id .. "_1" })
@@ -55,6 +57,7 @@ function M.DrawGame()
     if free > 0 then
         ui.font("small"); ui.text(30, 136, free .. " volné body talentů – N", { color = GOLD, shadow = true }); ui.pop_font()
     end
+    local px, _, pz = player.Pos()
     -- buffy
     local bx = 30
     for _, b in pairs(s.buffs) do
@@ -72,6 +75,9 @@ function M.DrawGame()
         ab.UnitFrame(400, 18, "target", t.t.name, t.level, t.hp, t.maxhp, nil, nil, { hostile = true, elite = t.t.elite })
         if t.stunT and game.time() < t.stunT then
             ui.font("small"); ui.text(500, 108, "Omráčen", { color = "#ffe080" }); ui.pop_font()
+        else
+            local distance = math.sqrt((t.x - px) ^ 2 + (t.z - pz) ^ 2)
+            ui.font("small"); ui.text(500, 108, string.format("%.0f m", distance), { color = DIM }); ui.pop_font()
         end
         -- značka nad cílem
         local p = entity.get_position(t.id)
@@ -81,7 +87,6 @@ function M.DrawGame()
         end
     end
     -- jmenovky a životy nepřátel poblíž
-    local px, _, pz = player.Pos()
     for _, m in ipairs(combat.mobs) do
         if m.state ~= "dead" and (m.x - px) ^ 2 + (m.z - pz) ^ 2 < 30 * 30 then
             local x, y, vis = ui.world_to_screen(m.x, combat.MobY(m) + (m.t.labelY or (m.t.elite and 3.0 or 2.0)), m.z)
