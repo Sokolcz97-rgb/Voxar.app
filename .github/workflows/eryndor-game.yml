@@ -64,7 +64,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
         run: |
-          gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'voxario-studio-*-linux-x86_64.tar.gz' -D "$RUNNER_TEMP/engine"
+          downloaded=0
+          for attempt in $(seq 1 30); do
+            if output=$(gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'voxario-studio-*-linux-x86_64.tar.gz' -D "$RUNNER_TEMP/engine" 2>&1); then
+              [ -z "$output" ] || printf '%s\n' "$output"
+              downloaded=1
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              printf '%s\n' "$output"
+              echo "::error::Engine $ENGINE_TAG nemá Linux release asset ani po 15 minutách"
+              exit 1
+            fi
+            echo "Engine $ENGINE_TAG ještě není připraven; další pokus za 30 s ($attempt/30)"
+            sleep 30
+          done
+          [ "$downloaded" -eq 1 ]
           tar -xzf "$RUNNER_TEMP"/engine/*.tar.gz -C "$RUNNER_TEMP/engine"
       - name: Závislosti
         run: |
@@ -82,6 +97,30 @@ jobs:
           grep -q "SELFTEST hotovo" player.log || { echo "::error::Samotest nedoběhl"; exit 1; }
           echo "Záběrů: $(ls selftest/*.png | wc -l)"
 
+      - name: Samotest kouře a částic
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/selftest-particles"
+          cd "$RUNNER_TEMP"
+          VOXARIO_SELFTEST_ONLY=kouzla VOXARIO_NO_AUDIO=1 timeout 900 xvfb-run -a -s "-screen 0 1600x900x24" ./game/Eryndor --selftest "$GITHUB_WORKSPACE/selftest-particles" 2>&1 | tee "$GITHUB_WORKSPACE/player-particles.log"
+          cd "$GITHUB_WORKSPACE"
+          if grep -E "Script error|disabled after repeated errors" player-particles.log; then echo "::error::Chyba skriptu částic"; exit 1; fi
+          grep -q "SELFTEST hotovo" player-particles.log || { echo "::error::Samotest částic nedoběhl"; exit 1; }
+          for shot in k8-koure k9-taborak k10-sopka; do
+            test -s "selftest-particles/$shot.png" || { echo "::error::Chybí snímek $shot"; exit 1; }
+          done
+
+      - name: Nahrát snímky samotestů
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eryndor-selftest-screenshots
+          path: |
+            selftest/*.png
+            selftest-particles/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
   publish:
     name: Hra pro Windows + kanál Fantasy
     needs: selftest
@@ -94,7 +133,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.VOXARIO_ENGINE_TOKEN }}
         run: |
-          gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine"
+          downloaded=0
+          for attempt in $(seq 1 30); do
+            if output=$(gh release download "$ENGINE_TAG" --repo "$ENGINE_REPO" --pattern 'VoxarioStudio-*-win64-portable.zip' -D "$RUNNER_TEMP/engine" 2>&1); then
+              [ -z "$output" ] || printf '%s\n' "$output"
+              downloaded=1
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              printf '%s\n' "$output"
+              echo "::error::Engine $ENGINE_TAG nemá Windows release asset ani po 15 minutách"
+              exit 1
+            fi
+            echo "Engine $ENGINE_TAG ještě není připraven; další pokus za 30 s ($attempt/30)"
+            sleep 30
+          done
+          [ "$downloaded" -eq 1 ]
           unzip -q "$RUNNER_TEMP"/engine/*.zip -d "$RUNNER_TEMP/engine"
       - name: Složit hru (Windows) a manifest
         run: |
