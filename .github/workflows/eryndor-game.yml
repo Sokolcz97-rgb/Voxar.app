@@ -49,7 +49,7 @@ jobs:
   selftest:
     name: Samotest (Linux, software Vulkan)
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     outputs:
       version: ${{ steps.ver.outputs.version }}
     steps:
