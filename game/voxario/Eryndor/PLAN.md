@@ -90,6 +90,12 @@ voda. Vše přes Voxario Studio Engine.
 - [x] D3 Vydání launcheru s novým kanálem
 
 ## Poznámky
+- Rozpracovaná obnova Valorie: větev `copilot/valoria-restoration` v repozitáři hry a větev
+  `copilot/valoria-rendering` v repozitáři enginu. Předchozí nepublikované sestavení není dostupné;
+  podle logu byl zatím obnoven pouze raný generátor pěti modulárních modelů
+  (`tools/valoria_assets.py`, závisí na NumPy). Modely jsou zjednodušené, nejsou fotorealistické
+  a dosud nejsou zapojené do světa ani kanálu Fantasy. Původní terén, portály, textury a pozdější
+  úpravy města je třeba obnovit a ověřit ve hře. Výchozí hra i kanál zůstávají beze změny.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
 - Samotest: `tools/package-game.sh <engine/bin> <výstup>` a `Eryndor --selftest <složka>` (záběry lokace a počasí).
 - Engine: `world.weather{rain, snow, storm, wind, wind_direction, instant}` (docs/LUA_API.md).
