@@ -105,6 +105,9 @@ voda. Vše přes Voxario Studio Engine.
   `python3 tools/content/plaster_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`
   před spuštěním generátoru modelů. Domy nyní mají omítku, kamennou podezdívku, uzavřené štíty,
   boční okna a podpěry markýz; stále jde o opakované procedurální zástupné modely.
+  Hradní kámen se obnoví příkazem
+  `python3 tools/content/stone_material.py <složka-hry>/Assets/Textures/valoria --size 1024 --seed 4301 --rows 16 --columns 8 --prefix castle --variation 0.6 --mortar 0.25`
+  z větve enginu (od commitu `305d791`); pak znovu vygenerovat modely Valorie.
   Zadání: startovní město na ostrově; kamenný most a sochy, modrozlaté prapory, obchodní čtvrť
   s dlažbou a červenými/modrými střechami, hrad na útesu a gryfové; přirozené světlo, mlha
   a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
@@ -117,9 +120,11 @@ voda. Vše přes Voxario Studio Engine.
   pásy písku, hlíny a skály; zázemí města a výšky mimo jeho původní půdorys ostrova se zachovávají.
   Celkový záběr `v0-ostrov` však ukazuje prázdnou krajinu a zástupný hrad; domy, hrad i okolí
   zůstávají daleko od fotorealismu a potřebují kvalitní detailní assety a osídlení.
-  Model hradu má dekorativní okna, cimbuří, věžové římsy a čelní vrata, ale nemá interiér ani
-  průchozí vstup: vrata jsou jen dekorace na plné kolizní stěně. Pohled na průčelí ověřuje
-  záběr `v3b-pruceli-hradu`; pro finální podobu je nutný originální detailní hrad i hratelný vstup.
+  Model hradu má okna, cimbuří, věžové římsy a průchod s otevřenými křídly vrat. Samotest ověřuje
+  volný průchod a kolizi sousední stěny koulemi o poloměru hráče; záběry `v3b-pruceli-hradu` a
+  `v3c-interier-hradu` ukazují novou texturu a provizorní vnitřek. Chybí detailní interiér,
+  výbava a hotové materiály; mezi provizorními dlaždicemi a kolem věže je vidět tráva a
+  dlažba kopírující terén tvoří schody. Přístupnost nebyla ověřena průchodem skutečné postavy.
   Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
   rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
   stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.

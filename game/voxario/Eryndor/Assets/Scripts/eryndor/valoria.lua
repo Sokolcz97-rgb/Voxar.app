@@ -20,16 +20,25 @@ end
 
 local function paving()
     local tiles = {}
+    local function addTile(px, pz)
+        local highest = -math.huge
+        for dx = -1, 1 do
+            for dz = -1, 1 do
+                highest = math.max(highest, map.HeightAt(px + dx, pz + dz))
+            end
+        end
+        tiles[#tiles + 1] = { px, highest + 0.03, pz, 0, 1 }
+    end
     for x = -8, 8, 2 do
         for z = -89, 69, 2 do
-            local px, pz = cx + x, cz + z
-            local highest = -math.huge
-            for dx = -1, 1 do
-                for dz = -1, 1 do
-                    highest = math.max(highest, map.HeightAt(px + dx, pz + dz))
-                end
+            addTile(cx + x, cz + z)
+        end
+    end
+    for x = -14, 14, 2 do
+        for z = -8, 10, 2 do
+            if math.abs(x) >= 6 or math.abs(z) >= 6 then
+                addTile(cx + x, cz - 235 + z)
             end
-            tiles[#tiles + 1] = { px, highest + 0.03, pz, 0, 1 }
         end
     end
     W.instances("Models/valoria/paving.glb", tiles, { distance = 600 })
@@ -49,6 +58,11 @@ function M.Build()
         model("house_red", cx + 25, cz + z, { yaw = 90, name = "Dům", collider = "mesh" })
     end
     model("keep", cx, cz - 235, { name = "Královský hrad", collider = "mesh" })
+    for _, x in ipairs({ -8, 8 }) do
+        local z = cz - 235
+        W.spawn("light", cx + x, map.HeightAt(cx + x, z) + 4, z,
+            { light = { color = { 1.0, 0.72, 0.42 }, intensity = 22, range = 13 } })
+    end
     portal(M.CityPortal)
     portal(M.OutpostPortal)
 end

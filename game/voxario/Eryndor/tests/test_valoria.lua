@@ -29,13 +29,19 @@ for _, name in ipairs({ "bridge", "gate", "hero", "house_blue", "house_red", "ke
     assert(found["Models/valoria/" .. name .. ".glb"], "missing city model " .. name)
 end
 assert(found["Models/nature/aetherium_big.glb"] == 2, "both portals must be visible")
+assert(found["light"] == 4, "castle and both portals must have lights")
 assert(#instanceCalls == 1 and instanceCalls[1][1] == "Models/valoria/paving.glb")
 local tiles = instanceCalls[1][2]
-assert(#tiles == 9 * 80, "street must cover its full footprint")
+assert(#tiles == 9 * 80 + 125, "street and castle floor must cover their footprints")
 local positions = {}
 for _, tile in ipairs(tiles) do
     local x, y, z = tile[1], tile[2], tile[3]
-    assert(x >= 2992 and x <= 3008 and z >= 2311 and z <= 2469)
+    local street = x >= 2992 and x <= 3008 and z >= 2311 and z <= 2469
+    local floor = x >= 2986 and x <= 3014 and z >= 2157 and z <= 2175
+    assert(street or floor, "tile is outside both paving footprints")
+    if floor then
+        assert(math.abs(x - 3000) >= 6 or math.abs(z - 2165) >= 6, "floor overlaps the central tower")
+    end
     local key = x .. ":" .. z
     assert(not positions[key], "duplicate street tile")
     positions[key] = true

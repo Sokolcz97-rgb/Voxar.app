@@ -11,6 +11,9 @@ OUT = ASSETS / "Models" / "valoria"
 STONE = dict(name="weathered stone", texture=str(ASSETS / "Textures/valoria/stone_basecolor.png"),
              normal=str(ASSETS / "Textures/valoria/stone_normal.png"),
              orm=str(ASSETS / "Textures/valoria/stone_orm.png"), uv_scale=2.0, roughness=1.0)
+CASTLE_STONE = dict(name="castle masonry", texture=str(ASSETS / "Textures/valoria/castle_basecolor.png"),
+                    normal=str(ASSETS / "Textures/valoria/castle_normal.png"),
+                    orm=str(ASSETS / "Textures/valoria/castle_orm.png"), uv_scale=8.0, roughness=1.0)
 PLASTER = dict(name="weathered plaster", texture=str(ASSETS / "Textures/valoria/plaster_basecolor.png"),
                normal=str(ASSETS / "Textures/valoria/plaster_normal.png"),
                orm=str(ASSETS / "Textures/valoria/plaster_orm.png"), uv_scale=3.0, roughness=1.0)
@@ -113,8 +116,11 @@ def generate():
               sphere(0.68, 16, 12).translate(0, 7.2, 0)]
     save("hero", [(merge(*statue), MARBLE)])
 
-    keep = [b(0, 8, 0, 35, 16, 24),
-            b(0, 1, 0, 36, 2, 25), b(0, 15.5, 0, 36, 1, 25)]
+    keep = [b(0, 8, -11, 35, 16, 2),
+            b(-16.5, 8, 0, 2, 16, 20), b(16.5, 8, 0, 2, 16, 20),
+            b(-9.85, 8, 11, 15.3, 16, 2), b(9.85, 8, 11, 15.3, 16, 2),
+            b(0, 11.2, 11, 4.4, 9.6, 2),
+            b(0, 15.5, 0, 36, 1, 25)]
     spires, slits, door, trim, pennants = [], [], [], [], []
     for z in (-12.3, 12.3):
         for x in range(-15, 16, 3):
@@ -132,15 +138,17 @@ def generate():
                 slits.append(b(x, y, z, 0.2, 2.7, 1.0))
                 trim.extend([b(x, y, z + dz, 0.35, 3.2, 0.3) for dz in (-0.68, 0.68)])
                 trim.append(b(x, y + 1.55, z, 0.35, 0.3, 1.65))
-    door.append(b(0, 3, 12.35, 4.0, 6.0, 0.25))
+    for side in (-1, 1):
+        x = side * 2.58
+        door.append(b(x, 3, 10.9, 0.25, 6.0, 2.2))
+        door.extend([b(x - side * 0.14, 3, z, 0.08, 5.8, 0.12) for z in (10.15, 10.9, 11.65)])
+        door.extend([b(x - side * 0.14, y, 10.9, 0.08, 0.18, 2.2) for y in (1, 3, 5)])
     for x in (-2.25, 2.25):
         trim.append(b(x, 3.2, 12.5, 0.5, 6.4, 0.55))
     for i in range(13):
         angle = math.pi * i / 12
         x, y = 2.25 * math.cos(angle), 6.4 + 2.25 * math.sin(angle)
         trim.append(box(0.7, 0.55, 0.55).rotate(0, 0, -math.degrees(angle)).translate(x, y, 12.5))
-    door.extend([b(x, 3, 12.53, 0.12, 5.8, 0.08) for x in (-1.5, -0.75, 0, 0.75, 1.5)])
-    door.extend([b(0, y, 12.54, 4, 0.18, 0.08) for y in (1, 3, 5)])
     for x, z, height in ((-18, -12, 32), (18, -12, 32), (-18, 12, 27),
                          (18, 12, 27), (0, 0, 42)):
         keep.append(tower(x, z, height, 4.5))
@@ -150,7 +158,7 @@ def generate():
             slits.append(b(x, y, z + 4.5 - 0.54 * y / height + 0.03, 0.65, 2.4, 0.18))
         spires.append(roof(x, height, z, 5.2, 12))
         pennants.append(sphere(0.35, 12, 8).translate(x, height + 12, z))
-    save("keep", [(merge(*keep, *trim), STONE), (merge(*spires), BLUE),
+    save("keep", [(merge(*keep, *trim), CASTLE_STONE), (merge(*spires), BLUE),
                   (merge(*slits), GLASS), (merge(*door), WOOD), (merge(*pennants), GOLD)])
 
 
