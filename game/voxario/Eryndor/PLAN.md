@@ -110,10 +110,12 @@ voda. Vše přes Voxario Studio Engine.
   terénu; předchozí dlouhá rovná deska se do něj propadala. Kontrola ve hře potvrdila spojitou
   ulici, ale zůstávají viditelné schody, spáry a opakování textury – cílem má být skutečně
   přizpůsobený povrch a kvalitnější materiál. Domy, hrad i okolí zůstávají daleko od fotorealismu.
-  Engine commit `62b9967` obsahuje volitelný experiment `style = "natural"`:
-  tlumí drobné vlnky, kaustiky, rozptyl a pěnu, původní a stylizovaný režim zachovává.
-  Vývojový VoxarioPlayer se sestavil a základní srovnání pláže proběhlo, voda však stále není
-  fotorealistická; je třeba zkontrolovat další počasí, denní doby, hlubinu a výkon.
+  Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
+  rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
+  stylizovaný režim zachovává. Vývojový VoxarioPlayer se sestavil a snímky pláže i moře vznikly,
+  voda však stále obsahuje nerealistické opakování a pásy a není fotorealistická. Výpočet neřeší
+  skutečný průsečík lomeného paprsku s měnícím se dnem; nutno zkontrolovat další počasí, denní
+  doby, hlubinu, podvodní pohled a výkon.
   Hra nový styl zatím nezapíná a nepoužívá tento vývojový engine. Průběžný experiment není
   důvodem měnit Fantasy manifest ani vydávat finální engine.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
