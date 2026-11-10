@@ -326,6 +326,7 @@ end
 
 function M.Build()
     M.BuildTerrain()
+    require("eryndor.valoria").Build()
     M.BuildBridges()
     M.BuildOutpost()
     M.BuildVerdant()
