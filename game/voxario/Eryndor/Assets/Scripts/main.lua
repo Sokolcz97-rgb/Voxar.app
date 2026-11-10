@@ -7,6 +7,7 @@ local player = require("eryndor.player")
 local combat = require("eryndor.combat")
 local hud = require("eryndor.hud")
 local quest = require("eryndor.quest")
+local valoria = require("eryndor.valoria")
 
 local deg, atan, sqrt = math.deg, math.atan, math.sqrt
 local game_ = { built = false, camera = nil, shot = nil }
@@ -43,6 +44,36 @@ function Selftest()
         lookFrom(x, G(x, z) + y, z, tx, G(tx, tz) + ty, tz)
         timer.sleep(wait or 2.5)
         shot(name)
+    end
+    if only == "valoria" then
+        local gateY = G(3000, 2165) + 2.0
+        local passage = physics.spherecast(3000, gateY, 2183, 0.35, 0, 0, -1, 12)
+        local wall = physics.spherecast(3006, gateY, 2183, 0.35, 0, 0, -1, 12)
+        local floor = physics.spherecast(3008, valoria.KeepFloorY + 1, 2168, 0.1, 0, -1, 0, 1.5)
+        assert(not passage, "castle entrance is obstructed")
+        assert(wall, "castle wall collision is missing")
+        assert(floor and floor.entity == valoria.KeepFloor, "castle floor collision is missing")
+        assert(valoria.KeepFloorY - 0.4 - G(3000, 2181) <= 0.45, "castle steps are too high for the player")
+        lookFrom(3670, 130, 3070, 3000, 16, 2400)
+        timer.sleep(3)
+        shot("v0-ostrov")
+        view("v1-udoli-hrdinu", 3000, 3, 2620, 3000, 16, 2480)
+        view("v2-obchodni-ctvrt", 3000, 5, 2455, 3000, 12, 2335)
+        view("v2b-fasady-domu", 3002, 4, 2428, 2975, 4, 2400)
+        view("v3-kralovsky-hrad", 3080, 35, 2300, 3000, 30, 2165)
+        view("v3b-pruceli-hradu", 3000, 8, 2210, 3000, 12, 2165)
+        view("v3c-interier-hradu", 3000, 2, 2176, 3008, 4, 2158)
+        assert(valoria.NearPortal(valoria.CityPortal.x, valoria.CityPortal.z) == valoria.OutpostPortal)
+        assert(valoria.NearPortal(valoria.OutpostPortal.x, valoria.OutpostPortal.z) == valoria.CityPortal)
+        game_.EnterWorld(1)
+        timer.sleep(2)
+        shot("v4-start")
+        player.Teleport(valoria.OutpostPortal.x + 8, valoria.OutpostPortal.z)
+        local x, _, z = player.Pos()
+        assert(math.abs(x - (valoria.OutpostPortal.x + 8)) < 1 and math.abs(z - valoria.OutpostPortal.z) < 1)
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
     end
     if only == "game" then
         -- výběr povolání, vstup, boj s vlky (Tab, automatický útok, dovednosti), rozhovor s Lyrise
@@ -636,12 +667,12 @@ local function enterWorld()
     local a = creator.a
     if a.name == "" then a.name = require("eryndor.races").Defs[a.race].name:match("^(%S+)") .. " Ozvěna" end
     local c = combat.Classes[a.cls] or combat.Classes[1]
-    player.Create(c, map.Start, a)
+    player.Create(c, valoria.Spawn, a)
     combat.SetupPlayer(c)
     combat.SpawnAll()
     quest.Spawn()
     local rname = require("eryndor.races").Defs[a.race].name
-    combat.Log("Vítej v Aethelgardu, " .. a.name .. " (" .. rname .. ", " .. c.name .. ").", { 0.8, 0.9, 1.0 })
+    combat.Log("Vítej ve Valorii, " .. a.name .. " (" .. rname .. ", " .. c.name .. "). Portál tě zavede k Lyrise.", { 0.8, 0.9, 1.0 })
     combat.Log("Tab cíl · R útok · 1–5 dovednosti · Shift sprint · Ctrl chůze · F mluvit · M mapa · pravé tlačítko kamera", { 0.7, 0.7, 0.7 })
     mode = "play"
     game_.mode = mode
@@ -807,7 +838,18 @@ function on_update(dt)
             elseif combat.target then combat.target, combat.auto = nil, false
             else menu.Toggle() end
         end
-        if input.pressed("F") then quest.Talk() end
+        if input.pressed("F") and not overlay then
+            local x, _, z = player.Pos()
+            local destination = valoria.NearPortal(x, z)
+            if destination and not player.dead then
+                combat.target, combat.auto, combat.moveTo = nil, false, nil
+                player.Teleport(destination.x + 8, destination.z)
+                combat.Log("Portál: " .. (destination == valoria.OutpostPortal and "základna Serpentine" or "Valoria"),
+                    { 0.6, 0.8, 1.0 })
+            else
+                quest.Talk()
+            end
+        end
         if input.pressed("M") then game_.mapOpen = not game_.mapOpen end
     end
     addons.Fire("update", dt)
@@ -865,6 +907,12 @@ function on_gui()
     if quest.NearNpc() and not quest.dialog then
         local sw, sh = ui.screen()
         ui.font("body"); ui.text(sw / 2, sh - 190, "[F] Mluvit", { align = "center", color = "#ffe8b0", shadow = true }); ui.pop_font()
+    elseif not quest.dialog then
+        local px, _, pz = player.Pos()
+        if valoria.NearPortal(px, pz) then
+            local sw, sh = ui.screen()
+            ui.font("body"); ui.text(sw / 2, sh - 190, "[F] Použít portál", { align = "center", color = "#a9d8ff", shadow = true }); ui.pop_font()
+        end
     end
     presence.DrawLabels()
     hud.DrawGame()

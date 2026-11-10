@@ -13,6 +13,12 @@ case "$player" in *.exe) exe="Eryndor.exe" ;; *) exe="Eryndor" ;; esac
 # assety se generují kódem (tools/*.py) – když chybí, vytvořit
 [ -f "$here/Assets/Models/nature/giant_tree.glb" ] || python3 "$here/tools/eryndor_nature.py" >/dev/null
 [ -f "$here/Assets/Models/chars/wolf.glb" ] || python3 "$here/tools/eryndor_chars.py" >/dev/null
+for model in bridge gate hero house_blue house_red keep paving; do
+    [ -f "$here/Assets/Models/valoria/$model.glb" ] || {
+        echo "Chybí model Valorie: $model.glb (spusťte tools/valoria_assets.py)" >&2
+        exit 1
+    }
+done
 rm -rf "$out"
 mkdir -p "$out"
 cp "$player" "$out/$exe"
