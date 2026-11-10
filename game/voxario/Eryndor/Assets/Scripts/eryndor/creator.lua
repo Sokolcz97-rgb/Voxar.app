@@ -7,16 +7,78 @@ local map = require("eryndor.map")
 local M = { rot = 0, tab = "race", dirty = true, enter = false }
 
 local GOLD, TEXT, DIM = "#d8b25a", "#efe6d2", "#a8a090"
-local KEY = "eryndor.character2"
+local KEY, CHARACTERS_KEY, ACTIVE_KEY = "eryndor.character2", "eryndor.characters", "eryndor.active_character"
 
 function M.Load()
-    local saved = settings and settings.get and settings.get(KEY)
-    M.a = races.Sanitize(saved or races.Default("clovek"))
+    local saved = settings and settings.get and settings.get(CHARACTERS_KEY)
+    M.characters = {}
+    if type(saved) == "table" then
+        for _, character in ipairs(saved) do M.characters[#M.characters + 1] = races.Sanitize(character) end
+    end
+    if #M.characters == 0 then
+        local legacy = settings and settings.get and settings.get(KEY)
+        if type(legacy) == "table" then M.characters[1] = races.Sanitize(legacy) end
+    end
+    local active = settings and settings.get and settings.get(ACTIVE_KEY) or 1
+    M.active = math.max(1, math.min(#M.characters, math.floor(tonumber(active) or 1)))
+    M.selected = M.characters[M.active] and M.active or nil
+    M.a = M.selected and races.Sanitize(M.characters[M.selected]) or races.Default("clovek")
+    M.screen = M.selected and "select" or "editor"
+    M.page = 1
     M.dirty, M.rebuild = true, true
 end
 
 function M.Save()
-    if settings and settings.set then settings.set(KEY, M.a) end
+    M.a = races.Sanitize(M.a)
+    M.characters = M.characters or {}
+    if M.selected and M.characters[M.selected] then
+        M.characters[M.selected] = races.Sanitize(M.a)
+    else
+        M.characters[#M.characters + 1] = races.Sanitize(M.a)
+        M.selected = #M.characters
+    end
+    M.active = M.selected
+    if settings and settings.set then
+        settings.set(CHARACTERS_KEY, M.characters)
+        settings.set(ACTIVE_KEY, M.active)
+        settings.set(KEY, M.a)
+    end
+end
+
+function M.New()
+    M.returnSelected = M.selected or M.active
+    M.a = races.Default("clovek")
+    M.selected, M.screen, M.tab = nil, "editor", "race"
+    M.rebuild, M.dirty = true, true
+end
+
+function M.Select(index)
+    if not M.characters[index] then return end
+    M.selected, M.active = index, index
+    M.a = races.Sanitize(M.characters[index])
+    M.screen, M.tab = "select", "race"
+    M.rebuild, M.dirty = true, true
+    if settings and settings.set then settings.set(ACTIVE_KEY, index) end
+end
+
+function M.Delete(index)
+    if not M.characters[index] then return end
+    table.remove(M.characters, index)
+    if #M.characters == 0 then
+        M.selected, M.active = nil, 0
+        M.New()
+        if settings and settings.set then
+            settings.set(CHARACTERS_KEY, {})
+            settings.set(ACTIVE_KEY, nil)
+            settings.set(KEY, nil)
+        end
+        return
+    end
+    if M.active > index then M.active = M.active - 1
+    elseif M.active == index then M.active = math.min(index, #M.characters) end
+    M.active = math.max(1, M.active or 1)
+    M.Select(M.active)
+    M.Save()
 end
 
 local function cls() return combat.Classes[M.a.cls] or combat.Classes[1] end
@@ -163,6 +225,66 @@ local function randomize()
 end
 
 function M.Draw()
+    if M.screen == "select" then
+        local sw, sh = ui.screen()
+        local count = #M.characters
+        local visible = math.max(1, math.floor((sh - 250) / 96))
+        local pages = math.max(1, math.ceil(count / visible))
+        M.page = math.max(1, math.min(M.page or 1, pages))
+        ui.vignette(0.5)
+        ui.font("title"); ui.text(sw / 2, 24, "ERYNDOR", { align = "center", color = GOLD, shadow = true }); ui.pop_font()
+        ui.font("body"); ui.text(sw / 2, 80, "Vyber svou Ozvěnu", { align = "center", color = DIM, shadow = true }); ui.pop_font()
+        ui.window("Postavy", 24, 120, 570, sh - 144, { title = false, move = false, resize = false, font = "panel", font_size = 27 }, function()
+            ui.font("h2"); ui.label("Tvé postavy", GOLD); ui.pop_font()
+            for row = 1, visible do
+                local index = (M.page - 1) * visible + row
+                local character = M.characters[index]
+                if character then
+                    local race = races.Defs[character.race]
+                    local y = 172 + (row - 1) * 92
+                    local chosen = M.selected == index
+                    ui.rect(42, y, 526, 78, chosen and "#3a2c18d8" or "#10131bd8", 5)
+                    ui.rect(42, y, 4, 78, chosen and GOLD or "#59606b", 0)
+                    ui.font("body")
+                    ui.text(58, y + 8, character.name ~= "" and character.name or (race.name .. " Ozvěna"),
+                        { color = chosen and "#ffe6a0" or TEXT, shadow = true })
+                    ui.pop_font()
+                    ui.font("small")
+                    ui.text(58, y + 42, race.name .. "  ·  " .. combat.Classes[character.cls].name, { color = DIM })
+                    ui.pop_font()
+                    if ui.button_at(356, y + 20, 84, 36, chosen and "Vybráno" or "Vybrat") then M.Select(index) end
+                    if ui.button_at(448, y + 20, 52, 36, "Upr.") then
+                        M.Select(index); M.screen = "editor"
+                    end
+                    if ui.button_at(506, y + 20, 52, 36, "Smaz.") then M.deleteConfirm = index end
+                end
+            end
+            if pages > 1 then
+                if ui.button_at(42, sh - 104, 100, 34, "Předchozí") then M.page = math.max(1, M.page - 1) end
+                ui.font("small"); ui.text(300, sh - 98, M.page .. " / " .. pages, { align = "center", color = DIM }); ui.pop_font()
+                if ui.button_at(458, sh - 104, 100, 34, "Další") then M.page = math.min(pages, M.page + 1) end
+            end
+        end)
+        ui.window("Dobrodruh", sw - 480, 150, 440, 290, { title = false, move = false, resize = false, font = "panel", font_size = 27 }, function()
+            local race = races.Defs[M.a.race]
+            ui.font("h2"); ui.label(M.a.name ~= "" and M.a.name or (race.name .. " Ozvěna"), GOLD); ui.pop_font()
+            ui.font("body"); ui.text_wrapped(race.name .. "  ·  " .. combat.Classes[M.a.cls].name, TEXT); ui.pop_font()
+            ui.spacing()
+            ui.text_wrapped(race.desc, DIM)
+        end)
+        if ui.button_at(sw - 460, 466, 200, 46, "Vytvořit postavu") then M.New() end
+        if ui.button_at(sw - 250, 466, 200, 46, "Vstoupit do Eryndoru") then M.Save(); M.enter = true end
+        if M.deleteConfirm then
+            local character = M.characters[M.deleteConfirm]
+            ui.window("Smazání postavy", sw / 2 - 220, sh / 2 - 100, 440, 210, { title = false, move = false, resize = false }, function()
+                ui.text_wrapped("Opravdu smazat postavu „" .. (character and character.name or "") .. "“? Tuto akci nelze vrátit.", TEXT)
+                if ui.button("Smazat", 150, 40) then M.Delete(M.deleteConfirm); M.deleteConfirm = nil end
+                ui.same_line()
+                if ui.button("Zrušit", 150, 40) then M.deleteConfirm = nil end
+            end)
+        end
+        return
+    end
     local sw, sh = ui.screen()
     local d = races.Defs[M.a.race]
     ui.vignette(0.45)
@@ -171,6 +293,14 @@ function M.Draw()
 
     ui.window("Tvorba postavy", 24, 24, 480, sh - 48, { title = false, move = false, resize = false, font = "panel", font_size = 27 }, function()
         ui.font("h2"); ui.label("Ozvěna – tvoje postava", GOLD); ui.pop_font()
+        if ui.button("Zpět na výběr", 190, 36) then
+            if M.selected then
+                M.Save(); M.screen = "select"
+            elseif #M.characters > 0 then
+                M.Select(math.max(1, math.min(M.returnSelected or M.active or 1, #M.characters)))
+            end
+        end
+        ui.spacing()
         ui.item_width(-1)
         local n, ch = ui.input("##name", M.a.name, { hint = "Jméno postavy", max = 24 })
         if ch then M.a.name = n end
@@ -263,6 +393,10 @@ function M.Draw()
         if M.a.name == "" then M.a.name = d.name:match("^(%S+)") .. " Ozvěna" end
         M.Save()
         M.enter = true
+    end
+    if ui.button_at(sw - 590, sh - 84, 270, 52, "Uložit postavu") then
+        M.Save()
+        M.screen = "select"
     end
     ui.font("h1"); ui.text(sw - 165, 30, d.name, { align = "center", color = GOLD, shadow = true }); ui.pop_font()
     ui.font("small"); ui.text(sw - 165, 66, cls().name, { align = "center", color = TEXT, shadow = true }); ui.pop_font()

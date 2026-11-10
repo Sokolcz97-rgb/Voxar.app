@@ -23,9 +23,14 @@ M.Modes = { "windowed", "borderless", "fullscreen" }
 M.ModeNames = { "V okně", "Okno přes celou obrazovku", "Celá obrazovka" }
 
 local function defaults()
-    local p = M.Presets[3]
-    return { preset = "high", shadows = p.shadows, texture = p.texture, view = p.view, detail = p.detail, water = p.water,
-             clouds = p.clouds, cull = p.cull, upscaler = "off", profile = "quality", scale = 1.0, fps = 0, vsync = true,
+    local p = M.Presets[4]
+    local upscaler = "off"
+    if graphics and graphics.dlss then
+        local _, available = graphics.dlss()
+        if available then upscaler = "dlss" end
+    end
+    return { preset = "ultra", shadows = p.shadows, texture = p.texture, view = p.view, detail = p.detail, water = p.water,
+             clouds = p.clouds, cull = p.cull, upscaler = upscaler, profile = "quality", scale = 1.0, fps = 0, vsync = true,
              mode = "borderless", fov = 60 }
 end
 

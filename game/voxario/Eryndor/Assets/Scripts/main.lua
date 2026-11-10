@@ -106,7 +106,7 @@ function Selftest()
         local talentui = require("eryndor.talentui")
         local options = require("eryndor.options")
         _G.world.environment({ time_of_day = 15 })
-        game_.SetMode("select"); cr.Show()
+        game_.SetMode("select"); cr.Show(); cr.screen = "editor"
         cr.a = races.Default("elf"); cr.a.name = "Lyriel"; cr.a.cls = 2
         cr.a.eyes, cr.a.nose, cr.a.jaw = 1.3, 0.8, 0.9
         cr.rebuild = true; cr.forceTab, cr.tab = "face", "face"
@@ -389,7 +389,7 @@ function Selftest()
         local races = require("eryndor.races")
         local cr = game_.Creator
         _G.world.environment({ time_of_day = 16 })
-        game_.SetMode("select"); cr.Show()
+        game_.SetMode("select"); cr.Show(); cr.screen = "editor"
         local n = 0
         local function set(r, tab, fn)
             cr.a = races.Default(r); cr.a.name = "Tester"; cr.rebuild = true
@@ -399,9 +399,12 @@ function Selftest()
         end
         local function snap(name) n = n + 1; shot(string.format("c%02d-%s", n, name)) end
         for _, r in ipairs(races.Order) do
-            set(r, "race"); snap(r)
+            set(r, "race")
+            if r == "kocka" then cr.a.variant = 1 end
+            snap(r)
             cr.rot = 150; timer.sleep(0.8); snap(r .. "-zezadu"); cr.rot = 0
         end
+        set("kocka", "race", function(a) a.variant = 2 end); snap("kocka-zrzava")
         set("clovek", "body", function(a) a.height, a.shoulders, a.muscle, a.limbs = 1.15, 1.25, 1.28, 1.1 end); snap("telo-mohutne")
         set("clovek", "body", function(a) a.height, a.shoulders, a.muscle, a.limbs = 0.85, 0.85, 0.82, 0.9 end); snap("telo-stihle")
         set("vila", "look", function(a) a.glow, a.glowColor = 0.8, races.Hex("#b06cff") end); snap("vzhled-zare")
@@ -409,6 +412,48 @@ function Selftest()
         set("elf", "race"); cr.Pose("Spellcast_Shoot"); timer.sleep(0.6); snap("animace-kouzlo")
         set("trpaslik", "race"); cr.Pose(combat.Classes[1].skills[1].anim); timer.sleep(0.5); snap("animace-utok")
         set("kocka", "race"); cr.Pose("Running_A"); timer.sleep(0.5); snap("animace-beh")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "creator_ui" then
+        local races = require("eryndor.races")
+        local cr = game_.Creator
+        _G.world.environment({ time_of_day = 15 })
+        game_.SetMode("select")
+        cr.Load()
+        cr.characters, cr.selected = {}, nil
+        cr.a = races.Default("elf"); cr.a.name = "Lyriel"; cr.a.cls = 2
+        cr.Save()
+        cr.New()
+        cr.a = races.Default("trpaslik"); cr.a.name = "Borin"; cr.a.cls = 1
+        cr.Save()
+        cr.Load(); cr.Respawn(); cr.Camera()
+        timer.sleep(2); shot("cu1-vyber-postav")
+        cr.deleteConfirm = 2
+        timer.sleep(0.5); shot("cu2-potvrzeni-smazani")
+        cr.deleteConfirm = nil; cr.Delete(2)
+        assert(#cr.characters == 1, "smazání postavy neaktualizovalo seznam")
+        timer.sleep(0.5); shot("cu3-postava-smazana")
+        cr.New()
+        cr.a = races.Default("vila"); cr.a.name = "Nyx"
+        cr.rebuild = true; cr.Respawn(); cr.Camera()
+        timer.sleep(1.5); shot("cu4-tvorba-postavy")
+        cr.Save(); assert(#cr.characters == 2, "uložení nové postavy selhalo")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
+    if only == "lava" then
+        _G.world.environment({ time_of_day = 18.2 })
+        _G.world.weather({ rain = 0, snow = 0, storm = 0, wind = 0.35, instant = true })
+        local volcano = map.Data.Volcanoes[1]
+        local x, z = volcano.x, volcano.z
+        local y = G(x, z)
+        lookFrom(x - 170, y + 75, z - 180, x + 120, G(x + 120, z + 100), z + 100)
+        timer.sleep(8); shot("l1-lava-flow")
+        lookFrom(x + 50, G(x + 50, z + 40) + 35, z + 150, x - 80, G(x - 80, z - 90), z - 90)
+        timer.sleep(8); shot("l2-lavova-reka")
         game.log("SELFTEST hotovo")
         game.quit()
         return

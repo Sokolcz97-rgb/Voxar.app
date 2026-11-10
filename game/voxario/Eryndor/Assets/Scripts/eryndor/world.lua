@@ -99,7 +99,7 @@ function M.BuildTerrain()
     -- pod hladinou zářící korály
     -- realistická voda (engine ≥ 1.16): Gerstnerovy vlny po větru, pohlcování světla (průhledná mělčina, tyrkys,
     -- temně modrá hloubka), měkká pěna příboje, příliv a odliv
-    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.5, 0.5, 0.5 }, wave = 0.55, wavelength = 18, foam = 1.2,
+    W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.18, 0.52, 0.68 }, wave = 0.65, wavelength = 18, foam = 1.2,
         shallow = 8, bed = "Textures/terrain/pisek.jpg", tide = 0.35, speed = 1.0 })
 end
 
