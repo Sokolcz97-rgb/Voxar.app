@@ -34,13 +34,6 @@ local function paving()
             addTile(cx + x, cz + z)
         end
     end
-    for x = -14, 14, 2 do
-        for z = -8, 10, 2 do
-            if math.abs(x) >= 6 or math.abs(z) >= 6 then
-                addTile(cx + x, cz - 235 + z)
-            end
-        end
-    end
     W.instances("Models/valoria/paving.glb", tiles, { distance = 600 })
 end
 
@@ -58,6 +51,20 @@ function M.Build()
         model("house_red", cx + 25, cz + z, { yaw = 90, name = "Dům", collider = "mesh" })
     end
     model("keep", cx, cz - 235, { name = "Královský hrad", collider = "mesh" })
+    local floorY = -math.huge
+    -- Sample all 2 m terrain vertices bordering the floor footprint, including the threshold.
+    for x = -16, 16, 2 do
+        for z = -11, 13, 2 do
+            floorY = math.max(floorY, map.HeightAt(cx + x, cz - 235 + z))
+        end
+    end
+    M.KeepFloorY = floorY + 0.05
+    M.KeepFloor = W.spawn("Models/valoria/keep_floor.glb", cx, M.KeepFloorY - 0.02, cz - 235,
+        { name = "Podlaha hradu", collider = "mesh" })
+    for i = 1, 2 do
+        W.spawn("Models/valoria/keep_step.glb", cx, M.KeepFloorY - 0.02 - i * 0.2, cz - 223 + (i * 2 - 1),
+            { name = "Schod hradu", collider = "mesh" })
+    end
     for _, x in ipairs({ -8, 8 }) do
         local z = cz - 235
         W.spawn("light", cx + x, map.HeightAt(cx + x, z) + 4, z,

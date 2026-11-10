@@ -29,19 +29,34 @@ for _, name in ipairs({ "bridge", "gate", "hero", "house_blue", "house_red", "ke
     assert(found["Models/valoria/" .. name .. ".glb"], "missing city model " .. name)
 end
 assert(found["Models/nature/aetherium_big.glb"] == 2, "both portals must be visible")
+assert(found["Models/valoria/keep_floor.glb"] == 1, "castle floor must have its own collider")
+assert(found["Models/valoria/keep_step.glb"] == 2, "castle entrance must have two steps")
 assert(found["light"] == 4, "castle and both portals must have lights")
+local maxGround = -math.huge
+for x = -16, 16, 2 do
+    for z = -11, 13, 2 do
+        maxGround = math.max(maxGround, ground(3000 + x, 2165 + z))
+    end
+end
+assert(math.abs(valoria.KeepFloorY - maxGround - 0.05) < 1e-8, "floor must clear terrain vertices")
+local floor = calls[valoria.KeepFloor]
+assert(floor[1] == "Models/valoria/keep_floor.glb" and floor[5].collider == "mesh")
+assert(math.abs(floor[3] + 0.02 - valoria.KeepFloorY) < 1e-8)
+local steps = {}
+for _, call in ipairs(calls) do
+    if call[1] == "Models/valoria/keep_step.glb" then steps[#steps + 1] = call end
+end
+for i, step in ipairs(steps) do
+    assert(step[2] == 3000 and step[4] == 2177 + i * 2 - 1 and step[5].collider == "mesh")
+    assert(math.abs(step[3] + 0.02 - (valoria.KeepFloorY - i * 0.2)) < 1e-8)
+end
 assert(#instanceCalls == 1 and instanceCalls[1][1] == "Models/valoria/paving.glb")
 local tiles = instanceCalls[1][2]
-assert(#tiles == 9 * 80 + 125, "street and castle floor must cover their footprints")
+assert(#tiles == 9 * 80, "street must cover its full footprint")
 local positions = {}
 for _, tile in ipairs(tiles) do
     local x, y, z = tile[1], tile[2], tile[3]
-    local street = x >= 2992 and x <= 3008 and z >= 2311 and z <= 2469
-    local floor = x >= 2986 and x <= 3014 and z >= 2157 and z <= 2175
-    assert(street or floor, "tile is outside both paving footprints")
-    if floor then
-        assert(math.abs(x - 3000) >= 6 or math.abs(z - 2165) >= 6, "floor overlaps the central tower")
-    end
+    assert(x >= 2992 and x <= 3008 and z >= 2311 and z <= 2469, "tile is outside the street footprint")
     local key = x .. ":" .. z
     assert(not positions[key], "duplicate street tile")
     positions[key] = true

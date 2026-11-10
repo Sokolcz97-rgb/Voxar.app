@@ -23,7 +23,7 @@ class ValoriaAssetsTest(unittest.TestCase):
             paths = sorted(Path(tmp).glob("*.glb"))
             self.assertEqual(
                 [path.stem for path in paths],
-                ["bridge", "gate", "hero", "house_blue", "house_red", "keep", "paving"],
+                ["bridge", "gate", "hero", "house_blue", "house_red", "keep", "keep_floor", "keep_step", "paving"],
             )
             for path in paths:
                 with self.subTest(model=path.name):
@@ -47,6 +47,13 @@ class ValoriaAssetsTest(unittest.TestCase):
                     if path.stem == "keep":
                         self.assertTrue({"castle masonry", "blue slate", "dark glass", "wood", "aged gold"}
                                         <= {m["name"] for m in document["materials"]})
+                    if path.stem == "keep_floor":
+                        position = document["meshes"][0]["primitives"][0]["attributes"]["POSITION"]
+                        bounds = document["accessors"][position]
+                        for actual, expected in zip(bounds["min"], (-15.5, -0.18, -10.0)):
+                            self.assertAlmostEqual(actual, expected)
+                        for actual, expected in zip(bounds["max"], (15.5, 0.02, 12.0)):
+                            self.assertAlmostEqual(actual, expected)
                     for material in document["materials"]:
                         if material["name"] in ("weathered stone", "weathered plaster", "castle masonry"):
                             self.assertIn("baseColorTexture", material["pbrMetallicRoughness"])

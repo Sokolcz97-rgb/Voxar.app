@@ -158,6 +158,9 @@ def generate():
             slits.append(b(x, y, z + 4.5 - 0.54 * y / height + 0.03, 0.65, 2.4, 0.18))
         spires.append(roof(x, height, z, 5.2, 12))
         pennants.append(sphere(0.35, 12, 8).translate(x, height + 12, z))
+    floor = merge(b(0, -0.08, 0, 31, 0.2, 20), b(0, -0.08, 11, 4.4, 0.2, 2))
+    save("keep_floor", [(floor, STONE)])
+    save("keep_step", [(b(0, -0.08, 0, 4.0, 0.2, 2), STONE)])
     save("keep", [(merge(*keep, *trim), CASTLE_STONE), (merge(*spires), BLUE),
                   (merge(*slits), GLASS), (merge(*door), WOOD), (merge(*pennants), GOLD)])
 

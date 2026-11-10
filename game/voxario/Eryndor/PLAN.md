@@ -123,8 +123,11 @@ voda. Vše přes Voxario Studio Engine.
   Model hradu má okna, cimbuří, věžové římsy a průchod s otevřenými křídly vrat. Samotest ověřuje
   volný průchod a kolizi sousední stěny koulemi o poloměru hráče; záběry `v3b-pruceli-hradu` a
   `v3c-interier-hradu` ukazují novou texturu a provizorní vnitřek. Chybí detailní interiér,
-  výbava a hotové materiály; mezi provizorními dlaždicemi a kolem věže je vidět tráva a
-  dlažba kopírující terén tvoří schody. Přístupnost nebyla ověřena průchodem skutečné postavy.
+  výbava a hotové materiály. Dlaždice v interiéru nahrazuje souvislá rovná podlaha a práh
+  se samostatnou kolizí, umístěné nad vrcholy terénu včetně detailního šumu; dva nášlapy
+  vyrovnávají vyšší práh. Přístupnost nebyla ověřena průchodem skutečné postavy.
+  V samotestu po vstupu do světa opakovaně hlásí příkladový mod `SouradniceFPS` chybu
+  formátování necelého čísla; jde o stávající problém mimo úpravu hradu.
   Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
   rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
   stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.
