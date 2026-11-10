@@ -106,6 +106,11 @@ voda. Vše přes Voxario Studio Engine.
   a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
   v enginu, doplnit život města, průběžně kontrolovat snímky a výkon. Sestavení ani vydání do
   Fantasy nelze považovat za hotové, dokud nejsou tyto požadavky ověřeny.
+  Kontrola prototypu s hráčem enginu 1.18.1 a PBR kamenem: samotest Valorie dokončen, snímek
+  obchodní čtvrti ukazuje propadání dlouhé rovné dlažby do terénu s procedurálním detailem.
+  Při pokračování je nutné ulici přizpůsobit výšce terénu a výsledek ověřit ve hře; samotné
+  zvýšení celé dlažby by mohlo vytvořit levitující plochu. Domy, hrad i okolí zůstávají daleko
+  od fotorealismu. Průběžné experimenty s vodou v enginu nejsou důvodem měnit Fantasy manifest.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
 - Samotest: `tools/package-game.sh <engine/bin> <výstup>` a `Eryndor --selftest <složka>` (záběry lokace a počasí).
 - Engine: `world.weather{rain, snow, storm, wind, wind_direction, instant}` (docs/LUA_API.md).
