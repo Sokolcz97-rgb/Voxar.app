@@ -97,7 +97,10 @@ voda. Vše přes Voxario Studio Engine.
   `tools/aethelgard_world.py` s `tools/valoria_terrain.py`; modely generuje `tools/valoria_assets.py`.
   Generátory vyžadují NumPy, generátor terénu také Pillow. `VOXARIO_SELFTEST_ONLY=valoria` pořizuje
   záběry a ověřuje cíle portálů. Větev je **hrubý prototyp**, nikoli fotorealistické AAA:
-  stavby a sochy jsou zástupné, podklady nejsou unikátní detailní PBR a voda používá stávající renderer.
+  stavby a sochy jsou zástupné, první procedurální PBR kámen nestačí na cílový detail, ostatní materiály
+  jsou zjednodušené a voda používá stávající renderer. Kámen se obnoví nástrojem z větve enginu:
+  `python3 tools/content/stone_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`,
+  potom `python3 tools/valoria_assets.py` ve složce Eryndor.
   Zadání: startovní město na ostrově; kamenný most a sochy, modrozlaté prapory, obchodní čtvrť
   s dlažbou a červenými/modrými střechami, hrad na útesu a gryfové; přirozené světlo, mlha
   a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu

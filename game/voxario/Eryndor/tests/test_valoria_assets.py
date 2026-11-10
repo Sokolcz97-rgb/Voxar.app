@@ -35,6 +35,11 @@ class ValoriaAssetsTest(unittest.TestCase):
                     document = json.loads(data[20:20 + json_length])
                     self.assertTrue(document["meshes"])
                     self.assertTrue(document["materials"])
+                    for material in document["materials"]:
+                        if material["name"] == "weathered stone":
+                            self.assertIn("normalTexture", material)
+                            self.assertIn("metallicRoughnessTexture", material["pbrMetallicRoughness"])
+                            self.assertIn("occlusionTexture", material)
 
 
 if __name__ == "__main__":

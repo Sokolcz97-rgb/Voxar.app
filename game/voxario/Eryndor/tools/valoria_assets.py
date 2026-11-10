@@ -7,8 +7,9 @@ from meshkit import box, cone, cylinder, merge, sphere, write_glb
 ASSETS = Path(__file__).resolve().parent.parent / "Assets"
 OUT = ASSETS / "Models" / "valoria"
 
-STONE = dict(name="weathered stone", texture=str(ASSETS / "Textures/nature/skala.jpg"),
-             uv_scale=2.0, roughness=0.95)
+STONE = dict(name="weathered stone", texture=str(ASSETS / "Textures/valoria/stone_basecolor.png"),
+             normal=str(ASSETS / "Textures/valoria/stone_normal.png"),
+             orm=str(ASSETS / "Textures/valoria/stone_orm.png"), uv_scale=2.0, roughness=1.0)
 WOOD = dict(name="wood", texture=str(ASSETS / "Textures/nature/kura.jpg"),
             uv_scale=1.5, roughness=0.9)
 BLUE = dict(name="blue slate", color=(0.12, 0.21, 0.31), roughness=0.83)

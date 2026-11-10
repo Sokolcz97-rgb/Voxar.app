@@ -381,7 +381,8 @@ def _relative_tint(C):
 
 def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
     """parts: [(Mesh, materiál dict)]; materiál: color, roughness, metallic, emissive, emissive_strength, double,
-    texture (cesta k .jpg/.png, vloží se do .glb; UV promítnutím ze tří stran), uv_scale (m na dlaždici), normal (mapa).
+    texture (cesta k .jpg/.png, vloží se do .glb; UV promítnutím ze tří stran), uv_scale (m na dlaždici),
+    normal (normálová mapa), orm (glTF occlusion/roughness/metallic mapa).
     skeleton: [(jméno, rodič|None, (x, y, z) svět)] – pak se zapíše skin (váha 1 na kost Mesh.B).
     animations: [(jméno, délka, smyčka, fn(t) -> {kost: (rx, ry, rz)}, translace pánve fn(t)->(dx,dy,dz))]."""
     out = _Bin()
@@ -433,6 +434,10 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
             pbr["baseColorTexture"] = {"index": image(mat["texture"])}
             if mat.get("normal"):
                 material["normalTexture"] = {"index": image(mat["normal"])}
+            if mat.get("orm"):
+                orm_index = image(mat["orm"])
+                pbr["metallicRoughnessTexture"] = {"index": orm_index}
+                material["occlusionTexture"] = {"index": orm_index}
         if mat.get("emissive"):
             material["emissiveFactor"] = list(mat["emissive"])
             if mat.get("emissive_strength", 1.0) != 1.0:
