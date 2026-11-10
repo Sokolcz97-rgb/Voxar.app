@@ -42,8 +42,11 @@ class ValoriaAssetsTest(unittest.TestCase):
                             self.assertAlmostEqual(actual, expected)
                         for actual, expected in zip(bounds["max"], (1.0, 0.02, 1.0)):
                             self.assertAlmostEqual(actual, expected)
+                    if path.stem in ("house_blue", "house_red"):
+                        self.assertIn("weathered plaster", [m["name"] for m in document["materials"]])
                     for material in document["materials"]:
-                        if material["name"] == "weathered stone":
+                        if material["name"] in ("weathered stone", "weathered plaster"):
+                            self.assertIn("baseColorTexture", material["pbrMetallicRoughness"])
                             self.assertIn("normalTexture", material)
                             self.assertIn("metallicRoughnessTexture", material["pbrMetallicRoughness"])
                             self.assertIn("occlusionTexture", material)

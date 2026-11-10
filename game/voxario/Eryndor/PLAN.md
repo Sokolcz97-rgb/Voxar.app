@@ -101,6 +101,10 @@ voda. Vše přes Voxario Studio Engine.
   jsou zjednodušené a voda používá stávající renderer. Kámen se obnoví nástrojem z větve enginu:
   `python3 tools/content/stone_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`,
   potom `python3 tools/valoria_assets.py` ve složce Eryndor.
+  Omítka domů se obnoví nástrojem z větve enginu
+  `python3 tools/content/plaster_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`
+  před spuštěním generátoru modelů. Domy nyní mají omítku, kamennou podezdívku, uzavřené štíty,
+  boční okna a podpěry markýz; stále jde o opakované procedurální zástupné modely.
   Zadání: startovní město na ostrově; kamenný most a sochy, modrozlaté prapory, obchodní čtvrť
   s dlažbou a červenými/modrými střechami, hrad na útesu a gryfové; přirozené světlo, mlha
   a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
@@ -112,7 +116,8 @@ voda. Vše přes Voxario Studio Engine.
   přizpůsobený povrch a kvalitnější materiál. Domy, hrad i okolí zůstávají daleko od fotorealismu.
   Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
   rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
-  stylizovaný režim zachovává. Vývojový VoxarioPlayer se sestavil a snímky pláže i moře vznikly,
+  stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.
+  Vývojový VoxarioPlayer se sestavil a snímky pláže i moře vznikly,
   voda však stále obsahuje nerealistické opakování a pásy a není fotorealistická. Výpočet neřeší
   skutečný průsečík lomeného paprsku s měnícím se dnem; nutno zkontrolovat další počasí, denní
   doby, hlubinu, podvodní pohled a výkon.

@@ -3,7 +3,7 @@
 import math
 from pathlib import Path
 
-from meshkit import box, cone, cylinder, merge, sphere, write_glb
+from meshkit import Mesh, box, cone, cylinder, merge, sphere, write_glb
 
 ASSETS = Path(__file__).resolve().parent.parent / "Assets"
 OUT = ASSETS / "Models" / "valoria"
@@ -11,6 +11,9 @@ OUT = ASSETS / "Models" / "valoria"
 STONE = dict(name="weathered stone", texture=str(ASSETS / "Textures/valoria/stone_basecolor.png"),
              normal=str(ASSETS / "Textures/valoria/stone_normal.png"),
              orm=str(ASSETS / "Textures/valoria/stone_orm.png"), uv_scale=2.0, roughness=1.0)
+PLASTER = dict(name="weathered plaster", texture=str(ASSETS / "Textures/valoria/plaster_basecolor.png"),
+               normal=str(ASSETS / "Textures/valoria/plaster_normal.png"),
+               orm=str(ASSETS / "Textures/valoria/plaster_orm.png"), uv_scale=3.0, roughness=1.0)
 WOOD = dict(name="wood", texture=str(ASSETS / "Textures/nature/kura.jpg"),
             uv_scale=1.5, roughness=0.9)
 BLUE = dict(name="blue slate", color=(0.12, 0.21, 0.31), roughness=0.83)
@@ -31,6 +34,12 @@ def tower(x, z, height, radius):
 
 def roof(x, y, z, radius, height):
     return cone(radius, height, 16).translate(x, y, z)
+
+
+def gable(z):
+    points = [[-6, 7, z], [6, 7, z], [0, 9.95, z]]
+    indices = [[0, 2, 1]] if z < 0 else [[0, 1, 2]]
+    return Mesh(points, indices)
 
 
 def generate():
@@ -69,6 +78,14 @@ def generate():
         timber = [b(x, 4, -4.55, 0.25, 6, 0.18) for x in (-5.5, 0, 5.5)]
         timber += [b(0, y, -4.55, 12, 0.25, 0.18) for y in (1, 4, 6.8)]
         timber += [b(0, 1.5, -4.7, 2, 3, 0.2)]
+        for side in (-1, 1):
+            x = side * 6.06
+            timber += [b(x, 4, z, 0.18, 5.8, 0.24) for z in (-4.2, 0, 4.2)]
+            timber += [b(x, y, 0, 0.18, 0.24, 9) for y in (1.3, 4, 6.8)]
+            for z in (-2.2, 2.2):
+                for y in (2.8, 5.2):
+                    timber += [b(x, y, z + dz, 0.18, 1.6, 0.16) for dz in (-0.7, 0, 0.7)]
+                    timber += [b(x, y + dy, z, 0.18, 0.16, 1.55) for dy in (-0.75, 0, 0.75)]
         for x in (-3.5, 3.5):
             for y in (2.8, 5.2):
                 timber += [b(x + dx, y, -4.68, 0.16, 1.7, 0.14) for dx in (-0.75, 0, 0.75)]
@@ -78,9 +95,14 @@ def generate():
         tiles = [box(7.0, 0.12, 0.10).rotate(0, 0, angle).translate(x, 8.77, z)
                  for x, angle in ((-3.1, 25), (3.1, -25)) for z in range(-4, 5)]
         windows = [b(x, y, -4.59, 1.5, 1.55, 0.08) for x in (-3.5, 3.5) for y in (2.8, 5.2)]
-        save(name, [(b(0, 3.5, 0, 12, 7, 9), STONE), (merge(*timber), WOOD),
+        windows += [b(side * 6.035, y, z, 0.08, 1.5, 1.4) for side in (-1, 1)
+                    for z in (-2.2, 2.2) for y in (2.8, 5.2)]
+        timber += [b(x, 1.65, -6.75, 0.18, 3.3, 0.18) for x in (-4.2, 4.2)]
+        save(name, [(b(0, 0.65, 0, 12, 1.3, 9), STONE),
+                    (merge(b(0, 4.15, 0, 12, 5.7, 9), gable(-4.5), gable(4.5)), PLASTER),
+                    (merge(*timber), WOOD),
                     (merge(*roofs, *tiles), material), (merge(*windows), GLASS),
-                    (b(0, 3.5, -5.7, 9, 0.18, 2.4), CLOTH)])
+                    (box(9, 0.12, 2.6).rotate(-8, 0, 0).translate(0, 3.45, -5.65), CLOTH)])
 
     statue = [b(0, 0.8, 0, 3.8, 1.6, 3.8),
               cylinder(0.5, 0.38, 2.8, 16).translate(-0.65, 1.6, 0),
