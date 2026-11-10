@@ -28,8 +28,8 @@ function M.Build()
         end
     end
     for z = -60, 60, 24 do
-        model("house_blue", cx - 25, cz + z, { yaw = 90, name = "Dům", collider = "mesh" })
-        model("house_red", cx + 25, cz + z, { yaw = -90, name = "Dům", collider = "mesh" })
+        model("house_blue", cx - 25, cz + z, { yaw = -90, name = "Dům", collider = "mesh" })
+        model("house_red", cx + 25, cz + z, { yaw = 90, name = "Dům", collider = "mesh" })
     end
     model("keep", cx, cz - 235, { name = "Královský hrad", collider = "mesh" })
     portal(M.CityPortal)
