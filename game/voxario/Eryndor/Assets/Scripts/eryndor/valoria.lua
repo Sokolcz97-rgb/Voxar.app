@@ -18,9 +18,26 @@ local function portal(p)
     W.spawn("light", p.x, y + 3, p.z, { light = { color = { 0.4, 0.7, 1.0 }, intensity = 25, range = 12 } })
 end
 
+local function paving()
+    local tiles = {}
+    for x = -8, 8, 2 do
+        for z = -89, 69, 2 do
+            local px, pz = cx + x, cz + z
+            local highest = -math.huge
+            for dx = -1, 1 do
+                for dz = -1, 1 do
+                    highest = math.max(highest, map.HeightAt(px + dx, pz + dz))
+                end
+            end
+            tiles[#tiles + 1] = { px, highest + 0.03, pz, 0, 1 }
+        end
+    end
+    W.instances("Models/valoria/paving.glb", tiles, { distance = 600 })
+end
+
 function M.Build()
     model("bridge", cx, cz + 170, { name = "Most hrdinů", collider = "mesh" })
-    model("paving", cx, cz - 10, { name = "Ulice Valorie" })
+    paving()
     model("gate", cx, cz + 90, { name = "Brána Valorie", collider = "mesh" })
     for _, x in ipairs({ -13, 13 }) do
         for z = 130, 250, 40 do

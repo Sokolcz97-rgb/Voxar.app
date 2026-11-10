@@ -35,6 +35,13 @@ class ValoriaAssetsTest(unittest.TestCase):
                     document = json.loads(data[20:20 + json_length])
                     self.assertTrue(document["meshes"])
                     self.assertTrue(document["materials"])
+                    if path.stem == "paving":
+                        position = document["meshes"][0]["primitives"][0]["attributes"]["POSITION"]
+                        bounds = document["accessors"][position]
+                        for actual, expected in zip(bounds["min"], (-1.0, -0.18, -1.0)):
+                            self.assertAlmostEqual(actual, expected)
+                        for actual, expected in zip(bounds["max"], (1.0, 0.02, 1.0)):
+                            self.assertAlmostEqual(actual, expected)
                     for material in document["materials"]:
                         if material["name"] == "weathered stone":
                             self.assertIn("normalTexture", material)

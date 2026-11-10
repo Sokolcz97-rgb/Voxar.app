@@ -106,11 +106,11 @@ voda. Vše přes Voxario Studio Engine.
   a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
   v enginu, doplnit život města, průběžně kontrolovat snímky a výkon. Sestavení ani vydání do
   Fantasy nelze považovat za hotové, dokud nejsou tyto požadavky ověřeny.
-  Kontrola prototypu s hráčem enginu 1.18.1 a PBR kamenem: samotest Valorie dokončen, snímek
-  obchodní čtvrti ukazuje propadání dlouhé rovné dlažby do terénu s procedurálním detailem.
-  Při pokračování je nutné ulici přizpůsobit výšce terénu a výsledek ověřit ve hře; samotné
-  zvýšení celé dlažby by mohlo vytvořit levitující plochu. Domy, hrad i okolí zůstávají daleko
-  od fotorealismu. Engine commit `62b9967` obsahuje volitelný experiment `style = "natural"`:
+  Dlažba obchodní čtvrti je rozdělena na instancované 2m díly, každý podle vzorků skutečné výšky
+  terénu; předchozí dlouhá rovná deska se do něj propadala. Kontrola ve hře potvrdila spojitou
+  ulici, ale zůstávají viditelné schody, spáry a opakování textury – cílem má být skutečně
+  přizpůsobený povrch a kvalitnější materiál. Domy, hrad i okolí zůstávají daleko od fotorealismu.
+  Engine commit `62b9967` obsahuje volitelný experiment `style = "natural"`:
   tlumí drobné vlnky, kaustiky, rozptyl a pěnu, původní a stylizovaný režim zachovává.
   Vývojový VoxarioPlayer se sestavil a základní srovnání pláže proběhlo, voda však stále není
   fotorealistická; je třeba zkontrolovat další počasí, denní doby, hlubinu a výkon.

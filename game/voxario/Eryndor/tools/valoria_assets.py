@@ -42,7 +42,7 @@ def generate():
     rails = [b(x, 0.9, 0, 0.7, 1.8, 200) for x in (-9.5, 9.5)]
     rails += [b(x, 1.4, z, 1.1, 2.8, 1.1) for x in (-9.5, 9.5) for z in range(-95, 96, 20)]
     save("bridge", [(merge(b(0, -0.5, 0, 20, 1, 200), *rails), STONE)])
-    save("paving", [(b(0, 0.02, 0, 18, 0.04, 160), STONE)])
+    save("paving", [(b(0, -0.08, 0, 2, 0.2, 2), STONE)])
 
     gate = [tower(-10, 0, 25, 4), tower(10, 0, 25, 4), b(0, 17, 0, 20, 2, 6)]
     for i in range(30):
