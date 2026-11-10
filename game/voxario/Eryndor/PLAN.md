@@ -92,10 +92,17 @@ voda. Vše přes Voxario Studio Engine.
 ## Poznámky
 - Rozpracovaná obnova Valorie: větev `copilot/valoria-restoration` v repozitáři hry a větev
   `copilot/valoria-rendering` v repozitáři enginu. Předchozí nepublikované sestavení není dostupné;
-  podle logu byl zatím obnoven pouze raný generátor pěti modulárních modelů
-  (`tools/valoria_assets.py`, závisí na NumPy). Modely jsou zjednodušené, nejsou fotorealistické
-  a dosud nejsou zapojené do světa ani kanálu Fantasy. Původní terén, portály, textury a pozdější
-  úpravy města je třeba obnovit a ověřit ve hře. Výchozí hra i kanál zůstávají beze změny.
+  podle logu vznikl nový ostrov na souřadnicích (3000, 2400), návrh mostu, brány, domů a hradu
+  (`eryndor/valoria.lua`) a obousměrný portál k základně. Výškovou mapu i mapu regionů generuje
+  `tools/aethelgard_world.py` s `tools/valoria_terrain.py`; modely generuje `tools/valoria_assets.py`.
+  Generátory vyžadují NumPy, generátor terénu také Pillow. `VOXARIO_SELFTEST_ONLY=valoria` pořizuje
+  záběry a ověřuje cíle portálů. Větev je **hrubý prototyp**, nikoli fotorealistické AAA:
+  stavby a sochy jsou zástupné, podklady nejsou unikátní detailní PBR a voda používá stávající renderer.
+  Zadání: startovní město na ostrově; kamenný most a sochy, modrozlaté prapory, obchodní čtvrť
+  s dlažbou a červenými/modrými střechami, hrad na útesu a gryfové; přirozené světlo, mlha
+  a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
+  v enginu, doplnit život města, průběžně kontrolovat snímky a výkon. Sestavení ani vydání do
+  Fantasy nelze považovat za hotové, dokud nejsou tyto požadavky ověřeny.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
 - Samotest: `tools/package-game.sh <engine/bin> <výstup>` a `Eryndor --selftest <složka>` (záběry lokace a počasí).
 - Engine: `world.weather{rain, snow, storm, wind, wind_direction, instant}` (docs/LUA_API.md).

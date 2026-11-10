@@ -23,7 +23,7 @@ class ValoriaAssetsTest(unittest.TestCase):
             paths = sorted(Path(tmp).glob("*.glb"))
             self.assertEqual(
                 [path.stem for path in paths],
-                ["gate", "hero", "house_blue", "house_red", "keep"],
+                ["bridge", "gate", "hero", "house_blue", "house_red", "keep", "paving"],
             )
             for path in paths:
                 with self.subTest(model=path.name):

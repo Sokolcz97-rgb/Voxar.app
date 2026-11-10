@@ -23,6 +23,7 @@ import os
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
+import valoria_terrain
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(HERE, "..", "Assets")
@@ -252,6 +253,9 @@ lava_w = 10 + 8 * fbm(16, 2, 601)
 lava_mask = np.maximum(1 - smooth(lava_w, lava_w + 6, lava_d), crater_mask) * smooth(4, 8, height)
 height = height - 2.5 * (1 - smooth(lava_w * 0.6, lava_w + 4, lava_d)) * smooth(4, 8, height)
 
+# Valoria is isolated from the existing continent and only changes its island footprint.
+height, valoria_mask = valoria_terrain.apply(height, (U - 0.5) * SIZE, (V - 0.5) * SIZE)
+
 # ------------------------------------------------------------------ sklon a povrchy
 cell = SIZE / (N - 1)
 gy, gx = np.gradient(height, cell)
@@ -279,6 +283,10 @@ layers[0] *= 1 - np.clip(rock, 0, 1) * 0.8
 layers = np.maximum(layers, 0)
 layers = np.stack([blur(l, 1) for l in layers])
 layers /= np.maximum(layers.sum(0), 1e-6)
+for i in range(8):
+    layers[i] *= 1 - valoria_mask
+layers[0] += valoria_mask * (1 - rock)
+layers[3] += valoria_mask * rock
 
 
 # ------------------------------------------------------------------ zápis
@@ -348,6 +356,7 @@ codes = np.where((small(river_mask) > 0.5) & (hs_ <= 0.4), "r", codes)
 codes = np.where(small(lava_mask) > 0.5, "l", codes)
 codes = np.where(small(lake_mask) > 0.5, "k", codes)
 codes = np.where((hs_ > 0.4) & (small(beach) > 0.5), "b", codes)
+codes = np.where((small(valoria_mask) > 0.5) & (hs_ > 0.4), "a", codes)
 rows = ["".join(r) for r in codes]
 
 
@@ -359,7 +368,7 @@ def poi(name, uu, vv, extra=""):
 lua = ["-- Vygenerováno: tools/aethelgard_world.py (neupravovat ručně)\n", "local D = {}\n",
        "D.Size = %d\nD.SeaY = 0\nD.HeightBase = %s\nD.HeightRange = %s\n" % (SIZE, BASE, RANGE),
        "-- mřížka regionů %d x %d (%.0f m na buňku), řádek 1 = sever (z = -%d):\n" % (G, G, SIZE / G, SIZE / 2),
-       "-- o oceán, r řeka, b pláž, m louky, v Verdant Canopy, f Frostfang Peaks, i Ignis Scar, c Crystalarium, l láva, k jezero\n",
+       "-- o oceán, r řeka, b pláž, a Valoria, m louky, v Verdant Canopy, f Frostfang Peaks, i Ignis Scar, c Crystalarium, l láva, k jezero\n",
        "D.Grid = %d\nD.Rows = {\n" % G]
 lua += ['"%s",\n' % r for r in rows]
 lua.append("}\n")
