@@ -110,7 +110,12 @@ voda. Vše přes Voxario Studio Engine.
   obchodní čtvrti ukazuje propadání dlouhé rovné dlažby do terénu s procedurálním detailem.
   Při pokračování je nutné ulici přizpůsobit výšce terénu a výsledek ověřit ve hře; samotné
   zvýšení celé dlažby by mohlo vytvořit levitující plochu. Domy, hrad i okolí zůstávají daleko
-  od fotorealismu. Průběžné experimenty s vodou v enginu nejsou důvodem měnit Fantasy manifest.
+  od fotorealismu. Engine commit `62b9967` obsahuje volitelný experiment `style = "natural"`:
+  tlumí drobné vlnky, kaustiky, rozptyl a pěnu, původní a stylizovaný režim zachovává.
+  Vývojový VoxarioPlayer se sestavil a základní srovnání pláže proběhlo, voda však stále není
+  fotorealistická; je třeba zkontrolovat další počasí, denní doby, hlubinu a výkon.
+  Hra nový styl zatím nezapíná a nepoužívá tento vývojový engine. Průběžný experiment není
+  důvodem měnit Fantasy manifest ani vydávat finální engine.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
 - Samotest: `tools/package-game.sh <engine/bin> <výstup>` a `Eryndor --selftest <složka>` (záběry lokace a počasí).
 - Engine: `world.weather{rain, snow, storm, wind, wind_direction, instant}` (docs/LUA_API.md).
