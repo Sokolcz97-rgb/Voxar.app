@@ -44,6 +44,9 @@ class ValoriaAssetsTest(unittest.TestCase):
                             self.assertAlmostEqual(actual, expected)
                     if path.stem in ("house_blue", "house_red"):
                         self.assertIn("weathered plaster", [m["name"] for m in document["materials"]])
+                    if path.stem == "keep":
+                        self.assertTrue({"weathered stone", "blue slate", "dark glass", "wood", "aged gold"}
+                                        <= {m["name"] for m in document["materials"]})
                     for material in document["materials"]:
                         if material["name"] in ("weathered stone", "weathered plaster"):
                             self.assertIn("baseColorTexture", material["pbrMetallicRoughness"])

@@ -117,6 +117,9 @@ voda. Vše přes Voxario Studio Engine.
   pásy písku, hlíny a skály; zázemí města a výšky mimo jeho původní půdorys ostrova se zachovávají.
   Celkový záběr `v0-ostrov` však ukazuje prázdnou krajinu a zástupný hrad; domy, hrad i okolí
   zůstávají daleko od fotorealismu a potřebují kvalitní detailní assety a osídlení.
+  Model hradu má dekorativní okna, cimbuří, věžové římsy a čelní vrata, ale nemá interiér ani
+  průchozí vstup: vrata jsou jen dekorace na plné kolizní stěně. Pohled na průčelí ověřuje
+  záběr `v3b-pruceli-hradu`; pro finální podobu je nutný originální detailní hrad i hratelný vstup.
   Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
   rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
   stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.
