@@ -285,8 +285,8 @@ layers = np.stack([blur(l, 1) for l in layers])
 layers /= np.maximum(layers.sum(0), 1e-6)
 for i in range(8):
     layers[i] *= 1 - valoria_mask
-layers[0] += valoria_mask * (1 - rock)
-layers[3] += valoria_mask * rock
+for i, weight in enumerate(valoria_terrain.surface_weights(height, slope, n1)):
+    layers[i] += valoria_mask * weight
 
 
 # ------------------------------------------------------------------ zápis

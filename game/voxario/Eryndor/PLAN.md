@@ -113,7 +113,10 @@ voda. Vše přes Voxario Studio Engine.
   Dlažba obchodní čtvrti je rozdělena na instancované 2m díly, každý podle vzorků skutečné výšky
   terénu; předchozí dlouhá rovná deska se do něj propadala. Kontrola ve hře potvrdila spojitou
   ulici, ale zůstávají viditelné schody, spáry a opakování textury – cílem má být skutečně
-  přizpůsobený povrch a kvalitnější materiál. Domy, hrad i okolí zůstávají daleko od fotorealismu.
+  přizpůsobený povrch a kvalitnější materiál. Ostrov má variabilnější obrys, mírné vyvýšeniny a
+  pásy písku, hlíny a skály; zázemí města a výšky mimo jeho původní půdorys ostrova se zachovávají.
+  Celkový záběr `v0-ostrov` však ukazuje prázdnou krajinu a zástupný hrad; domy, hrad i okolí
+  zůstávají daleko od fotorealismu a potřebují kvalitní detailní assety a osídlení.
   Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
   rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
   stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.

@@ -46,6 +46,9 @@ function Selftest()
         shot(name)
     end
     if only == "valoria" then
+        lookFrom(3670, 130, 3070, 3000, 16, 2400)
+        timer.sleep(3)
+        shot("v0-ostrov")
         view("v1-udoli-hrdinu", 3000, 3, 2620, 3000, 16, 2480)
         view("v2-obchodni-ctvrt", 3000, 5, 2455, 3000, 12, 2335)
         view("v2b-fasady-domu", 3002, 4, 2428, 2975, 4, 2400)
