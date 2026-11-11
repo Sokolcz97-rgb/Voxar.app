@@ -45,6 +45,29 @@ function Selftest()
         timer.sleep(wait or 2.5)
         shot(name)
     end
+    if only == "teren" then
+        -- fotorealistické PBR povrchy terénu (engine ≥ 1.19): každý biom zblízka a z výšky, útesy triplanárně
+        _G.world.environment({ time_of_day = 10.5 })
+        timer.sleep(2)
+        view("t1-louka", -1824, 2.2, 228, -1800, 0.5, 250)
+        view("t2-lesni-puda", -2324, 2.0, -252, -2306, 0.3, -236)
+        view("t3-plaz", -780, 2.4, 504, -756, 0.0, 520)
+        view("t4-utesy", 203, 3, -1472, 196, 2, -1532)
+        view("t5-snih", 396, 2.5, -2628, 420, 1.0, -2606)
+        _G.world.environment({ time_of_day = 19.2 })
+        timer.sleep(1)
+        view("t6-lava", 284, 4.0, 1960, 306, 0.0, 1980)
+        _G.world.environment({ time_of_day = 10.5 })
+        view("t7-cedic", 768, 2.6, 1884, 790, 0.5, 1906)
+        view("t8-ametyst", 2588, 2.4, -360, 2610, 0.5, -338)
+        view("t9-valoria", 3000, 3, 2620, 3000, 16, 2480)
+        lookFrom(3670, 130, 3070, 3000, 16, 2400)
+        timer.sleep(3)
+        shot("t10-ostrov")
+        game.log("SELFTEST hotovo")
+        game.quit()
+        return
+    end
     if only == "valoria" then
         local gateY = G(3000, 2165) + 2.0
         local passage = physics.spherecast(3000, gateY, 2183, 0.35, 0, 0, -1, 12)

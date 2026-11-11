@@ -171,3 +171,12 @@ voda. Vše přes Voxario Studio Engine.
   zbroje obepnuté kolem trupu (fit_garment), větší zbraně obra. Samotesty `plavani`, `kouzla`, `ui` (menu, doplňky).
 - Eryndor 0.9.0 (engine v1.18.0): průhledný kouř enginu – dýmající sopky (`world.lua`, smoke_dark s předehřátím, dosah 1400 m),
   kouř po ohnivých výbuších a pára po mrazivých kouzlech (`fx.lua`), kouzla jako měkké zářící částice; samotest `kouzla` (k8–k10).
+- Fotorealistické PBR povrchy terénu (engine v1.19.0, větev `claude/happy-bardeen-psq6y3`, zatím nevydáno): všech 8 vrstev
+  Aethelgardu (louky, lesní půda, pláže, skála, sníh, láva, čedič a popel, ametyst) z fotoskenů Poly Haven (CC0) –
+  `python3 tools/terrain_pbr.py` stáhne 2k mapy do cache a sbalí `Assets/Textures/terrain/pbr/<vrstva>_albedo.jpg`
+  (2048 px, zapečená okluze) a `_surface.png` (1024 px: normála RG, drsnost B, výška A). Láva = rozpraskaná skála se
+  žhnoucími prasklinami, ametyst = přebarvená rozpraskaná skála; meshy.ai se nepoužívá. Engine: prolínání vrstev podle
+  skutečné výšky, triplanární útesy, měřítko dlaždice na vrstvu (`scale`), vzdálené přemíchání proti opakování,
+  anizotropní filtrování. Starší engine povrchové mapy ignoruje (jen barva). Samotest `VOXARIO_SELFTEST_ONLY=teren`
+  (t1–t10: biomy zblízka, útesy, Valoria). Zbývá: tráva/kamínky jako 3D detail na zemi, mokrý písek u vody,
+  vydání enginu 1.19 a přepnutí `engine_tag` v CI – až po schválení vlastníkem.
