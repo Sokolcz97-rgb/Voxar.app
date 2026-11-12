@@ -180,3 +180,9 @@ voda. Vše přes Voxario Studio Engine.
   anizotropní filtrování. Starší engine povrchové mapy ignoruje (jen barva). Samotest `VOXARIO_SELFTEST_ONLY=teren`
   (t1–t10: biomy zblízka, útesy, Valoria). Zbývá: tráva/kamínky jako 3D detail na zemi, mokrý písek u vody,
   vydání enginu 1.19 a přepnutí `engine_tag` v CI – až po schválení vlastníkem.
+- Tekoucí láva (engine v1.19.0 `flowmap`, zatím nevydáno): `python3 tools/lava_flow.py` spočítá
+  `Assets/Terrain/aethelgard_lava_flow.png` (RG = směr a rychlost, B = žár) – směr podél koryta ze strukturního tenzoru
+  masky lávy, láva teče od kráteru (vzdálenost měřená korytem), rychlost podle spádu, v kráterech víří lávové jezero.
+  Shader: pláty chladnoucí kůry se žhnoucími švy plují korytem, barva žáru podle teploty. Generátor terénu dělá lávové
+  řeky, které místy mírně stoupají – láva tam teče pomalu „do kopce“; čistým řešením je monotónní dno koryt
+  v `aethelgard_world.py`. Samotest `teren`: t11 (řeka zblízka), t12 (sopka v noci), t13 (24 snímků animace).

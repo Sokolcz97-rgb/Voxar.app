@@ -65,6 +65,22 @@ function Selftest()
         tv("t7-cedic", 768, 2.6, 1884, 790, 0.5, 1906)
         tv("t8-ametyst", 2588, 2.4, -360, 2610, 0.5, -338)
         tv("t9-valoria", 3000, 3, 2620, 3000, 16, 2480)
+        -- tekoucí láva: řeka ze sopky zblízka za soumraku, sopka s lávovými řekami v noci, animace toku
+        if want("t11") or want("t12") or want("t13") then
+            _G.world.environment({ time_of_day = 19.4 })
+            timer.sleep(1)
+            tv("t11-lava-reka", 402, 4, 2134, 440, 0.0, 2135)
+            if want("t13") then
+                for i = 1, 24 do
+                    timer.sleep(0.2)
+                    shot(string.format("t13-anim-%02d", i))
+                end
+            end
+            _G.world.environment({ time_of_day = 21.0 })
+            timer.sleep(1)
+            tv("t12-lava-sopka", 720, 70, 2420, 330, 150, 2020)
+            _G.world.environment({ time_of_day = 10.5 })
+        end
         if want("t10-ostrov") then
             lookFrom(3670, 130, 3070, 3000, 16, 2400)
             timer.sleep(3)

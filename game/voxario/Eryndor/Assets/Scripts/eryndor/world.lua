@@ -90,6 +90,8 @@ function M.BuildTerrain()
         heightmap = "Terrain/aethelgard_height.png", base_height = D.HeightBase, height_scale = D.HeightRange,
         detail = 0.45, detail_scale = 0.16,
         splatmap = "Terrain/aethelgard_splat0.png", splatmap2 = "Terrain/aethelgard_splat1.png", tiling = 5,
+        -- tekoucí láva (engine ≥ 1.19): směr a rychlost proudu z kráterů korytem dolů, žár středu (tools/lava_flow.py)
+        flowmap = "Terrain/aethelgard_lava_flow.png",
         -- fotorealistické PBR povrchy (fotoskeny Poly Haven CC0, tools/terrain_pbr.py): barva + povrch (normála,
         -- drsnost, výška – engine ≥ 1.19; starší engine povrch ignoruje), scale = násobek dlaždice (tiling 5 m),
         -- strmé svahy engine mapuje triplanárně; barva = záloha bez textury
