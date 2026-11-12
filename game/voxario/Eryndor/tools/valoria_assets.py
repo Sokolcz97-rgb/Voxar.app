@@ -8,19 +8,23 @@ from meshkit import Mesh, box, cone, cylinder, merge, sphere, write_glb
 ASSETS = Path(__file__).resolve().parent.parent / "Assets"
 OUT = ASSETS / "Models" / "valoria"
 
-STONE = dict(name="weathered stone", texture=str(ASSETS / "Textures/valoria/stone_basecolor.png"),
-             normal=str(ASSETS / "Textures/valoria/stone_normal.png"),
-             orm=str(ASSETS / "Textures/valoria/stone_orm.png"), uv_scale=2.0, roughness=1.0)
-CASTLE_STONE = dict(name="castle masonry", texture=str(ASSETS / "Textures/valoria/castle_basecolor.png"),
-                    normal=str(ASSETS / "Textures/valoria/castle_normal.png"),
-                    orm=str(ASSETS / "Textures/valoria/castle_orm.png"), uv_scale=8.0, roughness=1.0)
-PLASTER = dict(name="weathered plaster", texture=str(ASSETS / "Textures/valoria/plaster_basecolor.png"),
-               normal=str(ASSETS / "Textures/valoria/plaster_normal.png"),
-               orm=str(ASSETS / "Textures/valoria/plaster_orm.png"), uv_scale=3.0, roughness=1.0)
-WOOD = dict(name="wood", texture=str(ASSETS / "Textures/nature/kura.jpg"),
-            uv_scale=1.5, roughness=0.9)
-BLUE = dict(name="blue slate", color=(0.12, 0.21, 0.31), roughness=0.83)
-RED = dict(name="red tile", color=(0.34, 0.13, 0.10), roughness=0.9)
+# fotorealistické PBR materiály z fotoskenů Poly Haven (CC0) – tools/valoria_pbr.py; uv_scale = skutečná velikost
+# dlaždice fotoskenu v metrech, ať kvádry, dlažba i tašky mají reálnou velikost
+PBR = ASSETS / "Textures/valoria/pbr"
+
+
+def pbr(name, label, tile, **extra):
+    return dict(name=label, texture=str(PBR / f"{name}_basecolor.jpg"), normal=str(PBR / f"{name}_normal.jpg"),
+                orm=str(PBR / f"{name}_orm.jpg"), uv_scale=tile, roughness=1.0, **extra)
+
+
+STONE = pbr("stone", "weathered stone", 2.5)            # brána, most, sokly domů
+CASTLE_STONE = pbr("castle", "castle masonry", 2.0)     # kvádrové zdivo hradu
+COBBLE = pbr("cobble", "cobblestone paving", 2.0)       # dlažba a podlaha hradu
+PLASTER = pbr("plaster", "weathered plaster", 1.0)      # vápenná omítka
+WOOD = pbr("timber", "wood", 2.0)                       # trámy hrázděných domů, dveře
+BLUE = pbr("slate", "blue slate", 3.0)                  # břidlicové střechy
+RED = pbr("clay", "red tile", 4.0)                      # pálené tašky
 GOLD = dict(name="aged gold", color=(0.53, 0.37, 0.14), roughness=0.4, metallic=0.75)
 CLOTH = dict(name="blue cloth", color=(0.09, 0.20, 0.39), roughness=1.0, double=True)
 MARBLE = dict(name="weathered marble", color=(0.58, 0.57, 0.53), roughness=0.82)
@@ -54,7 +58,7 @@ def generate():
     rails = [b(x, 0.9, 0, 0.7, 1.8, 200) for x in (-9.5, 9.5)]
     rails += [b(x, 1.4, z, 1.1, 2.8, 1.1) for x in (-9.5, 9.5) for z in range(-95, 96, 20)]
     save("bridge", [(merge(b(0, -0.5, 0, 20, 1, 200), *rails), STONE)])
-    save("paving", [(b(0, -0.08, 0, 2, 0.2, 2), STONE)])
+    save("paving", [(b(0, -0.08, 0, 2, 0.2, 2), COBBLE)])
 
     gate = [tower(-10, 0, 25, 4), tower(10, 0, 25, 4), b(0, 17, 0, 20, 2, 6)]
     for i in range(30):
@@ -77,7 +81,8 @@ def generate():
                   (merge(b(-10, 12, 4.1, 3, 8, 0.12), b(10, 12, 4.1, 3, 8, 0.12)), CLOTH),
                   (merge(b(-10, 12, 4.2, 0.25, 8, 0.14), b(10, 12, 4.2, 0.25, 8, 0.14)), GOLD)])
 
-    for name, material in (("house_blue", BLUE), ("house_red", RED)):
+    # střechy domů: hřeben podél osy Z – textura otočená, aby řady břidlic a tašek vedly podél hřebene
+    for name, material in (("house_blue", dict(BLUE, uv_swap=True)), ("house_red", dict(RED, uv_swap=True))):
         timber = [b(x, 4, -4.55, 0.25, 6, 0.18) for x in (-5.5, 0, 5.5)]
         timber += [b(0, y, -4.55, 12, 0.25, 0.18) for y in (1, 4, 6.8)]
         timber += [b(0, 1.5, -4.7, 2, 3, 0.2)]
@@ -159,8 +164,8 @@ def generate():
         spires.append(roof(x, height, z, 5.2, 12))
         pennants.append(sphere(0.35, 12, 8).translate(x, height + 12, z))
     floor = merge(b(0, -0.08, 0, 31, 0.2, 20), b(0, -0.08, 11, 4.4, 0.2, 2))
-    save("keep_floor", [(floor, STONE)])
-    save("keep_step", [(b(0, -0.08, 0, 4.0, 0.2, 2), STONE)])
+    save("keep_floor", [(floor, COBBLE)])
+    save("keep_step", [(b(0, -0.08, 0, 4.0, 0.2, 2), COBBLE)])
     save("keep", [(merge(*keep, *trim), CASTLE_STONE), (merge(*spires), BLUE),
                   (merge(*slits), GLASS), (merge(*door), WOOD), (merge(*pennants), GOLD)])
 

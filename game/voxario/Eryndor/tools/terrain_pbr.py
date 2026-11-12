@@ -44,7 +44,7 @@ USER_AGENT = {"User-Agent": "eryndor-terrain-pbr/1.0"}   # Poly Haven odmítá v
 MAPS = {"albedo": "Diffuse", "normal": "nor_gl", "rough": "Rough", "height": "Displacement", "ao": "AO"}
 
 
-def fetch(asset: str, cache: pathlib.Path) -> dict[str, pathlib.Path]:
+def fetch(asset: str, cache: pathlib.Path, maps: dict[str, str] | None = None) -> dict[str, pathlib.Path]:
     """Stáhne mapy fotoskenu ve 2k (JPG, kde existuje, jinak PNG) do cache."""
     folder = cache / asset
     folder.mkdir(parents=True, exist_ok=True)
@@ -54,7 +54,7 @@ def fetch(asset: str, cache: pathlib.Path) -> dict[str, pathlib.Path]:
             meta_path.write_bytes(r.read())
     meta = json.loads(meta_path.read_text())
     paths = {}
-    for key, name in MAPS.items():
+    for key, name in (maps or MAPS).items():
         if name not in meta:
             continue
         formats = meta[name]["2k"]

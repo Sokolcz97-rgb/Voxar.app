@@ -418,7 +418,10 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
                                5126, "VEC4", 34962),
         }
         if mat.get("texture"):
-            attrs["TEXCOORD_0"] = out.acc(_box_uv(m.P, axisN, mat.get("uv_scale", 1.0)), 5126, "VEC2", 34962)
+            uv = _box_uv(m.P, axisN, mat.get("uv_scale", 1.0))
+            if mat.get("uv_swap"):   # otočení textury o 90° (např. řady tašek podél hřebene střechy)
+                uv = np.ascontiguousarray(uv[:, ::-1])
+            attrs["TEXCOORD_0"] = out.acc(uv, 5126, "VEC2", 34962)
         if skinned:
             J = np.zeros((len(m.P), 4), np.uint16)
             J[:, 0] = m.B
