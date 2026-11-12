@@ -25,9 +25,9 @@ PLASTER = pbr("plaster", "weathered plaster", 1.0)      # vápenná omítka
 WOOD = pbr("timber", "wood", 2.0)                       # trámy hrázděných domů, dveře
 BLUE = pbr("slate", "blue slate", 3.0)                  # břidlicové střechy
 RED = pbr("clay", "red tile", 4.0)                      # pálené tašky
+CLOTH = pbr("linen", "blue cloth", 0.27, double=True)    # markýzy a prapory
+MARBLE = pbr("marble", "weathered marble", 1.8)         # sochy hrdinů
 GOLD = dict(name="aged gold", color=(0.53, 0.37, 0.14), roughness=0.4, metallic=0.75)
-CLOTH = dict(name="blue cloth", color=(0.09, 0.20, 0.39), roughness=1.0, double=True)
-MARBLE = dict(name="weathered marble", color=(0.58, 0.57, 0.53), roughness=0.82)
 GLASS = dict(name="dark glass", color=(0.05, 0.09, 0.12), roughness=0.25, metallic=0.05)
 
 

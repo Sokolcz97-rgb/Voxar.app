@@ -34,6 +34,8 @@ MATERIALS = {
     "timber": ("old_planks_02", 2.0, (0.8, 0.74, 0.68)),          # tmavé dubové trámy, dveře
     "slate": ("roof_slates_03", 3.0, (0.82, 0.92, 1.08)),         # modrošedá břidlice (hrad, brána, modrý dům)
     "clay": ("roof_09", 4.0, (1.0, 1.0, 1.0)),                    # pálené tašky (červený dům)
+    "linen": ("rough_linen", 0.27, (0.32, 0.48, 0.85)),           # modré plátno markýz a praporů
+    "marble": ("marble_rock_03", 1.8, (1.0, 1.0, 1.0)),           # sochy hrdinů
 }
 
 

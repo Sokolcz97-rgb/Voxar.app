@@ -8,3 +8,5 @@ plaster: https://polyhaven.com/a/white_rough_plaster
 timber: https://polyhaven.com/a/old_planks_02
 slate: https://polyhaven.com/a/roof_slates_03
 clay: https://polyhaven.com/a/roof_09
+linen: https://polyhaven.com/a/rough_linen
+marble: https://polyhaven.com/a/marble_rock_03
