@@ -193,3 +193,5 @@ voda. Vše přes Voxario Studio Engine.
   hřebene díky `uv_swap`), lněné markýzy a prapory, mramor soch. Záběry před/po: `docs/screenshots/valoria`.
   Zbývá: tvary budov jsou stále jednoduché bloky (chybí geometrický detail – římsy, okenní ostění, trámové konce,
   zvlněné tašky), dlažba z 2m dílů má viditelné spáry a schody, interiér hradu je prázdný.
+- Vydání Eryndor 0.10.0 (engine v1.19.0, schváleno vlastníkem 2026-11-12): fotorealistický terén (PBR fotoskeny), tekoucí láva,
+  fotorealistické materiály Valorie; workflow `eryndor-game.yml` používá výchozí `engine_tag` v1.19.0.
