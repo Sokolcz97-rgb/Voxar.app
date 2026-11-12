@@ -41,7 +41,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ENGINE_REPO: Sokolcz97-rgb/Voxario-Studio-Engine
+  ENGINE_REPO: StudioVoxarioAI/Voxario-Studio-Engine
   PROJECT: game/voxario/Eryndor
   ENGINE_TAG: ${{ inputs.engine_tag || 'v1.19.0' }}
 
