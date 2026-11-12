@@ -186,3 +186,10 @@ voda. Vše přes Voxario Studio Engine.
   Shader: pláty chladnoucí kůry se žhnoucími švy plují korytem, barva žáru podle teploty. Generátor terénu dělá lávové
   řeky, které místy mírně stoupají – láva tam teče pomalu „do kopce“; čistým řešením je monotónní dno koryt
   v `aethelgard_world.py`. Samotest `teren`: t11 (řeka zblízka), t12 (sopka v noci), t13 (24 snímků animace).
+- Valoria – fotorealistické materiály staveb (zatím nevydáno): `python3 tools/valoria_pbr.py` stáhne fotoskeny Poly Haven
+  (CC0) a uloží `Assets/Textures/valoria/pbr/<materiál>_{basecolor,normal,orm}.jpg` (1024 px); `tools/valoria_assets.py`
+  je vloží do modelů s reálnou velikostí dlaždice: hrad = kvádrové zdivo (medieval_blocks_03), brána/most/sokly =
+  kamenné zdivo, dlažba a podlaha hradu = kočičí hlavy, omítka, dubové trámy, břidlice, pálené tašky (řady podél
+  hřebene díky `uv_swap`), lněné markýzy a prapory, mramor soch. Záběry před/po: `docs/screenshots/valoria`.
+  Zbývá: tvary budov jsou stále jednoduché bloky (chybí geometrický detail – římsy, okenní ostění, trámové konce,
+  zvlněné tašky), dlažba z 2m dílů má viditelné spáry a schody, interiér hradu je prázdný.
