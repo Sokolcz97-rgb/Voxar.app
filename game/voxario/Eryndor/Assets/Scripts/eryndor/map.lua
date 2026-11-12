@@ -21,7 +21,7 @@ M.FrozenLake = D.FrozenLake
 
 M.RegionNames = {
     v = "Verdant Canopy", f = "Frostfang Peaks", i = "Ignis Scar", c = "Crystalarium", m = "Údolí Serpentine",
-    r = "Serpentine River", o = "Azure Ocean", b = "Pobřeží", l = "Ignis Scar", k = "Frostfang Peaks",
+    r = "Serpentine River", o = "Azure Ocean", b = "Pobřeží", l = "Ignis Scar", k = "Frostfang Peaks", a = "Valoria",
 }
 
 -- výška terénu (engine: velký terén z výškové mapy); mimo terén = dno oceánu

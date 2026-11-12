@@ -381,7 +381,8 @@ def _relative_tint(C):
 
 def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
     """parts: [(Mesh, materiál dict)]; materiál: color, roughness, metallic, emissive, emissive_strength, double,
-    texture (cesta k .jpg/.png, vloží se do .glb; UV promítnutím ze tří stran), uv_scale (m na dlaždici), normal (mapa).
+    texture (cesta k .jpg/.png, vloží se do .glb; UV promítnutím ze tří stran), uv_scale (m na dlaždici),
+    normal (normálová mapa), orm (glTF occlusion/roughness/metallic mapa).
     skeleton: [(jméno, rodič|None, (x, y, z) svět)] – pak se zapíše skin (váha 1 na kost Mesh.B).
     animations: [(jméno, délka, smyčka, fn(t) -> {kost: (rx, ry, rz)}, translace pánve fn(t)->(dx,dy,dz))]."""
     out = _Bin()
@@ -417,7 +418,10 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
                                5126, "VEC4", 34962),
         }
         if mat.get("texture"):
-            attrs["TEXCOORD_0"] = out.acc(_box_uv(m.P, axisN, mat.get("uv_scale", 1.0)), 5126, "VEC2", 34962)
+            uv = _box_uv(m.P, axisN, mat.get("uv_scale", 1.0))
+            if mat.get("uv_swap"):   # otočení textury o 90° (např. řady tašek podél hřebene střechy)
+                uv = np.ascontiguousarray(uv[:, ::-1])
+            attrs["TEXCOORD_0"] = out.acc(uv, 5126, "VEC2", 34962)
         if skinned:
             J = np.zeros((len(m.P), 4), np.uint16)
             J[:, 0] = m.B
@@ -433,6 +437,10 @@ def write_glb(path, parts, skeleton=None, animations=None, name="Model"):
             pbr["baseColorTexture"] = {"index": image(mat["texture"])}
             if mat.get("normal"):
                 material["normalTexture"] = {"index": image(mat["normal"])}
+            if mat.get("orm"):
+                orm_index = image(mat["orm"])
+                pbr["metallicRoughnessTexture"] = {"index": orm_index}
+                material["occlusionTexture"] = {"index": orm_index}
         if mat.get("emissive"):
             material["emissiveFactor"] = list(mat["emissive"])
             if mat.get("emissive_strength", 1.0) != 1.0:

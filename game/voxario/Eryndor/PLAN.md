@@ -90,6 +90,53 @@ voda. Vše přes Voxario Studio Engine.
 - [x] D3 Vydání launcheru s novým kanálem
 
 ## Poznámky
+- Rozpracovaná obnova Valorie: větev `copilot/valoria-restoration` v repozitáři hry a větev
+  `copilot/valoria-rendering` v repozitáři enginu. Předchozí nepublikované sestavení není dostupné;
+  podle logu vznikl nový ostrov na souřadnicích (3000, 2400), návrh mostu, brány, domů a hradu
+  (`eryndor/valoria.lua`) a obousměrný portál k základně. Výškovou mapu i mapu regionů generuje
+  `tools/aethelgard_world.py` s `tools/valoria_terrain.py`; modely generuje `tools/valoria_assets.py`.
+  Generátory vyžadují NumPy, generátor terénu také Pillow. `VOXARIO_SELFTEST_ONLY=valoria` pořizuje
+  záběry a ověřuje cíle portálů. Větev je **hrubý prototyp**, nikoli fotorealistické AAA:
+  stavby a sochy jsou zástupné, první procedurální PBR kámen nestačí na cílový detail, ostatní materiály
+  jsou zjednodušené a voda používá stávající renderer. Kámen se obnoví nástrojem z větve enginu:
+  `python3 tools/content/stone_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`,
+  potom `python3 tools/valoria_assets.py` ve složce Eryndor.
+  Omítka domů se obnoví nástrojem z větve enginu
+  `python3 tools/content/plaster_material.py <složka-hry>/Assets/Textures/valoria --seed 1337 --size 512`
+  před spuštěním generátoru modelů. Domy nyní mají omítku, kamennou podezdívku, uzavřené štíty,
+  boční okna a podpěry markýz; stále jde o opakované procedurální zástupné modely.
+  Hradní kámen se obnoví příkazem
+  `python3 tools/content/stone_material.py <složka-hry>/Assets/Textures/valoria --size 1024 --seed 4301 --rows 16 --columns 8 --prefix castle --variation 0.6 --mortar 0.25`
+  z větve enginu (od commitu `305d791`); pak znovu vygenerovat modely Valorie.
+  Zadání: startovní město na ostrově; kamenný most a sochy, modrozlaté prapory, obchodní čtvrť
+  s dlažbou a červenými/modrými střechami, hrad na útesu a gryfové; přirozené světlo, mlha
+  a realistická voda. Následně je třeba vytvořit vlastní detailní assety a materiály, zlepšit vodu
+  v enginu, doplnit život města, průběžně kontrolovat snímky a výkon. Sestavení ani vydání do
+  Fantasy nelze považovat za hotové, dokud nejsou tyto požadavky ověřeny.
+  Dlažba obchodní čtvrti je rozdělena na instancované 2m díly, každý podle vzorků skutečné výšky
+  terénu; předchozí dlouhá rovná deska se do něj propadala. Kontrola ve hře potvrdila spojitou
+  ulici, ale zůstávají viditelné schody, spáry a opakování textury – cílem má být skutečně
+  přizpůsobený povrch a kvalitnější materiál. Ostrov má variabilnější obrys, mírné vyvýšeniny a
+  pásy písku, hlíny a skály; zázemí města a výšky mimo jeho původní půdorys ostrova se zachovávají.
+  Celkový záběr `v0-ostrov` však ukazuje prázdnou krajinu a zástupný hrad; domy, hrad i okolí
+  zůstávají daleko od fotorealismu a potřebují kvalitní detailní assety a osídlení.
+  Model hradu má okna, cimbuří, věžové římsy a průchod s otevřenými křídly vrat. Samotest ověřuje
+  volný průchod a kolizi sousední stěny koulemi o poloměru hráče; záběry `v3b-pruceli-hradu` a
+  `v3c-interier-hradu` ukazují novou texturu a provizorní vnitřek. Chybí detailní interiér,
+  výbava a hotové materiály. Dlaždice v interiéru nahrazuje souvislá rovná podlaha a práh
+  se samostatnou kolizí, umístěné nad vrcholy terénu včetně detailního šumu; dva nášlapy
+  vyrovnávají vyšší práh. Přístupnost nebyla ověřena průchodem skutečné postavy.
+  V samotestu po vstupu do světa opakovaně hlásí příkladový mod `SouradniceFPS` chybu
+  formátování necelého čísla; jde o stávající problém mimo úpravu hradu.
+  Větve enginu zahrnují volitelný experiment `style = "natural"`: tlumí drobné vlnky, kaustiky,
+  rozptyl a pěnu a od commitu `2ecdb35` přibližně počítá lom a dráhu světla vodou; původní a
+  stylizovaný režim zachovává. Commit `5a2ba34` upravuje odrazivost hladiny podle indexu lomu vody.
+  Vývojový VoxarioPlayer se sestavil a snímky pláže i moře vznikly,
+  voda však stále obsahuje nerealistické opakování a pásy a není fotorealistická. Výpočet neřeší
+  skutečný průsečík lomeného paprsku s měnícím se dnem; nutno zkontrolovat další počasí, denní
+  doby, hlubinu, podvodní pohled a výkon.
+  Hra nový styl zatím nezapíná a nepoužívá tento vývojový engine. Průběžný experiment není
+  důvodem měnit Fantasy manifest ani vydávat finální engine.
 - Assety: `python3 tools/eryndor_nature.py` (krajina, stavby). Knihovna tvarů a zápisu GLB: `tools/meshkit.py`.
 - Samotest: `tools/package-game.sh <engine/bin> <výstup>` a `Eryndor --selftest <složka>` (záběry lokace a počasí).
 - Engine: `world.weather{rain, snow, storm, wind, wind_direction, instant}` (docs/LUA_API.md).
@@ -124,3 +171,27 @@ voda. Vše přes Voxario Studio Engine.
   zbroje obepnuté kolem trupu (fit_garment), větší zbraně obra. Samotesty `plavani`, `kouzla`, `ui` (menu, doplňky).
 - Eryndor 0.9.0 (engine v1.18.0): průhledný kouř enginu – dýmající sopky (`world.lua`, smoke_dark s předehřátím, dosah 1400 m),
   kouř po ohnivých výbuších a pára po mrazivých kouzlech (`fx.lua`), kouzla jako měkké zářící částice; samotest `kouzla` (k8–k10).
+- Fotorealistické PBR povrchy terénu (engine v1.19.0, větev `claude/happy-bardeen-psq6y3`, zatím nevydáno): všech 8 vrstev
+  Aethelgardu (louky, lesní půda, pláže, skála, sníh, láva, čedič a popel, ametyst) z fotoskenů Poly Haven (CC0) –
+  `python3 tools/terrain_pbr.py` stáhne 2k mapy do cache a sbalí `Assets/Textures/terrain/pbr/<vrstva>_albedo.jpg`
+  (2048 px, zapečená okluze) a `_surface.png` (1024 px: normála RG, drsnost B, výška A). Láva = rozpraskaná skála se
+  žhnoucími prasklinami, ametyst = přebarvená rozpraskaná skála; meshy.ai se nepoužívá. Engine: prolínání vrstev podle
+  skutečné výšky, triplanární útesy, měřítko dlaždice na vrstvu (`scale`), vzdálené přemíchání proti opakování,
+  anizotropní filtrování. Starší engine povrchové mapy ignoruje (jen barva). Samotest `VOXARIO_SELFTEST_ONLY=teren`
+  (t1–t10: biomy zblízka, útesy, Valoria). Zbývá: tráva/kamínky jako 3D detail na zemi, mokrý písek u vody,
+  vydání enginu 1.19 a přepnutí `engine_tag` v CI – až po schválení vlastníkem.
+- Tekoucí láva (engine v1.19.0 `flowmap`, zatím nevydáno): `python3 tools/lava_flow.py` spočítá
+  `Assets/Terrain/aethelgard_lava_flow.png` (RG = směr a rychlost, B = žár) – směr podél koryta ze strukturního tenzoru
+  masky lávy, láva teče od kráteru (vzdálenost měřená korytem), rychlost podle spádu, v kráterech víří lávové jezero.
+  Shader: pláty chladnoucí kůry se žhnoucími švy plují korytem, barva žáru podle teploty. Generátor terénu dělá lávové
+  řeky, které místy mírně stoupají – láva tam teče pomalu „do kopce“; čistým řešením je monotónní dno koryt
+  v `aethelgard_world.py`. Samotest `teren`: t11 (řeka zblízka), t12 (sopka v noci), t13 (24 snímků animace).
+- Valoria – fotorealistické materiály staveb (zatím nevydáno): `python3 tools/valoria_pbr.py` stáhne fotoskeny Poly Haven
+  (CC0) a uloží `Assets/Textures/valoria/pbr/<materiál>_{basecolor,normal,orm}.jpg` (1024 px); `tools/valoria_assets.py`
+  je vloží do modelů s reálnou velikostí dlaždice: hrad = kvádrové zdivo (medieval_blocks_03), brána/most/sokly =
+  kamenné zdivo, dlažba a podlaha hradu = kočičí hlavy, omítka, dubové trámy, břidlice, pálené tašky (řady podél
+  hřebene díky `uv_swap`), lněné markýzy a prapory, mramor soch. Záběry před/po: `docs/screenshots/valoria`.
+  Zbývá: tvary budov jsou stále jednoduché bloky (chybí geometrický detail – římsy, okenní ostění, trámové konce,
+  zvlněné tašky), dlažba z 2m dílů má viditelné spáry a schody, interiér hradu je prázdný.
+- Vydání Eryndor 0.10.0 (engine v1.19.0, schváleno vlastníkem 2026-11-12): fotorealistický terén (PBR fotoskeny), tekoucí láva,
+  fotorealistické materiály Valorie; workflow `eryndor-game.yml` používá výchozí `engine_tag` v1.19.0.

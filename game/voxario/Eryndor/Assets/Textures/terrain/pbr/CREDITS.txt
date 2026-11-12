@@ -1,0 +1,11 @@
+Povrchy terénu: fotoskeny Poly Haven (https://polyhaven.com), licence CC0 1.0.
+Vygenerováno skriptem tools/terrain_pbr.py.
+
+trava: https://polyhaven.com/a/leafy_grass
+zeme: https://polyhaven.com/a/forest_ground_04
+pisek: https://polyhaven.com/a/aerial_beach_01
+skala: https://polyhaven.com/a/rock_face_03
+snih: https://polyhaven.com/a/snow_02
+lava: https://polyhaven.com/a/rock_boulder_cracked
+cedic: https://polyhaven.com/a/burned_ground_01
+ametyst: https://polyhaven.com/a/rock_boulder_cracked

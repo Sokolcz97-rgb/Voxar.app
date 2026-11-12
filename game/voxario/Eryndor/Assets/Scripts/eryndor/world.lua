@@ -78,21 +78,31 @@ M.Scatter = scatter
 
 local function c255(r, g, b) return { r / 255, g / 255, b / 255 } end
 
+-- vrstva terénu s PBR povrchem (Textures/terrain/pbr/<jméno>_albedo.jpg + _surface.png)
+local function pbr(name, color, scale, emissive)
+    return { texture = "Textures/terrain/pbr/" .. name .. "_albedo.jpg", surface = "Textures/terrain/pbr/" .. name .. "_surface.png",
+             color = color, scale = scale, emissive = emissive }
+end
+
 function M.BuildTerrain()
     local half = map.Size / 2
     M.terrain = W.terrain({ size = { map.Size, map.Size }, cell = 2, origin = { -half, -half },
         heightmap = "Terrain/aethelgard_height.png", base_height = D.HeightBase, height_scale = D.HeightRange,
         detail = 0.45, detail_scale = 0.16,
         splatmap = "Terrain/aethelgard_splat0.png", splatmap2 = "Terrain/aethelgard_splat1.png", tiling = 5,
-        -- textury z listu přírodních textur (tools/eryndor_textures.sh); barva = záloha bez textury
-        layers = { { texture = "Textures/terrain/trava.jpg", color = c255(58, 104, 30) },      -- 1 tráva (louky, Verdant)
-                   { texture = "Textures/terrain/zeme.jpg", color = c255(66, 54, 46) },        -- 2 lesní půda a hlína
-                   { texture = "Textures/terrain/pisek.jpg", color = c255(200, 180, 130) },    -- 3 písek (pláže, břehy)
-                   { texture = "Textures/terrain/skala.jpg", color = c255(110, 100, 90) },     -- 4 skála (svahy)
-                   { texture = "Textures/terrain/snih_led.jpg", color = c255(230, 236, 245) }, -- 5 sníh a led (Frostfang)
-                   { texture = "Textures/terrain/lava.jpg", color = c255(240, 100, 20), emissive = 7 },   -- 6 láva (svítí)
-                   { texture = "Textures/terrain/cedic.jpg", color = c255(50, 44, 44) },       -- 7 čedič a popel (Ignis)
-                   { texture = "Textures/terrain/ametyst.jpg", color = c255(140, 80, 180) } } }) -- 8 ametyst (Crystalarium)
+        -- tekoucí láva (engine ≥ 1.19): směr a rychlost proudu z kráterů korytem dolů, žár středu (tools/lava_flow.py)
+        flowmap = "Terrain/aethelgard_lava_flow.png",
+        -- fotorealistické PBR povrchy (fotoskeny Poly Haven CC0, tools/terrain_pbr.py): barva + povrch (normála,
+        -- drsnost, výška – engine ≥ 1.19; starší engine povrch ignoruje), scale = násobek dlaždice (tiling 5 m),
+        -- strmé svahy engine mapuje triplanárně; barva = záloha bez textury
+        layers = { pbr("trava", c255(58, 104, 30), 0.7),             -- 1 tráva (louky, Verdant)
+                   pbr("zeme", c255(66, 54, 46), 0.8),               -- 2 lesní půda a hlína
+                   pbr("pisek", c255(200, 180, 130), 1.4),           -- 3 písek (pláže, břehy)
+                   pbr("skala", c255(110, 100, 90), 2.4),            -- 4 skála (svahy, útesy)
+                   pbr("snih", c255(230, 236, 245), 1.6),            -- 5 sníh a led (Frostfang)
+                   pbr("lava", c255(240, 100, 20), 1.6, 7),          -- 6 láva (svítí)
+                   pbr("cedic", c255(50, 44, 44), 1.2),              -- 7 čedič a popel (Ignis)
+                   pbr("ametyst", c255(140, 80, 180), 1.2) } })      -- 8 ametyst (Crystalarium)
     -- Azure Ocean + Serpentine River: jedna hladina v úrovni moře kolem kamery až k obzoru; voda se kreslí jen tam,
     -- kde je terén pod hladinou (koryto řeky je vyhloubené pod úroveň moře), dno mělčin je písek
     -- kreslený styl (Herní dokumentace: Azurový oceán): pásma smaragd / tyrkys / námořnická modř, bílé kudrlinky pěny,
@@ -100,7 +110,7 @@ function M.BuildTerrain()
     -- realistická voda (engine ≥ 1.16): Gerstnerovy vlny po větru, pohlcování světla (průhledná mělčina, tyrkys,
     -- temně modrá hloubka), měkká pěna příboje, příliv a odliv
     W.water(0, map.SeaY, 0, 1200, 1200, { color = { 0.5, 0.5, 0.5 }, wave = 0.55, wavelength = 18, foam = 1.2,
-        shallow = 8, bed = "Textures/terrain/pisek.jpg", tide = 0.35, speed = 1.0 })
+        shallow = 8, bed = "Textures/terrain/pbr/pisek_albedo.jpg", tide = 0.35, speed = 1.0 })
 end
 
 -- mosty přes Serpentine River (dřevěná mostovka na kamenných pilířích, s kolizí)
@@ -326,6 +336,7 @@ end
 
 function M.Build()
     M.BuildTerrain()
+    require("eryndor.valoria").Build()
     M.BuildBridges()
     M.BuildOutpost()
     M.BuildVerdant()
