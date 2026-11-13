@@ -195,3 +195,10 @@ voda. Vše přes Voxario Studio Engine.
   zvlněné tašky), dlažba z 2m dílů má viditelné spáry a schody, interiér hradu je prázdný.
 - Vydání Eryndor 0.10.0 (engine v1.19.0, schváleno vlastníkem 2026-11-12): fotorealistický terén (PBR fotoskeny), tekoucí láva,
   fotorealistické materiály Valorie; workflow `eryndor-game.yml` používá výchozí `engine_tag` v1.19.0.
+- Výkon a plynulost (engine v1.21.0): měření `VoxarioPlayer --benchmark 25` (hra sama vstoupí do světa v předvolbě
+  Ultra; `VOXARIO_BENCH_PRESET`, `VOXARIO_BENCH_PLACE`, `VOXARIO_BENCH_SET="detail=0,shadows=high"`,
+  `VOXARIO_BENCH_RUN=1` = běh a otáčení kamery, `VOXARIO_BENCH_SHOT`), log vypíše čas GPU po průchodech.
+  Ve Valorii: čas GPU snímku 3,4x kratší (terénní shader, early-Z, superdlaždice, stíny, světla), asynchronní
+  nahrávání sítí a textur odstranilo záseky při pohybu. Postava: výška modelu z paprsku na skutečný povrch
+  (most, dlažba) a plynule (dřív poskakovala mezi výškovou mapou a kolizí), teleport a start na horní povrch.
+  Most hrdinů leží nad nejvyšším místem terénu (detail terénu ±0,45 m prorůstal mostovkou), ulice k němu stoupá.
