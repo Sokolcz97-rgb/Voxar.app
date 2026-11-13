@@ -66,6 +66,22 @@ for _, tile in ipairs(tiles) do
             highest = math.max(highest, ground(x + dx, z + dz))
         end
     end
-    assert(math.abs(y - highest - 0.03) < 1e-8, "tile must clear sampled ground")
+    assert(y >= highest + 0.03 - 1e-8, "tile must clear sampled ground")
+    if 2470 - z >= 12 then
+        assert(math.abs(y - highest - 0.03) < 1e-8, "street away from the bridge lies on the ground")
+    else
+        assert(y <= valoria.BridgeY + 1e-8, "ramp to the bridge must not rise above the deck")
+    end
 end
+-- mostovka nad nejvyšším místem terénu pod celou plochou (detail terénu nesmí prorůstat skrz)
+local bridgeGround = -math.huge
+for dz = -100, 100 do
+    for dx = -10, 10 do bridgeGround = math.max(bridgeGround, ground(3000 + dx, 2570 + dz)) end
+end
+assert(math.abs(valoria.BridgeY - bridgeGround - 0.06) < 1e-8, "bridge deck must clear the terrain")
+local bridgeCall
+for _, call in ipairs(calls) do
+    if call[1] == "Models/valoria/bridge.glb" then bridgeCall = call end
+end
+assert(bridgeCall and math.abs(bridgeCall[3] - valoria.BridgeY) < 1e-8 and bridgeCall[5].collider == "mesh")
 print("Valoria scene and portals: OK")

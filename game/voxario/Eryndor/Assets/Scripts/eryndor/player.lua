@@ -23,6 +23,9 @@ function M.Create(class, spawn, appearance)
     M.appearance = appearance
     local x, z = spawn.x, spawn.z
     local y = map.HeightAt(x, z)
+    local hit = physics.raycast(x, y + 60, z, 0, -1, 0, 80)   -- start na mostě / podlaze, ne pod nimi
+    if hit and hit.point and hit.point.y > y then y = hit.point.y end
+    M.viewY, M.footOffset = nil, nil
     M.body = _G.world.spawn("cylinder", x, y + 1.0, z, { visible = false, name = "Player", tag = "player",
         character = { radius = 0.35, height = 1.7, step = 0.45, slope = 50 } })
     if appearance then
@@ -39,9 +42,14 @@ function M.Create(class, spawn, appearance)
 end
 
 function M.Teleport(x, z)
+    -- nejvyšší povrch v místě (mostovka, podlaha budovy), jinak terén
     local y = map.HeightAt(x, z)
+    local hit = physics.raycast(x, y + 60, z, 0, -1, 0, 80, M.body)
+    if hit and hit.point and hit.point.y > y then y = hit.point.y end
     entity.set_position(M.body, x, y + 1.0, z)
     entity.set_velocity(M.body, 0, 0, 0)
+    M.viewY = nil
+    if M.cam then M.cam.x, M.cam.y, M.cam.z = nil, nil, nil end   -- kamera skočí s hráčem (bez dlouhého dojezdu)
 end
 
 -- animace pohybu (útoky a kouzla hrají jako jednorázové přes M.Action); s holí varianta „_Staff“
@@ -75,6 +83,13 @@ local function angleLerp(a, b, t)
 end
 
 -- moveTo = {x, z} – automatický přesun k cíli (útok na vzdálený cíl, jako v 4Story)
+-- výška povrchu pod bodem: paprsek dolů (kolize mostů, budov, terénu), záloha výšková mapa
+function M.GroundY(x, y, z)
+    local hit = physics.raycast(x, y + 0.6, z, 0, -1, 0, 8, M.body)
+    if hit and hit.point then return hit.point.y end
+    return map.HeightAt(x, z)
+end
+
 function M.Update(dt, combatPose, moveTo, rooted)
     if not M.body then return end
     local c = M.cam
@@ -115,11 +130,24 @@ function M.Update(dt, combatPose, moveTo, rooted)
 
     -- model na zemi pod kapslí
     px, py, pz = M.Pos()
-    -- chodidla: odsazení kapsle od země se změří, když stojí na zemi (jinak by postava zapadla / visela)
-    local th = map.HeightAt(px, pz)
-    if grounded and (not M.footOffset or math.abs(py - th - M.footOffset) < 0.5) then M.footOffset = py - th end
+    -- skutečný povrch pod kapslí (most, dlažba, podlaha hradu, terén) – výšková mapa terénu by na mostě ukazovala
+    -- zem pod ním a na svazích se lišila od kolizní sítě (model pak poskakoval mezi dvěma výškami)
+    local th = M.GroundY(px, py, pz)
+    -- chodidla: odsazení kapsle od země se změří jednou, když stojí na zemi (pak už je pevné)
+    if grounded then
+        local measured = py - th
+        if not M.footOffset then M.footOffset = measured
+        elseif math.abs(measured - M.footOffset) < 0.3 then   -- jen pomalé doladění, žádné skoky
+            M.footOffset = M.footOffset + (measured - M.footOffset) * (1 - exp(-2 * dt))
+        end
+    end
     local gy = py - (M.footOffset or 0)
     if grounded and math.abs(gy - th) < 0.35 then gy = th end
+    -- svislá poloha modelu plynule (kapsle na schodech a hranách dlaždic skáče o centimetry)
+    if M.viewY and math.abs(gy - M.viewY) < 0.6 and grounded then
+        gy = M.viewY + (gy - M.viewY) * (1 - exp(-22 * dt))
+    end
+    M.viewY = gy
     entity.set_position(M.view, px, gy, pz)
     entity.set_rotation(M.view, 0, M.facing, 0)
     entity.set_position(M.lamp, px, gy + 2.6, pz)

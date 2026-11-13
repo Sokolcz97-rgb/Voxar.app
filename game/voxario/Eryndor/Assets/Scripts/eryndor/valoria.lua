@@ -18,8 +18,24 @@ local function portal(p)
     W.spawn("light", p.x, y + 3, p.z, { light = { color = { 0.4, 0.7, 1.0 }, intensity = 25, range = 12 } })
 end
 
+-- Most hrdinů: mostovka 20 x 200 m (horní plocha modelu v y = 0). Terén pod ním má jemný detail (± 0,45 m
+-- šumu nad výškovou mapou) – mostovka se proto posadí nad nejvyšší místo terénu pod celou plochou, jinak
+-- tráva prorůstala skrz dlažbu mostu.
+local BRIDGE = { z = 170, length = 200, width = 20 }
+local function bridgeHeight()
+    local highest = -math.huge
+    for dz = -BRIDGE.length / 2, BRIDGE.length / 2, 1 do
+        for dx = -BRIDGE.width / 2, BRIDGE.width / 2, 1 do
+            highest = math.max(highest, map.HeightAt(cx + dx, cz + BRIDGE.z + dz))
+        end
+    end
+    return highest + 0.06
+end
+M.BridgeY = nil
+
 local function paving()
     local tiles = {}
+    local bridgeStart = cz + BRIDGE.z - BRIDGE.length / 2
     local function addTile(px, pz)
         local highest = -math.huge
         for dx = -1, 1 do
@@ -27,7 +43,14 @@ local function paving()
                 highest = math.max(highest, map.HeightAt(px + dx, pz + dz))
             end
         end
-        tiles[#tiles + 1] = { px, highest + 0.03, pz, 0, 1 }
+        local y = highest + 0.03
+        -- posledních 12 m ulice plynule stoupá k mostovce (žádný schod na začátku mostu)
+        local toBridge = bridgeStart - pz
+        if M.BridgeY and toBridge < 12 then
+            local t = 1 - math.max(toBridge, 0) / 12
+            y = math.max(y, y + (M.BridgeY - y) * t)
+        end
+        tiles[#tiles + 1] = { px, y, pz, 0, 1 }
     end
     for x = -8, 8, 2 do
         for z = -89, 69, 2 do
@@ -38,7 +61,8 @@ local function paving()
 end
 
 function M.Build()
-    model("bridge", cx, cz + 170, { name = "Most hrdinů", collider = "mesh" })
+    M.BridgeY = bridgeHeight()
+    W.spawn("Models/valoria/bridge.glb", cx, M.BridgeY, cz + BRIDGE.z, { name = "Most hrdinů", collider = "mesh" })
     paving()
     model("gate", cx, cz + 90, { name = "Brána Valorie", collider = "mesh" })
     for _, x in ipairs({ -13, 13 }) do

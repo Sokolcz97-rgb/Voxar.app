@@ -842,6 +842,40 @@ local function microBar()
     end
 end
 
+-- ------------------------------------------------------------------ měření výkonu (VoxarioPlayer --benchmark)
+-- VOXARIO_BENCH_PRESET = low|medium|high|ultra (výchozí ultra), VOXARIO_BENCH_PLACE = valoria|ignis|frost|verdant,
+-- VOXARIO_BENCH_RUN = 1: postava běží a kamera se otáčí (streamování, LOD terénu – záseky = trhání kamery)
+local function Benchmark()
+    local env = game.env or function() return nil end
+    options.SetPreset(env("VOXARIO_BENCH_PRESET") or "ultra")
+    options.s.upscaler = "off"
+    -- VOXARIO_BENCH_SET = "detail=0,view=1,shadows=high" – jednotlivá nastavení navíc (měření jejich ceny)
+    for k, v in (env("VOXARIO_BENCH_SET") or ""):gmatch("(%w+)=([%w%.]+)") do
+        options.s[k] = tonumber(v) or v
+    end
+    options.s.fps = 0
+    options.s.vsync = false
+    options.Apply()
+    game_.EnterWorld(1)
+    -- srovnatelná měření: pevná denní doba a jasno (bez střídání počasí)
+    nextWeather = math.huge
+    _G.world.environment({ time_of_day = 14, day_length = 0 })
+    _G.world.weather({ rain = 0, snow = 0, storm = 0, instant = true })
+    local place = env("VOXARIO_BENCH_PLACE")
+    local r = place and map.Data.Regions[({ ignis = "ignis", frost = "frost", verdant = "verdant", crystal = "crystal" })[place] or ""]
+    if r then player.Teleport(r.x, r.z) end
+    timer.sleep(1)
+    timer.wait_until(function() return _G.world.loading() == 0 end)
+    timer.sleep(2)
+    if env("VOXARIO_BENCH_RUN") then
+        local x, _, z = player.Pos()
+        combat.moveTo = { x, z - 400 }
+        timer.every(0, function() player.cam.yaw = player.cam.yaw + 0.35 end)
+    end
+    game.benchmark_begin()
+    if env("VOXARIO_BENCH_SHOT") then timer.sleep(1); game.screenshot(env("VOXARIO_BENCH_SHOT")) end
+end
+
 function on_start()
     hud.Init()
     options.Load()
@@ -855,6 +889,7 @@ function on_start()
     pcall(addons.Load)
     if game.custom_pause then game.custom_pause(true) end
     if game.selftest() then timer.start(Selftest); return end
+    if game.benchmark and game.benchmark() then timer.start(Benchmark); return end
     showPreview()
     nextWeather = game.time() + 120
 end
