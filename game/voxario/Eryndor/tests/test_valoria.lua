@@ -31,7 +31,9 @@ end
 assert(found["Models/nature/aetherium_big.glb"] == 2, "both portals must be visible")
 assert(found["Models/valoria/keep_floor.glb"] == 1, "castle floor must have its own collider")
 assert(found["Models/valoria/keep_step.glb"] == 2, "castle entrance must have two steps")
-assert(found["light"] == 4, "castle and both portals must have lights")
+local skyLamps = found["Models/build/lamp.glb"] or 0
+assert(skyLamps >= 10, "arched bridge needs lamps along its deck")
+assert(found["light"] == 4 + skyLamps, "castle, both portals and every bridge lamp must have lights")
 local maxGround = -math.huge
 for x = -16, 16, 2 do
     for z = -11, 13, 2 do
@@ -84,4 +86,25 @@ for _, call in ipairs(calls) do
     if call[1] == "Models/valoria/bridge.glb" then bridgeCall = call end
 end
 assert(bridgeCall and math.abs(bridgeCall[3] - valoria.BridgeY) < 1e-8 and bridgeCall[5].collider == "mesh")
+-- obloukový most na hlavní ostrov: navazuje na jižní konec Mostu hrdinů, s kolizí, přes moře na útes
+local sky = valoria.Skybridge
+local skyCall = calls[valoria.SkybridgeEntity]
+assert(skyCall and skyCall[1] == "Models/valoria/skybridge.glb" and skyCall[5].collider == "mesh")
+assert(skyCall[2] == 3000 and skyCall[4] == 2570 + 100, "arched bridge must start at the end of the hero bridge")
+assert(math.abs(skyCall[3] - valoria.BridgeY) < 1e-8, "arched bridge must continue at the hero bridge deck level")
+local pts = sky.points
+assert(math.abs(pts[1][3]) < 0.1, "no step where the two bridges meet")
+local sea, prev = 0, nil
+for i, p in ipairs(pts) do
+    if p[4] == 1 then sea = sea + 1 end
+    if prev and i <= #pts - 2 then
+        local run = math.sqrt((p[1] - prev[1]) ^ 2 + (p[2] - prev[2]) ^ 2)
+        assert(math.abs(p[3] - prev[3]) / run <= 0.12, "deck grade must stay walkable")
+    end
+    prev = p
+end
+assert(sea * 10 >= 500, "bridge must span the sea between Valoria and the main island")
+local last = pts[#pts]
+assert(last[1] < 2100 and sky.landing.x < 2100, "bridge must land on the main island west of the strait")
+assert(#valoria.SkybridgeAvoid > 0 and #valoria.SkybridgeAvoid < #pts, "only land under the bridge is kept free")
 print("Valoria scene and portals: OK")

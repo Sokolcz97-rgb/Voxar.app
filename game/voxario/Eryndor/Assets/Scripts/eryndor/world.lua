@@ -336,7 +336,9 @@ end
 
 function M.Build()
     M.BuildTerrain()
-    require("eryndor.valoria").Build()
+    local valoria = require("eryndor.valoria")
+    valoria.Build()
+    for _, a in ipairs(valoria.SkybridgeAvoid) do avoid[#avoid + 1] = a end
     M.BuildBridges()
     M.BuildOutpost()
     M.BuildVerdant()

@@ -110,6 +110,25 @@ function Selftest()
         view("v3c-interier-hradu", 3000, 2, 2176, 3008, 4, 2158)
         assert(valoria.NearPortal(valoria.CityPortal.x, valoria.CityPortal.z) == valoria.OutpostPortal)
         assert(valoria.NearPortal(valoria.OutpostPortal.x, valoria.OutpostPortal.z) == valoria.CityPortal)
+        -- obloukový most na hlavní ostrov: mostovka nad mořem má kolizi a vede až na útes
+        local sky = valoria.Skybridge.points
+        for _, i in ipairs({ 2, math.floor(#sky / 2), #sky - 4 }) do
+            local p = sky[i]
+            local y = valoria.SkybridgeY(i)
+            local hit = physics.raycast(p[1], y + 3, p[2], 0, -1, 0, 6)
+            assert(hit and hit.entity == valoria.SkybridgeEntity and hit.point and math.abs(hit.point.y - y) < 0.6,
+                "arched bridge deck collision is missing at point " .. i)
+        end
+        local mid = sky[math.floor(#sky / 2)]
+        lookFrom(mid[1] + 260, 150, mid[2] + 330, mid[1], 40, mid[2])
+        timer.sleep(3)
+        shot("v5-obloukovy-most")
+        lookFrom(3040, valoria.BridgeY + 6, 2600, 2900, valoria.BridgeY + 12, 2760)
+        timer.sleep(2.5); shot("v6-most-z-valorie")
+        local q = sky[#sky - 14]
+        lookFrom(q[1] + 40, valoria.SkybridgeY(#sky - 14) + 8, q[2] + 30,
+            sky[#sky][1], valoria.SkybridgeY(#sky), sky[#sky][2])
+        timer.sleep(2.5); shot("v7-najezd-na-utes")
         game_.EnterWorld(1)
         timer.sleep(2)
         shot("v4-start")
