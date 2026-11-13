@@ -202,3 +202,9 @@ voda. Vše přes Voxario Studio Engine.
   nahrávání sítí a textur odstranilo záseky při pohybu. Postava: výška modelu z paprsku na skutečný povrch
   (most, dlažba) a plynule (dřív poskakovala mezi výškovou mapou a kolizí), teleport a start na horní povrch.
   Most hrdinů leží nad nejvyšším místem terénu (detail terénu ±0,45 m prorůstal mostovkou), ulice k němu stoupá.
+- Obloukový most Valoria – hlavní ostrov (Eryndor 0.12.0): `python3 tools/valoria_skybridge.py` vygeneruje
+  `Models/valoria/skybridge.glb` a `Scripts/eryndor/skybridge_data.lua` (osa po 10 m). Most navazuje na jižní konec
+  Mostu hrdinů, stáčí se obloukem (poloměr 70 m) na západ a 1136 m dlouhým viaduktem s 32 pilíři a kamennými
+  klenbami přes Azure Ocean vystoupá (max. 11 %, mírné klenutí nad mořem) na útes hlavního ostrova nad údolím
+  Serpentine; konec mostovky se zanoří pod terén. Mostovka je vždy ≥ 0,55 m nad terénem (detail neprorůstá),
+  kolize celého modelu, lucerny po 60 m (světlo v noci), pod mostem na souši nic neroste. Samotest `valoria`: v5–v7.

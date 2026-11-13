@@ -33,6 +33,40 @@ local function bridgeHeight()
 end
 M.BridgeY = nil
 
+-- Obloukový most na hlavní ostrov (tools/valoria_skybridge.py): navazuje na jižní konec Mostu hrdinů, stáčí se
+-- obloukem na západ a přes moře na kamenných klenbách vystoupá na útes nad údolím Serpentine.
+M.Skybridge = require("eryndor.skybridge_data")
+M.SkybridgeEntity = nil
+M.SkybridgeAvoid = {}   -- místa na souši pod mostem a u nájezdu (nic tu neroste)
+
+-- výška horní plochy mostovky (svět) v bodě osy i (1..n)
+function M.SkybridgeY(i)
+    local p = M.Skybridge.points[i]
+    return M.BridgeY + p[3]
+end
+
+local function skybridge()
+    local d = M.Skybridge
+    M.SkybridgeEntity = W.spawn("Models/valoria/skybridge.glb", d.start.x, M.BridgeY, d.start.z,
+        { name = "Obloukový most Valorie", collider = "mesh" })
+    local pts = d.points
+    for i, p in ipairs(pts) do
+        if p[4] == 0 then M.SkybridgeAvoid[#M.SkybridgeAvoid + 1] = { x = p[1], z = p[2], r = d.width } end
+    end
+    -- lucerny po 60 m střídavě po stranách, světlo jen v noci
+    for i = 4, #pts - 3, 6 do
+        local a, b = pts[i - 1], pts[i + 1]
+        local tx, tz = b[1] - a[1], b[2] - a[2]
+        local len = math.sqrt(tx * tx + tz * tz)
+        local side = math.floor(i / 6) % 2 == 0 and 1 or -1
+        local ox, oz = tz / len * 5.9 * side, -tx / len * 5.9 * side
+        local x, z, y = pts[i][1] + ox, pts[i][2] + oz, M.SkybridgeY(i)
+        W.spawn("Models/build/lamp.glb", x, y, z, { name = "Lucerna na mostě" })
+        W.spawn("light", x, y + 2.6, z,
+            { light = { color = { 1.0, 0.75, 0.4 }, intensity = 14, range = 16, night_only = true } })
+    end
+end
+
 local function paving()
     local tiles = {}
     local bridgeStart = cz + BRIDGE.z - BRIDGE.length / 2
@@ -63,6 +97,7 @@ end
 function M.Build()
     M.BridgeY = bridgeHeight()
     W.spawn("Models/valoria/bridge.glb", cx, M.BridgeY, cz + BRIDGE.z, { name = "Most hrdinů", collider = "mesh" })
+    skybridge()
     paving()
     model("gate", cx, cz + 90, { name = "Brána Valorie", collider = "mesh" })
     for _, x in ipairs({ -13, 13 }) do
